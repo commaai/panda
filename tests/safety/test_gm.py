@@ -24,6 +24,27 @@ class GmLongitudinalBase(common.PandaSafetyTest):
 
   PCM_CRUISE = False  # openpilot can control the PCM state if longitudinal
 
+  def _send_brake_msg(self, brake):
+    values = {"FrictionBrakeCmd": -brake}
+    return self.packer_chassis.make_can_msg_panda("EBCMFrictionBrakeCmd", self.BRAKE_BUS, values)
+
+  def _send_gas_msg(self, gas):
+    values = {"GasRegenCmd": gas}
+    return self.packer.make_can_msg_panda("ASCMGasRegenCmd", 0, values)
+
+  # override these tests from PandaSafetyTest, GM longitudinal uses button enable
+  def _pcm_status_msg(self, enable):
+    raise NotImplementedError
+
+  def test_disable_control_allowed_from_cruise(self):
+    pass
+
+  def test_enable_control_allowed_from_cruise(self):
+    pass
+
+  def test_cruise_engaged_prev(self):
+    pass
+
   def test_set_resume_buttons(self):
     """
       SET and RESUME enter controls allowed on their falling and rising edges, respectively.
@@ -63,19 +84,6 @@ class GmLongitudinalBase(common.PandaSafetyTest):
         should_tx = ((enabled and self.MAX_REGEN <= gas_regen <= self.MAX_GAS) or
                      gas_regen == self.INACTIVE_REGEN)
         self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas_regen)), (enabled, gas_regen))
-
-  # override these tests from PandaSafetyTest, GM longitudinal uses button enable
-  def test_disable_control_allowed_from_cruise(self):
-    pass
-
-  def test_enable_control_allowed_from_cruise(self):
-    pass
-
-  def test_cruise_engaged_prev(self):
-    pass
-
-  def _pcm_status_msg(self, enable):
-    pass
 
 
 class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
@@ -135,14 +143,6 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
       # Fill CruiseState with expected value if the safety mode reads cruise state from gas msg
       values["CruiseState"] = self.safety.get_controls_allowed()
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
-
-  def _send_brake_msg(self, brake):
-    values = {"FrictionBrakeCmd": -brake}
-    return self.packer_chassis.make_can_msg_panda("EBCMFrictionBrakeCmd", self.BRAKE_BUS, values)
-
-  def _send_gas_msg(self, gas):
-    values = {"GasRegenCmd": gas}
-    return self.packer.make_can_msg_panda("ASCMGasRegenCmd", 0, values)
 
   def _torque_driver_msg(self, torque):
     values = {"LKADriverAppldTrq": torque}
