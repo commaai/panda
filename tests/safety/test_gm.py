@@ -22,10 +22,31 @@ class GmLongitudinalBase(common.PandaSafetyTest, common.LongitudinalGasBrakeSafe
   INACTIVE_REGEN = 0
   MAX_BRAKE = 400
 
-  PCM_CRUISE = False  # openpilot can control the PCM state if longitudinal
-
   MAX_POSSIBLE_GAS = 2**12
   MAX_POSSIBLE_BRAKE = 2**12
+
+  PCM_CRUISE = False  # openpilot can control the PCM state if longitudinal
+
+  def _send_brake_msg(self, brake):
+    values = {"FrictionBrakeCmd": -brake}
+    return self.packer_chassis.make_can_msg_panda("EBCMFrictionBrakeCmd", self.BRAKE_BUS, values)
+
+  def _send_gas_msg(self, gas):
+    values = {"GasRegenCmd": gas}
+    return self.packer.make_can_msg_panda("ASCMGasRegenCmd", 0, values)
+
+  # override these tests from PandaSafetyTest, GM longitudinal uses button enable
+  def _pcm_status_msg(self, enable):
+    raise NotImplementedError
+
+  def test_disable_control_allowed_from_cruise(self):
+    pass
+
+  def test_enable_control_allowed_from_cruise(self):
+    pass
+
+  def test_cruise_engaged_prev(self):
+    pass
 
   def test_set_resume_buttons(self):
     """
@@ -66,27 +87,6 @@ class GmLongitudinalBase(common.PandaSafetyTest, common.LongitudinalGasBrakeSafe
         should_tx = ((enabled and self.MAX_REGEN <= gas_regen <= self.MAX_GAS) or
                      gas_regen == self.INACTIVE_REGEN)
         self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas_regen)), (enabled, gas_regen))
-
-  # override these tests from PandaSafetyTest, GM longitudinal uses button enable
-  def test_disable_control_allowed_from_cruise(self):
-    pass
-
-  def test_enable_control_allowed_from_cruise(self):
-    pass
-
-  def test_cruise_engaged_prev(self):
-    pass
-
-  def _pcm_status_msg(self, enable):
-    pass
-
-  def _brake_msg(self, brake):
-    values = {"FrictionBrakeCmd": -brake}
-    return self.packer_chassis.make_can_msg_panda("EBCMFrictionBrakeCmd", self.BRAKE_BUS, values)
-
-  def _gas_msg(self, gas):
-    values = {"GasRegenCmd": gas}
-    return self.packer.make_can_msg_panda("ASCMGasRegenCmd", 0, values)
 
 
 class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
