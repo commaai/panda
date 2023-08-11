@@ -53,6 +53,8 @@ def add_regen_tests(cls):
 
 
 class PandaSafetyTestBase(unittest.TestCase):
+  safety: libpanda_py.libpanda
+  
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "PandaSafetyTestBase":
