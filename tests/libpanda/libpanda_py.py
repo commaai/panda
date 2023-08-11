@@ -117,7 +117,7 @@ class Panda(PandaSafety, Protocol):
   logging_bank_size: int
   logging_rate_limit: int
 
-libpanda: PandaSafety = ffi.dlopen(libpanda_fn)
+libpanda: Panda = ffi.dlopen(libpanda_fn)
 
 
 # helpers

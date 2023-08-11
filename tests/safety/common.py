@@ -8,7 +8,6 @@ from typing import Dict, List, Optional
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
 from panda.tests.libpanda import libpanda_py
-from panda.tests.libpanda.safety_helpers import PandaSafety
 
 MAX_WRONG_COUNTERS = 5
 VEHICLE_SPEED_FACTOR = 100
@@ -54,7 +53,7 @@ def add_regen_tests(cls):
 
 
 class PandaSafetyTestBase(unittest.TestCase):
-  safety: PandaSafety
+  safety: libpanda_py.Panda
 
   @classmethod
   def setUpClass(cls):
