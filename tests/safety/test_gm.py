@@ -18,8 +18,8 @@ class GmLongitudinalBase(common.PandaSafetyTest, common.LongitudinalGasBrakeSafe
   # pylint: disable=no-member,abstract-method
 
   MAX_GAS = 0
-  MAX_REGEN = 0
-  INACTIVE_REGEN = 0
+  MIN_GAS = 0
+  INACTIVE_GAS = 0
   MAX_BRAKE = 400
 
   MAX_POSSIBLE_GAS = 2**12
@@ -84,8 +84,8 @@ class GmLongitudinalBase(common.PandaSafetyTest, common.LongitudinalGasBrakeSafe
     for enabled in [0, 1]:
       for gas_regen in range(0, 2 ** 12 - 1):
         self.safety.set_controls_allowed(enabled)
-        should_tx = ((enabled and self.MAX_REGEN <= gas_regen <= self.MAX_GAS) or
-                     gas_regen == self.INACTIVE_REGEN)
+        should_tx = ((enabled and self.MIN_GAS <= gas_regen <= self.MAX_GAS) or
+                     gas_regen == self.INACTIVE_GAS)
         self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas_regen)), (enabled, gas_regen))
 
 
