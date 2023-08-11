@@ -17,6 +17,11 @@ class Buttons:
 class GmLongitudinalBase(common.PandaSafetyTest, common.LongitudinalGasBrakeSafetyTest):
   # pylint: disable=no-member,abstract-method
 
+  MAX_GAS = 0
+  MAX_REGEN = 0
+  INACTIVE_REGEN = 0
+  MAX_BRAKE = 400
+
   PCM_CRUISE = False  # openpilot can control the PCM state if longitudinal
 
   MAX_POSSIBLE_GAS = 2**12
@@ -43,6 +48,24 @@ class GmLongitudinalBase(common.PandaSafetyTest, common.LongitudinalGasBrakeSafe
     self.safety.set_controls_allowed(1)
     self._rx(self._button_msg(Buttons.CANCEL))
     self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_brake_safety_check(self):
+    for enabled in [0, 1]:
+      for b in range(0, 500):
+        self.safety.set_controls_allowed(enabled)
+        if abs(b) > self.MAX_BRAKE or (not enabled and b != 0):
+          self.assertFalse(self._tx(self._send_brake_msg(b)))
+        else:
+          self.assertTrue(self._tx(self._send_brake_msg(b)))
+
+  def test_gas_safety_check(self):
+    # Block if enabled and out of actuation range, disabled and not inactive regen, or if stock longitudinal
+    for enabled in [0, 1]:
+      for gas_regen in range(0, 2 ** 12 - 1):
+        self.safety.set_controls_allowed(enabled)
+        should_tx = ((enabled and self.MAX_REGEN <= gas_regen <= self.MAX_GAS) or
+                     gas_regen == self.INACTIVE_REGEN)
+        self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas_regen)), (enabled, gas_regen))
 
   # override these tests from PandaSafetyTest, GM longitudinal uses button enable
   def test_disable_control_allowed_from_cruise(self):
@@ -149,7 +172,6 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
   MAX_GAS = 3072
   MIN_GAS = 1404
   INACTIVE_GAS = 1404
-  MAX_BRAKE = 400
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
@@ -212,7 +234,6 @@ class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase)
   MAX_GAS = 3400
   MIN_GAS = 1514
   INACTIVE_GAS = 1554
-  MAX_BRAKE = 400
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
