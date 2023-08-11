@@ -20,7 +20,7 @@ class GmLongitudinalBase(common.PandaSafetyTest):
   MAX_GAS = 0
   MAX_REGEN = 0
   INACTIVE_REGEN = 0
-  MAX_BRAKE = 0
+  MAX_BRAKE = 400
 
   PCM_CRUISE = False  # openpilot can control the PCM state if longitudinal
 
@@ -169,7 +169,6 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
   MAX_GAS = 3072
   MAX_REGEN = 1404
   INACTIVE_REGEN = 1404
-  MAX_BRAKE = 400
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
@@ -232,7 +231,6 @@ class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase)
   MAX_GAS = 3400
   MAX_REGEN = 1514
   INACTIVE_REGEN = 1554
-  MAX_BRAKE = 400
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
