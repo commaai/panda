@@ -13,14 +13,14 @@ def get_random_can_messages(n):
   return m
 
 
-def time_many_sends(p, bus, p_recv=None, msg_count=100, two_pandas=False):
+def time_many_sends(p, bus, p_recv=None, msg_count=100, two_pandas=False, msg_len=8):
   if p_recv is None:
     p_recv = p
   if p == p_recv and two_pandas:
     raise ValueError("Cannot have two pandas that are the same panda")
 
   msg_id = random.randint(0x100, 0x200)
-  to_send = [(msg_id, 0, b"\xaa" * 8, bus)] * msg_count
+  to_send = [(msg_id, 0, b"\xaa" * msg_len, bus)] * msg_count
 
   start_time = time.monotonic()
   p.can_send_many(to_send)
@@ -47,7 +47,7 @@ def time_many_sends(p, bus, p_recv=None, msg_count=100, two_pandas=False):
   assert len(sent_echo) == msg_count
 
   end_time = (end_time - start_time) * 1000.0
-  comp_kbps = (1 + 11 + 1 + 1 + 1 + 4 + 8 * 8 + 15 + 1 + 1 + 1 + 7) * msg_count / end_time
+  comp_kbps = (1 + 11 + 1 + 1 + 1 + 4 + (msg_len * 8) + 15 + 1 + 1 + 1 + 7) * msg_count / end_time
 
   return comp_kbps
 
