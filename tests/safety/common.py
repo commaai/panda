@@ -71,22 +71,22 @@ class PandaSafetyTestBase(unittest.TestCase):
   def _tx(self, msg):
     return self.safety.safety_tx_hook(msg)
 
-  def _generic_limit_safety_check(self, msg_function, min_allowed_value: float, max_allowed_value: float, min_test_value: float,
-                                        max_test_value: float, test_delta: float = 1, inactive_value: float = 0, msg_allowed=True):
+  def _generic_limit_safety_check(self, msg_function, min_allowed_value: float, max_allowed_value: float, min_possible_value: float,
+                                  max_possible_value: float, test_delta: float = 1, inactive_value: float = 0, msg_allowed=True):
     """
       Enforces that a signal within a message is only allowed to be sent within a specific range, min_allowed_value -> max_allowed_value.
-      Tests the range of min_test_value -> max_test_value with a delta of test_delta.
+      Tests the range of min_possible_value -> max_possible_value with a delta of test_delta.
       Message is also only allowed to be sent when controls_allowed is true, unless the value is equal to inactive_value.
       Message is never allowed if msg_allowed is false, for example when stock longitudinal is enabled and you are sending acceleration requests.
     """
 
     # Ensure that we at least test the allowed_value range
-    self.assertGreater(max_test_value, max_allowed_value)
-    self.assertLessEqual(min_test_value, min_allowed_value)
+    self.assertGreater(max_possible_value, max_allowed_value)
+    self.assertLessEqual(min_possible_value, min_allowed_value)
 
     for controls_allowed in [False, True]:
       # enforce we don't skip over 0 or inactive
-      for v in np.concatenate((np.arange(min_test_value, max_test_value, test_delta), np.array([0, inactive_value]))):
+      for v in np.concatenate((np.arange(min_possible_value, max_possible_value, test_delta), np.array([0, inactive_value]))):
         v = round(v, 2)  # floats might not hit exact boundary conditions without rounding
         self.safety.set_controls_allowed(controls_allowed)
         should_tx = controls_allowed and min_allowed_value <= v <= max_allowed_value
