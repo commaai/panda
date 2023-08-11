@@ -17,9 +17,6 @@ class Buttons:
 class GmLongitudinalBase(common.PandaSafetyTest, common.LongitudinalGasBrakeSafetyTest):
   # pylint: disable=no-member,abstract-method
 
-  MAX_GAS = 0
-  MIN_GAS = 0
-  INACTIVE_GAS = 0
   MAX_BRAKE = 400
 
   MAX_POSSIBLE_GAS = 2**12
@@ -69,24 +66,6 @@ class GmLongitudinalBase(common.PandaSafetyTest, common.LongitudinalGasBrakeSafe
     self.safety.set_controls_allowed(1)
     self._rx(self._button_msg(Buttons.CANCEL))
     self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_brake_safety_check(self):
-    for enabled in [0, 1]:
-      for b in range(0, 500):
-        self.safety.set_controls_allowed(enabled)
-        if abs(b) > self.MAX_BRAKE or (not enabled and b != 0):
-          self.assertFalse(self._tx(self._send_brake_msg(b)))
-        else:
-          self.assertTrue(self._tx(self._send_brake_msg(b)))
-
-  def test_gas_safety_check(self):
-    # Block if enabled and out of actuation range, disabled and not inactive regen, or if stock longitudinal
-    for enabled in [0, 1]:
-      for gas_regen in range(0, 2 ** 12 - 1):
-        self.safety.set_controls_allowed(enabled)
-        should_tx = ((enabled and self.MIN_GAS <= gas_regen <= self.MAX_GAS) or
-                     gas_regen == self.INACTIVE_GAS)
-        self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas_regen)), (enabled, gas_regen))
 
 
 class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
