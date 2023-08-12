@@ -12,7 +12,7 @@ from panda.tests.libpanda import libpanda_py
 MAX_WRONG_COUNTERS = 5
 VEHICLE_SPEED_FACTOR = 100
 
-MessageFunction = Optional[Callable[[float], libpanda_py.CANPacket]]
+MessageFunction = Callable[[float], libpanda_py.CANPacket]
 
 def sign_of(a):
   return 1 if a > 0 else -1
