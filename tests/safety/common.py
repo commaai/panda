@@ -3,7 +3,7 @@ import abc
 import unittest
 import importlib
 import numpy as np
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
@@ -12,6 +12,7 @@ from panda.tests.libpanda import libpanda_py
 MAX_WRONG_COUNTERS = 5
 VEHICLE_SPEED_FACTOR = 100
 
+MessageFunction = Callable[[float], libpanda_py.CANPacket]
 
 def sign_of(a):
   return 1 if a > 0 else -1
@@ -71,13 +72,15 @@ class PandaSafetyTestBase(unittest.TestCase):
   def _tx(self, msg):
     return self.safety.safety_tx_hook(msg)
 
-  def _generic_limit_safety_check(self, msg_function, min_allowed_value: float, max_allowed_value: float, min_possible_value: float,
-                                  max_possible_value: float, test_delta: float = 1, inactive_value: float = 0, msg_allowed=True):
+  def _generic_limit_safety_check(self, msg_function: MessageFunction, min_allowed_value: float, max_allowed_value: float,
+                                  min_possible_value: float, max_possible_value: float, test_delta: float = 1, inactive_value: float = 0,
+                                  msg_allowed = True, additional_setup: Optional[Callable[[float], None]] = None):
     """
       Enforces that a signal within a message is only allowed to be sent within a specific range, min_allowed_value -> max_allowed_value.
       Tests the range of min_possible_value -> max_possible_value with a delta of test_delta.
       Message is also only allowed to be sent when controls_allowed is true, unless the value is equal to inactive_value.
       Message is never allowed if msg_allowed is false, for example when stock longitudinal is enabled and you are sending acceleration requests.
+      additional_setup is used for extra setup before each _tx, ex: for setting the previous torque for rate limits
     """
 
     # Ensure that we at least test the allowed_value range
@@ -89,6 +92,8 @@ class PandaSafetyTestBase(unittest.TestCase):
       for v in np.concatenate((np.arange(min_possible_value, max_possible_value, test_delta), np.array([0, inactive_value]))):
         v = round(v, 2)  # floats might not hit exact boundary conditions without rounding
         self.safety.set_controls_allowed(controls_allowed)
+        if additional_setup is not None:
+          additional_setup(v)
         should_tx = controls_allowed and min_allowed_value <= v <= max_allowed_value
         should_tx = (should_tx or v == inactive_value) and msg_allowed
         self.assertEqual(self._tx(msg_function(v)), should_tx, (controls_allowed, should_tx, v))
@@ -166,6 +171,12 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
   MIN_ACCEL: float = -3.5
   INACTIVE_ACCEL: float = 0.0
 
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "LongitudinalAccelSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
+
   @abc.abstractmethod
   def _accel_msg(self, accel: float):
     pass
@@ -179,8 +190,18 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
               (self.MIN_ACCEL, self.MAX_ACCEL, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
 
     for min_accel, max_accel, alternative_experience in limits:
-      self.safety.set_alternative_experience(alternative_experience)
-      self._generic_limit_safety_check(self._accel_msg, min_accel, max_accel, min_accel - 1, max_accel + 1, 0.05, self.INACTIVE_ACCEL, not stock_longitudinal)
+      # enforce we don't skip over 0 or inactive accel
+      for accel in np.concatenate((np.arange(min_accel - 1, max_accel + 1, 0.05), [0, self.INACTIVE_ACCEL])):
+        accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
+        for controls_allowed in [True, False]:
+          self.safety.set_controls_allowed(controls_allowed)
+          self.safety.set_alternative_experience(alternative_experience)
+          if stock_longitudinal:
+            should_tx = False
+          else:
+            should_tx = controls_allowed and min_accel <= accel <= max_accel
+            should_tx = should_tx or accel == self.INACTIVE_ACCEL
+          self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
 
 
 class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
