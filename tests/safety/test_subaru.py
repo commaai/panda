@@ -98,7 +98,9 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
   def _pcm_status_msg(self, enable):
     values = {"Cruise_Activated": enable}
     return self.packer.make_can_msg_panda("CruiseControl", self.ALT_BUS, values)
+  
 
+class TestSubaruStockLongitudinalSafetyBase(TestSubaruSafetyBase):
   def _cancel_msg(self, cancel, cruise_throttle=0):
     values = {"Cruise_Cancel": cancel, "Cruise_Throttle": cruise_throttle}
     return self.packer.make_can_msg_panda("ES_Distance", self.ALT_BUS, values)
@@ -107,14 +109,6 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
     # test that we can only send the cancel message (ES_Distance) with inactive throttle (1818) and Cruise_Cancel=1
     for cancel in [True, False]:
       self._generic_limit_safety_check(partial(self._cancel_msg, cancel), self.INACTIVE_GAS, self.INACTIVE_GAS, 0, 2**12, 1, self.INACTIVE_GAS, cancel)
-
-
-class TestSubaruGen2SafetyBase(TestSubaruSafetyBase):
-  ALT_BUS = SUBARU_ALT_BUS
-
-  MAX_RATE_UP = 40
-  MAX_RATE_DOWN = 40
-  MAX_TORQUE = 1000
 
 
 class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.LongitudinalGasBrakeSafetyTest):
@@ -151,7 +145,15 @@ class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.Longitudinal
     return self.packer.make_can_msg_panda("ES_Status", self.ALT_BUS, values)
 
 
-class TestSubaruGen1Safety(TestSubaruSafetyBase):
+class TestSubaruGen2SafetyBase(TestSubaruStockLongitudinalSafetyBase):
+  ALT_BUS = SUBARU_ALT_BUS
+
+  MAX_RATE_UP = 40
+  MAX_RATE_DOWN = 40
+  MAX_TORQUE = 1000
+
+
+class TestSubaruGen1Safety(TestSubaruStockLongitudinalSafetyBase):
   FLAGS = 0
   TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS)
 
@@ -163,7 +165,7 @@ class TestSubaruGen2Safety(TestSubaruGen2SafetyBase):
 
 class TestSubaruGen1LongitudinalSafety(TestSubaruLongitudinalSafetyBase):
   FLAGS = Panda.FLAG_SUBARU_LONG
-  TX_MSGS = lkas_tx_msgs(0) + long_tx_msgs()
+  TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS) + long_tx_msgs()
 
 
 if __name__ == "__main__":
