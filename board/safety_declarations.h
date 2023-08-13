@@ -90,6 +90,11 @@ typedef struct {
   const int inactive_gas;
   const int max_brake;
 
+  // alternative cmd limits, ex: transmission rpm on subaru
+  const int max_alt;
+  const int min_alt;
+  const int inactive_alt;
+
   // speed cmd limits
   const int inactive_speed;
 } LongitudinalLimits;
@@ -163,6 +168,7 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
 bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits);
 bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limits);
 bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits);
+bool longitudinal_alt_checks(int desired_alt, const LongitudinalLimits limits);
 bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits);
 bool longitudinal_interceptor_checks(CANPacket_t *to_send);
 void pcm_cruise_check(bool cruise_engaged);
