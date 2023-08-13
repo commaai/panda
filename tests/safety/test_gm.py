@@ -149,8 +149,8 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
   BRAKE_BUS = 2
 
   MAX_GAS = 3072
-  MAX_REGEN = 1404
-  INACTIVE_REGEN = 1404
+  MIN_GAS = 1404
+  INACTIVE_GAS = 1404
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
@@ -211,8 +211,8 @@ class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase)
   BUTTONS_BUS = 0  # rx only
 
   MAX_GAS = 3400
-  MAX_REGEN = 1514
-  INACTIVE_REGEN = 1554
+  MIN_GAS = 1514
+  INACTIVE_GAS = 1554
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
