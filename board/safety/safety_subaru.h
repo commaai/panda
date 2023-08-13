@@ -219,11 +219,6 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     violation |= longitudinal_alt_checks(cruise_rpm, SUBARU_LONG_LIMITS);
   }
 
-  // Only allow ES_Distance when Cruise_Cancel is true, and Cruise_Throttle is "inactive" (1818)
-  if (addr == MSG_SUBARU_ES_Distance){
- 
-  }
-
   if (violation){
     tx = 0;
   }
