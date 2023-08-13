@@ -98,7 +98,7 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
   def _pcm_status_msg(self, enable):
     values = {"Cruise_Activated": enable}
     return self.packer.make_can_msg_panda("CruiseControl", self.ALT_BUS, values)
-  
+
 
 class TestSubaruStockLongitudinalSafetyBase(TestSubaruSafetyBase):
   def _cancel_msg(self, cancel, cruise_throttle=0):
