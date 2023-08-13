@@ -509,6 +509,12 @@ bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limit
   return !get_longitudinal_allowed() && (desired_speed != limits.inactive_speed);
 }
 
+bool longitudinal_alt_checks(int desired_alt, const LongitudinalLimits limits){
+  bool alt_valid = get_longitudinal_allowed() && !max_limit_check(desired_alt, limits.max_alt, limits.min_alt);
+  bool alt_inactive = desired_alt == limits.inactive_alt;
+  return !(alt_valid || alt_inactive);
+}
+
 bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits) {
   bool gas_valid = get_longitudinal_allowed() && !max_limit_check(desired_gas, limits.max_gas, limits.min_gas);
   bool gas_inactive = desired_gas == limits.inactive_gas;
