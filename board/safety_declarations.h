@@ -90,7 +90,7 @@ typedef struct {
   const int inactive_gas;
   const int max_brake;
 
-  // alternative gas limits, ex: transmission rpm on subaru
+  // alternative cmd limits, ex: transmission rpm on subaru
   const int max_alt;
   const int min_alt;
   const int inactive_alt;
