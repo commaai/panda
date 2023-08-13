@@ -200,7 +200,17 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   // check es_distance cruise_throttle limits
   if (addr == MSG_SUBARU_ES_Distance) {
     int cruise_throttle = (GET_BYTES(to_send, 2, 2) & 0xFFFU);
-    violation |= longitudinal_gas_checks(cruise_throttle, SUBARU_LONG_LIMITS);
+    bool cruise_cancel = GET_BIT(to_send, 56U) != 0U;
+    
+    if (subaru_longitudinal) {
+      violation |= longitudinal_gas_checks(cruise_throttle, SUBARU_LONG_LIMITS);
+    }
+    else {
+      // If openpilot is not controlling long, only allow ES_Distance for cruise cancel requests,
+      // (when Cruise_Cancel is true, and Cruise_Throttle is "inactive" at 1818)
+      violation |= (cruise_throttle != 1818);
+      violation |= (!cruise_cancel);
+    }
   }
 
   // check es_status cruise_rpm limits
@@ -209,7 +219,12 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     violation |= longitudinal_alt_checks(cruise_rpm, SUBARU_LONG_LIMITS);
   }
 
-  if (violation) {
+  // Only allow ES_Distance when Cruise_Cancel is true, and Cruise_Throttle is "inactive" (1818)
+  if (addr == MSG_SUBARU_ES_Distance){
+ 
+  }
+
+  if (violation){
     tx = 0;
   }
   return tx;

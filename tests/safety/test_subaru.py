@@ -4,6 +4,7 @@ from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, MeasurementSafetyTest
+from functools import partial
 
 
 MSG_SUBARU_Brake_Status     = 0x13c
@@ -57,6 +58,8 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
 
   DEG_TO_CAN = -100
 
+  INACTIVE_GAS = 1818
+
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
     self.safety = libpanda_py.libpanda
@@ -95,6 +98,15 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSa
   def _pcm_status_msg(self, enable):
     values = {"Cruise_Activated": enable}
     return self.packer.make_can_msg_panda("CruiseControl", self.ALT_BUS, values)
+
+  def _cancel_msg(self, cancel, cruise_throttle=0):
+    values = {"Cruise_Cancel": cancel, "Cruise_Throttle": cruise_throttle}
+    return self.packer.make_can_msg_panda("ES_Distance", self.ALT_BUS, values)
+
+  def test_cancel_message(self):
+    # test that we can only send the cancel message (ES_Distance) with inactive throttle (1818) and Cruise_Cancel=1
+    for cancel in [True, False]:
+      self._generic_limit_safety_check(partial(self._cancel_msg, cancel), self.INACTIVE_GAS, self.INACTIVE_GAS, 0, 2**12, 1, self.INACTIVE_GAS, cancel)
 
 
 class TestSubaruGen2SafetyBase(TestSubaruSafetyBase):
