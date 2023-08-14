@@ -17,7 +17,7 @@ if __name__ == "__main__":
       if os.getenv("SERIAL"):
         serials = [x for x in serials if x==os.getenv("SERIAL")]
 
-      panda_jungles = list([PandaJungle(x, claim=claim) for x in serials])
+      panda_jungles = [PandaJungle(x, claim=claim) for x in serials]
 
       if not len(panda_jungles):
         sys.exit("no panda jungles found")
