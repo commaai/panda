@@ -10,7 +10,7 @@ from hexdump import hexdump
 from itertools import permutations
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda  # noqa: E402
+from panda import Panda
 
 def get_test_string():
   return b"test" + os.urandom(10)
@@ -25,7 +25,7 @@ def run_test(sleep_duration):
   run_test_w_pandas(pandas, sleep_duration)
 
 def run_test_w_pandas(pandas, sleep_duration):
-  h = list([Panda(x) for x in pandas])
+  h = [Panda(x) for x in pandas]
   print("H", h)
 
   for hh in h:

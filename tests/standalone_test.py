@@ -5,7 +5,7 @@ import struct
 import time
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda  # noqa: E402
+from panda import Panda
 
 if __name__ == "__main__":
   p = Panda()
