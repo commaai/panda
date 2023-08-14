@@ -6,7 +6,6 @@ import time
 import select
 import codecs
 
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 from panda import Panda
 
 setcolor = ["\033[1;32;40m", "\033[1;31;40m"]
