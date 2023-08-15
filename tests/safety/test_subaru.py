@@ -159,6 +159,9 @@ class TestSubaruGen2TorqueStockLongitudinalSafety(TestSubaruStockLongitudinalSaf
   MAX_RATE_DOWN = 40
   MAX_TORQUE = 1000
 
+  FLAGS = Panda.FLAG_SUBARU_GEN2
+  TX_MSGS = lkas_tx_msgs(SUBARU_ALT_BUS)
+
 
 class TestSubaruGen1LongitudinalSafety(TestSubaruLongitudinalSafetyBase):
   FLAGS = Panda.FLAG_SUBARU_LONG
