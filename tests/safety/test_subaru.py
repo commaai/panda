@@ -163,7 +163,7 @@ class TestSubaruGen2TorqueStockLongitudinalSafety(TestSubaruStockLongitudinalSaf
   TX_MSGS = lkas_tx_msgs(SUBARU_ALT_BUS)
 
 
-class TestSubaruGen1LongitudinalSafety(TestSubaruLongitudinalSafetyBase):
+class TestSubaruGen1LongitudinalSafety(TestSubaruLongitudinalSafetyBase, TestSubaruTorqueSafetyBase):
   FLAGS = Panda.FLAG_SUBARU_LONG
   TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS) + long_tx_msgs()
 
