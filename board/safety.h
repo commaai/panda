@@ -509,7 +509,7 @@ bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limit
   return !get_longitudinal_allowed() && (desired_speed != limits.inactive_speed);
 }
 
-bool longitudinal_transmission_rpm_checks(int desired_transmission_rpm, const LongitudinalLimits limits){
+bool longitudinal_transmission_rpm_checks(int desired_transmission_rpm, const LongitudinalLimits limits) {
   bool transmission_rpm_valid = get_longitudinal_allowed() && !max_limit_check(desired_transmission_rpm, limits.max_transmission_rpm, limits.min_transmission_rpm);
   bool transmission_rpm_inactive = desired_transmission_rpm == limits.inactive_transmission_rpm;
   return !(transmission_rpm_valid || transmission_rpm_inactive);
