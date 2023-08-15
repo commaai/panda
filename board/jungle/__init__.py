@@ -151,3 +151,8 @@ class PandaJungle(Panda):
         break
       ret.append(lret)
     return b''.join(ret)
+
+  # ******************* header pins *******************
+
+  def set_header_pin(self, pin_num, enabled):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, int(pin_num), int(enabled), b'')

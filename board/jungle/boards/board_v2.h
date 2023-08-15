@@ -108,7 +108,7 @@ void board_v2_set_harness_orientation(uint8_t orientation) {
 }
 
 void board_v2_enable_can_transciever(uint8_t transciever, bool enabled) {
-  switch (transciever){
+  switch (transciever) {
     case 1U:
       set_gpio_output(GPIOG, 11, !enabled);
       break;
@@ -124,6 +124,14 @@ void board_v2_enable_can_transciever(uint8_t transciever, bool enabled) {
     default:
       print("Invalid CAN transciever ("); puth(transciever); print("): enabling failed\n");
       break;
+  }
+}
+
+void board_v2_enable_header_pin(uint8_t pin_num, bool enabled) {
+  if (pin_num < 8U) {
+    set_gpio_output(GPIOG, pin_num, enabled);
+  } else {
+    print("Invalid pin number ("); puth(pin_num); print("): enabling failed\n");
   }
 }
 
@@ -265,6 +273,16 @@ void board_v2_init(void) {
   set_gpio_mode(GPIOF, 4, MODE_ANALOG);
   set_gpio_mode(GPIOC, 0, MODE_ANALOG);
   set_gpio_mode(GPIOC, 1, MODE_ANALOG);
+
+  // Header pins
+  set_gpio_mode(GPIOG, 0, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 1, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 2, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 3, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 4, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 5, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 6, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 7, MODE_OUTPUT);
 }
 
 void board_v2_tick(void) {}
@@ -284,6 +302,7 @@ const board board_v2 = {
   .set_harness_orientation = &board_v2_set_harness_orientation,
   .set_can_mode = &board_v2_set_can_mode,
   .enable_can_transciever = &board_v2_enable_can_transciever,
+  .enable_header_pin = &board_v2_enable_header_pin,
   .get_channel_power = &board_v2_get_channel_power,
   .get_sbu_mV = &board_v2_get_sbu_mV,
 };
