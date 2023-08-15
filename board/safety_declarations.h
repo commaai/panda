@@ -90,10 +90,10 @@ typedef struct {
   const int inactive_gas;
   const int max_brake;
 
-  // alternative cmd limits, ex: transmission rpm on subaru
-  const int max_alt;
-  const int min_alt;
-  const int inactive_alt;
+  // transmission rpm limits
+  const int max_transmission_rpm;
+  const int min_transmission_rpm;
+  const int inactive_transmission_rpm;
 
   // speed cmd limits
   const int inactive_speed;

@@ -509,10 +509,10 @@ bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limit
   return !get_longitudinal_allowed() && (desired_speed != limits.inactive_speed);
 }
 
-bool longitudinal_alt_checks(int desired_alt, const LongitudinalLimits limits){
-  bool alt_valid = get_longitudinal_allowed() && !max_limit_check(desired_alt, limits.max_alt, limits.min_alt);
-  bool alt_inactive = desired_alt == limits.inactive_alt;
-  return !(alt_valid || alt_inactive);
+bool longitudinal_transmission_rpm_checks(int desired_transmission_rpm, const LongitudinalLimits limits) {
+  bool transmission_rpm_valid = get_longitudinal_allowed() && !max_limit_check(desired_transmission_rpm, limits.max_transmission_rpm, limits.min_transmission_rpm);
+  bool transmission_rpm_inactive = desired_transmission_rpm == limits.inactive_transmission_rpm;
+  return !(transmission_rpm_valid || transmission_rpm_inactive);
 }
 
 bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits) {
