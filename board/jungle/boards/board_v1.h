@@ -169,6 +169,7 @@ const board board_v1 = {
   .set_harness_orientation = &board_v1_set_harness_orientation,
   .set_can_mode = &board_v1_set_can_mode,
   .enable_can_transciever = &board_v1_enable_can_transciever,
+  .enable_header_pin = &unused_board_enable_header_pin,
   .get_channel_power = &board_v1_get_channel_power,
   .get_sbu_mV = &board_v1_get_sbu_mV,
 };
