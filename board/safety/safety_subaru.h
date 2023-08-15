@@ -20,8 +20,8 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
   .inactive_gas = 1818, // this is zero acceleration
   .max_brake = 600,     // approx -3.5 m/s^2
 
-  .min_alt = 0,         // Transmission RPM limits
-  .max_alt = 2400,
+  .min_transmission_rpm = 0,
+  .max_transmission_rpm = 2400,
 };
 
 #define MSG_SUBARU_Brake_Status          0x13c
@@ -216,7 +216,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   // check es_status cruise_rpm limits
   if (addr == MSG_SUBARU_ES_Status) {
     int cruise_rpm = (GET_BYTES(to_send, 2, 2) & 0xFFFU);
-    violation |= longitudinal_alt_checks(cruise_rpm, SUBARU_LONG_LIMITS);
+    violation |= longitudinal_transmission_rpm_checks(cruise_rpm, SUBARU_LONG_LIMITS);
   }
 
   if (violation){
