@@ -1,6 +1,6 @@
 
 void board_v1_set_led(uint8_t color, bool enabled) {
-  switch (color){
+  switch (color) {
     case LED_RED:
       set_gpio_output(GPIOC, 9, !enabled);
       break;
@@ -16,7 +16,7 @@ void board_v1_set_led(uint8_t color, bool enabled) {
 }
 
 void board_v1_enable_can_transciever(uint8_t transciever, bool enabled) {
-  switch (transciever){
+  switch (transciever) {
     case 1U:
       set_gpio_output(GPIOC, 1, !enabled);
       break;

@@ -108,7 +108,7 @@ void board_v2_set_harness_orientation(uint8_t orientation) {
 }
 
 void board_v2_enable_can_transciever(uint8_t transciever, bool enabled) {
-  switch (transciever){
+  switch (transciever) {
     case 1U:
       set_gpio_output(GPIOG, 11, !enabled);
       break;
@@ -128,7 +128,7 @@ void board_v2_enable_can_transciever(uint8_t transciever, bool enabled) {
 }
 
 void board_v2_enable_header_pin(uint8_t pin_num, bool enabled) {
-  switch (pin_num){
+  switch (pin_num) {
     case 0U:
       set_gpio_output(GPIOG, 0, enabled);
       break;
