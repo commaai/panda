@@ -58,7 +58,7 @@ def init_all_pandas():
 
   print(f"{len(_all_pandas)} total pandas")
 init_all_pandas()
-_all_panda_serials = list(sorted(_all_pandas.keys()))
+_all_panda_serials = sorted(_all_pandas.keys())
 
 
 def init_jungle():
