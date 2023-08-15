@@ -128,34 +128,10 @@ void board_v2_enable_can_transciever(uint8_t transciever, bool enabled) {
 }
 
 void board_v2_enable_header_pin(uint8_t pin_num, bool enabled) {
-  switch (pin_num) {
-    case 0U:
-      set_gpio_output(GPIOG, 0, enabled);
-      break;
-    case 1U:
-      set_gpio_output(GPIOG, 1, enabled);
-      break;
-    case 2U:
-      set_gpio_output(GPIOG, 2, enabled);
-      break;
-    case 3U:
-      set_gpio_output(GPIOG, 3, enabled);
-      break;
-    case 4U:
-      set_gpio_output(GPIOG, 4, enabled);
-      break;
-    case 5U:
-      set_gpio_output(GPIOG, 5, enabled);
-      break;
-    case 6U:
-      set_gpio_output(GPIOG, 6, enabled);
-      break;
-    case 7U:
-      set_gpio_output(GPIOG, 7, enabled);
-      break;
-    default:
-      print("Invalid pin number ("); puth(pin_num); print("): enabling failed\n");
-      break;
+  if (pin_num < 8U) {
+    set_gpio_output(GPIOG, pin_num, enabled);
+  } else {
+    print("Invalid pin number ("); puth(pin_num); print("): enabling failed\n");
   }
 }
 
@@ -297,6 +273,16 @@ void board_v2_init(void) {
   set_gpio_mode(GPIOF, 4, MODE_ANALOG);
   set_gpio_mode(GPIOC, 0, MODE_ANALOG);
   set_gpio_mode(GPIOC, 1, MODE_ANALOG);
+
+  // Header pins
+  set_gpio_mode(GPIOG, 0, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 1, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 2, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 3, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 4, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 5, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 6, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 7, MODE_OUTPUT);
 }
 
 void board_v2_tick(void) {}
