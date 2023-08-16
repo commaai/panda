@@ -71,7 +71,8 @@ def check_space(file, mcu):
   print(f"=======SUMMARY FOR {mcu} FILE {file}=======")
   for line in calcs:
     if line in MCUS[mcu]:
-      print(f"SECTION: {line} size: {MCUS[mcu][line]} USED: {calcs[line]}({(100 - (MCUS[mcu][line] - calcs[line]) / MCUS[mcu][line] * 100):.2f}%) FREE: {MCUS[mcu][line] - calcs[line]}")
+      used_percent = (100 - (MCUS[mcu][line] - calcs[line]) / MCUS[mcu][line] * 100)
+      print(f"SECTION: {line} size: {MCUS[mcu][line]} USED: {calcs[line]}({used_percent:.2f}%) FREE: {MCUS[mcu][line] - calcs[line]}")
     else:
       print(line, calcs[line])
   print()
