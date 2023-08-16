@@ -14,6 +14,16 @@ const SteeringLimits SUBARU_STEERING_LIMITS = SUBARU_STEERING_LIMITS_GENERATOR(2
 const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = SUBARU_STEERING_LIMITS_GENERATOR(1000, 40, 40);
 
 
+const LongitudinalLimits SUBARU_LONG_LIMITS = {
+  .min_gas = 808,       // appears to be engine braking
+  .max_gas = 3400,      // approx  2 m/s^2 when maxing cruise_rpm and cruise_throttle
+  .inactive_gas = 1818, // this is zero acceleration
+  .max_brake = 600,     // approx -3.5 m/s^2
+
+  .min_transmission_rpm = 0,
+  .max_transmission_rpm = 2400,
+};
+
 #define MSG_SUBARU_Brake_Status          0x13c
 #define MSG_SUBARU_CruiseControl         0x240
 #define MSG_SUBARU_Throttle              0x40
@@ -39,6 +49,10 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = SUBARU_STEERING_LIMITS_GENERA
   {MSG_SUBARU_ES_LKAS_State,   SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_Infotainment, SUBARU_MAIN_BUS, 8}, \
 
+#define SUBARU_COMMON_LONG_TX_MSGS(alt_bus)         \
+  {MSG_SUBARU_ES_Brake,        SUBARU_MAIN_BUS, 8}, \
+  {MSG_SUBARU_ES_Status,       SUBARU_MAIN_BUS, 8}, \
+
 #define SUBARU_COMMON_ADDR_CHECKS(alt_bus)                                                                                                            \
   {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}}, \
   {.msg = {{MSG_SUBARU_Steering_Torque, SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
@@ -50,6 +64,12 @@ const CanMsg SUBARU_TX_MSGS[] = {
   SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS)
 };
 #define SUBARU_TX_MSGS_LEN (sizeof(SUBARU_TX_MSGS) / sizeof(SUBARU_TX_MSGS[0]))
+
+const CanMsg SUBARU_LONG_TX_MSGS[] = {
+  SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS)
+  SUBARU_COMMON_LONG_TX_MSGS(SUBARU_MAIN_BUS)
+};
+#define SUBARU_LONG_TX_MSGS_LEN (sizeof(SUBARU_LONG_TX_MSGS) / sizeof(SUBARU_LONG_TX_MSGS[0]))
 
 const CanMsg SUBARU_GEN2_TX_MSGS[] = {
   SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS)
@@ -70,7 +90,10 @@ addr_checks subaru_gen2_rx_checks = {subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_C
 
 
 const uint16_t SUBARU_PARAM_GEN2 = 1;
+const uint16_t SUBARU_PARAM_LONGITUDINAL = 2;
+
 bool subaru_gen2 = false;
+bool subaru_longitudinal = false;
 
 
 static uint32_t subaru_get_checksum(CANPacket_t *to_push) {
@@ -153,6 +176,8 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
 
   if (subaru_gen2) {
     tx = msg_allowed(to_send, SUBARU_GEN2_TX_MSGS, SUBARU_GEN2_TX_MSGS_LEN);
+  } else if (subaru_longitudinal) {
+    tx = msg_allowed(to_send, SUBARU_LONG_TX_MSGS, SUBARU_LONG_TX_MSGS_LEN);
   } else {
     tx = msg_allowed(to_send, SUBARU_TX_MSGS, SUBARU_TX_MSGS_LEN);
   }
@@ -166,12 +191,31 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     violation |= steer_torque_cmd_checks(desired_torque, -1, limits);
   }
 
-  // Only allow ES_Distance when Cruise_Cancel is true, and Cruise_Throttle is "inactive" (1818)
-  if (addr == MSG_SUBARU_ES_Distance){
+  // check es_brake brake_pressure limits
+  if (addr == MSG_SUBARU_ES_Brake) {
+    int es_brake_pressure = GET_BYTES(to_send, 2, 2);
+    violation |= longitudinal_brake_checks(es_brake_pressure, SUBARU_LONG_LIMITS);
+  }
+
+  // check es_distance cruise_throttle limits
+  if (addr == MSG_SUBARU_ES_Distance) {
     int cruise_throttle = (GET_BYTES(to_send, 2, 2) & 0xFFFU);
     bool cruise_cancel = GET_BIT(to_send, 56U) != 0U;
-    violation |= (cruise_throttle != 1818);
-    violation |= (!cruise_cancel);
+    
+    if (subaru_longitudinal) {
+      violation |= longitudinal_gas_checks(cruise_throttle, SUBARU_LONG_LIMITS);
+    } else {
+      // If openpilot is not controlling long, only allow ES_Distance for cruise cancel requests,
+      // (when Cruise_Cancel is true, and Cruise_Throttle is inactive)
+      violation |= (cruise_throttle != SUBARU_LONG_LIMITS.inactive_gas);
+      violation |= (!cruise_cancel);
+    }
+  }
+
+  // check es_status transmission_rpm limits
+  if (addr == MSG_SUBARU_ES_Status) {
+    int transmission_rpm = (GET_BYTES(to_send, 2, 2) & 0xFFFU);
+    violation |= longitudinal_transmission_rpm_checks(transmission_rpm, SUBARU_LONG_LIMITS);
   }
 
   if (violation){
@@ -184,7 +228,7 @@ static int subaru_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
   if (bus_num == SUBARU_MAIN_BUS) {
-    bus_fwd = SUBARU_CAM_BUS;  // forward to camera
+    bus_fwd = SUBARU_CAM_BUS;  // to the eyesight camera
   }
 
   if (bus_num == SUBARU_CAM_BUS) {
@@ -193,7 +237,13 @@ static int subaru_fwd_hook(int bus_num, int addr) {
                        (addr == MSG_SUBARU_ES_DashStatus) ||
                        (addr == MSG_SUBARU_ES_LKAS_State) ||
                        (addr == MSG_SUBARU_ES_Infotainment));
-    if (!block_lkas) {
+
+    bool block_long = ((addr == MSG_SUBARU_ES_Brake) ||
+                       (addr == MSG_SUBARU_ES_Distance) ||
+                       (addr == MSG_SUBARU_ES_Status));
+
+    bool block_msg = block_lkas || (subaru_longitudinal && block_long);
+    if (!block_msg) {
       bus_fwd = SUBARU_MAIN_BUS;  // Main CAN
     }
   }
@@ -203,6 +253,10 @@ static int subaru_fwd_hook(int bus_num, int addr) {
 
 static const addr_checks* subaru_init(uint16_t param) {
   subaru_gen2 = GET_FLAG(param, SUBARU_PARAM_GEN2);
+
+#ifdef ALLOW_DEBUG
+  subaru_longitudinal = GET_FLAG(param, SUBARU_PARAM_LONGITUDINAL) && !subaru_gen2;
+#endif
 
   if (subaru_gen2) {
     subaru_rx_checks = (addr_checks){subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_CHECK_LEN};

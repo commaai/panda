@@ -32,6 +32,9 @@ def lkas_tx_msgs(alt_bus):
           [MSG_SUBARU_ES_LKAS_State,    SUBARU_MAIN_BUS],
           [MSG_SUBARU_ES_Infotainment,  SUBARU_MAIN_BUS]]
 
+def long_tx_msgs():
+  return [[MSG_SUBARU_ES_Brake,         SUBARU_MAIN_BUS],
+          [MSG_SUBARU_ES_Status,        SUBARU_MAIN_BUS]]
 
 class TestSubaruSafetyBase(common.PandaSafetyTest, MeasurementSafetyTest):
   FLAGS = 0
@@ -100,6 +103,40 @@ class TestSubaruStockLongitudinalSafetyBase(TestSubaruSafetyBase):
       self._generic_limit_safety_check(partial(self._cancel_msg, cancel), self.INACTIVE_GAS, self.INACTIVE_GAS, 0, 2**12, 1, self.INACTIVE_GAS, cancel)
 
 
+class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.LongitudinalGasBrakeSafetyTest):
+  MIN_GAS = 808
+  MAX_GAS = 3400
+  INACTIVE_GAS = 1818
+  MAX_POSSIBLE_GAS = 2**12
+
+  MIN_BRAKE = 0
+  MAX_BRAKE = 600
+  MAX_POSSIBLE_BRAKE = 2**16
+
+  MIN_RPM = 0
+  MAX_RPM = 2400
+  MAX_POSSIBLE_RPM = 2**12
+
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_SUBARU_ES_LKAS, MSG_SUBARU_ES_Brake, MSG_SUBARU_ES_Distance,
+                               MSG_SUBARU_ES_Status, MSG_SUBARU_ES_DashStatus,
+                               MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment]}
+
+  def test_rpm_safety_check(self):
+    self._generic_limit_safety_check(self._send_rpm_msg, self.MIN_RPM, self.MAX_RPM, 0, self.MAX_POSSIBLE_RPM, 1)
+
+  def _send_brake_msg(self, brake):
+    values = {"Brake_Pressure": brake}
+    return self.packer.make_can_msg_panda("ES_Brake", self.ALT_BUS, values)
+
+  def _send_gas_msg(self, gas):
+    values = {"Cruise_Throttle": gas}
+    return self.packer.make_can_msg_panda("ES_Distance", self.ALT_BUS, values)
+
+  def _send_rpm_msg(self, rpm):
+    values = {"Cruise_RPM": rpm}
+    return self.packer.make_can_msg_panda("ES_Status", self.ALT_BUS, values)
+
+
 class TestSubaruTorqueSafetyBase(TestSubaruSafetyBase, common.DriverTorqueSteeringSafetyTest):
   MAX_RATE_UP = 50
   MAX_RATE_DOWN = 70
@@ -124,6 +161,11 @@ class TestSubaruGen2TorqueStockLongitudinalSafety(TestSubaruStockLongitudinalSaf
 
   FLAGS = Panda.FLAG_SUBARU_GEN2
   TX_MSGS = lkas_tx_msgs(SUBARU_ALT_BUS)
+
+
+class TestSubaruGen1LongitudinalSafety(TestSubaruLongitudinalSafetyBase, TestSubaruTorqueSafetyBase):
+  FLAGS = Panda.FLAG_SUBARU_LONG
+  TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS) + long_tx_msgs()
 
 
 if __name__ == "__main__":
