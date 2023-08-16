@@ -23,7 +23,6 @@ bool hyundai_hybrid_gas_signal = false;
 bool hyundai_longitudinal = false;
 bool hyundai_camera_scc = false;
 bool hyundai_alt_limits = false;
-bool hyundai_pcm_cruise = false;  // TODO: think we can just use hyundai_longitudinal, right?
 uint8_t hyundai_last_button_interaction;  // button messages since the user pressed an enable button
 
 void hyundai_common_init(uint16_t param) {
@@ -39,7 +38,6 @@ void hyundai_common_init(uint16_t param) {
 #else
   hyundai_longitudinal = false;
 #endif
-  hyundai_pcm_cruise = !hyundai_longitudinal;
 }
 
 void hyundai_common_cruise_state_check(const int cruise_engaged) {
