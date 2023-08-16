@@ -212,10 +212,10 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     }
   }
 
-  // check es_status cruise_rpm limits
+  // check es_status transmission_rpm limits
   if (addr == MSG_SUBARU_ES_Status) {
-    int cruise_rpm = (GET_BYTES(to_send, 2, 2) & 0xFFFU);
-    violation |= longitudinal_transmission_rpm_checks(cruise_rpm, SUBARU_LONG_LIMITS);
+    int transmission_rpm = (GET_BYTES(to_send, 2, 2) & 0xFFFU);
+    violation |= longitudinal_transmission_rpm_checks(transmission_rpm, SUBARU_LONG_LIMITS);
   }
 
   if (violation){
