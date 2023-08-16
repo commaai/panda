@@ -36,13 +36,16 @@ def long_tx_msgs():
   return [[MSG_SUBARU_ES_Brake,         SUBARU_MAIN_BUS],
           [MSG_SUBARU_ES_Status,        SUBARU_MAIN_BUS]]
 
+def fwd_blacklisted_addr():
+  return {SUBARU_CAM_BUS: [MSG_SUBARU_ES_LKAS, MSG_SUBARU_ES_DashStatus, MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment]}
+
 class TestSubaruSafetyBase(common.PandaSafetyTest, MeasurementSafetyTest):
   FLAGS = 0
   STANDSTILL_THRESHOLD = 0 # kph
   RELAY_MALFUNCTION_ADDR = MSG_SUBARU_ES_LKAS
   RELAY_MALFUNCTION_BUS = SUBARU_MAIN_BUS
   FWD_BUS_LOOKUP = {SUBARU_MAIN_BUS: SUBARU_CAM_BUS, SUBARU_CAM_BUS: SUBARU_MAIN_BUS}
-  FWD_BLACKLISTED_ADDRS = {SUBARU_CAM_BUS: [MSG_SUBARU_ES_LKAS, MSG_SUBARU_ES_DashStatus, MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment]}
+  FWD_BLACKLISTED_ADDRS = fwd_blacklisted_addr()
 
   MAX_RT_DELTA = 940
   RT_INTERVAL = 250000
@@ -50,7 +53,8 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, MeasurementSafetyTest):
   DRIVER_TORQUE_ALLOWANCE = 60
   DRIVER_TORQUE_FACTOR = 50
 
-  ALT_BUS = SUBARU_MAIN_BUS
+  ALT_MAIN_BUS = SUBARU_MAIN_BUS
+  ALT_CAM_BUS = SUBARU_CAM_BUS
 
   DEG_TO_CAN = -100
 
@@ -73,7 +77,7 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, MeasurementSafetyTest):
 
   def _speed_msg(self, speed):
     values = {s: speed for s in ["FR", "FL", "RR", "RL"]}
-    return self.packer.make_can_msg_panda("Wheel_Speeds", self.ALT_BUS, values)
+    return self.packer.make_can_msg_panda("Wheel_Speeds", self.ALT_MAIN_BUS, values)
 
   def _angle_meas_msg(self, angle):
     values = {"Steering_Angle": angle}
@@ -81,7 +85,7 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, MeasurementSafetyTest):
 
   def _user_brake_msg(self, brake):
     values = {"Brake": brake}
-    return self.packer.make_can_msg_panda("Brake_Status", self.ALT_BUS, values)
+    return self.packer.make_can_msg_panda("Brake_Status", self.ALT_MAIN_BUS, values)
 
   def _user_gas_msg(self, gas):
     values = {"Throttle_Pedal": gas}
@@ -89,13 +93,13 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, MeasurementSafetyTest):
 
   def _pcm_status_msg(self, enable):
     values = {"Cruise_Activated": enable}
-    return self.packer.make_can_msg_panda("CruiseControl", self.ALT_BUS, values)
+    return self.packer.make_can_msg_panda("CruiseControl", self.ALT_MAIN_BUS, values)
 
 
 class TestSubaruStockLongitudinalSafetyBase(TestSubaruSafetyBase):
   def _cancel_msg(self, cancel, cruise_throttle=0):
     values = {"Cruise_Cancel": cancel, "Cruise_Throttle": cruise_throttle}
-    return self.packer.make_can_msg_panda("ES_Distance", self.ALT_BUS, values)
+    return self.packer.make_can_msg_panda("ES_Distance", self.ALT_MAIN_BUS, values)
 
   def test_cancel_message(self):
     # test that we can only send the cancel message (ES_Distance) with inactive throttle (1818) and Cruise_Cancel=1
@@ -126,15 +130,15 @@ class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.Longitudinal
 
   def _send_brake_msg(self, brake):
     values = {"Brake_Pressure": brake}
-    return self.packer.make_can_msg_panda("ES_Brake", self.ALT_BUS, values)
+    return self.packer.make_can_msg_panda("ES_Brake", self.ALT_MAIN_BUS, values)
 
   def _send_gas_msg(self, gas):
     values = {"Cruise_Throttle": gas}
-    return self.packer.make_can_msg_panda("ES_Distance", self.ALT_BUS, values)
+    return self.packer.make_can_msg_panda("ES_Distance", self.ALT_MAIN_BUS, values)
 
   def _send_rpm_msg(self, rpm):
     values = {"Cruise_RPM": rpm}
-    return self.packer.make_can_msg_panda("ES_Status", self.ALT_BUS, values)
+    return self.packer.make_can_msg_panda("ES_Status", self.ALT_MAIN_BUS, values)
 
 
 class TestSubaruTorqueSafetyBase(TestSubaruSafetyBase, common.DriverTorqueSteeringSafetyTest):
@@ -144,7 +148,7 @@ class TestSubaruTorqueSafetyBase(TestSubaruSafetyBase, common.DriverTorqueSteeri
 
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"LKAS_Output": torque}
-    return self.packer.make_can_msg_panda("ES_LKAS", 0, values)
+    return self.packer.make_can_msg_panda("ES_LKAS", SUBARU_MAIN_BUS, values)
 
 
 class TestSubaruGen1TorqueStockLongitudinalSafety(TestSubaruStockLongitudinalSafetyBase, TestSubaruTorqueSafetyBase):
@@ -153,7 +157,8 @@ class TestSubaruGen1TorqueStockLongitudinalSafety(TestSubaruStockLongitudinalSaf
 
 
 class TestSubaruGen2TorqueStockLongitudinalSafety(TestSubaruStockLongitudinalSafetyBase, TestSubaruTorqueSafetyBase):
-  ALT_BUS = SUBARU_ALT_BUS
+  ALT_MAIN_BUS = SUBARU_ALT_BUS
+  ALT_CAM_BUS = SUBARU_ALT_BUS
 
   MAX_RATE_UP = 40
   MAX_RATE_DOWN = 40
