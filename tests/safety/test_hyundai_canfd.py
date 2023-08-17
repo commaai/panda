@@ -12,7 +12,7 @@ from panda.tests.safety.hyundai_common import HyundaiButtonBase, HyundaiLongitud
 class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
 
   TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0]]
-  STANDSTILL_THRESHOLD = 30  # ~1kph
+  STANDSTILL_THRESHOLD = 12  # 0.375 kph
   RELAY_MALFUNCTION_ADDR = 0x50
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [0x50, 0x2a4]}
