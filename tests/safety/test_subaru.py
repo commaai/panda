@@ -21,8 +21,8 @@ MSG_SUBARU_ES_LKAS_State     = 0x322
 MSG_SUBARU_ES_Infotainment   = 0x323
 MSG_SUBARU_ES_UDS_Request    = 0x787
 MSG_SUBARU_ES_HighBeamAssist = 0x121
-MSG_SUBARU_ES_STATIC_1      = 0x22a
-MSG_SUBARU_ES_STATIC_2      = 0x325
+MSG_SUBARU_ES_STATIC_1       = 0x22a
+MSG_SUBARU_ES_STATIC_2       = 0x325
 
 
 SUBARU_MAIN_BUS = 0
@@ -44,8 +44,8 @@ def long_tx_msgs(alt_bus):
 def additional_tx_msgs(alt_bus):
   return [[MSG_SUBARU_ES_UDS_Request,    SUBARU_CAM_BUS],
           [MSG_SUBARU_ES_HighBeamAssist, SUBARU_MAIN_BUS],
-          [MSG_SUBARU_ES_STATIC_1,      SUBARU_MAIN_BUS],
-          [MSG_SUBARU_ES_STATIC_2,      SUBARU_MAIN_BUS]]
+          [MSG_SUBARU_ES_STATIC_1,       SUBARU_MAIN_BUS],
+          [MSG_SUBARU_ES_STATIC_2,       SUBARU_MAIN_BUS]]
 
 def fwd_blacklisted_addr():
   return {SUBARU_CAM_BUS: [MSG_SUBARU_ES_LKAS, MSG_SUBARU_ES_DashStatus, MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment]}
