@@ -48,18 +48,18 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
 #define SUBARU_ALT_BUS  1
 #define SUBARU_CAM_BUS  2
 
-#define SUBARU_COMMON_TX_MSGS(alt_main_bus)         \
+#define SUBARU_COMMON_TX_MSGS(alt_bus)              \
   {MSG_SUBARU_ES_LKAS,         SUBARU_MAIN_BUS, 8}, \
-  {MSG_SUBARU_ES_Distance,     alt_main_bus,    8}, \
+  {MSG_SUBARU_ES_Distance,     alt_bus,         8}, \
   {MSG_SUBARU_ES_DashStatus,   SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_LKAS_State,   SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_Infotainment, SUBARU_MAIN_BUS, 8}, \
 
-#define SUBARU_COMMON_LONG_TX_MSGS(alt_cam_bus)     \
-  {MSG_SUBARU_ES_Brake,        alt_cam_bus,     8}, \
-  {MSG_SUBARU_ES_Status,       alt_cam_bus,     8}, \
+#define SUBARU_COMMON_LONG_TX_MSGS(alt_bus)         \
+  {MSG_SUBARU_ES_Brake,        alt_bus,         8}, \
+  {MSG_SUBARU_ES_Status,       alt_bus,         8}, \
 
-#define SUBARU_ADDITIONAL_TX_MSGS(alt_cam_bus)      \
+#define SUBARU_ADDITIONAL_TX_MSGS(alt_bus)          \
   {MSG_SUBARU_ES_UDS_Request,  SUBARU_CAM_BUS,  8}, \
   {MSG_SUBARU_ES_Unknown_1,    SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_Unknown_2,    SUBARU_MAIN_BUS, 8}, \
