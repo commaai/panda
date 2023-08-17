@@ -14,13 +14,13 @@ class Buttons:
   CANCEL = 6
 
 
-class GmLongitudinalBase(common.PandaSafetyTest):
+class GmLongitudinalBase(common.PandaSafetyTest, common.LongitudinalGasBrakeSafetyTest):
   # pylint: disable=no-member,abstract-method
 
-  MAX_GAS = 0
-  MAX_REGEN = 0
-  INACTIVE_REGEN = 0
+  MAX_POSSIBLE_BRAKE = 2 ** 12
   MAX_BRAKE = 400
+
+  MAX_POSSIBLE_GAS = 2 ** 12
 
   PCM_CRUISE = False  # openpilot can control the PCM state if longitudinal
 
@@ -66,24 +66,6 @@ class GmLongitudinalBase(common.PandaSafetyTest):
     self.safety.set_controls_allowed(1)
     self._rx(self._button_msg(Buttons.CANCEL))
     self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_brake_safety_check(self):
-    for enabled in [0, 1]:
-      for b in range(0, 500):
-        self.safety.set_controls_allowed(enabled)
-        if abs(b) > self.MAX_BRAKE or (not enabled and b != 0):
-          self.assertFalse(self._tx(self._send_brake_msg(b)))
-        else:
-          self.assertTrue(self._tx(self._send_brake_msg(b)))
-
-  def test_gas_safety_check(self):
-    # Block if enabled and out of actuation range, disabled and not inactive regen, or if stock longitudinal
-    for enabled in [0, 1]:
-      for gas_regen in range(0, 2 ** 12 - 1):
-        self.safety.set_controls_allowed(enabled)
-        should_tx = ((enabled and self.MAX_REGEN <= gas_regen <= self.MAX_GAS) or
-                     gas_regen == self.INACTIVE_REGEN)
-        self.assertEqual(should_tx, self._tx(self._send_gas_msg(gas_regen)), (enabled, gas_regen))
 
 
 class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
@@ -167,8 +149,8 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
   BRAKE_BUS = 2
 
   MAX_GAS = 3072
-  MAX_REGEN = 1404
-  INACTIVE_REGEN = 1404
+  MIN_GAS = 1404 # maximum regen
+  INACTIVE_GAS = 1404
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
@@ -229,8 +211,8 @@ class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase)
   BUTTONS_BUS = 0  # rx only
 
   MAX_GAS = 3400
-  MAX_REGEN = 1514
-  INACTIVE_REGEN = 1554
+  MIN_GAS = 1514 # maximum regen
+  INACTIVE_GAS = 1554
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
