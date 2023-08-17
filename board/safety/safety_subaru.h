@@ -40,7 +40,7 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
 
 #define MSG_SUBARU_ES_UDS_Request        0x787
 
-#define MSG_SUBARU_ES_Unknown_1          0x121
+#define MSG_SUBARU_ES_HighBeamAssist     0x121
 #define MSG_SUBARU_ES_Unknown_2          0x22a
 #define MSG_SUBARU_ES_Unknown_3          0x325
 
@@ -60,10 +60,10 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
   {MSG_SUBARU_ES_Status,       alt_bus,         8}, \
 
 #define SUBARU_ADDITIONAL_TX_MSGS(alt_bus)          \
-  {MSG_SUBARU_ES_UDS_Request,  SUBARU_CAM_BUS,  8}, \
-  {MSG_SUBARU_ES_Unknown_1,    SUBARU_MAIN_BUS, 8}, \
-  {MSG_SUBARU_ES_Unknown_2,    SUBARU_MAIN_BUS, 8}, \
-  {MSG_SUBARU_ES_Unknown_3,    SUBARU_MAIN_BUS, 8}, \
+  {MSG_SUBARU_ES_UDS_Request,    SUBARU_CAM_BUS,  8}, \
+  {MSG_SUBARU_ES_HighBeamAssist, SUBARU_MAIN_BUS, 8}, \
+  {MSG_SUBARU_ES_Unknown_2,      SUBARU_MAIN_BUS, 8}, \
+  {MSG_SUBARU_ES_Unknown_3,      SUBARU_MAIN_BUS, 8}, \
 
 
 #define SUBARU_COMMON_ADDR_CHECKS(alt_bus)                                                                                                            \

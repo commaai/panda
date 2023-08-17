@@ -7,22 +7,22 @@ from panda.tests.safety.common import CANPackerPanda, MeasurementSafetyTest
 from functools import partial
 
 
-MSG_SUBARU_Brake_Status     = 0x13c
-MSG_SUBARU_CruiseControl    = 0x240
-MSG_SUBARU_Throttle         = 0x40
-MSG_SUBARU_Steering_Torque  = 0x119
-MSG_SUBARU_Wheel_Speeds     = 0x13a
-MSG_SUBARU_ES_LKAS          = 0x122
-MSG_SUBARU_ES_Brake         = 0x220
-MSG_SUBARU_ES_Distance      = 0x221
-MSG_SUBARU_ES_Status        = 0x222
-MSG_SUBARU_ES_DashStatus    = 0x321
-MSG_SUBARU_ES_LKAS_State    = 0x322
-MSG_SUBARU_ES_Infotainment  = 0x323
-MSG_SUBARU_ES_UDS_Request   = 0x787
-MSG_SUBARU_ES_Unknown_1     = 0x121
-MSG_SUBARU_ES_Unknown_2     = 0x22a
-MSG_SUBARU_ES_Unknown_3     = 0x325
+MSG_SUBARU_Brake_Status      = 0x13c
+MSG_SUBARU_CruiseControl     = 0x240
+MSG_SUBARU_Throttle          = 0x40
+MSG_SUBARU_Steering_Torque   = 0x119
+MSG_SUBARU_Wheel_Speeds      = 0x13a
+MSG_SUBARU_ES_LKAS           = 0x122
+MSG_SUBARU_ES_Brake          = 0x220
+MSG_SUBARU_ES_Distance       = 0x221
+MSG_SUBARU_ES_Status         = 0x222
+MSG_SUBARU_ES_DashStatus     = 0x321
+MSG_SUBARU_ES_LKAS_State     = 0x322
+MSG_SUBARU_ES_Infotainment   = 0x323
+MSG_SUBARU_ES_UDS_Request    = 0x787
+MSG_SUBARU_ES_HighBeamAssist = 0x121
+MSG_SUBARU_ES_Unknown_2      = 0x22a
+MSG_SUBARU_ES_Unknown_3      = 0x325
 
 
 SUBARU_MAIN_BUS = 0
@@ -42,10 +42,10 @@ def long_tx_msgs(alt_bus):
           [MSG_SUBARU_ES_Status,        alt_bus]]
 
 def additional_tx_msgs(alt_bus):
-  return [[MSG_SUBARU_ES_UDS_Request,   SUBARU_CAM_BUS],
-          [MSG_SUBARU_ES_Unknown_1,     SUBARU_MAIN_BUS],
-          [MSG_SUBARU_ES_Unknown_2,     SUBARU_MAIN_BUS],
-          [MSG_SUBARU_ES_Unknown_3,     SUBARU_MAIN_BUS]]
+  return [[MSG_SUBARU_ES_UDS_Request,    SUBARU_CAM_BUS],
+          [MSG_SUBARU_ES_HighBeamAssist, SUBARU_MAIN_BUS],
+          [MSG_SUBARU_ES_Unknown_2,      SUBARU_MAIN_BUS],
+          [MSG_SUBARU_ES_Unknown_3,      SUBARU_MAIN_BUS]]
 
 def fwd_blacklisted_addr():
   return {SUBARU_CAM_BUS: [MSG_SUBARU_ES_LKAS, MSG_SUBARU_ES_DashStatus, MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment]}
