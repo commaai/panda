@@ -248,6 +248,7 @@ class Panda:
   FLAG_CHRYSLER_RAM_HD = 2
 
   FLAG_SUBARU_GEN2 = 1
+  FLAG_SUBARU_LONG = 2
 
   FLAG_GM_HW_CAM = 1
   FLAG_GM_HW_CAM_LONG = 2
@@ -409,7 +410,7 @@ class Panda:
     return usb_handle, usb_serial, bootstub, bcd
 
   @classmethod
-  def list(cls):
+  def list(cls): # noqa: A003
     ret = cls.usb_list()
     ret += cls.spi_list()
     return list(set(ret))

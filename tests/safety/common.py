@@ -954,7 +954,8 @@ class PandaSafetyTest(PandaSafetyTestBase):
               continue
             if attr.startswith('TestToyota') and current_test.startswith('TestToyota'):
               continue
-            if {attr, current_test}.issubset({'TestSubaruGen1Safety', 'TestSubaruGen2Safety'}):
+            if {attr, current_test}.issubset({'TestSubaruGen1TorqueStockLongitudinalSafety', 'TestSubaruGen2TorqueStockLongitudinalSafety',
+                                              'TestSubaruGen1LongitudinalSafety', 'TestSubaruGen2LongitudinalSafety'}):
               continue
             if {attr, current_test}.issubset({'TestVolkswagenPqSafety', 'TestVolkswagenPqStockSafety', 'TestVolkswagenPqLongSafety'}):
               continue
@@ -987,7 +988,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
             if attr.startswith('TestHonda'):
               # exceptions for common msgs across different hondas
               tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C, 0x33D], tx))
-            all_tx.append(list([m[0], m[1], attr] for m in tx))
+            all_tx.append([m[0], m[1], attr] for m in tx)
 
     # make sure we got all the msgs
     self.assertTrue(len(all_tx) >= len(test_files)-1)

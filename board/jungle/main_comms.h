@@ -222,6 +222,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       can_silent = (req->param1 > 0U) ? ALL_CAN_SILENT : ALL_CAN_LIVE;
       can_init_all();
       break;
+    // **** 0xf7: enable/disable header pin by number
+    case 0xf7:
+      current_board->enable_header_pin(req->param1, req->param2 > 0U);
+      break;
     // **** 0xf9: set CAN FD data bitrate
     case 0xf9:
       if ((req->param1 < PANDA_CAN_CNT) &&

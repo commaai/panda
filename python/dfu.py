@@ -59,7 +59,7 @@ class PandaDFU:
     return handle
 
   @staticmethod
-  def list() -> List[str]:
+  def list() -> List[str]: # noqa: A003
     ret = PandaDFU.usb_list()
     ret += PandaDFU.spi_list()
     return list(set(ret))
