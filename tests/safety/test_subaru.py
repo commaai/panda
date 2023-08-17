@@ -42,7 +42,7 @@ def long_tx_msgs(alt_bus):
           [MSG_SUBARU_ES_Status,        alt_bus]]
 
 def long_gen2_tx_msgs(alt_bus):
-  return [[MSG_SUBARU_ES_UDS_Request,   SUBARU_CAM_BUS],    
+  return [[MSG_SUBARU_ES_UDS_Request,   SUBARU_CAM_BUS],
           [MSG_SUBARU_ES_Unknown_1,     SUBARU_MAIN_BUS],
           [MSG_SUBARU_ES_Unknown_2,     SUBARU_MAIN_BUS],
           [MSG_SUBARU_ES_Unknown_3,     SUBARU_MAIN_BUS]]
