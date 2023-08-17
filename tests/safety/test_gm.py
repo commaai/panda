@@ -149,7 +149,7 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
   BRAKE_BUS = 2
 
   MAX_GAS = 3072
-  MIN_GAS = 1404
+  MIN_GAS = 1404 # maximum regen
   INACTIVE_GAS = 1404
 
   def setUp(self):
@@ -211,7 +211,7 @@ class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase)
   BUTTONS_BUS = 0  # rx only
 
   MAX_GAS = 3400
-  MIN_GAS = 1514
+  MIN_GAS = 1514 # maximum regen
   INACTIVE_GAS = 1554
 
   def setUp(self):
