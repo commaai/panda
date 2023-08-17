@@ -59,7 +59,7 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
   {MSG_SUBARU_ES_Brake,        alt_cam_bus,     8}, \
   {MSG_SUBARU_ES_Status,       alt_cam_bus,     8}, \
 
-#define SUBARU_GEN2_LONG_TX_MSGS(alt_cam_bus)       \
+#define SUBARU_ADDITIONAL_TX_MSGS(alt_cam_bus)      \
   {MSG_SUBARU_ES_UDS_Request,  SUBARU_CAM_BUS,  8}, \
   {MSG_SUBARU_ES_Unknown_1,    SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_Unknown_2,    SUBARU_MAIN_BUS, 8}, \
@@ -92,7 +92,7 @@ const CanMsg SUBARU_GEN2_TX_MSGS[] = {
 const CanMsg SUBARU_GEN2_LONG_TX_MSGS[] = {
   SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS)
   SUBARU_COMMON_LONG_TX_MSGS(SUBARU_ALT_BUS)
-  SUBARU_GEN2_LONG_TX_MSGS(SUBARU_ALT_BUS)
+  SUBARU_ADDITIONAL_TX_MSGS(SUBARU_ALT_BUS)
 };
 #define SUBARU_GEN2_LONG_TX_MSGS_LEN (sizeof(SUBARU_GEN2_LONG_TX_MSGS) / sizeof(SUBARU_GEN2_LONG_TX_MSGS[0]))
 

@@ -41,7 +41,7 @@ def long_tx_msgs(alt_bus):
   return [[MSG_SUBARU_ES_Brake,         alt_bus],
           [MSG_SUBARU_ES_Status,        alt_bus]]
 
-def long_gen2_tx_msgs(alt_bus):
+def additional_tx_msgs(alt_bus):
   return [[MSG_SUBARU_ES_UDS_Request,   SUBARU_CAM_BUS],
           [MSG_SUBARU_ES_Unknown_1,     SUBARU_MAIN_BUS],
           [MSG_SUBARU_ES_Unknown_2,     SUBARU_MAIN_BUS],
@@ -193,7 +193,7 @@ class TestSubaruGen2LongitudinalSafety(TestSubaruLongitudinalSafetyBase, TestSub
   MAX_TORQUE = 1000
 
   FLAGS = Panda.FLAG_SUBARU_LONG | Panda.FLAG_SUBARU_GEN2
-  TX_MSGS = lkas_tx_msgs(SUBARU_ALT_BUS) + long_tx_msgs(SUBARU_ALT_BUS) + long_gen2_tx_msgs(SUBARU_ALT_BUS)
+  TX_MSGS = lkas_tx_msgs(SUBARU_ALT_BUS) + long_tx_msgs(SUBARU_ALT_BUS) + additional_tx_msgs(SUBARU_ALT_BUS)
 
   def _es_uds_msg(self, sid: int):
     return libpanda_py.make_CANPacket(MSG_SUBARU_ES_UDS_Request, 2, b'\x00' + sid.to_bytes(1) + b'\x00' * 6)
