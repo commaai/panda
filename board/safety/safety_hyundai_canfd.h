@@ -215,13 +215,8 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
 
     // vehicle moving
     if (addr == 0xa0) {
-//      uint32_t speed = 0;
       uint32_t front_left_speed = GET_BYTE(to_push, 8) | (GET_BYTE(to_push, 9) << 8U);
       uint32_t rear_right_speed = GET_BYTE(to_push, 14) | (GET_BYTE(to_push, 15) << 8U);
-//      for (int i = 8; i < 15; i+=2) {
-//        speed += GET_BYTE(to_push, i) | (GET_BYTE(to_push, i + 1) << 8U);
-//      }
-//      vehicle_moving = (speed / 4U) > HYUNDAI_STANDSTILL_THRSLD;
       vehicle_moving = (front_left_speed > HYUNDAI_STANDSTILL_THRSLD) || (rear_right_speed > HYUNDAI_STANDSTILL_THRSLD);
     }
   }
