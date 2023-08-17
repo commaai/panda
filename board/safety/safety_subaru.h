@@ -38,20 +38,33 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
 #define MSG_SUBARU_ES_LKAS_State         0x322
 #define MSG_SUBARU_ES_Infotainment       0x323
 
+#define MSG_SUBARU_ES_UDS_Request        0x787
+
+#define MSG_SUBARU_ES_Unknown_1          0x121
+#define MSG_SUBARU_ES_Unknown_2          0x22a
+#define MSG_SUBARU_ES_Unknown_3          0x325
+
 #define SUBARU_MAIN_BUS 0
 #define SUBARU_ALT_BUS  1
 #define SUBARU_CAM_BUS  2
 
-#define SUBARU_COMMON_TX_MSGS(alt_bus)              \
+#define SUBARU_COMMON_TX_MSGS(alt_main_bus)         \
   {MSG_SUBARU_ES_LKAS,         SUBARU_MAIN_BUS, 8}, \
-  {MSG_SUBARU_ES_Distance,     alt_bus,         8}, \
+  {MSG_SUBARU_ES_Distance,     alt_main_bus,    8}, \
   {MSG_SUBARU_ES_DashStatus,   SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_LKAS_State,   SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_Infotainment, SUBARU_MAIN_BUS, 8}, \
 
-#define SUBARU_COMMON_LONG_TX_MSGS(alt_bus)         \
-  {MSG_SUBARU_ES_Brake,        SUBARU_MAIN_BUS, 8}, \
-  {MSG_SUBARU_ES_Status,       SUBARU_MAIN_BUS, 8}, \
+#define SUBARU_COMMON_LONG_TX_MSGS(alt_cam_bus)     \
+  {MSG_SUBARU_ES_Brake,        alt_cam_bus,     8}, \
+  {MSG_SUBARU_ES_Status,       alt_cam_bus,     8}, \
+
+#define SUBARU_GEN2_LONG_TX_MSGS(alt_cam_bus)       \
+  {MSG_SUBARU_ES_UDS_Request,  SUBARU_CAM_BUS,  8}, \
+  {MSG_SUBARU_ES_Unknown_1,    SUBARU_MAIN_BUS, 8}, \
+  {MSG_SUBARU_ES_Unknown_2,    SUBARU_MAIN_BUS, 8}, \
+  {MSG_SUBARU_ES_Unknown_3,    SUBARU_MAIN_BUS, 8}, \
+
 
 #define SUBARU_COMMON_ADDR_CHECKS(alt_bus)                                                                                                            \
   {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}}, \
@@ -75,6 +88,13 @@ const CanMsg SUBARU_GEN2_TX_MSGS[] = {
   SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS)
 };
 #define SUBARU_GEN2_TX_MSGS_LEN (sizeof(SUBARU_GEN2_TX_MSGS) / sizeof(SUBARU_GEN2_TX_MSGS[0]))
+
+const CanMsg SUBARU_GEN2_LONG_TX_MSGS[] = {
+  SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS)
+  SUBARU_COMMON_LONG_TX_MSGS(SUBARU_ALT_BUS)
+  SUBARU_GEN2_LONG_TX_MSGS(SUBARU_ALT_BUS)
+};
+#define SUBARU_GEN2_LONG_TX_MSGS_LEN (sizeof(SUBARU_GEN2_LONG_TX_MSGS) / sizeof(SUBARU_GEN2_LONG_TX_MSGS[0]))
 
 AddrCheckStruct subaru_addr_checks[] = {
   SUBARU_COMMON_ADDR_CHECKS(SUBARU_MAIN_BUS)
@@ -175,7 +195,12 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   bool violation = false;
 
   if (subaru_gen2) {
-    tx = msg_allowed(to_send, SUBARU_GEN2_TX_MSGS, SUBARU_GEN2_TX_MSGS_LEN);
+    if(subaru_longitudinal){
+      tx = msg_allowed(to_send, SUBARU_GEN2_LONG_TX_MSGS, SUBARU_GEN2_LONG_TX_MSGS_LEN);
+    }
+    else{
+      tx = msg_allowed(to_send, SUBARU_GEN2_TX_MSGS, SUBARU_GEN2_TX_MSGS_LEN);
+    }
   } else if (subaru_longitudinal) {
     tx = msg_allowed(to_send, SUBARU_LONG_TX_MSGS, SUBARU_LONG_TX_MSGS_LEN);
   } else {
@@ -218,6 +243,15 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     violation |= longitudinal_transmission_rpm_checks(transmission_rpm, SUBARU_LONG_LIMITS);
   }
 
+  if (addr == MSG_SUBARU_ES_UDS_Request){
+    int sid = GET_BYTES(to_send, 1, 1);
+
+    // Allow "tester present", "read data by identifier", and "communication control"
+    bool allowed_sid = (sid == 0x3e) || (sid == 0x22) || (sid == 0x28);
+
+    violation |= (!allowed_sid);
+  }
+
   if (violation){
     tx = 0;
   }
@@ -255,7 +289,7 @@ static const addr_checks* subaru_init(uint16_t param) {
   subaru_gen2 = GET_FLAG(param, SUBARU_PARAM_GEN2);
 
 #ifdef ALLOW_DEBUG
-  subaru_longitudinal = GET_FLAG(param, SUBARU_PARAM_LONGITUDINAL) && !subaru_gen2;
+  subaru_longitudinal = GET_FLAG(param, SUBARU_PARAM_LONGITUDINAL);
 #endif
 
   if (subaru_gen2) {

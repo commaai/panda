@@ -19,6 +19,11 @@ MSG_SUBARU_ES_Status        = 0x222
 MSG_SUBARU_ES_DashStatus    = 0x321
 MSG_SUBARU_ES_LKAS_State    = 0x322
 MSG_SUBARU_ES_Infotainment  = 0x323
+MSG_SUBARU_ES_UDS_Request   = 0x787
+MSG_SUBARU_ES_Unknown_1     = 0x121
+MSG_SUBARU_ES_Unknown_2     = 0x22a
+MSG_SUBARU_ES_Unknown_3     = 0x325
+
 
 SUBARU_MAIN_BUS = 0
 SUBARU_ALT_BUS  = 1
@@ -32,9 +37,15 @@ def lkas_tx_msgs(alt_bus):
           [MSG_SUBARU_ES_LKAS_State,    SUBARU_MAIN_BUS],
           [MSG_SUBARU_ES_Infotainment,  SUBARU_MAIN_BUS]]
 
-def long_tx_msgs():
-  return [[MSG_SUBARU_ES_Brake,         SUBARU_MAIN_BUS],
-          [MSG_SUBARU_ES_Status,        SUBARU_MAIN_BUS]]
+def long_tx_msgs(alt_bus):
+  return [[MSG_SUBARU_ES_Brake,         alt_bus],
+          [MSG_SUBARU_ES_Status,        alt_bus]]
+
+def long_gen2_tx_msgs(alt_bus):
+  return [[MSG_SUBARU_ES_UDS_Request,   SUBARU_CAM_BUS],    
+          [MSG_SUBARU_ES_Unknown_1,     SUBARU_MAIN_BUS],
+          [MSG_SUBARU_ES_Unknown_2,     SUBARU_MAIN_BUS],
+          [MSG_SUBARU_ES_Unknown_3,     SUBARU_MAIN_BUS]]
 
 def fwd_blacklisted_addr():
   return {SUBARU_CAM_BUS: [MSG_SUBARU_ES_LKAS, MSG_SUBARU_ES_DashStatus, MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment]}
@@ -170,7 +181,29 @@ class TestSubaruGen2TorqueStockLongitudinalSafety(TestSubaruStockLongitudinalSaf
 
 class TestSubaruGen1LongitudinalSafety(TestSubaruLongitudinalSafetyBase, TestSubaruTorqueSafetyBase):
   FLAGS = Panda.FLAG_SUBARU_LONG
-  TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS) + long_tx_msgs()
+  TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS) + long_tx_msgs(SUBARU_MAIN_BUS)
+
+
+class TestSubaruGen2LongitudinalSafety(TestSubaruLongitudinalSafetyBase, TestSubaruTorqueSafetyBase):
+  ALT_MAIN_BUS = SUBARU_ALT_BUS
+  ALT_CAM_BUS = SUBARU_ALT_BUS
+
+  MAX_RATE_UP = 40
+  MAX_RATE_DOWN = 40
+  MAX_TORQUE = 1000
+
+  FLAGS = Panda.FLAG_SUBARU_LONG | Panda.FLAG_SUBARU_GEN2
+  TX_MSGS = lkas_tx_msgs(SUBARU_ALT_BUS) + long_tx_msgs(SUBARU_ALT_BUS) + long_gen2_tx_msgs(SUBARU_ALT_BUS)
+
+  def _es_uds_msg(self, sid: int):
+    return libpanda_py.make_CANPacket(MSG_SUBARU_ES_UDS_Request, 2, b'\x00' + sid.to_bytes(1) + b'\x00' * 6)
+
+  def test_es_uds_message(self):
+    allowed_sids = [0x3e, 0x22, 0x28]
+
+    for sid in range(0xFF):
+      should_tx = sid in allowed_sids
+      self.assertEqual(self._tx(self._es_uds_msg(sid)), should_tx)
 
 
 if __name__ == "__main__":
