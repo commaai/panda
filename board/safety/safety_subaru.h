@@ -41,8 +41,8 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
 #define MSG_SUBARU_ES_UDS_Request        0x787
 
 #define MSG_SUBARU_ES_HighBeamAssist     0x121
-#define MSG_SUBARU_ES_STATIC_1          0x22a
-#define MSG_SUBARU_ES_STATIC_2          0x325
+#define MSG_SUBARU_ES_STATIC_1           0x22a
+#define MSG_SUBARU_ES_STATIC_2           0x325
 
 #define SUBARU_MAIN_BUS 0
 #define SUBARU_ALT_BUS  1
