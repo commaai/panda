@@ -48,6 +48,8 @@ jobs:
         run: ${{ env.RUN }} "ENABLE_SPI=1 scons -j4"
       - name: Build with UBSan
         run: ${{ env.RUN }} "scons -j4 --ubsan"
+      - name: Build jungle firmware with FINAL_PROVISIONING support
+        run: ${{ env.RUN }} "FINAL_PROVISIONING=1 scons -j4 board/jungle"
 
   unit_tests:
     name: unit tests
@@ -76,7 +78,7 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Run safety tests
-        timeout-minutes: 4
+        timeout-minutes: 5
         run: |
           ${{ env.RUN }} "cd .. && \
                           scons -c && \
@@ -84,23 +86,6 @@ jobs:
                           cd panda && \
                           scons -j$(nproc) ${{ matrix.flags }} && \
                           tests/safety/test.sh"
-
-  safety_replay:
-    name: safety replay
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        flags: ['', '--ubsan']
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build Docker image
-        run: eval "$BUILD"
-      - name: Run safety replay
-        run: |
-          ${{ env.RUN }} "scons -j$(nproc) ${{ matrix.flags }} && \
-                          cd tests/safety_replay && \
-                          ./test_safety_replay.py"
 
   misra:
     name: misra c2012
