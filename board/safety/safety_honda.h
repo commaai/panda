@@ -142,7 +142,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     if ((addr == 0x326) || (addr == 0x1A6)) {
       acc_main_on = GET_BIT(to_push, ((addr == 0x326) ? 28U : 47U));
       if (!acc_main_on) {
-        controls_allowed = 0;
+        controls_allowed = false;
       }
     }
 
@@ -151,13 +151,13 @@ static int honda_rx_hook(CANPacket_t *to_push) {
       const bool cruise_engaged = GET_BIT(to_push, 38U) != 0U;
       // engage on rising edge
       if (cruise_engaged && !cruise_engaged_prev) {
-        controls_allowed = 1;
+        controls_allowed = true;
       }
 
       // Since some Nidec cars can brake down to 0 after the PCM disengages,
       // we don't disengage when the PCM does.
       if (!cruise_engaged && (honda_hw != HONDA_NIDEC)) {
-        controls_allowed = 0;
+        controls_allowed = false;
       }
       cruise_engaged_prev = cruise_engaged;
     }
@@ -169,14 +169,14 @@ static int honda_rx_hook(CANPacket_t *to_push) {
 
       // exit controls once main or cancel are pressed
       if ((button == HONDA_BTN_MAIN) || (button == HONDA_BTN_CANCEL)) {
-        controls_allowed = 0;
+        controls_allowed = false;
       }
 
       // enter controls on the falling edge of set or resume
       bool set = (button == HONDA_BTN_NONE) && (cruise_button_prev == HONDA_BTN_SET);
       bool res = (button == HONDA_BTN_NONE) && (cruise_button_prev == HONDA_BTN_RESUME);
       if (acc_main_on && !pcm_cruise && (set || res)) {
-        controls_allowed = 1;
+        controls_allowed = true;
       }
       cruise_button_prev = button;
     }
