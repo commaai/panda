@@ -132,7 +132,7 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
         self.assertFalse(self.safety.get_controls_allowed())
 
     # restore counters for future tests with a couple of good messages
-    for i in range(2):
+    for _ in range(2):
       self.safety.set_controls_allowed(1)
       self._rx(self._button_msg(Btn.SET))
       self._rx(self._speed_msg(0))

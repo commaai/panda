@@ -3,12 +3,32 @@ import pytest
 import random
 from unittest.mock import patch
 
-from panda import Panda
-from panda.python.spi import PandaSpiNackResponse
+from panda import Panda, PandaDFU
+from panda.python.spi import SpiDevice, PandaProtocolMismatch, PandaSpiNackResponse
 
 pytestmark = [
   pytest.mark.test_panda_types((Panda.HW_TYPE_TRES, ))
 ]
+
+@pytest.mark.skip("doesn't work, bootloader seems to ignore commands once it sees junk")
+@pytest.mark.expected_logs(0)
+def test_dfu_with_spam(p):
+  dfu_serial = p.get_dfu_serial()
+
+  # enter DFU
+  p.reset(enter_bootstub=True)
+  p.reset(enter_bootloader=True)
+  assert Panda.wait_for_dfu(dfu_serial, timeout=19), "failed to enter DFU"
+
+  # send junk
+  d = SpiDevice()
+  for _ in range(9):
+    with d.acquire() as spi:
+      dat = [random.randint(-1, 255) for _ in range(random.randint(1, 100))]
+      spi.xfer(dat)
+
+    # should still show up
+    assert dfu_serial in PandaDFU.list()
 
 class TestSpi:
   def _ping(self, mocker, panda):
@@ -19,7 +39,19 @@ class TestSpi:
     mocker.stop(spy)
 
   @pytest.mark.expected_logs(2)
-  def test_protocol_version(self, p):
+  def test_protocol_version_check(self, p):
+    for bootstub in (False, True):
+      p.reset(enter_bootstub=bootstub)
+      with patch('panda.python.spi.PandaSpiHandle.PROTOCOL_VERSION', return_value="abc"):
+        # list should still work with wrong version
+        assert p._serial in Panda.list()
+
+        # connect but raise protocol error
+        with pytest.raises(PandaProtocolMismatch):
+          Panda(p._serial)
+
+  @pytest.mark.expected_logs(2)
+  def test_protocol_version_data(self, p):
     for bootstub in (False, True):
       p.reset(enter_bootstub=bootstub)
       v = p._handle.get_protocol_version()
@@ -32,8 +64,6 @@ class TestSpi:
 
       bstub = v[13]
       assert bstub == (0xEE if bootstub else 0xCC)
-
-      assert v[14:] == b"\x01"
 
   def test_all_comm_types(self, mocker, p):
     spy = mocker.spy(p._handle, '_wait_for_ack')

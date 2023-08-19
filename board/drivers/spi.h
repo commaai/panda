@@ -2,7 +2,6 @@
 
 #include "crc.h"
 
-#define SPI_BUF_SIZE 1024U
 #define SPI_TIMEOUT_US 10000U
 
 // got max rate from hitting a non-existent endpoint
@@ -10,9 +9,11 @@
 #define SPI_IRQ_RATE  16000U
 
 #ifdef STM32H7
+#define SPI_BUF_SIZE 2048U
 __attribute__((section(".ram_d1"))) uint8_t spi_buf_rx[SPI_BUF_SIZE];
-__attribute__((section(".ram_d1"))) uint8_t spi_buf_tx[SPI_BUF_SIZE];
+__attribute__((section(".ram_d2"))) uint8_t spi_buf_tx[SPI_BUF_SIZE];
 #else
+#define SPI_BUF_SIZE 1024U
 uint8_t spi_buf_rx[SPI_BUF_SIZE];
 uint8_t spi_buf_tx[SPI_BUF_SIZE];
 #endif
@@ -83,7 +84,7 @@ uint16_t spi_version_packet(uint8_t *out) {
   data_len += 1U;
 
   // SPI protocol version
-  out[data_pos + data_len] = 0x1;
+  out[data_pos + data_len] = 0x2;
   data_len += 1U;
 
   // data length

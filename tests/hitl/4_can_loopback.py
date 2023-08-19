@@ -7,30 +7,17 @@ from flaky import flaky
 from collections import defaultdict
 
 from panda import Panda
-from panda.tests.hitl.conftest import PandaGroup, PARTIAL_TESTS
-from panda.tests.hitl.helpers import time_many_sends, clear_can_buffers
+from panda.tests.hitl.conftest import PandaGroup
+from panda.tests.hitl.helpers import time_many_sends, get_random_can_messages, clear_can_buffers
 
 @flaky(max_runs=3, min_passes=1)
 @pytest.mark.execution_timeout(35)
 def test_send_recv(p, panda_jungle):
   def test(p_send, p_recv):
-    p_send.set_can_loopback(False)
-    p_recv.set_can_loopback(False)
-
-    p_send.can_send_many([(0x1ba, 0, b"message", 0)] * 2)
-    time.sleep(0.05)
-    p_recv.can_recv()
-    p_send.can_recv()
-
     for bus in (0, 1, 2):
       for speed in (10, 20, 50, 100, 125, 250, 500, 1000):
-        p_send.set_can_speed_kbps(bus, speed)
-        p_recv.set_can_speed_kbps(bus, speed)
-        time.sleep(0.1)
-
-        clear_can_buffers(p_send)
-        clear_can_buffers(p_recv)
-        time.sleep(0.1)
+        clear_can_buffers(p_send, speed)
+        clear_can_buffers(p_recv, speed)
 
         comp_kbps = time_many_sends(p_send, bus, p_recv, two_pandas=True)
 
@@ -49,27 +36,10 @@ def test_send_recv(p, panda_jungle):
 @pytest.mark.execution_timeout(30)
 def test_latency(p, panda_jungle):
   def test(p_send, p_recv):
-    p_send.set_can_loopback(False)
-    p_recv.set_can_loopback(False)
-
-    p_send.set_can_speed_kbps(0, 500)
-    p_recv.set_can_speed_kbps(0, 500)
-    time.sleep(0.05)
-
-    p_send.can_send_many([(0x1ba, 0, b"testmsg", 0)] * 10)
-    time.sleep(0.05)
-    p_recv.can_recv()
-    p_send.can_recv()
-
     for bus in (0, 1, 2):
       for speed in (10, 20, 50, 100, 125, 250, 500, 1000):
-        p_send.set_can_speed_kbps(bus, speed)
-        p_recv.set_can_speed_kbps(bus, speed)
-        time.sleep(0.1)
-
-        # clear can buffers
-        clear_can_buffers(p_send)
-        clear_can_buffers(p_recv)
+        clear_can_buffers(p_send, speed)
+        clear_can_buffers(p_recv, speed)
 
         latencies = []
         comp_kbps_list = []
@@ -165,11 +135,11 @@ def test_gen2_loopback(p, panda_jungle):
   test(p, panda_jungle, 0x18DB33F1)
   test(panda_jungle, p, 0x18DB33F1)
 
-def test_bulk_write(p, panda_jungle):
-  # TODO: doesn't work in partial test mode
-  if PARTIAL_TESTS:
-    return
+  # TODO: why it's not being reset by fixtures reinit?
+  p.set_obd(False)
+  panda_jungle.set_obd(False)
 
+def test_bulk_write(p, panda_jungle):
   # The TX buffers on pandas is 0x100 in length.
   NUM_MESSAGES_PER_BUS = 10000
 
@@ -204,27 +174,15 @@ def test_bulk_write(p, panda_jungle):
   if len(rx) != 4 * NUM_MESSAGES_PER_BUS:
     raise Exception("Did not receive all messages!")
 
-  # Set back to silent mode
-  p.set_safety_mode(Panda.SAFETY_SILENT)
-
 def test_message_integrity(p):
-  clear_can_buffers(p)
-
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-
   p.set_can_loopback(True)
-
-  n = 250
-  for i in range(n):
+  for i in range(250):
     sent_msgs = defaultdict(set)
     for _ in range(random.randrange(10)):
-      to_send = []
-      for __ in range(random.randrange(100)):
-        bus = random.randrange(3)
-        addr = random.randrange(1, 1<<29)
-        dat = bytes([random.getrandbits(8) for _ in range(random.randrange(1, 9))])
-        sent_msgs[bus].add((addr, dat))
-        to_send.append([addr, None, dat, bus])
+      to_send = get_random_can_messages(random.randrange(100))
+      for m in to_send:
+        sent_msgs[m[3]].add((m[0], m[2]))
       p.can_send_many(to_send, timeout=0)
 
     start_time = time.monotonic()
@@ -233,13 +191,12 @@ def test_message_integrity(p):
       for msg in recvd:
         if msg[3] >= 128:
           k = (msg[0], bytes(msg[2]))
-          assert k in sent_msgs[msg[3]-128], f"message {k} was never sent on bus {bus}"
+          bus = msg[3]-128
+          assert k in sent_msgs[bus], f"message {k} was never sent on bus {bus}"
           sent_msgs[msg[3]-128].discard(k)
 
     # if a set isn't empty, messages got dropped
     for bus in range(3):
       assert not len(sent_msgs[bus]), f"loop {i}: bus {bus} missing {len(sent_msgs[bus])} messages"
 
-  # Set back to silent mode
-  p.set_safety_mode(Panda.SAFETY_SILENT)
   print("Got all messages intact")
