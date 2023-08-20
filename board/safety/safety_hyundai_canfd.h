@@ -253,6 +253,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
 
 static int hyundai_canfd_tx_hook(CANPacket_t *to_send) {
 
+  return 1;
   int tx = 0;
   int addr = GET_ADDR(to_send);
 
