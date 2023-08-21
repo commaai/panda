@@ -5,7 +5,7 @@
 #include "early_init.h"
 #include "crc.h"
 
-#define CANx CAN1
+#define CAN CAN1
 
 #ifdef PEDAL_USB
   #include "drivers/usb.h"
@@ -98,7 +98,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
 
 void CAN1_TX_IRQ_Handler(void) {
   // clear interrupt
-  CANx->TSR |= CAN_TSR_RQCP0;
+  CAN->TSR |= CAN_TSR_RQCP0;
 }
 
 // two independent values
@@ -120,18 +120,18 @@ uint8_t state = FAULT_STARTUP;
 const uint8_t crc_poly = 0xD5U;  // standard crc8
 
 void CAN1_RX0_IRQ_Handler(void) {
-  while ((CANx->RF0R & CAN_RF0R_FMP0) != 0) {
+  while ((CAN->RF0R & CAN_RF0R_FMP0) != 0) {
     #ifdef DEBUG
       print("CAN RX\n");
     #endif
-    int address = CANx->sFIFOMailBox[0].RIR >> 21;
+    int address = CAN->sFIFOMailBox[0].RIR >> 21;
     if (address == CAN_GAS_INPUT) {
       // softloader entry
-      if (GET_MAILBOX_BYTES_04(&CANx->sFIFOMailBox[0]) == 0xdeadface) {
-        if (GET_MAILBOX_BYTES_48(&CANx->sFIFOMailBox[0]) == 0x0ab00b1e) {
+      if (GET_MAILBOX_BYTES_04(&CAN->sFIFOMailBox[0]) == 0xdeadface) {
+        if (GET_MAILBOX_BYTES_48(&CAN->sFIFOMailBox[0]) == 0x0ab00b1e) {
           enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
           NVIC_SystemReset();
-        } else if (GET_MAILBOX_BYTES_48(&CANx->sFIFOMailBox[0]) == 0x02b00b1e) {
+        } else if (GET_MAILBOX_BYTES_48(&CAN->sFIFOMailBox[0]) == 0x02b00b1e) {
           enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
           NVIC_SystemReset();
         } else {
@@ -142,7 +142,7 @@ void CAN1_RX0_IRQ_Handler(void) {
       // normal packet
       uint8_t dat[8];
       for (int i=0; i<8; i++) {
-        dat[i] = GET_MAILBOX_BYTE(&CANx->sFIFOMailBox[0], i);
+        dat[i] = GET_MAILBOX_BYTE(&CAN->sFIFOMailBox[0], i);
       }
       uint16_t value_0 = (dat[0] << 8) | dat[1];
       uint16_t value_1 = (dat[2] << 8) | dat[3];
@@ -178,13 +178,13 @@ void CAN1_RX0_IRQ_Handler(void) {
       }
     }
     // next
-    CANx->RF0R |= CAN_RF0R_RFOM0;
+    CAN->RF0R |= CAN_RF0R_RFOM0;
   }
 }
 
 void CAN1_SCE_IRQ_Handler(void) {
   state = FAULT_SCE;
-  llcan_clear_send(CANx);
+  llcan_clear_send(CAN);
 }
 
 uint32_t pdl0 = 0;
@@ -204,7 +204,7 @@ void TIM3_IRQ_Handler(void) {
   #endif
 
   // check timer for sending the user pedal and clearing the CAN
-  if ((CANx->TSR & CAN_TSR_TME0) == CAN_TSR_TME0) {
+  if ((CAN->TSR & CAN_TSR_TME0) == CAN_TSR_TME0) {
     uint8_t dat[8];
     dat[0] = (pdl0 >> 8) & 0xFFU;
     dat[1] = (pdl0 >> 0) & 0xFFU;
@@ -212,10 +212,10 @@ void TIM3_IRQ_Handler(void) {
     dat[3] = (pdl1 >> 0) & 0xFFU;
     dat[4] = ((state & 0xFU) << 4) | pkt_idx;
     dat[5] = crc_checksum(dat, CAN_GAS_SIZE - 1, crc_poly);
-    CANx->sTxMailBox[0].TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
-    CANx->sTxMailBox[0].TDHR = dat[4] | (dat[5] << 8);
-    CANx->sTxMailBox[0].TDTR = 6;  // len of packet is 5
-    CANx->sTxMailBox[0].TIR = (CAN_GAS_OUTPUT << 21) | 1U;
+    CAN->sTxMailBox[0].TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
+    CAN->sTxMailBox[0].TDHR = dat[4] | (dat[5] << 8);
+    CAN->sTxMailBox[0].TDTR = 6;  // len of packet is 5
+    CAN->sTxMailBox[0].TIR = (CAN_GAS_OUTPUT << 21) | 1U;
     ++pkt_idx;
     pkt_idx &= COUNTER_CYCLE;
   } else {
@@ -290,12 +290,12 @@ int main(void) {
   adc_init();
 
   // init can
-  bool llcan_speed_set = llcan_set_speed(CANx, 5000, false, false);
+  bool llcan_speed_set = llcan_set_speed(CAN, 5000, false, false);
   if (!llcan_speed_set) {
     print("Failed to set llcan speed");
   }
 
-  bool ret = llcan_init(CANx);
+  bool ret = llcan_init(CAN);
   UNUSED(ret);
 
   // 48mhz / 65536 ~= 732
