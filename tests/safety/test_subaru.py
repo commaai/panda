@@ -13,6 +13,7 @@ MSG_SUBARU_Throttle         = 0x40
 MSG_SUBARU_Steering_Torque  = 0x119
 MSG_SUBARU_Wheel_Speeds     = 0x13a
 MSG_SUBARU_ES_LKAS          = 0x122
+MSG_SUBARU_ES_LKAS_ANGLE    = 0x124
 MSG_SUBARU_ES_Brake         = 0x220
 MSG_SUBARU_ES_Distance      = 0x221
 MSG_SUBARU_ES_Status        = 0x222
@@ -156,7 +157,7 @@ class TestSubaruAngleSafetyBase(TestSubaruSafetyBase, common.AngleSteeringSafety
   RELAY_MALFUNCTION_ADDR = MSG_SUBARU_ES_LKAS_ANGLE
   FWD_BLACKLISTED_ADDRS = fwd_blacklisted_addr(MSG_SUBARU_ES_LKAS_ANGLE)
 
-  FLAGS = Panda.FLAG_SUBARU_LKAS_ANGLE | Panda.FLAG_SUBARU_ES_STATUS
+  FLAGS = Panda.FLAG_SUBARU_LKAS_ANGLE
 
   ANGLE_RATE_BP = [0, 5, 15]
   ANGLE_RATE_UP = [5, 0.8, 0.15]
