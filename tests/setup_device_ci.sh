@@ -56,6 +56,9 @@ echo $SOM_ST_IO > /sys/class/gpio/export || true
 echo out > /sys/class/gpio/gpio${SOM_ST_IO}/direction
 echo 1 > /sys/class/gpio/gpio${SOM_ST_IO}/value
 
+# no aux USB due to jungle v2 USB hub
+echo "3-0:1.0" | sudo tee /sys/bus/usb/drivers/hub/unbind
+
 # checkout panda commit
 cd $SOURCE_DIR
 
