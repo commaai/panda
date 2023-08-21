@@ -29,7 +29,11 @@ def get_version(builder, build_type):
   try:
     git = subprocess.check_output(["git", "rev-parse", "--short=8", "HEAD"], encoding='utf8').strip()
   except subprocess.CalledProcessError:
-    git = "unknown"
+    if os.path.exists(".git_version"):
+      print("Using local .git_version file as the git revision")
+      git = open(".git_version").read().strip()
+    else:
+      git = "unknown"
   return f"{builder}-{git}-{build_type}"
 
 def get_key_header(name):
