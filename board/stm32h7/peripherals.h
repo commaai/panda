@@ -40,19 +40,6 @@ void common_init_gpio(void) {
   set_gpio_mode(GPIOE, 4, MODE_OUTPUT);
   set_gpio_output_type(GPIOE, 4, OUTPUT_TYPE_OPEN_DRAIN);
 
-  // F7,F8,F9,F10: BOARD ID
-  set_gpio_pullup(GPIOF, 7, PULL_NONE);
-  set_gpio_mode(GPIOF, 7, MODE_INPUT);
-
-  set_gpio_pullup(GPIOF, 8, PULL_NONE);
-  set_gpio_mode(GPIOF, 8, MODE_INPUT);
-
-  set_gpio_pullup(GPIOF, 9, PULL_NONE);
-  set_gpio_mode(GPIOF, 9, MODE_INPUT);
-
-  set_gpio_pullup(GPIOF, 10, PULL_NONE);
-  set_gpio_mode(GPIOF, 10, MODE_INPUT);
-
   //C4,A1: OBD_SBU1, OBD_SBU2
   set_gpio_pullup(GPIOC, 4, PULL_NONE);
   set_gpio_mode(GPIOC, 4, MODE_ANALOG);
