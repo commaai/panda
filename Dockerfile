@@ -51,8 +51,8 @@ RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-instal
 ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
 
 ENV PANDA_PATH=/tmp/openpilot/panda
-ENV OPENPILOT_REF="80bbba14f74e57bbe90216dfd0a99f6f68d77ca2"
-ENV OPENDBC_REF="5880fbbccf5a670631b51836f20e446de643795a"
+ENV OPENPILOT_REF="5690386d8d731c9bebda536a5c71c890f6dfe98c"
+ENV OPENDBC_REF="12dd7675c5ab2f49aedb813a79e6131b370b379f"
 
 COPY requirements.txt /tmp/
 RUN pyenv install 3.11.4 && \
@@ -79,13 +79,6 @@ RUN cd /tmp && \
     cp -pR SConstruct site_scons/ tools/ selfdrive/ system/ common/ cereal/ opendbc/ rednose/ third_party/ body/ /tmp/openpilot && \
     rm -rf /tmp/openpilot/panda && \
     rm -rf /tmp/tmppilot
-
-RUN cd /tmp/openpilot && \
-    git clone https://github.com/commaai/panda_jungle.git && \
-    cd panda_jungle && \
-    git fetch && \
-    git checkout 3a791be1f1877a69cf45de16a670992380622297 && \
-    rm -rf .git/
 
 RUN cd /tmp/openpilot && \
     pip install --no-cache-dir -r opendbc/requirements.txt && \
