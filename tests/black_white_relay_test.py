@@ -5,13 +5,11 @@
 
 
 import os
-import sys
 import time
 import random
 import argparse
 
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda  # noqa: E402
+from panda import Panda
 
 def get_test_string():
   return b"test" + os.urandom(10)
@@ -29,8 +27,7 @@ def run_test(sleep_duration):
 
   # make sure two pandas are connected
   if len(pandas) != 2:
-    print("Connect white/grey and black panda to run this test!")
-    assert False
+    raise Exception("Connect white/grey and black panda to run this test!")
 
   # connect
   pandas[0] = Panda(pandas[0])
@@ -50,8 +47,7 @@ def run_test(sleep_duration):
     black_panda = pandas[1]
     other_panda = pandas[0]
   else:
-    print("Connect white/grey and black panda to run this test!")
-    assert False
+    raise Exception("Connect white/grey and black panda to run this test!")
 
   # disable safety modes
   black_panda.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
@@ -69,8 +65,7 @@ def run_test(sleep_duration):
 
     if not test_buses(black_panda, other_panda, (0, False, [0])):
       open_errors += 1
-      print("Open error")
-      assert False
+      raise Exception("Open error")
 
     # Switch off relay
     black_panda.set_safety_mode(Panda.SAFETY_SILENT)
@@ -78,8 +73,7 @@ def run_test(sleep_duration):
 
     if not test_buses(black_panda, other_panda, (0, False, [0, 2])):
       closed_errors += 1
-      print("Close error")
-      assert False
+      raise Exception("Close error")
 
     counter += 1
     print("Number of cycles:", counter, "Open errors:", open_errors, "Closed errors:", closed_errors, "Content errors:", content_errors)
@@ -137,5 +131,5 @@ if __name__ == "__main__":
     while True:
       run_test(sleep_duration=args.sleep)
   else:
-    for i in range(args.n):
+    for _ in range(args.n):
       run_test(sleep_duration=args.sleep)

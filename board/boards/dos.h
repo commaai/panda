@@ -53,9 +53,11 @@ void dos_set_bootkick(bool enabled){
   set_gpio_output(GPIOC, 4, !enabled);
 }
 
-void dos_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool harness_inserted) {
+bool dos_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool harness_inserted) {
+  bool ret = false;
   if ((ignition && !usb_enum) || harness_inserted) {
     // enable bootkick if ignition seen or if plugged into a harness
+    ret = true;
     dos_set_bootkick(true);
   } else if (heartbeat_seen) {
     // disable once openpilot is up
@@ -63,9 +65,12 @@ void dos_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool harn
   } else {
 
   }
+  return ret;
 }
 
-void dos_set_can_mode(uint8_t mode){
+void dos_set_can_mode(uint8_t mode) {
+  dos_enable_can_transceiver(2U, false);
+  dos_enable_can_transceiver(4U, false);
   switch (mode) {
     case CAN_MODE_NORMAL:
     case CAN_MODE_OBD_CAN2:
@@ -77,6 +82,7 @@ void dos_set_can_mode(uint8_t mode){
         // B5,B6: normal CAN2 mode
         set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
         set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
+        dos_enable_can_transceiver(2U, true);
       } else {
         // B5,B6: disable normal CAN2 mode
         set_gpio_mode(GPIOB, 5, MODE_INPUT);
@@ -85,6 +91,7 @@ void dos_set_can_mode(uint8_t mode){
         // B12,B13: OBD mode
         set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
         set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
+        dos_enable_can_transceiver(4U, true);
       }
       break;
     default:
@@ -203,7 +210,6 @@ const board board_dos = {
   .board_type = "Dos",
   .board_tick = dos_board_tick,
   .harness_config = &dos_harness_config,
-  .has_gps = false,
   .has_hw_gmlan = false,
   .has_obd = true,
   .has_lin = false,
@@ -219,10 +225,10 @@ const board board_dos = {
   .fan_stall_recovery = true,
   .fan_enable_cooldown_time = 3U,
   .init = dos_init,
+  .init_bootloader = unused_init_bootloader,
   .enable_can_transceiver = dos_enable_can_transceiver,
   .enable_can_transceivers = dos_enable_can_transceivers,
   .set_led = dos_set_led,
-  .set_gps_mode = unused_set_gps_mode,
   .set_can_mode = dos_set_can_mode,
   .check_ignition = dos_check_ignition,
   .read_current = unused_read_current,

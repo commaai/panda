@@ -67,7 +67,7 @@ typedef struct {
   const bool has_steer_req_tolerance;
 
   // angle cmd limits
-  const int angle_deg_to_can;
+  const float angle_deg_to_can;
   const struct lookup_t angle_rate_up_lookup;
   const struct lookup_t angle_rate_down_lookup;
   const int max_angle_error;             // used to limit error between meas and cmd while enabled
@@ -89,6 +89,11 @@ typedef struct {
   const int min_gas;
   const int inactive_gas;
   const int max_brake;
+
+  // transmission rpm limits
+  const int max_transmission_rpm;
+  const int min_transmission_rpm;
+  const int inactive_transmission_rpm;
 
   // speed cmd limits
   const int inactive_speed;
@@ -163,6 +168,7 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
 bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits);
 bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limits);
 bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits);
+bool longitudinal_transmission_rpm_checks(int desired_transmission_rpm, const LongitudinalLimits limits);
 bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits);
 bool longitudinal_interceptor_checks(CANPacket_t *to_send);
 void pcm_cruise_check(bool cruise_engaged);
