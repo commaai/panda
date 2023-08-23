@@ -196,6 +196,32 @@ int main(void) {
   can_set_forwarding(1, 2);
 #endif
 
+#ifdef STM32H7
+#include "stm32h7/llsdmmc.h"
+
+hal_sd_sdmmc_init();
+print("SDMMC init\n");
+delay(25000);
+hal_sd_sdmmc_reset();
+print("SDMMC reset\n");
+delay(25000);
+hal_sd_sdmmc_getcardinfo();
+print("SDMMC getcardinfo\n");
+delay(25000);
+puth(sdinfo.type);
+print("card size: ");
+puth(sdinfo.card_size);
+print("rca: ");
+puth(sdinfo.rca);
+print("SDMMC init done\n");
+uint8_t buf[1024] = {0};
+memcpy(buf, "hello! wor!ld@@@", 16);
+memcpy(&buf[16], "hello! wor!ld@@@", 16);
+memcpy(&buf[32], "hello! wor!ld@@@", 16);
+memcpy(&buf[48], "hello! wor!ld@@@", 16);
+hal_sd_sdmmc_write(buf, 0, 2);
+print("SDMMC write done\n");
+#endif
   // LED should keep on blinking all the time
   uint64_t cnt = 0;
   for (cnt=0;;cnt++) {
