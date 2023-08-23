@@ -110,6 +110,14 @@ void peripherals_init(void) {
   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOFEN;
   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOGEN;
 
+  // Enable CPU access to SRAM1 and SRAM2 (in domain D2) for DMA
+  RCC->AHB2ENR |= RCC_AHB2ENR_SRAM1EN | RCC_AHB2ENR_SRAM2EN;
+
+  // Supplemental
+  RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;  // DAC DMA
+  RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;  // SPI DMA
+  RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN;
+
   // Connectivity
   RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;  // SPI
   RCC->APB1LENR |= RCC_APB1LENR_I2C5EN;  // codec I2C
@@ -131,10 +139,6 @@ void peripherals_init(void) {
   RCC->APB1LENR |= RCC_APB1LENR_TIM7EN;  // DMA trigger timer
   RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;  // tick timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM12EN;  // slow loop
-
-  // Supplemental
-  RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;  // DAC DMA
-  RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;  // SPI DMA
 
 #ifdef PANDA_JUNGLE
   RCC->AHB3ENR |= RCC_AHB3ENR_SDMMC1EN; // SDMMC

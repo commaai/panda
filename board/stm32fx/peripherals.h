@@ -61,6 +61,11 @@ void peripherals_init(void) {
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
 
+  // Supplemental
+  RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
+  RCC->APB1ENR |= RCC_APB1ENR_PWREN;   // for RTC config
+  RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+
   // Connectivity
   RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
   RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
@@ -88,11 +93,6 @@ void peripherals_init(void) {
   RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;  // interrupt timer
   RCC->APB2ENR |= RCC_APB2ENR_TIM9EN;  // slow loop
   RCC->APB1ENR |= RCC_APB1ENR_TIM12EN; // gmlan_alt
-
-  // Supplemental
-  RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
-  RCC->APB1ENR |= RCC_APB1ENR_PWREN;   // for RTC config
-  RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 }
 
 void enable_interrupt_timer(void) {
