@@ -140,7 +140,7 @@ static sd_info_t sdinfo;
 
 
 
-__attribute__((section(".ram_d1"))) uint8_t idmabuf[5*512]; // for FIFO D1 and D2 works, but for IDMA only D1 works
+__attribute__((section(".ram_d1"), aligned(32))) uint8_t idmabuf[5*512]; // for FIFO D1 and D2 works, but for IDMA only D1 works
 
 
 
