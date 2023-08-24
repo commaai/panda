@@ -1,7 +1,8 @@
-AddOption('--test',
-          action='store_true',
+AddOption('--minimal',
+          action='store_false',
+          dest='extras',
           default=True,
-          help='build test files')
+          help='the minimum build. no tests, tools, etc.')
 
 AddOption('--ubsan',
           action='store_true',
