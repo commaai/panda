@@ -26,6 +26,10 @@
 #include "board/can_comms.h"
 #include "main_comms.h"
 
+#ifdef STM32H7
+  #include "stm32h7/llsdmmc.h"
+#endif
+
 
 // ********************* Serial debugging *********************
 
@@ -197,13 +201,14 @@ int main(void) {
 #endif
 
 #ifdef STM32H7
-#include "stm32h7/llsdmmc.h"
 
 hal_sd_sdmmc_init();
 print("SDMMC init\n");
 delay(25000);
+
 hal_sd_sdmmc_reset();
 print("SDMMC reset\n");
+
 delay(25000);
 hal_sd_sdmmc_getcardinfo();
 print("SDMMC getcardinfo\n");
@@ -214,12 +219,17 @@ puth(sdinfo.card_size);
 print("rca: ");
 puth(sdinfo.rca);
 print("SDMMC init done\n");
-uint8_t buf[1024] = {0};
-memcpy(buf, "hello! wor!ld@@@", 16);
-memcpy(&buf[16], "hello! wor!ld@@@", 16);
-memcpy(&buf[32], "hello! wor!ld@@@", 16);
-memcpy(&buf[48], "hello! wor!ld@@@", 16);
-hal_sd_sdmmc_write(buf, 0, 2);
+// print("BREAK\n");
+//   while (1) {}
+// Declared buff in llsdmmc.h
+memcpy(idmabuf, "hello! wor!ld@@@", 16);
+memcpy(&idmabuf[16], "hello! wor!ld@@@", 16);
+memcpy(&idmabuf[32], "hello! wor!ld@@@", 16);
+memcpy(&idmabuf[48], "hello! wor!ld@@@", 16);
+memcpy(&idmabuf[512], "hello! wor!ld@@@", 16);
+memcpy(&idmabuf[548], "hello! wor!ld@@@", 16);
+
+hal_sd_sdmmc_write(idmabuf, 0, 5);
 print("SDMMC write done\n");
 #endif
   // LED should keep on blinking all the time

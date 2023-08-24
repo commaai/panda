@@ -135,6 +135,21 @@ static sd_info_t sdinfo;
 
 
 
+
+
+
+
+
+__attribute__((section(".ram_d2"))) uint8_t idmabuf[5*512];
+
+
+
+
+
+
+
+
+
 void gpio_sdmmc_init(void) {
     // SDMMC1:
   set_gpio_pullup(GPIOC, 8, PULL_NONE);
@@ -184,7 +199,7 @@ void sdmmc_fast(void)
 
 sd_error send_command(uint32_t cmd, uint32_t arg, sd_resp resp, uint32_t *buf)
 {
-	uint32_t cmd_waitresp;
+	uint32_t cmd_waitresp = 0;
 
 	switch(resp)
 	{
@@ -271,7 +286,7 @@ sd_error read_scr(void)
 {
 	sd_error err;
 	uint32_t cnt;
-	uint32_t buf[2];
+	uint32_t *buf = (uint32_t*)idmabuf;
 	uint32_t sd_sec;
 
 	err = sd_err_ok;
@@ -304,7 +319,7 @@ sd_error read_scr(void)
 		return err;
 	}
   print("ACMD51\n");
-  delay(25000); // FIXME: fails without this delay
+  // delay(25000); // FIXME: fails without this delay
 
 	while (!(SDMMC1->STA & (SDMMC_STA_DATAEND | SDMMC_STA_RXOVERR | SDMMC_STA_DCRCFAIL | SDMMC_STA_DTIMEOUT)))
 	{
@@ -689,14 +704,22 @@ sd_error hal_sd_sdmmc_reset(void)
 // 	return sd_err_ok;
 // }
 
+#define SDIO_DCTRL				(uint32_t)(9 << SDMMC_DCTRL_DBLOCKSIZE_Pos )
+#define SDIO_STA_ERRORS			(uint32_t)(SDMMC_STA_RXOVERR | SDMMC_STA_TXUNDERR | SDMMC_STA_DTIMEOUT | SDMMC_STA_DCRCFAIL )
+#define SDIO_ICR_STATIC     ((uint32_t)(SDMMC_ICR_CCRCFAILC | SDMMC_ICR_DCRCFAILC | SDMMC_ICR_CTIMEOUTC | \
+                                        SDMMC_ICR_DTIMEOUTC | SDMMC_ICR_TXUNDERRC | SDMMC_ICR_RXOVERRC  | \
+                                        SDMMC_ICR_CMDRENDC  | SDMMC_ICR_CMDSENTC  | SDMMC_ICR_DATAENDC  | \
+                                         SDMMC_ICR_DBCKENDC ))
+
 //--------------------------------------------
-sd_error hal_sd_sdmmc_write(const uint8_t *txbuf, uint32_t sector, uint32_t count)
+sd_error hal_sd_sdmmc_write(uint8_t *txbuf, uint32_t sector, uint32_t count)
 {
 	sd_error err;
 	uint32_t buf[4];
 	uint32_t *dbuf;
 	uint32_t cnt;
 	uint32_t sta;
+  // uint8_t dir = 0;
 
 	dbuf = (uint32_t *)&txbuf[0];
   // UNUSED(txbuf);
@@ -720,14 +743,18 @@ sd_error hal_sd_sdmmc_write(const uint8_t *txbuf, uint32_t sector, uint32_t coun
 		sector *= 512;
     print("CARD_SDSC sector\n");
 	}
-
+  
 	// Sending 512 bytes data blocks
+  // SDMMC1->IDMABASE0 = (uint32_t)txbuf;
 	SDMMC1->DTIMER = DATATIMEOUT;
 	SDMMC1->DLEN = count * 512;
 	SDMMC1->DCTRL = (SDMMC_DCTRL_DBLOCKSIZE_0 | SDMMC_DCTRL_DBLOCKSIZE_3) | // Data block size: (1001) 512 bytes
 	                                     // (0) DMA disabled
 	                                     // Data transfer direction selection: (0) From controller to card
 	                 SDMMC_DCTRL_DTEN;   // (1) Data transfer enabled bit
+
+  // SDMMC1->DCTRL= SDIO_DCTRL | (dir & SDMMC_DCTRL_DTDIR);  //Direction. 0=Controller to card, 1=Card to Controller
+	// SDMMC1->MASK=0;
   print("SDMMC1->DCTRL\n");
 	if (count == 1)
 	{
@@ -763,7 +790,7 @@ sd_error hal_sd_sdmmc_write(const uint8_t *txbuf, uint32_t sector, uint32_t coun
 		}
     print("CMD25\n");
 	}
-  delay(25000);
+  // delay(25000);
   print("before TXFIFOHE\n");
   puth((SDMMC1->STA & SDMMC_STA_TXFIFOHE));
   print(" ");
@@ -781,8 +808,17 @@ sd_error hal_sd_sdmmc_write(const uint8_t *txbuf, uint32_t sector, uint32_t coun
 			dbuf += 8;
 		}
 	}
-  // print("BREAK\n");
-  // while (1) {}
+
+  //////////////////////////////////////////
+  
+  // SDMMC1->ICR = SDIO_ICR_STATIC;
+	// SDMMC1->IDMACTRL |= SDMMC_IDMA_IDMAEN;
+	// SDMMC1->DCTRL |= SDMMC_DCTRL_DTEN; //DPSM is enabled
+  // while((SDMMC1->STA & (SDMMC_STA_DATAEND|SDIO_STA_ERRORS)) == 0){__NOP();};
+
+  //////////////////////////////////////////
+
+
   print("after TXFIFOHE\n");
   puth((SDMMC1->STA & SDMMC_STA_TXFIFOHE));
   print(" ");
