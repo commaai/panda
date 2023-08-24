@@ -140,7 +140,7 @@ static sd_info_t sdinfo;
 
 
 
-__attribute__((section(".ram_d2"))) uint8_t idmabuf[5*512];
+__attribute__((section(".ram_d1"))) uint8_t idmabuf[5*512]; // for FIFO D1 and D2 works, but for IDMA only D1 works
 
 
 
@@ -602,107 +602,107 @@ sd_error hal_sd_sdmmc_reset(void)
 }
 
 //--------------------------------------------
-// sd_error hal_sd_sdmmc_read(uint8_t *rxbuf, uint32_t sector, uint32_t count)
-// {
-// 	sd_error err;
-// 	uint32_t buf[4];
-// 	uint32_t *dbuf;
-// 	uint32_t cnt;
-// 	uint32_t sta;
+sd_error hal_sd_sdmmc_read(uint8_t *rxbuf, uint32_t sector, uint32_t count)
+{
+	sd_error err;
+	uint32_t buf[4];
+	uint32_t *dbuf;
+	uint32_t cnt;
+	uint32_t sta;
 
-// 	dbuf = (uint32_t *)&rxbuf[0];
+	dbuf = (uint32_t *)&rxbuf[0];
 
-// 	// CMD13: Asks the selected card to send its status register
-// 	if ((err = send_command(CMD13, sdinfo.rca << 16, RESP_R1, &buf[0])) != sd_err_ok)
-// 	{
-// 		return err;
-// 	}
-// 	// not Transfer State (tran)
-// 	if ((buf[0] & RESP_R1_CURRENT_STATE_MASK) != RESP_R1_CURRENT_STATE_TRAN)
-// 	{
-// 		return sd_err_wrong_status;
-// 	}
+	// CMD13: Asks the selected card to send its status register
+	if ((err = send_command(CMD13, sdinfo.rca << 16, RESP_R1, &buf[0])) != sd_err_ok)
+	{
+		return err;
+	}
+	// not Transfer State (tran)
+	if ((buf[0] & RESP_R1_CURRENT_STATE_MASK) != RESP_R1_CURRENT_STATE_TRAN)
+	{
+		return sd_err_wrong_status;
+	}
 
-// 	if (sdinfo.type == CARD_SDSC)
-// 	{
-// 		// SDSC uses the 32-bit argument of memory access commands as byte address format
-// 		// Block length is determined by CMD16, by default - 512 byte
-// 		sector *= 512;
-// 	}
+	if (sdinfo.type == CARD_SDSC)
+	{
+		// SDSC uses the 32-bit argument of memory access commands as byte address format
+		// Block length is determined by CMD16, by default - 512 byte
+		sector *= 512;
+	}
 
-// 	// Receiving 512 bytes data blocks
-// 	SDMMC1->DTIMER = DATATIMEOUT;
-// 	SDMMC1->DLEN = count * 512;
-// 	SDMMC1->DCTRL = (SDMMC_DCTRL_DBLOCKSIZE_0 | SDMMC_DCTRL_DBLOCKSIZE_3) | // Data block size: (1001) 512 bytes
-// 	                                     // (0) DMA disabled
-// 	                 SDMMC_DCTRL_DTDIR | // Data transfer direction selection: (1) From card to controller
-// 	                 SDMMC_DCTRL_DTEN;   // (1) Data transfer enabled bit
+	// Receiving 512 bytes data blocks
+	SDMMC1->DTIMER = DATATIMEOUT;
+	SDMMC1->DLEN = count * 512;
+	SDMMC1->DCTRL = (SDMMC_DCTRL_DBLOCKSIZE_0 | SDMMC_DCTRL_DBLOCKSIZE_3) | // Data block size: (1001) 512 bytes
+	                                     // (0) DMA disabled
+	                 SDMMC_DCTRL_DTDIR | // Data transfer direction selection: (1) From card to controller
+	                 SDMMC_DCTRL_DTEN;   // (1) Data transfer enabled bit
 
-// 	if (count == 1)
-// 	{
-// 		// CMD17: Reads a block of the size selected by the SET_BLOCKLEN command (SDSC)
-// 		// or exactly 512 byte (SDHC and SDXC)
-// 		// ==> Sending-data State (data)
-// 		if ((err = send_command(CMD17, sector, RESP_R1, &buf[0])) != sd_err_ok)
-// 		{
-// 			return err;
-// 		}
-// 	}
-// 	else
-// 	{
-// 		// CMD18: Continuously transfers data blocks from card to host 
-// 		// until interrupted by a STOP_TRANSMISSION command
-// 		// ==> Sending-data State (data)
-// 		if ((err = send_command(CMD18, sector, RESP_R1, &buf[0])) != sd_err_ok)
-// 		{
-// 			return err;
-// 		}
-// 	}
+	if (count == 1)
+	{
+		// CMD17: Reads a block of the size selected by the SET_BLOCKLEN command (SDSC)
+		// or exactly 512 byte (SDHC and SDXC)
+		// ==> Sending-data State (data)
+		if ((err = send_command(CMD17, sector, RESP_R1, &buf[0])) != sd_err_ok)
+		{
+			return err;
+		}
+	}
+	else
+	{
+		// CMD18: Continuously transfers data blocks from card to host 
+		// until interrupted by a STOP_TRANSMISSION command
+		// ==> Sending-data State (data)
+		if ((err = send_command(CMD18, sector, RESP_R1, &buf[0])) != sd_err_ok)
+		{
+			return err;
+		}
+	}
 
-// 	while (!(SDMMC1->STA & (SDMMC_STA_RXOVERR | SDMMC_STA_DCRCFAIL | SDMMC_STA_DTIMEOUT | SDMMC_STA_DATAEND)))
-// 	{
-// 		while (SDMMC1->STA & SDMMC_STA_RXFIFOHF)
-// 		{
-// 			for (cnt = 0; cnt < 8; cnt++)
-// 			{
-// 				*(dbuf + cnt) = SDMMC1->FIFO;
-// 			}
-// 			dbuf += 8;
-// 		}
-// 	}
+	while (!(SDMMC1->STA & (SDMMC_STA_RXOVERR | SDMMC_STA_DCRCFAIL | SDMMC_STA_DTIMEOUT | SDMMC_STA_DATAEND)))
+	{
+		while (SDMMC1->STA & SDMMC_STA_RXFIFOHF)
+		{
+			for (cnt = 0; cnt < 8; cnt++)
+			{
+				*(dbuf + cnt) = SDMMC1->FIFO;
+			}
+			dbuf += 8;
+		}
+	}
 
-// 	SDMMC1->DCTRL = 0;
+	SDMMC1->DCTRL = 0;
 
-// 	if (count > 1)
-// 	{
-// 		// CMD12: Forces the card to stop transmission
-// 		// if count == 1, "operation complete" is automatic
-// 		// ==> Transfer State (tran)
-// 		if ((err = send_command(CMD12, 0, RESP_R1b, &buf[0])) != sd_err_ok)
-// 		{
-// 			SDMMC1->ICR = SDMMC_ICR_FLAGS;
-// 			return err;
-// 		}
-// 	}
+	if (count > 1)
+	{
+		// CMD12: Forces the card to stop transmission
+		// if count == 1, "operation complete" is automatic
+		// ==> Transfer State (tran)
+		if ((err = send_command(CMD12, 0, RESP_R1b, &buf[0])) != sd_err_ok)
+		{
+			SDMMC1->ICR = SDMMC_ICR_FLAGS;
+			return err;
+		}
+	}
 
-// 	sta = SDMMC1->STA;
-// 	SDMMC1->ICR = SDMMC_ICR_FLAGS;
+	sta = SDMMC1->STA;
+	SDMMC1->ICR = SDMMC_ICR_FLAGS;
 
-// 	if (sta & SDMMC_STA_DTIMEOUT)
-// 	{
-// 		return sd_err_dtimeout;
-// 	}
-// 	if (sta & SDMMC_STA_DCRCFAIL)
-// 	{
-// 		return sd_err_dcrcfail;
-// 	}
-// 	if (sta & SDMMC_STA_RXOVERR)
-// 	{
-// 		return sd_err_rxoverr;
-// 	}
+	if (sta & SDMMC_STA_DTIMEOUT)
+	{
+		return sd_err_dtimeout;
+	}
+	if (sta & SDMMC_STA_DCRCFAIL)
+	{
+		return sd_err_dcrcfail;
+	}
+	if (sta & SDMMC_STA_RXOVERR)
+	{
+		return sd_err_rxoverr;
+	}
 
-// 	return sd_err_ok;
-// }
+	return sd_err_ok;
+}
 
 #define SDIO_DCTRL				(uint32_t)(9 << SDMMC_DCTRL_DBLOCKSIZE_Pos )
 #define SDIO_STA_ERRORS			(uint32_t)(SDMMC_STA_RXOVERR | SDMMC_STA_TXUNDERR | SDMMC_STA_DTIMEOUT | SDMMC_STA_DCRCFAIL )
@@ -723,6 +723,8 @@ sd_error hal_sd_sdmmc_write(uint8_t *txbuf, uint32_t sector, uint32_t count)
 
 	dbuf = (uint32_t *)&txbuf[0];
   // UNUSED(txbuf);
+
+
 
 	// CMD13: Asks the selected card to send its status register
 	if ((err = send_command(CMD13, sdinfo.rca << 16, RESP_R1, &buf[0])) != sd_err_ok)
@@ -826,6 +828,162 @@ sd_error hal_sd_sdmmc_write(uint8_t *txbuf, uint32_t sector, uint32_t count)
   print(" ");
   puth((SDMMC1->STA));
 	SDMMC1->DCTRL = 0;
+
+	if (count > 1)
+	{
+		// CMD12: Forces the card to stop receiving
+		// if count == 1, "transfer end" is automatic
+		// ==> Programming State (prg) ==> Transfer State (tran)
+		if ((err = send_command(CMD12, 0, RESP_R1b, &buf[0])) != sd_err_ok)
+		{
+			SDMMC1->ICR = SDMMC_ICR_FLAGS;
+      print("CMD12 err!!!!!\n");
+			return err;
+		}
+	}
+
+	sta = SDMMC1->STA;
+	SDMMC1->ICR = SDMMC_ICR_FLAGS;
+
+	if (sta & SDMMC_STA_DTIMEOUT)
+	{
+		return sd_err_dtimeout;
+	}
+	if (sta & SDMMC_STA_DCRCFAIL)
+	{
+		return sd_err_dcrcfail;
+	}
+	if (sta & SDMMC_STA_TXUNDERR)
+	{
+		return sd_err_txunderr;
+	}
+
+	return sd_err_ok;
+}
+
+
+sd_error hal_sd_sdmmc_write_idma(uint8_t *txbuf, uint32_t sector, uint32_t count)
+{
+	sd_error err;
+	uint32_t buf[4];
+	uint32_t *dbuf;
+	// uint32_t cnt;
+	uint32_t sta;
+  uint8_t dir = 0;
+
+	dbuf = (uint32_t *)&txbuf[0];
+  // UNUSED(txbuf);
+
+  SDMMC1->DCTRL = 0; // reset DPSM
+
+	// CMD13: Asks the selected card to send its status register
+	if ((err = send_command(CMD13, sdinfo.rca << 16, RESP_R1, &buf[0])) != sd_err_ok)
+	{
+		return err;
+	}
+  print("CMD13\n");
+	// not Transfer State (tran)
+	if ((buf[0] & RESP_R1_CURRENT_STATE_MASK) != RESP_R1_CURRENT_STATE_TRAN)
+	{
+		return sd_err_wrong_status;
+	}
+
+	if (sdinfo.type == CARD_SDSC)
+	{
+		// SDSC uses the 32-bit argument of memory access commands as byte address format
+		// Block length is determined by CMD16, by default - 512 byte
+		sector *= 512;
+    print("CARD_SDSC sector\n");
+	}
+  
+	// Sending 512 bytes data blocks
+  SDMMC1->DTIMER = DATATIMEOUT;
+  SDMMC1->DCTRL |= SDMMC_DCTRL_FIFORST;
+  // SDMMC1->ICR = SDIO_ICR_STATIC;
+  SDMMC1->DLEN = count * 512;
+  SDMMC1->MASK=0; // TODO: mask only FIFO interrupts??
+  SDMMC1->IDMABASE0 = (uint32_t)dbuf;
+  SDMMC1->DCTRL = SDIO_DCTRL | (dir & SDMMC_DCTRL_DTDIR);  //Direction. 0=Controller to card, 1=Card to Controller
+
+
+  // delay(25000);
+  print("SDMMC1->DCTRL\n");
+  print("STA: ");
+  puth((SDMMC1->STA));
+	if (count == 1)
+	{
+		// CMD24: Write a block of the size selected by the SET_BLOCKLEN command (SDSC)
+		// or exactly 512 byte (SDHC and SDXC)
+		// ==> Receive-data State (rcv)
+		if ((err = send_command(CMD24, sector, RESP_R1, &buf[0])) != sd_err_ok)
+		{
+			return err;
+		}
+    print("CMD24\n");
+	}
+	else
+	{
+		// CMD55: Next command is an application specific
+		if ((err = send_command(CMD55, sdinfo.rca << 16, RESP_R1, &buf[0])) != sd_err_ok)
+		{
+			return err;
+		}
+    print("CMD55\n");
+		// ACMD23: Set the number of write blocks to be pre-erased before writing 
+		// (to be used for faster Multiple Block WR command)
+		if ((err = send_command(ACMD23, count, RESP_R1, &buf[0])) != sd_err_ok)
+		{
+			return err;
+		}
+    print("ACMD23\n");
+		// CMD25: Continuously writes blocks of data until a STOP_TRANSMISSION follows.
+		// ==> Receive-data State (rcv)
+		if ((err = send_command(CMD25, sector, RESP_R1, &buf[0])) != sd_err_ok)
+		{
+			return err;
+		}
+    print("CMD25\n");
+	}
+  // delay(25000);
+
+  
+  // delay(100000);
+
+  SDMMC1->ICR = SDIO_ICR_STATIC;
+  SDMMC1->IDMACTRL = SDMMC_IDMA_IDMAEN;
+	SDMMC1->DCTRL |= SDMMC_DCTRL_DTEN; //DPSM is enabled
+
+  // delay(100000); 
+
+
+  // print("before TXFIFOHE\n");
+  // puth((SDMMC1->STA & SDMMC_STA_TXFIFOHE));
+  // print(" ");
+  // puth((SDMMC1->STA & SDMMC_STA_DPSMACT));
+  // print(" ");
+  // puth((SDMMC1->STA));
+
+  //////////////////////////////////////////
+  
+  // SDMMC1->ICR = SDIO_ICR_STATIC;
+	// SDMMC1->IDMACTRL |= SDMMC_IDMA_IDMAEN;
+	// SDMMC1->DCTRL |= SDMMC_DCTRL_DTEN; //DPSM is enabled
+  // TODO: this should be changed for IRQ instead of blocking
+  while((SDMMC1->STA & (SDMMC_STA_DATAEND|SDIO_STA_ERRORS)) == 0){__NOP();};
+
+  // if(SDMMC1->STA & SDIO_STA_ERRORS){
+	// 	SDMMC1->ICR = SDIO_ICR_STATIC;
+  //   print("error_flag\n");
+  //   puth(SDMMC1->STA);
+	// 	return 1;
+	// }
+
+  //////////////////////////////////////////
+
+
+  print("after TXFIFOHE\n");
+  puth((SDMMC1->STA));
+	// SDMMC1->DCTRL = 0;
 
 	if (count > 1)
 	{

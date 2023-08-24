@@ -201,6 +201,7 @@ int main(void) {
 #endif
 
 #ifdef STM32H7
+const uint8_t testkey[] = "testkey!";
 
 hal_sd_sdmmc_init();
 print("SDMMC init\n");
@@ -222,15 +223,51 @@ print("SDMMC init done\n");
 // print("BREAK\n");
 //   while (1) {}
 // Declared buff in llsdmmc.h
-memcpy(idmabuf, "hello! wor!ld@@@", 16);
-memcpy(&idmabuf[16], "hello! wor!ld@@@", 16);
-memcpy(&idmabuf[32], "hello! wor!ld@@@", 16);
-memcpy(&idmabuf[48], "hello! wor!ld@@@", 16);
-memcpy(&idmabuf[512], "hello! wor!ld@@@", 16);
-memcpy(&idmabuf[548], "hello! wor!ld@@@", 16);
 
-hal_sd_sdmmc_write(idmabuf, 0, 5);
-print("SDMMC write done\n");
+// memcpy(&idmabuf[16], "h@llo! wor!ld@@@", 16);
+// memcpy(&idmabuf[32], "h@llo! wor!ld@@@", 16);
+// memcpy(&idmabuf[48], "h@llo! wor!ld@@@", 16);
+// memcpy(&idmabuf[512], "h@llo! wor!ld@@@", 16);
+// memcpy(&idmabuf[548], "h@llo! wor!ld@@@", 16);
+// memcpy(&idmabuf[952], "h@llo! wor!ld@@@", 16);
+// memcpy(&idmabuf[4*512], "h@llo! wor!ld@@@", 16);
+
+// writing to sector 0 all zeroes to reset card, with working func
+(void)memset(idmabuf, 0xFF, 5*512);
+hal_sd_sdmmc_write(idmabuf, 0, 2);
+print("SDMMC erase done\n");
+
+delay(100000);
+
+// reset buffer
+(void)memset(idmabuf, 0, 5*512);
+memcpy(idmabuf, testkey, 8);
+memcpy(&idmabuf[512], testkey, 8);
+//write key with test func that might not work (like IDMA)
+// hal_sd_sdmmc_write(idmabuf, 0, 2);
+hal_sd_sdmmc_write_idma(idmabuf, 0, 2);
+
+delay(100000);  // FIXME: need to wait until previous command is finished, should be solved with IRQs
+
+// Try to read and compare result
+(void)memset(idmabuf, 0, 5*512);
+hal_sd_sdmmc_read(idmabuf, 0, 2);
+int8_t res = 0;
+res = memcmp(idmabuf, testkey, 8);
+res = memcmp(&idmabuf[512], testkey, 8);
+if (res == 0) {
+  print("SDMMC compare done\n");
+} else {
+  print("SDMMC compare failed\n");
+}
+// Freeze
+while (1) {
+  if (res == 0) {
+  current_board->set_led(LED_BLUE, true);
+} else {
+  current_board->set_led(LED_RED, true);
+}
+}
 #endif
   // LED should keep on blinking all the time
   uint64_t cnt = 0;
