@@ -38,7 +38,7 @@ class PandaDFU:
         self._context.close()
 
   @staticmethod
-  def usb_connect(dfu_serial: Optional[str]) -> Optional[STBootloaderUSBHandle]:
+  def usb_connect(dfu_serial: Optional[str]):
     handle = None
     context = usb1.USBContext()
     context.open()
@@ -56,7 +56,7 @@ class PandaDFU:
     return context, handle
 
   @staticmethod
-  def spi_connect(dfu_serial: Optional[str]) -> Optional[STBootloaderSPIHandle]:
+  def spi_connect(dfu_serial: Optional[str]):
     handle = None
     this_dfu_serial = None
 
