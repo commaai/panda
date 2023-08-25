@@ -335,7 +335,12 @@ static int hyundai_canfd_fwd_hook(int bus_num, int addr) {
   if (bus_num == 2) {
     // LKAS for HDA2, LFA for HDA1
     int hda2_steer_msg = hyundai_canfd_hda2_alt_steering ? 0x110 : 0x50;
-    int hda2_block_lfa = ((addr == 0x2a4) && !hyundai_canfd_hda2_alt_steering) || ((addr == 0x364) && hyundai_canfd_hda2_alt_steering);
+    int hda2_block_lfa_alt_steering = hyundai_canfd_hda2_alt_steering &&
+                                      ((addr == 0x230) ||
+                                       ((addr >= 0x235) && (addr <= 0x23f)) ||
+                                       ((addr >= 0x360) && (addr <= 0x366))
+                                      );
+    int hda2_block_lfa = ((addr == 0x2a4) && !hyundai_canfd_hda2_alt_steering) || hda2_block_lfa_alt_steering;
     int is_lkas_msg = (((addr == hda2_steer_msg) || hda2_block_lfa) && hyundai_canfd_hda2);
     int is_lfa_msg = ((addr == 0x12a) && !hyundai_canfd_hda2);
 
