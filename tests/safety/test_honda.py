@@ -77,8 +77,8 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
           # should enter controls allowed on falling edge and not transitioning to cancel or main
           should_enable = (main_on and
                            btn_cur != btn_prev and
-                           btn_cur not in (Btn.CANCEL, Btn.MAIN) and
-                           btn_prev in (Btn.RESUME, Btn.SET))
+                           btn_prev in (Btn.RESUME, Btn.SET) and
+                           btn_cur not in (Btn.CANCEL, Btn.MAIN))
 
           self._rx(self._button_msg(btn_cur))
           self.assertEqual(should_enable, self.safety.get_controls_allowed(), msg=f"{main_on=} {btn_prev=} {btn_cur=}")
