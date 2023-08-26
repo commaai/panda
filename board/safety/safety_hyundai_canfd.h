@@ -239,7 +239,8 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
     }
   }
 
-  const int steer_addr = hyundai_canfd_hda2 ? hyundai_canfd_hda2_alt_steering ? 0x110 : 0x50 : 0x12a;
+  const int hda2_steer_addr = hyundai_canfd_hda2_alt_steering ? 0x110 : 0x50;
+  const int steer_addr = hyundai_canfd_hda2 ? hda2_steer_addr : 0x12a;
   bool stock_ecu_detected = (addr == steer_addr) && (bus == 0);
   if (hyundai_longitudinal) {
     // on HDA2, ensure ADRV ECU is still knocked out
@@ -270,7 +271,8 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send) {
   }
 
   // steering
-  const int steer_addr = (hyundai_canfd_hda2 && !hyundai_longitudinal) ? hyundai_canfd_hda2_alt_steering ? 0x110 : 0x50 : 0x12a;
+  const int hda2_steer_addr = hyundai_canfd_hda2_alt_steering ? 0x110 : 0x50;
+  const int steer_addr = (hyundai_canfd_hda2 && !hyundai_longitudinal) ? hda2_steer_addr : 0x12a;
   if (addr == steer_addr) {
     int desired_torque = (((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U)) - 1024U;
     bool steer_req = GET_BIT(to_send, 52U) != 0U;
@@ -333,8 +335,8 @@ static int hyundai_canfd_fwd_hook(int bus_num, int addr) {
   if (bus_num == 2) {
     // LKAS for HDA2, LFA for HDA1
     int hda2_steer_msg = hyundai_canfd_hda2_alt_steering ? 0x110 : 0x50;
-    int hda2_block_lfa = ((addr == 0x2a4) && !hyundai_canfd_hda2_alt_steering) || ((addr == 0x362) && hyundai_canfd_hda2_alt_steering);
-    int is_lkas_msg = (((addr == hda2_steer_msg) || hda2_block_lfa) && hyundai_canfd_hda2);
+    int hda2_block_lfa = hyundai_canfd_hda2_alt_steering ? 0x362 : 0x2a4;
+    int is_lkas_msg = ((addr == hda2_steer_msg) || (addr == hda2_block_lfa)) && hyundai_canfd_hda2;
     int is_lfa_msg = ((addr == 0x12a) && !hyundai_canfd_hda2);
 
     // HUD icons
