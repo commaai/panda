@@ -13,6 +13,7 @@ MSG_SUBARU_Throttle         = 0x40
 MSG_SUBARU_Steering_Torque  = 0x119
 MSG_SUBARU_Wheel_Speeds     = 0x13a
 MSG_SUBARU_ES_LKAS          = 0x122
+MSG_SUBARU_ES_LKAS_ANGLE    = 0x124
 MSG_SUBARU_ES_Brake         = 0x220
 MSG_SUBARU_ES_Distance      = 0x221
 MSG_SUBARU_ES_Status        = 0x222
@@ -25,8 +26,8 @@ SUBARU_ALT_BUS  = 1
 SUBARU_CAM_BUS  = 2
 
 
-def lkas_tx_msgs(alt_bus):
-  return [[MSG_SUBARU_ES_LKAS,          SUBARU_MAIN_BUS],
+def lkas_tx_msgs(alt_bus, lkas_msg=MSG_SUBARU_ES_LKAS):
+  return [[lkas_msg,                    SUBARU_MAIN_BUS],
           [MSG_SUBARU_ES_Distance,      alt_bus],
           [MSG_SUBARU_ES_DashStatus,    SUBARU_MAIN_BUS],
           [MSG_SUBARU_ES_LKAS_State,    SUBARU_MAIN_BUS],
@@ -36,8 +37,8 @@ def long_tx_msgs():
   return [[MSG_SUBARU_ES_Brake,         SUBARU_MAIN_BUS],
           [MSG_SUBARU_ES_Status,        SUBARU_MAIN_BUS]]
 
-def fwd_blacklisted_addr():
-  return {SUBARU_CAM_BUS: [MSG_SUBARU_ES_LKAS, MSG_SUBARU_ES_DashStatus, MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment]}
+def fwd_blacklisted_addr(lkas_msg=MSG_SUBARU_ES_LKAS):
+  return {SUBARU_CAM_BUS: [lkas_msg, MSG_SUBARU_ES_DashStatus, MSG_SUBARU_ES_LKAS_State, MSG_SUBARU_ES_Infotainment]}
 
 class TestSubaruSafetyBase(common.PandaSafetyTest, MeasurementSafetyTest):
   FLAGS = 0
