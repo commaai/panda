@@ -7,15 +7,16 @@ def check_space(file, mcu):
   MCUS = {
     "H7": {
       ".flash": 1024*1024, # FLASH
-      ".ram_dtcm": 128*1024, # DTCMRAM
-      ".ram_d1": 320*1024, # AXI SRAM
-      ".ram_d2": 32*1024, # SRAM1(16kb) + SRAM2(16kb)
-      ".ram_d3": 16*1024, # SRAM4
-      ".ram_itcm": 64*1024, # ITCMRAM
+      ".dtcmram": 128*1024, # DTCMRAM
+      ".itcmram": 64*1024, # ITCMRAM
+      ".axisram": 320*1024, # AXI SRAM
+      ".sram12": 32*1024, # SRAM1(16kb) + SRAM2(16kb)
+      ".sram4": 16*1024, # SRAM4
+      ".backup_sram": 4*1024, # SRAM4
     },
     "F4": {
       ".flash": 1024*1024, # FLASH
-      ".ram_dtcm": 256*1024, # RAM
+      ".dtcmram": 256*1024, # RAM
       ".ram_d1": 64*1024, # RAM2
     },
   }
@@ -29,7 +30,10 @@ def check_space(file, mcu):
     ".debug_str",
     ".debug_ranges",
     ".debug_loc",
-    ".debug_frame"
+    ".debug_frame",
+    ".debug_line_str",
+    ".debug_rnglists",
+    ".debug_loclists",
   ]
   FLASH = [
     ".isr_vector",
@@ -59,7 +63,7 @@ def check_space(file, mcu):
         calcs[".flash"] += int(line[1], 16)
         pop = True
       if line[0] in RAM:
-        calcs[".ram_dtcm"] += int(line[1], 16)
+        calcs[".dtcmram"] += int(line[1], 16)
         pop = True
       if pop:
         result.pop(line[0])
