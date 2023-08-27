@@ -130,9 +130,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
     }
 
     bool stock_ecu_detected = (addr == 0x2E4);
-
-    // If openpilot is controlling longitudinal with a disabled radar we need to ensure the radar is turned off
-    // Enforce by checking we don't see ACC_CONTROL
+    // Also check ACC_CONTROL (0x343) if openpilot is controlling longitudinal (radar is disabled or camera sends ACC messages)
     if (!toyota_stock_longitudinal && (addr == 0x343)) {
       stock_ecu_detected = true;
     }
