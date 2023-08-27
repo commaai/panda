@@ -129,7 +129,12 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
       gas_interceptor_prev = gas_interceptor;
     }
 
-    generic_rx_checks((addr == 0x2E4));
+    bool stock_ecu_detected = (addr == 0x2E4);
+    // Also check ACC_CONTROL (0x343) if openpilot is controlling longitudinal (radar is disabled or camera sends ACC messages)
+    if (!toyota_stock_longitudinal && (addr == 0x343)) {
+      stock_ecu_detected = true;
+    }
+    generic_rx_checks(stock_ecu_detected);
   }
   return valid;
 }
