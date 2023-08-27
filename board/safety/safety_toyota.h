@@ -224,7 +224,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
     }
   }
 
-  // UDS: Only tester present ("\x0F\x02\x3E\x00\x00\x00\x00\x00\x00") allowed on diagnostics address
+  // UDS: Only tester present ("\x0F\x02\x3E\x00\x00\x00\x00\x00") allowed on diagnostics address
   if (addr == 0x750) {
     // this address is sub-addressed. only allow tester present to radar (0xF)
     if ((GET_BYTES(to_send, 0, 4) != 0x003E020FU) || (GET_BYTES(to_send, 4, 4) != 0x0U)) {
@@ -262,7 +262,7 @@ static int toyota_fwd_hook(int bus_num, int addr) {
     // in TSS2, 0x191 is LTA which we need to block to avoid controls collision
     int is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412) || (addr == 0x191));
     // in TSS2 the camera does ACC as well, so filter 0x343
-    int is_acc_msg = (addr == 0x343) || (addr == 0x411);
+    int is_acc_msg = (addr == 0x343);
     int block_msg = is_lkas_msg || (is_acc_msg && !toyota_stock_longitudinal);
     if (!block_msg) {
       bus_fwd = 0;
