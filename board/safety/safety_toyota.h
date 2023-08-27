@@ -134,7 +134,6 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
     if (!toyota_stock_longitudinal && (addr == 0x343)) {
       stock_ecu_detected = true;
     }
-
     generic_rx_checks(stock_ecu_detected);
   }
   return valid;
