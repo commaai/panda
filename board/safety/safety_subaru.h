@@ -188,8 +188,10 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     int desired_torque = ((GET_BYTES(to_send, 0, 4) >> 16) & 0x1FFFU);
     desired_torque = -1 * to_signed(desired_torque, 13);
 
+    bool steer_req = GET_BIT(to_send, 29U) != 0U;
+
     const SteeringLimits limits = subaru_gen2 ? SUBARU_GEN2_STEERING_LIMITS : SUBARU_STEERING_LIMITS;
-    violation |= steer_torque_cmd_checks(desired_torque, -1, limits);
+    violation |= steer_torque_cmd_checks(desired_torque, steer_req, limits);
   }
 
   // check es_brake brake_pressure limits

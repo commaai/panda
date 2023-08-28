@@ -148,7 +148,7 @@ class TestSubaruTorqueSafetyBase(TestSubaruSafetyBase, common.DriverTorqueSteeri
   MAX_TORQUE = 2047
 
   def _torque_cmd_msg(self, torque, steer_req=1):
-    values = {"LKAS_Output": torque}
+    values = {"LKAS_Output": torque, "LKAS_Request": steer_req}
     return self.packer.make_can_msg_panda("ES_LKAS", SUBARU_MAIN_BUS, values)
 
 
