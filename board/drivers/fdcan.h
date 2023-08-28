@@ -84,10 +84,11 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
     // }
     // H7 gets stuck in bus off state TODO: figure out why
     // FIXME: merge with previous if, but keep separate for now.
-    } else if (ir_reg & FDCAN_IR_BO) {
+    } else if ((ir_reg & FDCAN_IR_BO) != 0) {
       can_health[can_number].can_core_reset_cnt += 1U;
       can_health[can_number].total_tx_lost_cnt += (FDCAN_TX_FIFO_EL_CNT - (FDCANx->TXFQS & FDCAN_TXFQS_TFFL)); // TX FIFO msgs will be lost after reset
       llcan_clear_send(FDCANx);
+    } else {
     }
   }
 }
