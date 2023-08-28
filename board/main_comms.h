@@ -22,7 +22,6 @@ int get_health_pkt(void *dat) {
   health->safety_rx_invalid_pkt = safety_rx_invalid;
   health->tx_buffer_overflow_pkt = tx_buffer_overflow;
   health->rx_buffer_overflow_pkt = rx_buffer_overflow;
-  health->torque_interceptor_detected_pkt = torque_interceptor_detected;
   health->gmlan_send_errs_pkt = gmlan_send_errs;
   health->car_harness_status_pkt = harness.status;
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
