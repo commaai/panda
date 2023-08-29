@@ -64,18 +64,24 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
     """
       Both SET and RES should enter controls allowed on their falling edge.
     """
-    for btn in (Btn.SET, Btn.RESUME):
-      for main_on in (True, False):
-        self._rx(self._acc_state_msg(main_on))
-        self.safety.set_controls_allowed(0)
+    for main_on in (True, False):
+      self._rx(self._acc_state_msg(main_on))
+      for btn_prev in range(8):
+        for btn_cur in range(8):
+          self._rx(self._button_msg(Btn.NONE))
+          self.safety.set_controls_allowed(0)
+          for _ in range(10):
+            self._rx(self._button_msg(btn_prev))
+            self.assertFalse(self.safety.get_controls_allowed())
 
-        # nothing until falling edge
-        for _ in range(10):
-          self._rx(self._button_msg(btn, main_on=main_on))
-        self.assertFalse(self.safety.get_controls_allowed())
+          # should enter controls allowed on falling edge and not transitioning to cancel or main
+          should_enable = (main_on and
+                           btn_cur != btn_prev and
+                           btn_prev in (Btn.RESUME, Btn.SET) and
+                           btn_cur not in (Btn.CANCEL, Btn.MAIN))
 
-        self._rx(self._button_msg(Btn.NONE, main_on=main_on))
-        self.assertEqual(main_on, self.safety.get_controls_allowed(), msg=f"{main_on=} {btn=}")
+          self._rx(self._button_msg(btn_cur))
+          self.assertEqual(should_enable, self.safety.get_controls_allowed(), msg=f"{main_on=} {btn_prev=} {btn_cur=}")
 
   def test_main_cancel_buttons(self):
     """
@@ -132,7 +138,7 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
         self.assertFalse(self.safety.get_controls_allowed())
 
     # restore counters for future tests with a couple of good messages
-    for i in range(2):
+    for _ in range(2):
       self.safety.set_controls_allowed(1)
       self._rx(self._button_msg(Btn.SET))
       self._rx(self._speed_msg(0))
@@ -296,7 +302,7 @@ class TestHondaNidecSafetyBase(HondaBase):
       self.safety.set_controls_allowed(controls_allowed)
       for pcm_gas in range(0, 255):
         for pcm_speed in range(0, 100):
-          send = pcm_gas <= self.MAX_GAS if controls_allowed else pcm_gas == 0 and pcm_speed == 0
+          send = (controls_allowed and pcm_gas <= self.MAX_GAS) or (pcm_gas == 0 and pcm_speed == 0)
           self.assertEqual(send, self._tx(self._send_acc_hud_msg(pcm_gas, pcm_speed)))
 
   def test_fwd_hook(self):
@@ -499,7 +505,7 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
       for gas in np.arange(self.NO_GAS, self.MAX_GAS + 2000, 100):
         accel = 0 if gas < 0 else gas / 1000
         self.safety.set_controls_allowed(controls_allowed)
-        send = gas <= self.MAX_GAS if controls_allowed else gas == self.NO_GAS
+        send = (controls_allowed and 0 <= gas <= self.MAX_GAS) or gas == self.NO_GAS
         self.assertEqual(send, self._tx(self._send_gas_brake_msg(gas, accel)), (controls_allowed, gas, accel))
 
   def test_brake_safety_check(self):

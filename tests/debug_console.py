@@ -6,8 +6,7 @@ import time
 import select
 import codecs
 
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda  # noqa: E402
+from panda import Panda
 
 setcolor = ["\033[1;32;40m", "\033[1;31;40m"]
 unsetcolor = "\033[00m"
@@ -24,7 +23,7 @@ if __name__ == "__main__":
       if os.getenv("SERIAL"):
         serials = [x for x in serials if x == os.getenv("SERIAL")]
 
-      pandas = list([Panda(x, claim=claim) for x in serials])
+      pandas = [Panda(x, claim=claim) for x in serials]
       decoders = [codecs.getincrementaldecoder('utf-8')() for _ in pandas]
 
       if not len(pandas):

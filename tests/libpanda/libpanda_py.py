@@ -1,6 +1,6 @@
 import os
 from cffi import FFI
-from typing import List
+from typing import Any, List, Protocol
 
 from panda import LEN_TO_DLC
 from panda.tests.libpanda.safety_helpers import PandaSafety, setup_safety_helpers
@@ -54,6 +54,34 @@ void comms_can_reset(void);
 uint32_t can_slots_empty(can_ring *q);
 """)
 
+ffi.cdef("""
+  typedef struct timestamp_t {
+    uint16_t year;
+    uint8_t month;
+    uint8_t day;
+    uint8_t weekday;
+    uint8_t hour;
+    uint8_t minute;
+    uint8_t second;
+  } timestamp_t;
+
+  typedef struct {
+    uint16_t id;
+    timestamp_t timestamp;
+    uint32_t uptime;
+    char msg[50];
+  } log_t;
+
+  extern uint32_t *logging_bank;
+  extern uint32_t logging_bank_size;
+  extern uint32_t logging_rate_limit;
+
+  void logging_init(void);
+  void logging_tick(void);
+  void log(const char* msg);
+  uint8_t logging_read(uint8_t *buffer);
+""")
+
 setup_safety_helpers(ffi)
 
 class CANPacket:
@@ -66,13 +94,28 @@ class CANPacket:
   addr: int
   data: List[int]
 
-class Panda(PandaSafety):
+class Panda(PandaSafety, Protocol):
+  # CAN
+  tx1_q: Any
+  tx2_q: Any
+  tx3_q: Any
+  txgmlan_q: Any
+  def can_set_checksum(self, p: CANPacket) -> None: ...
+
   # safety
   def safety_rx_hook(self, to_send: CANPacket) -> int: ...
   def safety_tx_hook(self, to_push: CANPacket) -> int: ...
   def safety_fwd_hook(self, bus_num: int, addr: int) -> int: ...
   def set_safety_hooks(self, mode: int, param: int) -> int: ...
 
+  # logging
+  def logging_init(self) -> None: ...
+  def logging_tick(self) -> None: ...
+  def log(self, msg: bytearray) -> None: ...
+  def logging_read(self, buffer: bytearray) -> int: ...
+  logging_bank: bytearray
+  logging_bank_size: int
+  logging_rate_limit: int
 
 libpanda: Panda = ffi.dlopen(libpanda_fn)
 

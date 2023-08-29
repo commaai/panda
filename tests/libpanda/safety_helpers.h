@@ -71,6 +71,10 @@ bool get_cruise_engaged_prev(void){
   return cruise_engaged_prev;
 }
 
+void set_cruise_engaged_prev(bool engaged){
+  cruise_engaged_prev = engaged;
+}
+
 bool get_vehicle_moving(void){
   return vehicle_moving;
 }
@@ -139,6 +143,10 @@ void set_desired_torque_last(int t){
 
 void set_desired_angle_last(int t){
   desired_angle_last = t;
+}
+
+int get_desired_angle_last(void){
+  return desired_angle_last;
 }
 
 int get_angle_meas_min(void){
