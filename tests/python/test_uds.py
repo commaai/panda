@@ -108,14 +108,6 @@ class UdsServer(UdsClient):
               send_dat = bytes(send_dat)
               isotp_msg.send(send_dat)
 
-            # # send_dat = [resp_sid + 0x40, resp_sfn]
-            # # if len(lookup[resp_sid][resp_sfn]):
-            # #   send_dat.append(int.from_bytes(lookup[resp_sid][bytes([resp_sfn])]))  # add data if exists
-            # print('send_dat', send_dat)
-            # send_dat = bytes(send_dat)
-            # print('sending', send_dat)
-            # isotp_msg.send(send_dat)
-            # # something
             else:
               # invalid data
               dat = [0x7F]
