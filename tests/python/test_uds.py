@@ -62,11 +62,11 @@ class UdsServer(UdsClient):
 
       if resp_sid in lookup:
         # get subfunction from request if expected to have one
-        resp_sfn = bytes([resp[1]]) if len(resp) > 1 and None not in lookup[resp_sid] else None
+        has_subfunction = None not in lookup[resp_sid]  # len(lookup[resp_sid]) == 1
+        resp_sfn = bytes([resp[1]]) if len(resp) > 1 and has_subfunction else None
 
-        # service_has_subfunction = None not in lookup[resp_sid]  # len(lookup[resp_sid]) == 1
         # print(f'{service_has_subfunction=}')
-        if resp_sfn is None:
+        if not has_subfunction:
           data = resp[(1 if resp_sfn is None else 2):]
           print('data in service', data, lookup[resp_sid][None])
           if data in lookup[resp_sid][None]:
@@ -164,10 +164,16 @@ class TestUds(unittest.TestCase):
     tester present request with and without sub-addresses
     """
 
-    self.uds_server.tester_present()
+    self.uds_server._uds_request(SERVICE_TYPE.TESTER_PRESENT, 0)
 
-    # with self.assertRaises():
-    self.uds_server._uds_request(SERVICE_TYPE.TESTER_PRESENT)
+    with self.assertRaises(uds.NegativeResponseError):
+      self.uds_server._uds_request(SERVICE_TYPE.TESTER_PRESENT, 0, b'\x00')
+
+    with self.assertRaises(uds.NegativeResponseError):
+      self.uds_server._uds_request(SERVICE_TYPE.TESTER_PRESENT)
+
+    with self.assertRaises(uds.NegativeResponseError):
+      self.uds_server._uds_request(SERVICE_TYPE.TESTER_PRESENT, 1)
 
   def test_unsupported_service_type(self):
     # TODO: test exact response bytes, UdsClient doesn't support that yet
