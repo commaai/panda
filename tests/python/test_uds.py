@@ -124,27 +124,9 @@ class UdsServer(UdsClient):
               dat = bytes(dat)
               print('Car ECU - bad request, sending back:', dat)
               isotp_msg.send(dat)
-        # print(resp_sid, resp.hex(), 'in lookup')
-
-      # if resp_sid == SERVICE_TYPE.TESTER_PRESENT:
-      #   dat = bytes([SERVICE_TYPE.TESTER_PRESENT + 0x40, 0x0])
-      #   print('Car ECU - sending back:', dat)
-      #   isotp_msg.send(dat)
-      # elif resp_sid == SERVICE_TYPE.READ_DATA_BY_IDENTIFIER:
-      #   print('Car ECU - READ DATA')
-      #   assert len(resp) > 1
-      #   resp_data = struct.unpack('!H', resp[1:])[0]
-      #   print(resp_data)
-      #   if resp_data == DATA_IDENTIFIER_TYPE.VIN:
-      #     dat = bytes([resp_sid + 0x40]) + resp[1:] + DEFAULT_VIN.encode('utf-8')
-      #     print('Car ECU - sending back:', dat)
-      #     isotp_msg.send(dat)
-      #   else:
-      #     dat = bytes([0x7F, resp_sid, *resp[1:]])
-      #     print('Car ECU - bad data id, sending back:', dat)
-      #     isotp_msg.send(dat)
 
       else:
+        # invalid service
         dat = [0x7F]
         if resp_sid is not None:
           dat.append(resp_sid)
