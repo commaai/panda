@@ -449,18 +449,18 @@ class IsoTpMessage():
       timeout = self.timeout
 
     start_time = time.monotonic()
-    updated = False
+    rx_in_progress = False
     try:
       while True:
         for msg in self._can_client.recv():
-          self._isotp_rx_next(msg)
+          frame_type = self._isotp_rx_next(msg)
           start_time = time.monotonic()
-          updated = True
+          rx_in_progress = frame_type == ISOTP_FRAME_TYPE.CONSECUTIVE
           if self.tx_done and self.rx_done:
-            return self.rx_dat, updated
+            return self.rx_dat, False
         # no timeout indicates non-blocking
         if timeout == 0:
-          return None, updated
+          return None, rx_in_progress
         if time.monotonic() - start_time > timeout:
           raise MessageTimeoutError("timeout waiting for response")
     finally:
