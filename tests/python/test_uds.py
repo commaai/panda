@@ -166,6 +166,9 @@ class TestUds(unittest.TestCase):
 
     self.uds_server.tester_present()
 
+    # with self.assertRaises():
+    self.uds_server._uds_request(SERVICE_TYPE.TESTER_PRESENT)
+
   def test_unsupported_service_type(self):
     # TODO: test exact response bytes, UdsClient doesn't support that yet
     with self.assertRaises(uds.NegativeResponseError):
@@ -182,11 +185,16 @@ class TestUds(unittest.TestCase):
     response = self.uds_server.read_data_by_identifier(DATA_IDENTIFIER_TYPE.VIN)
     self.assertEqual(response, DEFAULT_VIN_B)
 
-    response = self.uds_server._uds_request(SERVICE_TYPE.READ_DATA_BY_IDENTIFIER, None, b'\xf1\x00')
+    response = self.uds_server._uds_request(SERVICE_TYPE.READ_DATA_BY_IDENTIFIER, data=b'\xf1\x00')
     self.assertEqual(response, b'\xf1\x00CV1 MFC  AT USA LHD 1.00 1.05 99210-CV000 211027')
 
     with self.assertRaises(uds.NegativeResponseError):
-      self.uds_server._uds_request(SERVICE_TYPE.READ_DATA_BY_IDENTIFIER, None, b'\xf1\x01')
+      self.uds_server._uds_request(SERVICE_TYPE.READ_DATA_BY_IDENTIFIER, 0, data=b'\xf1\x00')
+
+    with self.assertRaises(uds.NegativeResponseError):
+      self.uds_server._uds_request(SERVICE_TYPE.READ_DATA_BY_IDENTIFIER, data=b'\xf1\x01')
+
+    # self.uds_server._uds_request(SERVICE_TYPE.READ_DATA_BY_IDENTIFIER)
 
 
 if __name__ == '__main__':
