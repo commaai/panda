@@ -33,7 +33,7 @@ class UdsServer(UdsClient):
     # Dict[SERVICE_TYPE, Dict[bytes, bool | bytes]]
     lookup = {
       SERVICE_TYPE.TESTER_PRESENT: {
-        b'\x00': {  # sub function to
+        b'\x00': {  # sub function to data in/out  # TODO: replace subfunction map with int
           b'': b'',  # don't expect any extra data, don't respond with extra data
         },
       },
@@ -43,6 +43,11 @@ class UdsServer(UdsClient):
           b'\xF1\x90': DEFAULT_VIN_B,
         }
       },
+      SERVICE_TYPE.DIAGNOSTIC_SESSION_CONTROL: {
+        bytes([i]): {
+          b'': b'',
+        } for i in uds.SESSION_TYPE
+      }
     }
 
     # send request, wait for response
@@ -174,6 +179,13 @@ class TestUds(unittest.TestCase):
 
     with self.assertRaises(uds.NegativeResponseError):
       self.uds_server._uds_request(SERVICE_TYPE.TESTER_PRESENT, 1)
+
+  def test_multi_subfunctions(self):
+    for session_type in uds.SESSION_TYPE:
+      self.uds_server.diagnostic_session_control(session_type)
+
+    with self.assertRaises(uds.NegativeResponseError):
+      self.uds_server.diagnostic_session_control(max(uds.SESSION_TYPE) + 1)
 
   def test_unsupported_service_type(self):
     # TODO: test exact response bytes, UdsClient doesn't support that yet
