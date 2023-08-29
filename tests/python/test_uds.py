@@ -38,7 +38,7 @@ class UdsServer(UdsClient):
         },
       },
       SERVICE_TYPE.READ_DATA_BY_IDENTIFIER: {
-        None: {  # no subfunction, only responds to data
+        None: {  # no subfunction, only responds to data  # TODO: test no other subfunctions
           b'\xF1\x00': b'CV1 MFC  AT USA LHD 1.00 1.05 99210-CV000 211027',
           b'\xF1\x90': DEFAULT_VIN_B,
         }
@@ -184,24 +184,21 @@ class TestUds(unittest.TestCase):
   def tearDown(self):
     self.uds_server.stop()
 
-  # def test_tester_present_v2(self):
-  #   ret = self.uds_server._uds_request(SERVICE_TYPE.TESTER_PRESENT, 0)
-  #   print('ret', ret)
+  def test_tester_present(self):
+    """
+    Tests IsoTpMessage and CanClient both sending and responding to a
+    tester present request with and without sub-addresses
+    """
 
-  # def test_tester_present(self):
-  #   """
-  #   Tests IsoTpMessage and CanClient both sending and responding to a
-  #   tester present request with and without sub-addresses
-  #   """
-  #
-  #   self.uds_server.tester_present()
-  #
-  # def test_unsupported_service_type(self):
-  #   with self.assertRaises(uds.NegativeResponseError):
-  #     self.uds_server._uds_request(100)
-  #
-  #   with self.assertRaises(uds.NegativeResponseError):
-  #     self.uds_server._uds_request(SERVICE_TYPE.ACCESS_TIMING_PARAMETER)
+    self.uds_server.tester_present()
+
+  def test_unsupported_service_type(self):
+    # TODO: test exact response bytes, UdsClient doesn't support that yet
+    with self.assertRaises(uds.NegativeResponseError):
+      self.uds_server._uds_request(100)
+
+    with self.assertRaises(uds.NegativeResponseError):
+      self.uds_server._uds_request(SERVICE_TYPE.ACCESS_TIMING_PARAMETER)
 
   def test_read_by_identifier(self):
     """
