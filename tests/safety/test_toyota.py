@@ -27,7 +27,7 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest,
              [0x2E4, 0], [0x191, 0], [0x411, 0], [0x412, 0], [0x343, 0], [0x1D2, 0],  # LKAS + ACC
              [0x200, 0], [0x750, 0]]  # interceptor + blindspot monitor
   STANDSTILL_THRESHOLD = 0  # kph
-  RELAY_MALFUNCTION_ADDR = 0x343  # ACC_CONTROL
+  RELAY_MALFUNCTION_ADDR = 0x2E4
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x343]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
@@ -180,8 +180,7 @@ class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
 
 class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
 
-  # Forwarding: base addresses minus ACC_CONTROL (0x343), relay malfunction: STEERING_LKA
-  RELAY_MALFUNCTION_ADDR = 0x2E4
+  # Base fwd addresses minus ACC_CONTROL (0x343)
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191]}
 
   def test_accel_actuation_limits(self, stock_longitudinal=True):
