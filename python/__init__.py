@@ -91,7 +91,7 @@ def unpack_can_buffer(dat):
   return (ret, dat)
 
 
-def ensure_version(fn, desc, lib_field, panda_field):
+def ensure_version(desc, lib_field, panda_field, fn):
   @wraps(fn)
   def wrapper(self, *args, **kwargs):
     lib_version = getattr(self, lib_field)
