@@ -120,6 +120,12 @@ bool hyundai_canfd_hda2 = false;
 bool hyundai_canfd_alt_buttons = false;
 
 
+int hyundai_canfd_get_steer_addr(bool longitudinal) {
+  // when using longitudinal on HDA2, we control with LFA instead of LKAS
+  // which is normally sent by the ADAS ECU
+  return (hyundai_canfd_hda2 && !longitudinal) ? 0x50 : 0x12a;
+}
+
 static uint8_t hyundai_canfd_get_counter(CANPacket_t *to_push) {
   uint8_t ret = 0;
   if (GET_LEN(to_push) == 8U) {
@@ -231,7 +237,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
     }
   }
 
-  const int steer_addr = hyundai_canfd_hda2 ? 0x50 : 0x12a;
+  const int steer_addr = hyundai_canfd_get_steer_addr(false);  // get address normally from the camera
   bool stock_ecu_detected = (addr == steer_addr) && (bus == 0);
   if (hyundai_longitudinal) {
     // on HDA2, ensure ADRV ECU is still knocked out
@@ -258,7 +264,7 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send) {
   }
 
   // steering
-  const int steer_addr = (hyundai_canfd_hda2 && !hyundai_longitudinal) ? 0x50 : 0x12a;
+  const int steer_addr = hyundai_canfd_get_steer_addr(hyundai_longitudinal);
   if (addr == steer_addr) {
     int desired_torque = (((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U)) - 1024U;
     bool steer_req = GET_BIT(to_send, 52U) != 0U;
