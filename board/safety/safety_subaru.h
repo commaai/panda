@@ -202,7 +202,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   if (addr == MSG_SUBARU_ES_Distance) {
     int cruise_throttle = (GET_BYTES(to_send, 2, 2) & 0xFFFU);
     bool cruise_cancel = GET_BIT(to_send, 56U) != 0U;
-    
+
     if (subaru_longitudinal) {
       violation |= longitudinal_gas_checks(cruise_throttle, SUBARU_LONG_LIMITS);
     } else {
@@ -234,16 +234,16 @@ static int subaru_fwd_hook(int bus_num, int addr) {
 
   if (bus_num == SUBARU_CAM_BUS) {
     // Global platform
-    bool block_lkas = ((addr == MSG_SUBARU_ES_LKAS) ||
-                       (addr == MSG_SUBARU_ES_DashStatus) ||
-                       (addr == MSG_SUBARU_ES_LKAS_State) ||
-                       (addr == MSG_SUBARU_ES_Infotainment));
+    const bool block_lkas = ((addr == MSG_SUBARU_ES_LKAS) ||
+                             (addr == MSG_SUBARU_ES_DashStatus) ||
+                             (addr == MSG_SUBARU_ES_LKAS_State) ||
+                             (addr == MSG_SUBARU_ES_Infotainment));
 
-    bool block_long = ((addr == MSG_SUBARU_ES_Brake) ||
-                       (addr == MSG_SUBARU_ES_Distance) ||
-                       (addr == MSG_SUBARU_ES_Status));
+    const bool block_long = ((addr == MSG_SUBARU_ES_Brake) ||
+                             (addr == MSG_SUBARU_ES_Distance) ||
+                             (addr == MSG_SUBARU_ES_Status));
 
-    bool block_msg = block_lkas || (subaru_longitudinal && block_long);
+    const bool block_msg = block_lkas || (subaru_longitudinal && block_long);
     if (!block_msg) {
       bus_fwd = SUBARU_MAIN_BUS;  // Main CAN
     }
