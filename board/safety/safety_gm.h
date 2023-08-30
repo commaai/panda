@@ -227,7 +227,7 @@ static int gm_fwd_hook(int bus_num, int addr) {
       // block lkas message and acc messages if gm_cam_long, forward all others
       bool is_lkas_msg = (addr == 384);
       bool is_acc_msg = (addr == 789) || (addr == 715) || (addr == 880);
-      int block_msg = is_lkas_msg || (is_acc_msg && gm_cam_long);
+      bool block_msg = is_lkas_msg || (is_acc_msg && gm_cam_long);
       if (!block_msg) {
         bus_fwd = 0;
       }
