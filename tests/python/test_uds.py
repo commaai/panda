@@ -36,9 +36,9 @@ class UdsServer(UdsClient):
 
   def set_services(self, services):
     self.services = services
-    # TODO: test services (no mixed subfunctions (none and not-none))
 
     for service_type, service_info in self.services.items():
+      assert service_type is not None, "Service type can't be undefined"
       # TODO: if we use a dataclass we don't need to test, it would be impossible to write
       assert len(set(map(type, service_info.keys()))) == 1, \
         f"Service {hex(service_type)} must not define some and none subfunctions"
@@ -183,6 +183,11 @@ class TestUds(unittest.TestCase):
 
     # add None subfunction (no subfunction), can't exist with subfunction above
     services[SERVICE_TYPE.COMMUNICATION_CONTROL][None] = {b'': b''}
+    with self.assertRaises(AssertionError):
+      self.uds_server.set_services(STANDARD_UDS_SERVER_SERVICES | services)
+
+    # add None service type
+    services: UdsServicesType = {None: {b'\x00': {b'': b''}}}
     with self.assertRaises(AssertionError):
       self.uds_server.set_services(STANDARD_UDS_SERVER_SERVICES | services)
 
