@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import copy
 from typing import *  # FIXME this
 from parameterized import parameterized_class
 import unittest
@@ -168,16 +167,6 @@ class MockCanBuffer:
       return self.rx_msg
 
 
-TEST_UDS_SERVICES = {
-  SERVICE_TYPE.READ_DATA_BY_IDENTIFIER: {
-    None: {  # no subfunction, only responds to data  # TODO: test no other subfunctions
-      b'\xF1\x00': b'CV1 MFC  AT USA LHD 1.00 1.05 99210-CV000 211027',
-      b'\xF1\x90': DEFAULT_VIN_B,
-    }
-  }
-}
-
-
 # @parameterized_class([
 #   {"tx_addr": 0x750, "sub_addr": None},
 #   {"tx_addr": 0x750, "sub_addr": 0xf},
@@ -186,11 +175,20 @@ class TestUds(unittest.TestCase):
   tx_addr: int = 0x750
   sub_addr: int = None
 
+  TEST_UDS_SERVICES = {
+    SERVICE_TYPE.READ_DATA_BY_IDENTIFIER: {
+      None: {  # no subfunction, only responds to data  # TODO: test no other subfunctions
+        b'\xF1\x00': b'CV1 MFC  AT USA LHD 1.00 1.05 99210-CV000 211027',
+        b'\xF1\x90': DEFAULT_VIN_B,
+      }
+    }
+  }
+
   def setUp(self):
     self.rx_addr = get_rx_addr_for_tx_addr(self.tx_addr)
     can_buf = MockCanBuffer()
     self.uds_server = UdsServer(can_buf, get_rx_addr_for_tx_addr(self.tx_addr), self.tx_addr, sub_addr=self.sub_addr)
-    self.uds_server.set_services(STANDARD_UDS_SERVER_SERVICES | TEST_UDS_SERVICES)
+    self.uds_server.set_services(STANDARD_UDS_SERVER_SERVICES | self.TEST_UDS_SERVICES)
     self.uds_server.start()
 
   def tearDown(self):
@@ -198,18 +196,18 @@ class TestUds(unittest.TestCase):
 
   def test_server_set_services(self):
     # add new service with subfunction
-    services = copy.deepcopy(STANDARD_UDS_SERVER_SERVICES)
+    services = {}
     services[SERVICE_TYPE.COMMUNICATION_CONTROL] = {
       b'\x00': {  # sub function to data in/out  # TODO: replace subfunction map with int
         b'': b'',  # don't expect any extra data, don't respond with extra data
       },
     }
-    self.uds_server.set_services(services)
+    self.uds_server.set_services(STANDARD_UDS_SERVER_SERVICES | services)
 
     # add None subfunction (no subfunction), can't exist with subfunction above
     services[SERVICE_TYPE.COMMUNICATION_CONTROL][None] = {b'': b''}
     with self.assertRaises(Exception):
-      self.uds_server.set_services(services)
+      self.uds_server.set_services(STANDARD_UDS_SERVER_SERVICES | services)
 
   def test_tester_present(self):
     """
