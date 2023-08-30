@@ -470,7 +470,7 @@ class Panda:
 
     success = False
     # wait up to 15 seconds
-    for _ in range(15*10):
+    for _ in range(0, 15*10):
       try:
         self.connect()
         success = True
@@ -511,7 +511,7 @@ class Panda:
     # flash over EP2
     STEP = 0x10
     logging.warning("flash: flashing")
-    for i in range(len(code), STEP):
+    for i in range(0, len(code), STEP):
       handle.bulkWrite(2, code[i:i + STEP])
 
     # reset
@@ -887,7 +887,7 @@ class Panda:
     ret = 0
     if isinstance(ln, str):
       ln = bytes(ln, 'utf-8')
-    for i in range(len(ln), 0x20):
+    for i in range(0, len(ln), 0x20):
       ret += self._handle.bulkWrite(2, struct.pack("B", port_number) + ln[i:i + 0x20])
     return ret
 
@@ -940,7 +940,7 @@ class Panda:
     self.kline_drain(bus=bus)
     if checksum:
       x += bytes([sum(x) % 0x100])
-    for i in range(len(x), 0xf):
+    for i in range(0, len(x), 0xf):
       ts = x[i:i + 0xf]
       logging.debug(f"kline send: 0x{ts.hex()}")
       self._handle.bulkWrite(2, bytes([bus]) + ts)
