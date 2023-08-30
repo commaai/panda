@@ -257,10 +257,6 @@ class Panda:
     # reset comms
     self.can_reset_communications()
 
-    self.ensure_health_packet_version = partial(ensure_version, "health", self.HEALTH_PACKET_VERSION, self.health_version)
-    self.ensure_can_packet_version = partial(ensure_version, "health", self.HEALTH_PACKET_VERSION, self.health_version)
-    self.ensure_can_health_packet_version = partial(ensure_version, "CAN health", self.CAN_HEALTH_PACKET_VERSION, self.can_health_version)
-
   def __enter__(self):
     return self
 
