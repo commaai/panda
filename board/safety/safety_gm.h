@@ -217,7 +217,7 @@ static int gm_fwd_hook(int bus_num, int addr) {
   if (gm_hw == GM_CAM) {
     if (bus_num == 0) {
       // block PSCMStatus; forwarded through openpilot to hide an alert from the camera
-      const bool is_pscm_msg = (addr == 388);
+      bool is_pscm_msg = (addr == 388);
       if (!is_pscm_msg) {
         bus_fwd = 2;
       }
@@ -225,9 +225,9 @@ static int gm_fwd_hook(int bus_num, int addr) {
 
     if (bus_num == 2) {
       // block lkas message and acc messages if gm_cam_long, forward all others
-      const bool is_lkas_msg = (addr == 384);
-      const bool is_acc_msg = (addr == 789) || (addr == 715) || (addr == 880);
-      const bool block_msg = is_lkas_msg || (is_acc_msg && gm_cam_long);
+      bool is_lkas_msg = (addr == 384);
+      bool is_acc_msg = (addr == 789) || (addr == 715) || (addr == 880);
+      int block_msg = is_lkas_msg || (is_acc_msg && gm_cam_long);
       if (!block_msg) {
         bus_fwd = 0;
       }

@@ -114,7 +114,7 @@ static int mazda_fwd_hook(int bus, int addr) {
   if (bus == MAZDA_MAIN) {
     bus_fwd = MAZDA_CAM;
   } else if (bus == MAZDA_CAM) {
-    const bool block = (addr == MAZDA_LKAS) || (addr == MAZDA_LKAS_HUD);
+    bool block = (addr == MAZDA_LKAS) || (addr == MAZDA_LKAS_HUD);
     if (!block) {
       bus_fwd = MAZDA_MAIN;
     }
