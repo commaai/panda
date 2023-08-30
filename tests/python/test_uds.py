@@ -9,8 +9,6 @@ from dataclasses import dataclass
 from panda.python import uds
 from panda.python.uds import SERVICE_TYPE, DATA_IDENTIFIER_TYPE, IsoTpMessage, UdsClient, get_rx_addr_for_tx_addr
 
-DEFAULT_VIN_B = b'1H3110W0RLD5'
-
 STANDARD_UDS_SERVER_SERVICES = {  # TODO: type or use dataclass
   SERVICE_TYPE.TESTER_PRESENT: {
     b'\x00': {  # sub function to data in/out  # TODO: replace subfunction map with int
@@ -50,30 +48,6 @@ class UdsServer(UdsClient):
     if response_code is not None:
       dat.append(response_code)
     return bytes(dat)
-
-  # def get_lookup(self):
-  #   """Returns standard lookup table """
-  #   # {service_type: {subfunction: response (if True, positive, if bytes, return that)}}  # TODO: maybe just bytes
-  #   # TODO: might want to use a dataclass so we aren't using dynamically shaped dicts
-  #   # Dict[SERVICE_TYPE, Dict[bytes, bool | bytes]]
-  #   lookup = {
-  #     SERVICE_TYPE.TESTER_PRESENT: {
-  #       b'\x00': {  # sub function to data in/out  # TODO: replace subfunction map with int
-  #         b'': b'',  # don't expect any extra data, don't respond with extra data
-  #       },
-  #     },
-  #     SERVICE_TYPE.READ_DATA_BY_IDENTIFIER: {
-  #       None: {  # no subfunction, only responds to data  # TODO: test no other subfunctions
-  #         b'\xF1\x00': b'CV1 MFC  AT USA LHD 1.00 1.05 99210-CV000 211027',
-  #         b'\xF1\x90': DEFAULT_VIN_B,
-  #       }
-  #     },
-  #     SERVICE_TYPE.DIAGNOSTIC_SESSION_CONTROL: {
-  #       bytes([i]): {
-  #         b'': b'',
-  #       } for i in uds.SESSION_TYPE
-  #     }
-  #   }
 
   def _uds_response(self):
     # send request, wait for response
@@ -179,7 +153,7 @@ class TestUds(unittest.TestCase):
     SERVICE_TYPE.READ_DATA_BY_IDENTIFIER: {
       None: {  # no subfunction, only responds to data  # TODO: test no other subfunctions
         b'\xF1\x00': b'CV1 MFC  AT USA LHD 1.00 1.05 99210-CV000 211027',
-        b'\xF1\x90': DEFAULT_VIN_B,
+        b'\xF1\x90': b'1H3110W0RLD5',
       }
     }
   }
@@ -251,8 +225,9 @@ class TestUds(unittest.TestCase):
     """
 
     response = self.uds_server.read_data_by_identifier(DATA_IDENTIFIER_TYPE.VIN)
-    self.assertEqual(response, DEFAULT_VIN_B)
+    self.assertEqual(response, b'1H3110W0RLD5')
 
+    # test non-standard id
     response = self.uds_server._uds_request(SERVICE_TYPE.READ_DATA_BY_IDENTIFIER, data=b'\xf1\x00')
     self.assertEqual(response, b'\xf1\x00CV1 MFC  AT USA LHD 1.00 1.05 99210-CV000 211027')
 
