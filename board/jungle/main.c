@@ -201,7 +201,7 @@ int main(void) {
 #endif
 
 #ifdef STM32H7
-#define SDMMC_DELAY 7500 // FIXME: lower than 7500 - get 0xb error - wrong status (not in transfer state)
+#define SDMMC_DELAY 10000 // FIXME: lower than 7500 - get 0xb error - wrong status (not in transfer state)
 const uint8_t testkey = 0X5AU;
 uint8_t sd_error = 0U;
 
