@@ -201,6 +201,7 @@ int main(void) {
 #endif
 
 #ifdef STM32H7
+#define SDMMC_DELAY 7500 // FIXME: lower than 7500 - get 0xb error - wrong status (not in transfer state)
 const uint8_t testkey = 0X5AU;
 uint8_t sd_error = 0U;
 
@@ -238,7 +239,7 @@ sd_error = sdmmc_write(idmabuf, 0, (SDMMC_BUFFER_SIZE/SDMMC_BLOCK_SIZE));
 print("SDMMC erase done\n");
 puth(sd_error);
 
-delay(100000);
+delay(SDMMC_DELAY);
 
 // reset buffer
 (void)memset(idmabuf, testkey, SDMMC_BUFFER_SIZE);
@@ -251,7 +252,7 @@ sd_error = sdmmc_write_idma(idmabuf, 0, (SDMMC_BUFFER_SIZE/SDMMC_BLOCK_SIZE));
 print("SDMMC write done\n");
 puth(sd_error);
 
-delay(100000);  // FIXME: need to wait until previous command is finished, should be solved with IRQs
+delay(SDMMC_DELAY);  // FIXME: need to wait until previous command is finished, should be solved with IRQs
 
 // Try to read and compare result
 (void)memset(idmabuf, 0, SDMMC_BUFFER_SIZE);
@@ -261,7 +262,7 @@ print("SDMMC read done\n");
 puth(sd_error);
 int8_t res = 0;
 
-delay(100000);
+// delay(SDMMC_DELAY);
 print("SDMMC compare\n");
 print("SAMPLE: ");
 puth2(idmabuf[0]);
