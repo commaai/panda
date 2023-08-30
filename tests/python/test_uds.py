@@ -195,6 +195,10 @@ class TestUds(unittest.TestCase):
     self.uds_server.stop()
 
   def test_server_set_services(self):
+    """
+    Test we can't add service with subfunctions both defined and not defined.
+    None is no subfunction supported
+    """
     # add new service with subfunction
     services = {}
     services[SERVICE_TYPE.COMMUNICATION_CONTROL] = {
