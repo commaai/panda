@@ -13,6 +13,25 @@ void gpio_spi_init(void) {
   register_set_bits(&(GPIOE->OSPEEDR), GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12 | GPIO_OSPEEDR_OSPEED13 | GPIO_OSPEEDR_OSPEED14);
 }
 
+void gpio_sdmmc_init(void) {
+    // SDMMC1:
+  set_gpio_pullup(GPIOC, 8, PULL_NONE);
+  set_gpio_alternate(GPIOC, 8, GPIO_AF12_SDMMC1); // SD_D0
+  set_gpio_pullup(GPIOC, 9, PULL_NONE);
+  set_gpio_alternate(GPIOC, 9, GPIO_AF12_SDMMC1); // SD_D1
+  set_gpio_pullup(GPIOC, 10, PULL_NONE);
+  set_gpio_alternate(GPIOC, 10, GPIO_AF12_SDMMC1); // SD_D2
+  set_gpio_pullup(GPIOC, 11, PULL_NONE);
+  set_gpio_alternate(GPIOC, 11, GPIO_AF12_SDMMC1); // SD_D3
+  set_gpio_pullup(GPIOC, 12, PULL_NONE);
+  set_gpio_alternate(GPIOC, 12, GPIO_AF12_SDMMC1); // SD_SCLK
+
+  set_gpio_alternate(GPIOD, 2, GPIO_AF12_SDMMC1); // SD_CMD
+
+  register_set_bits(&(GPIOC->OSPEEDR), GPIO_OSPEEDR_OSPEED8 | GPIO_OSPEEDR_OSPEED9 | GPIO_OSPEEDR_OSPEED10 | GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12);
+  register_set_bits(&(GPIOD->OSPEEDR), GPIO_OSPEEDR_OSPEED2);
+}
+
 void gpio_usart2_init(void) {
   // A2,A3: USART 2 for debugging
   set_gpio_alternate(GPIOA, 2, GPIO_AF7_USART2);

@@ -1,36 +1,3 @@
-typedef enum
-{
-	sd_err_ok = 0,
-	sd_err_ctimeout,
-	sd_err_ccrcfail,
-	sd_err_dtimeout,
-	sd_err_dcrcfail,
-	sd_err_rxoverr,
-	sd_err_txunderr,
-	sd_err_stbiterr,
-	sd_err_writefail,
-	sd_err_unexpected_command,
-	sd_err_not_supported,
-	sd_err_wrong_status
-} sd_error;
-
-typedef enum
-{
-	CARD_SDSC,
-	CARD_SDHC,
-	CARD_SDXC
-} sd_type;
-
-typedef struct sd_info
-{
-	sd_type    type;            // type of the sd card
-	uint32_t   rca;             // relative card address
-	uint32_t   card_size;       // card size in sectors
-	uint32_t   sect_size;       // sector size in bytes
-	uint32_t   erase_size;      // erase block size in sectors
-} sd_info_t;
-
-
 #define	RESP_NONE 0U
 #define	RESP_R1 1U
 #define	RESP_R1b 2U
@@ -88,63 +55,60 @@ typedef struct sd_info
 #define SCR_SD_SECURITY_SDXC          0x400000          // SDXC Card (Security Version 3.xx)
 
 
-#define SDMMC_INIT_CLK_DIV         0x64U // div 200 (400kHz max)
-#define SDMMC_TRANSFER_CLK_DIV     0x2U // div 4 (PLL1Q/4=20MHz) (25MHz max)
+#define SDMMC_INIT_CLK_DIV            0x64U // div 200 (400kHz max)
+#define SDMMC_TRANSFER_CLK_DIV        0x2U // div 4 (PLL1Q/4=20MHz) (25MHz max)
 
 //--------------------------------------------
-#define INIT_PROCESS_COUNT        1000      // Number of attempts to get a ready state
-#define DATATIMEOUT               0xFFFFFF  // A method for computing a realistic values from CSD is described in the specs
+#define INIT_PROCESS_COUNT            1000      // Number of attempts to get a ready state
+#define DATATIMEOUT                   0xFFFFFF  // A method for computing a realistic values from CSD is described in the specs
 
-#define SDMMC_DCTRL_BLOCKSIZE_512				(9 << SDMMC_DCTRL_DBLOCKSIZE_Pos )
-#define SDMMC_STA_ERRORS			(SDMMC_STA_RXOVERR | SDMMC_STA_TXUNDERR | SDMMC_STA_DTIMEOUT | SDMMC_STA_DCRCFAIL )
-#define SDMMC_ICR_STATIC     (SDMMC_ICR_CCRCFAILC | SDMMC_ICR_DCRCFAILC | SDMMC_ICR_CTIMEOUTC | \
-                                        SDMMC_ICR_DTIMEOUTC | SDMMC_ICR_TXUNDERRC | SDMMC_ICR_RXOVERRC  | \
-                                        SDMMC_ICR_CMDRENDC  | SDMMC_ICR_CMDSENTC  | SDMMC_ICR_DATAENDC  | \
-                                         SDMMC_ICR_DBCKENDC )
+#define SDMMC_DCTRL_BLOCKSIZE_512			(9 << SDMMC_DCTRL_DBLOCKSIZE_Pos )
+#define SDMMC_STA_ERRORS			        (SDMMC_STA_RXOVERR | SDMMC_STA_TXUNDERR | SDMMC_STA_DTIMEOUT | SDMMC_STA_DCRCFAIL )
+#define SDMMC_ICR_STATIC              (SDMMC_ICR_CCRCFAILC | SDMMC_ICR_DCRCFAILC | SDMMC_ICR_CTIMEOUTC | \
+                                       SDMMC_ICR_DTIMEOUTC | SDMMC_ICR_TXUNDERRC | SDMMC_ICR_RXOVERRC  | \
+                                       SDMMC_ICR_CMDRENDC  | SDMMC_ICR_CMDSENTC  | SDMMC_ICR_DATAENDC  | \
+                                       SDMMC_ICR_DBCKENDC )
+
+#define SDMMC_BLOCK_SIZE              512U
+#define SDMMC_BUFFER_SIZE             32U*SDMMC_BLOCK_SIZE
+
+// for FIFO D1 and D2 works, but for IDMA only D1 works
+__attribute__((section(".axisram"), aligned(32))) uint8_t idmabuf[SDMMC_BUFFER_SIZE];
+
+typedef enum
+{
+	sd_err_ok = 0,
+	sd_err_ctimeout,
+	sd_err_ccrcfail,
+	sd_err_dtimeout,
+	sd_err_dcrcfail,
+	sd_err_rxoverr,
+	sd_err_txunderr,
+	sd_err_stbiterr,
+	sd_err_writefail,
+	sd_err_unexpected_command,
+	sd_err_not_supported,
+	sd_err_wrong_status
+} sd_error;
+
+typedef enum
+{
+	CARD_SDSC,
+	CARD_SDHC,
+	CARD_SDXC
+} sd_type;
+
+typedef struct sd_info
+{
+	sd_type    type;            // type of the sd card
+	uint32_t   rca;             // relative card address
+	uint32_t   card_size;       // card size in sectors
+	uint32_t   sect_size;       // sector size in bytes
+	uint32_t   erase_size;      // erase block size in sectors
+} sd_info_t;
 
 static sd_info_t sdinfo;
 
-
-__attribute__((section(".axisram"), aligned(32))) uint8_t idmabuf[5*512]; // for FIFO D1 and D2 works, but for IDMA only D1 works
-
-
-void gpio_sdmmc_init(void) {
-    // SDMMC1:
-  set_gpio_pullup(GPIOC, 8, PULL_NONE);
-  set_gpio_alternate(GPIOC, 8, GPIO_AF12_SDMMC1); // SD_D0
-  set_gpio_pullup(GPIOC, 9, PULL_NONE);
-  set_gpio_alternate(GPIOC, 9, GPIO_AF12_SDMMC1); // SD_D1
-  set_gpio_pullup(GPIOC, 10, PULL_NONE);
-  set_gpio_alternate(GPIOC, 10, GPIO_AF12_SDMMC1); // SD_D2
-  set_gpio_pullup(GPIOC, 11, PULL_NONE);
-  set_gpio_alternate(GPIOC, 11, GPIO_AF12_SDMMC1); // SD_D3
-  set_gpio_pullup(GPIOC, 12, PULL_NONE);
-  set_gpio_alternate(GPIOC, 12, GPIO_AF12_SDMMC1); // SD_SCLK
-
-  set_gpio_alternate(GPIOD, 2, GPIO_AF12_SDMMC1); // SD_CMD
-
-  register_set_bits(&(GPIOC->OSPEEDR), GPIO_OSPEEDR_OSPEED8 | GPIO_OSPEEDR_OSPEED9 | GPIO_OSPEEDR_OSPEED10 | GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12);
-  register_set_bits(&(GPIOD->OSPEEDR), GPIO_OSPEEDR_OSPEED2);
-}
-
-void hal_sd_sdmmc_init(void) {
-  gpio_sdmmc_init();
-  delay(25000);
-	RCC->AHB3ENR |= RCC_AHB3ENR_SDMMC1EN; // SDMMC
-  RCC->AHB3RSTR |= RCC_AHB3RSTR_SDMMC1RST;
-  for(uint8_t i=0; i<0x10; i++) asm volatile("nop");
-  RCC->AHB3RSTR &= ~RCC_AHB3RSTR_SDMMC1RST;
-}
-
-void sdmmc_init_speed(void) {
-  SDMMC1->CLKCR = SDMMC_INIT_CLK_DIV | SDMMC_CLKCR_PWRSAV | SDMMC_CLKCR_NEGEDGE;
-	SDMMC1->POWER |= SDMMC_POWER_PWRCTRL;
-  while ((SDMMC1->POWER & SDMMC_POWER_PWRCTRL) == 0);
-}
-
-void sdmmc_high_speed(void) {
-	SDMMC1->CLKCR = SDMMC_TRANSFER_CLK_DIV | SDMMC_CLKCR_WIDBUS_0 | SDMMC_CLKCR_PWRSAV | SDMMC_CLKCR_NEGEDGE;
-}
 
 sd_error send_command(uint32_t cmd, uint32_t arg, uint8_t resp, uint32_t *buf) {
 	uint32_t cmd_waitresp = 0;
@@ -313,17 +277,8 @@ sd_error read_csd(void) {
 		c_size_mult  = (buf[2] & 0x00030000) >> 15;
 		c_size_mult |= (buf[2] & 0x00008000) >> 15;
 
-		// The memory capacity of the card is computed from the entries
-		// C_SIZE, C_SIZE_MULT and READ_BL_LEN as follows:
-		// memory capacity = BLOCKNR * BLOCK_LEN (in bytes)
-		// memory capacity = BLOCKNR * BLOCK_LEN / 512 (in 512 byte sectors)
-		// Where
-		// BLOCKNR = (C_SIZE+1) * MULT
-		// MULT = 2^(C_SIZE_MULT+2)
-		// BLOCK_LEN = 2^READ_BL_LEN
-
-		sdinfo.card_size = (c_size + 1) * (1 << (c_size_mult + 2)) * (1 << read_bl_len) / 512;
-		sdinfo.sect_size = 512;
+		sdinfo.card_size = (c_size + 1) * (1 << (c_size_mult + 2)) * (1 << read_bl_len) / SDMMC_BLOCK_SIZE;
+		sdinfo.sect_size = SDMMC_BLOCK_SIZE;
 		// The erase operation can erase either one or multiple sectors
 		sdinfo.erase_size = 1;
 	} else {
@@ -332,13 +287,8 @@ sd_error read_csd(void) {
 		c_size |= (buf[2] & 0xFF000000) >> 16;
 		c_size |= (buf[2] & 0x00FF0000) >> 16;
 
-		// The user data area capacity is calculated from C_SIZE as follows:
-		// memory capacity = (C_SIZE+1) * 512 (in kilobytes)
-		// memory capacity = (C_SIZE+1) * 512 * 1024 (in bytes)
-		// memory capacity = (C_SIZE+1) * 512 * 1024 / 512 = (C_SIZE+1) * 1024 (in 512 byte sectors)
-
-		sdinfo.card_size = (c_size + 1) * 1024;
-		sdinfo.sect_size = 512;
+		sdinfo.card_size = (c_size + 1) * 1024; // in 512 byte sectors
+		sdinfo.sect_size = SDMMC_BLOCK_SIZE;
 		// The erase operation can erase either one or multiple sectors
 		sdinfo.erase_size = 1;
 	}
@@ -346,17 +296,15 @@ sd_error read_csd(void) {
 }
 
 //--------------------------------------------
-sd_info_t* hal_sd_sdmmc_getcardinfo(void) {
-	return &sdinfo;
-}
-
-//--------------------------------------------
-sd_error hal_sd_sdmmc_reset(void) {
+sd_error sdmmc_reset(void) {
 	sd_error err;
 	uint32_t cnt;
 	uint32_t buf[4];
 
-	sdmmc_init_speed();
+  // Init SD card at 400kHz and one data line
+	SDMMC1->CLKCR = SDMMC_INIT_CLK_DIV | SDMMC_CLKCR_PWRSAV | SDMMC_CLKCR_NEGEDGE;
+	SDMMC1->POWER |= SDMMC_POWER_PWRCTRL;
+  while ((SDMMC1->POWER & SDMMC_POWER_PWRCTRL) == 0) {};
 
 	// command to send the card to SPI mode.
 	send_command(CMD0, 0, RESP_NONE, &buf[0]);
@@ -453,12 +401,14 @@ sd_error hal_sd_sdmmc_reset(void) {
 	if ((err = send_command(ACMD6, 0x2, RESP_R1, &buf[0])) != sd_err_ok) {
 		return err;
 	}
-	sdmmc_high_speed();
+  // Switch to fast clock and 4 data lines
+	SDMMC1->CLKCR = SDMMC_TRANSFER_CLK_DIV | SDMMC_CLKCR_WIDBUS_0 | SDMMC_CLKCR_PWRSAV | SDMMC_CLKCR_NEGEDGE;
+
 	return sd_err_ok;
 }
 
 //--------------------------------------------
-sd_error hal_sd_sdmmc_read(uint8_t *rxbuf, uint32_t sector, uint32_t count) {
+sd_error sdmmc_read(uint8_t *rxbuf, uint32_t sector, uint32_t count) {
 	sd_error err;
 	uint32_t buf[4];
 	uint32_t *dbuf;
@@ -478,11 +428,11 @@ sd_error hal_sd_sdmmc_read(uint8_t *rxbuf, uint32_t sector, uint32_t count) {
 	if (sdinfo.type == CARD_SDSC) {
 		// SDSC uses the 32-bit argument of memory access commands as byte address format
 		// Block length is determined by CMD16, by default - 512 byte
-		sector *= 512;
+		sector *= SDMMC_BLOCK_SIZE;
 	}
 	// Receiving 512 bytes data blocks
 	SDMMC1->DTIMER = DATATIMEOUT;
-	SDMMC1->DLEN = count * 512;
+	SDMMC1->DLEN = count * SDMMC_BLOCK_SIZE;
 	SDMMC1->DCTRL = (SDMMC_DCTRL_DBLOCKSIZE_0 | SDMMC_DCTRL_DBLOCKSIZE_3) | // Data block size: (1001) 512 bytes
 	                                     // (0) DMA disabled
 	                 SDMMC_DCTRL_DTDIR | // Data transfer direction selection: (1) From card to controller
@@ -540,8 +490,93 @@ sd_error hal_sd_sdmmc_read(uint8_t *rxbuf, uint32_t sector, uint32_t count) {
 	return sd_err_ok;
 }
 
+// FIXME: IDMA does not work for read, timeout
+sd_error sdmmc_read_idma(uint8_t *rxbuf, uint32_t sector, uint32_t count) {
+	sd_error err;
+	uint32_t buf[4];
+	uint32_t *dbuf;
+	uint32_t sta;
+  uint8_t dir = 1;
+
+	dbuf = (uint32_t *)&rxbuf[0];
+
+  SDMMC1->DCTRL = 0; // reset DPSM
+
+	// CMD13: Asks the selected card to send its status register
+	if ((err = send_command(CMD13, sdinfo.rca << 16, RESP_R1, &buf[0])) != sd_err_ok) {
+		return err;
+	}
+	// not Transfer State (tran)
+	if ((buf[0] & RESP_R1_CURRENT_STATE_MASK) != RESP_R1_CURRENT_STATE_TRAN) {
+		return sd_err_wrong_status;
+	}
+
+	if (sdinfo.type == CARD_SDSC) {
+		// SDSC uses the 32-bit argument of memory access commands as byte address format
+		// Block length is determined by CMD16, by default - 512 byte
+		sector *= SDMMC_BLOCK_SIZE;
+	}
+	// Sending 512 bytes data blocks
+  SDMMC1->DTIMER = DATATIMEOUT;
+  SDMMC1->DCTRL |= SDMMC_DCTRL_FIFORST;
+  SDMMC1->DLEN = count * SDMMC_BLOCK_SIZE;
+  SDMMC1->MASK=0; // TODO: mask only FIFO interrupts??
+  SDMMC1->IDMABASE0 = (uint32_t)dbuf;
+  SDMMC1->DCTRL = SDMMC_DCTRL_BLOCKSIZE_512 | (dir & SDMMC_DCTRL_DTDIR);  //Direction. 0=Controller to card, 1=Card to Controller
+
+
+	if (count == 1) {
+		// CMD17: Reads a block of the size selected by the SET_BLOCKLEN command (SDSC)
+		// or exactly 512 byte (SDHC and SDXC)
+		// ==> Sending-data State (data)
+		if ((err = send_command(CMD17, sector, RESP_R1, &buf[0])) != sd_err_ok) {
+			return err;
+		}
+	} else {
+		// CMD18: Continuously transfers data blocks from card to host
+		// until interrupted by a STOP_TRANSMISSION command
+		// ==> Sending-data State (data)
+		if ((err = send_command(CMD18, sector, RESP_R1, &buf[0])) != sd_err_ok) {
+			return err;
+		}
+	}
+
+  SDMMC1->ICR = SDMMC_ICR_STATIC;
+  SDMMC1->IDMACTRL = SDMMC_IDMA_IDMAEN;
+	SDMMC1->DCTRL |= SDMMC_DCTRL_DTEN; //DPSM is enabled
+
+  // TODO: this should be changed for IRQ instead of blocking
+  while((SDMMC1->STA & (SDMMC_STA_DATAEND|SDMMC_STA_ERRORS)) == 0){__NOP();};
+
+	SDMMC1->DCTRL = 0;
+
+	if (count > 1) {
+		// CMD12: Forces the card to stop transmission
+		// if count == 1, "operation complete" is automatic
+		// ==> Transfer State (tran)
+		if ((err = send_command(CMD12, 0, RESP_R1b, &buf[0])) != sd_err_ok) {
+			SDMMC1->ICR = SDMMC_ICR_STATIC;
+			return err;
+		}
+	}
+
+	sta = SDMMC1->STA;
+	SDMMC1->ICR = SDMMC_ICR_STATIC;
+
+	if (sta & SDMMC_STA_DTIMEOUT) {
+		return sd_err_dtimeout;
+	}
+	if (sta & SDMMC_STA_DCRCFAIL) {
+		return sd_err_dcrcfail;
+	}
+	if (sta & SDMMC_STA_TXUNDERR) {
+		return sd_err_txunderr;
+	}
+	return sd_err_ok;
+}
+
 //--------------------------------------------
-sd_error hal_sd_sdmmc_write(uint8_t *txbuf, uint32_t sector, uint32_t count) {
+sd_error sdmmc_write(uint8_t *txbuf, uint32_t sector, uint32_t count) {
 	sd_error err;
 	uint32_t buf[4];
 	uint32_t *dbuf;
@@ -562,11 +597,11 @@ sd_error hal_sd_sdmmc_write(uint8_t *txbuf, uint32_t sector, uint32_t count) {
 	if (sdinfo.type == CARD_SDSC) {
 		// SDSC uses the 32-bit argument of memory access commands as byte address format
 		// Block length is determined by CMD16, by default - 512 byte
-		sector *= 512;
+		sector *= SDMMC_BLOCK_SIZE;
 	}
 	// Sending 512 bytes data blocks
 	SDMMC1->DTIMER = DATATIMEOUT;
-	SDMMC1->DLEN = count * 512;
+	SDMMC1->DLEN = count * SDMMC_BLOCK_SIZE;
 	SDMMC1->DCTRL = SDMMC_DCTRL_BLOCKSIZE_512 | // Data block size: (1001) 512 bytes
 	                                     // (0) DMA disabled
 	                                     // Data transfer direction selection: (0) From controller to card
@@ -632,7 +667,7 @@ sd_error hal_sd_sdmmc_write(uint8_t *txbuf, uint32_t sector, uint32_t count) {
 }
 
 
-sd_error hal_sd_sdmmc_write_idma(uint8_t *txbuf, uint32_t sector, uint32_t count) {
+sd_error sdmmc_write_idma(uint8_t *txbuf, uint32_t sector, uint32_t count) {
 	sd_error err;
 	uint32_t buf[4];
 	uint32_t *dbuf;
@@ -655,12 +690,12 @@ sd_error hal_sd_sdmmc_write_idma(uint8_t *txbuf, uint32_t sector, uint32_t count
 	if (sdinfo.type == CARD_SDSC) {
 		// SDSC uses the 32-bit argument of memory access commands as byte address format
 		// Block length is determined by CMD16, by default - 512 byte
-		sector *= 512;
+		sector *= SDMMC_BLOCK_SIZE;
 	}
 	// Sending 512 bytes data blocks
   SDMMC1->DTIMER = DATATIMEOUT;
   SDMMC1->DCTRL |= SDMMC_DCTRL_FIFORST;
-  SDMMC1->DLEN = count * 512;
+  SDMMC1->DLEN = count * SDMMC_BLOCK_SIZE;
   SDMMC1->MASK=0; // TODO: mask only FIFO interrupts??
   SDMMC1->IDMABASE0 = (uint32_t)dbuf;
   SDMMC1->DCTRL = SDMMC_DCTRL_BLOCKSIZE_512 | (dir & SDMMC_DCTRL_DTDIR);  //Direction. 0=Controller to card, 1=Card to Controller

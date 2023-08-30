@@ -201,19 +201,19 @@ int main(void) {
 #endif
 
 #ifdef STM32H7
-const uint8_t testkey[] = "testkey!";
+const uint8_t testkey = 0X5AU;
+uint8_t sd_error = 0U;
 
-hal_sd_sdmmc_init();
+gpio_sdmmc_init();
 print("SDMMC init\n");
-delay(25000);
+// delay(25000);
 
-hal_sd_sdmmc_reset();
+sd_error = sdmmc_reset();
 print("SDMMC reset\n");
+puth(sd_error);
 
-delay(25000);
-hal_sd_sdmmc_getcardinfo();
-print("SDMMC getcardinfo\n");
-delay(25000);
+// delay(25000);
+print("card type: ");
 puth(sdinfo.type);
 print("card size: ");
 puth(sdinfo.card_size);
@@ -233,28 +233,47 @@ print("SDMMC init done\n");
 // memcpy(&idmabuf[4*512], "h@llo! wor!ld@@@", 16);
 
 // writing to sector 0 all zeroes to reset card, with working func
-(void)memset(idmabuf, 0xFF, 5*512);
-hal_sd_sdmmc_write(idmabuf, 0, 2);
+(void)memset(idmabuf, 0xFF, SDMMC_BUFFER_SIZE);
+sd_error = sdmmc_write(idmabuf, 0, (SDMMC_BUFFER_SIZE/SDMMC_BLOCK_SIZE));
 print("SDMMC erase done\n");
+puth(sd_error);
 
 delay(100000);
 
 // reset buffer
-(void)memset(idmabuf, 0, 5*512);
-memcpy(idmabuf, testkey, 8);
-memcpy(&idmabuf[512], testkey, 8);
+(void)memset(idmabuf, testkey, SDMMC_BUFFER_SIZE);
+
+// memcpy(idmabuf, testkey, 8);
+// memcpy(&idmabuf[512], testkey, 8);
 //write key with test func that might not work (like IDMA)
-// hal_sd_sdmmc_write(idmabuf, 0, 2);
-hal_sd_sdmmc_write_idma(idmabuf, 0, 2);
+// sd_error = sdmmc_write(idmabuf, 0, (SDMMC_BUFFER_SIZE/SDMMC_BLOCK_SIZE));
+sd_error = sdmmc_write_idma(idmabuf, 0, (SDMMC_BUFFER_SIZE/SDMMC_BLOCK_SIZE));
+print("SDMMC write done\n");
+puth(sd_error);
 
 delay(100000);  // FIXME: need to wait until previous command is finished, should be solved with IRQs
 
 // Try to read and compare result
-(void)memset(idmabuf, 0, 5*512);
-hal_sd_sdmmc_read(idmabuf, 0, 2);
+(void)memset(idmabuf, 0, SDMMC_BUFFER_SIZE);
+sd_error = sdmmc_read(idmabuf, 0, (SDMMC_BUFFER_SIZE/SDMMC_BLOCK_SIZE));
+// sd_error = sdmmc_read_idma(idmabuf, 0, (SDMMC_BUFFER_SIZE/SDMMC_BLOCK_SIZE)); // FIXME: doesn't work, data timeout
+print("SDMMC read done\n");
+puth(sd_error);
 int8_t res = 0;
-res = memcmp(idmabuf, testkey, 8);
-res = memcmp(&idmabuf[512], testkey, 8);
+
+delay(100000);
+print("SDMMC compare\n");
+print("SAMPLE: ");
+puth2(idmabuf[0]);
+
+for (uint32_t i = 0; i < SDMMC_BUFFER_SIZE; i++) {
+  if (idmabuf[i] != testkey) {
+    res = -1;
+    break;
+  }
+}
+// res = memcmp(idmabuf, testkey, 8);
+// res = memcmp(&idmabuf[512], testkey, 8);
 if (res == 0) {
   print("SDMMC compare done\n");
 } else {
