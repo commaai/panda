@@ -52,17 +52,22 @@ void process_can(uint8_t can_number);
   CANPacket_t elems_##x[size]; \
   can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = (size), .elems = (CANPacket_t *)&(elems_##x) };
 
+#define CAN_RX_BUFFER_SIZE 4096U
+#define CAN_TX_BUFFER_SIZE 416U
+#define GMLAN_TX_BUFFER_SIZE 416U
+
 #ifdef STM32H7
-__attribute__((section(".axisram"))) can_buffer(rx_q, 0x1000)
-__attribute__((section(".axisram"))) can_buffer(tx2_q, 0x1A0)
-__attribute__((section(".sram12"))) can_buffer(txgmlan_q, 0x1A0)
+// ITCM RAM and DTCM RAM are the fastest for Cortex-M7 core access
+__attribute__((section(".axisram"))) can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
+__attribute__((section(".itcmram"))) can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
+__attribute__((section(".itcmram"))) can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
 #else
-can_buffer(rx_q, 0x1000)
-can_buffer(tx2_q, 0x1A0)
-can_buffer(txgmlan_q, 0x1A0)
+can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
+can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
+can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
 #endif
-can_buffer(tx1_q, 0x1A0)
-can_buffer(tx3_q, 0x1A0)
+can_buffer(tx3_q, CAN_TX_BUFFER_SIZE)
+can_buffer(txgmlan_q, GMLAN_TX_BUFFER_SIZE)
 // FIXME:
 // cppcheck-suppress misra-c2012-9.3
 can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q, &can_txgmlan_q};

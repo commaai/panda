@@ -21,7 +21,7 @@ sudo apt-get install dfu-util gcc-arm-none-eabi python3-pip libffi-dev git
 ```bash
 # macOS
 brew install --cask gcc-arm-embedded
-brew install python3 dfu-util gcc@12
+brew install python3 dfu-util gcc@13
 ```
 
 Clone panda repository:
