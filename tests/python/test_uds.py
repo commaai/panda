@@ -76,10 +76,10 @@ class UdsServer(UdsClient):
         # print(f'{service_has_subfunction=}')
         if not has_subfunction:
           data = resp[(1 if resp_sfn is None else 2):]
-          print('data in service', data, self.services[resp_sid][None])
+          # print('data in service', data, self.services[resp_sid][None])
           if data in self.services[resp_sid][None]:
             print('here!')
-            send_dat = bytes([resp_sid + 0x40]) + resp[1:] + self.services[resp_sid][None][data]
+            send_dat = bytes([resp_sid + 0x40]) + self.services[resp_sid][None][data]
             isotp_msg.send(send_dat)
           else:
             # invalid data
@@ -189,6 +189,21 @@ class TestUds(unittest.TestCase):
     services[SERVICE_TYPE.COMMUNICATION_CONTROL][None] = {b'': b''}
     with self.assertRaises(Exception):
       self.uds_server.set_services(STANDARD_UDS_SERVER_SERVICES | services)
+
+  def test_transceive_data(self):
+    """
+    Asserts no data is lost with back and forth communication.
+    Catches bug with sub-addresses and multi-frame communication
+    """
+
+    max_bytes = 200
+    readback_service = {0x00: {None: {b'\x00' * i: b'\x00' * i for i in range(max_bytes)}}}
+    self.uds_server.set_services(STANDARD_UDS_SERVER_SERVICES | readback_service)
+
+    for i in range(max_bytes):
+      data = b'\x00' * i
+      response = self.uds_server._uds_request(0x00, data=data)
+      self.assertEqual(data, response)
 
   def test_tester_present(self):
     """
