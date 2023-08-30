@@ -180,6 +180,7 @@ class TestHyundaiCanfdHDA2EV(TestHyundaiCanfdBase):
     self.safety.init_tests()
 
 
+# TODO: Handle ICE and HEV configurations once we see cars that use the new messages
 class TestHyundaiCanfdHDA2EVAltSteering(TestHyundaiCanfdBase):
 
   TX_MSGS = [[0x110, 0], [0x1CF, 1], [0x362, 0]]
