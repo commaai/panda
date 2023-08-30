@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from typing import *  # FIXME this
+from typing import Dict, Optional
 from parameterized import parameterized_class
 import unittest
 import struct
@@ -9,7 +9,10 @@ from dataclasses import dataclass
 from panda.python import uds
 from panda.python.uds import SERVICE_TYPE, DATA_IDENTIFIER_TYPE, IsoTpMessage, UdsClient, get_rx_addr_for_tx_addr
 
-STANDARD_UDS_SERVER_SERVICES = {  # TODO: type or use dataclass
+UdsServicesType = Dict[SERVICE_TYPE, Dict[Optional[bytes], Dict[bytes, bytes]]]
+
+# TODO: use dataclass?
+STANDARD_UDS_SERVER_SERVICES: UdsServicesType = {
   SERVICE_TYPE.TESTER_PRESENT: {
     b'\x00': {  # sub function to data in/out  # TODO: replace subfunction map with int
       b'': b'',  # don't expect any extra data, don't respond with extra data
@@ -24,7 +27,7 @@ STANDARD_UDS_SERVER_SERVICES = {  # TODO: type or use dataclass
 
 
 class UdsServer(UdsClient):
-  services: dict
+  services: UdsServicesType
 
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs, single_frame_mode=True)
@@ -147,9 +150,9 @@ class MockCanBuffer:
 # ])
 class TestUds(unittest.TestCase):
   tx_addr: int = 0x750
-  sub_addr: int = None
+  sub_addr: Optional[int] = None
 
-  TEST_UDS_SERVICES = {
+  TEST_UDS_SERVER_SERVICES: UdsServicesType = {
     SERVICE_TYPE.READ_DATA_BY_IDENTIFIER: {
       None: {  # no subfunction, only responds to data  # TODO: test no other subfunctions
         b'\xF1\x00': b'CV1 MFC  AT USA LHD 1.00 1.05 99210-CV000 211027',
@@ -162,7 +165,7 @@ class TestUds(unittest.TestCase):
     self.rx_addr = get_rx_addr_for_tx_addr(self.tx_addr)
     can_buf = MockCanBuffer()
     self.uds_server = UdsServer(can_buf, get_rx_addr_for_tx_addr(self.tx_addr), self.tx_addr, sub_addr=self.sub_addr)
-    self.uds_server.set_services(STANDARD_UDS_SERVER_SERVICES | self.TEST_UDS_SERVICES)
+    self.uds_server.set_services(STANDARD_UDS_SERVER_SERVICES | self.TEST_UDS_SERVER_SERVICES)
     self.uds_server.start()
 
   def tearDown(self):
