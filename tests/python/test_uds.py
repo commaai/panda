@@ -27,6 +27,15 @@ class UdsServer(UdsClient):
     self.kill_event.set()
     self.uds_thread.join()
 
+  @staticmethod
+  def _create_negative_response(service_type: SERVICE_TYPE, response_code: Optional[int] = None) -> bytes:
+    dat = [0x7F]
+    if service_type is not None:  # TODO: shouldn't be none
+      dat.append(service_type)
+    if response_code is not None:
+      dat.append(response_code)
+    return bytes(dat)
+
   def _uds_response(self):
     # {service_type: {subfunction: response (if True, positive, if bytes, return that)}}  # TODO: maybe just bytes
     # TODO: might want to use a dataclass so we aren't using dynamically shaped dicts
@@ -80,11 +89,7 @@ class UdsServer(UdsClient):
             isotp_msg.send(send_dat)
           else:
             # invalid data
-            dat = [0x7F]
-            if resp_sid is not None:
-              dat.append(resp_sid)
-            dat.append(0x31)  # request out of range
-            dat = bytes(dat)
+            dat = self._create_negative_response(resp_sid, 0x31)  # request out of range
             print('Car ECU - bad request, sending back:', dat)
             isotp_msg.send(dat)
 
@@ -93,11 +98,7 @@ class UdsServer(UdsClient):
           print('resp_sfn', resp_sfn)
           if resp_sfn not in lookup[resp_sid]:
             # return invalid subfunction
-            dat = [0x7F]
-            if resp_sid is not None:  # TODO: should be always true
-              dat.append(resp_sid)
-            dat.append(0x7e)
-            dat = bytes(dat)
+            dat = self._create_negative_response(resp_sid, 0x7E)
             print('Car ECU - bad subfunction, sending back:', dat.hex())
             isotp_msg.send(dat)
 
@@ -115,19 +116,13 @@ class UdsServer(UdsClient):
 
             else:
               # invalid data
-              dat = [0x7F]
-              if resp_sid is not None:
-                dat.append(resp_sid)
-              dat = bytes(dat)
+              dat = self._create_negative_response(resp_sid, 0x31)  # request out of range
               print('Car ECU - bad request, sending back:', dat)
               isotp_msg.send(dat)
 
       else:
         # invalid service
-        dat = [0x7F]
-        if resp_sid is not None:
-          dat.append(resp_sid)
-        dat = bytes(dat)
+        dat = self._create_negative_response(resp_sid, 0x11)  # service not supported
         print('Car ECU - bad request, sending back:', dat)
         isotp_msg.send(dat)
 
