@@ -126,8 +126,11 @@ const int HYUNDAI_PARAM_CANFD_HDA2_ALT_STEERING = 128;
 bool hyundai_canfd_hda2 = false;
 bool hyundai_canfd_alt_buttons = false;
 bool hyundai_canfd_hda2_alt_steering = false;
-int hyundai_canfd_hda2_lkas_addr = 0x00;
 
+
+int hyundai_canfd_get_lkas_addr() {
+  return hyundai_canfd_hda2_alt_steering ? 0x110 : 0x50;
+}
 
 static uint8_t hyundai_canfd_get_counter(CANPacket_t *to_push) {
   uint8_t ret = 0;
@@ -240,7 +243,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
     }
   }
 
-  const int steer_addr = hyundai_canfd_hda2 ? hyundai_canfd_hda2_lkas_addr : 0x12a;
+  const int steer_addr = hyundai_canfd_hda2 ? hyundai_canfd_get_lkas_addr() : 0x12a;
   bool stock_ecu_detected = (addr == steer_addr) && (bus == 0);
   if (hyundai_longitudinal) {
     // on HDA2, ensure ADRV ECU is still knocked out
@@ -271,7 +274,7 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send) {
   }
 
   // steering
-  const int steer_addr = (hyundai_canfd_hda2 && !hyundai_longitudinal) ? hyundai_canfd_hda2_lkas_addr : 0x12a;;
+  const int steer_addr = (hyundai_canfd_hda2 && !hyundai_longitudinal) ? hyundai_canfd_get_lkas_addr() : 0x12a;;
   if (addr == steer_addr) {
     int desired_torque = (((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U)) - 1024U;
     bool steer_req = GET_BIT(to_send, 52U) != 0U;
@@ -333,8 +336,8 @@ static int hyundai_canfd_fwd_hook(int bus_num, int addr) {
   }
   if (bus_num == 2) {
     // LKAS for HDA2, LFA for HDA1
-    int hda2_block_lfa = hyundai_canfd_hda2_alt_steering ? 0x362 : 0x2a4;
-    bool is_lkas_msg = ((addr == hyundai_canfd_hda2_lkas_addr) || (addr == hda2_block_lfa)) && hyundai_canfd_hda2;
+    int hda2_lfa_block_addr = hyundai_canfd_hda2_alt_steering ? 0x362 : 0x2a4;
+    bool is_lkas_msg = ((addr == hyundai_canfd_get_lkas_addr()) || (addr == hda2_lfa_block_addr)) && hyundai_canfd_hda2;
     bool is_lfa_msg = ((addr == 0x12a) && !hyundai_canfd_hda2);
 
     // HUD icons
@@ -359,8 +362,6 @@ static const addr_checks* hyundai_canfd_init(uint16_t param) {
   hyundai_canfd_hda2 = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2);
   hyundai_canfd_alt_buttons = GET_FLAG(param, HYUNDAI_PARAM_CANFD_ALT_BUTTONS);
   hyundai_canfd_hda2_alt_steering = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2_ALT_STEERING);
-
-  hyundai_canfd_hda2_lkas_addr = hyundai_canfd_hda2_alt_steering ? 0x110 : 0x50;
 
   // no long for ICE yet
   if (!hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
