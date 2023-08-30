@@ -8,7 +8,7 @@ import hashlib
 import binascii
 import datetime
 import logging
-from functools import wraps
+from functools import wraps, partial
 from typing import Optional
 from itertools import accumulate
 
@@ -90,35 +90,21 @@ def unpack_can_buffer(dat):
 
   return (ret, dat)
 
-def ensure_health_packet_version(fn):
-  @wraps(fn)
-  def wrapper(self, *args, **kwargs):
-    if self.health_version < self.HEALTH_PACKET_VERSION:
-      raise RuntimeError("Panda firmware has outdated health packet definition. Reflash panda firmware.")
-    elif self.health_version > self.HEALTH_PACKET_VERSION:
-      raise RuntimeError("Panda python library has outdated health packet definition. Update panda python library.")
-    return fn(self, *args, **kwargs)
-  return wrapper
 
-def ensure_can_packet_version(fn):
+def ensure_version(desc, lib_field, panda_field, fn):
   @wraps(fn)
   def wrapper(self, *args, **kwargs):
-    if self.can_version < self.CAN_PACKET_VERSION:
-      raise RuntimeError("Panda firmware has outdated CAN packet definition. Reflash panda firmware.")
-    elif self.can_version > self.CAN_PACKET_VERSION:
-      raise RuntimeError("Panda python library has outdated CAN packet definition. Update panda python library.")
+    lib_version = getattr(self, lib_field)
+    panda_version = getattr(self, panda_field)
+    if lib_version != panda_version:
+      raise RuntimeError(f"{desc} packet version mismatch: panda's firmware v{panda_version}, library v{lib_version}. Reflash panda.")
     return fn(self, *args, **kwargs)
   return wrapper
+ensure_can_packet_version = partial(ensure_version, "CAN", "CAN_PACKET_VERSION", "can_version")
+ensure_can_health_packet_version = partial(ensure_version, "CAN health", "CAN_HEALTH_PACKET_VERSION", "can_health_version")
+ensure_health_packet_version = partial(ensure_version, "health", "HEALTH_PACKET_VERSION", "health_version")
 
-def ensure_can_health_packet_version(fn):
-  @wraps(fn)
-  def wrapper(self, *args, **kwargs):
-    if self.can_health_version < self.CAN_HEALTH_PACKET_VERSION:
-      raise RuntimeError("Panda firmware has outdated CAN health packet definition. Reflash panda firmware.")
-    elif self.can_health_version > self.CAN_HEALTH_PACKET_VERSION:
-      raise RuntimeError("Panda python library has outdated CAN health packet definition. Update panda python library.")
-    return fn(self, *args, **kwargs)
-  return wrapper
+
 
 def parse_timestamp(dat):
   a = struct.unpack("HBBBBBB", dat)
