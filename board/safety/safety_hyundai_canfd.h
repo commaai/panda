@@ -127,7 +127,6 @@ bool hyundai_canfd_hda2 = false;
 bool hyundai_canfd_alt_buttons = false;
 bool hyundai_canfd_hda2_alt_steering = false;
 int hyundai_canfd_hda2_lkas_addr = 0x00;
-int hyundai_canfd_steer_addr = 0x00;
 
 
 static uint8_t hyundai_canfd_get_counter(CANPacket_t *to_push) {
@@ -272,7 +271,7 @@ static int hyundai_canfd_tx_hook(CANPacket_t *to_send) {
   }
 
   // steering
-  const int steer_addr = hyundai_canfd_steer_addr;
+  const int steer_addr = (hyundai_canfd_hda2 && !hyundai_longitudinal) ? hyundai_canfd_hda2_lkas_addr : 0x12a;;
   if (addr == steer_addr) {
     int desired_torque = (((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U)) - 1024U;
     bool steer_req = GET_BIT(to_send, 52U) != 0U;
@@ -362,7 +361,6 @@ static const addr_checks* hyundai_canfd_init(uint16_t param) {
   hyundai_canfd_hda2_alt_steering = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2_ALT_STEERING);
 
   hyundai_canfd_hda2_lkas_addr = hyundai_canfd_hda2_alt_steering ? 0x110 : 0x50;
-  hyundai_canfd_steer_addr = (hyundai_canfd_hda2 && !hyundai_longitudinal) ? hyundai_canfd_hda2_lkas_addr : 0x12a;
 
   // no long for ICE yet
   if (!hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
