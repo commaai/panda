@@ -300,8 +300,8 @@ class TestHondaNidecSafetyBase(HondaBase):
   def test_acc_hud_safety_check(self):
     for controls_allowed in [True, False]:
       self.safety.set_controls_allowed(controls_allowed)
-      for pcm_gas in range(0, 255):
-        for pcm_speed in range(0, 100):
+      for pcm_gas in range(255):
+        for pcm_speed in range(100):
           send = (controls_allowed and pcm_gas <= self.MAX_GAS) or (pcm_gas == 0 and pcm_speed == 0)
           self.assertEqual(send, self._tx(self._send_acc_hud_msg(pcm_gas, pcm_speed)))
 
