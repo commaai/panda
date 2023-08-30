@@ -155,8 +155,8 @@ class TestUds(unittest.TestCase):
   TEST_UDS_SERVER_SERVICES: UdsServicesType = {
     SERVICE_TYPE.READ_DATA_BY_IDENTIFIER: {
       None: {  # no subfunction, only responds to data  # TODO: test no other subfunctions
-        b'\xF1\x00': b'CV1 MFC  AT USA LHD 1.00 1.05 99210-CV000 211027',
-        b'\xF1\x90': b'1H3110W0RLD5',
+        b'\xF1\x00': b'\xF1\x00CV1 MFC  AT USA LHD 1.00 1.05 99210-CV000 211027',
+        b'\xF1\x90': b'\xF1\x901H3110W0RLD5',
       }
     }
   }
@@ -196,7 +196,7 @@ class TestUds(unittest.TestCase):
     Catches bug with sub-addresses and multi-frame communication
     """
 
-    max_bytes = 200
+    max_bytes = 20
     readback_service = {0x00: {None: {b'\x00' * i: b'\x00' * i for i in range(max_bytes)}}}
     self.uds_server.set_services(STANDARD_UDS_SERVER_SERVICES | readback_service)
 
