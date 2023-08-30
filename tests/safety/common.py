@@ -126,7 +126,7 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
     self.safety.set_gas_interceptor_detected(False)
 
   def test_disengage_on_gas_interceptor(self):
-    for g in range(0, 0x1000):
+    for g in range(0x1000):
       self._rx(self._interceptor_user_gas(0))
       self.safety.set_controls_allowed(True)
       self._rx(self._interceptor_user_gas(g))
@@ -138,7 +138,7 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
   def test_alternative_experience_no_disengage_on_gas_interceptor(self):
     self.safety.set_controls_allowed(True)
     self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
-    for g in range(0, 0x1000):
+    for g in range(0x1000):
       self._rx(self._interceptor_user_gas(g))
       # Test we allow lateral, but not longitudinal
       self.assertTrue(self.safety.get_controls_allowed())
@@ -576,13 +576,13 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     self.assertTrue(self.safety.get_torque_meas_min() in min_range)
     self.assertTrue(self.safety.get_torque_meas_max() in max_range)
 
-    max_range = range(0, self.TORQUE_MEAS_TOLERANCE + 1)
+    max_range = range(self.TORQUE_MEAS_TOLERANCE + 1)
     min_range = range(-(trq + self.TORQUE_MEAS_TOLERANCE), -trq + 1)
     self._rx(self._torque_meas_msg(0))
     self.assertTrue(self.safety.get_torque_meas_min() in min_range)
     self.assertTrue(self.safety.get_torque_meas_max() in max_range)
 
-    max_range = range(0, self.TORQUE_MEAS_TOLERANCE + 1)
+    max_range = range(self.TORQUE_MEAS_TOLERANCE + 1)
     min_range = range(-self.TORQUE_MEAS_TOLERANCE, 0 + 1)
     self._rx(self._torque_meas_msg(0))
     self.assertTrue(self.safety.get_torque_meas_min() in min_range)
@@ -733,7 +733,7 @@ class AngleSteeringSafetyTest(MeasurementSafetyTest):
 @add_regen_tests
 class PandaSafetyTest(PandaSafetyTestBase):
   TX_MSGS: Optional[List[List[int]]] = None
-  SCANNED_ADDRS = [*range(0x0, 0x800),                      # Entire 11-bit CAN address space
+  SCANNED_ADDRS = [*range(0x800),                      # Entire 11-bit CAN address space
                    *range(0x18DA00F1, 0x18DB00F1, 0x100),   # 29-bit UDS physical addressing
                    *range(0x18DB00F1, 0x18DC00F1, 0x100),   # 29-bit UDS functional addressing
                    *range(0x3300, 0x3400),                  # Honda
@@ -791,14 +791,14 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.assertFalse(self.safety.get_relay_malfunction())
     self._rx(make_msg(self.RELAY_MALFUNCTION_BUS, self.RELAY_MALFUNCTION_ADDR, 8))
     self.assertTrue(self.safety.get_relay_malfunction())
-    for bus in range(0, 3):
+    for bus in range(3):
       for addr in self.SCANNED_ADDRS:
         self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
         self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr))
 
   def test_fwd_hook(self):
     # some safety modes don't forward anything, while others blacklist msgs
-    for bus in range(0, 3):
+    for bus in range(3):
       for addr in self.SCANNED_ADDRS:
         # assume len 8
         fwd_bus = self.FWD_BUS_LOOKUP.get(bus, -1)
@@ -807,7 +807,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
         self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, addr), f"{addr=:#x} from {bus=} to {fwd_bus=}")
 
   def test_spam_can_buses(self):
-    for bus in range(0, 4):
+    for bus in range(4):
       for addr in self.SCANNED_ADDRS:
         if all(addr != m[0] or bus != m[1] for m in self.TX_MSGS):
           self.assertFalse(self._tx(make_msg(bus, addr, 8)), f"allowed TX {addr=} {bus=}")
