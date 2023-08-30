@@ -154,7 +154,7 @@ class TestUds(unittest.TestCase):
 
   TEST_UDS_SERVER_SERVICES: UdsServicesType = {
     SERVICE_TYPE.READ_DATA_BY_IDENTIFIER: {
-      None: {  # no subfunction, only responds to data  # TODO: test no other subfunctions
+      None: {  # no subfunction
         b'\xF1\x00': b'\xF1\x00CV1 MFC  AT USA LHD 1.00 1.05 99210-CV000 211027',
         b'\xF1\x90': b'\xF1\x901H3110W0RLD5',
       }
@@ -176,18 +176,14 @@ class TestUds(unittest.TestCase):
     Test we can't add service with subfunctions both defined and not defined.
     None is no subfunction supported
     """
+
     # add new service with subfunction
-    services = {}
-    services[SERVICE_TYPE.COMMUNICATION_CONTROL] = {
-      b'\x00': {  # sub function to data in/out  # TODO: replace subfunction map with int
-        b'': b'',  # don't expect any extra data, don't respond with extra data
-      },
-    }
+    services: UdsServicesType = {SERVICE_TYPE.COMMUNICATION_CONTROL: {b'\x00': {b'': b''}}}
     self.uds_server.set_services(STANDARD_UDS_SERVER_SERVICES | services)
 
     # add None subfunction (no subfunction), can't exist with subfunction above
     services[SERVICE_TYPE.COMMUNICATION_CONTROL][None] = {b'': b''}
-    with self.assertRaises(Exception):
+    with self.assertRaises(AssertionError):
       self.uds_server.set_services(STANDARD_UDS_SERVER_SERVICES | services)
 
   def test_transceive_data(self):
@@ -197,7 +193,7 @@ class TestUds(unittest.TestCase):
     """
 
     max_bytes = 20
-    readback_service = {0x00: {None: {b'\x00' * i: b'\x00' * i for i in range(max_bytes)}}}
+    readback_service: UdsServicesType = {0x00: {None: {b'\x00' * i: b'\x00' * i for i in range(max_bytes)}}}
     self.uds_server.set_services(STANDARD_UDS_SERVER_SERVICES | readback_service)
 
     for i in range(max_bytes):
@@ -254,8 +250,6 @@ class TestUds(unittest.TestCase):
 
     with self.assertRaises(uds.NegativeResponseError):
       self.uds_server._uds_request(SERVICE_TYPE.READ_DATA_BY_IDENTIFIER, data=b'\xf1\x01')
-
-    # self.uds_server._uds_request(SERVICE_TYPE.READ_DATA_BY_IDENTIFIER)
 
 
 if __name__ == '__main__':
