@@ -178,7 +178,7 @@ class TestGmCameraSafetyBase(TestGmSafetyBase):
 
 class TestGmCameraSafety(TestGmCameraSafetyBase):
   TX_MSGS = [[0x180, 0],  # pt bus
-             [0x180, 2]]  # camera bus
+             [0x184, 2]]  # camera bus
   FWD_BLACKLISTED_ADDRS = {2: [0x180], 0: [0x184]}  # block LKAS message and PSCMStatus
   BUTTONS_BUS = 2  # tx only
 
