@@ -6,6 +6,7 @@ import unittest
 import struct
 import threading
 from dataclasses import dataclass
+from functools import partial
 
 from panda.python import uds
 from panda.python.uds import SERVICE_TYPE, DATA_IDENTIFIER_TYPE, IsoTpMessage, UdsClient, get_rx_addr_for_tx_addr
@@ -27,6 +28,7 @@ STANDARD_UDS_SERVER_SERVICES: UdsServicesType = {
 }
 
 
+# TODO: it might make sense to not subclass, what do we even use from UdsClient now?
 class UdsServer(UdsClient):
   services: UdsServicesType
 
@@ -34,6 +36,12 @@ class UdsServer(UdsClient):
     super().__init__(*args, **kwargs, single_frame_mode=False)
     self.kill_event = threading.Event()
     self.uds_thread = threading.Thread(target=self._uds_response)
+
+    # wrap can buffer functions with server=True so we know where to put messages
+    panda, tx_timeout = args[0], kwargs.get('tx_timeout', 1)
+    can_send_with_timeout_server = partial(panda.can_send, server=True, timeout=int(tx_timeout * 1000))
+    can_recv_server = partial(panda.can_recv, server=True)
+    self._server_can_client = uds.CanClient(can_send_with_timeout_server, can_recv_server, self.tx_addr, self.rx_addr, self.bus, self.sub_addr, debug=self.debug)
 
   def set_services(self, services):
     self.services = services

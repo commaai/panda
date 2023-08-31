@@ -594,10 +594,6 @@ class UdsClient():
     self.debug = debug
     can_send_with_timeout = partial(panda.can_send, timeout=int(tx_timeout*1000))
     self._can_client = CanClient(can_send_with_timeout, panda.can_recv, self.rx_addr, self.tx_addr, self.bus, self.sub_addr, debug=self.debug)
-    # TODO: remove this
-    can_send_with_timeout_server = partial(panda.can_send, server=True, timeout=int(tx_timeout * 1000))
-    can_recv_server = partial(panda.can_recv, server=True)
-    self._server_can_client = CanClient(can_send_with_timeout_server, can_recv_server, self.tx_addr, self.rx_addr, self.bus, self.sub_addr, debug=self.debug)
     self.response_pending_timeout = response_pending_timeout
     # TODO: and this, with proper timing (needed for IsoTpParallelQuery testing)
     self.single_frame_mode = single_frame_mode
