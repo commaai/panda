@@ -250,6 +250,8 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
   MAX_INVALID_STEERING_FRAMES = 0
   MIN_VALID_STEERING_RT_INTERVAL = 0
 
+  NO_STEER_REQ_BIT = False
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "TorqueSteeringSafetyTestBase":
@@ -287,6 +289,15 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
     self.safety.set_controls_allowed(True)
     self._set_prev_torque(0)
     self.assertFalse(self._tx(self._torque_cmd_msg(-self.MAX_RATE_UP - 1)))
+
+  def test_steer_req_bit(self):
+    if self.NO_STEER_REQ_BIT:
+      raise unittest.SkipTest("No Steering Request Bit")
+    self.safety.set_controls_allowed(True)
+    self._tx(self._torque_cmd_msg(0, True))
+    self.assertTrue(self.safety.get_steer_req_last())
+    self._tx(self._torque_cmd_msg(0, False))
+    self.assertFalse(self.safety.get_steer_req_last())
 
   def test_steer_req_bit_frames(self):
     """
@@ -664,6 +675,13 @@ class AngleSteeringSafetyTest(MeasurementSafetyTest):
   def _reset_speed_measurement(self, speed):
     for _ in range(6):
       self._rx(self._speed_msg(speed))
+
+  def test_steer_req_bit(self):
+    self.safety.set_controls_allowed(True)
+    self._tx(self._angle_cmd_msg(0, True))
+    self.assertTrue(self.safety.get_steer_req_last())
+    self._tx(self._angle_cmd_msg(0, False))
+    self.assertFalse(self.safety.get_steer_req_last())
 
   def test_angle_cmd_when_enabled(self):
     # when controls are allowed, angle cmd rate limit is enforced

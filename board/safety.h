@@ -605,6 +605,8 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
     }
   }
 
+  steer_req_last = steer_req;
+
   // reset to 0 if either controls is not allowed or there's a violation
   if (violation || !controls_allowed) {
     valid_steer_req_count = 0;
@@ -612,6 +614,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
     desired_torque_last = 0;
     rt_torque_last = 0;
     ts_torque_check_last = ts;
+    steer_req_last = false;
     ts_steer_req_mismatch_last = ts;
   }
 
@@ -657,6 +660,7 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     violation |= max_limit_check(desired_angle, highest_desired_angle, lowest_desired_angle);
   }
   desired_angle_last = desired_angle;
+  steer_req_last = steer_control_enabled;
 
   // Angle should either be 0 or same as current angle while not steering
   if (!steer_control_enabled) {
