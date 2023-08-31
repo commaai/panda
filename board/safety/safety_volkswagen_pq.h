@@ -197,7 +197,7 @@ static int volkswagen_pq_tx_hook(CANPacket_t *to_send) {
       desired_torque *= -1;
     }
 
-    uint32_t hca_status = ((GET_BYTE(to_send, 1) >> 4) & 0xF);
+    uint32_t hca_status = ((GET_BYTE(to_send, 1) >> 4) & 0xFU);
     bool steer_req = (hca_status == 5U);
 
     if (steer_torque_cmd_checks(desired_torque, steer_req, VOLKSWAGEN_PQ_STEERING_LIMITS)) {
