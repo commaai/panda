@@ -38,8 +38,8 @@ class UdsServer(UdsClient):
     self.uds_thread = threading.Thread(target=self._uds_response)
 
     # wrap can buffer functions with server=True so we know where to put messages
-    panda, tx_timeout = args[0], kwargs.get('tx_timeout', 1)
-    can_send_with_timeout_server = partial(panda.can_send, server=True, timeout=int(tx_timeout * 1000))
+    panda = args[0]
+    can_send_with_timeout_server = partial(panda.can_send, server=True)
     can_recv_server = partial(panda.can_recv, server=True)
     self._server_can_client = uds.CanClient(can_send_with_timeout_server, can_recv_server, self.tx_addr, self.rx_addr, self.bus, self.sub_addr, debug=self.debug)
 
