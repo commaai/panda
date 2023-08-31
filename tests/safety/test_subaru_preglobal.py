@@ -49,7 +49,7 @@ class TestSubaruPreglobalSafety(common.PandaSafetyTest, common.DriverTorqueSteer
     return self.packer.make_can_msg_panda("Brake_Pedal", 0, values)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
-    values = {"LKAS_Command": torque}
+    values = {"LKAS_Command": torque, "LKAS_Active": steer_req}
     return self.packer.make_can_msg_panda("ES_LKAS", 0, values)
 
   def _user_gas_msg(self, gas):
