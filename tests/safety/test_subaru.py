@@ -61,6 +61,11 @@ class TestSubaruSafetyBase(common.PandaSafetyTest, MeasurementSafetyTest):
 
   INACTIVE_GAS = 1818
 
+  # Safety around steering req bit
+  MIN_VALID_STEERING_FRAMES = 7
+  MAX_INVALID_STEERING_FRAMES = 1
+  MIN_VALID_STEERING_RT_INTERVAL = 140000
+
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
     self.safety = libpanda_py.libpanda

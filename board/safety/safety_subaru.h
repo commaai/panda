@@ -8,7 +8,15 @@
     .driver_torque_factor = 50,                                                  \
     .driver_torque_allowance = 60,                                               \
     .type = TorqueDriverLimited,                                                 \
+
+    // the EPS will temporary fault if the steering rate is too high, so we cut the
+    // steering torque every 7 frames for 1 frame if the steering rate is high
+    .min_valid_request_frames = 7,                                               \
+    .max_invalid_request_frames = 1,                                             \
+    .min_valid_request_rt_interval = 140000,                                     \
+    .has_steer_req_tolerance = true,                                             \
   }                                                                              \
+
 
 const SteeringLimits SUBARU_STEERING_LIMITS      = SUBARU_STEERING_LIMITS_GENERATOR(2047, 50, 70);
 const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = SUBARU_STEERING_LIMITS_GENERATOR(1000, 40, 40);
