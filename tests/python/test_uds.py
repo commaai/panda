@@ -69,7 +69,7 @@ class UdsServer(UdsClient):
     while not self.kill_event.is_set():
       resp, _ = isotp_msg.recv(0)  # resp is request from client
       print('UDS Server - got resp', resp)
-      # time.sleep(0.01)
+      time.sleep(0.01)
 
       # message from client not fully built
       if resp is None:
@@ -111,11 +111,12 @@ class UdsServer(UdsClient):
             data = resp[(1 if resp_sfn is None else 2):]
             if data in self.services[resp_sid][resp_sfn]:
               # valid data
-              send_dat = [resp_sid + 0x40, int.from_bytes(resp_sfn)]
+              send_dat = bytes([resp_sid + 0x40, int.from_bytes(resp_sfn)])
               if len(self.services[resp_sid][resp_sfn][data]):
-                send_dat.append(self.services[resp_sid][resp_sfn][data])  # add data if exists
+                # send_dat.append(self.services[resp_sid][resp_sfn][data])  # add data if exists
+                send_dat += (self.services[resp_sid][resp_sfn][data])  # add data if exists
               print('send_dat', send_dat, resp_sid)
-              send_dat = bytes(send_dat)
+              # send_dat = bytes(send_dat)
               isotp_msg.send(send_dat)
 
             else:
@@ -139,6 +140,10 @@ class UdsServer(UdsClient):
     self.kill_event.set()
     self.uds_thread.join()
 
+def pop_all(l):
+  r, l[:] = l[:], []
+  return r
+
 
 class MockCanBuffer:
   def __init__(self):
@@ -151,14 +156,18 @@ class MockCanBuffer:
     with self.lock:
       print(f'added to can_send {server=}', (addr, 0, dat, bus))
       buf = self.rx_msgs_server if server else self.rx_msgs_client
-      buf.append([(addr, 0, dat, bus)])
+      buf.append((addr, 0, dat, bus))
 
   def can_recv(self, server=False):
     with self.lock:
       buf = self.rx_msgs_client if server else self.rx_msgs_server
       if len(buf):
         print(f'returned {server=}', buf[0])
-        return buf.pop(0)
+
+        ret = pop_all(buf)
+
+        return ret
+        # return buf.pop(0)
       else:
         return []
 

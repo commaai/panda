@@ -340,12 +340,12 @@ class CanClient():
           print("CAN-RX: drain - {}".format(len(msgs)))
         self.rx_buff.clear()
       else:
-        print('canclient, got msgs', msgs)
+        # print('canclient, got msgs', msgs)
         for rx_addr, _, rx_data, rx_bus in msgs or []:
-          print('rx_addr', rx_addr, self._recv_filter(rx_bus, rx_addr), len(rx_data))
+          # print('rx_addr', rx_addr, self._recv_filter(rx_bus, rx_addr), len(rx_data))
           if self._recv_filter(rx_bus, rx_addr) and len(rx_data) > 0:
             rx_data = bytes(rx_data)  # convert bytearray to bytes
-            print('worked!', rx_data)
+            # print('worked!', rx_data)
 
             if self.debug:
               print(f"CAN-RX: {hex(rx_addr)} - 0x{bytes.hex(rx_data)}")
@@ -359,13 +359,13 @@ class CanClient():
             self.rx_buff.append(rx_data)
       # break when non-full buffer is processed
       if len(msgs) < 254:
-        print('break')
+        # print('break')
         return
 
   def recv(self, drain: bool = False) -> Generator[bytes, None, None]:
     # buffer rx messages in case two response messages are received at once
     # (e.g. response pending and success/failure response)
-    print('here')
+    # print('here')
     self._recv_buffer(drain)
     try:
       while True:
