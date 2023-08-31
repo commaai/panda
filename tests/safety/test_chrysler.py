@@ -21,6 +21,8 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
   RT_INTERVAL = 250000
   MAX_TORQUE_ERROR = 80
 
+  LKAS_ACTIVE_VALUE = 1
+
   DAS_BUS = 0
 
   def setUp(self):
@@ -54,7 +56,7 @@ class TestChryslerSafety(common.PandaSafetyTest, common.MotorTorqueSteeringSafet
     return self.packer.make_can_msg_panda("EPS_2", 0, values)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
-    values = {"STEERING_TORQUE": torque}
+    values = {"STEERING_TORQUE": torque, "LKAS_CONTROL_BIT": self.LKAS_ACTIVE_VALUE if steer_req else 0}
     return self.packer.make_can_msg_panda("LKAS_COMMAND", 0, values)
 
   def test_buttons(self):
@@ -83,6 +85,8 @@ class TestChryslerRamDTSafety(TestChryslerSafety):
 
   DAS_BUS = 2
 
+  LKAS_ACTIVE_VALUE = 2
+
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_ram_dt_generated")
     self.safety = libpanda_py.libpanda
@@ -104,6 +108,8 @@ class TestChryslerRamHDSafety(TestChryslerSafety):
   MAX_RT_DELTA = 182
 
   DAS_BUS = 2
+
+  LKAS_ACTIVE_VALUE = 2
 
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_ram_hd_generated")
