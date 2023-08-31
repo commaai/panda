@@ -40,7 +40,7 @@ class TestMazdaSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyT
     return self.packer.make_can_msg_panda("STEER_TORQUE", 0, values)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
-    values = {"LKAS_REQUEST": torque}
+    values = {"LKAS_REQUEST": torque, "ANGLE_ENABLED": steer_req}
     return self.packer.make_can_msg_panda("CAM_LKAS", 0, values)
 
   def _speed_msg(self, speed):

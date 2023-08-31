@@ -89,7 +89,9 @@ static int mazda_tx_hook(CANPacket_t *to_send) {
     if (addr == MAZDA_LKAS) {
       int desired_torque = (((GET_BYTE(to_send, 0) & 0x0FU) << 8) | GET_BYTE(to_send, 1)) - 2048U;
 
-      if (steer_torque_cmd_checks(desired_torque, -1, MAZDA_STEERING_LIMITS)) {
+      bool steer_req = GET_BIT(to_send, 52);
+
+      if (steer_torque_cmd_checks(desired_torque, steer_req, MAZDA_STEERING_LIMITS)) {
         tx = 0;
       }
     }
