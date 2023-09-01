@@ -1,7 +1,5 @@
 #include "safety_hyundai_common.h"
 
-#define HYUNDAI_CANFD_A_CAN 1
-
 const SteeringLimits HYUNDAI_CANFD_STEERING_LIMITS = {
   .max_steer = 270,
   .max_rt_delta = 112,

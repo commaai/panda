@@ -2,6 +2,7 @@
 #define SAFETY_HYUNDAI_COMMON_H
 
 #define HYUNDAI_PT_CAN  0
+#define HYUNDAI_CANFD_A_CAN 1
 #define HYUNDAI_CAM_CAN 2
 
 const int HYUNDAI_PARAM_EV_GAS = 1;
