@@ -14,7 +14,7 @@
 #define SUBARU_STEERING_RATE_LIMIT_GENERATOR()                                      \
     .min_valid_request_frames = 7,                                                  \
     .max_invalid_request_frames = 1,                                                \
-    .min_valid_request_rt_interval = 155000,                                        \
+    .min_valid_request_rt_interval = 175000,                                        \
     .has_steer_req_tolerance = true,                                                \
 
 
