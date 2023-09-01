@@ -38,9 +38,6 @@ void hyundai_common_init(uint16_t param) {
 
   hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
 
-  hyundai_pt_bus = HYUNDAI_PT_CAN;
-  hyundai_scc_bus = hyundai_camera_scc ? HYUNDAI_CAM_CAN : hyundai_pt_bus;
-
 #ifdef ALLOW_DEBUG
   hyundai_longitudinal = GET_FLAG(param, HYUNDAI_PARAM_LONGITUDINAL);
 #else
@@ -88,6 +85,11 @@ void hyundai_common_cruise_buttons_check(const int cruise_button, const int main
 
     cruise_button_prev = cruise_button;
   }
+}
+
+void hyundai_common_get_bus(const bool canfd_hda2) {
+  hyundai_pt_bus = canfd_hda2 ? HYUNDAI_CANFD_A_CAN : HYUNDAI_PT_CAN;
+  hyundai_scc_bus = hyundai_camera_scc ? HYUNDAI_CAM_CAN : hyundai_pt_bus;
 }
 
 #endif

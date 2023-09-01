@@ -361,8 +361,7 @@ static const addr_checks* hyundai_canfd_init(uint16_t param) {
   hyundai_canfd_alt_buttons = GET_FLAG(param, HYUNDAI_PARAM_CANFD_ALT_BUTTONS);
   hyundai_canfd_hda2_alt_steering = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2_ALT_STEERING);
 
-  hyundai_pt_bus = hyundai_canfd_hda2 ? HYUNDAI_CANFD_A_CAN : HYUNDAI_PT_CAN;
-  hyundai_scc_bus = hyundai_camera_scc ? HYUNDAI_CAM_CAN : hyundai_pt_bus;
+  hyundai_common_get_bus(hyundai_canfd_hda2);
 
   // no long for ICE yet
   if (!hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
