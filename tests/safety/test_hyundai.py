@@ -13,7 +13,7 @@ def checksum(msg):
   addr, t, dat, bus = msg
 
   chksum = 0
-  if addr == 902:
+  if addr == 0x386:
     for i, b in enumerate(dat):
       for j in range(8):
         # exclude checksum and counter bits
@@ -28,26 +28,26 @@ def checksum(msg):
     ret[7] |= (chksum & 0xc) << 4
   else:
     for i, b in enumerate(dat):
-      if addr in [608, 1057] and i == 7:
-        b &= 0x0F if addr == 1057 else 0xF0
-      elif addr == 916 and i == 6:
+      if addr in [0x260, 0x421] and i == 7:
+        b &= 0x0F if addr == 0x421 else 0xF0
+      elif addr == 0x394 and i == 6:
         b &= 0xF0
-      elif addr == 916 and i == 7:
+      elif addr == 0x394 and i == 7:
         continue
       chksum += sum(divmod(b, 16))
     chksum = (16 - chksum) % 16
     ret = bytearray(dat)
-    ret[6 if addr == 916 else 7] |= chksum << (4 if addr == 1057 else 0)
+    ret[6 if addr == 0x394 else 7] |= chksum << (4 if addr == 0x421 else 0)
 
   return addr, t, ret, bus
 
 
 class TestHyundaiSafety(HyundaiButtonBase, common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
-  TX_MSGS = [[832, 0], [1265, 0], [1157, 0]]
-  STANDSTILL_THRESHOLD = 30  # ~1kph
-  RELAY_MALFUNCTION_ADDR = 832
+  TX_MSGS = [[0x340, 0], [0x4F1, 0], [0x485, 0]]
+  STANDSTILL_THRESHOLD = 12  # 0.375 kph
+  RELAY_MALFUNCTION_ADDR = 0x340
   RELAY_MALFUNCTION_BUS = 0
-  FWD_BLACKLISTED_ADDRS = {2: [832, 1157]}
+  FWD_BLACKLISTED_ADDRS = {2: [0x340, 0x485]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   MAX_RATE_UP = 3
@@ -168,11 +168,10 @@ class TestHyundaiLegacySafetyHEV(TestHyundaiSafety):
     return self.packer.make_can_msg_panda("E_EMS11", 0, values, fix_checksum=checksum)
 
 class TestHyundaiLongitudinalSafety(HyundaiLongitudinalBase, TestHyundaiSafety):
-  TX_MSGS = [[832, 0], [1265, 0], [1157, 0], [1056, 0], [1057, 0], [1290, 0], [905, 0], [1186, 0], [909, 0], [1155, 0], [2000, 0]]
+  TX_MSGS = [[0x340, 0], [0x4F1, 0], [0x485, 0], [0x420, 0], [0x421, 0], [0x50A, 0], [0x389, 0], [0x4A2, 0], [0x38D, 0], [0x483, 0], [0x7D0, 0]]
 
-
-  DISABLED_ECU_UDS_MSG = (2000, 0)
-  DISABLED_ECU_ACTUATION_MSG = (1057, 0)
+  DISABLED_ECU_UDS_MSG = (0x7D0, 0)
+  DISABLED_ECU_ACTUATION_MSG = (0x421, 0)
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
