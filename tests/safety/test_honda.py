@@ -64,18 +64,24 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
     """
       Both SET and RES should enter controls allowed on their falling edge.
     """
-    for btn in (Btn.SET, Btn.RESUME):
-      for main_on in (True, False):
-        self._rx(self._acc_state_msg(main_on))
-        self.safety.set_controls_allowed(0)
+    for main_on in (True, False):
+      self._rx(self._acc_state_msg(main_on))
+      for btn_prev in range(8):
+        for btn_cur in range(8):
+          self._rx(self._button_msg(Btn.NONE))
+          self.safety.set_controls_allowed(0)
+          for _ in range(10):
+            self._rx(self._button_msg(btn_prev))
+            self.assertFalse(self.safety.get_controls_allowed())
 
-        # nothing until falling edge
-        for _ in range(10):
-          self._rx(self._button_msg(btn, main_on=main_on))
-        self.assertFalse(self.safety.get_controls_allowed())
+          # should enter controls allowed on falling edge and not transitioning to cancel or main
+          should_enable = (main_on and
+                           btn_cur != btn_prev and
+                           btn_prev in (Btn.RESUME, Btn.SET) and
+                           btn_cur not in (Btn.CANCEL, Btn.MAIN))
 
-        self._rx(self._button_msg(Btn.NONE, main_on=main_on))
-        self.assertEqual(main_on, self.safety.get_controls_allowed(), msg=f"{main_on=} {btn=}")
+          self._rx(self._button_msg(btn_cur))
+          self.assertEqual(should_enable, self.safety.get_controls_allowed(), msg=f"{main_on=} {btn_prev=} {btn_cur=}")
 
   def test_main_cancel_buttons(self):
     """
@@ -132,7 +138,7 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
         self.assertFalse(self.safety.get_controls_allowed())
 
     # restore counters for future tests with a couple of good messages
-    for i in range(2):
+    for _ in range(2):
       self.safety.set_controls_allowed(1)
       self._rx(self._button_msg(Btn.SET))
       self._rx(self._speed_msg(0))

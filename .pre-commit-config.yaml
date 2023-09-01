@@ -1,36 +1,18 @@
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
-    hooks:
-    -   id: check-ast
-    -   id: check-yaml
-    -   id: check-merge-conflict
-    -   id: check-symlinks
--   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.4.1
-    hooks:
-    -   id: mypy
-        additional_dependencies: ['git+https://github.com/numpy/numpy-stubs', 'types-requests', 'types-atomicwrites',
-                                  'types-pycurl']
--   repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
-    hooks:
-    -   id: flake8
-        args:
-        - --select=F,E112,E113,E304,E501,E502,E701,E702,E703,E71,E72,E731,W191,W6
-        - --exclude=tests/gmbitbang/*
-        - --max-line-length=160
-        - --statistics
--   repo: local
-    hooks:
-    -   id: pylint
-        name: pylint
-        entry: pylint
-        language: system
-        types: [python]
-        args:
-        - -rn
-        - -sn
-        - -j0
-        - --disable=C,R,W0613,W0511,W0212,W0201,W0311,W0106,W0603,W0621,W0703,W0719,W1203,W1514,E1136
-        - --generated-members="usb1.*"
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.4.0
+  hooks:
+    - id: check-ast
+    - id: check-yaml
+    - id: check-merge-conflict
+    - id: check-symlinks
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v1.5.1
+  hooks:
+    - id: mypy
+      additional_dependencies: ['git+https://github.com/numpy/numpy-stubs', 'types-requests', 'types-atomicwrites',
+                                'types-pycurl']
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.0.285
+  hooks:
+    - id: ruff

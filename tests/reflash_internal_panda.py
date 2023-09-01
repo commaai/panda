@@ -27,6 +27,7 @@ if __name__ == "__main__":
   gpio_set(GPIO.HUB_RST_N, 1)
 
   # flash bootstub
+  print("resetting into DFU")
   gpio_set(GPIO.STM_RST_N, 1)
   gpio_set(GPIO.STM_BOOT0, 1)
   time.sleep(1)
@@ -34,6 +35,7 @@ if __name__ == "__main__":
   gpio_set(GPIO.STM_BOOT0, 0)
   time.sleep(1)
 
+  print("flashing bootstub")
   PandaDFU(None).recover()
 
   gpio_set(GPIO.STM_RST_N, 1)
@@ -41,7 +43,7 @@ if __name__ == "__main__":
   gpio_set(GPIO.STM_RST_N, 0)
   time.sleep(1)
 
-  # flash app
+  print("flashing app")
   p = Panda()
   assert p.bootstub
   p.flash()
