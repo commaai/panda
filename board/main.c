@@ -348,6 +348,8 @@ int main(void) {
   clock_init();
   peripherals_init();
   detect_board_type();
+  // red led enabled until succesful USB/SPI init, as a debug indicator
+  current_board->set_led(LED_RED, true);
   adc_init();
   logging_init();
 
@@ -409,6 +411,8 @@ int main(void) {
     spi_init();
   }
 #endif
+
+  current_board->set_led(LED_RED, false);
 
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();
