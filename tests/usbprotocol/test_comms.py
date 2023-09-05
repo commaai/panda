@@ -1,3 +1,4 @@
+#!/bin/bash
 import random
 import unittest
 
