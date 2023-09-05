@@ -145,10 +145,7 @@ static uint32_t hyundai_canfd_get_checksum(CANPacket_t *to_push) {
 }
 
 static uint32_t hyundai_canfd_compute_checksum(CANPacket_t *to_push) {
-  int len = GET_LEN(to_push);
-  uint32_t address = GET_ADDR(to_push);
-
-  return hyundai_common_canfd_compute_checksum(to_push, len, address);
+  return hyundai_common_canfd_compute_checksum(to_push);
 }
 
 static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
