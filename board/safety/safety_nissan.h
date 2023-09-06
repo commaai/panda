@@ -37,11 +37,9 @@ AddrCheckStruct nissan_addr_checks[] = {
 #define NISSAN_ADDR_CHECK_LEN (sizeof(nissan_addr_checks) / sizeof(nissan_addr_checks[0]))
 addr_checks nissan_rx_checks = {nissan_addr_checks, NISSAN_ADDR_CHECK_LEN};
 
-
 // EPS Location. false = V-CAN, true = C-CAN
 const int NISSAN_PARAM_ALT_EPS_BUS = 1;
 bool nissan_alt_eps = false;
-
 
 static int nissan_rx_hook(CANPacket_t *to_push) {
 
@@ -51,7 +49,7 @@ static int nissan_rx_hook(CANPacket_t *to_push) {
     int bus = GET_BUS(to_push);
     int addr = GET_ADDR(to_push);
 
-    if (((bus == 0) && (!nissan_alt_eps)) || ((bus == 1) && (nissan_alt_eps))) {
+    if (bus == (nissan_alt_eps ? 1 : 0)) {
       if (addr == 0x2) {
         // Current steering angle
         // Factor -0.1, little endian
@@ -91,7 +89,8 @@ static int nissan_rx_hook(CANPacket_t *to_push) {
     }
 
     // Handle cruise enabled
-    if ((addr == 0x30f) && (((bus == 2) && (!nissan_alt_eps)) || ((bus == 1) && (nissan_alt_eps)))) {
+//    if ((addr == 0x30f) && (((bus == 2) && (!nissan_alt_eps)) || ((bus == 1) && (nissan_alt_eps)))) {
+    if ((addr == 0x30f) && (bus == (nissan_alt_eps ? 1 : 2))) {
       bool cruise_engaged = (GET_BYTE(to_push, 0) >> 3) & 1U;
       pcm_cruise_check(cruise_engaged);
     }
