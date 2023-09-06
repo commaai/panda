@@ -93,15 +93,6 @@ void tick_handler(void) {
     }
 
 #ifdef FINAL_PROVISIONING
-    // Reset CAN core if it got stuck in bus off state after shorted CANH/L
-    // Looks like an issue with H7 that it doesn't want to recover from bus off
-    // FIXME: this must be fixed on the driver level, temporary workaround
-    for (uint8_t i = 0U; i < 3U; i++) {
-      update_can_health_pkt(i, 0);
-      if (can_health[i].bus_off == 1U) {
-        can_init(i);
-      }
-    }
     // Ignition blinking
     uint8_t ignition_bitmask = 0U;
     for (uint8_t i = 0U; i < 6U; i++) {
@@ -150,6 +141,9 @@ int main(void) {
   clock_init();
   peripherals_init();
   detect_board_type();
+  // red+green leds enabled until succesful USB init, as a debug indicator
+  current_board->set_led(LED_RED, true);
+  current_board->set_led(LED_GREEN, true);
 
   // print hello
   print("\n\n\n************************ MAIN START ************************\n");
@@ -180,6 +174,9 @@ int main(void) {
 #endif
   // enable USB (right before interrupts or enum can fail!)
   usb_init();
+
+  current_board->set_led(LED_RED, false);
+  current_board->set_led(LED_GREEN, false);
 
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();

@@ -6,6 +6,8 @@ repos:
     - id: check-yaml
     - id: check-merge-conflict
     - id: check-symlinks
+    - id: check-executables-have-shebangs
+    - id: check-shebang-scripts-are-executable
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v1.5.1
   hooks:

@@ -75,9 +75,11 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
     if ((ir_reg & (FDCAN_IR_RF0L)) != 0) {
       can_health[can_number].total_rx_lost_cnt += 1U;
     }
-    // While multiplexing between buses 1 and 3 we are getting ACK errors that overwhelm CAN core
-    // By resseting CAN core when no ACK is detected for a while(until TEC counter reaches 127) it can recover faster
-    if (((can_health[can_number].last_error == CAN_ACK_ERROR) || (can_health[can_number].last_data_error == CAN_ACK_ERROR)) && (can_health[can_number].transmit_error_cnt > 127U)) {
+    // Cases:
+    // 1. while multiplexing between buses 1 and 3 we are getting ACK errors that overwhelm CAN core, by resetting it recovers faster
+    // 2. H7 gets stuck in bus off recovery state indefinitely
+    if ((((can_health[can_number].last_error == CAN_ACK_ERROR) || (can_health[can_number].last_data_error == CAN_ACK_ERROR)) && (can_health[can_number].transmit_error_cnt > 127U)) ||
+     ((ir_reg & FDCAN_IR_BO) != 0)) {
       can_health[can_number].can_core_reset_cnt += 1U;
       can_health[can_number].total_tx_lost_cnt += (FDCAN_TX_FIFO_EL_CNT - (FDCANx->TXFQS & FDCAN_TXFQS_TFFL)); // TX FIFO msgs will be lost after reset
       llcan_clear_send(FDCANx);
