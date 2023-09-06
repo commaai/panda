@@ -39,6 +39,7 @@ addr_checks nissan_rx_checks = {nissan_addr_checks, NISSAN_ADDR_CHECK_LEN};
 
 // EPS Location. false = V-CAN, true = C-CAN
 const int NISSAN_PARAM_ALT_EPS_BUS = 1;
+
 bool nissan_alt_eps = false;
 
 static int nissan_rx_hook(CANPacket_t *to_push) {
