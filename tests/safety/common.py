@@ -286,9 +286,9 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
 class SteerRequestCutTestBase(unittest.TestCase, abc.ABC):
 
   # Safety around steering req bit
-  MIN_VALID_STEERING_FRAMES = None
-  MAX_INVALID_STEERING_FRAMES = 1
-  MIN_VALID_STEERING_RT_INTERVAL = None
+  MIN_VALID_STEERING_FRAMES: Optional[int] = None
+  MAX_INVALID_STEERING_FRAMES: int = 1
+  MIN_VALID_STEERING_RT_INTERVAL: Optional[int] = None
 
   def test_steer_req_parameters(self):
     # assert the parameters are properly set
