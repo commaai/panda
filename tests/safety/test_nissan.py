@@ -82,6 +82,7 @@ class TestNissanSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
 
 
 class TestNissanSafetyAltEpsBus(TestNissanSafety):
+  """Altima uses different buses"""
 
   EPS_BUS = 1
   CRUISE_BUS = 1
