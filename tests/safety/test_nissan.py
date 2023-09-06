@@ -90,7 +90,7 @@ class TestNissanSafetyAltEpsBus(TestNissanSafety):
   def setUp(self):
     self.packer = CANPackerPanda("nissan_x_trail_2017_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, 1)
+    self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, Panda.FLAG_NISSAN_ALT_EPS_BUS)
     self.safety.init_tests()
 
 

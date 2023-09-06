@@ -38,6 +38,8 @@ AddrCheckStruct nissan_addr_checks[] = {
 addr_checks nissan_rx_checks = {nissan_addr_checks, NISSAN_ADDR_CHECK_LEN};
 
 // EPS Location. false = V-CAN, true = C-CAN
+const int NISSAN_PARAM_ALT_EPS_BUS = 1;
+
 bool nissan_alt_eps = false;
 
 static int nissan_rx_hook(CANPacket_t *to_push) {
@@ -158,7 +160,7 @@ static int nissan_fwd_hook(int bus_num, int addr) {
 }
 
 static const addr_checks* nissan_init(uint16_t param) {
-  nissan_alt_eps = param ? 1 : 0;
+  nissan_alt_eps = GET_FLAG(param, NISSAN_PARAM_ALT_EPS_BUS);
   return &nissan_rx_checks;
 }
 
