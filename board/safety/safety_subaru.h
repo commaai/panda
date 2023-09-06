@@ -1,5 +1,5 @@
 #define SUBARU_STEERING_LIMITS_GENERATOR(steer_max, rate_up, rate_down)               \
-  {
+  {                                                                                   \
     .max_steer = (steer_max),                                                         \
     .max_rt_delta = 940,                                                              \
     .max_rt_interval = 250000,                                                        \
@@ -19,6 +19,7 @@
 
 const SteeringLimits SUBARU_STEERING_LIMITS      = SUBARU_STEERING_LIMITS_GENERATOR(2047, 50, 70);
 const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = SUBARU_STEERING_LIMITS_GENERATOR(1000, 40, 40);
+
 
 const LongitudinalLimits SUBARU_LONG_LIMITS = {
   .min_gas = 808,       // appears to be engine braking
