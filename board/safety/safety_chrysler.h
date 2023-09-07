@@ -178,7 +178,7 @@ static uint8_t chrysler_get_counter(CANPacket_t *to_push) {
 
 static int chrysler_rx_hook(CANPacket_t *to_push) {
 
-  bool valid = addr_safety_check(to_push, &chrysler_rx_checks, NULL,
+  bool valid = addr_safety_check(to_push, &chrysler_rx_checks,
                                  chrysler_get_checksum, chrysler_compute_checksum,
                                  chrysler_get_counter, NULL);
 

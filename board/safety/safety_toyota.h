@@ -72,10 +72,11 @@ static uint32_t toyota_get_checksum(CANPacket_t *to_push) {
 
 static int toyota_rx_hook(CANPacket_t *to_push) {
 
-  bool valid = addr_safety_check(to_push, &toyota_rx_checks, NULL,
+  bool exists = get_addr_check_index(to_push, toyota_rx_checks.check, toyota_rx_checks.len) != -1;
+  bool valid = addr_safety_check(to_push, &toyota_rx_checks,
                                  toyota_get_checksum, toyota_compute_checksum, NULL, NULL);
 
-  if (valid && (GET_BUS(to_push) == 0U)) {
+  if (valid && exists && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
 
     // get eps motor torque (0.66 factor in dbc)

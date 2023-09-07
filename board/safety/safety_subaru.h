@@ -143,7 +143,7 @@ static uint32_t subaru_compute_checksum(CANPacket_t *to_push) {
 
 static int subaru_rx_hook(CANPacket_t *to_push) {
 
-  bool valid = addr_safety_check(to_push, &subaru_rx_checks, NULL,
+  bool valid = addr_safety_check(to_push, &subaru_rx_checks,
                                  subaru_get_checksum, subaru_compute_checksum, subaru_get_counter, NULL);
 
   if (valid) {
