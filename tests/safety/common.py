@@ -283,17 +283,19 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
     self._set_prev_torque(0)
     self.assertFalse(self._tx(self._torque_cmd_msg(-self.MAX_RATE_UP - 1)))
 
-class SteerRequestCutTestBase(unittest.TestCase, abc.ABC):
 
-  # Safety around steering req bit
-  MIN_VALID_STEERING_FRAMES: Optional[int] = None
-  MAX_INVALID_STEERING_FRAMES: int = 1
-  MIN_VALID_STEERING_RT_INTERVAL: Optional[int] = None
+class SteerRequestCutSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
-  def test_steer_req_parameters(self):
-    # assert the parameters are properly set
-    self.assertIsNotNone(self.MIN_VALID_STEERING_FRAMES)
-    self.assertIsNotNone(self.MIN_VALID_STEERING_RT_INTERVAL)
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "SteerRequestCutSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
+
+  # Safety around steering request bit
+  MIN_VALID_STEERING_FRAMES: int
+  MAX_INVALID_STEERING_FRAMES: int
+  MIN_VALID_STEERING_RT_INTERVAL: int
 
   def test_steer_req_bit_frames(self):
     """
@@ -336,10 +338,6 @@ class SteerRequestCutTestBase(unittest.TestCase, abc.ABC):
       is sent after an invalid frame (even without sending the max number of allowed invalid frames),
       all counters are reset.
     """
-    # TODO: Add safety around steer request bits for all safety modes and remove exception
-    if self.MIN_VALID_STEERING_FRAMES == 0:
-      raise unittest.SkipTest("Safety mode does not implement tolerance for steer request bit safety")
-
     for max_invalid_steer_frames in range(1, self.MAX_INVALID_STEERING_FRAMES * 2):
       self.safety.init_tests()
       self.safety.set_timer(self.MIN_VALID_STEERING_RT_INTERVAL)
@@ -367,10 +365,6 @@ class SteerRequestCutTestBase(unittest.TestCase, abc.ABC):
         - That we allow messages with mismatching steer request bit if time from last is >= MIN_VALID_STEERING_RT_INTERVAL
         - That frame mismatch safety does not interfere with this test
     """
-    # TODO: Add safety around steer request bits for all safety modes and remove exception
-    if self.MIN_VALID_STEERING_RT_INTERVAL == 0:
-      raise unittest.SkipTest("Safety mode does not implement tolerance for steer request bit safety")
-
     for rt_us in np.arange(self.MIN_VALID_STEERING_RT_INTERVAL - 50000, self.MIN_VALID_STEERING_RT_INTERVAL + 50000, 10000):
       # Reset match count and rt timer (valid_steer_req_count, ts_steer_req_mismatch_last)
       self.safety.init_tests()
@@ -404,7 +398,6 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
   @classmethod
   def setUpClass(cls):
-    super().setUpClass()
     if cls.__name__ == "DriverTorqueSteeringSafetyTest":
       cls.safety = None
       raise unittest.SkipTest
