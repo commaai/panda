@@ -168,7 +168,6 @@ static uint32_t hyundai_compute_checksum(CANPacket_t *to_push) {
 
 static int hyundai_rx_hook(CANPacket_t *to_push) {
 
-  bool exists = get_addr_check_index(to_push, hyundai_rx_checks.check, hyundai_rx_checks.len) != -1;
   bool valid = addr_safety_check(to_push, &hyundai_rx_checks,
                                  hyundai_get_checksum, hyundai_compute_checksum,
                                  hyundai_get_counter, NULL);
@@ -177,13 +176,13 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   // SCC12 is on bus 2 for camera-based SCC cars, bus 0 on all others
-  if (valid && exists && (addr == 0x421) && (((bus == 0) && !hyundai_camera_scc) || ((bus == 2) && hyundai_camera_scc))) {
+  if (valid && (addr == 0x421) && (((bus == 0) && !hyundai_camera_scc) || ((bus == 2) && hyundai_camera_scc))) {
     // 2 bits: 13-14
     int cruise_engaged = (GET_BYTES(to_push, 0, 4) >> 13) & 0x3U;
     hyundai_common_cruise_state_check(cruise_engaged);
   }
 
-  if (valid && exists && (bus == 0)) {
+  if (valid && (bus == 0)) {
     if (addr == 0x251) {
       int torque_driver_new = ((GET_BYTES(to_push, 0, 4) & 0x7ffU) * 0.79) - 808; // scale down new driver torque signal to match previous one
       // update array of samples
