@@ -284,7 +284,13 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
     self.assertFalse(self._tx(self._torque_cmd_msg(-self.MAX_RATE_UP - 1)))
 
 
-class SteerRequestCutTestBase(unittest.TestCase, abc.ABC):
+class SteerRequestCutSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "SteerRequestCutSafetyTest":
+      cls.safety = None
+      raise unittest.SkipTest
 
   # Safety around steering req bit
   MIN_VALID_STEERING_FRAMES: int
@@ -392,7 +398,6 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
   @classmethod
   def setUpClass(cls):
-    super().setUpClass()
     if cls.__name__ == "DriverTorqueSteeringSafetyTest":
       cls.safety = None
       raise unittest.SkipTest
