@@ -75,6 +75,7 @@ const CanMsg HYUNDAI_CANFD_HDA1_TX_MSGS[] = {
   {.msg = {{0x1aa, (pt_bus), 16, .check_checksum = false, .max_counter = 0xffU, .expected_timestep = 20000U}, { 0 }, { 0 }}},   \
 
 
+// *** Macros to create addr check structs ***
 #define HYUNDAI_CANFD_CREATE_ADDR_CHECK(name, pt_bus, scc_bus, button_msg) \
 AddrCheckStruct (name)[] = {                                               \
   HYUNDAI_CANFD_COMMON_ADDR_CHECKS((pt_bus))                               \
@@ -82,11 +83,12 @@ AddrCheckStruct (name)[] = {                                               \
   (button_msg)((pt_bus))                                                   \
 };                                                                         \
 
-#define HYUNDAI_CANFD_CREATE_LONG_ADDR_CHECK(name, pt_bus, button_msg) \
-AddrCheckStruct (name)[] = {                                           \
-  HYUNDAI_CANFD_COMMON_ADDR_CHECKS((pt_bus))                           \
-  (button_msg)((pt_bus))                                               \
-};                                                                     \
+#define HYUNDAI_CANFD_CREATE_LONG_ADDR_CHECK(name, pt_bus, button_msg)       \
+AddrCheckStruct (name)[] = {                                                 \
+  /* SCC not checked since its ECU is disabled on HDA2 and we use buttons */ \
+  HYUNDAI_CANFD_COMMON_ADDR_CHECKS((pt_bus))                                 \
+  (button_msg)((pt_bus))                                                     \
+};                                                                           \
 
 
 // *** Non-HDA2 checks ***
