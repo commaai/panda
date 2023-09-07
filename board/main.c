@@ -203,8 +203,8 @@ void tick_handler(void) {
         if (som_running) {
           log("device booted");
           waiting_to_boot = false;
-        } else if (waiting_to_boot_count == 10U) {
-          log("not booted after 10s");
+        } else if (waiting_to_boot_count == 45U) {
+          log("not booted after 45s");
         } else {
 
         }
