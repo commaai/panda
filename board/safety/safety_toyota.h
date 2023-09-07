@@ -32,14 +32,22 @@ const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0
                                  {0x2E4, 0, 5}, {0x191, 0, 8}, {0x411, 0, 8}, {0x412, 0, 8}, {0x343, 0, 8}, {0x1D2, 0, 8},  // LKAS + ACC
                                  {0x200, 0, 6}};  // interceptor
 
+#define TOYOTA_COMMON_ADDR_CHECKS(brake_msg)                                                        \
+  {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .expected_timestep = 12000U}, { 0 }, { 0 }}},     \
+  {.msg = {{0x260, 0, 8, .check_checksum = true, .expected_timestep = 20000U}, { 0 }, { 0 }}},      \
+  {.msg = {{0x1D2, 0, 8, .check_checksum = true, .expected_timestep = 30000U}, { 0 }, { 0 }}},      \
+  {.msg = {{brake_msg, 0, 8, .check_checksum = false, .expected_timestep = 25000U}, { 0 }, { 0 }}}, \
+
 AddrCheckStruct toyota_addr_checks[] = {
-  {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .expected_timestep = 12000U}, { 0 }, { 0 }}},
-  {.msg = {{0x260, 0, 8, .check_checksum = true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{0x1D2, 0, 8, .check_checksum = true, .expected_timestep = 30000U}, { 0 }, { 0 }}},
-  {.msg = {{0x224, 0, 8, .check_checksum = false, .expected_timestep = 25000U},
-           {0x226, 0, 8, .check_checksum = false, .expected_timestep = 25000U}, { 0 }}},
+  TOYOTA_COMMON_ADDR_CHECKS(0x226)
 };
 #define TOYOTA_ADDR_CHECKS_LEN (sizeof(toyota_addr_checks) / sizeof(toyota_addr_checks[0]))
+
+AddrCheckStruct toyota_alt_brake_addr_checks[] = {
+  TOYOTA_COMMON_ADDR_CHECKS(0x224)
+};
+#define TOYOTA_ALT_BRAKE_ADDR_CHECKS_LEN (sizeof(toyota_alt_brake_addr_checks) / sizeof(toyota_alt_brake_addr_checks[0]))
+
 addr_checks toyota_rx_checks = {toyota_addr_checks, TOYOTA_ADDR_CHECKS_LEN};
 
 // safety param flags
@@ -227,6 +235,12 @@ static const addr_checks* toyota_init(uint16_t param) {
   toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
+
+  if (!toyota_alt_brake) {
+    toyota_rx_checks = (addr_checks){toyota_addr_checks, TOYOTA_ADDR_CHECKS_LEN};
+  } else {
+    toyota_rx_checks = (addr_checks){toyota_alt_brake_addr_checks, TOYOTA_ALT_BRAKE_ADDR_CHECKS_LEN};
+  }
 
 #ifdef ALLOW_DEBUG
   toyota_lta = GET_FLAG(param, TOYOTA_PARAM_LTA);
