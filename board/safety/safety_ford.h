@@ -213,7 +213,7 @@ const SteeringLimits FORD_STEERING_LIMITS = {
 };
 
 static int ford_rx_hook(CANPacket_t *to_push) {
-  bool valid = addr_safety_check(to_push, &ford_rx_checks,
+  bool valid = addr_safety_check(to_push, &ford_rx_checks, NULL,
                                  ford_get_checksum, ford_compute_checksum, ford_get_counter, ford_get_quality_flag_valid);
 
   if (valid && (GET_BUS(to_push) == FORD_MAIN_BUS)) {

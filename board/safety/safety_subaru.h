@@ -143,7 +143,7 @@ static uint32_t subaru_compute_checksum(CANPacket_t *to_push) {
 
 static int subaru_rx_hook(CANPacket_t *to_push) {
 
-  bool valid = addr_safety_check(to_push, &subaru_rx_checks,
+  bool valid = addr_safety_check(to_push, &subaru_rx_checks, NULL,
                                  subaru_get_checksum, subaru_compute_checksum, subaru_get_counter, NULL);
 
   if (valid) {
@@ -232,7 +232,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   if (addr == MSG_SUBARU_ES_Distance) {
     int cruise_throttle = (GET_BYTES(to_send, 2, 2) & 0xFFFU);
     bool cruise_cancel = GET_BIT(to_send, 56U) != 0U;
-    
+
     if (subaru_longitudinal) {
       violation |= longitudinal_gas_checks(cruise_throttle, SUBARU_LONG_LIMITS);
     } else {

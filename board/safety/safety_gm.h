@@ -43,6 +43,7 @@ AddrCheckStruct gm_addr_checks[] = {
   {.msg = {{0x184, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{0x34A, 0, 5, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{0x1E1, 0, 7, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+//  {.msg = {{0xBD, 0, 7, .expected_timestep = 100000U}, { 0 }, { 0 }}},  // only on EV
   {.msg = {{0xBE, 0, 6, .expected_timestep = 100000U},    // Volt, Silverado, Acadia Denali
            {0xBE, 0, 7, .expected_timestep = 100000U},    // Bolt EUV
            {0xBE, 0, 8, .expected_timestep = 100000U}}},  // Escalade
@@ -68,7 +69,7 @@ bool gm_pcm_cruise = false;
 
 static int gm_rx_hook(CANPacket_t *to_push) {
 
-  bool valid = addr_safety_check(to_push, &gm_rx_checks, NULL, NULL, NULL, NULL);
+  bool valid = addr_safety_check(to_push, &gm_rx_checks, NULL, NULL, NULL, NULL, NULL);
 
   if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);

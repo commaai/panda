@@ -215,6 +215,7 @@ void update_addr_timestamp(AddrCheckStruct addr_list[], int index) {
 
 bool addr_safety_check(CANPacket_t *to_push,
                        const addr_checks *rx_checks,
+                       bool *exists,
                        uint32_t (*get_checksum)(CANPacket_t *to_push),
                        uint32_t (*compute_checksum)(CANPacket_t *to_push),
                        uint8_t (*get_counter)(CANPacket_t *to_push),
@@ -222,6 +223,10 @@ bool addr_safety_check(CANPacket_t *to_push,
 
   int index = get_addr_check_index(to_push, rx_checks->check, rx_checks->len);
   update_addr_timestamp(rx_checks->check, index);
+
+  if (exists != NULL) {
+    *exists = index != -1;
+  }
 
   if (index != -1) {
     // checksum check
@@ -247,11 +252,8 @@ bool addr_safety_check(CANPacket_t *to_push,
     } else {
       rx_checks->check[index].valid_quality_flag = true;
     }
-    return is_msg_valid(rx_checks->check, index);
-  } else {
-    // messages not in address checks are not valid
-    return false;
   }
+  return is_msg_valid(rx_checks->check, index);
 }
 
 void generic_rx_checks(bool stock_ecu_detected) {

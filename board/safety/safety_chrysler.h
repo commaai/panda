@@ -178,7 +178,7 @@ static uint8_t chrysler_get_counter(CANPacket_t *to_push) {
 
 static int chrysler_rx_hook(CANPacket_t *to_push) {
 
-  bool valid = addr_safety_check(to_push, &chrysler_rx_checks,
+  bool valid = addr_safety_check(to_push, &chrysler_rx_checks, NULL,
                                  chrysler_get_checksum, chrysler_compute_checksum,
                                  chrysler_get_counter, NULL);
 
@@ -247,7 +247,7 @@ static int chrysler_tx_hook(CANPacket_t *to_send) {
 
     const SteeringLimits limits = (chrysler_platform == CHRYSLER_PACIFICA) ? CHRYSLER_STEERING_LIMITS :
                                   (chrysler_platform == CHRYSLER_RAM_DT) ? CHRYSLER_RAM_DT_STEERING_LIMITS : CHRYSLER_RAM_HD_STEERING_LIMITS;
-                                
+
     bool steer_req = (chrysler_platform == CHRYSLER_PACIFICA) ? (GET_BIT(to_send, 4U) != 0U) : ((GET_BYTE(to_send, 3) & 0x7U) == 2U);
     if (steer_torque_cmd_checks(desired_torque, steer_req, limits)) {
       tx = 0;

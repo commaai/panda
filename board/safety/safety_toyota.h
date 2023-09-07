@@ -72,7 +72,7 @@ static uint32_t toyota_get_checksum(CANPacket_t *to_push) {
 
 static int toyota_rx_hook(CANPacket_t *to_push) {
 
-  bool valid = addr_safety_check(to_push, &toyota_rx_checks,
+  bool valid = addr_safety_check(to_push, &toyota_rx_checks, NULL,
                                  toyota_get_checksum, toyota_compute_checksum, NULL, NULL);
 
   if (valid && (GET_BUS(to_push) == 0U)) {
