@@ -1,0 +1,33 @@
+#!/usr/bin/env python3
+import time
+
+from panda import Panda, PandaDFU
+
+if __name__ == "__main__":
+  from openpilot.system.hardware import HARDWARE
+  HARDWARE.recover_internal_panda()
+  Panda.wait_for_dfu(None, 5)
+
+  p = PandaDFU(None)
+  cfg = p.get_mcu_type().config
+
+  def readmem(addr, length, fn):
+    print(f"reading {hex(addr)} {hex(length)} bytes to {fn}")
+    max_size = 255
+    with open(fn, "wb") as f:
+      to_read = length
+      while to_read > 0:
+        l = min(to_read, max_size)
+        dat = p._handle.read(addr, l)
+        assert len(dat) == l
+        to_read -= len(dat)
+        f.write(dat)
+
+  #readmem(cfg.bootstub_address, cfg.app_address - cfg.bootstub_address, "/tmp/bootstub.bin")
+  #readmem(0, 0, "/tmp/bootstub.bin")
+
+  # read all sectors
+  addr = cfg.bootstub_address
+  for i, sector_size in enumerate(cfg.sector_sizes):
+    readmem(addr, sector_size, f"sector_{i}.bin")
+    addr += sector_size
