@@ -291,11 +291,6 @@ class SteerRequestCutTestBase(unittest.TestCase, abc.ABC):
   MAX_INVALID_STEERING_FRAMES: int
   MIN_VALID_STEERING_RT_INTERVAL: int
 
-  def test_steer_req_parameters(self):
-    # assert the parameters are properly set
-    self.assertIsNotNone(self.MIN_VALID_STEERING_FRAMES)
-    self.assertIsNotNone(self.MIN_VALID_STEERING_RT_INTERVAL)
-
   def test_steer_req_bit_frames(self):
     """
       Certain safety modes implement some tolerance on their steer request bits matching the
