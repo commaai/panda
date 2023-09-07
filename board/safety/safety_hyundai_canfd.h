@@ -53,7 +53,7 @@ const CanMsg HYUNDAI_CANFD_HDA1_TX_MSGS[] = {
   {0x1E0, 0, 16}, // LFAHDA_CLUSTER
 };
 
-#define HYUNDAI_CANFD_COMMON_ADDR_CHECKS(pt_bus)                                                                     \
+#define HYUNDAI_CANFD_COMMON_ADDR_CHECKS(pt_bus)                                                                              \
   /* ACCELERATOR, ACCELERATOR_BRAKE_ALT, ACCELERATOR_ALT */                                                                   \
   {.msg = {{0x35, (pt_bus), 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U},                   \
            {0x100, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U},                         \
