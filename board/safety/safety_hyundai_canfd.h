@@ -349,11 +349,6 @@ static const addr_checks* hyundai_canfd_init(uint16_t param) {
   hyundai_canfd_alt_buttons = GET_FLAG(param, HYUNDAI_PARAM_CANFD_ALT_BUTTONS);
   hyundai_canfd_hda2_alt_steering = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2_ALT_STEERING);
 
-  // no long for ICE yet
-  if (!hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
-    hyundai_longitudinal = false;
-  }
-
   if (hyundai_longitudinal) {
     if (hyundai_canfd_hda2) {
       hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_hda2_long_addr_checks, HYUNDAI_CANFD_HDA2_LONG_ADDR_CHECK_LEN};
@@ -361,8 +356,6 @@ static const addr_checks* hyundai_canfd_init(uint16_t param) {
       hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_long_addr_checks, HYUNDAI_CANFD_LONG_ADDR_CHECK_LEN};
     }
   } else {
-//    if (!hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
-//      hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_ice_addr_checks, HYUNDAI_CANFD_ICE_ADDR_CHECK_LEN};
     if (!hyundai_camera_scc && !hyundai_canfd_hda2) {
       hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_radar_scc_addr_checks, HYUNDAI_CANFD_RADAR_SCC_ADDR_CHECK_LEN};
     } else {
