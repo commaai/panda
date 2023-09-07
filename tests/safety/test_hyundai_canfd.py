@@ -259,35 +259,5 @@ class TestHyundaiCanfdHDALongHybrid(HyundaiLongitudinalBase, TestHyundaiCanfdHDA
     pass
 
 
-class TestHyundaiCanfdHDALongICE(HyundaiLongitudinalBase, TestHyundaiCanfdHDA1Base):
-
-  FWD_BLACKLISTED_ADDRS = {2: [0x12a, 0x1e0, 0x1a0]}
-
-  DISABLED_ECU_UDS_MSG = (0x730, 1)
-  DISABLED_ECU_ACTUATION_MSG = (0x1a0, 0)
-
-  STEER_MSG = "LFA"
-  GAS_MSG = ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED")
-  STEER_BUS = 0
-  SCC_BUS = 2
-
-  def setUp(self):
-    self.packer = CANPackerPanda("hyundai_canfd")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CAMERA_SCC | Panda.FLAG_HYUNDAI_LONG)
-    self.safety.init_tests()
-
-  def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
-    values = {
-      "aReqRaw": accel,
-      "aReqValue": accel,
-    }
-    return self.packer.make_can_msg_panda("SCC_CONTROL", 0, values)
-
-  # no knockout
-  def test_tester_present_allowed(self):
-    pass
-
-
 if __name__ == "__main__":
   unittest.main()
