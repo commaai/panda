@@ -69,38 +69,30 @@ const CanMsg HYUNDAI_CANFD_HDA1_TX_MSGS[] = {
   /* SCC_CONTROL (from ADAS unit or camera) */                                                                                \
   {.msg = {{0x1a0, (scc_bus), 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
 
-AddrCheckStruct hyundai_canfd_addr_checks[] = {
-  // Camera sends SCC messages on HDA2
-  HYUNDAI_CANFD_COMMON_ADDR_CHECKS(0)
-  HYUNDAI_CANFD_SCC_ADDR_CHECK(2)
-};
-#define HYUNDAI_CANFD_ADDR_CHECK_LEN (sizeof(hyundai_canfd_addr_checks) / sizeof(hyundai_canfd_addr_checks[0]))
+#define HYUNDAI_CANFD_CREATE_ADDR_CHECK(name, pt_bus, scc_bus)    \
+AddrCheckStruct name[] = {                          \
+  HYUNDAI_CANFD_COMMON_ADDR_CHECKS(pt_bus)          \
+  HYUNDAI_CANFD_SCC_ADDR_CHECK(scc_bus)             \
+};                                                  \
 
-AddrCheckStruct hyundai_canfd_hda2_addr_checks[] = {
-  // E-CAN is on bus 1, ADAS unit sends SCC messages on HDA2
-  HYUNDAI_CANFD_COMMON_ADDR_CHECKS(1)
-  HYUNDAI_CANFD_SCC_ADDR_CHECK(1)
-};
-#define HYUNDAI_CANFD_HDA2_ADDR_CHECK_LEN (sizeof(hyundai_canfd_hda2_addr_checks) / sizeof(hyundai_canfd_hda2_addr_checks[0]))
+// Camera sends SCC messages on HDA2
+HYUNDAI_CANFD_CREATE_ADDR_CHECK(hyundai_canfd_addr_checks, 0, 2)
 
-AddrCheckStruct hyundai_canfd_radar_scc_addr_checks[] = {
-  // Non-HDA2, radar sends SCC messages on these cars
-  HYUNDAI_CANFD_COMMON_ADDR_CHECKS(0)
-  HYUNDAI_CANFD_SCC_ADDR_CHECK(0)
-};
-#define HYUNDAI_CANFD_RADAR_SCC_ADDR_CHECK_LEN (sizeof(hyundai_canfd_radar_scc_addr_checks) / sizeof(hyundai_canfd_radar_scc_addr_checks[0]))
+// E-CAN is on bus 1, ADAS unit sends SCC messages on HDA2
+HYUNDAI_CANFD_CREATE_ADDR_CHECK(hyundai_canfd_hda2_addr_checks, 1, 1)
+
+// Non-HDA2, radar sends SCC messages on these cars instead of camera
+HYUNDAI_CANFD_CREATE_ADDR_CHECK(hyundai_canfd_radar_scc_addr_checks, 0, 0)
 
 AddrCheckStruct hyundai_canfd_long_addr_checks[] = {
   HYUNDAI_CANFD_COMMON_ADDR_CHECKS(0)
 };
-#define HYUNDAI_CANFD_LONG_ADDR_CHECK_LEN (sizeof(hyundai_canfd_long_addr_checks) / sizeof(hyundai_canfd_long_addr_checks[0]))
 
 AddrCheckStruct hyundai_canfd_hda2_long_addr_checks[] = {
   HYUNDAI_CANFD_COMMON_ADDR_CHECKS(1)
 };
-#define HYUNDAI_CANFD_HDA2_LONG_ADDR_CHECK_LEN (sizeof(hyundai_canfd_hda2_long_addr_checks) / sizeof(hyundai_canfd_hda2_long_addr_checks[0]))
 
-addr_checks hyundai_canfd_rx_checks = {hyundai_canfd_addr_checks, HYUNDAI_CANFD_ADDR_CHECK_LEN};
+addr_checks hyundai_canfd_rx_checks = {hyundai_canfd_addr_checks, ARRAY_LEN(hyundai_canfd_addr_checks)};
 
 
 uint16_t hyundai_canfd_crc_lut[256];
@@ -356,18 +348,18 @@ static const addr_checks* hyundai_canfd_init(uint16_t param) {
 
   if (hyundai_longitudinal) {
     if (hyundai_canfd_hda2) {
-      hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_hda2_long_addr_checks, HYUNDAI_CANFD_HDA2_LONG_ADDR_CHECK_LEN};
+      hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_hda2_long_addr_checks, ARRAY_LEN(hyundai_canfd_hda2_long_addr_checks)};
     } else {
-      hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_long_addr_checks, HYUNDAI_CANFD_LONG_ADDR_CHECK_LEN};
+      hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_long_addr_checks, ARRAY_LEN(hyundai_canfd_long_addr_checks)};
     }
   } else {
     if (!hyundai_camera_scc && !hyundai_canfd_hda2) {
-      hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_radar_scc_addr_checks, HYUNDAI_CANFD_RADAR_SCC_ADDR_CHECK_LEN};
+      hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_radar_scc_addr_checks, ARRAY_LEN(hyundai_canfd_radar_scc_addr_checks)};
     } else {
       if (hyundai_canfd_hda2) {
-        hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_hda2_addr_checks, HYUNDAI_CANFD_HDA2_ADDR_CHECK_LEN};
+        hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_hda2_addr_checks, ARRAY_LEN(hyundai_canfd_hda2_addr_checks)};
       } else {
-        hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_addr_checks, HYUNDAI_CANFD_ADDR_CHECK_LEN};
+        hyundai_canfd_rx_checks = (addr_checks){hyundai_canfd_addr_checks, ARRAY_LEN(hyundai_canfd_addr_checks)};
       }
     }
   }
