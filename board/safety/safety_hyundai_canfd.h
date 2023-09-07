@@ -80,14 +80,14 @@ const CanMsg HYUNDAI_CANFD_HDA1_TX_MSGS[] = {
 AddrCheckStruct (name)[] = {                                               \
   HYUNDAI_CANFD_COMMON_ADDR_CHECKS((pt_bus))                               \
   HYUNDAI_CANFD_SCC_ADDR_CHECK((scc_bus))                                  \
-  (button_msg)((pt_bus))                                                   \
+  button_msg((pt_bus))  /* cppcheck-suppress misra-c2012-20.7 */           \
 };                                                                         \
 
 #define HYUNDAI_CANFD_CREATE_LONG_ADDR_CHECK(name, pt_bus, button_msg)       \
 AddrCheckStruct (name)[] = {                                                 \
   /* SCC not checked since its ECU is disabled on HDA2 and we use buttons */ \
   HYUNDAI_CANFD_COMMON_ADDR_CHECKS((pt_bus))                                 \
-  (button_msg)((pt_bus))                                                     \
+  button_msg((pt_bus))  /* cppcheck-suppress misra-c2012-20.7 */             \
 };                                                                           \
 
 
