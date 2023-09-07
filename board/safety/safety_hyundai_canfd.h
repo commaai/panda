@@ -53,18 +53,6 @@ const CanMsg HYUNDAI_CANFD_HDA1_TX_MSGS[] = {
   {0x1E0, 0, 16}, // LFAHDA_CLUSTER
 };
 
-#define HYUNDAI_CANFD_EV_ADDR_CHECKS                                                                          \
-  /* ACCELERATOR: buses are swapped for HDA2 variants */                                                      \
-  {.msg = {{0x35, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U},          \
-           {0x35, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }}}, \
-  /* TCS buses are swapped for HDA2 variants */   \
-  {.msg = {{0x175, 1, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 20000U}, \
-           {0x175, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 20000U}, { 0 }}}, \
-
-#define HYUNDAI_CANFD_HYBRID_ADDR_CHECKS \
-  /* ACCELERATOR_ALT: TODO: bus is always PT? no HDA hybrids? */ \
-  {.msg = {{0x105, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}}, \
-
 AddrCheckStruct hyundai_canfd_addr_checks[] = {
   {.msg = {{0x35, 1, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U},
            {0x35, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U},
@@ -265,7 +253,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
   }
   generic_rx_checks(stock_ecu_detected);
 
-  return true;
+  return valid;
 }
 
 static int hyundai_canfd_tx_hook(CANPacket_t *to_send) {

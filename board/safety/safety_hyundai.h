@@ -224,7 +224,7 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
     }
     generic_rx_checks(stock_ecu_detected);
   }
-  return true;
+  return valid;
 }
 
 static int hyundai_tx_hook(CANPacket_t *to_send) {

@@ -247,11 +247,8 @@ bool addr_safety_check(CANPacket_t *to_push,
     } else {
       rx_checks->check[index].valid_quality_flag = true;
     }
-    return is_msg_valid(rx_checks->check, index);
-  } else {
-    // return invalid to safety modes for messages not in checks
-    return false;
   }
+  return is_msg_valid(rx_checks->check, index);
 }
 
 void generic_rx_checks(bool stock_ecu_detected) {
