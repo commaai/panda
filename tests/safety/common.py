@@ -288,7 +288,7 @@ class SteerRequestCutTestBase(unittest.TestCase, abc.ABC):
 
   # Safety around steering req bit
   MIN_VALID_STEERING_FRAMES: int
-  MAX_INVALID_STEERING_FRAMES: int = 1
+  MAX_INVALID_STEERING_FRAMES: int
   MIN_VALID_STEERING_RT_INTERVAL: int
 
   def test_steer_req_parameters(self):
