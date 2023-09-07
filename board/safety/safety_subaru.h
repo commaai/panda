@@ -232,7 +232,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   if (addr == MSG_SUBARU_ES_Distance) {
     int cruise_throttle = (GET_BYTES(to_send, 2, 2) & 0xFFFU);
     bool cruise_cancel = GET_BIT(to_send, 56U) != 0U;
-
+    
     if (subaru_longitudinal) {
       violation |= longitudinal_gas_checks(cruise_throttle, SUBARU_LONG_LIMITS);
     } else {
