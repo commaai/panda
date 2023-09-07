@@ -292,7 +292,7 @@ class SteerRequestCutSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
       cls.safety = None
       raise unittest.SkipTest
 
-  # Safety around steering req bit
+  # Safety around steering request bit
   MIN_VALID_STEERING_FRAMES: int
   MAX_INVALID_STEERING_FRAMES: int
   MIN_VALID_STEERING_RT_INTERVAL: int
