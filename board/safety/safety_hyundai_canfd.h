@@ -111,6 +111,8 @@ AddrCheckStruct hyundai_canfd_ice_addr_checks[] = {
   {.msg = {{0xea, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x175, 0, 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{0x1aa, 0, 16, .check_checksum = false, .max_counter = 0xffU, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{0x1a0, 0, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 20000U},
+           {0x1a0, 2, 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 20000U}, { 0 }}},
 };
 #define HYUNDAI_CANFD_ICE_ADDR_CHECK_LEN (sizeof(hyundai_canfd_ice_addr_checks) / sizeof(hyundai_canfd_ice_addr_checks[0]))
 
@@ -235,7 +237,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
 
   if (valid && (bus == scc_bus)) {
     // cruise state
-    if ((addr == 0x1a0) && !hyundai_longitudinal) {
+    if ((addr == 0x1a0)) {
       // 1=enabled, 2=driver override
       int cruise_status = ((GET_BYTE(to_push, 8) >> 4) & 0x7U);
       bool cruise_engaged = (cruise_status == 1) || (cruise_status == 2);
@@ -253,7 +255,7 @@ static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
   }
   generic_rx_checks(stock_ecu_detected);
 
-  return valid;
+  return true;
 }
 
 static int hyundai_canfd_tx_hook(CANPacket_t *to_send) {

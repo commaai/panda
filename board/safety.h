@@ -135,15 +135,27 @@ int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], cons
   int addr = GET_ADDR(to_push);
   int length = GET_LEN(to_push);
 
+//  if (addr == 0x1cf) {
+//    print("seen button "); puth(addr); print(" "); puth(bus); print(" "); puth(length); print(" "); puth(len); print("\n");
+//  }
+
   int index = -1;
   for (int i = 0; i < len; i++) {
     // if multiple msgs are allowed, determine which one is present on the bus
     if (!addr_list[i].msg_seen) {
+      if (addr == 0x1cf) {
+        print("seen button "); puth(addr); print(" "); puth(bus); print(" "); puth(length); print("\n");
+      }
+      if (i == 4) {
+        // print first address in checks
+        print("i 4 "); puth(addr_list[i].msg[0].addr); print("\n");
+      }
       for (uint8_t j = 0U; (j < MAX_ADDR_CHECK_MSGS) && (addr_list[i].msg[j].addr != 0); j++) {
         if ((addr == addr_list[i].msg[j].addr) && (bus == addr_list[i].msg[j].bus) &&
               (length == addr_list[i].msg[j].len)) {
           addr_list[i].index = j;
           addr_list[i].msg_seen = true;
+          print("seen "); puth(addr); print(" "); puth(bus); print(" "); puth(length); print("\n");
           break;
         }
       }
@@ -151,8 +163,14 @@ int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], cons
 
     if (addr_list[i].msg_seen) {
       int idx = addr_list[i].index;
+      if (addr_list[i].msg[idx].addr == 0x1cf) {
+        print("idx "); puth(idx); print("\n");
+      }
       if ((addr == addr_list[i].msg[idx].addr) && (bus == addr_list[i].msg[idx].bus) &&
           (length == addr_list[i].msg[idx].len)) {
+        if (addr == 0x1cf) {
+          print("button: "); puth(i); print("\n");
+        }
         index = i;
         break;
       }
@@ -247,8 +265,11 @@ bool addr_safety_check(CANPacket_t *to_push,
     } else {
       rx_checks->check[index].valid_quality_flag = true;
     }
+    return is_msg_valid(rx_checks->check, index);
+  } else {
+    // messages not in address checks are not valid
+    return false;
   }
-  return is_msg_valid(rx_checks->check, index);
 }
 
 void generic_rx_checks(bool stock_ecu_detected) {
