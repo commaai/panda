@@ -51,14 +51,14 @@ const CanMsg HYUNDAI_CAMERA_SCC_TX_MSGS[] = {
   {0x485, 0, 4}, // LFAHDA_MFC Bus 0
 };
 
-#define HYUNDAI_COMMON_ADDR_CHECKS(legacy)                                                                                          \
-  {.msg = {{0x260, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},                                   \
-           {0x371, 0, 8, .expected_timestep = 10000U}, { 0 }}},                                                                     \
-  {.msg = {{0x386, 0, 8, .check_checksum = !legacy, .max_counter = legacy ? 0U : 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}}, \
-  {.msg = {{0x394, 0, 8, .check_checksum = !legacy, .max_counter = legacy ? 0U : 7U, .expected_timestep = 10000U}, { 0 }, { 0 }}},  \
+#define HYUNDAI_COMMON_ADDR_CHECKS(legacy)                                                                                              \
+  {.msg = {{0x260, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},                                       \
+           {0x371, 0, 8, .expected_timestep = 10000U}, { 0 }}},                                                                         \
+  {.msg = {{0x386, 0, 8, .check_checksum = !(legacy), .max_counter = (legacy) ? 0U : 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}}, \
+  {.msg = {{0x394, 0, 8, .check_checksum = !(legacy), .max_counter = (legacy) ? 0U : 7U, .expected_timestep = 10000U}, { 0 }, { 0 }}},  \
 
-#define HYUNDAI_SCC12_ADDR_CHECK(scc_bus)                                                                                \
-  {.msg = {{0x421, scc_bus, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
+#define HYUNDAI_SCC12_ADDR_CHECK(scc_bus)                                                                                  \
+  {.msg = {{0x421, (scc_bus), 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
 
 AddrCheckStruct hyundai_addr_checks[] = {
    HYUNDAI_COMMON_ADDR_CHECKS(false)
