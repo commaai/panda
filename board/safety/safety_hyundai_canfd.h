@@ -76,16 +76,16 @@ const CanMsg HYUNDAI_CANFD_HDA1_TX_MSGS[] = {
 
 
 #define HYUNDAI_CANFD_CREATE_ADDR_CHECK(name, pt_bus, scc_bus, button_msg) \
-AddrCheckStruct name[] = {                                                 \
-  HYUNDAI_CANFD_COMMON_ADDR_CHECKS(pt_bus)                                 \
-  HYUNDAI_CANFD_SCC_ADDR_CHECK(scc_bus)                                    \
-  button_msg(pt_bus)                                                       \
+AddrCheckStruct (name)[] = {                                               \
+  HYUNDAI_CANFD_COMMON_ADDR_CHECKS((pt_bus))                               \
+  HYUNDAI_CANFD_SCC_ADDR_CHECK((scc_bus))                                  \
+  (button_msg)((pt_bus))                                                   \
 };                                                                         \
 
 #define HYUNDAI_CANFD_CREATE_LONG_ADDR_CHECK(name, pt_bus, button_msg) \
-AddrCheckStruct name[] = {                                             \
-  HYUNDAI_CANFD_COMMON_ADDR_CHECKS(pt_bus)                             \
-  button_msg(pt_bus)                                                   \
+AddrCheckStruct (name)[] = {                                           \
+  HYUNDAI_CANFD_COMMON_ADDR_CHECKS((pt_bus))                           \
+  (button_msg)((pt_bus))                                               \
 };                                                                     \
 
 
