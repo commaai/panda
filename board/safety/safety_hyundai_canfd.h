@@ -90,7 +90,8 @@ AddrCheckStruct name[] = {                                             \
 
 
 // *** Non-HDA2 checks ***
-// Camera sends SCC messages on HDA1
+// Camera sends SCC messages on HDA1.
+// Both button messages exist on some platforms, so we ensure we track the correct one
 HYUNDAI_CANFD_CREATE_ADDR_CHECK(hyundai_canfd_addr_checks, 0, 2, HYUNDAI_CANFD_BUTTONS_ADDR_CHECK)
 HYUNDAI_CANFD_CREATE_ADDR_CHECK(hyundai_canfd_alt_buttons_addr_checks, 0, 2, HYUNDAI_CANFD_ALT_BUTTONS_ADDR_CHECK)
 
