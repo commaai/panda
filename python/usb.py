@@ -78,7 +78,7 @@ class STBootloaderUSBHandle(BaseSTBootloaderHandle):
     # Program
     bs = min(len(dat), self._mcu_type.config.block_size)
     dat += b"\xFF" * ((bs - len(dat)) % bs)
-    for i in range(0, len(dat) // bs):
+    for i in range(len(dat) // bs):
       ldat = dat[i * bs:(i + 1) * bs]
       print("programming %d with length %d" % (i, len(ldat)))
       self._libusb_handle.controlWrite(0x21, self.DFU_DNLOAD, 2 + i, 0, ldat)
