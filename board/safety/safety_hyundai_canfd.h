@@ -64,53 +64,66 @@ const CanMsg HYUNDAI_CANFD_HDA1_TX_MSGS[] = {
   {.msg = {{0xa0, (pt_bus), 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},   \
   {.msg = {{0xea, (pt_bus), 24, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 10000U}, { 0 }, { 0 }}},   \
 
-// SCC_CONTROL (from ADAS unit or camera)
-#define HYUNDAI_CANFD_SCC_ADDR_CHECK(scc_bus)                                                                                 \
-  {.msg = {{0x1a0, (scc_bus), 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
-
 #define HYUNDAI_CANFD_BUTTONS_ADDR_CHECK(pt_bus)                                                                            \
   {.msg = {{0x1cf, (pt_bus), 8, .check_checksum = false, .max_counter = 0xfU, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
 
 #define HYUNDAI_CANFD_ALT_BUTTONS_ADDR_CHECK(pt_bus)                                                                            \
   {.msg = {{0x1aa, (pt_bus), 16, .check_checksum = false, .max_counter = 0xffU, .expected_timestep = 20000U}, { 0 }, { 0 }}},   \
 
-
-// *** Macros to create addr check structs ***
-#define HYUNDAI_CANFD_CREATE_ADDR_CHECK(name, pt_bus, scc_bus, button_msg) \
-AddrCheckStruct (name)[] = {                                               \
-  HYUNDAI_CANFD_COMMON_ADDR_CHECKS((pt_bus))                               \
-  HYUNDAI_CANFD_SCC_ADDR_CHECK((scc_bus))                                  \
-  button_msg((pt_bus))  /* cppcheck-suppress misra-c2012-20.7 */           \
-};                                                                         \
-
-#define HYUNDAI_CANFD_CREATE_LONG_ADDR_CHECK(name, pt_bus, button_msg)       \
-AddrCheckStruct (name)[] = {                                                 \
-  /* SCC not checked since its ECU is disabled on HDA2 and we use buttons */ \
-  HYUNDAI_CANFD_COMMON_ADDR_CHECKS((pt_bus))                                 \
-  button_msg((pt_bus))  /* cppcheck-suppress misra-c2012-20.7 */             \
-};                                                                           \
+// SCC_CONTROL (from ADAS unit or camera)
+#define HYUNDAI_CANFD_SCC_ADDR_CHECK(scc_bus)                                                                                 \
+  {.msg = {{0x1a0, (scc_bus), 32, .check_checksum = true, .max_counter = 0xffU, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
 
 
 // *** Non-HDA2 checks ***
 // Camera sends SCC messages on HDA1.
 // Both button messages exist on some platforms, so we ensure we track the correct one
-HYUNDAI_CANFD_CREATE_ADDR_CHECK(hyundai_canfd_addr_checks, 0, 2, HYUNDAI_CANFD_BUTTONS_ADDR_CHECK)
-HYUNDAI_CANFD_CREATE_ADDR_CHECK(hyundai_canfd_alt_buttons_addr_checks, 0, 2, HYUNDAI_CANFD_ALT_BUTTONS_ADDR_CHECK)
+AddrCheckStruct hyundai_canfd_addr_checks[] = {
+  HYUNDAI_CANFD_COMMON_ADDR_CHECKS(0)
+  HYUNDAI_CANFD_BUTTONS_ADDR_CHECK(0)
+  HYUNDAI_CANFD_SCC_ADDR_CHECK(2)
+};
+AddrCheckStruct hyundai_canfd_alt_buttons_addr_checks[] = {
+  HYUNDAI_CANFD_COMMON_ADDR_CHECKS(0)
+  HYUNDAI_CANFD_ALT_BUTTONS_ADDR_CHECK(0)
+  HYUNDAI_CANFD_SCC_ADDR_CHECK(2)
+};
 
 // Longitudinal checks for HDA1
-HYUNDAI_CANFD_CREATE_LONG_ADDR_CHECK(hyundai_canfd_long_addr_checks, 0, HYUNDAI_CANFD_BUTTONS_ADDR_CHECK)
-HYUNDAI_CANFD_CREATE_LONG_ADDR_CHECK(hyundai_canfd_long_alt_buttons_addr_checks, 0, HYUNDAI_CANFD_ALT_BUTTONS_ADDR_CHECK)
+AddrCheckStruct hyundai_canfd_long_addr_checks[] = {
+  HYUNDAI_CANFD_COMMON_ADDR_CHECKS(0)
+  HYUNDAI_CANFD_BUTTONS_ADDR_CHECK(0)
+};
+AddrCheckStruct hyundai_canfd_long_alt_buttons_addr_checks[] = {
+  HYUNDAI_CANFD_COMMON_ADDR_CHECKS(0)
+  HYUNDAI_CANFD_ALT_BUTTONS_ADDR_CHECK(0)
+};
 
 // Radar sends SCC messages on these cars instead of camera
-HYUNDAI_CANFD_CREATE_ADDR_CHECK(hyundai_canfd_radar_scc_addr_checks, 0, 0, HYUNDAI_CANFD_BUTTONS_ADDR_CHECK)
-HYUNDAI_CANFD_CREATE_ADDR_CHECK(hyundai_canfd_radar_scc_alt_buttons_addr_checks, 0, 0, HYUNDAI_CANFD_ALT_BUTTONS_ADDR_CHECK)
+AddrCheckStruct hyundai_canfd_radar_scc_addr_checks[] = {
+  HYUNDAI_CANFD_COMMON_ADDR_CHECKS(0)
+  HYUNDAI_CANFD_BUTTONS_ADDR_CHECK(0)
+  HYUNDAI_CANFD_SCC_ADDR_CHECK(0)
+};
+AddrCheckStruct hyundai_canfd_radar_scc_alt_buttons_addr_checks[] = {
+  HYUNDAI_CANFD_COMMON_ADDR_CHECKS(0)
+  HYUNDAI_CANFD_ALT_BUTTONS_ADDR_CHECK(0)
+  HYUNDAI_CANFD_SCC_ADDR_CHECK(0)
+};
 
 
 // *** HDA2 checks ***
 // E-CAN is on bus 1, ADAS unit sends SCC messages on HDA2.
 // Does not use the alt buttons message
-HYUNDAI_CANFD_CREATE_ADDR_CHECK(hyundai_canfd_hda2_addr_checks, 1, 1, HYUNDAI_CANFD_BUTTONS_ADDR_CHECK)
-HYUNDAI_CANFD_CREATE_LONG_ADDR_CHECK(hyundai_canfd_hda2_long_addr_checks, 1, HYUNDAI_CANFD_BUTTONS_ADDR_CHECK)
+AddrCheckStruct hyundai_canfd_hda2_addr_checks[] = {
+  HYUNDAI_CANFD_COMMON_ADDR_CHECKS(1)
+  HYUNDAI_CANFD_BUTTONS_ADDR_CHECK(1)
+  HYUNDAI_CANFD_SCC_ADDR_CHECK(1)
+};
+AddrCheckStruct hyundai_canfd_hda2_long_addr_checks[] = {
+  HYUNDAI_CANFD_COMMON_ADDR_CHECKS(1)
+  HYUNDAI_CANFD_BUTTONS_ADDR_CHECK(1)
+};
 
 addr_checks hyundai_canfd_rx_checks = SET_ADDR_CHECKS(hyundai_canfd_addr_checks);
 
