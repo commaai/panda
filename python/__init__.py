@@ -458,7 +458,7 @@ class Panda:
 
     success = False
     # wait up to 15 seconds
-    for _ in range(0, 15*10):
+    for _ in range(15*10):
       try:
         self.connect()
         success = True
