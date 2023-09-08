@@ -22,8 +22,6 @@
   (_a > 0) ? _a : (-_a); \
 })
 
-#define ARRAY_LEN(name) (sizeof((name)) / sizeof((name)[0]))
-
 #ifndef NULL
 #define NULL ((void*)0)
 #endif
