@@ -237,6 +237,8 @@ class Panda:
   FLAG_SUBARU_GEN2 = 1
   FLAG_SUBARU_LONG = 2
 
+  FLAG_NISSAN_ALT_EPS_BUS = 1
+
   FLAG_GM_HW_CAM = 1
   FLAG_GM_HW_CAM_LONG = 2
 
@@ -456,7 +458,7 @@ class Panda:
 
     success = False
     # wait up to 15 seconds
-    for _ in range(0, 15*10):
+    for _ in range(15*10):
       try:
         self.connect()
         success = True

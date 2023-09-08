@@ -1,14 +1,21 @@
-#define SUBARU_STEERING_LIMITS_GENERATOR(steer_max, rate_up, rate_down)          \
-  {                                                                              \
-    .max_steer = (steer_max),                                                    \
-    .max_rt_delta = 940,                                                         \
-    .max_rt_interval = 250000,                                                   \
-    .max_rate_up = (rate_up),                                                    \
-    .max_rate_down = (rate_down),                                                \
-    .driver_torque_factor = 50,                                                  \
-    .driver_torque_allowance = 60,                                               \
-    .type = TorqueDriverLimited,                                                 \
-  }                                                                              \
+#define SUBARU_STEERING_LIMITS_GENERATOR(steer_max, rate_up, rate_down)               \
+  {                                                                                   \
+    .max_steer = (steer_max),                                                         \
+    .max_rt_delta = 940,                                                              \
+    .max_rt_interval = 250000,                                                        \
+    .max_rate_up = (rate_up),                                                         \
+    .max_rate_down = (rate_down),                                                     \
+    .driver_torque_factor = 50,                                                       \
+    .driver_torque_allowance = 60,                                                    \
+    .type = TorqueDriverLimited,                                                      \
+    /* the EPS will temporary fault if the steering rate is too high, so we cut the   \
+       the steering torque every 7 frames for 1 frame if the steering rate is high */ \
+    .min_valid_request_frames = 7,                                                    \
+    .max_invalid_request_frames = 1,                                                  \
+    .min_valid_request_rt_interval = 144000,  /* 10% tolerance */                     \
+    .has_steer_req_tolerance = true,                                                  \
+  }
+
 
 const SteeringLimits SUBARU_STEERING_LIMITS      = SUBARU_STEERING_LIMITS_GENERATOR(2047, 50, 70);
 const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = SUBARU_STEERING_LIMITS_GENERATOR(1000, 40, 40);
@@ -225,7 +232,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   if (addr == MSG_SUBARU_ES_Distance) {
     int cruise_throttle = (GET_BYTES(to_send, 2, 2) & 0xFFFU);
     bool cruise_cancel = GET_BIT(to_send, 56U) != 0U;
-    
+
     if (subaru_longitudinal) {
       violation |= longitudinal_gas_checks(cruise_throttle, SUBARU_LONG_LIMITS);
     } else {
