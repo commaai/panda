@@ -154,10 +154,15 @@ class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.Longitudinal
     return self.packer.make_can_msg_panda("ES_Status", self.ALT_MAIN_BUS, values)
 
 
-class TestSubaruTorqueSafetyBase(TestSubaruSafetyBase, common.DriverTorqueSteeringSafetyTest):
+class TestSubaruTorqueSafetyBase(TestSubaruSafetyBase, common.DriverTorqueSteeringSafetyTest, common.SteerRequestCutSafetyTest):
   MAX_RATE_UP = 50
   MAX_RATE_DOWN = 70
   MAX_TORQUE = 2047
+
+  # Safety around steering req bit
+  MIN_VALID_STEERING_FRAMES = 7
+  MAX_INVALID_STEERING_FRAMES = 1
+  MIN_VALID_STEERING_RT_INTERVAL = 144000
 
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"LKAS_Output": torque, "LKAS_Request": steer_req}
