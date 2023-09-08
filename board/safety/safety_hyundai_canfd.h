@@ -77,7 +77,7 @@ const CanMsg HYUNDAI_CANFD_HDA1_TX_MSGS[] = {
 
 // *** Non-HDA2 checks ***
 // Camera sends SCC messages on HDA1.
-// Both button messages exist on some platforms, so we ensure we track the correct one
+// Both button messages exist on some platforms, so we ensure we track the correct one using flag
 AddrCheckStruct hyundai_canfd_addr_checks[] = {
   HYUNDAI_CANFD_COMMON_ADDR_CHECKS(0)
   HYUNDAI_CANFD_BUTTONS_ADDR_CHECK(0)
