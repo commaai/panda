@@ -421,7 +421,7 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
   def program(self, address, dat):
     bs = 256  # max block size for writing to flash over SPI
     dat += b"\xFF" * ((bs - len(dat)) % bs)
-    for i in range(0, len(dat) // bs):
+    for i in range(len(dat) // bs):
       block = dat[i * bs:(i + 1) * bs]
       self._cmd(0x31, data=[
         struct.pack('>I', address + i*bs),
