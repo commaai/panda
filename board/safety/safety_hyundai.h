@@ -64,31 +64,27 @@ AddrCheckStruct hyundai_addr_checks[] = {
    HYUNDAI_COMMON_ADDR_CHECKS(false)
    HYUNDAI_SCC12_ADDR_CHECK(0)
 };
-#define HYUNDAI_ADDR_CHECK_LEN (sizeof(hyundai_addr_checks) / sizeof(hyundai_addr_checks[0]))
 
 AddrCheckStruct hyundai_cam_scc_addr_checks[] = {
   HYUNDAI_COMMON_ADDR_CHECKS(false)
   HYUNDAI_SCC12_ADDR_CHECK(2)
 };
-#define HYUNDAI_CAM_SCC_ADDR_CHECK_LEN (sizeof(hyundai_cam_scc_addr_checks) / sizeof(hyundai_cam_scc_addr_checks[0]))
 
 AddrCheckStruct hyundai_long_addr_checks[] = {
   HYUNDAI_COMMON_ADDR_CHECKS(false)
   // Use CLU11 (buttons) to manage controls allowed instead of SCC cruise state
   {.msg = {{0x4F1, 0, 4, .check_checksum = false, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
-#define HYUNDAI_LONG_ADDR_CHECK_LEN (sizeof(hyundai_long_addr_checks) / sizeof(hyundai_long_addr_checks[0]))
 
 // older hyundai models have less checks due to missing counters and checksums
 AddrCheckStruct hyundai_legacy_addr_checks[] = {
   HYUNDAI_COMMON_ADDR_CHECKS(true)
   HYUNDAI_SCC12_ADDR_CHECK(0)
 };
-#define HYUNDAI_LEGACY_ADDR_CHECK_LEN (sizeof(hyundai_legacy_addr_checks) / sizeof(hyundai_legacy_addr_checks[0]))
 
 bool hyundai_legacy = false;
 
-addr_checks hyundai_rx_checks = {hyundai_addr_checks, HYUNDAI_ADDR_CHECK_LEN};
+addr_checks hyundai_rx_checks = SET_ADDR_CHECKS(hyundai_addr_checks);
 
 static uint8_t hyundai_get_counter(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
@@ -327,11 +323,11 @@ static const addr_checks* hyundai_init(uint16_t param) {
   }
 
   if (hyundai_longitudinal) {
-    hyundai_rx_checks = (addr_checks){hyundai_long_addr_checks, HYUNDAI_LONG_ADDR_CHECK_LEN};
+    hyundai_rx_checks = SET_ADDR_CHECKS(hyundai_long_addr_checks);
   } else if (hyundai_camera_scc) {
-    hyundai_rx_checks = (addr_checks){hyundai_cam_scc_addr_checks, HYUNDAI_CAM_SCC_ADDR_CHECK_LEN};
+    hyundai_rx_checks = SET_ADDR_CHECKS(hyundai_cam_scc_addr_checks);
   } else {
-    hyundai_rx_checks = (addr_checks){hyundai_addr_checks, HYUNDAI_ADDR_CHECK_LEN};
+    hyundai_rx_checks = SET_ADDR_CHECKS(hyundai_addr_checks);
   }
   return &hyundai_rx_checks;
 }
@@ -342,7 +338,7 @@ static const addr_checks* hyundai_legacy_init(uint16_t param) {
   hyundai_longitudinal = false;
   hyundai_camera_scc = false;
 
-  hyundai_rx_checks = (addr_checks){hyundai_legacy_addr_checks, HYUNDAI_LEGACY_ADDR_CHECK_LEN};
+  hyundai_rx_checks = SET_ADDR_CHECKS(hyundai_legacy_addr_checks);
   return &hyundai_rx_checks;
 }
 
