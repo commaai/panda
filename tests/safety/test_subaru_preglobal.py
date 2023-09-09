@@ -65,7 +65,7 @@ class TestSubaruPreglobalReversedDriverTorqueSafety(TestSubaruPreglobalSafety):
   FLAGS = Panda.FLAG_SUBARU_PREGLOBAL_REVERSED_DRIVER_TORQUE
 
   def _torque_driver_msg(self, torque):
-    return TestSubaruPreglobalSafety._torque_cmd_msg(-torque)
+    return super()._torque_cmd_msg(-torque)
 
 
 if __name__ == "__main__":
