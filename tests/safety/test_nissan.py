@@ -16,6 +16,9 @@ class TestNissanSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
   FWD_BLACKLISTED_ADDRS = {0: [0x280], 2: [0x169, 0x2b1, 0x4cc]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
+  EPS_BUS = 0
+  CRUISE_BUS = 2
+
   # Angle control limits
   DEG_TO_CAN = -100
 
@@ -35,16 +38,16 @@ class TestNissanSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
 
   def _angle_meas_msg(self, angle: float):
     values = {"STEER_ANGLE": angle}
-    return self.packer.make_can_msg_panda("STEER_ANGLE_SENSOR", 0, values)
+    return self.packer.make_can_msg_panda("STEER_ANGLE_SENSOR", self.EPS_BUS, values)
 
   def _pcm_status_msg(self, enable):
     values = {"CRUISE_ENABLED": enable}
-    return self.packer.make_can_msg_panda("CRUISE_STATE", 2, values)
+    return self.packer.make_can_msg_panda("CRUISE_STATE", self.CRUISE_BUS, values)
 
   def _speed_msg(self, speed):
     # TODO: why the 3.6? m/s to kph? not in dbc
     values = {"WHEEL_SPEED_%s" % s: speed * 3.6 for s in ["RR", "RL"]}
-    return self.packer.make_can_msg_panda("WHEEL_SPEEDS_REAR", 0, values)
+    return self.packer.make_can_msg_panda("WHEEL_SPEEDS_REAR", self.EPS_BUS, values)
 
   def _user_brake_msg(self, brake):
     values = {"USER_BRAKE_PRESSED": brake}
@@ -52,7 +55,7 @@ class TestNissanSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
 
   def _user_gas_msg(self, gas):
     values = {"GAS_PEDAL": gas}
-    return self.packer.make_can_msg_panda("GAS_PEDAL", 0, values)
+    return self.packer.make_can_msg_panda("GAS_PEDAL", self.EPS_BUS, values)
 
   def _acc_button_cmd(self, cancel=0, propilot=0, flw_dist=0, _set=0, res=0):
     no_button = not any([cancel, propilot, flw_dist, _set, res])
@@ -76,6 +79,19 @@ class TestNissanSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
         args = {} if btn is None else {btn: 1}
         tx = self._tx(self._acc_button_cmd(**args))
         self.assertEqual(tx, should_tx)
+
+
+class TestNissanSafetyAltEpsBus(TestNissanSafety):
+  """Altima uses different buses"""
+
+  EPS_BUS = 1
+  CRUISE_BUS = 1
+
+  def setUp(self):
+    self.packer = CANPackerPanda("nissan_x_trail_2017_generated")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, Panda.FLAG_NISSAN_ALT_EPS_BUS)
+    self.safety.init_tests()
 
 
 class TestNissanLeafSafety(TestNissanSafety):
