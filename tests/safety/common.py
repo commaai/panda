@@ -298,7 +298,8 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
       self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, 1)))
 
     self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, 0)))
-    self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, 1)))
+    for _ in range(10):
+      self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, 1)))
 
 
 class SteerRequestCutSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
