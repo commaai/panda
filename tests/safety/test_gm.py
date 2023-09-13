@@ -204,7 +204,7 @@ class TestGmCameraSafety(TestGmCameraSafetyBase):
       self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL)))
 
 
-class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase):
+class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase):#, common.SteerRequestCutSafetyTest):
   TX_MSGS = [[0x180, 0], [0x315, 0], [0x2CB, 0], [0x370, 0],  # pt bus
              [0x184, 2]]  # camera bus
   FWD_BLACKLISTED_ADDRS = {2: [0x180, 0x2CB, 0x370, 0x315], 0: [0x184]}  # block LKAS, ACC messages and PSCMStatus
@@ -213,6 +213,10 @@ class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase)
   MAX_GAS = 3400
   MIN_GAS = 1514 # maximum regen
   INACTIVE_GAS = 1554
+
+  # MIN_VALID_STEERING_FRAMES = 1
+  # MAX_INVALID_STEERING_FRAMES = 0
+  # MIN_VALID_STEERING_RT_INTERVAL: int = 0
 
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
