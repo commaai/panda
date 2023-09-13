@@ -287,12 +287,12 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
 
   def test_steer_req_bit(self):
     if self.NO_STEER_REQ_BIT:
-      raise unittest.SkipTest("No Steering Request Bit")
-    self.safety.set_controls_allowed(True)
-    self._tx(self._torque_cmd_msg(0, True))
-    self.assertTrue(self.safety.get_steer_req_last())
-    self._tx(self._torque_cmd_msg(0, False))
-    self.assertFalse(self.safety.get_steer_req_last())
+      raise unittest.SkipTest("No steering request bit")
+
+    for steer_req in [True, False] * 2:
+      self._tx(self._torque_cmd_msg(0, steer_req))
+      self.assertEqual(steer_req, self.safety.get_steer_req_prev())
+
 
 class SteerRequestCutSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 

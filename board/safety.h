@@ -334,6 +334,7 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   cruise_engaged_prev = false;
   vehicle_moving = false;
   acc_main_on = false;
+  steer_req_prev = false;
   cruise_button_prev = 0;
   desired_torque_last = 0;
   rt_torque_last = 0;
@@ -604,8 +605,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
       invalid_steer_req_count = 0;
     }
   }
-
-  steer_req_last = steer_req;
+  steer_req_prev = steer_req;
 
   // reset to 0 if either controls is not allowed or there's a violation
   if (violation || !controls_allowed) {
@@ -614,7 +614,6 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
     desired_torque_last = 0;
     rt_torque_last = 0;
     ts_torque_check_last = ts;
-    steer_req_last = false;
     ts_steer_req_mismatch_last = ts;
   }
 
