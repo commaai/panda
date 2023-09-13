@@ -405,6 +405,8 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
 
   def erase_app(self):
     self.erase_sector(1)
+    self.erase_sector(5)
+    self.erase_sector(6)
 
   def erase_bootstub(self):
     self.erase_sector(0)
