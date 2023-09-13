@@ -210,9 +210,9 @@ int cruise_button_prev = 0;
 bool safety_rx_checks_invalid = false;
 
 // for safety modes with torque steering control
+bool steer_req_prev = false;       // whether the last steering command message was requesting torque or not
 int desired_torque_last = 0;       // last desired steer torque
 int rt_torque_last = 0;            // last desired torque for real time check
-bool steer_req_prev = false;       // whether the last steering message was requesting torque or not
 int valid_steer_req_count = 0;     // counter for steer request bit matching non-zero torque
 int invalid_steer_req_count = 0;   // counter to allow multiple frames of mismatching torque request bit
 struct sample_t torque_meas;       // last 6 motor torques produced by the eps
