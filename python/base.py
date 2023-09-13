@@ -53,11 +53,7 @@ class BaseSTBootloaderHandle(ABC):
     ...
 
   @abstractmethod
-  def erase_app(self) -> None:
-    ...
-
-  @abstractmethod
-  def erase_bootstub(self) -> None:
+  def erase_sector(self, sector: int) -> None:
     ...
 
   @abstractmethod

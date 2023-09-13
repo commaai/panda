@@ -51,11 +51,8 @@ class STBootloaderUSBHandle(BaseSTBootloaderHandle):
   def get_mcu_type(self):
     return self._mcu_type
 
-  def erase_app(self):
-    self._erase_page_address(self._mcu_type.config.app_address)
-
-  def erase_bootstub(self):
-    self._erase_page_address(self._mcu_type.config.bootstub_address)
+  def erase_sector(self, sector: int):
+    self._erase_page_address(self._mcu_type.config.sector_address(sector))
 
   def clear_status(self):
     # Clear status

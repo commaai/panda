@@ -12,22 +12,30 @@ class McuConfig(NamedTuple):
   mcu_idcode: int
   uid_address: int
   block_size: int
+  page_size: int
   sector_sizes: List[int]
   serial_number_address: int
   app_address: int
   app_fn: str
   bootstub_address: int
   bootstub_fn: str
+  log_sectors: List[int]
+
+  def sector_address(self, i):
+    # assume bootstub is in sector 0
+    return self.bootstub_address + sum(self.sector_sizes[:i])
 
 Fx = (
   0x1FFF7A10,
   0x800,
+  0,
   [0x4000 for _ in range(4)] + [0x10000] + [0x20000 for _ in range(11)],
   0x1FFF79C0,
   0x8004000,
   "panda.bin.signed",
   0x8000000,
   "bootstub.panda.bin",
+  [10, 11],
 )
 F2Config = McuConfig("STM32F2", 0x411, *Fx)
 F4Config = McuConfig("STM32F4", 0x463, *Fx)
@@ -37,6 +45,7 @@ H7Config = McuConfig(
   0x483,
   0x1FF1E800,
   0x400,
+  0,
   # there is an 8th sector, but we use that for the provisioning chunk, so don't program over that!
   [0x20000 for _ in range(7)],
   0x080FFFC0,
@@ -44,6 +53,7 @@ H7Config = McuConfig(
   "panda_h7.bin.signed",
   0x8000000,
   "bootstub.panda_h7.bin",
+  [5, 6],
 )
 
 @enum.unique
