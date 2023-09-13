@@ -59,4 +59,3 @@ class BaseSTBootloaderHandle(ABC):
   @abstractmethod
   def jump(self, address: int) -> None:
     ...
-
