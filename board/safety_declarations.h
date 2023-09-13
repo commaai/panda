@@ -210,7 +210,6 @@ int cruise_button_prev = 0;
 bool safety_rx_checks_invalid = false;
 
 // for safety modes with torque steering control
-bool steer_req_prev = false;       // whether the last steering command message was requesting torque or not
 int desired_torque_last = 0;       // last desired steer torque
 int rt_torque_last = 0;            // last desired torque for real time check
 int valid_steer_req_count = 0;     // counter for steer request bit matching non-zero torque

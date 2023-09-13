@@ -157,9 +157,6 @@ int get_angle_meas_max(void){
   return angle_meas.max;
 }
 
-bool get_steer_req_prev(void){
-  return steer_req_prev;
-}
 
 // ***** car specific helpers *****
 

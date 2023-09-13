@@ -286,30 +286,20 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
     self.assertFalse(self._tx(self._torque_cmd_msg(-self.MAX_RATE_UP - 1)))
 
   def test_steer_req_bit(self):
+    """Asserts all torque safety modes check the steering request bit"""
     if self.NO_STEER_REQ_BIT:
       raise unittest.SkipTest("No steering request bit")
 
     self.safety.set_controls_allowed(True)
-    for steer_req in [True, False] * 2:
-      # self.safety.set_rt_torque_last(self.MAX_TORQUE)
-      # # self.safety.set_torque_meas(torque_meas, torque_meas)
-      # self.safety.set_desired_torque_last(self.MAX_TORQUE)
-      self._set_prev_torque(self.MAX_TORQUE)
-      for _ in range(100):
-        self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, 1)))
+    self._set_prev_torque(self.MAX_TORQUE)
 
-      self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, 0)))
+    # Send torque successfully, then only drop the request bit and ensure it's blocked
+    for _ in range(10):
+      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, 1)))
 
-      # self._tx(self._torque_cmd_msg(0, steer_req))
-      # self.assertEqual(steer_req, self.safety.get_steer_req_prev())
-
-  # def test_steer_req_bit(self):
-  #   if self.NO_STEER_REQ_BIT:
-  #     raise unittest.SkipTest("No steering request bit")
-  #
-  #   for steer_req in [True, False] * 2:
-  #     self._tx(self._torque_cmd_msg(0, steer_req))
-  #     self.assertEqual(steer_req, self.safety.get_steer_req_prev())
+    self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, 0)))
+    for _ in range(10):
+      self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, 1)))
 
 
 class SteerRequestCutSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
@@ -320,7 +310,7 @@ class SteerRequestCutSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
       cls.safety = None
       raise unittest.SkipTest
 
-  # Safety around steering request bit
+  # Safety around steering request bit mismatch tolerance
   MIN_VALID_STEERING_FRAMES: int
   MAX_INVALID_STEERING_FRAMES: int
   MIN_VALID_STEERING_RT_INTERVAL: int
