@@ -293,7 +293,7 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
     self.safety.set_controls_allowed(True)
     self._set_prev_torque(self.MAX_TORQUE)
 
-    # Send torque successfully, then only drop the request bit and ensure it's blocked
+    # Send torque successfully, then only drop the request bit and ensure it stays blocked
     for _ in range(10):
       self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, 1)))
 
