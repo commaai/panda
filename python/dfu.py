@@ -123,7 +123,7 @@ class PandaDFU:
     self._handle.clear_status()
 
     # erase all sectors
-    for i in range(len(self._mcu_type.config.sector_sizes):
+    for i in range(len(self._mcu_type.config.sector_sizes)):
       self._handle.erase_sector(i)
 
     self._handle.program(self._mcu_type.config.bootstub_address, code_bootstub)
