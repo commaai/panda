@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-import time
-
 from panda import Panda, PandaDFU
 
 if __name__ == "__main__":
-  from openpilot.system.hardware import HARDWARE
-  HARDWARE.recover_internal_panda()
-  Panda.wait_for_dfu(None, 5)
+  try:
+    from openpilot.system.hardware import HARDWARE
+    HARDWARE.recover_internal_panda()
+    Panda.wait_for_dfu(None, 5)
+  except Exception:
+    pass
 
   p = PandaDFU(None)
   cfg = p.get_mcu_type().config
@@ -25,10 +26,7 @@ if __name__ == "__main__":
         to_read -= len(dat)
         addr += len(dat)
 
-  # read all sectors
   addr = cfg.bootstub_address
   for i, sector_size in enumerate(cfg.sector_sizes):
     readmem(addr, sector_size, f"sector_{i}.bin")
     addr += sector_size
-    #if i >= 0:
-    #  break
