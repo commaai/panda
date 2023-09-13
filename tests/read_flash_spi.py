@@ -20,14 +20,15 @@ if __name__ == "__main__":
         l = min(to_read, max_size)
         dat = p._handle.read(addr, l)
         assert len(dat) == l
-        to_read -= len(dat)
         f.write(dat)
 
-  #readmem(cfg.bootstub_address, cfg.app_address - cfg.bootstub_address, "/tmp/bootstub.bin")
-  #readmem(0, 0, "/tmp/bootstub.bin")
+        to_read -= len(dat)
+        addr += len(dat)
 
   # read all sectors
   addr = cfg.bootstub_address
   for i, sector_size in enumerate(cfg.sector_sizes):
     readmem(addr, sector_size, f"sector_{i}.bin")
     addr += sector_size
+    #if i >= 0:
+    #  break
