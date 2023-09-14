@@ -403,12 +403,6 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
 
   # *** PandaDFU API ***
 
-  def erase_app(self):
-    self.erase_sector(1)
-
-  def erase_bootstub(self):
-    self.erase_sector(0)
-
   def get_mcu_type(self):
     return self._mcu_type
 

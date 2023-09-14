@@ -19,6 +19,10 @@ class McuConfig(NamedTuple):
   bootstub_address: int
   bootstub_fn: str
 
+  def sector_address(self, i):
+    # assume bootstub is in sector 0
+    return self.bootstub_address + sum(self.sector_sizes[:i])
+
 Fx = (
   0x1FFF7A10,
   0x800,
