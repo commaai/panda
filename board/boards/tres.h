@@ -32,6 +32,7 @@ bool tres_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool har
   } else {
 
   }
+
   tres_ignition_prev = ignition;
   return ret;
 }
@@ -80,6 +81,10 @@ void tres_init(void) {
   set_gpio_alternate(GPIOC, 11, GPIO_AF4_I2C5);
   register_set_bits(&(GPIOC->OTYPER), GPIO_OTYPER_OT10 | GPIO_OTYPER_OT11); // open drain
   fake_siren_init();
+
+  // SOM reset line
+  set_gpio_mode(GPIOC, 12, MODE_OUTPUT);
+  set_gpio_output(GPIOC, 12, 1);
 
   // Clock source
   clock_source_init();
