@@ -90,7 +90,7 @@ void UART5_IRQ_Handler(void) { uart_interrupt_handler(&uart_ring_lin1); }
 #define __USART_BRR(_PCLK_, _BAUD_)              ((__DIVMANT((_PCLK_), (_BAUD_)) << 4) | (__DIVFRAQ((_PCLK_), (_BAUD_)) & 0x0FU))
 
 void uart_set_baud(USART_TypeDef *u, unsigned int baud) {
-  u->BRR = __USART_BRR(APB1_FREQ, baud);
+  u->BRR = __USART_BRR(APB1_FREQ*1000000U, baud);
 }
 
 void uart_init(uart_ring *q, int baud) {

@@ -4,6 +4,8 @@
 #define GET_BYTE(msg, b) ((msg)->data[(b)])
 #define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask))
 
+#define SET_ADDR_CHECKS(name) ((addr_checks){(name), (sizeof((name)) / sizeof((name)[0]))})
+
 uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
   uint32_t ret = 0U;
   for (int i = 0; i < len; i++) {

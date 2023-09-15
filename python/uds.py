@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import time
 import struct
 from collections import deque
@@ -449,18 +448,18 @@ class IsoTpMessage():
       timeout = self.timeout
 
     start_time = time.monotonic()
-    updated = False
+    rx_in_progress = False
     try:
       while True:
         for msg in self._can_client.recv():
-          self._isotp_rx_next(msg)
+          frame_type = self._isotp_rx_next(msg)
           start_time = time.monotonic()
-          updated = True
+          rx_in_progress = frame_type == ISOTP_FRAME_TYPE.CONSECUTIVE
           if self.tx_done and self.rx_done:
-            return self.rx_dat, updated
+            return self.rx_dat, False
         # no timeout indicates non-blocking
         if timeout == 0:
-          return None, updated
+          return None, rx_in_progress
         if time.monotonic() - start_time > timeout:
           raise MessageTimeoutError("timeout waiting for response")
     finally:
@@ -473,7 +472,6 @@ class IsoTpMessage():
     # assert len(rx_data) == self.max_len, f"isotp - rx: invalid CAN frame length: {len(rx_data)}"
 
     if rx_data[0] >> 4 == ISOTP_FRAME_TYPE.SINGLE:
-      assert not self.rx_done, "isotp - rx: unexpected single frame"
       self.rx_len = rx_data[0] & 0x0F
       assert self.rx_len < self.max_len, f"isotp - rx: invalid single frame length: {self.rx_len}"
       self.rx_dat = rx_data[1:1 + self.rx_len]
@@ -484,7 +482,6 @@ class IsoTpMessage():
       return ISOTP_FRAME_TYPE.SINGLE
 
     elif rx_data[0] >> 4 == ISOTP_FRAME_TYPE.FIRST:
-      assert self.rx_dat == b"", "isotp - rx: first frame with data already received"
       self.rx_len = ((rx_data[0] & 0x0F) << 8) + rx_data[1]
       assert self.max_len <= self.rx_len, f"isotp - rx: invalid first frame length: {self.rx_len}"
       self.rx_dat = rx_data[2:]
