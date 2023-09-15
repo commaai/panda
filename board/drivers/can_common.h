@@ -208,9 +208,9 @@ void ignition_can_hook(CANPacket_t *to_push) {
 
   if (bus == 0) {
     // GM exception
-    if ((addr == 0x160) && (len == 5)) {
-      // this message isn't all zeros when ignition is on
-      ignition_can = GET_BYTES(to_push, 0, 4) != 0U;
+    if ((addr == 0x1F1) && (len == 8)) {
+      // SystemPowerMode (2=Run, 3=Crank Request)
+      ignition_can = (GET_BYTE(to_push, 0) & 0x2U) != 0U;
       ignition_can_cnt = 0U;
     }
 
