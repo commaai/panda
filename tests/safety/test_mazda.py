@@ -25,6 +25,9 @@ class TestMazdaSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyT
   DRIVER_TORQUE_ALLOWANCE = 15
   DRIVER_TORQUE_FACTOR = 1
 
+  # Mazda actually does not set any bit when requesting torque
+  NO_STEER_REQ_BIT = True
+
   def setUp(self):
     self.packer = CANPackerPanda("mazda_2017")
     self.safety = libpanda_py.libpanda

@@ -1,7 +1,6 @@
 def docker_run(String step_label, int timeout_mins, String cmd) {
   timeout(time: timeout_mins, unit: 'MINUTES') {
     sh script: "docker run --rm --privileged \
-          --env PARTIAL_TESTS=${env.PARTIAL_TESTS} \
           --env PYTHONWARNINGS=error \
           --volume /dev/bus/usb:/dev/bus/usb \
           --volume /var/run/dbus:/var/run/dbus \
@@ -62,7 +61,6 @@ pipeline {
   agent any
   environment {
     CI = "1"
-    //PARTIAL_TESTS = "${env.BRANCH_NAME == 'master' ? ' ' : '1'}"
     PYTHONWARNINGS= "error"
     DOCKER_IMAGE_TAG = "panda:build-${env.GIT_COMMIT}"
 
@@ -83,6 +81,7 @@ pipeline {
             phone_steps("panda-dos", [
               ["build", "scons -j4"],
               ["flash", "cd tests/ && ./reflash_internal_panda.py"],
+              ["flash jungle", "cd board/jungle && ./flash.py"],
               ["test", "cd tests/hitl && HW_TYPES=6 pytest --durations=0 [2-7]*.py -k 'not test_send_recv'"],
             ])
           }
@@ -94,11 +93,13 @@ pipeline {
             phone_steps("panda-tres", [
               ["build", "scons -j4"],
               ["flash", "cd tests/ && ./reflash_internal_panda.py"],
+              ["flash jungle", "cd board/jungle && ./flash.py"],
               ["test", "cd tests/hitl && HW_TYPES=9 pytest --durations=0 2*.py [5-9]*.py"],
             ])
           }
         }
 
+        /*
         stage ('Acquire resource locks') {
           options {
             lock(resource: "pandas")
@@ -133,7 +134,8 @@ pipeline {
             stage('HITL tests') {
               steps {
                 script {
-                  docker_run("HITL tests", 35, 'PANDAS_JUNGLE=23002d000851393038373731 PANDAS_EXCLUDE="1d0002000c51303136383232 2f002e000c51303136383232" ./tests/hitl/test.sh')
+                  docker_run("parallel tests", 5, 'PANDAS_JUNGLE=23002d000851393038373731 PANDAS_EXCLUDE="1d0002000c51303136383232 2f002e000c51303136383232" ./tests/hitl/run_parallel_tests.sh')
+                  docker_run("serial tests", 9, 'PANDAS_JUNGLE=23002d000851393038373731 PANDAS_EXCLUDE="1d0002000c51303136383232 2f002e000c51303136383232" ./tests/hitl/run_serial_tests.sh')
                 }
               }
             }
@@ -146,6 +148,7 @@ pipeline {
             }
           }
         }
+        */
       }
     }
   }

@@ -1,5 +1,4 @@
 import struct
-from typing import List
 
 from .base import BaseHandle, BaseSTBootloaderHandle, TIMEOUT
 from .constants import McuType
@@ -17,7 +16,7 @@ class PandaUsbHandle(BaseHandle):
   def controlRead(self, request_type: int, request: int, value: int, index: int, length: int, timeout: int = TIMEOUT):
     return self._libusb_handle.controlRead(request_type, request, value, index, length, timeout)
 
-  def bulkWrite(self, endpoint: int, data: List[int], timeout: int = TIMEOUT) -> int:
+  def bulkWrite(self, endpoint: int, data: bytes, timeout: int = TIMEOUT) -> int:
     return self._libusb_handle.bulkWrite(endpoint, data, timeout)  # type: ignore
 
   def bulkRead(self, endpoint: int, length: int, timeout: int = TIMEOUT) -> bytes:
@@ -35,9 +34,15 @@ class STBootloaderUSBHandle(BaseSTBootloaderHandle):
   def __init__(self, libusb_device, libusb_handle):
     self._libusb_handle = libusb_handle
 
-    # TODO: Find a way to detect F4 vs F2
-    # TODO: also check F4 BCD, don't assume in else
-    self._mcu_type = McuType.H7 if libusb_device.getbcdDevice() == 512 else McuType.F4
+    # lsusb -v | grep Flash
+    # iInterface  4 @Internal Flash  /0x08000000/04*016Kg,01*064Kg,011*128Kg
+    out = libusb_handle.controlRead(0x80, 0x06, 0x0300 | 4, 0, 255)
+    flash_desc = bytes(out[2:]).decode('utf-16le')
+    sector_count = sum([int(s.split('*')[0]) for s in flash_desc.split('/')[-1].split(',')])
+
+    mcu_by_sector_count = {len(m.config.sector_sizes): m for m in McuType}
+    assert sector_count in mcu_by_sector_count, f"Unkown MCU: {sector_count=}"
+    self._mcu_type = mcu_by_sector_count[sector_count]
 
   def _status(self) -> None:
     while 1:
@@ -52,11 +57,8 @@ class STBootloaderUSBHandle(BaseSTBootloaderHandle):
   def get_mcu_type(self):
     return self._mcu_type
 
-  def erase_app(self):
-    self._erase_page_address(self._mcu_type.config.app_address)
-
-  def erase_bootstub(self):
-    self._erase_page_address(self._mcu_type.config.bootstub_address)
+  def erase_sector(self, sector: int):
+    self._erase_page_address(self._mcu_type.config.sector_address(sector))
 
   def clear_status(self):
     # Clear status
@@ -79,7 +81,7 @@ class STBootloaderUSBHandle(BaseSTBootloaderHandle):
     # Program
     bs = min(len(dat), self._mcu_type.config.block_size)
     dat += b"\xFF" * ((bs - len(dat)) % bs)
-    for i in range(0, len(dat) // bs):
+    for i in range(len(dat) // bs):
       ldat = dat[i * bs:(i + 1) * bs]
       print("programming %d with length %d" % (i, len(ldat)))
       self._libusb_handle.controlWrite(0x21, self.DFU_DNLOAD, 2 + i, 0, ldat)
