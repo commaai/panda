@@ -141,6 +141,9 @@ int main(void) {
   clock_init();
   peripherals_init();
   detect_board_type();
+  // red+green leds enabled until succesful USB init, as a debug indicator
+  current_board->set_led(LED_RED, true);
+  current_board->set_led(LED_GREEN, true);
 
   // print hello
   print("\n\n\n************************ MAIN START ************************\n");
@@ -171,6 +174,9 @@ int main(void) {
 #endif
   // enable USB (right before interrupts or enum can fail!)
   usb_init();
+
+  current_board->set_led(LED_RED, false);
+  current_board->set_led(LED_GREEN, false);
 
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();

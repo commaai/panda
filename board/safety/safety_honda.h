@@ -167,16 +167,16 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     if (((addr == 0x1A6) || (addr == 0x296)) && (bus == pt_bus)) {
       int button = (GET_BYTE(to_push, 0) & 0xE0U) >> 5;
 
+      // enter controls on the falling edge of set or resume
+      bool set = (button != HONDA_BTN_SET) && (cruise_button_prev == HONDA_BTN_SET);
+      bool res = (button != HONDA_BTN_RESUME) && (cruise_button_prev == HONDA_BTN_RESUME);
+      if (acc_main_on && !pcm_cruise && (set || res)) {
+        controls_allowed = true;
+      }
+
       // exit controls once main or cancel are pressed
       if ((button == HONDA_BTN_MAIN) || (button == HONDA_BTN_CANCEL)) {
         controls_allowed = false;
-      }
-
-      // enter controls on the falling edge of set or resume
-      bool set = (button == HONDA_BTN_NONE) && (cruise_button_prev == HONDA_BTN_SET);
-      bool res = (button == HONDA_BTN_NONE) && (cruise_button_prev == HONDA_BTN_RESUME);
-      if (acc_main_on && !pcm_cruise && (set || res)) {
-        controls_allowed = true;
       }
       cruise_button_prev = button;
     }

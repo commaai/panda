@@ -203,8 +203,8 @@ void tick_handler(void) {
         if (som_running) {
           log("device booted");
           waiting_to_boot = false;
-        } else if (waiting_to_boot_count == 10U) {
-          log("not booted after 10s");
+        } else if (waiting_to_boot_count == 45U) {
+          log("not booted after 45s");
         } else {
 
         }
@@ -348,6 +348,9 @@ int main(void) {
   clock_init();
   peripherals_init();
   detect_board_type();
+  // red+green leds enabled until succesful USB/SPI init, as a debug indicator
+  current_board->set_led(LED_RED, true);
+  current_board->set_led(LED_GREEN, true);
   adc_init();
   logging_init();
 
@@ -409,6 +412,9 @@ int main(void) {
     spi_init();
   }
 #endif
+
+  current_board->set_led(LED_RED, false);
+  current_board->set_led(LED_GREEN, false);
 
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();

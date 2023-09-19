@@ -99,6 +99,7 @@ pipeline {
           }
         }
 
+        /*
         stage ('Acquire resource locks') {
           options {
             lock(resource: "pandas")
@@ -147,6 +148,7 @@ pipeline {
             }
           }
         }
+        */
       }
     }
   }

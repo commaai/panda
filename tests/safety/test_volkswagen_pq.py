@@ -71,7 +71,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
 
   # openpilot steering output torque
   def _torque_cmd_msg(self, torque, steer_req=1):
-    values = {"LM_Offset": abs(torque), "LM_OffSign": torque < 0}
+    values = {"LM_Offset": abs(torque), "LM_OffSign": torque < 0, "HCA_Status": 5 if steer_req else 3}
     return self.packer.make_can_msg_panda("HCA_1", 0, values)
 
   # ACC engagement and brake light switch status
