@@ -125,6 +125,7 @@ def test_microsecond_timer(p):
   time_diff = (end_time - start_time) / 1e6
   assert 0.98 < time_diff  < 1.02, f"Timer not running at the correct speed! (got {time_diff:.2f}s instead of 1.0s)"
 
+@pytest.mark.skip("logging is disabled")
 @pytest.mark.expected_logs(1)
 def test_logging(p):
   p.reset()
