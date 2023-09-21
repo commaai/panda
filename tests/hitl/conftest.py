@@ -144,8 +144,10 @@ def func_fixture_panda(request, module_panda):
 
   # TODO: reset is slow (2+ seconds)
   p.reset()
-  logs = p.get_logs()
-  last_log_id = logs[-1]['id'] if len(logs) > 0 else 0
+
+  #logs = p.get_logs()
+  #last_log_id = logs[-1]['id'] if len(logs) > 0 else 0
+  assert len(p.get_logs()) == 0
 
   # ensure FW hasn't changed
   assert p.up_to_date()
@@ -174,6 +176,7 @@ def func_fixture_panda(request, module_panda):
   assert p.health()['fault_status'] == 0
 
   # Make sure that there are no unexpected logs
+  """
   min_expected_logs = 0
   max_expected_logs = 0
   mark = request.node.get_closest_marker('expected_logs')
@@ -186,6 +189,8 @@ def func_fixture_panda(request, module_panda):
   log_id = logs[-1]['id'] if len(logs) > 0 else last_log_id
 
   assert min_expected_logs <= ((log_id - last_log_id) % 0xFFFE) <= max_expected_logs, f"Unexpected amount of logs. Last 5: {logs[-5:]}"
+  """
+  assert len(p.get_logs()) == 0
 
   # Check for SPI errors
   #assert p.health()['spi_checksum_error_count'] == 0
