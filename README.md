@@ -1,15 +1,13 @@
 # Welcome to panda
 
+![panda tests](https://github.com/commaai/panda/workflows/tests/badge.svg)
+![panda drivers](https://github.com/commaai/panda/workflows/drivers/badge.svg)
+
 [panda](http://github.com/commaai/panda) is the nicest universal car interface ever.
 
 <a href="https://comma.ai/shop/products/panda-obd-ii-dongle"><img src="https://github.com/commaai/panda/blob/master/panda.png?raw=true"></a>
 
-It supports 3x CAN, 2x LIN, and 1x GMLAN. It also charges a phone. On the computer side, it has USB.
-
-It uses an [STM32F413](http://www.st.com/en/microcontrollers/stm32f413-423.html?querycriteria=productId=LN2004).
-
-![panda tests](https://github.com/commaai/panda/workflows/tests/badge.svg)
-![panda drivers](https://github.com/commaai/panda/workflows/drivers/badge.svg)
+panda speaks CAN, CAN FD, LIN, and GMLAN. panda supports [STM32F205](https://www.st.com/resource/en/reference_manual/rm0033-stm32f205xx-stm32f207xx-stm32f215xx-and-stm32f217xx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf), [STM32F413](https://www.st.com/resource/en/reference_manual/rm0430-stm32f413423-advanced-armbased-32bit-mcus-stmicroelectronics.pdf), and [STM32H725](https://www.st.com/resource/en/reference_manual/rm0468-stm32h723733-stm32h725735-and-stm32h730-value-line-advanced-armbased-32bit-mcus-stmicroelectronics.pdf).
 
 ## Usage
 
