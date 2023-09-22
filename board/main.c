@@ -215,8 +215,10 @@ void tick_handler(void) {
       }
       #ifdef STM32H7
       set_gpio_output(GPIOC, 12, (device_reset_count == 0U));
-      #endif
+      //tres_set_bootkick((device_reset_count == 0U));
+      green_led_enabled = (device_reset_count > 0U);
       if (device_reset_count > 0U) device_reset_count -= 1U;
+      #endif
 
       // increase heartbeat counter and cap it at the uint32 limit
       if (heartbeat_counter < __UINT32_MAX__) {

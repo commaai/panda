@@ -375,6 +375,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xe6: set custom clock source period
     case 0xe6:
+      device_reset_count = req->param1;
       clock_source_set_period(req->param1);
       break;
     // **** 0xe7: set power save state
@@ -439,8 +440,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xf7: set green led enabled
     case 0xf7:
-      green_led_enabled = (req->param1 != 0U);
-      device_reset_count = 3;
+      //green_led_enabled = (req->param1 != 0U);
       break;
     // **** 0xf8: disable heartbeat checks
     case 0xf8:
