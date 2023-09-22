@@ -440,6 +440,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // **** 0xf7: set green led enabled
     case 0xf7:
       green_led_enabled = (req->param1 != 0U);
+      device_reset_count = 3;
       break;
     // **** 0xf8: disable heartbeat checks
     case 0xf8:

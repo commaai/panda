@@ -147,7 +147,6 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 // called at 8Hz
 uint8_t loop_counter = 0U;
 uint8_t previous_harness_status = HARNESS_STATUS_NC;
-uint8_t device_reset_count = 0;
 uint32_t waiting_to_boot_count = 0;
 bool waiting_to_boot = false;
 void tick_handler(void) {
@@ -214,7 +213,9 @@ void tick_handler(void) {
         }
         waiting_to_boot_count += 1U;
       }
+      #ifdef STM32H7
       set_gpio_output(GPIOC, 12, (device_reset_count == 0U));
+      #endif
       if (device_reset_count > 0U) device_reset_count -= 1U;
 
       // increase heartbeat counter and cap it at the uint32 limit
