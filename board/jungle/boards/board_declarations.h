@@ -4,6 +4,7 @@ typedef void (*board_set_led)(uint8_t color, bool enabled);
 typedef void (*board_board_tick)(void);
 typedef bool (*board_get_button)(void);
 typedef void (*board_set_panda_power)(bool enabled);
+typedef void (*board_set_panda_individual_power)(uint8_t bitmask);
 typedef void (*board_set_ignition)(bool enabled);
 typedef void (*board_set_individual_ignition)(uint8_t bitmask);
 typedef void (*board_set_harness_orientation)(uint8_t orientation);
@@ -23,6 +24,7 @@ struct board {
   board_board_tick board_tick;
   board_get_button get_button;
   board_set_panda_power set_panda_power;
+  board_set_panda_individual_power set_panda_individual_power;
   board_set_ignition set_ignition;
   board_set_individual_ignition set_individual_ignition;
   board_set_harness_orientation set_harness_orientation;
@@ -74,4 +76,8 @@ void unused_set_individual_ignition(uint8_t bitmask) {
 void unused_board_enable_header_pin(uint8_t pin_num, bool enabled) {
   UNUSED(pin_num);
   UNUSED(enabled);
+}
+
+void unused_set_panda_individual_power(uint8_t bitmask) {
+  UNUSED(bitmask);
 }

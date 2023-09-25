@@ -183,6 +183,10 @@ void board_v2_set_panda_power(bool enable) {
   gpio_set_all_output(power_pins, sizeof(power_pins) / sizeof(gpio_t), enable);
 }
 
+void board_v2_set_panda_individual_power(uint8_t bitmask) {
+  gpio_set_bitmask(power_pins, sizeof(power_pins) / sizeof(gpio_t), (uint32_t)bitmask);
+}
+
 bool board_v2_get_button(void) {
   return get_gpio_input(GPIOG, 15);
 }
@@ -297,6 +301,7 @@ const board board_v2 = {
   .board_tick = &board_v2_tick,
   .get_button = &board_v2_get_button,
   .set_panda_power = &board_v2_set_panda_power,
+  .set_panda_individual_power = &board_v2_set_panda_individual_power,
   .set_ignition = &board_v2_set_ignition,
   .set_individual_ignition = &board_v2_set_individual_ignition,
   .set_harness_orientation = &board_v2_set_harness_orientation,
