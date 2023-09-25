@@ -4,7 +4,7 @@ typedef void (*board_set_led)(uint8_t color, bool enabled);
 typedef void (*board_board_tick)(void);
 typedef bool (*board_get_button)(void);
 typedef void (*board_set_panda_power)(bool enabled);
-typedef void (*board_set_panda_individual_power)(uint8_t bitmask);
+typedef void (*board_set_panda_individual_power)(uint8_t port_num, bool enabled);
 typedef void (*board_set_ignition)(bool enabled);
 typedef void (*board_set_individual_ignition)(uint8_t bitmask);
 typedef void (*board_set_harness_orientation)(uint8_t orientation);
@@ -78,6 +78,7 @@ void unused_board_enable_header_pin(uint8_t pin_num, bool enabled) {
   UNUSED(enabled);
 }
 
-void unused_set_panda_individual_power(uint8_t bitmask) {
-  UNUSED(bitmask);
+void unused_set_panda_individual_power(uint8_t port_num, bool enabled) {
+  UNUSED(port_num);
+  UNUSED(enabled);
 }

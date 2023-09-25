@@ -60,7 +60,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xa0: Set panda power per channel by bitmask.
     case 0xa3:
-      current_board->set_panda_individual_power(req->param1);
+      current_board->set_panda_individual_power(req->param1, (req->param2 > 0U));
       break;
     // **** 0xa8: get microsecond timer
     case 0xa8:
