@@ -232,7 +232,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   if (addr == MSG_SUBARU_ES_Distance) {
     int cruise_throttle = (GET_BYTES(to_send, 2, 2) & 0xFFFU);
     bool cruise_cancel = GET_BIT(to_send, 56U) != 0U;
-    
+
     if (subaru_longitudinal) {
       violation |= longitudinal_gas_checks(cruise_throttle, SUBARU_LONG_LIMITS);
     } else {
@@ -256,7 +256,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
     // reading ES button data by identifier (b'\x03\x22\x11\x30\x00\x00\x00\x00') is also allowed (DID 0x1130)
     bool is_button_rdbi = (GET_BYTES(to_send, 0, 4) == 0x30112203U) && (GET_BYTES(to_send, 4, 4) == 0x0U);
 
-    violation |= !(is_tester_present || is_button_rdbi);
+    violation |= !(is_tester_present || is_button_rdbi) || !subaru_longitudinal;
   }
 
   if (violation){
