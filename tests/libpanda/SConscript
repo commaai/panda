@@ -15,6 +15,7 @@ env = Environment(
     '-std=gnu11',
     '-Wfatal-errors',
     '-Wno-pointer-to-int-cast',
+    '-DENABLE_LOGGING',
   ],
   CPPPATH=[".", "../../board/"],
 )

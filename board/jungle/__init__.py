@@ -132,6 +132,9 @@ class PandaJungle(Panda):
   def set_panda_power(self, enabled):
     self._handle.controlWrite(PandaJungle.REQUEST_OUT, 0xa0, int(enabled), 0, b'')
 
+  def set_panda_individual_power(self, port, enabled):
+    self._handle.controlWrite(PandaJungle.REQUEST_OUT, 0xa3, int(port), int(enabled), b'')
+
   def set_harness_orientation(self, mode):
     self._handle.controlWrite(PandaJungle.REQUEST_OUT, 0xa1, int(mode), 0, b'')
 
