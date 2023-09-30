@@ -184,9 +184,6 @@ void tick_handler(void) {
       // unless we are in power saving mode
       current_board->set_led(LED_BLUE, (uptime_cnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
 
-      // tick drivers at 1Hz
-      harness_tick();
-
       const bool recent_heartbeat = heartbeat_counter == 0U;
       const bool harness_inserted = (harness.status != previous_harness_status) && (harness.status != HARNESS_STATUS_NC);
       const bool just_bootkicked = current_board->board_tick(check_started(), usb_enumerated, recent_heartbeat, harness_inserted);
