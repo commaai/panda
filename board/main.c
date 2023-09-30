@@ -6,7 +6,6 @@
 #include "drivers/gmlan_alt.h"
 #include "drivers/kline_init.h"
 #include "drivers/simple_watchdog.h"
-#include "drivers/logging.h"
 
 #include "early_init.h"
 #include "provision.h"
@@ -185,9 +184,6 @@ void tick_handler(void) {
       // unless we are in power saving mode
       current_board->set_led(LED_BLUE, (uptime_cnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
 
-      // tick drivers at 1Hz
-      logging_tick();
-
       const bool recent_heartbeat = heartbeat_counter == 0U;
       const bool harness_inserted = (harness.status != previous_harness_status) && (harness.status != HARNESS_STATUS_NC);
       const bool just_bootkicked = current_board->board_tick(check_started(), usb_enumerated, recent_heartbeat, harness_inserted);
@@ -196,16 +192,16 @@ void tick_handler(void) {
       // log device boot time
       const bool som_running = current_board->read_som_gpio();
       if (just_bootkicked && !som_running) {
-        log("bootkick");
+        print("bootkick\n");
         waiting_to_boot = true;
       }
       if (waiting_to_boot) {
         if (som_running) {
-          log("device booted");
+          print("device booted\n");
           waiting_to_boot = false;
           waiting_to_boot_count = 0;
         } else if (waiting_to_boot_count == 45U) {
-          log("not booted after 45s");
+          print("not booted after 45s\n");
           device_reset_count = 3;
           waiting_to_boot_count = 0;
         } else {
@@ -361,7 +357,6 @@ int main(void) {
   current_board->set_led(LED_RED, true);
   current_board->set_led(LED_GREEN, true);
   adc_init();
-  logging_init();
 
   // print hello
   print("\n\n\n************************ MAIN START ************************\n");
@@ -380,8 +375,6 @@ int main(void) {
 
   // panda has an FPU, let's use it!
   enable_fpu();
-
-  log("main start");
 
   if (current_board->has_lin) {
     // enable LIN

@@ -38,12 +38,6 @@
 #define PROVISION_CHUNK_ADDRESS 0x1FFF79E0U
 #define DEVICE_SERIAL_NUMBER_ADDRESS 0x1FFF79C0U
 
-#define LOGGING_FLASH_SECTOR_A 10U
-#define LOGGING_FLASH_SECTOR_B 11U
-#define LOGGING_FLASH_BASE_A 0x080C0000U
-#define LOGGING_FLASH_BASE_B 0x080E0000U
-#define LOGGING_FLASH_SECTOR_SIZE 0x20000U
-
 #include "can_definitions.h"
 #include "comms_definitions.h"
 
@@ -71,7 +65,6 @@
 #include "stm32fx/board.h"
 #include "stm32fx/clock.h"
 #include "drivers/watchdog.h"
-#include "stm32fx/llflash.h"
 
 #if !defined(PEDAL) || defined(BOOTSTUB)
   #include "drivers/spi.h"
@@ -87,7 +80,9 @@
   #include "stm32fx/llexti.h"
 #endif
 
-#ifndef BOOTSTUB
+#ifdef BOOTSTUB
+  #include "stm32fx/llflash.h"
+#else
   #include "stm32fx/llbxcan.h"
 #endif
 
