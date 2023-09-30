@@ -1,4 +1,3 @@
-#ifdef ENABLE_LOGGING
 
 #include "logging_definitions.h"
 
@@ -192,17 +191,3 @@ uint8_t logging_read(uint8_t *buffer) {
   }
   return ret;
 }
-
-#else
-
-void logging_init(void) { }
-void logging_tick(void) { }
-void logging_init_read_index(void) { }
-void logging_find_read_index(uint16_t last_id) { UNUSED(last_id); }
-void log(const char* msg) { UNUSED(msg); }
-uint8_t logging_read(uint8_t *buffer) {
-  UNUSED(buffer);
-  return 0;
-}
-
-#endif
