@@ -84,7 +84,7 @@ static uint32_t volkswagen_mqb_compute_crc(CANPacket_t *to_push) {
     case MSG_TSK_06:
       crc ^= (uint8_t[]){0xC4,0xE2,0x4F,0xE4,0xF8,0x2F,0x56,0x81,0x9F,0xE5,0x83,0x44,0x05,0x3F,0x97,0xDF}[counter];
       break;
-	case MSG_TSK_07:
+    case MSG_TSK_07:
       crc ^= (uint8_t[]){0x78,0x68,0x3A,0x16,0x16,0x08,0x4F,0xDE,0xF7,0x35,0x19,0xE6,0x28,0x2F,0x59,0x82}[counter];
       break;
     case MSG_MOTOR_20:
@@ -247,7 +247,9 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
 static int volkswagen_mqb_fwd_hook(int bus_num, int addr) {
   UNUSED(bus_num);
   UNUSED(addr);
-  return -1; // do not do any forwarding
+  int bus_fwd = -1; // do not do any forwarding
+  UNUSED(bus_fwd);
+  return bus_fwd;
 }
 
 const safety_hooks volkswagen_mqb_hooks = {
@@ -256,4 +258,4 @@ const safety_hooks volkswagen_mqb_hooks = {
   .tx = volkswagen_mqb_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = volkswagen_mqb_fwd_hook,
-};
+}
