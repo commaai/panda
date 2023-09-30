@@ -258,4 +258,4 @@ const safety_hooks volkswagen_mqb_hooks = {
   .tx = volkswagen_mqb_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = volkswagen_mqb_fwd_hook,
-}
+};
