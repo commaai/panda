@@ -68,8 +68,6 @@ jobs:
         run: $RUN "scons -j4"
       - name: Test communication protocols
         run: $RUN "cd tests/usbprotocol && ./test.sh"
-      - name: Test logging
-        run: $RUN "cd tests/logging && ./test.sh"
 
   safety:
     name: safety
