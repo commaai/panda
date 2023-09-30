@@ -227,6 +227,8 @@ void tick_handler(void) {
 
       if (controls_allowed || heartbeat_engaged) {
         controls_allowed_countdown = 30U;
+      } else if (recent_heartbeat && !check_started()) {
+        controls_allowed_countdown = 0U;
       } else if (controls_allowed_countdown > 0U) {
         controls_allowed_countdown -= 1U;
       } else {
