@@ -10,7 +10,6 @@ def check_signature(p):
   assert p.up_to_date()
 
 
-@pytest.mark.expected_logs(1)
 def test_dfu(p):
   app_mcu_type = p.get_mcu_type()
   dfu_serial = p.get_dfu_serial()
