@@ -50,7 +50,6 @@ separate IRQs for RX and TX.
 #define LOGGING_FLASH_SECTOR_B 6U
 #define LOGGING_FLASH_BASE_A 0x080A0000U
 #define LOGGING_FLASH_BASE_B 0x080C0000U
-#define LOGGING_FLASH_SECTOR_SIZE 0x20000U
 
 #include "can_definitions.h"
 #include "comms_definitions.h"

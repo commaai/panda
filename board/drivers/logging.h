@@ -1,7 +1,7 @@
 
 #include "logging_definitions.h"
 
-#define BANK_SIZE LOGGING_FLASH_SECTOR_SIZE
+#define BANK_SIZE 0x20000U
 #define BANK_LOG_CAPACITY (BANK_SIZE / sizeof(log_t))
 #define TOTAL_LOG_CAPACITY (BANK_LOG_CAPACITY * 2U)
 

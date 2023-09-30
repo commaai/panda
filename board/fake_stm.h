@@ -56,7 +56,6 @@ uint8_t fake_logging_bank[0x40000] __attribute__ ((aligned (4)));
 #define LOGGING_FLASH_BASE_B (&fake_logging_bank[0x20000])
 #define LOGGING_FLASH_SECTOR_A 5
 #define LOGGING_FLASH_SECTOR_B 6
-#define LOGGING_FLASH_SECTOR_SIZE 0x20000U
 
 bool flash_locked = true;
 void flash_unlock(void) {
