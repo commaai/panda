@@ -118,7 +118,7 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &volkswagen_mqb_rx_checks,
                                  volkswagen_mqb_get_checksum, volkswagen_mqb_compute_crc, volkswagen_mqb_get_counter, NULL);
 
-  if (valid && (GET_BUS(to_push) == 0U)) {
+  if (valid && (GET_BUS(to_push) == 1U)) {
     int addr = GET_ADDR(to_push);
 
     // Update in-motion state by sampling wheel speeds
