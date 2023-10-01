@@ -226,9 +226,9 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
 
     bool steer_req = GET_BIT(to_send, 30U) != 0U;
 
-    //if (steer_torque_cmd_checks(desired_torque, steer_req, VOLKSWAGEN_MQB_STEERING_LIMITS)) {
-    //  tx = 0;
-    //}
+    if (steer_torque_cmd_checks(desired_torque, steer_req, VOLKSWAGEN_MQB_STEERING_LIMITS)) {
+      tx = 0;
+    }
   }
 
   // FORCE CANCEL: ensuring that only the cancel button press is sent when controls are off.
@@ -241,6 +241,7 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
   }
 
   // 1 allows the message through
+  tx = 0;
   return tx;
 }
 
