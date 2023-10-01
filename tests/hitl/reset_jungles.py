@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
-import os
-import time
 import concurrent.futures
 
-from panda import Panda, PandaDFU, PandaJungle, PandaJungleDFU, McuType
+from panda import PandaJungle, PandaJungleDFU, McuType
 from panda.tests.libs.resetter import Resetter
+
+def recover(s):
+  with PandaJungleDFU(s) as pd:
+    pd.recover()
+
+def flash(s):
+  with PandaJungle(s) as p:
+    p.flash()
+    return p.get_mcu_type()
 
 # Reset + flash all CI hardware to get it into a consistent state
 # * port 1: jungles-under-test
@@ -15,14 +22,18 @@ if __name__ == "__main__":
     # everything off
     for i in range(1, 4):
       r.enable_power(i, 0)
+    r.cycle_power(ports=[1, 2], dfu=True)
 
-    # reflash test jungles
-    r.cycle_power(delay=7, ports=[1, 2], dfu=True)
     dfu_serials = PandaJungleDFU.list()
     assert len(dfu_serials) == 2
-    mcu_types = {}
-    for s in dfu_serials:
-      with PandaJungleDFU(s) as pd:
-        mcu_types.add(pd.get_mcu_type())
-        pd.recover()
-    assert mcu_types == {McuType.F4, McuType.H7}
+
+    with concurrent.futures.ProcessPoolExecutor(max_workers=len(dfu_serials)) as exc:
+      list(exc.map(recover, dfu_serials, timeout=30))
+
+      # power cycle for H7 bootloader bug
+      r.cycle_power(ports=[1, 2])
+
+      serials = PandaJungle.list()
+      assert len(serials) == len(dfu_serials)
+      mcu_types = list(exc.map(flash, serials, timeout=20))
+      assert set(mcu_types) == {McuType.F4, McuType.H7}

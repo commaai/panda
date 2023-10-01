@@ -46,15 +46,12 @@ class Resetter():
     if ports is None:
       ports = [1, 2, 3]
 
-    if dfu:
-      self.enable_boot(True)
-
+    self.enable_boot(dfu)
     for port in ports:
       self.enable_power(port, False)
-    time.sleep(1)
+    time.sleep(0.5)
+
     for port in ports:
       self.enable_power(port, True)
     time.sleep(delay)
-
-    if dfu:
-      self.enable_boot(False)
+    self.enable_boot(False)
