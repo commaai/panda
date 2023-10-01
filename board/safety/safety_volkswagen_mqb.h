@@ -32,8 +32,8 @@ const LongitudinalLimits VOLKSWAGEN_MQB_LONG_LIMITS = {
 #define MSG_LDW_02      0x397   // TX by OP, Lane line recognition and text alerts
 
 // Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
-const CanMsg VOLKSWAGEN_MQB_STOCK_TX_MSGS[] = {{MSG_HCA_01, 1, 8}, {MSG_GRA_ACC_01, 1, 8}, {MSG_LDW_02, 0, 8}};
-const CanMsg VOLKSWAGEN_MQB_LONG_TX_MSGS[] = {{MSG_HCA_01, 1, 8}, {MSG_GRA_ACC_01, 1, 8}, {MSG_LDW_02, 0, 8}};
+const CanMsg VOLKSWAGEN_MQB_STOCK_TX_MSGS[] = {{MSG_HCA_01, 1, 8}, {MSG_GRA_ACC_01, 1, 8}, {MSG_LDW_02, 2, 8}};
+const CanMsg VOLKSWAGEN_MQB_LONG_TX_MSGS[] = {{MSG_HCA_01, 1, 8}, {MSG_GRA_ACC_01, 1, 8}, {MSG_LDW_02, 2, 8}};
 
 AddrCheckStruct volkswagen_mqb_addr_checks[] = {
   {.msg = {{MSG_ESP_19, 1, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
@@ -199,7 +199,7 @@ static int volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
 
     brake_pressed = volkswagen_mqb_brake_pedal_switch || volkswagen_mqb_brake_pressure_detected;
 
-    //generic_rx_checks((addr == MSG_HCA_01));
+    generic_rx_checks((addr == MSG_HCA_01));
   }
   return valid;
 }
