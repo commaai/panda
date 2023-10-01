@@ -5,7 +5,7 @@ from panda import Panda
 from panda import PandaJungle
 from panda.tests.hitl.conftest import PandaGroup
 
-@pytest.mark.expected_logs(1)
+
 def test_ignition(p, panda_jungle):
   # Set harness orientation to #2, since the ignition line is on the wrong SBU bus :/
   panda_jungle.set_harness_orientation(PandaJungle.HARNESS_ORIENTATION_2)
@@ -71,7 +71,6 @@ def test_voltage(p):
     assert ((voltage > 11000) and (voltage < 13000))
     time.sleep(0.1)
 
-@pytest.mark.expected_logs(1)
 def test_hw_type(p):
   """
     hw type should be same in bootstub as application
@@ -124,16 +123,3 @@ def test_microsecond_timer(p):
 
   time_diff = (end_time - start_time) / 1e6
   assert 0.98 < time_diff  < 1.02, f"Timer not running at the correct speed! (got {time_diff:.2f}s instead of 1.0s)"
-
-@pytest.mark.expected_logs(1)
-def test_logging(p):
-  p.reset()
-
-  logs = p.get_logs(True)
-  assert len(logs) > 0
-  assert len(p.get_logs()) == 0
-
-  # we assume the start log is relatively recent
-  start_logs = list(filter(lambda x: x['msg'] == 'main start', logs[-5:]))
-  assert len(start_logs) > 0
-  assert start_logs[0]['uptime'] < 2
