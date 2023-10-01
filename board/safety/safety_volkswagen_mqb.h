@@ -32,17 +32,17 @@ const LongitudinalLimits VOLKSWAGEN_MQB_LONG_LIMITS = {
 #define MSG_LDW_02      0x397   // TX by OP, Lane line recognition and text alerts
 
 // Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
-const CanMsg VOLKSWAGEN_MQB_STOCK_TX_MSGS[] = {{MSG_HCA_01, 2, 8}, {MSG_GRA_ACC_01, 1, 8}, {MSG_LDW_02, 1, 8}};
-const CanMsg VOLKSWAGEN_MQB_LONG_TX_MSGS[] = {{MSG_HCA_01, 2, 8}, {MSG_GRA_ACC_01, 1, 8}, {MSG_LDW_02, 1, 8}};
+const CanMsg VOLKSWAGEN_MQB_STOCK_TX_MSGS[] = {{MSG_HCA_01, 1, 8}, {MSG_GRA_ACC_01, 1, 8}, {MSG_LDW_02, 0, 8}};
+const CanMsg VOLKSWAGEN_MQB_LONG_TX_MSGS[] = {{MSG_HCA_01, 1, 8}, {MSG_GRA_ACC_01, 1, 8}, {MSG_LDW_02, 0, 8}};
 
 AddrCheckStruct volkswagen_mqb_addr_checks[] = {
-  {.msg = {{MSG_ESP_19, 2, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_LH_EPS_03, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_ESP_05, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_TSK_06, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_TSK_07, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_MOTOR_20, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_MOTOR_14, 2, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_ESP_19, 1, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_LH_EPS_03, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_ESP_05, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_TSK_06, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_TSK_07, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_MOTOR_20, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_MOTOR_14, 1, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
 #define VOLKSWAGEN_MQB_ADDR_CHECKS_LEN (sizeof(volkswagen_mqb_addr_checks) / sizeof(volkswagen_mqb_addr_checks[0]))
 addr_checks volkswagen_mqb_rx_checks = {volkswagen_mqb_addr_checks, VOLKSWAGEN_MQB_ADDR_CHECKS_LEN};
@@ -241,6 +241,7 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
   }
 
   // 1 allows the message through
+  tx = 1;
   return tx;
 }
 
