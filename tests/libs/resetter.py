@@ -7,6 +7,12 @@ class Resetter():
     self._handle = None
     self.connect()
 
+  def __enter__(self):
+    return self
+
+  def __exit__(self, *args):
+    self.close()
+
   def close(self):
     self._handle.close()
     self._context.close()
