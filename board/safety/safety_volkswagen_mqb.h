@@ -241,7 +241,7 @@ static int volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
   }
 
   // 1 allows the message through
-  tx = 0;
+  tx = 1;
   return tx;
 }
 
