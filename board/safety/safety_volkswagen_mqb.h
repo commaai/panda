@@ -24,7 +24,7 @@ const LongitudinalLimits VOLKSWAGEN_MQB_LONG_LIMITS = {
 #define MSG_LH_EPS_03   0x09F   // RX from EPS, for driver steering torque
 #define MSG_ESP_05      0x106   // RX from ABS, for brake switch state
 #define MSG_TSK_06      0x120   // RX from ECU, for CC status from drivetrain coordinator
-//#define MSG_TSK_07      0x31E   // RX from ECU, for CC speed from drivetrain coordinator
+#define MSG_TSK_07      0x31E   // RX from ECU, for CC speed from drivetrain coordinator
 #define MSG_MOTOR_20    0x121   // RX from ECU, for driver throttle input
 #define MSG_HCA_01      0x126   // TX by OP, Heading Control Assist steering torque
 #define MSG_GRA_ACC_01  0x12B   // TX by OP, ACC control buttons for cancel/resume
@@ -40,7 +40,7 @@ AddrCheckStruct volkswagen_mqb_addr_checks[] = {
   {.msg = {{MSG_LH_EPS_03, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_ESP_05, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_TSK_06, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  //{.msg = {{MSG_TSK_07, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_TSK_07, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MOTOR_20, 1, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MOTOR_14, 1, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
@@ -84,9 +84,9 @@ static uint32_t volkswagen_mqb_compute_crc(CANPacket_t *to_push) {
     case MSG_TSK_06:
       crc ^= (uint8_t[]){0xC4,0xE2,0x4F,0xE4,0xF8,0x2F,0x56,0x81,0x9F,0xE5,0x83,0x44,0x05,0x3F,0x97,0xDF}[counter];
       break;
-    //case MSG_TSK_07:
-    //  crc ^= (uint8_t[]){0x78,0x68,0x3A,0x31,0x16,0x08,0x4F,0xDE,0xF7,0x35,0x19,0xE6,0x28,0x2F,0x59,0x82}[counter];
-    //  break;
+    case MSG_TSK_07:
+      crc ^= (uint8_t[]){0x78,0x68,0x3A,0x31,0x16,0x08,0x4F,0xDE,0xF7,0x35,0x19,0xE6,0x28,0x2F,0x59,0x82}[counter];
+      break;
     case MSG_MOTOR_20:
       crc ^= (uint8_t[]){0xE9,0x65,0xAE,0x6B,0x7B,0x35,0xE5,0x5F,0x4E,0xC7,0x86,0xA2,0xBB,0xDD,0xEB,0xB4}[counter];
       break;
