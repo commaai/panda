@@ -494,11 +494,12 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, 6):
       self.assertTrue(self._rx(self._torque_driver_msg(t)))
 
+    # ensure sample_t is reset on safety init
     self.assertNotEqual(self.safety.get_torque_driver_min(), 0)
     self.assertNotEqual(self.safety.get_torque_driver_max(), 0)
 
-    # reset sample_t by reinitializing the safety mode
     self._reset_safety_hooks()
+
     self.assertEqual(self.safety.get_torque_driver_min(), 0)
     self.assertEqual(self.safety.get_torque_driver_max(), 0)
 
@@ -613,11 +614,12 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, 6):
       self.assertTrue(self._rx(self._torque_meas_msg(t)))
 
+    # ensure sample_t is reset on safety init
     self.assertNotEqual(self.safety.get_torque_meas_min(), 0)
     self.assertNotEqual(self.safety.get_torque_meas_max(), 0)
 
-    # reset sample_t by reinitializing the safety mode
     self._reset_safety_hooks()
+
     self.assertEqual(self.safety.get_torque_meas_min(), 0)
     self.assertEqual(self.safety.get_torque_meas_max(), 0)
 
@@ -647,7 +649,7 @@ class MeasurementSafetyTest(PandaSafetyTestBase):
       self.assertAlmostEqual(get_min_func() / factor, val, delta=0.1)
       self.assertAlmostEqual(get_max_func() / factor - 0.5, val, delta=0.1)
 
-      # reset sample_t by reinitializing the safety mode
+      # ensure sample_t is reset on safety init
       self._reset_safety_hooks()
       self.assertEqual(get_min_func(), 0)
       self.assertEqual(get_max_func(), 0)
