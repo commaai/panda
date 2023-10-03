@@ -15,6 +15,6 @@ repos:
       additional_dependencies: ['git+https://github.com/numpy/numpy-stubs', 'types-requests', 'types-atomicwrites',
                                 'types-pycurl']
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.0.291
+  rev: v0.0.292
   hooks:
     - id: ruff
