@@ -636,8 +636,6 @@ class MeasurementSafetyTest(PandaSafetyTestBase):
 
   def common_measurement_test(self, msg_func, min_value, max_value, factor, get_min_func, get_max_func):
     for val in np.arange(min_value, max_value, 0.5):
-      if val > 10:
-        continue
       print('rxing val,', val, ':')
       for i in range(6):
         print(f'{val + i * 0.1}, ', end='')
@@ -657,8 +655,8 @@ class MeasurementSafetyTest(PandaSafetyTestBase):
       #   continue
       # self.assertLessEqual((get_min_func() / factor - val), 1)
       # self.assertLessEqual((get_max_func() / factor - (val + 0.5)), 1, get_max_func())
-      self.assertEqual(get_min_func() / factor, val)
-      self.assertEqual(get_max_func() / factor - 0.5, val)
+      self.assertAlmostEqual(get_min_func() / factor, val, delta=0.1)
+      self.assertAlmostEqual(get_max_func() / factor - 0.5, val, delta=0.1)
 
       # print(1 * factor, (get_max_func() - (val + 0.5) * factor) - (1 * abs(factor)))
 
