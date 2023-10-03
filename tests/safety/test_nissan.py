@@ -20,7 +20,7 @@ class TestNissanSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
   CRUISE_BUS = 2
 
   # Angle control limits
-  DEG_TO_CAN = -100
+  DEG_TO_CAN = 100
 
   ANGLE_RATE_BP = [0., 5., 15.]
   ANGLE_RATE_UP = [5., .8, .15]  # windup limit
