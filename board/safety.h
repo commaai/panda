@@ -350,15 +350,6 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   reset_sample(&torque_driver);
   reset_sample(&angle_meas);
 
-    vehicle_speed.min = 0;
-  vehicle_speed.max = 0;
-  torque_meas.min = 0;
-  torque_meas.max = 0;
-  torque_driver.min = 0;
-  torque_driver.max = 0;
-  angle_meas.min = 0;
-  angle_meas.max = 0;
-
   controls_allowed = false;
   relay_malfunction_reset();
   safety_rx_checks_invalid = false;
