@@ -128,7 +128,6 @@ AddrCheckStruct hyundai_canfd_hda2_long_addr_checks[] = {
 addr_checks hyundai_canfd_rx_checks = SET_ADDR_CHECKS(hyundai_canfd_addr_checks);
 
 
-const int HYUNDAI_PARAM_CANFD_HDA2 = 16;
 const int HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 32;
 const int HYUNDAI_PARAM_CANFD_HDA2_ALT_STEERING = 128;
 bool hyundai_canfd_alt_buttons = false;
