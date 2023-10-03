@@ -424,6 +424,15 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
   def _torque_driver_msg(self, torque):
     pass
 
+  def test_driver_torque_msg(self):
+    for sign in [-1, 1]:
+      for t in np.arange(0, self.DRIVER_TORQUE_ALLOWANCE + 1, 1):
+        for _ in range(10):
+          self._rx(self._torque_driver_msg(t * sign))
+        
+        self.assertEqual(self.safety.get_torque_driver_min(), t * sign)
+        self.assertEqual(self.safety.get_torque_driver_max(), t * sign)
+
   def test_non_realtime_limit_up(self):
     self.safety.set_torque_driver(0, 0)
     super().test_non_realtime_limit_up()
