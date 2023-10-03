@@ -636,38 +636,18 @@ class MeasurementSafetyTest(PandaSafetyTestBase):
 
   def common_measurement_test(self, msg_func, min_value, max_value, factor, get_min_func, get_max_func):
     for val in np.arange(min_value, max_value, 0.5):
-      print('rxing val,', val, ':')
       for i in range(6):
-        print(f'{val + i * 0.1}, ', end='')
         self.assertTrue(self._rx(msg_func(val + i * 0.1)))
-      # print()
-      print('min, max, val:', get_min_func(), get_max_func(), val)
-      # print(abs(get_min_func() - val * factor))
-      # print(abs(get_max_func() / factor - (val + 0.5)))
 
       # assert close by one decimal place
-      # print('min', (get_min_func() / factor - (val + 0.5)), 'should be less equal', 1)
-      print('min2', (get_min_func() / factor), 'should be close to', val)
-      # print('max', (get_max_func() / factor - val), 'should be less equal', 1)
-      print('max2', (get_max_func() / factor - 0.5), 'should be close to', val)
-      print(get_max_func(), factor)
-      # if get_max_func() > -100:
-      #   continue
-      # self.assertLessEqual((get_min_func() / factor - val), 1)
-      # self.assertLessEqual((get_max_func() / factor - (val + 0.5)), 1, get_max_func())
       self.assertAlmostEqual(get_min_func() / factor, val, delta=0.1)
       self.assertAlmostEqual(get_max_func() / factor - 0.5, val, delta=0.1)
 
-      # print(1 * factor, (get_max_func() - (val + 0.5) * factor) - (1 * abs(factor)))
+      # reset sample_t by reinitializing the safety mode
+      self._reset_safety_hooks()
 
-      # self.assertNotEqual(get_min_func(), 0)
-      # self.assertNotEqual(get_max_func(), 0)
-      #
-      # # reset sample_t by reinitializing the safety mode
-      # self._reset_safety_hooks()
-      #
-      # self.assertEqual(get_min_func(), 0)
-      # self.assertEqual(get_max_func(), 0)
+      self.assertEqual(get_min_func(), 0)
+      self.assertEqual(get_max_func(), 0)
 
   def test_vehicle_speed_measurements(self):
     self.common_measurement_test(self._speed_msg, 0, 80, VEHICLE_SPEED_FACTOR, self.safety.get_vehicle_speed_min, self.safety.get_vehicle_speed_max)
