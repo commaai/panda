@@ -495,12 +495,10 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, MAX_SAMPLE_VALS):
       self.assertTrue(self._rx(self._torque_driver_msg(t)))
 
-    # ensure sample_t is reset on safety init
     self.assertNotEqual(self.safety.get_torque_driver_min(), 0)
     self.assertNotEqual(self.safety.get_torque_driver_max(), 0)
 
     self._reset_safety_hooks()
-
     self.assertEqual(self.safety.get_torque_driver_min(), 0)
     self.assertEqual(self.safety.get_torque_driver_max(), 0)
 
@@ -615,12 +613,10 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, MAX_SAMPLE_VALS):
       self.assertTrue(self._rx(self._torque_meas_msg(t)))
 
-    # ensure sample_t is reset on safety init
     self.assertNotEqual(self.safety.get_torque_meas_min(), 0)
     self.assertNotEqual(self.safety.get_torque_meas_max(), 0)
 
     self._reset_safety_hooks()
-
     self.assertEqual(self.safety.get_torque_meas_min(), 0)
     self.assertEqual(self.safety.get_torque_meas_max(), 0)
 
