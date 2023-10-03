@@ -657,8 +657,8 @@ class MeasurementSafetyTest(PandaSafetyTestBase):
       #   continue
       # self.assertLessEqual((get_min_func() / factor - val), 1)
       # self.assertLessEqual((get_max_func() / factor - (val + 0.5)), 1, get_max_func())
-      self.assertAlmostEqual(get_min_func() / factor, val, delta=0.1)
-      self.assertAlmostEqual(get_max_func() / factor - 0.5, val, delta=0.1)
+      self.assertEqual(get_min_func() / factor, val)
+      self.assertEqual(get_max_func() / factor - 0.5, val)
 
       # print(1 * factor, (get_max_func() - (val + 0.5) * factor) - (1 * abs(factor)))
 
