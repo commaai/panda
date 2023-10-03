@@ -38,6 +38,8 @@ AddrCheckStruct nissan_addr_checks[] = {
 addr_checks nissan_rx_checks = {nissan_addr_checks, NISSAN_ADDR_CHECK_LEN};
 
 // EPS Location. false = V-CAN, true = C-CAN
+const int NISSAN_PARAM_ALT_EPS_BUS = 1;
+
 bool nissan_alt_eps = false;
 
 static int nissan_rx_hook(CANPacket_t *to_push) {
@@ -48,7 +50,7 @@ static int nissan_rx_hook(CANPacket_t *to_push) {
     int bus = GET_BUS(to_push);
     int addr = GET_ADDR(to_push);
 
-    if (((bus == 0) && (!nissan_alt_eps)) || ((bus == 1) && (nissan_alt_eps))) {
+    if (bus == (nissan_alt_eps ? 1 : 0)) {
       if (addr == 0x2) {
         // Current steering angle
         // Factor -0.1, little endian
@@ -65,7 +67,7 @@ static int nissan_rx_hook(CANPacket_t *to_push) {
         uint16_t right_rear = (GET_BYTE(to_push, 0) << 8) | (GET_BYTE(to_push, 1));
         uint16_t left_rear = (GET_BYTE(to_push, 2) << 8) | (GET_BYTE(to_push, 3));
         vehicle_moving = (right_rear | left_rear) != 0U;
-        vehicle_speed = (right_rear + left_rear) / 2.0 * 0.005 / 3.6;
+        update_sample(&vehicle_speed, ROUND((right_rear + left_rear) / 2.0 * 0.005 / 3.6 * VEHICLE_SPEED_FACTOR));
       }
 
       // X-Trail 0x15c, Leaf 0x239
@@ -88,7 +90,7 @@ static int nissan_rx_hook(CANPacket_t *to_push) {
     }
 
     // Handle cruise enabled
-    if ((addr == 0x30f) && (((bus == 2) && (!nissan_alt_eps)) || ((bus == 1) && (nissan_alt_eps)))) {
+    if ((addr == 0x30f) && (bus == (nissan_alt_eps ? 1 : 2))) {
       bool cruise_engaged = (GET_BYTE(to_push, 0) >> 3) & 1U;
       pcm_cruise_check(cruise_engaged);
     }
@@ -158,7 +160,7 @@ static int nissan_fwd_hook(int bus_num, int addr) {
 }
 
 static const addr_checks* nissan_init(uint16_t param) {
-  nissan_alt_eps = param ? 1 : 0;
+  nissan_alt_eps = GET_FLAG(param, NISSAN_PARAM_ALT_EPS_BUS);
   return &nissan_rx_checks;
 }
 

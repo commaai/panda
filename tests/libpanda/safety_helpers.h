@@ -71,12 +71,32 @@ bool get_cruise_engaged_prev(void){
   return cruise_engaged_prev;
 }
 
+void set_cruise_engaged_prev(bool engaged){
+  cruise_engaged_prev = engaged;
+}
+
 bool get_vehicle_moving(void){
   return vehicle_moving;
 }
 
 bool get_acc_main_on(void){
   return acc_main_on;
+}
+
+int get_vehicle_speed_min(void){
+  return vehicle_speed.min;
+}
+
+int get_vehicle_speed_max(void){
+  return vehicle_speed.max;
+}
+
+int get_current_safety_mode(void){
+  return current_safety_mode;
+}
+
+int get_current_safety_param(void){
+  return current_safety_param;
 }
 
 int get_hw_type(void){
@@ -123,6 +143,10 @@ void set_desired_torque_last(int t){
 
 void set_desired_angle_last(int t){
   desired_angle_last = t;
+}
+
+int get_desired_angle_last(void){
+  return desired_angle_last;
 }
 
 int get_angle_meas_min(void){

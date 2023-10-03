@@ -65,23 +65,6 @@ void white_set_usb_power_mode(uint8_t mode){
   }
 }
 
-void white_set_gps_mode(uint8_t mode) {
-  switch (mode) {
-    case GPS_DISABLED:
-      // ESP OFF
-      set_gpio_output(GPIOC, 14, 0);
-      set_gpio_output(GPIOC, 5, 0);
-      break;
-    case GPS_BOOTMODE:
-      set_gpio_output(GPIOC, 14, 1);
-      set_gpio_output(GPIOC, 5, 0);
-      break;
-    default:
-      print("Invalid ESP/GPS mode\n");
-      break;
-  }
-}
-
 void white_set_can_mode(uint8_t mode){
   switch (mode) {
     case CAN_MODE_NORMAL:
@@ -142,7 +125,7 @@ void white_set_can_mode(uint8_t mode){
 }
 
 uint32_t white_read_current(void){
-  return adc_get(ADCCHAN_CURRENT);
+  return adc_get_raw(ADCCHAN_CURRENT);
 }
 
 bool white_check_ignition(void){
@@ -150,7 +133,7 @@ bool white_check_ignition(void){
   return !get_gpio_input(GPIOA, 1);
 }
 
-void white_grey_common_init(void) {
+void white_grey_init(void) {
   common_init_gpio();
 
   // C3: current sense
@@ -214,7 +197,7 @@ void white_grey_common_init(void) {
   white_set_can_mode(CAN_MODE_NORMAL);
 
   // Init usb power mode
-  uint32_t voltage = adc_get_voltage(current_board->adc_scale);
+  uint32_t voltage = adc_get_mV(ADCCHAN_VIN) * VIN_READOUT_DIVIDER;
   // Init in CDP mode only if panda is powered by 12V.
   // Otherwise a PC would not be able to flash a standalone panda
   if (voltage > 8000U) {  // 8V threshold
@@ -222,13 +205,16 @@ void white_grey_common_init(void) {
   } else {
     white_set_usb_power_mode(USB_POWER_CLIENT);
   }
+
+  // ESP/GPS off
+  set_gpio_output(GPIOC, 5, 0);
+  set_gpio_output(GPIOC, 14, 0);
 }
 
-void white_init(void) {
-  white_grey_common_init();
-
-  // Set ESP off by default
-  current_board->set_gps_mode(GPS_DISABLED);
+void white_grey_init_bootloader(void) {
+  // ESP/GPS off
+  set_gpio_output(GPIOC, 5, 0);
+  set_gpio_output(GPIOC, 14, 0);
 }
 
 const harness_configuration white_harness_config = {
@@ -239,7 +225,6 @@ const board board_white = {
   .board_type = "White",
   .board_tick = unused_board_tick,
   .harness_config = &white_harness_config,
-  .has_gps = false,
   .has_hw_gmlan = true,
   .has_obd = false,
   .has_lin = true,
@@ -247,14 +232,14 @@ const board board_white = {
   .has_canfd = false,
   .has_rtc_battery = false,
   .fan_max_rpm = 0U,
-  .adc_scale = 8862U,
+  .avdd_mV = 3300U,
   .fan_stall_recovery = false,
   .fan_enable_cooldown_time = 0U,
-  .init = white_init,
+  .init = white_grey_init,
+  .init_bootloader = white_grey_init_bootloader,
   .enable_can_transceiver = white_enable_can_transceiver,
   .enable_can_transceivers = white_enable_can_transceivers,
   .set_led = white_set_led,
-  .set_gps_mode = white_set_gps_mode,
   .set_can_mode = white_set_can_mode,
   .check_ignition = white_check_ignition,
   .read_current = white_read_current,

@@ -4,6 +4,8 @@
 #define GET_BYTE(msg, b) ((msg)->data[(b)])
 #define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask))
 
+#define SET_ADDR_CHECKS(name) ((addr_checks){(name), (sizeof((name)) / sizeof((name)[0]))})
+
 uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
   uint32_t ret = 0U;
   for (int i = 0; i < len; i++) {
@@ -17,6 +19,8 @@ const int MAX_WRONG_COUNTERS = 5;
 const uint8_t MAX_MISSED_MSGS = 10U;
 #define MAX_ADDR_CHECK_MSGS 3U
 #define MAX_SAMPLE_VALS 6
+// used to represent floating point vehicle speed in a sample_t
+#define VEHICLE_SPEED_FACTOR 100.0
 
 // sample struct that keeps 6 samples in memory
 struct sample_t {
@@ -66,13 +70,12 @@ typedef struct {
   const bool has_steer_req_tolerance;
 
   // angle cmd limits
-  const int angle_deg_to_can;
+  const float angle_deg_to_can;
   const struct lookup_t angle_rate_up_lookup;
   const struct lookup_t angle_rate_down_lookup;
   const int max_angle_error;             // used to limit error between meas and cmd while enabled
-  const float angle_error_limit_speed;   // minimum speed to start limiting angle error
+  const float angle_error_min_speed;     // minimum speed to start limiting angle error
 
-  const bool disable_angle_rate_limits;
   const bool enforce_angle_error;        // enables max_angle_error check
   const bool inactive_angle_is_zero;     // if false, enforces angle near meas when disabled (default)
 } SteeringLimits;
@@ -89,6 +92,11 @@ typedef struct {
   const int min_gas;
   const int inactive_gas;
   const int max_brake;
+
+  // transmission rpm limits
+  const int max_transmission_rpm;
+  const int min_transmission_rpm;
+  const int inactive_transmission_rpm;
 
   // speed cmd limits
   const int inactive_speed;
@@ -141,6 +149,7 @@ bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
 bool get_longitudinal_allowed(void);
 bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 float interpolate(struct lookup_t xy, float x);
+int ROUND(float val);
 void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]);
 void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]);
 bool msg_allowed(CANPacket_t *to_send, const CanMsg msg_list[], int len);
@@ -162,6 +171,7 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
 bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits);
 bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limits);
 bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits);
+bool longitudinal_transmission_rpm_checks(int desired_transmission_rpm, const LongitudinalLimits limits);
 bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits);
 bool longitudinal_interceptor_checks(CANPacket_t *to_send);
 void pcm_cruise_check(bool cruise_engaged);
@@ -194,7 +204,7 @@ bool brake_pressed_prev = false;
 bool regen_braking = false;
 bool regen_braking_prev = false;
 bool cruise_engaged_prev = false;
-float vehicle_speed = 0;
+struct sample_t vehicle_speed;
 bool vehicle_moving = false;
 bool acc_main_on = false;  // referred to as "ACC off" in ISO 15622:2018
 int cruise_button_prev = 0;

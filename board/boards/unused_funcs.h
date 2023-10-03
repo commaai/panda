@@ -1,5 +1,4 @@
-void unused_set_gps_mode(uint8_t mode) {
-  UNUSED(mode);
+void unused_init_bootloader(void) {
 }
 
 void unused_set_ir_power(uint8_t percentage) {
@@ -22,10 +21,12 @@ uint32_t unused_read_current(void) {
   return 0U;
 }
 
-void unused_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
+bool unused_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool harness_inserted) {
   UNUSED(ignition);
   UNUSED(usb_enum);
   UNUSED(heartbeat_seen);
+  UNUSED(harness_inserted);
+  return false;
 }
 
 bool unused_read_som_gpio(void) {

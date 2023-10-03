@@ -19,10 +19,12 @@ void tres_set_bootkick(bool enabled){
 }
 
 bool tres_ignition_prev = false;
-void tres_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
+bool tres_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool harness_inserted) {
   UNUSED(usb_enum);
-  if (ignition && !tres_ignition_prev) {
+  bool ret = false;
+  if ((ignition && !tres_ignition_prev) || harness_inserted) {
     // enable bootkick on rising edge of ignition
+    ret = true;
     tres_set_bootkick(true);
   } else if (heartbeat_seen) {
     // disable once openpilot is up
@@ -31,6 +33,7 @@ void tres_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen) {
 
   }
   tres_ignition_prev = ignition;
+  return ret;
 }
 
 void tres_set_fan_enabled(bool enabled) {
@@ -86,7 +89,6 @@ const board board_tres = {
   .board_type = "Tres",
   .board_tick = tres_board_tick,
   .harness_config = &red_chiplet_harness_config,
-  .has_gps = false,
   .has_hw_gmlan = false,
   .has_obd = true,
   .has_lin = false,
@@ -94,15 +96,15 @@ const board board_tres = {
   .has_canfd = true,
   .has_rtc_battery = true,
   .fan_max_rpm = 6600U,
-  .adc_scale = 3021U,
+  .avdd_mV = 1800U,
   .fan_stall_recovery = false,
   .fan_enable_cooldown_time = 3U,
   .init = tres_init,
+  .init_bootloader = unused_init_bootloader,
   .enable_can_transceiver = red_chiplet_enable_can_transceiver,
   .enable_can_transceivers = red_chiplet_enable_can_transceivers,
   .set_led = red_set_led,
-  .set_gps_mode = unused_set_gps_mode,
-  .set_can_mode = red_set_can_mode,
+  .set_can_mode = red_chiplet_set_can_mode,
   .check_ignition = red_check_ignition,
   .read_current = unused_read_current,
   .set_fan_enabled = tres_set_fan_enabled,

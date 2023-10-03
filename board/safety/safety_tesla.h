@@ -2,11 +2,11 @@ const SteeringLimits TESLA_STEERING_LIMITS = {
   .angle_deg_to_can = 10,
   .angle_rate_up_lookup = {
     {0., 5., 15.},
-    {5., .8, .15}
+    {10., 1.6, .3}
   },
   .angle_rate_down_lookup = {
     {0., 5., 15.},
-    {5., 3.5, .4}
+    {10., 7.0, .8}
   },
 };
 
@@ -80,8 +80,9 @@ static int tesla_rx_hook(CANPacket_t *to_push) {
 
       if(addr == (tesla_powertrain ? 0x116 : 0x118)) {
         // Vehicle speed: ((0.05 * val) - 25) * MPH_TO_MPS
-        vehicle_speed = (((((GET_BYTE(to_push, 3) & 0x0FU) << 8) | (GET_BYTE(to_push, 2))) * 0.05) - 25) * 0.447;
-        vehicle_moving = ABS(vehicle_speed) > 0.1;
+        float speed = (((((GET_BYTE(to_push, 3) & 0x0FU) << 8) | (GET_BYTE(to_push, 2))) * 0.05) - 25) * 0.447;
+        vehicle_moving = ABS(speed) > 0.1;
+        update_sample(&vehicle_speed, ROUND(speed * VEHICLE_SPEED_FACTOR));
       }
 
       if(addr == (tesla_powertrain ? 0x106 : 0x108)) {
