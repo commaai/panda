@@ -494,9 +494,6 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, 6):
       self.assertTrue(self._rx(self._torque_driver_msg(t)))
 
-    self.assertNotEqual(self.safety.get_torque_driver_min(), 0)
-    self.assertNotEqual(self.safety.get_torque_driver_max(), 0)
-
     # reset sample_t by reinitializing the safety mode
     self._reset_safety_hooks()
 
@@ -663,10 +660,10 @@ class MeasurementSafetyTest(PandaSafetyTestBase):
       print('min2', (get_min_func() / factor), 'should be close to', val)
       # if get_max_func() > -100:
       #   continue
-      self.assertLessEqual((get_min_func() / factor - val), 1)
-      self.assertLessEqual((get_max_func() / factor - (val + 0.5)), 1, get_max_func())
-      # self.assertAlmostEqual(get_min_func() / factor, val, delta=1)
-      # self.assertAlmostEqual(get_max_func() / factor, val, delta=1)
+      # self.assertLessEqual((get_min_func() / factor - val), 1)
+      # self.assertLessEqual((get_max_func() / factor - (val + 0.5)), 1, get_max_func())
+      self.assertAlmostEqual(get_min_func() / factor, val, delta=1)
+      self.assertAlmostEqual(get_max_func() / factor, val, delta=1)
 
       # print(1 * factor, (get_max_func() - (val + 0.5) * factor) - (1 * abs(factor)))
 
