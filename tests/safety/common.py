@@ -429,7 +429,7 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
       for t in np.arange(0, self.DRIVER_TORQUE_ALLOWANCE + 1, 1):
         for _ in range(10):
           self._rx(self._torque_driver_msg(t * sign))
-        
+
         self.assertEqual(self.safety.get_torque_driver_min(), t * sign)
         self.assertEqual(self.safety.get_torque_driver_max(), t * sign)
 
