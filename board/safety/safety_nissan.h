@@ -59,7 +59,7 @@ static int nissan_rx_hook(CANPacket_t *to_push) {
         angle_meas_new = to_signed(angle_meas_new, 16) * 10;
 
         // update array of samples
-        update_sample(&angle_meas, angle_meas_new * 2);
+        update_sample(&angle_meas, angle_meas_new);
       }
 
       if (addr == 0x285) {

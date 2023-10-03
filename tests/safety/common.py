@@ -647,11 +647,6 @@ class MeasurementSafetyTest(PandaSafetyTestBase):
       # print(abs(get_min_func() - val * factor))
       # print(abs(get_max_func() / factor - (val + 0.5)))
 
-      # max should always be
-      # min_meas, max_meas = get_min_func(), get_max_func()
-      # if min_meas < 0:
-      #   min_meas, max_meas = max_meas, min_meas
-
       # assert close by one decimal place
       print('max', (get_max_func() / factor - val), 'should be less equal', 1)
       print('max2', (get_max_func() / factor), 'should be close to', val)
