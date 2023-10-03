@@ -70,7 +70,7 @@ static int subaru_preglobal_rx_hook(CANPacket_t *to_push) {
     }
 
     if (addr == MSG_SUBARU_PG_Throttle) {
-      gas_pressed = GET_BYTE(to_push, 0) != 0U;
+      gas_pressed_prev = GET_BYTE(to_push, 0) != 0U;
     }
 
     generic_rx_checks((addr == MSG_SUBARU_PG_ES_LKAS));

@@ -252,11 +252,7 @@ bool addr_safety_check(CANPacket_t *to_push,
 }
 
 void generic_rx_checks(bool stock_ecu_detected) {
-  // exit controls on rising edge of gas press
-  if (gas_pressed && !gas_pressed_prev && !(alternative_experience & ALT_EXP_DISABLE_DISENGAGE_ON_GAS)) {
-    controls_allowed = false;
-  }
-  gas_pressed_prev = gas_pressed;
+  // do not exit controls on rising edge of gas press
 
   // exit controls on rising edge of brake press
   if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
@@ -325,7 +321,6 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   relay_malfunction = false;
   gas_interceptor_detected = false;
   gas_interceptor_prev = 0;
-  gas_pressed = false;
   gas_pressed_prev = false;
   brake_pressed = false;
   brake_pressed_prev = false;

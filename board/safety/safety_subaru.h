@@ -187,7 +187,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
     }
 
     if ((addr == MSG_SUBARU_Throttle) && (bus == SUBARU_MAIN_BUS)) {
-      gas_pressed = GET_BYTE(to_push, 4) != 0U;
+      gas_pressed_prev = GET_BYTE(to_push, 4) != 0U;
     }
 
     generic_rx_checks((addr == MSG_SUBARU_ES_LKAS) && (bus == SUBARU_MAIN_BUS));

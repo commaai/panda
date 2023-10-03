@@ -87,7 +87,7 @@ static int tesla_rx_hook(CANPacket_t *to_push) {
 
       if(addr == (tesla_powertrain ? 0x106 : 0x108)) {
         // Gas pressed
-        gas_pressed = (GET_BYTE(to_push, 6) != 0U);
+        gas_pressed_prev = (GET_BYTE(to_push, 6) != 0U);
       }
 
       if(addr == (tesla_powertrain ? 0x1f8 : 0x20a)) {

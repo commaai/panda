@@ -60,7 +60,7 @@ static int mazda_rx_hook(CANPacket_t *to_push) {
     }
 
     if (addr == MAZDA_ENGINE_DATA) {
-      gas_pressed = (GET_BYTE(to_push, 4) || (GET_BYTE(to_push, 5) & 0xF0U));
+      gas_pressed_prev = (GET_BYTE(to_push, 4) || (GET_BYTE(to_push, 5) & 0xF0U));
     }
 
     if (addr == MAZDA_PEDALS) {

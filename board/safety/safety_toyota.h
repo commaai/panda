@@ -103,7 +103,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
 
       // sample gas pedal
       if (!gas_interceptor_detected) {
-        gas_pressed = GET_BIT(to_push, 4U) == 0U;
+        gas_pressed_prev = GET_BIT(to_push, 4U) == 0U;
       }
     }
 
@@ -123,7 +123,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
     if (addr == 0x201) {
       gas_interceptor_detected = 1;
       int gas_interceptor = TOYOTA_GET_INTERCEPTOR(to_push);
-      gas_pressed = gas_interceptor > TOYOTA_GAS_INTERCEPTOR_THRSLD;
+      gas_pressed_prev = gas_interceptor > TOYOTA_GAS_INTERCEPTOR_THRSLD;
 
       // TODO: remove this, only left in for gas_interceptor_prev test
       gas_interceptor_prev = gas_interceptor;

@@ -254,7 +254,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     if (addr == FORD_EngVehicleSpThrottle) {
       // Pedal position: (0.1 * val) in percent
       // Signal: ApedPos_Pc_ActlArb
-      gas_pressed = (((GET_BYTE(to_push, 0) & 0x03U) << 8) | GET_BYTE(to_push, 1)) > 0U;
+      gas_pressed_prev = (((GET_BYTE(to_push, 0) & 0x03U) << 8) | GET_BYTE(to_push, 1)) > 0U;
     }
 
     // Update brake pedal and cruise state
