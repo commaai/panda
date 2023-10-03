@@ -127,7 +127,6 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
 
   def test_no_disengage_on_gas_interceptor(self):
     self.safety.set_controls_allowed(True)
-    self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
     for g in range(0x1000):
       self._rx(self._interceptor_user_gas(g))
       # Test we allow lateral, but not longitudinal
@@ -847,7 +846,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
     """Assert we allow rising edge of gas; no disable on gas is the only supported mode"""
     self._rx(self._user_gas_msg(0))
     self.safety.set_controls_allowed(True)
-    self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
     self._rx(self._user_gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
     # Test we allow lateral, but not longitudinal
     self.assertTrue(self.safety.get_controls_allowed())
