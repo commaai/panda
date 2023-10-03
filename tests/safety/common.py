@@ -245,6 +245,8 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
   MAX_RT_DELTA = 0
   RT_INTERVAL = 0
 
+  NO_STEER_REQ_BIT = False
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "TorqueSteeringSafetyTestBase":
@@ -283,6 +285,22 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
     self._set_prev_torque(0)
     self.assertFalse(self._tx(self._torque_cmd_msg(-self.MAX_RATE_UP - 1)))
 
+  def test_steer_req_bit(self):
+    """Asserts all torque safety modes check the steering request bit"""
+    if self.NO_STEER_REQ_BIT:
+      raise unittest.SkipTest("No steering request bit")
+
+    self.safety.set_controls_allowed(True)
+    self._set_prev_torque(self.MAX_TORQUE)
+
+    # Send torque successfully, then only drop the request bit and ensure it stays blocked
+    for _ in range(10):
+      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, 1)))
+
+    self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, 0)))
+    for _ in range(10):
+      self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE, 1)))
+
 
 class SteerRequestCutSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
@@ -292,7 +310,7 @@ class SteerRequestCutSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
       cls.safety = None
       raise unittest.SkipTest
 
-  # Safety around steering request bit
+  # Safety around steering request bit mismatch tolerance
   MIN_VALID_STEERING_FRAMES: int
   MAX_INVALID_STEERING_FRAMES: int
   MIN_VALID_STEERING_RT_INTERVAL: int
