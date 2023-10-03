@@ -116,7 +116,7 @@ static int nissan_tx_hook(CANPacket_t *to_send) {
     int desired_angle = ((GET_BYTE(to_send, 0) << 10) | (GET_BYTE(to_send, 1) << 2) | ((GET_BYTE(to_send, 2) >> 6) & 0x3U));
     bool lka_active = (GET_BYTE(to_send, 6) >> 4) & 1U;
 
-    // Factor is -0.01, offset is 1310. Keep units in CAN scaling
+    // Factor is -0.01, offset is 1310. Flip to correct sign, but keep units in CAN scale
     desired_angle = -desired_angle + (1310 * NISSAN_STEERING_LIMITS.angle_deg_to_can);
 
     if (steer_angle_cmd_checks(desired_angle, lka_active, NISSAN_STEERING_LIMITS)) {
