@@ -138,6 +138,7 @@ int safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 int to_signed(int d, int bits);
 void update_sample(struct sample_t *sample, int sample_new);
+void reset_sample(struct sample_t *sample);
 bool max_limit_check(int val, const int MAX, const int MIN);
 bool angle_dist_to_meas_check(int val, struct sample_t *val_meas,
   const int MAX_ERROR, const int MAX_VAL);
