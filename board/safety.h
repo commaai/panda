@@ -404,7 +404,7 @@ void update_sample(struct sample_t *sample, int sample_new) {
   }
 }
 
-// resets and updates min/max for sample_t struct
+// resets values and min/max for sample_t struct
 void reset_sample(struct sample_t *sample) {
   for (int i = 0; i < MAX_SAMPLE_VALS; i++) {
     sample->values[i] = 0;
