@@ -345,10 +345,10 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   invalid_steer_req_count = 0;
 
   // reset samples
-//  reset_sample(&vehicle_speed);
+  reset_sample(&vehicle_speed);
   reset_sample(&torque_meas);
   reset_sample(&torque_driver);
-//  reset_sample(&angle_meas);
+  reset_sample(&angle_meas);
 
     vehicle_speed.min = 0;
   vehicle_speed.max = 0;
@@ -418,7 +418,7 @@ void reset_sample(struct sample_t *sample) {
   for (int i = 0; i < MAX_SAMPLE_VALS; i++) {
     sample->values[i] = 0;
   }
-//  update_sample(sample, 0);
+  update_sample(sample, 0);
 }
 
 bool max_limit_check(int val, const int MAX_VAL, const int MIN_VAL) {
