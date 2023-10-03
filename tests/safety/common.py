@@ -640,8 +640,8 @@ class MeasurementSafetyTest(PandaSafetyTestBase):
         self.assertTrue(self._rx(msg_func(val + i * 0.1)))
 
       # assert close by one decimal place
-      self.assertLessEqual(abs(get_min_func() - val * factor), 1 * abs(factor))
-      self.assertLessEqual(abs(get_max_func() - (val + 0.5) * factor), 1 * abs(factor))
+      self.assertAlmostEqual(get_min_func() / factor, val, delta=0.1)
+      self.assertAlmostEqual(get_max_func() / factor - 0.5, val, delta=0.1)
 
       # reset sample_t by reinitializing the safety mode
       self._reset_safety_hooks()
