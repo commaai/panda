@@ -854,22 +854,26 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_disengage_on_gas(self):
+    """Assert we allow rising edge of gas; no disable on gas is the only supported mode"""
     self._rx(self._user_gas_msg(0))
     self.safety.set_controls_allowed(True)
-    self._rx(self._user_gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
-    self.assertFalse(self.safety.get_controls_allowed())
 
-  def test_alternative_experience_no_disengage_on_gas(self):
-    self._rx(self._user_gas_msg(0))
-    self.safety.set_controls_allowed(True)
-    self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
-    self._rx(self._user_gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
-    # Test we allow lateral, but not longitudinal
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.assertFalse(self.safety.get_longitudinal_allowed())
-    # Make sure we can re-gain longitudinal actuation
-    self._rx(self._user_gas_msg(0))
-    self.assertTrue(self.safety.get_longitudinal_allowed())
+    # Test we allow lateral, but not longitudinal, make sure we can re-gain longitudinal actuation
+    for gas in (self.GAS_PRESSED_THRESHOLD, self.GAS_PRESSED_THRESHOLD + 1, self.GAS_PRESSED_THRESHOLD):
+      self._rx(self._user_gas_msg(gas))
+      self.assertTrue(self.safety.get_controls_allowed())
+      self.assertNotEqual(gas > self.GAS_PRESSED_THRESHOLD, self.safety.get_longitudinal_allowed())
+
+  # def test_alternative_experience_no_disengage_on_gas(self):
+  #   self._rx(self._user_gas_msg(0))
+  #   self.safety.set_controls_allowed(True)
+  #   self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
+  #   self._rx(self._user_gas_msg(self.GAS_PRESSED_THRESHOLD + 1))
+  #   self.assertTrue(self.safety.get_controls_allowed())
+  #   self.assertFalse(self.safety.get_longitudinal_allowed())
+  #   # Make sure we can re-gain longitudinal actuation
+  #   self._rx(self._user_gas_msg(0))
+  #   self.assertTrue(self.safety.get_longitudinal_allowed())
 
   def test_prev_user_brake(self, _user_brake_msg=None, get_brake_pressed_prev=None):
     if _user_brake_msg is None:
