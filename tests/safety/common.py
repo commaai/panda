@@ -10,6 +10,7 @@ from panda import ALTERNATIVE_EXPERIENCE
 from panda.tests.libpanda import libpanda_py
 
 MAX_WRONG_COUNTERS = 5
+MAX_SAMPLE_VALS = 6
 VEHICLE_SPEED_FACTOR = 100
 
 MessageFunction = Callable[[float], libpanda_py.CANPacket]
@@ -491,7 +492,7 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
   def test_reset_driver_torque_measurements(self):
     # Tests that the driver torque measurement sample_t is reset on safety mode init
-    for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, 6):
+    for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, MAX_SAMPLE_VALS):
       self.assertTrue(self._rx(self._torque_driver_msg(t)))
 
     # ensure sample_t is reset on safety init
@@ -611,7 +612,7 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
   def test_reset_torque_measurements(self):
     # Tests that the torque measurement sample_t is reset on safety mode init
-    for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, 6):
+    for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, MAX_SAMPLE_VALS):
       self.assertTrue(self._rx(self._torque_meas_msg(t)))
 
     # ensure sample_t is reset on safety init
@@ -642,7 +643,7 @@ class MeasurementSafetyTest(PandaSafetyTestBase):
 
   def common_measurement_test(self, msg_func, min_value, max_value, factor, get_min_func, get_max_func):
     for val in np.arange(min_value, max_value, 0.5):
-      for i in range(6):
+      for i in range(MAX_SAMPLE_VALS):
         self.assertTrue(self._rx(msg_func(val + i * 0.1)))
 
       # assert close by one decimal place
@@ -681,11 +682,11 @@ class AngleSteeringSafetyTest(MeasurementSafetyTest):
     self.safety.set_desired_angle_last(t)
 
   def _reset_angle_measurement(self, angle):
-    for _ in range(6):
+    for _ in range(MAX_SAMPLE_VALS):
       self._rx(self._angle_meas_msg(angle))
 
   def _reset_speed_measurement(self, speed):
-    for _ in range(6):
+    for _ in range(MAX_SAMPLE_VALS):
       self._rx(self._speed_msg(speed))
 
   def test_angle_cmd_when_enabled(self):
