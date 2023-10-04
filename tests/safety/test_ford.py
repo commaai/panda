@@ -434,8 +434,7 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
       for brake in np.arange(self.MIN_ACCEL - 2, self.MAX_ACCEL + 2, 0.05):
         brake = round(brake, 2)  # floats might not hit exact boundary conditions without rounding
         should_tx = (controls_allowed and self.MIN_ACCEL <= brake <= self.MAX_ACCEL) or brake == self.INACTIVE_ACCEL
-        tx = self._tx(self._acc_command_msg(self.INACTIVE_GAS, brake))
-        self.assertEqual(should_tx, tx, (controls_allowed, brake))
+        self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, brake)))
 
 
 class TestFordLongitudinalSafety(TestFordLongitudinalSafetyBase):
@@ -453,19 +452,19 @@ class TestFordLongitudinalSafety(TestFordLongitudinalSafetyBase):
     self.safety.init_tests()
 
 
-# class TestFordCANFDLongitudinalSafety(TestFordLongitudinalSafetyBase):
-#   STEER_MESSAGE = MSG_LateralMotionControl2
-#
-#   TX_MSGS = [
-#     [MSG_Steering_Data_FD1, 0], [MSG_Steering_Data_FD1, 2], [MSG_ACCDATA, 0], [MSG_ACCDATA_3, 0], [MSG_Lane_Assist_Data1, 0],
-#     [MSG_LateralMotionControl2, 0], [MSG_IPMA_Data, 0],
-#   ]
-#
-#   def setUp(self):
-#     self.packer = CANPackerPanda("ford_lincoln_base_pt")
-#     self.safety = libpanda_py.libpanda
-#     self.safety.set_safety_hooks(Panda.SAFETY_FORD, Panda.FLAG_FORD_LONG_CONTROL | Panda.FLAG_FORD_CANFD)
-#     self.safety.init_tests()
+class TestFordCANFDLongitudinalSafety(TestFordLongitudinalSafetyBase):
+  STEER_MESSAGE = MSG_LateralMotionControl2
+
+  TX_MSGS = [
+    [MSG_Steering_Data_FD1, 0], [MSG_Steering_Data_FD1, 2], [MSG_ACCDATA, 0], [MSG_ACCDATA_3, 0], [MSG_Lane_Assist_Data1, 0],
+    [MSG_LateralMotionControl2, 0], [MSG_IPMA_Data, 0],
+  ]
+
+  def setUp(self):
+    self.packer = CANPackerPanda("ford_lincoln_base_pt")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_FORD, Panda.FLAG_FORD_LONG_CONTROL | Panda.FLAG_FORD_CANFD)
+    self.safety.init_tests()
 
 
 if __name__ == "__main__":
