@@ -7,12 +7,11 @@ This will allow the panda to work with tools such as `can-utils`
  - `apt-get install dkms gcc linux-headers-$(uname -r) make sudo`
 
 ## Installation
- - `make link` (only needed the first time. It will report an error on subsequent attempts to link)
  - `make all`
- - `make install`
+ - `make link` (optional, setup to build/install when kernel is updated)
 
 ## Uninstall
- - `make uninstall`
+ - `make clean`
 
 ## Usage
 

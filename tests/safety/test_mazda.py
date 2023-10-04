@@ -25,6 +25,9 @@ class TestMazdaSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyT
   DRIVER_TORQUE_ALLOWANCE = 15
   DRIVER_TORQUE_FACTOR = 1
 
+  # Mazda actually does not set any bit when requesting torque
+  NO_STEER_REQ_BIT = True
+
   def setUp(self):
     self.packer = CANPackerPanda("mazda_2017")
     self.safety = libpanda_py.libpanda
@@ -35,9 +38,9 @@ class TestMazdaSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyT
     values = {"STEER_TORQUE_MOTOR": torque}
     return self.packer.make_can_msg_panda("STEER_TORQUE", 0, values)
 
-#  def _torque_driver_msg(self, torque):
-#    values = {"STEER_TORQUE_DRIVER": torque}
-#    return self.packer.make_can_msg_panda("STEER_TORQUE", 0, values)
+  def _torque_driver_msg(self, torque):
+    values = {"STEER_TORQUE_SENSOR": torque}
+    return self.packer.make_can_msg_panda("STEER_TORQUE", 0, values)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"LKAS_REQUEST": torque}

@@ -9,10 +9,10 @@ int get_health_pkt(void *dat) {
   struct health_t * health = (struct health_t*)dat;
 
   health->uptime_pkt = uptime_cnt;
-  health->voltage_pkt = adc_get_voltage();
+  health->voltage_pkt = adc_get_mV(ADCCHAN_VIN) * VIN_READOUT_DIVIDER;
   health->current_pkt = current_board->read_current();
 
-  //Use the GPIO pin to determine ignition or use a CAN based logic
+  // Use the GPIO pin to determine ignition or use a CAN based logic
   health->ignition_line_pkt = (uint8_t)(current_board->check_ignition());
   health->ignition_can_pkt = (uint8_t)(ignition_can);
 
@@ -23,7 +23,7 @@ int get_health_pkt(void *dat) {
   health->tx_buffer_overflow_pkt = tx_buffer_overflow;
   health->rx_buffer_overflow_pkt = rx_buffer_overflow;
   health->gmlan_send_errs_pkt = gmlan_send_errs;
-  health->car_harness_status_pkt = car_harness_status;
+  health->car_harness_status_pkt = harness.status;
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
   health->safety_param_pkt = current_safety_param;
   health->alternative_experience_pkt = alternative_experience;
@@ -31,12 +31,18 @@ int get_health_pkt(void *dat) {
   health->heartbeat_lost_pkt = (uint8_t)(heartbeat_lost);
   health->safety_rx_checks_invalid = safety_rx_checks_invalid;
 
+  health->spi_checksum_error_count = spi_checksum_error_count;
+
   health->fault_status_pkt = fault_status;
   health->faults_pkt = faults;
 
   health->interrupt_load = interrupt_load;
 
   health->fan_power = fan_state.power;
+  health->fan_stall_count = fan_state.total_stall_count;
+
+  health->sbu1_voltage_mV = harness.sbu1_voltage_mV;
+  health->sbu2_voltage_mV = harness.sbu2_voltage_mV;
 
   return sizeof(*health);
 }
@@ -65,6 +71,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   unsigned int resp_len = 0;
   uart_ring *ur = NULL;
   timestamp_t t;
+  uint32_t time;
 
 #ifdef DEBUG_COMMS
   print("raw control request: "); hexdump(req, sizeof(ControlPacket_t)); print("\n");
@@ -120,6 +127,15 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       t.second = req->param1;
       rtc_set_time(t);
       break;
+    // **** 0xa8: get microsecond timer
+    case 0xa8:
+      time = microsecond_timer_get();
+      resp[0] = (time & 0x000000FFU);
+      resp[1] = ((time & 0x0000FF00U) >> 8U);
+      resp[2] = ((time & 0x00FF0000U) >> 16U);
+      resp[3] = ((time & 0xFF000000U) >> 24U);
+      resp_len = 4U;
+      break;
     // **** 0xb0: set IR power
     case 0xb0:
       current_board->set_ir_power(req->param1);
@@ -138,15 +154,20 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xb3:
       current_board->set_phone_power(req->param1 > 0U);
       break;
+    // **** 0xc0: reset communications
+    case 0xc0:
+      comms_can_reset();
+      break;
     // **** 0xc1: get hardware type
     case 0xc1:
       resp[0] = hw_type;
       resp_len = 1;
       break;
-    // **** 0xd0: fetch serial number
+    // **** 0xc2: CAN health stats
     case 0xc2:
       COMPILE_TIME_ASSERT(sizeof(can_health_t) <= USBPACKET_MAX_SIZE);
       if (req->param1 < 3U) {
+        update_can_health_pkt(req->param1, 0U);
         can_health[req->param1].can_speed = (bus_config[req->param1].can_speed / 10U);
         can_health[req->param1].can_data_speed = (bus_config[req->param1].can_data_speed / 10U);
         can_health[req->param1].canfd_enabled = bus_config[req->param1].canfd_enabled;
@@ -156,6 +177,27 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         (void)memcpy(resp, &can_health[req->param1], resp_len);
       }
       break;
+    // **** 0xc3: fetch MCU UID
+    case 0xc3:
+      (void)memcpy(resp, ((uint8_t *)UID_BASE), 12);
+      resp_len = 12;
+      break;
+    // **** 0xc4: get interrupt call rate
+    case 0xc4:
+      if (req->param1 < NUM_INTERRUPTS) {
+        uint32_t load = interrupts[req->param1].call_rate;
+        resp[0] = (load & 0x000000FFU);
+        resp[1] = ((load & 0x0000FF00U) >> 8U);
+        resp[2] = ((load & 0x00FF0000U) >> 16U);
+        resp[3] = ((load & 0xFF000000U) >> 24U);
+        resp_len = 4U;
+      }
+      break;
+    // **** 0xc5: DEBUG: drive relay
+    case 0xc5:
+      set_intercept_relay((req->param1 & 0x1U), (req->param1 & 0x2U));
+      break;
+    // **** 0xd0: fetch serial (aka the provisioned dongle ID)
     case 0xd0:
       // addresses are OTP
       if (req->param1 == 1U) {
@@ -220,28 +262,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xd8:
       NVIC_SystemReset();
       break;
-    // **** 0xd9: set ESP power
-    case 0xd9:
-      if (req->param1 == 1U) {
-        current_board->set_gps_mode(GPS_ENABLED);
-      } else if (req->param1 == 2U) {
-        current_board->set_gps_mode(GPS_BOOTMODE);
-      } else {
-        current_board->set_gps_mode(GPS_DISABLED);
-      }
-      break;
-    // **** 0xda: reset ESP, with optional boot mode
-    case 0xda:
-      current_board->set_gps_mode(GPS_DISABLED);
-      delay(1000000);
-      if (req->param1 == 1U) {
-        current_board->set_gps_mode(GPS_BOOTMODE);
-      } else {
-        current_board->set_gps_mode(GPS_ENABLED);
-      }
-      delay(1000000);
-      current_board->set_gps_mode(GPS_ENABLED);
-      break;
     // **** 0xdb: set GMLAN (white/grey) or OBD CAN (black) multiplexing mode
     case 0xdb:
       if(current_board->has_obd){
@@ -301,11 +321,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         break;
       }
 
-      // TODO: Remove this again and fix boardd code to hande the message bursts instead of single chars
-      if (ur == &uart_ring_gps) {
-        dma_pointer_handler(ur, DMA2_Stream5->NDTR);
-      }
-
       // read
       while ((resp_len < MIN(req->length, USBPACKET_MAX_SIZE)) &&
                          getc(ur, (char*)&resp[resp_len])) {
@@ -357,6 +372,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xe5:
       can_loopback = (req->param1 > 0U);
       can_init_all();
+      break;
+    // **** 0xe6: set custom clock source period
+    case 0xe6:
+      clock_source_set_period(req->param1);
       break;
     // **** 0xe7: set power save state
     case 0xe7:
@@ -417,6 +436,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // **** 0xf6: set siren enabled
     case 0xf6:
       siren_enabled = (req->param1 != 0U);
+      break;
+    // **** 0xf7: set green led enabled
+    case 0xf7:
+      green_led_enabled = (req->param1 != 0U);
       break;
     // **** 0xf8: disable heartbeat checks
     case 0xf8:

@@ -36,6 +36,8 @@ def interceptor_msg(gas, addr):
 #    * interceptor with alt SCM messages
 #  * Bosch
 #    * Bosch with Longitudinal Support
+#  * Bosch Radarless
+#    * Bosch Radarless with Longitudinal Support
 
 
 class HondaButtonEnableBase(common.PandaSafetyTest):
@@ -62,18 +64,24 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
     """
       Both SET and RES should enter controls allowed on their falling edge.
     """
-    for btn in (Btn.SET, Btn.RESUME):
-      for main_on in (True, False):
-        self._rx(self._acc_state_msg(main_on))
-        self.safety.set_controls_allowed(0)
+    for main_on in (True, False):
+      self._rx(self._acc_state_msg(main_on))
+      for btn_prev in range(8):
+        for btn_cur in range(8):
+          self._rx(self._button_msg(Btn.NONE))
+          self.safety.set_controls_allowed(0)
+          for _ in range(10):
+            self._rx(self._button_msg(btn_prev))
+            self.assertFalse(self.safety.get_controls_allowed())
 
-        # nothing until falling edge
-        for _ in range(10):
-          self._rx(self._button_msg(btn, main_on=main_on))
-        self.assertFalse(self.safety.get_controls_allowed())
+          # should enter controls allowed on falling edge and not transitioning to cancel or main
+          should_enable = (main_on and
+                           btn_cur != btn_prev and
+                           btn_prev in (Btn.RESUME, Btn.SET) and
+                           btn_cur not in (Btn.CANCEL, Btn.MAIN))
 
-        self._rx(self._button_msg(Btn.NONE, main_on=main_on))
-        self.assertEqual(main_on, self.safety.get_controls_allowed(), msg=f"{main_on=} {btn=}")
+          self._rx(self._button_msg(btn_cur))
+          self.assertEqual(should_enable, self.safety.get_controls_allowed(), msg=f"{main_on=} {btn_prev=} {btn_cur=}")
 
   def test_main_cancel_buttons(self):
     """
@@ -130,7 +138,7 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
         self.assertFalse(self.safety.get_controls_allowed())
 
     # restore counters for future tests with a couple of good messages
-    for i in range(2):
+    for _ in range(2):
       self.safety.set_controls_allowed(1)
       self._rx(self._button_msg(Btn.SET))
       self._rx(self._speed_msg(0))
@@ -186,7 +194,7 @@ class HondaBase(common.PandaSafetyTest):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "HondaBase":
+    if cls.__name__.endswith("Base"):
       cls.packer = None
       cls.safety = None
       raise unittest.SkipTest
@@ -268,12 +276,6 @@ class TestHondaNidecSafetyBase(HondaBase):
   INTERCEPTOR_THRESHOLD = 492
   MAX_GAS = 198
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TestHondaNidecSafetyBase":
-      cls.safety = None
-      raise unittest.SkipTest
-
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_touring_2016_can_generated")
     self.safety = libpanda_py.libpanda
@@ -298,10 +300,10 @@ class TestHondaNidecSafetyBase(HondaBase):
   def test_acc_hud_safety_check(self):
     for controls_allowed in [True, False]:
       self.safety.set_controls_allowed(controls_allowed)
-      for pcm_gas in range(0, 255):
-        for pcm_speed in range(0, 100):
-          send = pcm_gas <= self.MAX_GAS if controls_allowed else pcm_gas == 0 and pcm_speed == 0
-          self.assertEqual(send, self.safety.safety_tx_hook(self._send_acc_hud_msg(pcm_gas, pcm_speed)))
+      for pcm_gas in range(255):
+        for pcm_speed in range(100):
+          send = (controls_allowed and pcm_gas <= self.MAX_GAS) or (pcm_gas == 0 and pcm_speed == 0)
+          self.assertEqual(send, self._tx(self._send_acc_hud_msg(pcm_gas, pcm_speed)))
 
   def test_fwd_hook(self):
     # normal operation, not forwarding AEB
@@ -403,13 +405,6 @@ class TestHondaBoschSafetyBase(HondaBase):
   TX_MSGS = [[0xE4, 0], [0xE5, 0], [0x296, 1], [0x33D, 0], [0x33DA, 0], [0x33DB, 0]]
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB]}
 
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "TestHondaBoschSafetyBase":
-      cls.packer = None
-      cls.safety = None
-      raise unittest.SkipTest
-
   def setUp(self):
     self.packer = CANPackerPanda("honda_accord_2018_can_generated")
     self.safety = libpanda_py.libpanda
@@ -494,10 +489,10 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
 
   def test_diagnostics(self):
     tester_present = libpanda_py.make_CANPacket(0x18DAB0F1, self.PT_BUS, b"\x02\x3E\x80\x00\x00\x00\x00\x00")
-    self.assertTrue(self.safety.safety_tx_hook(tester_present))
+    self.assertTrue(self._tx(tester_present))
 
     not_tester_present = libpanda_py.make_CANPacket(0x18DAB0F1, self.PT_BUS, b"\x03\xAA\xAA\x00\x00\x00\x00\x00")
-    self.assertFalse(self.safety.safety_tx_hook(not_tester_present))
+    self.assertFalse(self._tx(not_tester_present))
 
   def test_radar_alive(self):
     # If the radar knockout failed, make sure the relay malfunction is shown
@@ -510,8 +505,8 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
       for gas in np.arange(self.NO_GAS, self.MAX_GAS + 2000, 100):
         accel = 0 if gas < 0 else gas / 1000
         self.safety.set_controls_allowed(controls_allowed)
-        send = gas <= self.MAX_GAS if controls_allowed else gas == self.NO_GAS
-        self.assertEqual(send, self.safety.safety_tx_hook(self._send_gas_brake_msg(gas, accel)), (controls_allowed, gas, accel))
+        send = (controls_allowed and 0 <= gas <= self.MAX_GAS) or gas == self.NO_GAS
+        self.assertEqual(send, self._tx(self._send_gas_brake_msg(gas, accel)), (controls_allowed, gas, accel))
 
   def test_brake_safety_check(self):
     for controls_allowed in [True, False]:
@@ -522,7 +517,8 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
         self.assertEqual(send, self._tx(self._send_gas_brake_msg(self.NO_GAS, accel)), (controls_allowed, accel))
 
 
-class TestHondaBoschRadarless(HondaPcmEnableBase, TestHondaBoschSafetyBase):
+class TestHondaBoschRadarlessSafetyBase(TestHondaBoschSafetyBase):
+  """Base class for radarless Honda Bosch"""
   PT_BUS = 0
   STEER_BUS = 0
   BUTTONS_BUS = 2  # camera controls ACC, need to send buttons on bus 2
@@ -533,11 +529,40 @@ class TestHondaBoschRadarless(HondaPcmEnableBase, TestHondaBoschSafetyBase):
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_ex_2022_can_generated")
     self.safety = libpanda_py.libpanda
+
+
+class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschRadarlessSafetyBase):
+  """
+    Covers the Honda Bosch Radarless safety mode with stock longitudinal
+  """
+
+  def setUp(self):
+    super().setUp()
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS)
     self.safety.init_tests()
 
-  def test_alt_disengage_on_brake(self):
-    # These cars do not have 0x1BE (BRAKE_MODULE)
+
+class TestHondaBoschRadarlessLongSafety(common.LongitudinalAccelSafetyTest, HondaButtonEnableBase,
+                                        TestHondaBoschRadarlessSafetyBase):
+  """
+    Covers the Honda Bosch Radarless safety mode with longitudinal control
+  """
+  TX_MSGS = [[0xE4, 0], [0x33D, 0], [0x1C8, 0], [0x30C, 0]]
+  FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB, 0x1C8, 0x30C]}
+
+  def setUp(self):
+    super().setUp()
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS | Panda.FLAG_HONDA_BOSCH_LONG)
+    self.safety.init_tests()
+
+  def _accel_msg(self, accel):
+    values = {
+      "ACCEL_COMMAND": accel,
+    }
+    return self.packer.make_can_msg_panda("ACC_CONTROL", self.PT_BUS, values)
+
+  # Longitudinal doesn't need to send buttons
+  def test_spam_cancel_safety_check(self):
     pass
 
 

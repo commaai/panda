@@ -8,6 +8,7 @@ typedef struct {
 typedef struct {
   uint8_t bus_lookup;
   uint8_t can_num_lookup;
+  int8_t forwarding_bus;
   uint32_t can_speed;
   uint32_t can_data_speed;
   bool canfd_enabled;
@@ -51,17 +52,22 @@ void process_can(uint8_t can_number);
   CANPacket_t elems_##x[size]; \
   can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = (size), .elems = (CANPacket_t *)&(elems_##x) };
 
+#define CAN_RX_BUFFER_SIZE 4096U
+#define CAN_TX_BUFFER_SIZE 416U
+#define GMLAN_TX_BUFFER_SIZE 416U
+
 #ifdef STM32H7
-__attribute__((section(".ram_d1"))) can_buffer(rx_q, 0x1000)
-__attribute__((section(".ram_d1"))) can_buffer(tx2_q, 0x1A0)
-__attribute__((section(".ram_d2"))) can_buffer(txgmlan_q, 0x1A0)
+// ITCM RAM and DTCM RAM are the fastest for Cortex-M7 core access
+__attribute__((section(".axisram"))) can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
+__attribute__((section(".itcmram"))) can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
+__attribute__((section(".itcmram"))) can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
 #else
-can_buffer(rx_q, 0x1000)
-can_buffer(tx2_q, 0x1A0)
-can_buffer(txgmlan_q, 0x1A0)
+can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
+can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
+can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
 #endif
-can_buffer(tx1_q, 0x1A0)
-can_buffer(tx3_q, 0x1A0)
+can_buffer(tx3_q, CAN_TX_BUFFER_SIZE)
+can_buffer(txgmlan_q, GMLAN_TX_BUFFER_SIZE)
 // FIXME:
 // cppcheck-suppress misra-c2012-9.3
 can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q, &can_txgmlan_q};
@@ -147,7 +153,7 @@ void can_clear(can_ring *q) {
   q->r_ptr = 0;
   EXIT_CRITICAL();
   // handle TX buffer full with zero ECUs awake on the bus
-  usb_cb_ep3_out_complete();
+  refresh_can_tx_slots_available();
 }
 
 // assign CAN numbering
@@ -157,14 +163,15 @@ void can_clear(can_ring *q) {
 // can number: numeric lookup for MCU CAN interfaces (0 = CAN1, 1 = CAN2, etc);
 // bus_lookup: Translates from 'can number' to 'bus number'.
 // can_num_lookup: Translates from 'bus number' to 'can number'.
+// forwarding bus: If >= 0, forward all messages from this bus to the specified bus.
 
 // Helpers
 // Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
 bus_config_t bus_config[] = {
-  { .bus_lookup = 0U, .can_num_lookup = 0U, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
-  { .bus_lookup = 1U, .can_num_lookup = 1U, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
-  { .bus_lookup = 2U, .can_num_lookup = 2U, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
-  { .bus_lookup = 0xFFU, .can_num_lookup = 0xFFU, .can_speed = 333U, .can_data_speed = 333U, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
+  { .bus_lookup = 0U, .can_num_lookup = 0U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
+  { .bus_lookup = 1U, .can_num_lookup = 1U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
+  { .bus_lookup = 2U, .can_num_lookup = 2U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
+  { .bus_lookup = 0xFFU, .can_num_lookup = 0xFFU, .forwarding_bus = -1, .can_speed = 333U, .can_data_speed = 333U, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
 };
 
 #define CANIF_FROM_CAN_NUM(num) (cans[num])
@@ -190,29 +197,34 @@ void can_flip_buses(uint8_t bus1, uint8_t bus2){
   bus_config[bus2].can_num_lookup = bus1;
 }
 
+void can_set_forwarding(uint8_t from, uint8_t to) {
+  bus_config[from].forwarding_bus = to;
+}
+
 void ignition_can_hook(CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
 
-  ignition_can_cnt = 0U;  // reset counter
-
   if (bus == 0) {
     // GM exception
-    if ((addr == 0x160) && (len == 5)) {
-      // this message isn't all zeros when ignition is on
-      ignition_can = GET_BYTES_04(to_push) != 0U;
+    if ((addr == 0x1F1) && (len == 8)) {
+      // SystemPowerMode (2=Run, 3=Crank Request)
+      ignition_can = (GET_BYTE(to_push, 0) & 0x2U) != 0U;
+      ignition_can_cnt = 0U;
     }
 
     // Tesla exception
     if ((addr == 0x348) && (len == 8)) {
       // GTW_status
       ignition_can = (GET_BYTE(to_push, 0) & 0x1U) != 0U;
+      ignition_can_cnt = 0U;
     }
 
     // Mazda exception
     if ((addr == 0x9E) && (len == 8)) {
       ignition_can = (GET_BYTE(to_push, 0) >> 5) == 0x6U;
+      ignition_can_cnt = 0U;
     }
 
   }
@@ -224,6 +236,23 @@ bool can_tx_check_min_slots_free(uint32_t min) {
     (can_slots_empty(&can_tx2_q) >= min) &&
     (can_slots_empty(&can_tx3_q) >= min) &&
     (can_slots_empty(&can_txgmlan_q) >= min);
+}
+
+uint8_t calculate_checksum(uint8_t *dat, uint32_t len) {
+  uint8_t checksum = 0U;
+  for (uint32_t i = 0U; i < len; i++) {
+    checksum ^= dat[i];
+  }
+  return checksum;
+}
+
+void can_set_checksum(CANPacket_t *packet) {
+  packet->checksum = 0U;
+  packet->checksum = calculate_checksum((uint8_t *) packet, CANPACKET_HEAD_SIZE + GET_LEN(packet));
+}
+
+bool can_check_checksum(CANPacket_t *packet) {
+  return (calculate_checksum((uint8_t *) packet, CANPACKET_HEAD_SIZE + GET_LEN(packet)) == 0U);
 }
 
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
@@ -239,7 +268,11 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
     }
   } else {
     safety_tx_blocked += 1U;
+    to_push->returned = 0U;
     to_push->rejected = 1U;
+
+    // data changed
+    can_set_checksum(to_push);
     rx_buffer_overflow += can_push(&can_rx_q, to_push) ? 0U : 1U;
   }
 }

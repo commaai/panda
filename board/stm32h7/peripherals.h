@@ -1,8 +1,16 @@
 void gpio_usb_init(void) {
-  // A11,A12: USB:
+  // A11,A12: USB
   set_gpio_alternate(GPIOA, 11, GPIO_AF10_OTG1_FS);
   set_gpio_alternate(GPIOA, 12, GPIO_AF10_OTG1_FS);
   GPIOA->OSPEEDR = GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12;
+}
+
+void gpio_spi_init(void) {
+  set_gpio_alternate(GPIOE, 11, GPIO_AF5_SPI4);
+  set_gpio_alternate(GPIOE, 12, GPIO_AF5_SPI4);
+  set_gpio_alternate(GPIOE, 13, GPIO_AF5_SPI4);
+  set_gpio_alternate(GPIOE, 14, GPIO_AF5_SPI4);
+  register_set_bits(&(GPIOE->OSPEEDR), GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12 | GPIO_OSPEEDR_OSPEED13 | GPIO_OSPEEDR_OSPEED14);
 }
 
 void gpio_usart2_init(void) {
@@ -31,19 +39,6 @@ void common_init_gpio(void) {
   set_gpio_pullup(GPIOE, 4, PULL_NONE);
   set_gpio_mode(GPIOE, 4, MODE_OUTPUT);
   set_gpio_output_type(GPIOE, 4, OUTPUT_TYPE_OPEN_DRAIN);
-
-  // F7,F8,F9,F10: BOARD ID
-  set_gpio_pullup(GPIOF, 7, PULL_NONE);
-  set_gpio_mode(GPIOF, 7, MODE_INPUT);
-
-  set_gpio_pullup(GPIOF, 8, PULL_NONE);
-  set_gpio_mode(GPIOF, 8, MODE_INPUT);
-
-  set_gpio_pullup(GPIOF, 9, PULL_NONE);
-  set_gpio_mode(GPIOF, 9, MODE_INPUT);
-
-  set_gpio_pullup(GPIOF, 10, PULL_NONE);
-  set_gpio_mode(GPIOF, 10, MODE_INPUT);
 
   //C4,A1: OBD_SBU1, OBD_SBU2
   set_gpio_pullup(GPIOC, 4, PULL_NONE);
@@ -85,7 +80,10 @@ void common_init_gpio(void) {
 
 void flasher_peripherals_init(void) {
   RCC->AHB1ENR |= RCC_AHB1ENR_USB1OTGHSEN;
+
+  // SPI + DMA
   RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;
+  RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
 }
 
 // Peripheral initialization
@@ -99,29 +97,40 @@ void peripherals_init(void) {
   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOFEN;
   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOGEN;
 
-  RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;  // SPI
+  // Enable CPU access to SRAM1 and SRAM2 (in domain D2) for DMA
+  RCC->AHB2ENR |= RCC_AHB2ENR_SRAM1EN | RCC_AHB2ENR_SRAM2EN;
+
+  // Supplemental
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;  // DAC DMA
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;  // SPI DMA
+  RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN;
+
+  // Connectivity
+  RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;  // SPI
+  RCC->APB1LENR |= RCC_APB1LENR_I2C5EN;  // codec I2C
+  RCC->AHB1ENR |= RCC_AHB1ENR_USB1OTGHSEN; // USB
+  RCC->AHB1LPENR |= RCC_AHB1LPENR_USB1OTGHSLPEN; // USB LP needed for CSleep state(__WFI())
+  RCC->AHB1LPENR &= ~(RCC_AHB1LPENR_USB1OTGHSULPILPEN); // disable USB ULPI
+  RCC->APB1LENR |= RCC_APB1LENR_UART7EN;  // SOM uart
+  RCC->APB1HENR |= RCC_APB1HENR_FDCANEN; // FDCAN core enable
+
+  // Analog
+  RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN; // Enable ADC12 clocks
+  RCC->APB1LENR |= RCC_APB1LENR_DAC12EN; // DAC
+
+  // Timers
+  RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;  // clock source timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;  // main counter
   RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;  // fan pwm
   RCC->APB1LENR |= RCC_APB1LENR_TIM6EN;  // interrupt timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM7EN;  // DMA trigger timer
-  RCC->APB1LENR |= RCC_APB1LENR_UART7EN;  // SOM uart
-  RCC->APB1LENR |= RCC_APB1LENR_DAC12EN; // DAC
-  RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;  // tick timer
-  RCC->APB1LENR |= RCC_APB1LENR_TIM12EN;  // slow loop
-  RCC->APB1LENR |= RCC_APB1LENR_I2C5EN;  // codec I2C
-  RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;  // clock source timer
+  RCC->APB1LENR |= RCC_APB1LENR_TIM12EN;  // tick timer
+  RCC->APB1LENR |= RCC_APB1LENR_TIM13EN;  // gmlan bitbang timer
 
-  RCC->APB1HENR |= RCC_APB1HENR_FDCANEN; // FDCAN core enable
-  RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN; // Enable ADC clocks
-
-  RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN;
-
-  // HS USB enable, also LP is needed for CSleep state(__WFI())
-  RCC->AHB1ENR |= RCC_AHB1ENR_USB1OTGHSEN;
-  RCC->AHB1LPENR |= RCC_AHB1LPENR_USB1OTGHSLPEN;
-  RCC->AHB1LPENR &= ~(RCC_AHB1LPENR_USB1OTGHSULPILPEN);
+#ifdef PANDA_JUNGLE
+  RCC->AHB3ENR |= RCC_AHB3ENR_SDMMC1EN; // SDMMC
+  RCC->AHB4ENR |= RCC_AHB4ENR_ADC3EN; // Enable ADC3 clocks
+#endif
 }
 
 void enable_interrupt_timer(void) {

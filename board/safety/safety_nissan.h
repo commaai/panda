@@ -1,12 +1,12 @@
 const SteeringLimits NISSAN_STEERING_LIMITS = {
   .angle_deg_to_can = 100,
   .angle_rate_up_lookup = {
-    {2., 7., 17.},
+    {0., 5., 15.},
     {5., .8, .15}
   },
   .angle_rate_down_lookup = {
-    {2., 7., 17.},
-    {5., 3.5, .5}
+    {0., 5., 15.},
+    {5., 3.5, .4}
   },
 };
 
@@ -38,23 +38,25 @@ AddrCheckStruct nissan_addr_checks[] = {
 addr_checks nissan_rx_checks = {nissan_addr_checks, NISSAN_ADDR_CHECK_LEN};
 
 // EPS Location. false = V-CAN, true = C-CAN
+const int NISSAN_PARAM_ALT_EPS_BUS = 1;
+
 bool nissan_alt_eps = false;
 
 static int nissan_rx_hook(CANPacket_t *to_push) {
 
-  bool valid = addr_safety_check(to_push, &nissan_rx_checks, NULL, NULL, NULL);
+  bool valid = addr_safety_check(to_push, &nissan_rx_checks, NULL, NULL, NULL, NULL);
 
   if (valid) {
     int bus = GET_BUS(to_push);
     int addr = GET_ADDR(to_push);
 
-    if (((bus == 0) && (!nissan_alt_eps)) || ((bus == 1) && (nissan_alt_eps))) {
+    if (bus == (nissan_alt_eps ? 1 : 0)) {
       if (addr == 0x2) {
         // Current steering angle
         // Factor -0.1, little endian
-        int angle_meas_new = (GET_BYTES_04(to_push) & 0xFFFFU);
-        // Need to multiply by 10 here as LKAS and Steering wheel are different base unit
-        angle_meas_new = to_signed(angle_meas_new, 16) * 10;
+        int angle_meas_new = (GET_BYTES(to_push, 0, 4) & 0xFFFFU);
+        // Multiply by -10 to match scale of LKAS angle
+        angle_meas_new = to_signed(angle_meas_new, 16) * -10;
 
         // update array of samples
         update_sample(&angle_meas, angle_meas_new);
@@ -65,7 +67,7 @@ static int nissan_rx_hook(CANPacket_t *to_push) {
         uint16_t right_rear = (GET_BYTE(to_push, 0) << 8) | (GET_BYTE(to_push, 1));
         uint16_t left_rear = (GET_BYTE(to_push, 2) << 8) | (GET_BYTE(to_push, 3));
         vehicle_moving = (right_rear | left_rear) != 0U;
-        vehicle_speed = left_rear * 0.005 / 3.6;
+        update_sample(&vehicle_speed, ROUND((right_rear + left_rear) / 2.0 * 0.005 / 3.6 * VEHICLE_SPEED_FACTOR));
       }
 
       // X-Trail 0x15c, Leaf 0x239
@@ -88,7 +90,7 @@ static int nissan_rx_hook(CANPacket_t *to_push) {
     }
 
     // Handle cruise enabled
-    if ((addr == 0x30f) && (((bus == 2) && (!nissan_alt_eps)) || ((bus == 1) && (nissan_alt_eps)))) {
+    if ((addr == 0x30f) && (bus == (nissan_alt_eps ? 1 : 2))) {
       bool cruise_engaged = (GET_BYTE(to_push, 0) >> 3) & 1U;
       pcm_cruise_check(cruise_engaged);
     }
@@ -114,8 +116,8 @@ static int nissan_tx_hook(CANPacket_t *to_send) {
     int desired_angle = ((GET_BYTE(to_send, 0) << 10) | (GET_BYTE(to_send, 1) << 2) | ((GET_BYTE(to_send, 2) >> 6) & 0x3U));
     bool lka_active = (GET_BYTE(to_send, 6) >> 4) & 1U;
 
-    // offeset 1310 * NISSAN_STEERING_LIMITS.angle_deg_to_can
-    desired_angle =  desired_angle - 131000;
+    // Factor is -0.01, offset is 1310. Flip to correct sign, but keep units in CAN scale
+    desired_angle = -desired_angle + (1310 * NISSAN_STEERING_LIMITS.angle_deg_to_can);
 
     if (steer_angle_cmd_checks(desired_angle, lka_active, NISSAN_STEERING_LIMITS)) {
       violation = true;
@@ -136,9 +138,8 @@ static int nissan_tx_hook(CANPacket_t *to_send) {
 }
 
 
-static int nissan_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
+static int nissan_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
-  int addr = GET_ADDR(to_fwd);
 
   if (bus_num == 0) {
     int block_msg = (addr == 0x280); // CANCEL_MSG
@@ -159,7 +160,7 @@ static int nissan_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
 }
 
 static const addr_checks* nissan_init(uint16_t param) {
-  nissan_alt_eps = param ? 1 : 0;
+  nissan_alt_eps = GET_FLAG(param, NISSAN_PARAM_ALT_EPS_BUS);
   return &nissan_rx_checks;
 }
 

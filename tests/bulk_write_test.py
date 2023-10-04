@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# type: ignore # for jungle stuff
 import os
 import time
 import threading
@@ -9,7 +8,7 @@ from panda import Panda
 
 JUNGLE = "JUNGLE" in os.environ
 if JUNGLE:
-  from panda_jungle import PandaJungle # pylint: disable=import-error
+  from panda import PandaJungle
 
 # The TX buffers on pandas is 0x100 in length.
 NUM_MESSAGES_PER_BUS = 10000
@@ -30,7 +29,7 @@ if __name__ == "__main__":
     if len(serials) != 2:
       raise Exception("Connect two pandas to perform this test!")
     sender = Panda(serials[0])
-    receiver = Panda(serials[1])
+    receiver = Panda(serials[1])  # type: ignore
     receiver.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
   sender.set_safety_mode(Panda.SAFETY_ALLOUTPUT)

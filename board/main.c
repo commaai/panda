@@ -5,11 +5,11 @@
 #include "drivers/usb.h"
 #include "drivers/gmlan_alt.h"
 #include "drivers/kline_init.h"
+#include "drivers/simple_watchdog.h"
 
 #include "early_init.h"
 #include "provision.h"
 
-#include "power_saving.h"
 #include "safety.h"
 
 #include "health.h"
@@ -21,6 +21,8 @@
 #else
   #include "drivers/bxcan.h"
 #endif
+
+#include "power_saving.h"
 
 #include "obj/gitversion.h"
 
@@ -79,21 +81,21 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
 
   switch (mode_copy) {
     case SAFETY_SILENT:
-      set_intercept_relay(false);
+      set_intercept_relay(false, false);
       if (current_board->has_obd) {
         current_board->set_can_mode(CAN_MODE_NORMAL);
       }
       can_silent = ALL_CAN_SILENT;
       break;
     case SAFETY_NOOUTPUT:
-      set_intercept_relay(false);
+      set_intercept_relay(false, false);
       if (current_board->has_obd) {
         current_board->set_can_mode(CAN_MODE_NORMAL);
       }
       can_silent = ALL_CAN_LIVE;
       break;
     case SAFETY_ELM327:
-      set_intercept_relay(false);
+      set_intercept_relay(false, false);
       heartbeat_counter = 0U;
       heartbeat_lost = false;
       if (current_board->has_obd) {
@@ -106,7 +108,7 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
       can_silent = ALL_CAN_LIVE;
       break;
     default:
-      set_intercept_relay(true);
+      set_intercept_relay(true, false);
       heartbeat_counter = 0U;
       heartbeat_lost = false;
       if (current_board->has_obd) {
@@ -143,6 +145,9 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 
 // called at 8Hz
 uint8_t loop_counter = 0U;
+uint8_t previous_harness_status = HARNESS_STATUS_NC;
+uint32_t waiting_to_boot_count = 0;
+bool waiting_to_boot = false;
 void tick_handler(void) {
   if (TICK_TIMER->SR != 0) {
     // siren
@@ -150,6 +155,9 @@ void tick_handler(void) {
 
     // tick drivers at 8Hz
     fan_tick();
+    usb_tick();
+    harness_tick();
+    simple_watchdog_kick();
 
     // decimated to 1Hz
     if (loop_counter == 0U) {
@@ -170,15 +178,34 @@ void tick_handler(void) {
       #endif
 
       // set green LED to be controls allowed
-      current_board->set_led(LED_GREEN, controls_allowed);
+      current_board->set_led(LED_GREEN, controls_allowed | green_led_enabled);
 
       // turn off the blue LED, turned on by CAN
       // unless we are in power saving mode
       current_board->set_led(LED_BLUE, (uptime_cnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
 
-      // tick drivers at 1Hz
       const bool recent_heartbeat = heartbeat_counter == 0U;
-      current_board->board_tick(check_started(), usb_enumerated, recent_heartbeat);
+      const bool harness_inserted = (harness.status != previous_harness_status) && (harness.status != HARNESS_STATUS_NC);
+      const bool just_bootkicked = current_board->board_tick(check_started(), usb_enumerated, recent_heartbeat, harness_inserted);
+      previous_harness_status = harness.status;
+
+      // log device boot time
+      const bool som_running = current_board->read_som_gpio();
+      if (just_bootkicked && !som_running) {
+        print("bootkick\n");
+        waiting_to_boot = true;
+      }
+      if (waiting_to_boot) {
+        if (som_running) {
+          print("device booted\n");
+          waiting_to_boot = false;
+        } else if (waiting_to_boot_count == 45U) {
+          print("not booted after 45s\n");
+        } else {
+
+        }
+        waiting_to_boot_count += 1U;
+      }
 
       // increase heartbeat counter and cap it at the uint32 limit
       if (heartbeat_counter < __UINT32_MAX__) {
@@ -194,7 +221,7 @@ void tick_handler(void) {
         siren_countdown -= 1U;
       }
 
-      if (controls_allowed) {
+      if (controls_allowed || heartbeat_engaged) {
         controls_allowed_countdown = 30U;
       } else if (controls_allowed_countdown > 0U) {
         controls_allowed_countdown -= 1U;
@@ -206,7 +233,7 @@ void tick_handler(void) {
       if (controls_allowed && !heartbeat_engaged) {
         heartbeat_engaged_mismatches += 1U;
         if (heartbeat_engaged_mismatches >= 3U) {
-          controls_allowed = 0U;
+          controls_allowed = false;
         }
       } else {
         heartbeat_engaged_mismatches = 0U;
@@ -229,6 +256,9 @@ void tick_handler(void) {
             heartbeat_lost = true;
           }
 
+          // clear heartbeat engaged state
+          heartbeat_engaged = false;
+
           if (current_safety_mode != SAFETY_SILENT) {
             set_safety_mode(SAFETY_SILENT, 0U);
           }
@@ -240,13 +270,11 @@ void tick_handler(void) {
           // Also disable IR when the heartbeat goes missing
           current_board->set_ir_power(0U);
 
-          // TODO: need a SPI equivalent
-          // If enumerated but no heartbeat (phone up, boardd not running), turn the fan on to cool the device
-          if (usb_enumerated) {
-            fan_set_power(50U);
-          } else {
-            fan_set_power(0U);
-          }
+          // Run fan when device is up, but not talking to us
+          // * bootloader enables the SOM GPIO on boot
+          // * fallback to USB enumerated where supported
+          bool enabled = usb_enumerated || current_board->read_som_gpio();
+          fan_set_power(enabled ? 50U : 0U);
         }
       }
 
@@ -316,6 +344,9 @@ int main(void) {
   clock_init();
   peripherals_init();
   detect_board_type();
+  // red+green leds enabled until succesful USB/SPI init, as a debug indicator
+  current_board->set_led(LED_RED, true);
+  current_board->set_led(LED_GREEN, true);
   adc_init();
 
   // print hello
@@ -336,13 +367,6 @@ int main(void) {
   // panda has an FPU, let's use it!
   enable_fpu();
 
-  if (current_board->has_gps) {
-    uart_init(&uart_ring_gps, 9600);
-  } else {
-    // enable ESP uart
-    uart_init(&uart_ring_gps, 115200);
-  }
-
   if (current_board->has_lin) {
     // enable LIN
     uart_init(&uart_ring_lin1, 10400);
@@ -352,7 +376,7 @@ int main(void) {
   }
 
   if (current_board->fan_max_rpm > 0U) {
-    llfan_init();
+    fan_init();
   }
 
   microsecond_timer_init();
@@ -362,6 +386,9 @@ int main(void) {
 
   // enable CAN TXs
   current_board->enable_can_transceivers(true);
+
+  // init watchdog for heartbeat loop, fed at 8Hz
+  simple_watchdog_init(FAULT_HEARTBEAT_LOOP_WATCHDOG, (3U * 1000000U / 8U));
 
   // 8Hz timer
   REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK)
@@ -378,6 +405,9 @@ int main(void) {
     spi_init();
   }
 #endif
+
+  current_board->set_led(LED_RED, false);
+  current_board->set_led(LED_GREEN, false);
 
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();

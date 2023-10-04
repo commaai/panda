@@ -1,9 +1,13 @@
 #define CLOCK_SOURCE_PERIOD_MS           50U
 #define CLOCK_SOURCE_PULSE_LEN_MS        2U
 
+void clock_source_set_period(uint8_t period) {
+  register_set(&(TIM1->ARR), ((period*10U) - 1U), 0xFFFFU);
+}
+
 void clock_source_init(void) {
   // Setup timer
-  register_set(&(TIM1->PSC), ((APB2_FREQ*100U)-1U), 0xFFFFU);                 // Tick on 0.1 ms
+  register_set(&(TIM1->PSC), ((APB2_TIMER_FREQ*100U)-1U), 0xFFFFU);           // Tick on 0.1 ms
   register_set(&(TIM1->ARR), ((CLOCK_SOURCE_PERIOD_MS*10U) - 1U), 0xFFFFU);   // Period
   register_set(&(TIM1->CCMR1), 0U, 0xFFFFU);                                  // No output on compare
   register_set(&(TIM1->CCER), TIM_CCER_CC1E, 0xFFFFU);                        // Enable compare 1
