@@ -384,7 +384,7 @@ class TestFordCANFDStockSafety(TestFordSafetyBase):
     self.safety.init_tests()
 
 
-class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
+class TestFordLongitudinalSafetyBase(TestFordSafetyBase, common.LongitudinalAccelSafetyTest):
   FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA, MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl,
                                MSG_LateralMotionControl2, MSG_IPMA_Data]}
 
@@ -409,6 +409,9 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
       "CmbbDeny_B_Actl": 1 if cmbb_deny else 0,  # [0|1] deny AEB actuation
     }
     return self.packer.make_can_msg_panda("ACCDATA", 0, values)
+
+  def _accel_msg(self, accel: float):
+    return self._acc_command_msg(self.INACTIVE_GAS, accel)
 
   def test_stock_aeb(self):
     # Test that CmbbDeny_B_Actl is never 1, it prevents the ABS module from actuating AEB requests from ACCDATA_2
