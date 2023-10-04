@@ -513,7 +513,7 @@ bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limit
   bool accel_valid = get_accel_allowed() && !max_limit_check(desired_accel, limits.max_accel, limits.zero_accel);
   bool decel_valid = get_decel_allowed() && !max_limit_check(desired_accel, limits.zero_accel, limits.min_accel);
   bool accel_inactive = desired_accel == limits.inactive_accel;
-  print("here: "); puth(accel_valid); print(" "); puth(accel_valid); print(" "); puth(decel_valid); print(" "); puth(accel_inactive); print("\n");
+  print("here: "); puth(desired_accel); print(" "); puth(accel_valid); print(" "); puth(decel_valid); print(" "); puth(accel_inactive); print("\n");
   return !(accel_valid || decel_valid || accel_inactive);
 }
 
