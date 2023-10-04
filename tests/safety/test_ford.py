@@ -392,7 +392,7 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase, common.LongitudinalAcce
   MIN_ACCEL = -3.5
   INACTIVE_ACCEL = 0.0
 
-  MAX_GAS = 2.0
+  MAX_GAS = 2.0  # gas is also in m/s^2
   MIN_GAS = -0.5
   INACTIVE_GAS = -5.0
 
