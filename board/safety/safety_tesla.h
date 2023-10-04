@@ -10,11 +10,11 @@ const SteeringLimits TESLA_STEERING_LIMITS = {
   },
 };
 
-
 const LongitudinalLimits TESLA_LONG_LIMITS = {
-  .max_accel = 425 - 375,       // 2. m/s^2
-  .min_accel = 287 - 375,       // -3.52 m/s^2  // TODO: limit to -3.48
-  .inactive_accel = 375 - 375,  // 0. m/s^2 (15 / .04)
+  .max_accel = 425,       // 2. m/s^2
+  .min_accel = 287,       // -3.52 m/s^2  // TODO: limit to -3.48
+  .inactive_accel = 375,  // 0. m/s^2
+  .zero_accel = 375,
 };
 
 
@@ -178,8 +178,8 @@ static int tesla_tx_hook(CANPacket_t *to_send) {
       }
 
       // Don't allow any acceleration limits above the safety limits
-      int raw_accel_max = (((GET_BYTE(to_send, 6) & 0x1FU) << 4) | (GET_BYTE(to_send, 5) >> 4)) - 375;
-      int raw_accel_min = (((GET_BYTE(to_send, 5) & 0x0FU) << 5) | (GET_BYTE(to_send, 4) >> 3)) - 375;
+      int raw_accel_max = ((GET_BYTE(to_send, 6) & 0x1FU) << 4) | (GET_BYTE(to_send, 5) >> 4);
+      int raw_accel_min = ((GET_BYTE(to_send, 5) & 0x0FU) << 5) | (GET_BYTE(to_send, 4) >> 3);
       violation |= longitudinal_accel_checks(raw_accel_max, TESLA_LONG_LIMITS);
       violation |= longitudinal_accel_checks(raw_accel_min, TESLA_LONG_LIMITS);
     } else {
