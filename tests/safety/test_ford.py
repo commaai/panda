@@ -411,6 +411,7 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase, common.LongitudinalAcce
     return self.packer.make_can_msg_panda("ACCDATA", 0, values)
 
   def _accel_msg(self, accel: float):
+    # Brake actuation only
     return self._acc_command_msg(self.INACTIVE_GAS, accel)
 
   def test_stock_aeb(self):
