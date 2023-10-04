@@ -82,7 +82,7 @@ int safety_fwd_hook(int bus_num, int addr) {
 }
 
 bool get_longitudinal_allowed(void) {
-  // No longitudinal control when overriding with gas. Brake is allowed when pre-enabling at a standstill
+  // No longitudinal control when overriding with gas. Only brake is allowed when pre-enabling at a standstill
   return controls_allowed && !gas_pressed_prev;
 }
 
@@ -510,9 +510,23 @@ int ROUND(float val) {
 
 // Safety checks for longitudinal actuation
 bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits) {
-  bool accel_valid = get_accel_allowed() && !max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
+//  bool braking = desired_accel < 0;
+
+  bool accel_valid = get_accel_allowed() && !max_limit_check(desired_accel, limits.max_accel, 0);
+  bool decel_valid = get_longitudinal_allowed() && !max_limit_check(desired_accel, 0, limits.min_accel);
+
+//  if (get_longitudinal_allowed()) {
+//    if (!get_accel_allowed())
+//  }
+//
+//  int max_accel =
+//  if (get_accel_allowed()) {
+//    bool accel_valid
+//  }
+
+//  bool accel_valid = get_accel_allowed() && !max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
   bool accel_inactive = desired_accel == limits.inactive_accel;
-  return !(accel_valid || accel_inactive);
+  return !(accel_valid || decel_valid || accel_inactive);
 }
 
 bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limits) {
@@ -520,7 +534,7 @@ bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limit
 }
 
 bool longitudinal_transmission_rpm_checks(int desired_transmission_rpm, const LongitudinalLimits limits) {
-  bool transmission_rpm_valid = get_longitudinal_allowed() && !max_limit_check(desired_transmission_rpm, limits.max_transmission_rpm, limits.min_transmission_rpm);
+  bool transmission_rpm_valid = get_accel_allowed() && !max_limit_check(desired_transmission_rpm, limits.max_transmission_rpm, limits.min_transmission_rpm);
   bool transmission_rpm_inactive = desired_transmission_rpm == limits.inactive_transmission_rpm;
   return !(transmission_rpm_valid || transmission_rpm_inactive);
 }
