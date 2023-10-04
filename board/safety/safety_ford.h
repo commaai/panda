@@ -166,8 +166,7 @@ const LongitudinalLimits FORD_LONG_LIMITS = {
   .max_accel = 5641,       //  1.9999 m/s^s
   .min_accel = 4231,       // -3.4991 m/s^2
   .inactive_accel = 5128,  // -0.0008 m/s^2
-  .zero_accel = 5128,  // -0.0008 m/s^2
-  // TODO: why do tests pass without zero_accel set
+  .zero_accel = 5128,      // -0.0008 m/s^2
 
   // gas cmd limits
   // Signal: AccPrpl_A_Rq

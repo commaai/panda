@@ -14,7 +14,7 @@ const LongitudinalLimits TESLA_LONG_LIMITS = {
   .max_accel = 425,       // 2. m/s^2
   .min_accel = 287,       // -3.52 m/s^2  // TODO: limit to -3.48
   .inactive_accel = 375,  // 0. m/s^2
-  .zero_accel = 375,
+  .zero_accel = 375,      // 0. m/s^2
 };
 
 
