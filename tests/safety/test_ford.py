@@ -384,7 +384,7 @@ class TestFordCANFDStockSafety(TestFordSafetyBase):
     self.safety.init_tests()
 
 
-class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
+class TestFordLongitudinalSafetyBase(TestFordSafetyBase, common.LongitudinalAccelSafetyTest):
   FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA, MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl,
                                MSG_LateralMotionControl2, MSG_IPMA_Data]}
 
@@ -427,6 +427,9 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
         gas = round(gas, 2)  # floats might not hit exact boundary conditions without rounding
         should_tx = (controls_allowed and self.MIN_GAS <= gas <= self.MAX_GAS) or gas == self.INACTIVE_GAS
         self.assertEqual(should_tx, self._tx(self._acc_command_msg(gas, self.INACTIVE_ACCEL)))
+
+  def _accel_msg(self, accel: float):
+    return self._acc_command_msg(self.INACTIVE_GAS, accel)
 
   def test_brake_safety_check(self):
     for controls_allowed in (True, False):
