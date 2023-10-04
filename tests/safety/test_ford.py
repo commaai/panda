@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import numpy as np
 import unittest
-import time
 
 import panda.tests.safety.common as common
 
@@ -411,26 +410,23 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
     }
     return self.packer.make_can_msg_panda("ACCDATA", 0, values)
 
-  # def test_stock_aeb(self):
-  #   # Test that CmbbDeny_B_Actl is never 1, it prevents the ABS module from actuating AEB requests from ACCDATA_2
-  #   for controls_allowed in (True, False):
-  #     self.safety.set_controls_allowed(controls_allowed)
-  #     for cmbb_deny in (True, False):
-  #       should_tx = not cmbb_deny
-  #       self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, self.INACTIVE_ACCEL, cmbb_deny)))
-  #       should_tx = controls_allowed and not cmbb_deny
-  #       self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.MAX_GAS, self.MAX_ACCEL, cmbb_deny)))
+  def test_stock_aeb(self):
+    # Test that CmbbDeny_B_Actl is never 1, it prevents the ABS module from actuating AEB requests from ACCDATA_2
+    for controls_allowed in (True, False):
+      self.safety.set_controls_allowed(controls_allowed)
+      for cmbb_deny in (True, False):
+        should_tx = not cmbb_deny
+        self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, self.INACTIVE_ACCEL, cmbb_deny)))
+        should_tx = controls_allowed and not cmbb_deny
+        self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.MAX_GAS, self.MAX_ACCEL, cmbb_deny)))
 
-  # def test_gas_safety_check(self):
-  #   for controls_allowed in (True, False):
-  #     self.safety.set_controls_allowed(controls_allowed)
-  #     for gas in np.concatenate((np.arange(self.MIN_GAS - 2, self.MAX_GAS + 2, 0.05), [self.INACTIVE_GAS])):
-  #       gas = round(gas, 2)  # floats might not hit exact boundary conditions without rounding
-  #       should_tx = (controls_allowed and self.MIN_GAS <= gas <= self.MAX_GAS) or gas == self.INACTIVE_GAS
-  #       self.assertEqual(should_tx, self._tx(self._acc_command_msg(gas, self.INACTIVE_ACCEL)))
-
-  # def _accel_msg(self, accel: float):
-  #   return self._acc_command_msg(self.INACTIVE_GAS, accel)
+  def test_gas_safety_check(self):
+    for controls_allowed in (True, False):
+      self.safety.set_controls_allowed(controls_allowed)
+      for gas in np.concatenate((np.arange(self.MIN_GAS - 2, self.MAX_GAS + 2, 0.05), [self.INACTIVE_GAS])):
+        gas = round(gas, 2)  # floats might not hit exact boundary conditions without rounding
+        should_tx = (controls_allowed and self.MIN_GAS <= gas <= self.MAX_GAS) or gas == self.INACTIVE_GAS
+        self.assertEqual(should_tx, self._tx(self._acc_command_msg(gas, self.INACTIVE_ACCEL)))
 
   def test_brake_safety_check(self):
     for controls_allowed in (True, False):
@@ -439,9 +435,7 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
         brake = round(brake, 2)  # floats might not hit exact boundary conditions without rounding
         should_tx = (controls_allowed and self.MIN_ACCEL <= brake <= self.MAX_ACCEL) or brake == self.INACTIVE_ACCEL
         tx = self._tx(self._acc_command_msg(self.INACTIVE_GAS, brake))
-        print('brake', brake, should_tx, tx)
         self.assertEqual(should_tx, tx, (controls_allowed, brake))
-        # time.sleep(1)
 
 
 class TestFordLongitudinalSafety(TestFordLongitudinalSafetyBase):
