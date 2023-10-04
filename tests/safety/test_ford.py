@@ -384,8 +384,7 @@ class TestFordCANFDStockSafety(TestFordSafetyBase):
     self.safety.init_tests()
 
 
-class TestFordLongitudinalSafetyBase(TestFordSafetyBase, common.LongitudinalAccelSafetyTest,
-                                     ):
+class TestFordLongitudinalSafetyBase(TestFordSafetyBase, common.LongitudinalAccelSafetyTest):
   FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA, MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl,
                                MSG_LateralMotionControl2, MSG_IPMA_Data]}
 
@@ -393,13 +392,9 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase, common.LongitudinalAcce
   MIN_ACCEL = -3.5
   INACTIVE_ACCEL = 0.0
 
-  MAX_GAS = 2.0  # gas is also in m/s^2
+  MAX_GAS = 2.0
   MIN_GAS = -0.5
   INACTIVE_GAS = -5.0
-  MAX_POSSIBLE_GAS = 5.23
-
-  # Not used, part of gas/brake test
-  MAX_POSSIBLE_BRAKE = -1
 
   @classmethod
   def setUpClass(cls):
@@ -425,28 +420,18 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase, common.LongitudinalAcce
         should_tx = controls_allowed and not cmbb_deny
         self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.MAX_GAS, self.MAX_ACCEL, cmbb_deny)))
 
-  def _send_gas_msg(self, gas: int):
-    self._acc_command_msg(gas, self.INACTIVE_ACCEL)
-
-  def _send_brake_msg(self, brake: int):
-    raise NotImplementedError
-
-  def test_gas_safety_check123(self):
-    self._generic_limit_safety_check(lambda gas: self._acc_command_msg(gas, self.INACTIVE_ACCEL),
-                                     self.MIN_GAS, self.MAX_GAS, self.INACTIVE_GAS,
-                                     self.MAX_POSSIBLE_GAS, 1, self.INACTIVE_GAS)
-
-    # for controls_allowed in (True, False):
-    #   self.safety.set_controls_allowed(controls_allowed)
-    #   for gas in np.concatenate((np.arange(self.MIN_GAS - 2, self.MAX_GAS + 2, 0.05), [self.INACTIVE_GAS])):
-    #     gas = round(gas, 2)  # floats might not hit exact boundary conditions without rounding
-    #     should_tx = (controls_allowed and self.MIN_GAS <= gas <= self.MAX_GAS) or gas == self.INACTIVE_GAS
-    #     self.assertEqual(should_tx, self._tx(self._acc_command_msg(gas, self.INACTIVE_ACCEL)))
+  def test_gas_safety_check(self):
+    for controls_allowed in (True, False):
+      self.safety.set_controls_allowed(controls_allowed)
+      for gas in np.concatenate((np.arange(self.MIN_GAS - 2, self.MAX_GAS + 2, 0.05), [self.INACTIVE_GAS])):
+        gas = round(gas, 2)  # floats might not hit exact boundary conditions without rounding
+        should_tx = (controls_allowed and self.MIN_GAS <= gas <= self.MAX_GAS) or gas == self.INACTIVE_GAS
+        self.assertEqual(should_tx, self._tx(self._acc_command_msg(gas, self.INACTIVE_ACCEL)))
 
   def _accel_msg(self, accel: float):
     return self._acc_command_msg(self.INACTIVE_GAS, accel)
 
-  def test_brake_safety_check123(self):
+  def test_brake_safety_check(self):
     for controls_allowed in (True, False):
       self.safety.set_controls_allowed(controls_allowed)
       for brake in np.arange(self.MIN_ACCEL - 2, self.MAX_ACCEL + 2, 0.05):
