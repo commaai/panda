@@ -144,7 +144,7 @@ class TestTeslaLongitudinalSafety(TestTeslaSafety):
             send = (MIN_ACCEL <= min_accel <= MAX_ACCEL) and (MIN_ACCEL <= max_accel <= MAX_ACCEL)
           else:
             send = np.all(np.isclose([min_accel, max_accel], 0, atol=0.0001))
-          self.assertEqual(send, self._tx(self._long_control_msg(10, acc_val=4, accel_limits=[min_accel, max_accel])))
+          self.assertEqual(send, self._tx(self._long_control_msg(10, acc_val=4, accel_limits=[min_accel, max_accel])), (min_accel, max_accel))
 
 
 class TestTeslaChassisLongitudinalSafety(TestTeslaLongitudinalSafety):

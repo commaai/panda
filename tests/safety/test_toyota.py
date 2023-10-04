@@ -186,6 +186,9 @@ class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
   def test_accel_actuation_limits(self, stock_longitudinal=True):
     super().test_accel_actuation_limits(stock_longitudinal=stock_longitudinal)
 
+  def test_brake_preenable(self):
+    raise unittest.SkipTest
+
   def test_acc_cancel(self):
     """
       Regardless of controls allowed, never allow ACC_CONTROL if cancel bit isn't set

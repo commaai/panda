@@ -81,14 +81,14 @@ int safety_fwd_hook(int bus_num, int addr) {
   return (relay_malfunction ? -1 : current_hooks->fwd(bus_num, addr));
 }
 
-bool get_longitudinal_allowed(void) {
+bool get_decel_allowed(void) {
   // No longitudinal control when overriding with gas. Only brake is allowed when pre-enabling at a standstill
   return controls_allowed && !gas_pressed_prev;
 }
 
 bool get_accel_allowed(void) {
   // No positive acceleration/gas command while pre-enabled at a stop with brake
-  return get_longitudinal_allowed() && !brake_pressed_prev;
+  return get_decel_allowed() && !brake_pressed_prev && !regen_braking_prev;
 }
 
 // Given a CRC-8 poly, generate a static lookup table to use with a fast CRC-8
@@ -510,27 +510,15 @@ int ROUND(float val) {
 
 // Safety checks for longitudinal actuation
 bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits) {
-//  bool braking = desired_accel < 0;
-
   bool accel_valid = get_accel_allowed() && !max_limit_check(desired_accel, limits.max_accel, 0);
-  bool decel_valid = get_longitudinal_allowed() && !max_limit_check(desired_accel, 0, limits.min_accel);
-
-//  if (get_longitudinal_allowed()) {
-//    if (!get_accel_allowed())
-//  }
-//
-//  int max_accel =
-//  if (get_accel_allowed()) {
-//    bool accel_valid
-//  }
-
-//  bool accel_valid = get_accel_allowed() && !max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
+  bool decel_valid = get_decel_allowed() && !max_limit_check(desired_accel, 0, limits.min_accel);
   bool accel_inactive = desired_accel == limits.inactive_accel;
+  print("here: "); puth(accel_valid); print(" "); puth(accel_valid); print(" "); puth(decel_valid); print(" "); puth(accel_inactive); print("\n");
   return !(accel_valid || decel_valid || accel_inactive);
 }
 
 bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limits) {
-  return !get_longitudinal_allowed() && (desired_speed != limits.inactive_speed);
+  return !get_decel_allowed() && (desired_speed != limits.inactive_speed);
 }
 
 bool longitudinal_transmission_rpm_checks(int desired_transmission_rpm, const LongitudinalLimits limits) {
@@ -547,7 +535,7 @@ bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits) {
 
 bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits) {
   bool violation = false;
-  violation |= !get_longitudinal_allowed() && (desired_brake != 0);
+  violation |= !get_decel_allowed() && (desired_brake != 0);
   violation |= desired_brake > limits.max_brake;
   return violation;
 }
