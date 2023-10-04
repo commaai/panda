@@ -128,9 +128,6 @@ AddrCheckStruct hyundai_canfd_hda2_long_addr_checks[] = {
 addr_checks hyundai_canfd_rx_checks = SET_ADDR_CHECKS(hyundai_canfd_addr_checks);
 
 
-uint16_t hyundai_canfd_crc_lut[256];
-
-
 const int HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 32;
 const int HYUNDAI_PARAM_CANFD_HDA2_ALT_STEERING = 128;
 bool hyundai_canfd_alt_buttons = false;
@@ -156,39 +153,10 @@ static uint32_t hyundai_canfd_get_checksum(CANPacket_t *to_push) {
   return chksum;
 }
 
-static uint32_t hyundai_canfd_compute_checksum(CANPacket_t *to_push) {
-  int len = GET_LEN(to_push);
-  uint32_t address = GET_ADDR(to_push);
-
-  uint16_t crc = 0;
-
-  for (int i = 2; i < len; i++) {
-    crc = (crc << 8U) ^ hyundai_canfd_crc_lut[(crc >> 8U) ^ GET_BYTE(to_push, i)];
-  }
-
-  // Add address to crc
-  crc = (crc << 8U) ^ hyundai_canfd_crc_lut[(crc >> 8U) ^ ((address >> 0U) & 0xFFU)];
-  crc = (crc << 8U) ^ hyundai_canfd_crc_lut[(crc >> 8U) ^ ((address >> 8U) & 0xFFU)];
-
-  if (len == 8) {
-    crc ^= 0x5f29U;
-  } else if (len == 16) {
-    crc ^= 0x041dU;
-  } else if (len == 24) {
-    crc ^= 0x819dU;
-  } else if (len == 32) {
-    crc ^= 0x9f5bU;
-  } else {
-
-  }
-
-  return crc;
-}
-
 static int hyundai_canfd_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &hyundai_canfd_rx_checks,
-                                 hyundai_canfd_get_checksum, hyundai_canfd_compute_checksum, hyundai_canfd_get_counter, NULL);
+                                 hyundai_canfd_get_checksum, hyundai_common_canfd_compute_checksum, hyundai_canfd_get_counter, NULL);
 
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
