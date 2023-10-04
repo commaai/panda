@@ -86,8 +86,8 @@ bool get_longitudinal_allowed(void) {
   return controls_allowed && !gas_pressed_prev;
 }
 
-bool get_gas_allowed(void) {
-  // No +acceleration/gas command while pre-enabled at a stop with brake
+bool get_accel_allowed(void) {
+  // No positive acceleration/gas command while pre-enabled at a stop with brake
   return get_longitudinal_allowed() && !brake_pressed_prev;
 }
 
@@ -510,7 +510,7 @@ int ROUND(float val) {
 
 // Safety checks for longitudinal actuation
 bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits) {
-  bool accel_valid = get_gas_allowed() && !max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
+  bool accel_valid = get_accel_allowed() && !max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
   bool accel_inactive = desired_accel == limits.inactive_accel;
   return !(accel_valid || accel_inactive);
 }
@@ -526,7 +526,7 @@ bool longitudinal_transmission_rpm_checks(int desired_transmission_rpm, const Lo
 }
 
 bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits) {
-  bool gas_valid = get_gas_allowed() && !max_limit_check(desired_gas, limits.max_gas, limits.min_gas);
+  bool gas_valid = get_accel_allowed() && !max_limit_check(desired_gas, limits.max_gas, limits.min_gas);
   bool gas_inactive = desired_gas == limits.inactive_gas;
   return !(gas_valid || gas_inactive);
 }
@@ -539,7 +539,7 @@ bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limit
 }
 
 bool longitudinal_interceptor_checks(CANPacket_t *to_send) {
-  return !get_gas_allowed() && (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1));
+  return !get_accel_allowed() && (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1));
 }
 
 // Safety checks for torque-based steering commands
