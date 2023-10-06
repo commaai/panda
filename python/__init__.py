@@ -492,6 +492,10 @@ class Panda:
       pass
 
   def flash(self, fn=None, code=None, reconnect=True):
+    if self.up_to_date(fn=fn):
+      logging.debug("flash: already up to date")
+      return
+
     if not fn:
       fn = os.path.join(FW_PATH, self._mcu_type.config.app_fn)
     assert os.path.isfile(fn)
@@ -556,9 +560,10 @@ class Panda:
       serials = Panda.list()
     return True
 
-  def up_to_date(self) -> bool:
+  def up_to_date(self, fn=None) -> bool:
     current = self.get_signature()
-    fn = os.path.join(FW_PATH, self.get_mcu_type().config.app_fn)
+    if fn is None:
+      fn = os.path.join(FW_PATH, self.get_mcu_type().config.app_fn)
     expected = Panda.get_signature_from_firmware(fn)
     return (current == expected)
 
