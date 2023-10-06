@@ -1,7 +1,5 @@
 import time
 import pytest
-import numpy as np
-from collections import deque
 
 from panda import Panda, PandaJungle
 
@@ -10,14 +8,6 @@ JUNGLE_SERIAL = "26001c001451313236343430"
 
 AUX_PORT = 6
 OBDC_PORT = 1
-
-class State:
-  OFF = 1
-  QDL = 2
-  FASTBOOT = 3
-  NORMAL_BOOT = 4
-  STANDBY_FOR_BOOTKICK = 5
-
 
 @pytest.fixture(autouse=True, scope="function")
 def pj():
@@ -44,15 +34,15 @@ def p(pj):
 def setup_state(panda, jungle, state):
   jungle.set_panda_power(0)
 
-  if state == State.OFF:
+  if state == "off":
     wait_for_full_poweroff(jungle)
-  elif state == State.NORMAL_BOOT:
+  elif state == "normal boot":
     jungle.set_panda_individual_power(OBDC_PORT, 1)
-  elif state == State.QDL:
+  elif state == "QDL":
     jungle.set_panda_individual_power(AUX_PORT, 1)
     time.sleep(0.5)
     jungle.set_panda_individual_power(OBDC_PORT, 1)
-  elif state == State.STANDBY_FOR_BOOTKICK:
+  elif state == "ready to bootkick":
     wait_for_full_poweroff(jungle)
     jungle.set_panda_individual_power(OBDC_PORT, 1)
     wait_for_boot(panda, jungle)
@@ -64,24 +54,18 @@ def setup_state(panda, jungle, state):
 
 
 def wait_for_som_shutdown(panda, jungle):
-  # jungle power measurement isn't very accurate
-
-  pwrs = deque([], maxlen=15)
   st = time.monotonic()
-  while time.monotonic() - st < 30 and (len(pwrs) < pwrs.maxlen or np.mean(pwrs) > 2.):
-    pwrs.append(jungle.health()[f"ch{OBDC_PORT}_power"])
+  while panda.read_som_gpio():
+    if time.monotonic() - st > 45:
+      raise Exception("SOM didn't shutdown in time")
     time.sleep(0.5)
   dt = time.monotonic() - st
-  print(f"took {dt:.2f}s for SOM to shutdown", pwrs, np.mean(pwrs))
-
-  assert len(pwrs) == pwrs.maxlen
-  assert np.mean(pwrs) < 2.1
+  print(f"took {dt:.2f}s for SOM to shutdown")
 
 def wait_for_full_poweroff(jungle, timeout=30):
   st = time.monotonic()
 
   time.sleep(5)
-
   while PANDA_SERIAL in Panda.list():
     if time.monotonic() - st > timeout:
       raise Exception("took too long for device to turn off")
@@ -115,17 +99,17 @@ def wait_for_boot(panda, jungle, bootkick=False, timeout=60):
 
 
 def test_cold_boot(p, pj):
-  setup_state(p, pj, State.OFF)
-  setup_state(p, pj, State.NORMAL_BOOT)
+  setup_state(p, pj, "off")
+  setup_state(p, pj, "normal boot")
   wait_for_boot(p, pj)
 
 def test_bootkick_ignition_line(p, pj):
-  setup_state(p, pj, State.STANDBY_FOR_BOOTKICK)
+  setup_state(p, pj, "ready to bootkick")
   pj.set_ignition(True)
   wait_for_boot(p, pj, bootkick=True)
 
 def test_bootkick_can_ignition(p, pj):
-  setup_state(p, pj, State.STANDBY_FOR_BOOTKICK)
+  setup_state(p, pj, "ready to bootkick")
   for _ in range(10):
     # Mazda ignition signal
     pj.can_send(0x9E, b'\xc0\x00\x00\x00\x00\x00\x00\x00', 0)
