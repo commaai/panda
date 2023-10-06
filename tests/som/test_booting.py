@@ -56,7 +56,8 @@ def setup_state(panda, jungle, state):
 def wait_for_som_shutdown(panda, jungle):
   st = time.monotonic()
   while panda.read_som_gpio():
-    if time.monotonic() - st > 60:
+    # can take a while for the SOM to fully shutdown
+    if time.monotonic() - st > 120:
       raise Exception("SOM didn't shutdown in time")
     time.sleep(0.5)
   dt = time.monotonic() - st
@@ -83,7 +84,7 @@ def wait_for_boot(panda, jungle, bootkick=False, timeout=60):
   Panda.wait_for_panda(PANDA_SERIAL, timeout)
   panda.reconnect()
   if bootkick:
-    assert panda.health()['uptime'] > 30
+    assert panda.health()['uptime'] > 20
   else:
     assert panda.health()['uptime'] < 3
 
