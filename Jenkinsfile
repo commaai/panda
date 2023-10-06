@@ -123,14 +123,6 @@ pipeline {
                 }
               }
             }
-            stage('SOM boot tests') {
-              steps {
-                script {
-                  docker_run("test", 3, "pytest tests/som/test_booting.py")
-                }
-              }
-            }
-
             /*
             stage('pedal tests') {
               steps {

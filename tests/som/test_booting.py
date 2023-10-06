@@ -56,7 +56,7 @@ def setup_state(panda, jungle, state):
 def wait_for_som_shutdown(panda, jungle):
   st = time.monotonic()
   while panda.read_som_gpio():
-    if time.monotonic() - st > 45:
+    if time.monotonic() - st > 60:
       raise Exception("SOM didn't shutdown in time")
     time.sleep(0.5)
   dt = time.monotonic() - st

@@ -993,7 +993,5 @@ class Panda:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xc5, (int(intercept_relay_drive) | int(ignition_relay_drive) << 1), 0, b'')
 
   def read_som_gpio(self) -> bool:
-    ret = self._handle.controlRead(Panda.REQUEST_IN, 0xc6, 0, 0, 1)
-    return ret[0] == 1
-
-
+    r = self._handle.controlRead(Panda.REQUEST_IN, 0xc6, 0, 0, 1)
+    return r[0] == 1
