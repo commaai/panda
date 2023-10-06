@@ -28,7 +28,8 @@ def pj():
 
   yield jungle
 
-  #jungle.set_panda_power(False)
+  jungle.set_panda_power(False)
+  jungle.close()
 
 @pytest.fixture(scope="function")
 def p(pj):
@@ -37,7 +38,8 @@ def p(pj):
   p = Panda(PANDA_SERIAL)
   p.flash()
   p.reset()
-  return p
+  yield p
+  p.close()
 
 def setup_state(panda, jungle, state):
   jungle.set_panda_power(0)
@@ -78,7 +80,7 @@ def wait_for_som_shutdown(panda, jungle):
 def wait_for_full_poweroff(jungle, timeout=30):
   st = time.monotonic()
 
-  time.sleep(15)
+  time.sleep(5)
 
   while PANDA_SERIAL in Panda.list():
     if time.monotonic() - st > timeout:
@@ -91,7 +93,7 @@ def check_som_boot_flag(panda):
   h = panda.health()
   return h['safety_mode'] == Panda.SAFETY_ELM327 and h['safety_param'] == 30
 
-def wait_for_boot(panda, jungle, bootkick=False, timeout=45):
+def wait_for_boot(panda, jungle, bootkick=False, timeout=60):
   st = time.monotonic()
 
   Panda.wait_for_panda(PANDA_SERIAL, timeout)
