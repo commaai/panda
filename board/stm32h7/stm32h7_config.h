@@ -36,6 +36,9 @@ separate IRQs for RX and TX.
 #define TICK_TIMER_IRQ TIM8_BRK_TIM12_IRQn
 #define TICK_TIMER TIM12
 
+#define GMLAN_BITBANG_TIMER_IRQ TIM8_UP_TIM13_IRQn
+#define GMLAN_BITBANG_TIMER TIM13
+
 #define MICROSECOND_TIMER TIM2
 
 #define INTERRUPT_TIMER_IRQ TIM6_DAC_IRQn
@@ -45,12 +48,6 @@ separate IRQs for RX and TX.
 
 #define PROVISION_CHUNK_ADDRESS 0x080FFFE0U
 #define DEVICE_SERIAL_NUMBER_ADDRESS 0x080FFFC0U
-
-#define LOGGING_FLASH_SECTOR_A 5U
-#define LOGGING_FLASH_SECTOR_B 6U
-#define LOGGING_FLASH_BASE_A 0x080A0000U
-#define LOGGING_FLASH_BASE_B 0x080C0000U
-#define LOGGING_FLASH_SECTOR_SIZE 0x20000U
 
 #include "can_definitions.h"
 #include "comms_definitions.h"
@@ -73,7 +70,6 @@ separate IRQs for RX and TX.
 #include "stm32h7/interrupt_handlers.h"
 #include "drivers/timers.h"
 #include "drivers/watchdog.h"
-#include "stm32h7/llflash.h"
 
 #if !defined(BOOTSTUB)
   #include "drivers/uart.h"
@@ -87,7 +83,9 @@ separate IRQs for RX and TX.
   #include "stm32h7/llexti.h"
 #endif
 
-#ifndef BOOTSTUB
+#ifdef BOOTSTUB
+  #include "stm32h7/llflash.h"
+#else
   #include "stm32h7/llfdcan.h"
 #endif
 
