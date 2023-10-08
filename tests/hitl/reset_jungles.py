@@ -37,6 +37,6 @@ if __name__ == "__main__":
       r.cycle_power(ports=[1, 2])
 
       serials = PandaJungle.list()
-      assert set(PandaJungle.list()) <= SERIALS
+      assert set(PandaJungle.list()) >= SERIALS
       mcu_types = list(exc.map(flash, SERIALS, timeout=20))
       assert set(mcu_types) == {McuType.F4, McuType.H7}
