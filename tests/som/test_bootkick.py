@@ -78,7 +78,7 @@ def check_som_boot_flag(panda):
   h = panda.health()
   return h['safety_mode'] == Panda.SAFETY_ELM327 and h['safety_param'] == 30
 
-def wait_for_boot(panda, jungle, bootkick=False, timeout=60):
+def wait_for_boot(panda, jungle, bootkick=False, timeout=120):
   st = time.monotonic()
 
   Panda.wait_for_panda(PANDA_SERIAL, timeout)
