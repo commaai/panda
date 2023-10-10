@@ -104,6 +104,11 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
       // increase torque_meas by 1 to be conservative on rounding
       torque_meas.min--;
       torque_meas.max++;
+
+      // driver torque for angle limiting
+      int torque_driver_new = (GET_BYTE(to_push, 1) << 8) | GET_BYTE(to_push, 2);
+      torque_driver_new = to_signed(torque_driver_new, 16);
+      update_sample(&torque_driver, torque_driver_new);
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
@@ -214,11 +219,15 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
         if (steer_angle_cmd_checks(lta_angle, steer_control_enabled, TOYOTA_STEERING_LIMITS)) {
           tx = 0;
         }
+        int driver_torque = MIN(ABS(torque_driver.min), ABS(torque_driver.max));
+        if ((driver_torque > 150) && (setme_x64 != 0)) {
+          tx = 0;
+        }
         int eps_torque = MIN(ABS(torque_meas.min), ABS(torque_meas.max));
         if ((eps_torque > 1500) && (setme_x64 != 0)) {
           tx = 0;
         }
-        if (setme_x64 > 100) {
+        if ((setme_x64 != 0) && (setme_x64 != 100)) {
           tx = 0;
         }
       } else {
