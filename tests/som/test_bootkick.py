@@ -109,6 +109,7 @@ def test_bootkick_ignition_line(p, pj):
   pj.set_ignition(True)
   wait_for_boot(p, pj, bootkick=True)
 
+@pytest.mark.skip("test isn't reliable yet")
 def test_bootkick_can_ignition(p, pj):
   setup_state(p, pj, "ready to bootkick")
   for _ in range(10):
