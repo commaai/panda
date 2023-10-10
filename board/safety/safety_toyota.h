@@ -214,6 +214,10 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
         if (steer_angle_cmd_checks(lta_angle, steer_control_enabled, TOYOTA_STEERING_LIMITS)) {
           tx = 0;
         }
+        int eps_torque = MIN(ABS(torque_meas.min), ABS(torque_meas.max));
+        if ((eps_torque > 1500) && (setme_x64 != 0)) {
+          tx = 0;
+        }
         if (setme_x64 > 100) {
           tx = 0;
         }
