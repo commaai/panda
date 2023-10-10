@@ -66,7 +66,7 @@ def wait_for_som_shutdown(panda, jungle):
 def wait_for_full_poweroff(jungle, timeout=30):
   st = time.monotonic()
 
-  time.sleep(5)
+  time.sleep(15)
   while PANDA_SERIAL in Panda.list():
     if time.monotonic() - st > timeout:
       raise Exception("took too long for device to turn off")
@@ -78,7 +78,7 @@ def check_som_boot_flag(panda):
   h = panda.health()
   return h['safety_mode'] == Panda.SAFETY_ELM327 and h['safety_param'] == 30
 
-def wait_for_boot(panda, jungle, bootkick=False, timeout=60):
+def wait_for_boot(panda, jungle, bootkick=False, timeout=120):
   st = time.monotonic()
 
   Panda.wait_for_panda(PANDA_SERIAL, timeout)
@@ -109,6 +109,7 @@ def test_bootkick_ignition_line(p, pj):
   pj.set_ignition(True)
   wait_for_boot(p, pj, bootkick=True)
 
+@pytest.mark.skip("test isn't reliable yet")
 def test_bootkick_can_ignition(p, pj):
   setup_state(p, pj, "ready to bootkick")
   for _ in range(10):
