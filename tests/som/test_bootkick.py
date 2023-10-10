@@ -66,7 +66,7 @@ def wait_for_som_shutdown(panda, jungle):
 def wait_for_full_poweroff(jungle, timeout=30):
   st = time.monotonic()
 
-  time.sleep(5)
+  time.sleep(15)
   while PANDA_SERIAL in Panda.list():
     if time.monotonic() - st > timeout:
       raise Exception("took too long for device to turn off")
