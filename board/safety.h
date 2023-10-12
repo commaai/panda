@@ -344,14 +344,11 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   valid_steer_req_count = 0;
   invalid_steer_req_count = 0;
 
-  vehicle_speed.min = 0;
-  vehicle_speed.max = 0;
-  torque_meas.min = 0;
-  torque_meas.max = 0;
-  torque_driver.min = 0;
-  torque_driver.max = 0;
-  angle_meas.min = 0;
-  angle_meas.max = 0;
+  // reset samples
+  reset_sample(&vehicle_speed);
+  reset_sample(&torque_meas);
+  reset_sample(&torque_driver);
+  reset_sample(&angle_meas);
 
   controls_allowed = false;
   relay_malfunction_reset();
@@ -389,8 +386,7 @@ int to_signed(int d, int bits) {
 
 // given a new sample, update the sample_t struct
 void update_sample(struct sample_t *sample, int sample_new) {
-  int sample_size = sizeof(sample->values) / sizeof(sample->values[0]);
-  for (int i = sample_size - 1; i > 0; i--) {
+  for (int i = MAX_SAMPLE_VALS - 1; i > 0; i--) {
     sample->values[i] = sample->values[i-1];
   }
   sample->values[0] = sample_new;
@@ -398,7 +394,7 @@ void update_sample(struct sample_t *sample, int sample_new) {
   // get the minimum and maximum measured samples
   sample->min = sample->values[0];
   sample->max = sample->values[0];
-  for (int i = 1; i < sample_size; i++) {
+  for (int i = 1; i < MAX_SAMPLE_VALS; i++) {
     if (sample->values[i] < sample->min) {
       sample->min = sample->values[i];
     }
@@ -406,6 +402,14 @@ void update_sample(struct sample_t *sample, int sample_new) {
       sample->max = sample->values[i];
     }
   }
+}
+
+// resets values and min/max for sample_t struct
+void reset_sample(struct sample_t *sample) {
+  for (int i = 0; i < MAX_SAMPLE_VALS; i++) {
+    sample->values[i] = 0;
+  }
+  update_sample(sample, 0);
 }
 
 bool max_limit_check(int val, const int MAX_VAL, const int MIN_VAL) {
