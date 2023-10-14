@@ -82,7 +82,7 @@ As a universal car interface, it should support every reasonable software interf
 
 ## Programming
 
-See `board/README.md`
+See [`board/README.md`](board/README.md)
 
 ## Debugging
 
