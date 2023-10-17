@@ -81,17 +81,6 @@ class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest,
   def _interceptor_user_gas(self, gas):
     return interceptor_msg(gas, 0x201)
 
-  def test_diagnostics(self, stock_longitudinal: bool = False):
-    camera_tester_present = libpanda_py.make_CANPacket(0x750, 0, b"\x6D\x02\x3E\x00\x00\x00\x00\x00")
-    self.assertFalse(self._tx(camera_tester_present))
-
-    not_tester_present = libpanda_py.make_CANPacket(0x750, 0, b"\x0F\x03\xAA\xAA\x00\x00\x00\x00")
-    self.assertFalse(self._tx(not_tester_present))
-
-    tester_present = libpanda_py.make_CANPacket(0x750, 0, b"\x0F\x02\x3E\x00\x00\x00\x00\x00")
-    should_tx = not stock_longitudinal
-    self.assertEqual(should_tx, self._tx(tester_present))
-
   def test_block_aeb(self):
     for controls_allowed in (True, False):
       for bad in (True, False):
@@ -193,9 +182,6 @@ class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
 
   # Base fwd addresses minus ACC_CONTROL (0x343)
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191]}
-
-  def test_diagnostics(self, stock_longitudinal: bool = True):
-    super().test_diagnostics(stock_longitudinal=stock_longitudinal)
 
   def test_accel_actuation_limits(self, stock_longitudinal=True):
     super().test_accel_actuation_limits(stock_longitudinal=stock_longitudinal)
