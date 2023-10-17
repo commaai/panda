@@ -30,7 +30,6 @@ const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 805;
 const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0x33E, 0, 7}, {0x344, 0, 8}, {0x365, 0, 7}, {0x366, 0, 7}, {0x4CB, 0, 8},  // DSU bus 0
                                  {0x128, 1, 6}, {0x141, 1, 4}, {0x160, 1, 8}, {0x161, 1, 7}, {0x470, 1, 4},  // DSU bus 1
                                  {0x2E4, 0, 5}, {0x191, 0, 8}, {0x411, 0, 8}, {0x412, 0, 8}, {0x343, 0, 8}, {0x1D2, 0, 8},  // LKAS + ACC
-                                 {0x750, 0, 8}, // dp - white list 0x750 for Enhanced Diagnostic Request
                                  {0x200, 0, 6}};  // interceptor
 
 AddrCheckStruct toyota_addr_checks[] = {
@@ -46,6 +45,9 @@ addr_checks toyota_rx_checks = {toyota_addr_checks, TOYOTA_ADDR_CHECKS_LEN};
 // safety param flags
 // first byte is for eps factor, second is for flags
 #define TOYOTA_PARAM_OFFSET 8U
+#if 0
+const uint32_t TOYOTA_PARAM_OFFSET = 8U;
+#endif
 const uint32_t TOYOTA_EPS_FACTOR = (1U << TOYOTA_PARAM_OFFSET) - 1U;
 const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1U << TOYOTA_PARAM_OFFSET;
 const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2U << TOYOTA_PARAM_OFFSET;
@@ -130,12 +132,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
       gas_interceptor_prev = gas_interceptor;
     }
 
-    bool stock_ecu_detected = (addr == 0x2E4);
-    // Also check ACC_CONTROL (0x343) if openpilot is controlling longitudinal (radar is disabled or camera sends ACC messages)
-    if (!toyota_stock_longitudinal && (addr == 0x343)) {
-      stock_ecu_detected = true;
-    }
-    generic_rx_checks(stock_ecu_detected);
+    generic_rx_checks((addr == 0x2E4));
   }
   return valid;
 }
