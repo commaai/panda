@@ -15,7 +15,7 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
   safety.set_alternative_experience(alternative_experience)
 
   if segment:
-    init_segment(safety, lr, safety_mode)
+    init_segment(safety, lr, safety_mode, param)
     lr.reset()
 
   rx_tot, rx_invalid, tx_tot, tx_blocked, tx_controls, tx_controls_blocked = 0, 0, 0, 0, 0, 0

@@ -10,6 +10,7 @@ from panda import ALTERNATIVE_EXPERIENCE
 from panda.tests.libpanda import libpanda_py
 
 MAX_WRONG_COUNTERS = 5
+MAX_SAMPLE_VALS = 6
 VEHICLE_SPEED_FACTOR = 100
 
 MessageFunction = Callable[[float], libpanda_py.CANPacket]
@@ -491,12 +492,13 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
   def test_reset_driver_torque_measurements(self):
     # Tests that the driver torque measurement sample_t is reset on safety mode init
-    for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, 6):
+    for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, MAX_SAMPLE_VALS):
       self.assertTrue(self._rx(self._torque_driver_msg(t)))
 
-    # reset sample_t by reinitializing the safety mode
-    self._reset_safety_hooks()
+    self.assertNotEqual(self.safety.get_torque_driver_min(), 0)
+    self.assertNotEqual(self.safety.get_torque_driver_max(), 0)
 
+    self._reset_safety_hooks()
     self.assertEqual(self.safety.get_torque_driver_min(), 0)
     self.assertEqual(self.safety.get_torque_driver_max(), 0)
 
@@ -608,12 +610,13 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
   def test_reset_torque_measurements(self):
     # Tests that the torque measurement sample_t is reset on safety mode init
-    for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, 6):
+    for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, MAX_SAMPLE_VALS):
       self.assertTrue(self._rx(self._torque_meas_msg(t)))
 
-    # reset sample_t by reinitializing the safety mode
-    self._reset_safety_hooks()
+    self.assertNotEqual(self.safety.get_torque_meas_min(), 0)
+    self.assertNotEqual(self.safety.get_torque_meas_max(), 0)
 
+    self._reset_safety_hooks()
     self.assertEqual(self.safety.get_torque_meas_min(), 0)
     self.assertEqual(self.safety.get_torque_meas_max(), 0)
 
@@ -636,16 +639,15 @@ class MeasurementSafetyTest(PandaSafetyTestBase):
 
   def common_measurement_test(self, msg_func, min_value, max_value, factor, get_min_func, get_max_func):
     for val in np.arange(min_value, max_value, 0.5):
-      for i in range(6):
+      for i in range(MAX_SAMPLE_VALS):
         self.assertTrue(self._rx(msg_func(val + i * 0.1)))
 
       # assert close by one decimal place
-      self.assertLessEqual(abs(get_min_func() - val * factor), 1 * abs(factor))
-      self.assertLessEqual(abs(get_max_func() - (val + 0.5) * factor), 1 * abs(factor))
+      self.assertAlmostEqual(get_min_func() / factor, val, delta=0.1)
+      self.assertAlmostEqual(get_max_func() / factor - 0.5, val, delta=0.1)
 
-      # reset sample_t by reinitializing the safety mode
+      # ensure sample_t is reset on safety init
       self._reset_safety_hooks()
-
       self.assertEqual(get_min_func(), 0)
       self.assertEqual(get_max_func(), 0)
 
@@ -676,11 +678,11 @@ class AngleSteeringSafetyTest(MeasurementSafetyTest):
     self.safety.set_desired_angle_last(t)
 
   def _reset_angle_measurement(self, angle):
-    for _ in range(6):
+    for _ in range(MAX_SAMPLE_VALS):
       self._rx(self._angle_meas_msg(angle))
 
   def _reset_speed_measurement(self, speed):
-    for _ in range(6):
+    for _ in range(MAX_SAMPLE_VALS):
       self._rx(self._speed_msg(speed))
 
   def test_angle_cmd_when_enabled(self):
