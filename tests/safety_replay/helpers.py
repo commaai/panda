@@ -12,10 +12,7 @@ def is_steering_msg(mode, param, addr):
   if mode in (Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH):
     ret = (addr == 0xE4) or (addr == 0x194) or (addr == 0x33D) or (addr == 0x33DA) or (addr == 0x33DB)
   elif mode == Panda.SAFETY_TOYOTA:
-    if param & Panda.FLAG_TOYOTA_LTA:
-      ret = addr == 0x191
-    else:
-      ret = addr == 0x2E4
+    ret = addr == (0x191 if param & Panda.FLAG_TOYOTA_LTA else 0x2E4)
   elif mode == Panda.SAFETY_GM:
     ret = addr == 384
   elif mode == Panda.SAFETY_HYUNDAI:
