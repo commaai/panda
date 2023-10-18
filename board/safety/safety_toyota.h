@@ -104,14 +104,6 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
   if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
 
-    //  STEER_TORQUE_SENSOR: get angle for LTA inactive safety
-    if (addr == 0x260) {
-      // note that angle can be relative to init angle on some TSS2 platforms, LTA has the same offset
-      // Signal: STEER_ANGLE
-      float angle_meas_new = to_signed((GET_BYTE(to_push, 3) << 8U) | GET_BYTE(to_push, 4), 16);
-      update_sample(&angle_meas, angle_meas_new);
-    }
-
     // get eps motor torque (0.66 factor in dbc)
     if (addr == 0x260) {
       int torque_meas_new = (GET_BYTE(to_push, 5) << 8) | GET_BYTE(to_push, 6);
@@ -131,6 +123,11 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
       int torque_driver_new = (GET_BYTE(to_push, 1) << 8) | GET_BYTE(to_push, 2);
       torque_driver_new = to_signed(torque_driver_new, 16);
       update_sample(&torque_driver, torque_driver_new);
+
+      // current angle for LTA inactive safety.
+      // note that angle can be relative to init angle on some TSS2 platforms, LTA has the same offset
+      float angle_meas_new = to_signed((GET_BYTE(to_push, 3) << 8U) | GET_BYTE(to_push, 4), 16);
+      update_sample(&angle_meas, angle_meas_new);
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
