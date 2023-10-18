@@ -15,7 +15,8 @@ const SteeringLimits TOYOTA_STEERING_LIMITS = {
   .has_steer_req_tolerance = true,
 
   // LTA angle limits
-  // factor for STEER_TORQUE_SENSOR->STEER_ANGLE & STEERING_LTA->STEER_ANGLE_CMD (1 / 0.0573)
+  .max_angle = 1657,  // EPS only accepts up to 94.9461
+  // factor for STEER_TORQUE_SENSOR->STEER_ANGLE and STEERING_LTA->STEER_ANGLE_CMD (1 / 0.0573)
   .angle_deg_to_can = 17.452007,
   .angle_rate_up_lookup = {
     {5., 25., 25.},
@@ -46,7 +47,7 @@ const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0
 
 AddrCheckStruct toyota_addr_checks[] = {
   {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .expected_timestep = 12000U}, { 0 }, { 0 }}},
-  {.msg = {{0x260, 0, 8, .check_checksum = true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{0x260, 0, 8, .check_checksum = true, .quality_flag = true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{0x1D2, 0, 8, .check_checksum = true, .expected_timestep = 30000U}, { 0 }, { 0 }}},
   {.msg = {{0x224, 0, 8, .check_checksum = false, .expected_timestep = 25000U},
            {0x226, 0, 8, .check_checksum = false, .expected_timestep = 25000U}, { 0 }}},
@@ -82,10 +83,22 @@ static uint32_t toyota_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)(GET_BYTE(to_push, checksum_byte));
 }
 
+static bool toyota_get_quality_flag_valid(CANPacket_t *to_push) {
+  int addr = GET_ADDR(to_push);
+
+  bool valid = false;
+  if (addr == 0x260) {
+    // TODO: this is 1 on non-TSS2 platforms I think, probably need to check `toyota_lta`
+    valid = GET_BIT(to_push, 3) == 0U;  // STEER_ANGLE_INITIALIZING
+  }
+  return valid;
+}
+
 static int toyota_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &toyota_rx_checks,
-                                 toyota_get_checksum, toyota_compute_checksum, NULL, NULL);
+                                 toyota_get_checksum, toyota_compute_checksum, NULL,
+                                 toyota_get_quality_flag_valid);
 
   if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
