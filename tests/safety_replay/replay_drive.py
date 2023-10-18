@@ -2,6 +2,7 @@
 import argparse
 import os
 from collections import Counter
+from tqdm import tqdm
 
 from panda.tests.libpanda import libpanda_py
 from panda.tests.safety_replay.helpers import package_can_msg, init_segment
@@ -26,7 +27,7 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
   can_msgs = [m for m in lr if m.which() in ('can', 'sendcan')]
   start_t = can_msgs[0].logMonoTime
   end_t = can_msgs[-1].logMonoTime
-  for msg in can_msgs:
+  for msg in tqdm(can_msgs):
     safety.set_timer((msg.logMonoTime // 1000) % 0xFFFFFFFF)
 
     # skip start and end of route, warm up/down period
@@ -86,7 +87,7 @@ if __name__ == "__main__":
   s = SegmentName(args.route_or_segment_name[0], allow_route_name=True)
 
   r = Route(s.route_name.canonical_name)
-  logs = r.log_paths()[s.segment_num:s.segment_num+1] if s.segment_num >= 0 else r.log_paths()
+  logs = r.log_paths()[s.segment_num:s.segment_num+1] if s.segment_num >= 0 else r.log_paths()[1:]
   lr = MultiLogIterator(logs, sort_by_time=True)
 
   if None in (args.mode, args.param, args.alternative_experience):
