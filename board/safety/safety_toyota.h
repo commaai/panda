@@ -87,9 +87,11 @@ static bool toyota_get_quality_flag_valid(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   bool valid = false;
-  if (addr == 0x260) {
-    // TODO: this is 1 on non-TSS2 platforms I think, probably need to check `toyota_lta`
-    valid = GET_BIT(to_push, 3) == 0U;  // STEER_ANGLE_INITIALIZING
+  if (toyota_lta) {
+    if (addr == 0x260) {
+      // This is always 1 on non-TSS2 platforms
+      valid = GET_BIT(to_push, 3) == 0U;  // STEER_ANGLE_INITIALIZING
+    }
   }
   return valid;
 }
@@ -106,10 +108,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
     if (addr == 0x260) {
       // note that angle can be relative to init angle on some TSS2 platforms, LTA has the same offset
       // Signal: STEER_ANGLE
-      float angle_meas_new = (GET_BYTE(to_push, 3) << 8U) | GET_BYTE(to_push, 4);
-      angle_meas_new = to_signed(angle_meas_new, 16);
-
-      // update array of sample
+      float angle_meas_new = to_signed((GET_BYTE(to_push, 3) << 8U) | GET_BYTE(to_push, 4), 16);
       update_sample(&angle_meas, angle_meas_new);
     }
 
