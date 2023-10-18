@@ -84,7 +84,15 @@ AddrCheckStruct hyundai_legacy_addr_checks[] = {
 
 bool hyundai_legacy = false;
 
+#if 0
 addr_checks hyundai_rx_checks = SET_ADDR_CHECKS(hyundai_addr_checks);
+#endif
+
+// rick - fixing initializer element is not constant error
+addr_checks hyundai_rx_checks = {
+  .check = hyundai_addr_checks,
+  .len = sizeof(hyundai_addr_checks) / sizeof(hyundai_addr_checks[0])
+};
 
 static uint8_t hyundai_get_counter(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
