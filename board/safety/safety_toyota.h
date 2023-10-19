@@ -15,7 +15,6 @@ const SteeringLimits TOYOTA_STEERING_LIMITS = {
   .has_steer_req_tolerance = true,
 
   // LTA angle limits
-  .max_angle = 1657,  // EPS only accepts up to 94.9461
   // factor for STEER_TORQUE_SENSOR->STEER_ANGLE and STEERING_LTA->STEER_ANGLE_CMD (1 / 0.0573)
   .angle_deg_to_can = 17.452007,
   .angle_rate_up_lookup = {
@@ -27,6 +26,8 @@ const SteeringLimits TOYOTA_STEERING_LIMITS = {
     {0.36, 0.26, 0.26}
   },
 };
+
+const int TOYOTA_LTA_MAX_ANGLE = 1657;  // EPS only accepts up to 94.9461
 
 // longitudinal limits
 const LongitudinalLimits TOYOTA_LONG_LIMITS = {
@@ -124,10 +125,14 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
       torque_driver_new = to_signed(torque_driver_new, 16);
       update_sample(&torque_driver, torque_driver_new);
 
-      // current angle for LTA inactive safety.
+      // LTA request angle should match current angle while inactive, clipped to max accepted angle.
       // note that angle can be relative to init angle on some TSS2 platforms, LTA has the same offset
-      float angle_meas_new = to_signed((GET_BYTE(to_push, 3) << 8U) | GET_BYTE(to_push, 4), 16);
-      update_sample(&angle_meas, angle_meas_new);
+      bool steer_angle_initializing = GET_BIT(to_push, 3) != 0U;
+      if (!steer_angle_initializing) {
+        int angle_meas_new = (GET_BYTE(to_push, 3) << 8U) | GET_BYTE(to_push, 4);
+        angle_meas_new = CLAMP(to_signed(angle_meas_new, 16), -TOYOTA_LTA_MAX_ANGLE, TOYOTA_LTA_MAX_ANGLE);
+        update_sample(&angle_meas, angle_meas_new);
+      }
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
