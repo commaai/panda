@@ -93,6 +93,8 @@ static bool toyota_get_quality_flag_valid(CANPacket_t *to_push) {
       // This is always 1 on non-TSS2 platforms
       valid = GET_BIT(to_push, 3) == 0U;  // STEER_ANGLE_INITIALIZING
     }
+  } else {
+    valid = true;
   }
   return valid;
 }
