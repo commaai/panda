@@ -248,7 +248,7 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
 //          tx = 0;
 //        }
         int eps_torque = MIN(ABS(torque_meas.min), ABS(torque_meas.max));
-        if ((eps_torque > 1515) && (setme_x64 != 0)) {
+        if ((eps_torque > TOYOTA_STEERING_LIMITS.max_steer) && (setme_x64 != 0)) {
           tx = 0;
         }
         if ((setme_x64 != 0) && (setme_x64 != 100)) {
