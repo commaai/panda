@@ -175,7 +175,6 @@ static int gm_tx_hook(CANPacket_t *to_send) {
     }
   } else if (gm_hw == GM_SDGM) {
     tx = msg_allowed(to_send, GM_SDGM_TX_MSGS, sizeof(GM_SDGM_TX_MSGS)/sizeof(GM_SDGM_TX_MSGS[0]));
-  }
   } else {
     tx = msg_allowed(to_send, GM_ASCM_TX_MSGS, sizeof(GM_ASCM_TX_MSGS)/sizeof(GM_ASCM_TX_MSGS[0]));
   }
