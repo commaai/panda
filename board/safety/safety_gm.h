@@ -57,7 +57,7 @@ addr_checks gm_rx_checks = {gm_addr_checks, GM_RX_CHECK_LEN};
 
 const uint16_t GM_PARAM_HW_CAM = 1;
 const uint16_t GM_PARAM_HW_CAM_LONG = 2;
-const_uint16_t GM_PARAM_HW_SDGM = 4;
+const uint16_t GM_PARAM_HW_SDGM = 4;
 
 enum {
   GM_BTN_UNPRESS = 1,
@@ -173,6 +173,9 @@ static int gm_tx_hook(CANPacket_t *to_send) {
     } else {
       tx = msg_allowed(to_send, GM_CAM_TX_MSGS, sizeof(GM_CAM_TX_MSGS)/sizeof(GM_CAM_TX_MSGS[0]));
     }
+  } else if (gm_hw == GM_SDGM) {
+    tx = msg_allowed(to_send, GM_SDGM_TX_MSGS, sizeof(GM_SDGM_TX_MSGS)/sizeof(GM_SDGM_TX_MSGS[0]));
+  }
   } else {
     tx = msg_allowed(to_send, GM_ASCM_TX_MSGS, sizeof(GM_ASCM_TX_MSGS)/sizeof(GM_ASCM_TX_MSGS[0]));
   }
