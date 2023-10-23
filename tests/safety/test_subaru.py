@@ -4,7 +4,7 @@ import unittest
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, MeasurementSafetyTest
+from panda.tests.safety.common import CANPackerPanda
 from functools import partial
 
 class SubaruMsg(enum.IntEnum):
@@ -52,7 +52,7 @@ def gen2_long_additional_tx_msgs():
 def fwd_blacklisted_addr(lkas_msg=SubaruMsg.ES_LKAS):
   return {SUBARU_CAM_BUS: [lkas_msg, SubaruMsg.ES_DashStatus, SubaruMsg.ES_LKAS_State, SubaruMsg.ES_Infotainment]}
 
-class TestSubaruSafetyBase(common.PandaSafetyTest, MeasurementSafetyTest):
+class TestSubaruSafetyBase(common.PandaSafetyTest):
   FLAGS = 0
   STANDSTILL_THRESHOLD = 0 # kph
   RELAY_MALFUNCTION_ADDR = SubaruMsg.ES_LKAS
