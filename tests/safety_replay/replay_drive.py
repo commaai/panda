@@ -40,6 +40,7 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
         to_send = package_can_msg(canmsg)
         sent = safety.safety_tx_hook(to_send)
         if not sent:
+          print('blocked!')
           tx_blocked += 1
           tx_controls_blocked += safety.get_controls_allowed()
           blocked_addrs[canmsg.address] += 1

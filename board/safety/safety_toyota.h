@@ -28,6 +28,7 @@ const SteeringLimits TOYOTA_STEERING_LIMITS = {
 };
 
 const int TOYOTA_LTA_MAX_ANGLE = 1657;  // EPS only accepts up to 94.9461
+const int TOYOTA_LTA_MAX_DRIVER_TORQUE = 150;
 
 // longitudinal limits
 const LongitudinalLimits TOYOTA_LONG_LIMITS = {
@@ -255,11 +256,14 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
           tx = 0;
         }
 //        int driver_torque = MIN(ABS(torque_driver.min), ABS(torque_driver.max));
-//        if ((driver_torque > 150) && (setme_x64 != 0)) {
+//        if ((driver_torque > TOYOTA_LTA_MAX_DRIVER_TORQUE) && (setme_x64 != 0)) {
 //          tx = 0;
 //        }
         int eps_torque = MIN(ABS(torque_meas.min), ABS(torque_meas.max));
         if ((eps_torque > TOYOTA_STEERING_LIMITS.max_steer) && (setme_x64 != 0)) {
+          tx = 0;
+        }
+        if ((!steer_control_enabled) && (setme_x64 != 0)) {
           tx = 0;
         }
         if ((setme_x64 != 0) && (setme_x64 != 100)) {
