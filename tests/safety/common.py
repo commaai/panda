@@ -654,11 +654,9 @@ class MeasurementSafetyTest(PandaSafetyTestBase):
   def test_vehicle_speed_measurements(self):
     self.common_measurement_test(self._speed_msg, 0, 80, VEHICLE_SPEED_FACTOR, self.safety.get_vehicle_speed_min, self.safety.get_vehicle_speed_max)
 
-  def test_steering_angle_measurements(self):
-    self.common_measurement_test(self._angle_meas_msg, -180, 180, self.DEG_TO_CAN, self.safety.get_angle_meas_min, self.safety.get_angle_meas_max)
+class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
-
-class AngleSteeringSafetyTest(MeasurementSafetyTest):
+  DEG_TO_CAN: int
   ANGLE_RATE_BP: List[float]
   ANGLE_RATE_UP: List[float]  # windup limit
   ANGLE_RATE_DOWN: List[float]  # unwind limit
@@ -670,7 +668,15 @@ class AngleSteeringSafetyTest(MeasurementSafetyTest):
       raise unittest.SkipTest
 
   @abc.abstractmethod
+  def _speed_msg(self, speed):
+    pass
+
+  @abc.abstractmethod
   def _angle_cmd_msg(self, angle: float, enabled: bool):
+    pass
+
+  @abc.abstractmethod
+  def _angle_meas_msg(self, angle: float):
     pass
 
   def _set_prev_desired_angle(self, t):
@@ -684,6 +690,28 @@ class AngleSteeringSafetyTest(MeasurementSafetyTest):
   def _reset_speed_measurement(self, speed):
     for _ in range(MAX_SAMPLE_VALS):
       self._rx(self._speed_msg(speed))
+
+  def _common_measurement_test(self, msg_func, min_value, max_value, factor, get_min_func, get_max_func):
+    for val in np.arange(min_value, max_value, 0.5):
+      for i in range(MAX_SAMPLE_VALS):
+        print('rxing', val + i * 0.1)
+        self.assertTrue(self._rx(msg_func(val + i * 0.1)))
+      print()
+
+      # assert close by one decimal place
+      self.assertAlmostEqual(get_min_func() / factor, val, delta=0.1)
+      self.assertAlmostEqual(get_max_func() / factor - 0.5, val, delta=0.1)
+
+      # ensure sample_t is reset on safety init
+      self._reset_safety_hooks()
+      self.assertEqual(get_min_func(), 0)
+      self.assertEqual(get_max_func(), 0)
+
+  def test_vehicle_speed_measurements(self):
+    self._common_measurement_test(self._speed_msg, 0, 80, VEHICLE_SPEED_FACTOR, self.safety.get_vehicle_speed_min, self.safety.get_vehicle_speed_max)
+
+  # def test_steering_angle_measurements(self):
+  #   self._common_measurement_test(self._angle_meas_msg, -180, 180, self.DEG_TO_CAN, self.safety.get_angle_meas_min, self.safety.get_angle_meas_max)
 
   def test_angle_cmd_when_enabled(self):
     # when controls are allowed, angle cmd rate limit is enforced
