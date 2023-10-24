@@ -175,9 +175,9 @@ class TestSubaruAngleSafetyBase(TestSubaruSafetyBase, common.AngleSteeringSafety
 
   FLAGS = Panda.FLAG_SUBARU_LKAS_ANGLE
 
-  ANGLE_RATE_BP = [0, 5, 15]
-  ANGLE_RATE_UP = [5, 0.8, 0.15]
-  ANGLE_RATE_DOWN = [5, 3.5, 0.4]
+  ANGLE_RATE_BP = [0, 15]
+  ANGLE_RATE_UP = [5, 0.15]
+  ANGLE_RATE_DOWN = [5, 0.4]
 
   def _angle_cmd_msg(self, angle, enabled=1):
     values = {"LKAS_Output": angle, "LKAS_Request": enabled}

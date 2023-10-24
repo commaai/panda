@@ -23,12 +23,12 @@ const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = SUBARU_STEERING_LIMITS_GENERA
 const SteeringLimits SUBARU_ANGLE_STEERING_LIMITS = {
   .angle_deg_to_can = 100,
   .angle_rate_up_lookup = {
-    {0., 5., 15.},
-    {5., .8, .15}
+    {0., 15., 15.},
+    {5.,  .8,  .8}
   },
   .angle_rate_down_lookup = {
-    {0., 5., 15.},
-    {5., 3.5, .4}
+    {0., 15., 15.},
+    {5.,  .4,  .4}
   },
 };
 
@@ -298,17 +298,18 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
 static int subaru_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
+  const int stock_lkas_msg = lkas_angle ? MSG_SUBARU_ES_LKAS_ANGLE : MSG_SUBARU_ES_LKAS;
+
   if (bus_num == SUBARU_MAIN_BUS) {
     bus_fwd = SUBARU_CAM_BUS;  // to the eyesight camera
   }
 
   if (bus_num == SUBARU_CAM_BUS) {
     // Global platform
-    bool block_lkas = (((addr == MSG_SUBARU_ES_LKAS)       && !lkas_angle) ||
-                       ((addr == MSG_SUBARU_ES_LKAS_ANGLE) &&  lkas_angle) ||
-                        (addr == MSG_SUBARU_ES_DashStatus) ||
-                        (addr == MSG_SUBARU_ES_LKAS_State) ||
-                        (addr == MSG_SUBARU_ES_Infotainment));
+    bool block_lkas = ((addr == stock_lkas_msg) ||
+                       (addr == MSG_SUBARU_ES_DashStatus) ||
+                       (addr == MSG_SUBARU_ES_LKAS_State) ||
+                       (addr == MSG_SUBARU_ES_Infotainment));
 
     bool block_long = ((addr == MSG_SUBARU_ES_Brake) ||
                        (addr == MSG_SUBARU_ES_Distance) ||
