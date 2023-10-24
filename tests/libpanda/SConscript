@@ -16,9 +16,7 @@ env = Environment(
     '-Wfatal-errors',
     '-Wno-pointer-to-int-cast',
     "-fprofile-arcs",
-    "-fprofile-abs-path",
     "-ftest-coverage",
-    "-O0",
   ],
   CPPPATH=[".", "../../board/"],
 )
