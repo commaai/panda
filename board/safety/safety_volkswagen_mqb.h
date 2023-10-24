@@ -33,10 +33,11 @@ const LongitudinalLimits VOLKSWAGEN_MQB_LONG_LIMITS = {
 #define MSG_ACC_02      0x30C   // TX by OP, ACC HUD data to the instrument cluster
 #define MSG_MOTOR_14    0x3BE   // RX from ECU, for brake switch status
 #define MSG_LDW_02      0x397   // TX by OP, Lane line recognition and text alerts
+#define MSG_BAP_LDW_10 0x17331910 // TX by OP, BAP_LDW_0x19 for lane assist assistant menu enablement
 
 // Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
-const CanMsg VOLKSWAGEN_MQB_STOCK_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_GRA_ACC_01, 0, 8}, {MSG_LDW_02, 1, 8}};
-const CanMsg VOLKSWAGEN_MQB_LONG_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_LDW_02, 1, 8}, {MSG_GRA_ACC_01, 0, 8},
+const CanMsg VOLKSWAGEN_MQB_STOCK_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_GRA_ACC_01, 0, 8}, {MSG_LDW_02, 1, 8}, {MSG_BAP_LDW_10, 1, 8}};
+const CanMsg VOLKSWAGEN_MQB_LONG_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_LDW_02, 1, 8}, {MSG_GRA_ACC_01, 0, 8}, {MSG_BAP_LDW_10, 1, 8},
                                               {MSG_ACC_02, 0, 8}, {MSG_ACC_06, 0, 8}, {MSG_ACC_07, 0, 8}};
 
 AddrCheckStruct volkswagen_mqb_addr_checks[] = {
