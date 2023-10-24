@@ -82,6 +82,7 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   RT_INTERVAL = 250000
   DRIVER_TORQUE_ALLOWANCE = 65
   DRIVER_TORQUE_FACTOR = 4
+  DRIVER_TORQUE_TO_CAN = 100
 
   PCM_CRUISE = True  # openpilot is tied to the PCM state if not longitudinal
 

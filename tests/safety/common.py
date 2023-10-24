@@ -414,6 +414,7 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
   DRIVER_TORQUE_ALLOWANCE = 0
   DRIVER_TORQUE_FACTOR = 0
+  DRIVER_TORQUE_TO_CAN = 1
 
   @classmethod
   def setUpClass(cls):
@@ -432,7 +433,7 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
   def test_driver_torque_measurements(self):
     trq = 50
     for t in [trq, -trq, 0, 0, 0, 0]:
-      self._rx(self._torque_driver_msg(t))
+      self._rx(self._torque_driver_msg(t / self.DRIVER_TORQUE_TO_CAN))
 
     self.assertEqual(self.safety.get_torque_driver_min(), -trq)
     self.assertEqual(self.safety.get_torque_driver_max(), trq)
