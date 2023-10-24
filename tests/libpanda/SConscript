@@ -15,9 +15,15 @@ env = Environment(
     '-std=gnu11',
     '-Wfatal-errors',
     '-Wno-pointer-to-int-cast',
+    "-fprofile-arcs",
+    "-fprofile-abs-path",
+    "-ftest-coverage",
+    "-O0",
   ],
   CPPPATH=[".", "../../board/"],
 )
+env.Append(LIBS=['gcov'])
+
 if system == "Darwin":
   env.PrependENVPath('PATH', '/opt/homebrew/bin')
 
