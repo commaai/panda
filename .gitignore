@@ -5,6 +5,8 @@
 *.o
 *.so
 *.os
+*.gcno
+*.gcda
 *.d
 *.dump
 a.out

@@ -15,12 +15,9 @@ env = Environment(
     '-std=gnu11',
     '-Wfatal-errors',
     '-Wno-pointer-to-int-cast',
-    "-fprofile-arcs",
-    "-ftest-coverage",
   ],
   CPPPATH=[".", "../../board/"],
 )
-env.Append(LIBS=['gcov'])
 
 if system == "Darwin":
   env.PrependENVPath('PATH', '/opt/homebrew/bin')
@@ -33,4 +30,10 @@ if GetOption('ubsan'):
   env['CFLAGS'] += flags
   env['LINKFLAGS'] += flags
 
-env.SharedLibrary("libpanda.so", ["panda.c",])
+if GetOption('test_coverage'):
+  env.Append(
+    CFLAGS=["-fprofile-arcs", "-ftest-coverage", "-fprofile-abs-path",],
+    LIBS=["gcov"],
+  )
+
+lib = env.SharedLibrary("libpanda.so", ["panda.c",])
