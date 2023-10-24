@@ -36,4 +36,11 @@ if GetOption('test_coverage'):
     LIBS=["gcov"],
   )
 
-env.SharedLibrary("libpanda.so", ["panda.c",])
+original_decider = env.decide_target
+
+def gcno_changed(dependency, target, env, _):
+  return not target.get_dir().File('panda.gcno').exists() or original_decider(dependency, target, env)
+
+libpanda = env.SharedLibrary("libpanda.so", ["panda.c"])
+env.SideEffect("panda.gcno", libpanda)
+env.Decider(gcno_changed)
