@@ -429,28 +429,21 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     self.safety.set_torque_driver(0, 0)
     super().test_non_realtime_limit_up()
 
-  def test_non_realtime_limit_down(self):
-    self.safety.set_controls_allowed(True)
+  def test_driver_torque_measurements(self):
+    trq = 50
+    for t in [trq, -trq, 0, 0, 0, 0]:
+      self._rx(self._torque_driver_msg(t))
 
-    torque_driver = self.DRIVER_TORQUE_ALLOWANCE# * self.DRIVER_TORQUE_FACTOR
-    torque_driver_above_limit = self.MAX_TORQUE - self.DRIVER_TORQUE_ALLOWANCE * self.DRIVER_TORQUE_FACTOR * 2
+    self.assertEqual(self.safety.get_torque_driver_min(), -trq)
+    self.assertEqual(self.safety.get_torque_driver_max(), trq)
 
-    cases = (
-      (True, 0, self.MAX_TORQUE),
-      (True, -torque_driver, self.MAX_TORQUE),
-      (False, -(torque_driver + 1), self.MAX_TORQUE),
-      # (False, torque_driver_above_limit, self.MAX_TORQUE - self.MAX_RATE_DOWN + 1),
-    )
+    self._rx(self._torque_driver_msg(0))
+    self.assertEqual(self.safety.get_torque_driver_min(), -trq)
+    self.assertEqual(self.safety.get_torque_driver_max(), 0)
 
-    for should_tx, torque_driver, torque_desired in cases:
-      with self.subTest(should_tx=should_tx, torque_driver=torque_driver, torque_desired=torque_desired):
-        self.safety.set_controls_allowed(True)
-        self._set_prev_torque(self.MAX_TORQUE)
-        for _ in range(MAX_SAMPLE_VALS):
-          self._rx(self._torque_driver_msg(torque_driver))
-        # self.safety.set_torque_driver(torque_driver, torque_driver)
-        self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(torque_desired)))
-
+    self._rx(self._torque_driver_msg(0))
+    self.assertEqual(self.safety.get_torque_driver_min(), 0)
+    self.assertEqual(self.safety.get_torque_driver_max(), 0)
 
   def test_against_torque_driver(self):
     # Tests down limits and driver torque blending
