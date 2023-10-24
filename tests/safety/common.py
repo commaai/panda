@@ -99,7 +99,7 @@ class PandaSafetyTestBase(unittest.TestCase):
         should_tx = (should_tx or v == inactive_value) and msg_allowed
         self.assertEqual(self._tx(msg_function(v)), should_tx, (controls_allowed, should_tx, v))
 
-  def _common_measurement_test(self, msg_func: MessageFunction, min_value: float, max_value: float,
+  def _common_measurement_test(self, msg_func: Callable[[int | float], ...], min_value: float, max_value: float,
                                factor: int, meas_min_func: Callable[[], int], meas_max_func: Callable[[], int],
                                increment: float = 1):
     """Tests accurate measurement parsing, and that it's reset on safety mode init"""
