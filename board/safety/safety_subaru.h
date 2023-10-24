@@ -245,7 +245,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
 
   if (addr == MSG_SUBARU_ES_LKAS_ANGLE) {
     int desired_angle = (GET_BYTES(to_send, 5, 3) & 0x1FFFFU);
-    desired_angle = to_signed(desired_angle, 17);
+    desired_angle = -1 * to_signed(desired_angle, 17);
     bool lkas_request = GET_BIT(to_send, 12U);
 
     const SteeringLimits limits = SUBARU_ANGLE_STEERING_LIMITS;
