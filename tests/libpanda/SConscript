@@ -1,4 +1,3 @@
-import os
 import platform
 
 CC = 'gcc'
@@ -19,7 +18,6 @@ env = Environment(
   ],
   CPPPATH=[".", "../../board/"],
 )
-
 if system == "Darwin":
   env.PrependENVPath('PATH', '/opt/homebrew/bin')
 
@@ -37,11 +35,8 @@ if GetOption('safety_coverage'):
     LIBS=["gcov"],
   )
 
-original_decider = env.decide_target
-
-def gcno_changed(dependency, target, prev_ni, _):
-  return not target.get_dir().File('panda.gcno').exists() or original_decider(dependency, target, prev_ni)
-
 libpanda = env.SharedLibrary("libpanda.so", ["panda.c",])
-env.SideEffect("panda.gcno", libpanda)
-env.Decider(gcno_changed)
+
+if GetOption('safety_coverage'):
+  AlwaysBuild(libpanda)
+  env.SideEffect("panda.gcno", libpanda)
