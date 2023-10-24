@@ -75,7 +75,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 
     if (addr == 0x184) {
       int torque_driver_new = ((GET_BYTE(to_push, 6) & 0x7U) << 8) | GET_BYTE(to_push, 7);
-      torque_driver_new = to_signed(torque_driver_new, 11);
+      torque_driver_new = to_signed(torque_driver_new, 11) * 0.79;
       // update array of samples
       update_sample(&torque_driver, torque_driver_new);
     }

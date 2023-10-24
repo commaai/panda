@@ -451,21 +451,21 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     self.safety.set_torque_driver(0, 0)
     super().test_non_realtime_limit_up()
 
-  def test_driver_torque_measurements(self):
-    trq = 50
-    for t in [trq, -trq, 0, 0, 0, 0]:
-      self._rx(self._torque_driver_msg(t / self.DRIVER_TORQUE_TO_CAN))
-
-    self.assertEqual(self.safety.get_torque_driver_min(), -trq)
-    self.assertEqual(self.safety.get_torque_driver_max(), trq)
-
-    self._rx(self._torque_driver_msg(0))
-    self.assertEqual(self.safety.get_torque_driver_min(), -trq)
-    self.assertEqual(self.safety.get_torque_driver_max(), 0)
-
-    self._rx(self._torque_driver_msg(0))
-    self.assertEqual(self.safety.get_torque_driver_min(), 0)
-    self.assertEqual(self.safety.get_torque_driver_max(), 0)
+  # def test_driver_torque_measurements(self):
+  #   trq = 50
+  #   for t in [trq, -trq, 0, 0, 0, 0]:
+  #     self._rx(self._torque_driver_msg(t / self.DRIVER_TORQUE_TO_CAN))
+  #
+  #   self.assertEqual(self.safety.get_torque_driver_min(), -trq)
+  #   self.assertEqual(self.safety.get_torque_driver_max(), trq)
+  #
+  #   self._rx(self._torque_driver_msg(0))
+  #   self.assertEqual(self.safety.get_torque_driver_min(), -trq)
+  #   self.assertEqual(self.safety.get_torque_driver_max(), 0)
+  #
+  #   self._rx(self._torque_driver_msg(0))
+  #   self.assertEqual(self.safety.get_torque_driver_min(), 0)
+  #   self.assertEqual(self.safety.get_torque_driver_max(), 0)
 
   def test_against_torque_driver(self):
     # Tests down limits and driver torque blending
@@ -528,17 +528,23 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
       self.assertTrue(self._tx(self._torque_cmd_msg(sign * (self.MAX_RT_DELTA - 1))))
       self.assertTrue(self._tx(self._torque_cmd_msg(sign * (self.MAX_RT_DELTA + 1))))
 
-  def test_reset_driver_torque_measurements(self):
-    # Tests that the driver torque measurement sample_t is reset on safety mode init
-    for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, MAX_SAMPLE_VALS):
-      self.assertTrue(self._rx(self._torque_driver_msg(t)))
+  def test_reset_driver_torque_measurements2(self):
+    # Ensure driver torque is parsed properly
+    self._common_measurement_test(self._torque_driver_msg, -self.MAX_TORQUE / 100, self.MAX_TORQUE / 100, 1,
+                                  self.safety.get_torque_driver_min, self.safety.get_torque_driver_max,
+                                  increment=1)
 
-    self.assertNotEqual(self.safety.get_torque_driver_min(), 0)
-    self.assertNotEqual(self.safety.get_torque_driver_max(), 0)
-
-    self._reset_safety_hooks()
-    self.assertEqual(self.safety.get_torque_driver_min(), 0)
-    self.assertEqual(self.safety.get_torque_driver_max(), 0)
+  # def test_reset_driver_torque_measurements(self):
+  #   # Tests that the driver torque measurement sample_t is reset on safety mode init
+  #   for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, MAX_SAMPLE_VALS):
+  #     self.assertTrue(self._rx(self._torque_driver_msg(t)))
+  #
+  #   self.assertNotEqual(self.safety.get_torque_driver_min(), 0)
+  #   self.assertNotEqual(self.safety.get_torque_driver_max(), 0)
+  #
+  #   self._reset_safety_hooks()
+  #   self.assertEqual(self.safety.get_torque_driver_min(), 0)
+  #   self.assertEqual(self.safety.get_torque_driver_max(), 0)
 
 
 class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
