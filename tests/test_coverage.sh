@@ -5,7 +5,7 @@ rm -f libpanda/*.gcda
 rm -f libpanda/*.gcov
 rm -f *.gcov
 rm -rf libpanda/coverage-out
-scons -j8 -D --test-coverage
+scons -j8 -D --safety-coverage
 
 
 ./safety/test.sh
