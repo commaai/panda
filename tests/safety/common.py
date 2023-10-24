@@ -511,7 +511,6 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     for t in np.linspace(-self.MAX_TORQUE, self.MAX_TORQUE, MAX_SAMPLE_VALS):
       self.assertTrue(self._rx(self._torque_driver_msg(t)))
 
-    print(self.safety.get_torque_driver_max(), self.safety.get_torque_driver_min())
     self.assertNotEqual(self.safety.get_torque_driver_min(), 0)
     self.assertNotEqual(self.safety.get_torque_driver_max(), 0)
 
