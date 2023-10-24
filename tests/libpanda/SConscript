@@ -36,4 +36,4 @@ if GetOption('test_coverage'):
     LIBS=["gcov"],
   )
 
-lib = env.SharedLibrary("libpanda.so", ["panda.c",])
+env.SharedLibrary("libpanda.so", ["panda.c",])

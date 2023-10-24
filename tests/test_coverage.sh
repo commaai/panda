@@ -3,8 +3,10 @@ set -e
 
 rm -f libpanda/*.gcda
 rm -f libpanda/*.gcov
+rm -f *.gcov
 rm -rf libpanda/coverage-out
-scons -j8 -D
+scons -j8 -D --test-coverage
+
 
 ./safety/test.sh
 
