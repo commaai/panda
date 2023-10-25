@@ -8,7 +8,7 @@ AddOption('--ubsan',
           action='store_true',
           help='turn on UBSan')
 
-AddOption('--test-coverage',
+AddOption('--safety-coverage',
           action='store_true',
           help='build with safety test coverage options')
 
