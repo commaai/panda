@@ -453,7 +453,7 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     # Tests down limits and driver torque blending
     self.safety.set_controls_allowed(True)
 
-    # Must wind down if above DRIVER_TORQUE_ALLOWANCE
+    # Cannot stay at MAX_TORQUE if above DRIVER_TORQUE_ALLOWANCE
     for sign in [-1, 1]:
       for driver_torque in np.arange(0, self.DRIVER_TORQUE_ALLOWANCE * 2, 1):
         self._reset_torque_driver_measurement(-driver_torque * sign)
