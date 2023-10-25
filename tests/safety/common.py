@@ -12,6 +12,7 @@ from panda.tests.libpanda import libpanda_py
 MAX_WRONG_COUNTERS = 5
 MAX_SAMPLE_VALS = 6
 VEHICLE_SPEED_FACTOR = 100
+SKIP_SCAN_TESTS = bool(os.getenv('SKIP_SCAN_TESTS'))
 
 MessageFunction = Callable[[float], libpanda_py.CANPacket]
 
@@ -806,6 +807,8 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.assertFalse(self.safety.get_relay_malfunction())
     self._rx(make_msg(self.RELAY_MALFUNCTION_BUS, self.RELAY_MALFUNCTION_ADDR, 8))
     self.assertTrue(self.safety.get_relay_malfunction())
+    if SKIP_SCAN_TESTS:
+      return
     for bus in range(3):
       for addr in self.SCANNED_ADDRS:
         self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
@@ -822,6 +825,10 @@ class PandaSafetyTest(PandaSafetyTestBase):
         self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, addr), f"{addr=:#x} from {bus=} to {fwd_bus=}")
 
   def test_spam_can_buses(self):
+    # TODO: support pytest and use markers?
+    if SKIP_SCAN_TESTS:
+      raise unittest.SkipTest
+
     for bus in range(4):
       for addr in self.SCANNED_ADDRS:
         if all(addr != m[0] or bus != m[1] for m in self.TX_MSGS):
@@ -951,6 +958,9 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.assertTrue(self.safety.get_vehicle_moving())
 
   def test_tx_hook_on_wrong_safety_mode(self):
+    if SKIP_SCAN_TESTS:
+      raise unittest.SkipTest
+
     files = os.listdir(os.path.dirname(os.path.realpath(__file__)))
     test_files = [f for f in files if f.startswith("test_") and f.endswith(".py")]
 
