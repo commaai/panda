@@ -446,7 +446,7 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
       self._rx(self._torque_driver_msg(torque))
 
   def test_non_realtime_limit_up(self):
-    self.safety.set_torque_driver(0, 0)
+    self._reset_torque_driver_measurement(0)
     super().test_non_realtime_limit_up()
 
   def test_against_torque_driver(self):
@@ -494,7 +494,7 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     for sign in [-1, 1]:
       self.safety.init_tests()
       self._set_prev_torque(0)
-      self.safety.set_torque_driver(0, 0)
+      self._reset_torque_driver_measurement(0)
       for t in np.arange(0, self.MAX_RT_DELTA, 1):
         t *= sign
         self.assertTrue(self._tx(self._torque_cmd_msg(t)))
