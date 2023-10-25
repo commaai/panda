@@ -138,7 +138,7 @@ const uint16_t SUBARU_PARAM_LKAS_ANGLE = 4;
 
 bool subaru_gen2 = false;
 bool subaru_longitudinal = false;
-bool lkas_angle = false;
+bool subaru_lkas_angle = false;
 
 
 static uint32_t subaru_get_checksum(CANPacket_t *to_push) {
@@ -167,7 +167,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
   if (valid) {
     const int bus = GET_BUS(to_push);
     const int alt_main_bus = subaru_gen2 ? SUBARU_ALT_BUS : SUBARU_MAIN_BUS;
-    const int stock_lkas_msg = lkas_angle ? MSG_SUBARU_ES_LKAS_ANGLE : MSG_SUBARU_ES_LKAS;
+    const int stock_lkas_msg = subaru_lkas_angle ? MSG_SUBARU_ES_LKAS_ANGLE : MSG_SUBARU_ES_LKAS;
 
     int addr = GET_ADDR(to_push);
     if ((addr == MSG_SUBARU_Steering_Torque) && (bus == SUBARU_MAIN_BUS)) {
@@ -220,7 +220,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
   bool violation = false;
 
-  if (lkas_angle) {
+  if (subaru_lkas_angle) {
     tx = msg_allowed(to_send, SUBARU_LKAS_ANGLE_TX_MSGS, SUBARU_LKAS_ANGLE_TX_MSGS_LEN);
   } else if (subaru_gen2 && subaru_longitudinal) {
     tx = msg_allowed(to_send, SUBARU_GEN2_LONG_TX_MSGS, SUBARU_GEN2_LONG_TX_MSGS_LEN);
@@ -298,7 +298,7 @@ static int subaru_tx_hook(CANPacket_t *to_send) {
 static int subaru_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
-  const int stock_lkas_msg = lkas_angle ? MSG_SUBARU_ES_LKAS_ANGLE : MSG_SUBARU_ES_LKAS;
+  const int stock_lkas_msg = subaru_lkas_angle ? MSG_SUBARU_ES_LKAS_ANGLE : MSG_SUBARU_ES_LKAS;
 
   if (bus_num == SUBARU_MAIN_BUS) {
     bus_fwd = SUBARU_CAM_BUS;  // to the eyesight camera
@@ -328,7 +328,7 @@ static const addr_checks* subaru_init(uint16_t param) {
   subaru_gen2 = GET_FLAG(param, SUBARU_PARAM_GEN2);
 
 #ifdef ALLOW_DEBUG
-  lkas_angle = GET_FLAG(param, SUBARU_PARAM_LKAS_ANGLE);
+  subaru_lkas_angle = GET_FLAG(param, SUBARU_PARAM_LKAS_ANGLE);
   subaru_longitudinal = GET_FLAG(param, SUBARU_PARAM_LONGITUDINAL);
 #endif
 
