@@ -450,11 +450,11 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
     self.safety.set_controls_allowed(True)
 
     for sign in [-1, 1]:
-      for t in np.arange(0, self.DRIVER_TORQUE_ALLOWANCE * 2, 1):
-        t *= -sign
-        self.safety.set_torque_driver(t, t)
+      for driver_torque in np.arange(0, self.DRIVER_TORQUE_ALLOWANCE * 2, 1):
+        driver_torque *= -sign
+        self.safety.set_torque_driver(driver_torque * sign, driver_torque * sign)
         self._set_prev_torque(self.MAX_TORQUE * sign)
-        should_tx = abs(t) <= self.DRIVER_TORQUE_ALLOWANCE
+        should_tx = abs(driver_torque) <= self.DRIVER_TORQUE_ALLOWANCE
         self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE * sign)))
 
     # arbitrary high driver torque to ensure max steer torque is allowed
