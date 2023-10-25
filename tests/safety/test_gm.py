@@ -128,7 +128,8 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
   def _torque_driver_msg(self, torque):
-    values = {"LKADriverAppldTrq": torque}
+    # Safety assumes driver torque is an int
+    values = {"LKADriverAppldTrq": torque / self.DRIVER_TORQUE_TO_CAN}
     return self.packer.make_can_msg_panda("PSCMStatus", 0, values)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
