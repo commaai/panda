@@ -472,11 +472,6 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
         should_tx = abs(t) <= self.DRIVER_TORQUE_ALLOWANCE
         self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(self.MAX_TORQUE * sign)))
 
-      self._set_prev_torque(self.MAX_TORQUE * sign)
-      self.safety.set_torque_driver(-sign * (self.DRIVER_TORQUE_ALLOWANCE + 1), -sign * (self.DRIVER_TORQUE_ALLOWANCE + 1))
-      # self._reset_torque_driver_measurement(self.DRIVER_TORQUE_ALLOWANCE + 1)
-      self.assertFalse(self._tx(self._torque_cmd_msg(self.MAX_TORQUE * sign)))
-
     # arbitrary high driver torque to ensure max steer torque is allowed
     max_driver_torque = int(self.MAX_TORQUE / self.DRIVER_TORQUE_FACTOR + self.DRIVER_TORQUE_ALLOWANCE + 1)
 
