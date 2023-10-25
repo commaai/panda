@@ -513,7 +513,7 @@ class DriverTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
       self.assertTrue(self._tx(self._torque_cmd_msg(sign * (self.MAX_RT_DELTA + 1))))
 
   def test_driver_torque_measurements(self):
-    # Ensure driver torque is parsed properly
+    # Ensure driver torque is parsed properly and that sample_t is reset on safety mode init
     self._common_measurement_test(self._torque_driver_msg, -self.MAX_TORQUE, self.MAX_TORQUE, 1,
                                   self.safety.get_torque_driver_min, self.safety.get_torque_driver_max,
                                   increment=1)
