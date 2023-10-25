@@ -82,7 +82,6 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
   RT_INTERVAL = 250000
   DRIVER_TORQUE_ALLOWANCE = 65
   DRIVER_TORQUE_FACTOR = 4
-  DRIVER_TORQUE_TO_CAN = 100
 
   PCM_CRUISE = True  # openpilot is tied to the PCM state if not longitudinal
 
@@ -128,8 +127,8 @@ class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafety
     return self.packer.make_can_msg_panda("AcceleratorPedal2", 0, values)
 
   def _torque_driver_msg(self, torque):
-    # Safety assumes driver torque is an int
-    values = {"LKADriverAppldTrq": torque / self.DRIVER_TORQUE_TO_CAN}
+    # Safety assumes driver torque is an int, use DBC factor
+    values = {"LKADriverAppldTrq": torque * 0.01}
     return self.packer.make_can_msg_panda("PSCMStatus", 0, values)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
