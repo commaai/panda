@@ -26,5 +26,5 @@ nosetests.xml
 # safety coverage-related files
 *.gcda
 *.gcno
-tests/libpanda/coverage-out
-tests/libpanda/coverage.info
+tests/safety/coverage-out
+tests/safety/coverage.info
