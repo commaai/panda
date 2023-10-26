@@ -2,9 +2,6 @@
 set -e
 
 # reset coverage data and generate gcc note file
-rm -f ../libpanda/*.gcda
-rm -rf coverage-out
-rm -f coverage.info
 scons -j$(nproc) -D --safety-coverage
 
 # run safety tests to generate coverage data
