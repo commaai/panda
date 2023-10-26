@@ -11,9 +11,9 @@ scons -j8 -D --safety-coverage
 ./safety/test.sh
 
 # generate and open report
-geninfo libpanda/ -o libpanda/coverage.info
-genhtml libpanda/coverage.info -o libpanda/coverage-out
-browse libpanda/coverage-out/index.html
+#geninfo libpanda/ -o libpanda/coverage.info
+#genhtml libpanda/coverage.info -o libpanda/coverage-out
+#browse libpanda/coverage-out/index.html
 
 # test coverage
 GCOV_OUTPUT=$(gcov -n libpanda/panda.c)
