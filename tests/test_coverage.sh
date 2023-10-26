@@ -5,7 +5,7 @@ set -e
 rm -f libpanda/*.gcda
 rm -rf libpanda/coverage-out
 rm -f libpanda/coverage.info
-scons -j8 -D --safety-coverage
+scons -j$(nproc) -D --safety-coverage
 
 # run safety tests to generate coverage data
 ./safety/test.sh
