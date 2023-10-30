@@ -32,7 +32,7 @@ if GetOption('ubsan'):
 panda = env.SharedObject("panda.os", "panda.c")
 libpanda = env.SharedLibrary("libpanda.so", [panda])
 
-if GetOption('safety_coverage'):
+if GetOption('coverage'):
   env.Append(
     CFLAGS=["-fprofile-arcs", "-ftest-coverage", "-fprofile-abs-path",],
     LIBS=["gcov"],
