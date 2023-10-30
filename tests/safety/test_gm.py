@@ -70,7 +70,7 @@ class GmLongitudinalBase(common.PandaSafetyTest, common.LongitudinalGasBrakeSafe
 
 class TestGmSafetyBase(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
   STANDSTILL_THRESHOLD = 10 * 0.0311
-  RELAY_MALFUNCTION_ADDR = 0x180
+  RELAY_MALFUNCTION_ADDR = 0x180  # ASCMLKASteeringCmd
   RELAY_MALFUNCTION_BUS = 0
   BUTTONS_BUS = 0  # rx or tx
   BRAKE_BUS = 0  # tx only
@@ -208,6 +208,8 @@ class TestGmCameraSafety(TestGmCameraSafetyBase):
 class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase):
   TX_MSGS = [[0x180, 0], [0x315, 0], [0x2CB, 0], [0x370, 0],  # pt bus
              [0x184, 2]]  # camera bus
+  RELAY_MALFUNCTION_ADDR = 0x2CB  # ASCMGasRegenCmd
+  RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [0x180, 0x2CB, 0x370, 0x315], 0: [0x184]}  # block LKAS, ACC messages and PSCMStatus
   BUTTONS_BUS = 0  # rx only
 
