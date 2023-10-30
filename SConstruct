@@ -8,9 +8,9 @@ AddOption('--ubsan',
           action='store_true',
           help='turn on UBSan')
 
-AddOption('--safety-coverage',
+AddOption('--coverage',
           action='store_true',
-          help='build with safety test coverage options')
+          help='build with test coverage options')
 
 # panda fw & test files
 SConscript('SConscript')
