@@ -77,7 +77,7 @@ addr_checks ford_rx_checks = {ford_addr_checks, FORD_ADDR_CHECK_LEN};
 static uint8_t ford_get_counter(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
-  uint8_t cnt;
+  uint8_t cnt = 0;
   if (addr == FORD_BrakeSysFeatures) {
     // Signal: VehVActlBrk_No_Cnt
     cnt = (GET_BYTE(to_push, 2) >> 2) & 0xFU;
@@ -88,7 +88,6 @@ static uint8_t ford_get_counter(CANPacket_t *to_push) {
     // Signal: VehRollYaw_No_Cnt
     cnt = GET_BYTE(to_push, 5);
   } else {
-    cnt = 0;
   }
   return cnt;
 }
@@ -96,7 +95,7 @@ static uint8_t ford_get_counter(CANPacket_t *to_push) {
 static uint32_t ford_get_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
-  uint8_t chksum;
+  uint8_t chksum = 0;
   if (addr == FORD_BrakeSysFeatures) {
     // Signal: VehVActlBrk_No_Cs
     chksum = GET_BYTE(to_push, 3);
@@ -107,7 +106,6 @@ static uint32_t ford_get_checksum(CANPacket_t *to_push) {
     // Signal: VehRollYawW_No_Cs
     chksum = GET_BYTE(to_push, 4);
   } else {
-    chksum = 0;
   }
   return chksum;
 }

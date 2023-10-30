@@ -63,7 +63,6 @@ static uint8_t volkswagen_pq_get_counter(CANPacket_t *to_push) {
   } else if (addr == MSG_GRA_NEU) {
     counter = (uint8_t)(GET_BYTE(to_push, 2) & 0xF0U) >> 4;
   } else {
-    counter = 0U;
   }
 
   return counter;
