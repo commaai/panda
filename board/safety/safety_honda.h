@@ -217,7 +217,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     // disable stock Honda AEB in alternative experience
     if (!(alternative_experience & ALT_EXP_DISABLE_STOCK_AEB)) {
       if ((bus == 2) && (addr == 0x1FA)) {
-        bool honda_stock_aeb = GET_BYTE(to_push, 3) & 0x20U;
+        bool honda_stock_aeb = GET_BIT(to_push, 29) != 0;
         int honda_stock_brake = (GET_BYTE(to_push, 0) << 2) + ((GET_BYTE(to_push, 1) >> 6) & 0x3U);
 
         // Forward AEB when stock braking is higher than openpilot braking
