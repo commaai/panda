@@ -820,7 +820,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
               continue
             if attr.startswith('TestToyota') and current_test.startswith('TestToyota'):
               continue
-            if attr == 'TestAllOutput':
+            if attr.startswith('TestAllOutput'):
               continue
             # if current_test == 'TestAllOutput':
             #   continue
