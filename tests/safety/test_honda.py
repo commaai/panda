@@ -317,6 +317,12 @@ class TestHondaNidecSafetyBase(HondaBase):
     self.safety.set_honda_fwd_brake(True)
     super().test_fwd_hook()
 
+  def test_honda_fwd_brake_reset(self):
+    self.safety.set_honda_fwd_brake(True)
+    self._reset_safety_hooks()
+    self.assertFalse(self.safety.get_honda_fwd_brake())
+
+
   def test_brake_safety_check(self):
     for fwd_brake in [False, True]:
       self.safety.set_honda_fwd_brake(fwd_brake)

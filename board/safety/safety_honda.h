@@ -382,6 +382,7 @@ static const addr_checks* honda_nidec_init(uint16_t param) {
   honda_alt_brake_msg = false;
   honda_bosch_long = false;
   honda_bosch_radarless = false;
+  honda_fwd_brake = false;
 
   if (GET_FLAG(param, HONDA_PARAM_NIDEC_ALT)) {
     honda_rx_checks = (addr_checks){honda_nidec_alt_addr_checks, HONDA_NIDEC_ALT_ADDR_CHECKS_LEN};
