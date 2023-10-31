@@ -288,9 +288,9 @@ class TestHondaNidecSafetyBase(HondaBase):
   def _interceptor_user_gas(self, gas):
     return interceptor_msg(gas, 0x201)
 
-  def _send_brake_msg(self, brake):
-    values = {"COMPUTER_BRAKE": brake}
-    return self.packer.make_can_msg_panda("BRAKE_COMMAND", 0, values)
+  def _send_brake_msg(self, brake, aeb_req=0, bus=0):
+    values = {"COMPUTER_BRAKE": brake, "AEB_REQ_1": aeb_req}
+    return self.packer.make_can_msg_panda("BRAKE_COMMAND", bus, values)
 
   def _send_acc_hud_msg(self, pcm_gas, pcm_speed):
     # Used to control ACC on Nidec without pedal
@@ -311,17 +311,38 @@ class TestHondaNidecSafetyBase(HondaBase):
     self.safety.set_honda_fwd_brake(False)
     super().test_fwd_hook()
 
-    # TODO: test latching until AEB event is over?
     # forwarding AEB brake signal
     self.FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0x194, 0x33D, 0x30C]}
     self.safety.set_honda_fwd_brake(True)
     super().test_fwd_hook()
 
-  def test_honda_fwd_brake_reset(self):
-    self.safety.set_honda_fwd_brake(True)
-    self._reset_safety_hooks()
+  def test_honda_fwd_brake_latching(self):
+    # Spot checking some cases
+    self.assertTrue(self._rx(self._send_brake_msg(0, bus=2)))
     self.assertFalse(self.safety.get_honda_fwd_brake())
 
+    # Shouldn't fwd stock Honda requesting any brake without AEB
+    self.assertTrue(self._rx(self._send_brake_msg(self.MAX_BRAKE, aeb_req=0, bus=2)))
+    self.assertFalse(self.safety.get_honda_fwd_brake())
+
+    # Now allow controls and request some brake
+    openpilot_brake = round(self.MAX_BRAKE * 0.5)
+    self.safety.set_controls_allowed(True)
+    self.assertTrue(self._tx(self._send_brake_msg(openpilot_brake)))
+
+    # Still shouldn't fwd Honda brake until it's more than openpilot's
+    self.assertTrue(self._rx(self._send_brake_msg(openpilot_brake - 1, aeb_req=1, bus=2)))
+    self.assertFalse(self.safety.get_honda_fwd_brake())
+    self.assertTrue(self._rx(self._send_brake_msg(openpilot_brake, aeb_req=1, bus=2)))
+    self.assertTrue(self.safety.get_honda_fwd_brake())
+    self.assertTrue(self._rx(self._send_brake_msg(self.MAX_BRAKE, aeb_req=1, bus=2)))
+    self.assertTrue(self.safety.get_honda_fwd_brake())
+
+    # Shouldn't stop fwding until AEB event is over
+    self.assertTrue(self._rx(self._send_brake_msg(0, aeb_req=1, bus=2)))
+    self.assertTrue(self.safety.get_honda_fwd_brake())
+    self.assertTrue(self._rx(self._send_brake_msg(0, aeb_req=0, bus=2)))
+    self.assertFalse(self.safety.get_honda_fwd_brake())
 
   def test_brake_safety_check(self):
     for fwd_brake in [False, True]:
