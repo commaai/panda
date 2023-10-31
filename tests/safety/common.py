@@ -3,7 +3,7 @@ import abc
 import unittest
 import importlib
 import numpy as np
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Set, Tuple
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
@@ -751,7 +751,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
 @add_regen_tests
 class PandaSafetyTest(PandaSafetyTestBase):
-  TX_MSGS: Optional[List[List[int]]] = None
+  TX_MSGS: Optional[Set[Tuple[int, int]]] = None
   SCANNED_ADDRS = [*range(0x800),                      # Entire 11-bit CAN address space
                    *range(0x18DA00F1, 0x18DB00F1, 0x100),   # 29-bit UDS physical addressing
                    *range(0x18DB00F1, 0x18DC00F1, 0x100),   # 29-bit UDS functional addressing
