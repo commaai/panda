@@ -11,7 +11,7 @@ from panda.tests.safety.hyundai_common import HyundaiButtonBase, HyundaiLongitud
 
 class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest, common.SteerRequestCutSafetyTest):
 
-  TX_MSGS = {(0x50, 0), (0x1CF, 1), (0x2A4, 0)}
+  TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0]]
   STANDSTILL_THRESHOLD = 12  # 0.375 kph
   RELAY_MALFUNCTION_ADDR = 0x50
   RELAY_MALFUNCTION_BUS = 0
@@ -84,7 +84,7 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaSafetyTest, common.Dri
 
 class TestHyundaiCanfdHDA1Base(TestHyundaiCanfdBase):
 
-  TX_MSGS = {(0x12A, 0), (0x1A0, 1), (0x1CF, 0), (0x1E0, 0)}
+  TX_MSGS = [[0x12A, 0], [0x1A0, 1], [0x1CF, 0], [0x1E0, 0]]
   RELAY_MALFUNCTION_ADDR = 0x12A
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [0x12A, 0x1E0]}
@@ -162,7 +162,7 @@ class TestHyundaiCanfdHDA1AltButtons(TestHyundaiCanfdHDA1Base):
 
 class TestHyundaiCanfdHDA2EV(TestHyundaiCanfdBase):
 
-  TX_MSGS = {(0x50, 0), (0x1CF, 1), (0x2A4, 0)}
+  TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0]]
   RELAY_MALFUNCTION_ADDR = 0x50
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [0x50, 0x2a4]}
@@ -183,7 +183,7 @@ class TestHyundaiCanfdHDA2EV(TestHyundaiCanfdBase):
 # TODO: Handle ICE and HEV configurations once we see cars that use the new messages
 class TestHyundaiCanfdHDA2EVAltSteering(TestHyundaiCanfdBase):
 
-  TX_MSGS = {(0x110, 0), (0x1CF, 1), (0x362, 0)}
+  TX_MSGS = [[0x110, 0], [0x1CF, 1], [0x362, 0]]
   RELAY_MALFUNCTION_ADDR = 0x110
   RELAY_MALFUNCTION_BUS = 0
   FWD_BLACKLISTED_ADDRS = {2: [0x110, 0x362]}
@@ -204,8 +204,8 @@ class TestHyundaiCanfdHDA2EVAltSteering(TestHyundaiCanfdBase):
 
 class TestHyundaiCanfdHDA2LongEV(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2EV):
 
-  TX_MSGS = {(0x50, 0), (0x1CF, 1), (0x2A4, 0), (0x51, 0), (0x730, 1), (0x12a, 1), (0x160, 1),
-             (0x1e0, 1), (0x1a0, 1), (0x1ea, 1), (0x200, 1), (0x345, 1), (0x1da, 1)}
+  TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0], [0x51, 0], [0x730, 1], [0x12a, 1], [0x160, 1],
+             [0x1e0, 1], [0x1a0, 1], [0x1ea, 1], [0x200, 1], [0x345, 1], [0x1da, 1]]
 
   DISABLED_ECU_UDS_MSG = (0x730, 1)
   DISABLED_ECU_ACTUATION_MSG = (0x1a0, 1)
