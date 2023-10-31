@@ -19,6 +19,10 @@ class TestNoOutput(common.PandaSafetyTest):
     for addr in self.SCANNED_ADDRS:
       self.assertTrue(self._rx(common.make_msg(0, addr, 8)), f"not allowed RX {addr=}")
 
+  def test_tx_lin_hook(self):
+    for lin_num in range(2):
+      self.assertFalse(self._tx_lin(lin_num, b'\x00' * 8, 8), f"allowed TX LIN {lin_num=}")
+
 
 class TestAllOutput(common.PandaSafetyTest):
   # Allow all messages
@@ -33,6 +37,10 @@ class TestAllOutput(common.PandaSafetyTest):
   def test_rx_hook(self):
     for addr, bus in self.TX_MSGS:
       self.assertTrue(self._rx(common.make_msg(bus, addr, 8)), f"not allowed RX {addr=}")
+
+  def test_tx_lin_hook(self):
+    for lin_num in range(2):
+      self.assertTrue(self._tx_lin(lin_num, b'\x00' * 8, 8), f"allowed TX LIN {lin_num=}")
 
   def test_spam_can_buses(self):
     # Uses TX_MSGS instead of scanned addrs and asserts all send
