@@ -176,7 +176,7 @@ class HondaPcmEnableBase(common.PandaCarSafetyTest):
 
 
 class HondaBase(common.PandaCarSafetyTest):
-  MAX_BRAKE: int = 255
+  MAX_BRAKE = 255
   PT_BUS: Optional[int] = None  # must be set when inherited
   STEER_BUS: Optional[int] = None  # must be set when inherited
   BUTTONS_BUS: Optional[int] = None  # must be set when inherited, tx on this bus, rx on PT_BUS
