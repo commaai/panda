@@ -356,7 +356,6 @@ class TestHondaNidecSafetyBase(HondaBase):
           else:
             send = brake == 0
           self.assertEqual(send, self._tx(self._send_brake_msg(brake)))
-    self.safety.set_honda_fwd_brake(False)
 
 
 class TestHondaNidecSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):
