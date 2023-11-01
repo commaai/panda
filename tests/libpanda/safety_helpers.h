@@ -187,10 +187,6 @@ void init_tests(void){
   ts_steer_req_mismatch_last = 0;
   valid_steer_req_count = 0;
   invalid_steer_req_count = 0;
-
-  // car-specific stuff
-  honda_fwd_brake = false;
-  tesla_stock_aeb = false;
 }
 
 void set_gmlan_digital_output(int to_set){
