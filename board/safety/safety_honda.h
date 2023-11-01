@@ -377,8 +377,9 @@ static int honda_tx_hook(CANPacket_t *to_send) {
 }
 
 static const addr_checks* honda_nidec_init(uint16_t param) {
-  gas_interceptor_detected = 0;
   honda_hw = HONDA_NIDEC;
+  honda_brake = 0;
+  honda_fwd_brake = false;
   honda_alt_brake_msg = false;
   honda_bosch_long = false;
   honda_bosch_radarless = false;
