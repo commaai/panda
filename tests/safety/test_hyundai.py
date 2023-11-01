@@ -185,7 +185,7 @@ class TestHyundaiLongitudinalSafety(HyundaiLongitudinalBase, TestHyundaiSafety):
       "AEB_CmdAct": int(aeb_req),
       "CR_VSM_DecCmd": aeb_decel,
     }
-    return self.packer.make_can_msg_panda("SCC12", self.SCC_BUS, values)
+    return self.packer.make_can_msg_panda("SCC12", 0, values)
 
   def _fca11_msg(self, idx=0, vsm_aeb_req=False, fca_aeb_req=False, aeb_decel=0):
     values = {
@@ -207,6 +207,53 @@ class TestHyundaiLongitudinalSafety(HyundaiLongitudinalBase, TestHyundaiSafety):
     self.assertTrue(self._tx(self._accel_msg(0)))
     self.assertFalse(self._tx(self._accel_msg(0, aeb_req=True)))
     self.assertFalse(self._tx(self._accel_msg(0, aeb_decel=1.0)))
+
+class TestHyundaiSafetyCameraSCCLongitudinal(HyundaiLongitudinalBase, TestHyundaiSafetyCameraSCC):
+  TX_MSGS = [[0x340, 0], [0x4F1, 2], [0x485, 0], [0x420, 0], [0x421, 0], [0x50A, 0], [0x389, 0], [0x38D, 0], [0x483, 0]]
+
+  FWD_BLACKLISTED_ADDRS = {2: [0x340, 0x485, 0x420, 0x421, 0x50A, 0x389, 0x38D, 0x483]}
+
+  DISABLED_ECU_ACTUATION_MSG = (0x421, 0)
+
+  def setUp(self):
+    self.packer = CANPackerPanda("hyundai_kia_generic")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, Panda.FLAG_HYUNDAI_CAMERA_SCC | Panda.FLAG_HYUNDAI_LONG)
+    self.safety.init_tests()
+
+  def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
+    values = {
+      "aReqRaw": accel,
+      "aReqValue": accel,
+      "AEB_CmdAct": int(aeb_req),
+      "CR_VSM_DecCmd": aeb_decel,
+    }
+    return self.packer.make_can_msg_panda("SCC12", 0, values)
+
+  def _fca11_msg(self, idx=0, vsm_aeb_req=False, fca_aeb_req=False, aeb_decel=0):
+    values = {
+      "CR_FCA_Alive": idx % 0xF,
+      "FCA_Status": 2,
+      "CR_VSM_DecCmd": aeb_decel,
+      "CF_VSM_DecCmdAct": int(vsm_aeb_req),
+      "FCA_CmdAct": int(fca_aeb_req),
+    }
+    return self.packer.make_can_msg_panda("FCA11", 0, values)
+
+  def test_no_aeb_fca11(self):
+    self.assertTrue(self._tx(self._fca11_msg()))
+    self.assertFalse(self._tx(self._fca11_msg(vsm_aeb_req=True)))
+    self.assertFalse(self._tx(self._fca11_msg(fca_aeb_req=True)))
+    self.assertFalse(self._tx(self._fca11_msg(aeb_decel=1.0)))
+
+  def test_no_aeb_scc12(self):
+    self.assertTrue(self._tx(self._accel_msg(0)))
+    self.assertFalse(self._tx(self._accel_msg(0, aeb_req=True)))
+    self.assertFalse(self._tx(self._accel_msg(0, aeb_decel=1.0)))
+
+  # no knockout
+  def test_tester_present_allowed(self):
+    pass
 
 
 if __name__ == "__main__":
