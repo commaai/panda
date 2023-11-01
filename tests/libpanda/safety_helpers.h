@@ -176,6 +176,10 @@ void set_honda_fwd_brake(bool c){
   honda_fwd_brake = c;
 }
 
+bool get_honda_fwd_brake(void){
+  return honda_fwd_brake;
+}
+
 void init_tests(void){
   // get HW_TYPE from env variable set in test.sh
   if (getenv("HW_TYPE")) {
