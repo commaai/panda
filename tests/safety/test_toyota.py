@@ -19,7 +19,7 @@ def interceptor_msg(gas, addr):
   return to_send
 
 
-class TestToyotaSafetyBase(common.PandaSafetyTest, common.InterceptorSafetyTest,
+class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.InterceptorSafetyTest,
                            common.LongitudinalAccelSafetyTest):
 
   TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0], [0x366, 0], [0x4CB, 0],  # DSU bus 0

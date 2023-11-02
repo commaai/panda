@@ -750,7 +750,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
 
 @add_regen_tests
-class PandaSafetyTest(PandaSafetyTestBase):
+class PandaCarSafetyTest(PandaSafetyTestBase):
   TX_MSGS: Optional[List[List[int]]] = None
   SCANNED_ADDRS = [*range(0x800),                      # Entire 11-bit CAN address space
                    *range(0x18DA00F1, 0x18DB00F1, 0x100),   # 29-bit UDS physical addressing
@@ -766,7 +766,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "PandaSafetyTest" or cls.__name__.endswith('Base'):
+    if cls.__name__ == "PandaCarSafetyTest" or cls.__name__.endswith('Base'):
       cls.safety = None
       raise unittest.SkipTest
 
