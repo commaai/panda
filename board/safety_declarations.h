@@ -210,6 +210,7 @@ bool vehicle_moving = false;
 bool acc_main_on = false;  // referred to as "ACC off" in ISO 15622:2018
 int cruise_button_prev = 0;
 bool safety_rx_checks_invalid = false;
+bool lateral_only = false;
 
 // for safety modes with torque steering control
 int desired_torque_last = 0;       // last desired steer torque
@@ -244,6 +245,8 @@ struct sample_t angle_meas;         // last 6 steer angles/curvatures
 // Setting this flag is used for allowing the full -5.0 to +4.0 m/s^2 at lower speeds
 // See ISO 15622:2018 for more information.
 #define ALT_EXP_RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX 8
+
+#define ALT_EXP_ALLOW_LATERAL_ON_BRAKE 32
 
 int alternative_experience = 0;
 
