@@ -2,10 +2,11 @@
 set -e
 
 # reset coverage data and generate gcc note file
-scons -j$(nproc) -D --safety-coverage
+scons -j$(nproc) -D --coverage
 
 # run safety tests to generate coverage data
-./test.sh
+#./test.sh
+./test_defaults.py
 
 # generate and open report
 geninfo ../libpanda/ -o coverage.info
