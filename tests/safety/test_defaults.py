@@ -44,11 +44,11 @@ class TestAllOutput(common.PandaSafetyTest):
 
   def test_spam_can_buses(self):
     # Uses TX_MSGS instead of scanned addrs and asserts all send
-    for bus in range(4):
-      for addr, bus in self.TX_MSGS:
-        self.assertTrue(self._tx(common.make_msg(bus, addr, 8)), f"not allowed TX {addr=} {bus=}")
+    for addr, bus in self.TX_MSGS:
+      self.assertTrue(self._tx(common.make_msg(bus, addr, 8)), f"not allowed TX {addr=} {bus=}")
 
   def test_default_controls_not_allowed(self):
+    # controls always allowed
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_tx_hook_on_wrong_safety_mode(self):
