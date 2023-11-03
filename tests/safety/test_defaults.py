@@ -26,7 +26,7 @@ class TestNoOutput(common.PandaSafetyTest):
 
 class TestAllOutput(common.PandaSafetyTest):
   # Allow all messages
-  TX_MSGS = [(addr, bus) for addr in common.PandaSafetyTest.SCANNED_ADDRS
+  TX_MSGS = [[addr, bus] for addr in common.PandaSafetyTest.SCANNED_ADDRS
              for bus in range(4)]
 
   def setUp(self):
