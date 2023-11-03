@@ -817,6 +817,9 @@ class PandaSafetyTest(PandaSafetyTestBase):
             # No point in comparing different Tesla safety modes
             if 'Tesla' in attr and 'Tesla' in current_test:
               continue
+            # No point in comparing to ALLOUTPUT which allows all messages
+            if attr.startswith('TestAllOutput'):
+              continue
             if attr.startswith('TestToyota') and current_test.startswith('TestToyota'):
               continue
             if {attr, current_test}.issubset({'TestSubaruGen1TorqueStockLongitudinalSafety', 'TestSubaruGen2TorqueStockLongitudinalSafety',
