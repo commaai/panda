@@ -12,7 +12,7 @@ class TestDefaultRxHookBase(common.PandaSafetyTest):
     # default rx hook allows all msgs
     for bus in range(4):
       for addr in self.SCANNED_ADDRS:
-        self.assertTrue(self._rx(common.make_msg(0, addr, 8)), f"not allowed RX {addr=}")
+        self.assertTrue(self._rx(common.make_msg(bus, addr, 8)), f"not allowed RX {addr=}")
 
 
 class TestNoOutput(TestDefaultRxHookBase):
