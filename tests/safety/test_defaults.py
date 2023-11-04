@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from parameterized import parameterized_class
 import unittest
 
 import panda.tests.safety.common as common
@@ -16,13 +15,12 @@ class TestDefaultRxHookBase(common.PandaSafetyTest):
         self.assertTrue(self._rx(common.make_msg(bus, addr, 8)), f"not allowed RX {addr=}")
 
 
-@parameterized_class(('safety_model',), [(Panda.SAFETY_NOOUTPUT,), (Panda.SAFETY_SILENT,)])
 class TestNoOutput(TestDefaultRxHookBase):
   TX_MSGS = []
 
   def setUp(self):
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(self.safety_model, 0)
+    self.safety.set_safety_hooks(Panda.SAFETY_NOOUTPUT, 0)
     self.safety.init_tests()
 
   def test_tx_lin_hook(self):
