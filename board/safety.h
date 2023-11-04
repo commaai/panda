@@ -190,7 +190,7 @@ void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
   if (index != -1) {
     uint8_t expected_counter = (addr_list[index].last_counter + 1U) % (addr_list[index].msg[addr_list[index].index].max_counter + 1U);
     addr_list[index].wrong_counters += (expected_counter == counter) ? -1 : 1;
-    addr_list[index].wrong_counters = MAX(MIN(addr_list[index].wrong_counters, MAX_WRONG_COUNTERS), 0);
+    addr_list[index].wrong_counters = CLAMP(addr_list[index].wrong_counters, 0, MAX_WRONG_COUNTERS);
     addr_list[index].last_counter = counter;
   }
 }
