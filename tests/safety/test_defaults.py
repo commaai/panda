@@ -29,7 +29,7 @@ class TestNoOutput(TestDefaultRxHookBase):
 
 
 class TestSilent(TestNoOutput):
-  """ SILENT uses same hooks as NOOUTPUT """
+  """SILENT uses same hooks as NOOUTPUT"""
 
   def setUp(self):
     self.safety = libpanda_py.libpanda
