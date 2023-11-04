@@ -28,6 +28,15 @@ class TestNoOutput(TestDefaultRxHookBase):
       self.assertFalse(self._tx_lin(0x0, lin_num, 0x0, 0x0, b'\x00' * 8), f"allowed TX LIN {lin_num=}")
 
 
+class TestSilent(TestNoOutput):
+  """ SILENT uses same hooks as NOOUTPUT """
+
+  def setUp(self):
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_SILENT, 0)
+    self.safety.init_tests()
+
+
 class TestAllOutput(TestDefaultRxHookBase):
   # Allow all messages
   TX_MSGS = [[addr, bus] for addr in common.PandaSafetyTest.SCANNED_ADDRS
