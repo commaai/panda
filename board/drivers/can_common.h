@@ -214,6 +214,13 @@ void ignition_can_hook(CANPacket_t *to_push) {
       ignition_can_cnt = 0U;
     }
 
+     // GM SDGM exception
+    if ((addr == 0xC9) && (len == 8)) {
+      // Matches SystemPowerMode (1=Run, 0=Off)
+      ignition_can = (GET_BYTE(to_push, 6) & 0x10U) != 0U;
+      ignition_can_cnt = 0U;
+    }
+
     // Tesla exception
     if ((addr == 0x348) && (len == 8)) {
       // GTW_status
