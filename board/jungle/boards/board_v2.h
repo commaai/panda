@@ -178,9 +178,26 @@ void board_v2_set_can_mode(uint8_t mode) {
 }
 
 bool panda_power = false;
+uint8_t panda_power_bitmask = 0U;
 void board_v2_set_panda_power(bool enable) {
   panda_power = enable;
   gpio_set_all_output(power_pins, sizeof(power_pins) / sizeof(gpio_t), enable);
+  if (enable) {
+    panda_power_bitmask = 0xFFU;
+  } else {
+    panda_power_bitmask = 0U;
+  }
+}
+
+void board_v2_set_panda_individual_power(uint8_t port_num, bool enable) {
+  port_num -= 1U;
+  if (port_num < 6U) {
+    panda_power_bitmask &= ~(1U << port_num);
+    panda_power_bitmask |= (enable ? 1U : 0U) << port_num;
+  } else {
+    print("Invalid port number ("); puth(port_num); print("): enabling failed\n");
+  }
+  gpio_set_bitmask(power_pins, sizeof(power_pins) / sizeof(gpio_t), (uint32_t)panda_power_bitmask);
 }
 
 bool board_v2_get_button(void) {
@@ -297,6 +314,7 @@ const board board_v2 = {
   .board_tick = &board_v2_tick,
   .get_button = &board_v2_get_button,
   .set_panda_power = &board_v2_set_panda_power,
+  .set_panda_individual_power = &board_v2_set_panda_individual_power,
   .set_ignition = &board_v2_set_ignition,
   .set_individual_ignition = &board_v2_set_individual_ignition,
   .set_harness_orientation = &board_v2_set_harness_orientation,

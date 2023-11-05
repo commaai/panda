@@ -103,7 +103,6 @@ class TestHyundaiSafety(HyundaiButtonBase, common.PandaSafetyTest, common.Driver
     self.__class__.cnt_cruise += 1
     return self.packer.make_can_msg_panda("SCC12", self.SCC_BUS, values, fix_checksum=checksum)
 
-  # TODO: this is unused
   def _torque_driver_msg(self, torque):
     values = {"CR_Mdps_StrColTq": torque}
     return self.packer.make_can_msg_panda("MDPS12", 0, values)

@@ -217,8 +217,8 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     // disable stock Honda AEB in alternative experience
     if (!(alternative_experience & ALT_EXP_DISABLE_STOCK_AEB)) {
       if ((bus == 2) && (addr == 0x1FA)) {
-        bool honda_stock_aeb = GET_BYTE(to_push, 3) & 0x20U;
-        int honda_stock_brake = (GET_BYTE(to_push, 0) << 2) + ((GET_BYTE(to_push, 1) >> 6) & 0x3U);
+        bool honda_stock_aeb = GET_BIT(to_push, 29U) != 0U;
+        int honda_stock_brake = (GET_BYTE(to_push, 0) << 2) | (GET_BYTE(to_push, 1) >> 6);
 
         // Forward AEB when stock braking is higher than openpilot braking
         // only stop forwarding when AEB event is over
@@ -377,8 +377,9 @@ static int honda_tx_hook(CANPacket_t *to_send) {
 }
 
 static const addr_checks* honda_nidec_init(uint16_t param) {
-  gas_interceptor_detected = 0;
   honda_hw = HONDA_NIDEC;
+  honda_brake = 0;
+  honda_fwd_brake = false;
   honda_alt_brake_msg = false;
   honda_bosch_long = false;
   honda_bosch_radarless = false;
