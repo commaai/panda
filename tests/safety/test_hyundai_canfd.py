@@ -12,7 +12,6 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaCarSafetyTest, common.
 
   TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0]]
   STANDSTILL_THRESHOLD = 12  # 0.375 kph
-  RELAY_MALFUNCTION_ADDRS = None
   FWD_BLACKLISTED_ADDRS = {2: [0x50, 0x2a4]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
