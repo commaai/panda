@@ -918,8 +918,6 @@ class PandaCarSafetyTest(PandaSafetyTest):
     # each car has an addr that is used to detect relay malfunction
     # if that addr is seen on specified bus, triggers the relay malfunction
     # protection logic: both tx_hook and fwd_hook are expected to return failure
-
-    # test relay malfunction addresses match between tests and safety
     self.assertFalse(self.safety.get_relay_malfunction())
     for bus in range(3):
       for addr in self.SCANNED_ADDRS:
