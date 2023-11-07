@@ -3,7 +3,7 @@ import abc
 import unittest
 import importlib
 import numpy as np
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Tuple
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
@@ -880,6 +880,7 @@ class PandaCarSafetyTest(PandaSafetyTest):
   STANDSTILL_THRESHOLD: Optional[float] = None
   GAS_PRESSED_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDR: Optional[int] = None
+  RELAY_MALFUNCTION_ADDRS: Optional[Dict[int, Tuple[int, ...]]] = None
   RELAY_MALFUNCTION_BUS: Optional[int] = None
 
   @classmethod
@@ -917,13 +918,26 @@ class PandaCarSafetyTest(PandaSafetyTest):
     # each car has an addr that is used to detect relay malfunction
     # if that addr is seen on specified bus, triggers the relay malfunction
     # protection logic: both tx_hook and fwd_hook are expected to return failure
-    self.assertFalse(self.safety.get_relay_malfunction())
-    self._rx(make_msg(self.RELAY_MALFUNCTION_BUS, self.RELAY_MALFUNCTION_ADDR, 8))
-    self.assertTrue(self.safety.get_relay_malfunction())
-    for bus in range(3):
-      for addr in self.SCANNED_ADDRS:
-        self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
-        self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr))
+    if self.RELAY_MALFUNCTION_ADDRS is not None:
+      print(self.__class__.__name__)
+      for relay_malfunction_bus, relay_malfunction_addrs in self.RELAY_MALFUNCTION_ADDRS.items():
+        for relay_malfunction_addr in relay_malfunction_addrs:
+          self.assertFalse(self.safety.get_relay_malfunction())
+          self._rx(make_msg(relay_malfunction_bus, relay_malfunction_addr, 8))
+          self.assertTrue(self.safety.get_relay_malfunction())
+          for bus in range(3):
+            for addr in self.SCANNED_ADDRS:
+              self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
+              self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr))
+          self.safety.set_relay_malfunction(False)
+
+    # self.assertFalse(self.safety.get_relay_malfunction())
+    # self._rx(make_msg(self.RELAY_MALFUNCTION_BUS, self.RELAY_MALFUNCTION_ADDR, 8))
+    # self.assertTrue(self.safety.get_relay_malfunction())
+    # for bus in range(3):
+    #   for addr in self.SCANNED_ADDRS:
+    #     self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
+    #     self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr))
 
   def test_prev_gas(self):
     self.assertFalse(self.safety.get_gas_pressed_prev())

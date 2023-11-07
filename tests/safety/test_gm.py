@@ -149,6 +149,8 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
   FWD_BUS_LOOKUP: Dict[int, int] = {}
   BRAKE_BUS = 2
 
+  RELAY_MALFUNCTION_ADDRS = {0: (0x180, 0x2CB)}  # ASCMLKASteeringCmd
+
   MAX_GAS = 3072
   MIN_GAS = 1404 # maximum regen
   INACTIVE_GAS = 1404
