@@ -920,38 +920,16 @@ class PandaCarSafetyTest(PandaSafetyTest):
     # protection logic: both tx_hook and fwd_hook are expected to return failure
     if self.RELAY_MALFUNCTION_ADDRS is not None:
       print(self.__class__.__name__)
-      # for relay_malfunction_bus, relay_malfunction_addrs in self.RELAY_MALFUNCTION_ADDRS.items():
-      #   for relay_malfunction_addr in relay_malfunction_addrs:
-      self.assertFalse(self.safety.get_relay_malfunction())
-
-
-      # self._rx(make_msg(relay_malfunction_bus, relay_malfunction_addr, 8))
-      # self.assertTrue(self.safety.get_relay_malfunction())
-      should_relay_malfunction = False
-      for bus in range(3):
-        for addr in self.SCANNED_ADDRS:
-          print(bus, addr)
-          self._rx(make_msg(bus, addr, 8))
-          # if addr in self.RELAY_MALFUNCTION_ADDRS.get(bus, ()):
-          #   should_relay_malfunction = True
-          should_relay_malfunction = addr in self.RELAY_MALFUNCTION_ADDRS.get(bus, ())
-          # should_relay_malfunction = bus == relay_malfunction_bus and addr == relay_malfunction_addr
-          self.assertEqual(should_relay_malfunction, self.safety.get_relay_malfunction(), (bus, addr))
+      for relay_malfunction_bus, relay_malfunction_addrs in self.RELAY_MALFUNCTION_ADDRS.items():
+        for relay_malfunction_addr in relay_malfunction_addrs:
+          self.assertFalse(self.safety.get_relay_malfunction())
+          self._rx(make_msg(relay_malfunction_bus, relay_malfunction_addr, 8))
+          self.assertTrue(self.safety.get_relay_malfunction())
+          for bus in range(3):
+            for addr in self.SCANNED_ADDRS:
+              self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
+              self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr))
           self.safety.set_relay_malfunction(False)
-          # if should_relay_malfunction:
-          #   self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
-          #   self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr))
-
-
-          # self._rx(make_msg(relay_malfunction_bus, relay_malfunction_addr, 8))
-          # self.assertTrue(self.safety.get_relay_malfunction())
-          # for bus in range(3):
-          #   for addr in self.SCANNED_ADDRS:
-          #     self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
-          #     self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr))
-
-
-      self.safety.set_relay_malfunction(False)
 
     # self.assertFalse(self.safety.get_relay_malfunction())
     # self._rx(make_msg(self.RELAY_MALFUNCTION_BUS, self.RELAY_MALFUNCTION_ADDR, 8))
