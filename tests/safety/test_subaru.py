@@ -83,7 +83,6 @@ class TestSubaruSafetyBase(common.PandaCarSafetyTest):
     self.safety.set_desired_torque_last(t)
     self.safety.set_rt_torque_last(t)
 
-  # TODO: this is unused
   def _torque_driver_msg(self, torque):
     values = {"Steer_Torque_Sensor": torque}
     return self.packer.make_can_msg_panda("Steering_Torque", 0, values)
