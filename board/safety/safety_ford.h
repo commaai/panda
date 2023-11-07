@@ -274,7 +274,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
     if (ford_longitudinal) {
       stock_ecu_detected = stock_ecu_detected || (addr == FORD_ACCDATA);
     }
-    generic_rx_checks(ford_lkas_msg_check(addr));
+    generic_rx_checks(stock_ecu_detected);
   }
 
   return valid;
