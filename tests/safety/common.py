@@ -919,34 +919,13 @@ class PandaCarSafetyTest(PandaSafetyTest):
     # if that addr is seen on specified bus, triggers the relay malfunction
     # protection logic: both tx_hook and fwd_hook are expected to return failure
 
-    #
-    # for relay_malfunction_bus, relay_malfunction_addrs in self.RELAY_MALFUNCTION_ADDRS.items():
-    #   for relay_malfunction_addr in relay_malfunction_addrs:
-    #     # self.assertFalse(self.safety.get_relay_malfunction())
-    #     self.safety.set_relay_malfunction(False)
-    #     self._rx(make_msg(relay_malfunction_bus, relay_malfunction_addr, 8))
-    #     self.assertTrue(self.safety.get_relay_malfunction())
-    #     for bus in range(3):
-    #       for addr in self.SCANNED_ADDRS:
-    #         self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
-    #         self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr))
-
-    # test relay malfunction addresses are expected
-    print(self.__class__.__name__)
-    # for relay_malfunction_bus, relay_malfunction_addrs in self.RELAY_MALFUNCTION_ADDRS.items():
-    #   for relay_malfunction_addr in relay_malfunction_addrs:
-    # self.assertFalse(self.safety.get_relay_malfunction())
-    # self._rx(make_msg(relay_malfunction_bus, relay_malfunction_addr, 8))
-    # self.assertTrue(self.safety.get_relay_malfunction())
+    # test relay malfunction addresses match between tests and safety
     for bus in range(3):
       for addr in self.SCANNED_ADDRS:
-        # with self.subTest(bus=bus, addr=addr):
         self.safety.set_relay_malfunction(False)
         self._rx(make_msg(bus, addr, 8))
         should_relay_malfunction = bus in self.RELAY_MALFUNCTION_ADDRS and addr in self.RELAY_MALFUNCTION_ADDRS[bus]
         self.assertEqual(should_relay_malfunction, self.safety.get_relay_malfunction())
-        # self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
-        # self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr))
 
     # test relay malfunction protection logic
     self.safety.set_relay_malfunction(True)
@@ -954,14 +933,6 @@ class PandaCarSafetyTest(PandaSafetyTest):
       for addr in self.SCANNED_ADDRS:
         self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)), (bus, addr))
         self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr))
-
-    # # self.assertFalse(self.safety.get_relay_malfunction())
-    # # self._rx(make_msg(self.RELAY_MALFUNCTION_BUS, self.RELAY_MALFUNCTION_ADDR, 8))
-    # # self.assertTrue(self.safety.get_relay_malfunction())
-    # # for bus in range(3):
-    # #   for addr in self.SCANNED_ADDRS:
-    # #     self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
-    # #     self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr))
 
   def test_prev_gas(self):
     self.assertFalse(self.safety.get_gas_pressed_prev())
