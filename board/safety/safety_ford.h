@@ -270,6 +270,10 @@ static int ford_rx_hook(CANPacket_t *to_push) {
 
     // If steering controls messages are received on the destination bus, it's an indication
     // that the relay might be malfunctioning.
+    bool stock_ecu_detected = ford_lkas_msg_check(addr);
+    if (ford_longitudinal) {
+      stock_ecu_detected = stock_ecu_detected || (addr == FORD_ACCDATA);
+    }
     generic_rx_checks(ford_lkas_msg_check(addr));
   }
 
