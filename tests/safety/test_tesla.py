@@ -20,7 +20,7 @@ class CONTROL_LEVER_STATE:
   IDLE = 0
 
 
-class TestTeslaSafety(common.PandaSafetyTest):
+class TestTeslaSafety(common.PandaCarSafetyTest):
   STANDSTILL_THRESHOLD = 0
   GAS_PRESSED_THRESHOLD = 3
   RELAY_MALFUNCTION_BUS = 0

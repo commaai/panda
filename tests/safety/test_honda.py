@@ -40,7 +40,7 @@ def interceptor_msg(gas, addr):
 #    * Bosch Radarless with Longitudinal Support
 
 
-class HondaButtonEnableBase(common.PandaSafetyTest):
+class HondaButtonEnableBase(common.PandaCarSafetyTest):
   # pylint: disable=no-member,abstract-method
 
   # override these inherited tests since we're using button enable
@@ -147,7 +147,7 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
     self.assertTrue(self.safety.get_controls_allowed())
 
 
-class HondaPcmEnableBase(common.PandaSafetyTest):
+class HondaPcmEnableBase(common.PandaCarSafetyTest):
   # pylint: disable=no-member,abstract-method
 
   def test_buttons(self):
@@ -175,7 +175,7 @@ class HondaPcmEnableBase(common.PandaSafetyTest):
             self.assertEqual(controls_allowed, self.safety.get_controls_allowed())
 
 
-class HondaBase(common.PandaSafetyTest):
+class HondaBase(common.PandaCarSafetyTest):
   MAX_BRAKE = 255
   PT_BUS: Optional[int] = None  # must be set when inherited
   STEER_BUS: Optional[int] = None  # must be set when inherited
