@@ -6,7 +6,7 @@ import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
 
-class TestNissanSafety(common.PandaSafetyTest, common.AngleSteeringSafetyTest):
+class TestNissanSafety(common.PandaCarSafetyTest, common.AngleSteeringSafetyTest):
 
   TX_MSGS = [[0x169, 0], [0x2b1, 0], [0x4cc, 0], [0x20b, 2], [0x280, 2]]
   STANDSTILL_THRESHOLD = 0

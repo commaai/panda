@@ -73,6 +73,10 @@ class PandaSafetyTestBase(unittest.TestCase):
   def _tx(self, msg):
     return self.safety.safety_tx_hook(msg)
 
+  def _tx_lin(self, priority: int, lin_num: int, to_addr: int, from_addr: int, dat: bytes):
+    msg = bytes([priority | len(dat), to_addr, from_addr]) + dat
+    return self.safety.safety_tx_lin_hook(lin_num, msg, len(msg))
+
   def _generic_limit_safety_check(self, msg_function: MessageFunction, min_allowed_value: float, max_allowed_value: float,
                                   min_possible_value: float, max_possible_value: float, test_delta: float = 1, inactive_value: float = 0,
                                   msg_allowed = True, additional_setup: Optional[Callable[[float], None]] = None):
@@ -749,7 +753,6 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
             self.assertEqual(should_tx, self._tx(self._angle_cmd_msg(angle_cmd, steer_control_enabled)))
 
 
-@add_regen_tests
 class PandaSafetyTest(PandaSafetyTestBase):
   TX_MSGS: Optional[List[List[int]]] = None
   SCANNED_ADDRS = [*range(0x800),                      # Entire 11-bit CAN address space
@@ -757,16 +760,131 @@ class PandaSafetyTest(PandaSafetyTestBase):
                    *range(0x18DB00F1, 0x18DC00F1, 0x100),   # 29-bit UDS functional addressing
                    *range(0x3300, 0x3400),                  # Honda
                    0x10400060, 0x104c006c]                  # GMLAN (exceptions, range/format unclear)
-  STANDSTILL_THRESHOLD: Optional[float] = None
-  GAS_PRESSED_THRESHOLD = 0
-  RELAY_MALFUNCTION_ADDR: Optional[int] = None
-  RELAY_MALFUNCTION_BUS: Optional[int] = None
   FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}  # {bus: [addr]}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
 
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "PandaSafetyTest" or cls.__name__.endswith('Base'):
+      cls.safety = None
+      raise unittest.SkipTest
+
+  # ***** standard tests for all safety modes *****
+
+  def test_tx_msg_in_scanned_range(self):
+    # the relay malfunction, fwd hook, and spam can tests don't exhaustively
+    # scan the entire 29-bit address space, only some known important ranges
+    # make sure SCANNED_ADDRS stays up to date with car port TX_MSGS; new
+    # model ports should expand the range if needed
+    for msg in self.TX_MSGS:
+      self.assertTrue(msg[0] in self.SCANNED_ADDRS, f"{msg[0]=:#x}")
+
+  def test_fwd_hook(self):
+    # some safety modes don't forward anything, while others blacklist msgs
+    for bus in range(3):
+      for addr in self.SCANNED_ADDRS:
+        # assume len 8
+        fwd_bus = self.FWD_BUS_LOOKUP.get(bus, -1)
+        if bus in self.FWD_BLACKLISTED_ADDRS and addr in self.FWD_BLACKLISTED_ADDRS[bus]:
+          fwd_bus = -1
+        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, addr), f"{addr=:#x} from {bus=} to {fwd_bus=}")
+
+  def test_spam_can_buses(self):
+    for bus in range(4):
+      for addr in self.SCANNED_ADDRS:
+        if [addr, bus] not in self.TX_MSGS:
+          self.assertFalse(self._tx(make_msg(bus, addr, 8)), f"allowed TX {addr=} {bus=}")
+
+  def test_default_controls_not_allowed(self):
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_manually_enable_controls_allowed(self):
+    self.safety.set_controls_allowed(1)
+    self.assertTrue(self.safety.get_controls_allowed())
+    self.safety.set_controls_allowed(0)
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_tx_hook_on_wrong_safety_mode(self):
+    files = os.listdir(os.path.dirname(os.path.realpath(__file__)))
+    test_files = [f for f in files if f.startswith("test_") and f.endswith(".py")]
+
+    current_test = self.__class__.__name__
+
+    all_tx = []
+    for tf in test_files:
+      test = importlib.import_module("panda.tests.safety."+tf[:-3])
+      for attr in dir(test):
+        if attr.startswith("Test") and attr != current_test:
+          tc = getattr(test, attr)
+          tx = tc.TX_MSGS
+          if tx is not None and not attr.endswith('Base'):
+            # No point in comparing different Tesla safety modes
+            if 'Tesla' in attr and 'Tesla' in current_test:
+              continue
+            # No point in comparing to ALLOUTPUT which allows all messages
+            if attr.startswith('TestAllOutput'):
+              continue
+            if attr.startswith('TestToyota') and current_test.startswith('TestToyota'):
+              continue
+            if {attr, current_test}.issubset({'TestSubaruGen1TorqueStockLongitudinalSafety', 'TestSubaruGen2TorqueStockLongitudinalSafety',
+                                              'TestSubaruGen1LongitudinalSafety', 'TestSubaruGen2LongitudinalSafety'}):
+              continue
+            if {attr, current_test}.issubset({'TestVolkswagenPqSafety', 'TestVolkswagenPqStockSafety', 'TestVolkswagenPqLongSafety'}):
+              continue
+            if {attr, current_test}.issubset({'TestGmCameraSafety', 'TestGmCameraLongitudinalSafety'}):
+              continue
+            if attr.startswith('TestFord') and current_test.startswith('TestFord'):
+              continue
+            if attr.startswith('TestHyundaiCanfd') and current_test.startswith('TestHyundaiCanfd'):
+              continue
+            if {attr, current_test}.issubset({'TestVolkswagenMqbSafety', 'TestVolkswagenMqbStockSafety', 'TestVolkswagenMqbLongSafety'}):
+              continue
+
+            # overlapping TX addrs, but they're not actuating messages for either car
+            if attr == 'TestHyundaiCanfdHDA2LongEV' and current_test.startswith('TestToyota'):
+              tx = list(filter(lambda m: m[0] not in [0x160, ], tx))
+
+            # Volkswagen MQB longitudinal actuating message overlaps with the Subaru lateral actuating message
+            if attr == 'TestVolkswagenMqbLongSafety' and current_test.startswith('TestSubaru'):
+              tx = list(filter(lambda m: m[0] not in [0x122, ], tx))
+
+            # Volkswagen MQB and Honda Nidec ACC HUD messages overlap
+            if attr == 'TestVolkswagenMqbLongSafety' and current_test.startswith('TestHondaNidec'):
+              tx = list(filter(lambda m: m[0] not in [0x30c, ], tx))
+
+            # Volkswagen MQB and Honda Bosch Radarless ACC HUD messages overlap
+            if attr == 'TestVolkswagenMqbLongSafety' and current_test.startswith('TestHondaBoschRadarless'):
+              tx = list(filter(lambda m: m[0] not in [0x30c, ], tx))
+
+            # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
+            if attr.startswith('TestHonda'):
+              # exceptions for common msgs across different hondas
+              tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C, 0x33D], tx))
+            all_tx.append([[m[0], m[1], attr] for m in tx])
+
+    # make sure we got all the msgs
+    self.assertTrue(len(all_tx) >= len(test_files)-1)
+
+    for tx_msgs in all_tx:
+      for addr, bus, test_name in tx_msgs:
+        msg = make_msg(bus, addr)
+        self.safety.set_controls_allowed(1)
+        # TODO: this should be blocked
+        if current_test in ["TestNissanSafety", "TestNissanSafetyAltEpsBus", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
+          continue
+        self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} during {current_test} was allowed")
+
+
+@add_regen_tests
+class PandaCarSafetyTest(PandaSafetyTest):
+  STANDSTILL_THRESHOLD: Optional[float] = None
+  GAS_PRESSED_THRESHOLD = 0
+  RELAY_MALFUNCTION_ADDR: Optional[int] = None
+  RELAY_MALFUNCTION_BUS: Optional[int] = None
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "PandaCarSafetyTest" or cls.__name__.endswith('Base'):
       cls.safety = None
       raise unittest.SkipTest
 
@@ -793,15 +911,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
   def _pcm_status_msg(self, enable):
     pass
 
-  # ***** standard tests for all safety modes *****
-
-  def test_tx_msg_in_scanned_range(self):
-    # the relay malfunction, fwd hook, and spam can tests don't exhaustively
-    # scan the entire 29-bit address space, only some known important ranges
-    # make sure SCANNED_ADDRS stays up to date with car port TX_MSGS; new
-    # model ports should expand the range if needed
-    for msg in self.TX_MSGS:
-      self.assertTrue(msg[0] in self.SCANNED_ADDRS, f"{msg[0]=:#x}")
+  # ***** standard tests for all car-specific safety modes *****
 
   def test_relay_malfunction(self):
     # each car has an addr that is used to detect relay malfunction
@@ -814,31 +924,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
       for addr in self.SCANNED_ADDRS:
         self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
         self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr))
-
-  def test_fwd_hook(self):
-    # some safety modes don't forward anything, while others blacklist msgs
-    for bus in range(3):
-      for addr in self.SCANNED_ADDRS:
-        # assume len 8
-        fwd_bus = self.FWD_BUS_LOOKUP.get(bus, -1)
-        if bus in self.FWD_BLACKLISTED_ADDRS and addr in self.FWD_BLACKLISTED_ADDRS[bus]:
-          fwd_bus = -1
-        self.assertEqual(fwd_bus, self.safety.safety_fwd_hook(bus, addr), f"{addr=:#x} from {bus=} to {fwd_bus=}")
-
-  def test_spam_can_buses(self):
-    for bus in range(4):
-      for addr in self.SCANNED_ADDRS:
-        if [addr, bus] not in self.TX_MSGS:
-          self.assertFalse(self._tx(make_msg(bus, addr, 8)), f"allowed TX {addr=} {bus=}")
-
-  def test_default_controls_not_allowed(self):
-    self.assertFalse(self.safety.get_controls_allowed())
-
-  def test_manually_enable_controls_allowed(self):
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self.safety.get_controls_allowed())
-    self.safety.set_controls_allowed(0)
-    self.assertFalse(self.safety.get_controls_allowed())
 
   def test_prev_gas(self):
     self.assertFalse(self.safety.get_gas_pressed_prev())
@@ -953,70 +1038,3 @@ class PandaSafetyTest(PandaSafetyTestBase):
     # past threshold
     self._rx(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD + 1))
     self.assertTrue(self.safety.get_vehicle_moving())
-
-  def test_tx_hook_on_wrong_safety_mode(self):
-    files = os.listdir(os.path.dirname(os.path.realpath(__file__)))
-    test_files = [f for f in files if f.startswith("test_") and f.endswith(".py")]
-
-    current_test = self.__class__.__name__
-
-    all_tx = []
-    for tf in test_files:
-      test = importlib.import_module("panda.tests.safety."+tf[:-3])
-      for attr in dir(test):
-        if attr.startswith("Test") and attr != current_test:
-          tc = getattr(test, attr)
-          tx = tc.TX_MSGS
-          if tx is not None and not attr.endswith('Base'):
-            # No point in comparing different Tesla safety modes
-            if 'Tesla' in attr and 'Tesla' in current_test:
-              continue
-            if attr.startswith('TestToyota') and current_test.startswith('TestToyota'):
-              continue
-            if {attr, current_test}.issubset({'TestSubaruGen1TorqueStockLongitudinalSafety', 'TestSubaruGen2TorqueStockLongitudinalSafety',
-                                              'TestSubaruGen1LongitudinalSafety', 'TestSubaruGen2LongitudinalSafety'}):
-              continue
-            if {attr, current_test}.issubset({'TestVolkswagenPqSafety', 'TestVolkswagenPqStockSafety', 'TestVolkswagenPqLongSafety'}):
-              continue
-            if {attr, current_test}.issubset({'TestGmCameraSafety', 'TestGmCameraLongitudinalSafety'}):
-              continue
-            if attr.startswith('TestFord') and current_test.startswith('TestFord'):
-              continue
-            if attr.startswith('TestHyundaiCanfd') and current_test.startswith('TestHyundaiCanfd'):
-              continue
-            if {attr, current_test}.issubset({'TestVolkswagenMqbSafety', 'TestVolkswagenMqbStockSafety', 'TestVolkswagenMqbLongSafety'}):
-              continue
-
-            # overlapping TX addrs, but they're not actuating messages for either car
-            if attr == 'TestHyundaiCanfdHDA2LongEV' and current_test.startswith('TestToyota'):
-              tx = list(filter(lambda m: m[0] not in [0x160, ], tx))
-
-            # Volkswagen MQB longitudinal actuating message overlaps with the Subaru lateral actuating message
-            if attr == 'TestVolkswagenMqbLongSafety' and current_test.startswith('TestSubaru'):
-              tx = list(filter(lambda m: m[0] not in [0x122, ], tx))
-
-            # Volkswagen MQB and Honda Nidec ACC HUD messages overlap
-            if attr == 'TestVolkswagenMqbLongSafety' and current_test.startswith('TestHondaNidec'):
-              tx = list(filter(lambda m: m[0] not in [0x30c, ], tx))
-
-            # Volkswagen MQB and Honda Bosch Radarless ACC HUD messages overlap
-            if attr == 'TestVolkswagenMqbLongSafety' and current_test.startswith('TestHondaBoschRadarless'):
-              tx = list(filter(lambda m: m[0] not in [0x30c, ], tx))
-
-            # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
-            if attr.startswith('TestHonda'):
-              # exceptions for common msgs across different hondas
-              tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C, 0x33D], tx))
-            all_tx.append([[m[0], m[1], attr] for m in tx])
-
-    # make sure we got all the msgs
-    self.assertTrue(len(all_tx) >= len(test_files)-1)
-
-    for tx_msgs in all_tx:
-      for addr, bus, test_name in tx_msgs:
-        msg = make_msg(bus, addr)
-        self.safety.set_controls_allowed(1)
-        # TODO: this should be blocked
-        if current_test in ["TestNissanSafety", "TestNissanSafetyAltEpsBus", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
-          continue
-        self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} during {current_test} was allowed")
