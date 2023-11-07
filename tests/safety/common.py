@@ -920,11 +920,12 @@ class PandaCarSafetyTest(PandaSafetyTest):
     # protection logic: both tx_hook and fwd_hook are expected to return failure
 
     # test relay malfunction addresses match between tests and safety
+    self.assertFalse(self.safety.get_relay_malfunction())
     for bus in range(3):
       for addr in self.SCANNED_ADDRS:
         self.safety.set_relay_malfunction(False)
         self._rx(make_msg(bus, addr, 8))
-        should_relay_malfunction = bus in self.RELAY_MALFUNCTION_ADDRS and addr in self.RELAY_MALFUNCTION_ADDRS[bus]
+        should_relay_malfunction = addr in self.RELAY_MALFUNCTION_ADDRS.get(bus, ())
         self.assertEqual(should_relay_malfunction, self.safety.get_relay_malfunction())
 
     # test relay malfunction protection logic
