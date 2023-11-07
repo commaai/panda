@@ -9,8 +9,7 @@ from panda.tests.safety.common import CANPackerPanda
 class TestSubaruPreglobalSafety(common.PandaCarSafetyTest, common.DriverTorqueSteeringSafetyTest):
   TX_MSGS = [[0x161, 0], [0x164, 0]]
   STANDSTILL_THRESHOLD = 0  # kph
-  RELAY_MALFUNCTION_ADDR = 0x164
-  RELAY_MALFUNCTION_BUS = 0
+  RELAY_MALFUNCTION_ADDRS = {0: (0x164,)}
   FWD_BLACKLISTED_ADDRS = {2: [0x161, 0x164]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 

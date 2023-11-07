@@ -879,9 +879,9 @@ class PandaSafetyTest(PandaSafetyTestBase):
 class PandaCarSafetyTest(PandaSafetyTest):
   STANDSTILL_THRESHOLD: Optional[float] = None
   GAS_PRESSED_THRESHOLD = 0
-  RELAY_MALFUNCTION_ADDR: Optional[int] = None
+  # RELAY_MALFUNCTION_ADDR: Optional[int] = None
+  # RELAY_MALFUNCTION_BUS: Optional[int] = None
   RELAY_MALFUNCTION_ADDRS: Optional[Dict[int, Tuple[int, ...]]] = None
-  RELAY_MALFUNCTION_BUS: Optional[int] = None
 
   @classmethod
   def setUpClass(cls):

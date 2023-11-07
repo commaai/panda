@@ -519,7 +519,7 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
     not_tester_present = libpanda_py.make_CANPacket(0x18DAB0F1, self.PT_BUS, b"\x03\xAA\xAA\x00\x00\x00\x00\x00")
     self.assertFalse(self._tx(not_tester_present))
 
-  def test_radar_alive(self):
+  def test_radar_alive(self):  # TODO: remove me
     # If the radar knockout failed, make sure the relay malfunction is shown
     self.assertFalse(self.safety.get_relay_malfunction())
     self._rx(make_msg(self.PT_BUS, 0x1DF, 8))
