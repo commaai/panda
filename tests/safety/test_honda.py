@@ -493,6 +493,7 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
   STEER_BUS = 1
   TX_MSGS = [[0xE4, 1], [0x1DF, 1], [0x1EF, 1], [0x1FA, 1], [0x30C, 1], [0x33D, 1], [0x33DA, 1], [0x33DB, 1], [0x39F, 1], [0x18DAB0F1, 1]]
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB]}
+  # 0x1DF is to test that radar is disabled
   RELAY_MALFUNCTION_ADDRS = {0: (0xE4, 0x194), 1: (0x1DF,)}  # STEERING_CONTROL, ACC_CONTROL
 
   def setUp(self):
@@ -518,12 +519,6 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
 
     not_tester_present = libpanda_py.make_CANPacket(0x18DAB0F1, self.PT_BUS, b"\x03\xAA\xAA\x00\x00\x00\x00\x00")
     self.assertFalse(self._tx(not_tester_present))
-
-  def test_radar_alive(self):  # TODO: remove me
-    # If the radar knockout failed, make sure the relay malfunction is shown
-    self.assertFalse(self.safety.get_relay_malfunction())
-    self._rx(make_msg(self.PT_BUS, 0x1DF, 8))
-    self.assertTrue(self.safety.get_relay_malfunction())
 
   def test_gas_safety_check(self):
     for controls_allowed in [True, False]:
