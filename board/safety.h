@@ -135,6 +135,7 @@ int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], cons
   int addr = GET_ADDR(to_push);
   int length = GET_LEN(to_push);
 
+
   int index = -1;
   for (int i = 0; i < len; i++) {
     // if multiple msgs are allowed, determine which one is present on the bus
@@ -158,6 +159,7 @@ int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], cons
       }
     }
   }
+//  print("bus: "); puth(bus); print(", addr: "); puth(addr); print(", len: "); puth(length); print(", index: "); puth(index); print("\n");
   return index;
 }
 
@@ -198,6 +200,7 @@ void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
 bool is_msg_valid(AddrCheckStruct addr_list[], int index) {
   bool valid = true;
   if (index != -1) {
+//    print("index: "); puth(index); print(", wrong counters: "); puth(addr_list[index].wrong_counters); print("\n");
     if (!addr_list[index].valid_checksum || !addr_list[index].valid_quality_flag || (addr_list[index].wrong_counters >= MAX_WRONG_COUNTERS)) {
       valid = false;
       controls_allowed = false;

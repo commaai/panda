@@ -21,10 +21,17 @@ const LongitudinalLimits TOYOTA_LONG_LIMITS = {
   .min_accel = -3500,  // -3.5 m/s2
 };
 
-// panda interceptor threshold needs to be equivalent to openpilot threshold to avoid controls mismatches
-// If thresholds are mismatched then it is possible for panda to see the gas fall and rise while openpilot is in the pre-enabled state
-// Threshold calculated from DBC gains: round((((15 + 75.555) / 0.159375) + ((15 + 151.111) / 0.159375)) / 2) = 805
-const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 805;
+//// panda interceptor threshold needs to be equivalent to openpilot threshold to avoid controls mismatches
+//// If thresholds are mismatched then it is possible for panda to see the gas fall and rise while openpilot is in the pre-enabled state
+//// Threshold calculated from DBC gains: round((((15 + 75.555) / 0.159375) + ((15 + 151.111) / 0.159375)) / 2) = 805
+const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 845;
+
+//// Roughly calculated using the offsets in openpilot +5%:
+//// In openpilot: ((gas1_norm + gas2_norm)/2) > 15
+//// gas_norm1 = ((gain_dbc*gas1) + offset1_dbc)
+//// gas_norm2 = ((gain_dbc*gas2) + offset2_dbc)
+//// In this safety: ((gas1 + gas2)/2) > THRESHOLD
+//const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 845;
 #define TOYOTA_GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + (GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2U) // avg between 2 tracks
 
 const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0x33E, 0, 7}, {0x344, 0, 8}, {0x365, 0, 7}, {0x366, 0, 7}, {0x4CB, 0, 8},  // DSU bus 0
@@ -33,6 +40,7 @@ const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0
                                  {0x200, 0, 6}};  // interceptor
 
 AddrCheckStruct toyota_addr_checks[] = {
+  {.msg = {{ 0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .expected_timestep = 0U}, { 0 }, { 0 }}},
   {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .expected_timestep = 12000U}, { 0 }, { 0 }}},
   {.msg = {{0x260, 0, 8, .check_checksum = true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{0x1D2, 0, 8, .check_checksum = true, .expected_timestep = 30000U}, { 0 }, { 0 }}},
@@ -70,10 +78,23 @@ static uint32_t toyota_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)(GET_BYTE(to_push, checksum_byte));
 }
 
+static uint8_t toyota_get_counter(CANPacket_t *to_push) {
+  int addr = GET_ADDR(to_push);
+
+  uint8_t cnt = 0U;
+  if (addr == 0x201) {
+    // Signal: COUNTER_PEDAL
+    cnt = (GET_BYTE(to_push, 4)) & 0x0FU;
+  }
+  return cnt;
+}
+
 static int toyota_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &toyota_rx_checks,
-                                 toyota_get_checksum, toyota_compute_checksum, NULL, NULL);
+                                 toyota_get_checksum, toyota_compute_checksum, toyota_get_counter, NULL);
+
+//  print("safety, addr: "); puth(GET_ADDR(to_push)); print("\n");
 
   if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
@@ -97,8 +118,10 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
     // enter controls on rising edge of ACC, exit controls on ACC off
     // exit controls on rising edge of gas press
     if (addr == 0x1D2) {
+//      print("we are here\n");
       // 5th bit is CRUISE_ACTIVE
       bool cruise_engaged = GET_BIT(to_push, 5U) != 0U;
+//      print("cruise engaged: "); puth(cruise_engaged); print("\n");
       pcm_cruise_check(cruise_engaged);
 
       // sample gas pedal
@@ -111,6 +134,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
       // check that all wheel speeds are at zero value with offset
       bool standstill = (GET_BYTES(to_push, 0, 4) == 0x6F1A6F1AU) && (GET_BYTES(to_push, 4, 4) == 0x6F1A6F1AU);
       vehicle_moving = !standstill;
+//      print("panda standstill: "); puth(standstill); print("\n");
     }
 
     // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224
@@ -123,6 +147,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
     if (addr == 0x201) {
       gas_interceptor_detected = 1;
       int gas_interceptor = TOYOTA_GET_INTERCEPTOR(to_push);
+//      print("gas_interceptor: "); puth(gas_interceptor); print("\n");
       gas_pressed = gas_interceptor > TOYOTA_GAS_INTERCEPTOR_THRSLD;
 
       // TODO: remove this, only left in for gas_interceptor_prev test
