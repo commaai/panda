@@ -21,8 +21,7 @@ class TestVolkswagenPqSafety(common.PandaCarSafetyTest, common.DriverTorqueSteer
   cruise_engaged = False
 
   STANDSTILL_THRESHOLD = 0
-  RELAY_MALFUNCTION_ADDR = MSG_HCA_1
-  RELAY_MALFUNCTION_BUS = 0
+  RELAY_MALFUNCTION_ADDRS = {0: (MSG_HCA_1,)}
 
   MAX_RATE_UP = 6
   MAX_RATE_DOWN = 10

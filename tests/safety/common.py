@@ -3,7 +3,7 @@ import abc
 import unittest
 import importlib
 import numpy as np
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Tuple
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
@@ -879,8 +879,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
 class PandaCarSafetyTest(PandaSafetyTest):
   STANDSTILL_THRESHOLD: Optional[float] = None
   GAS_PRESSED_THRESHOLD = 0
-  RELAY_MALFUNCTION_ADDR: Optional[int] = None
-  RELAY_MALFUNCTION_BUS: Optional[int] = None
+  RELAY_MALFUNCTION_ADDRS: Optional[Dict[int, Tuple[int, ...]]] = None
 
   @classmethod
   def setUpClass(cls):
@@ -918,8 +917,15 @@ class PandaCarSafetyTest(PandaSafetyTest):
     # if that addr is seen on specified bus, triggers the relay malfunction
     # protection logic: both tx_hook and fwd_hook are expected to return failure
     self.assertFalse(self.safety.get_relay_malfunction())
-    self._rx(make_msg(self.RELAY_MALFUNCTION_BUS, self.RELAY_MALFUNCTION_ADDR, 8))
-    self.assertTrue(self.safety.get_relay_malfunction())
+    for bus in range(3):
+      for addr in self.SCANNED_ADDRS:
+        self.safety.set_relay_malfunction(False)
+        self._rx(make_msg(bus, addr, 8))
+        should_relay_malfunction = addr in self.RELAY_MALFUNCTION_ADDRS.get(bus, ())
+        self.assertEqual(should_relay_malfunction, self.safety.get_relay_malfunction(), (bus, addr))
+
+    # test relay malfunction protection logic
+    self.safety.set_relay_malfunction(True)
     for bus in range(3):
       for addr in self.SCANNED_ADDRS:
         self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
