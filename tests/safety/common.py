@@ -928,8 +928,8 @@ class PandaCarSafetyTest(PandaSafetyTest):
     self.safety.set_relay_malfunction(True)
     for bus in range(3):
       for addr in self.SCANNED_ADDRS:
-        self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)), (bus, addr))
-        self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr), (bus, addr))
+        self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
+        self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr))
 
   def test_prev_gas(self):
     self.assertFalse(self.safety.get_gas_pressed_prev())
