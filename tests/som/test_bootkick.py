@@ -133,8 +133,7 @@ def test_bootkick_can_ignition(p, pj):
 def test_recovery_from_qdl(p, pj):
   setup_state(p, pj, "ready to bootkick")
 
-  # TODO: check that we went into QDL
-  # put into QDL, using the FORCE_USB_BOOT pin
+  # put into QDL using the FORCE_USB_BOOT pin
   for i in range(10):
     pj.set_header_pin(i, 1)
 
@@ -147,7 +146,7 @@ def test_recovery_from_qdl(p, pj):
     assert not p.read_som_gpio()
     time.sleep(1)
 
-  # no QDL
+  # release FORCE_USB_BOOT
   for i in range(10):
     pj.set_header_pin(i, 0)
 
