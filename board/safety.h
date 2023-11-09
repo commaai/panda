@@ -200,12 +200,13 @@ void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
 bool is_msg_valid(AddrCheckStruct addr_list[], int index) {
   bool valid = true;
   if (index != -1) {
-//    print("index: "); puth(index); print(", wrong counters: "); puth(addr_list[index].wrong_counters); print("\n");
+    print("index: "); puth(index); print(", wrong counters: "); puth(addr_list[index].wrong_counters); print("\n");
     if (!addr_list[index].valid_checksum || !addr_list[index].valid_quality_flag || (addr_list[index].wrong_counters >= MAX_WRONG_COUNTERS)) {
       valid = false;
       controls_allowed = false;
     }
   }
+  print("index: "); puth(index); print(", valid: "); puth(valid); print("\n");
   return valid;
 }
 
@@ -225,6 +226,8 @@ bool addr_safety_check(CANPacket_t *to_push,
 
   int index = get_addr_check_index(to_push, rx_checks->check, rx_checks->len);
   update_addr_timestamp(rx_checks->check, index);
+
+//  print("index: "); puth(index); print("\n");
 
   if (index != -1) {
     // checksum check
