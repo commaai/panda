@@ -49,23 +49,8 @@ void dos_set_led(uint8_t color, bool enabled) {
   }
 }
 
-void dos_set_bootkick(bool enabled){
-  set_gpio_output(GPIOC, 4, !enabled);
-}
-
-bool dos_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool harness_inserted) {
-  bool ret = false;
-  if ((ignition && !usb_enum) || harness_inserted) {
-    // enable bootkick if ignition seen or if plugged into a harness
-    ret = true;
-    dos_set_bootkick(true);
-  } else if (heartbeat_seen) {
-    // disable once openpilot is up
-    dos_set_bootkick(false);
-  } else {
-
-  }
-  return ret;
+void dos_set_bootkick(BootState state) {
+  set_gpio_output(GPIOC, 4, state != BOOT_BOOTKICK);
 }
 
 void dos_set_can_mode(uint8_t mode) {
@@ -208,7 +193,6 @@ const harness_configuration dos_harness_config = {
 
 const board board_dos = {
   .board_type = "Dos",
-  .board_tick = dos_board_tick,
   .harness_config = &dos_harness_config,
   .has_hw_gmlan = false,
   .has_obd = true,
@@ -236,5 +220,6 @@ const board board_dos = {
   .set_ir_power = dos_set_ir_power,
   .set_phone_power = unused_set_phone_power,
   .set_siren = dos_set_siren,
+  .set_bootkick = dos_set_bootkick,
   .read_som_gpio = dos_read_som_gpio
 };
