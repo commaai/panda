@@ -28,27 +28,35 @@ void bootkick_tick(bool ignition, bool recent_heartbeat) {
     if (current_board->read_som_gpio() || (boot_state != BOOT_BOOTKICK)) {
       waiting_to_boot_countdown = 0U;
     } else {
-      waiting_to_boot_countdown -= 1U;
-
       // try a reset
-      if (waiting_to_boot_countdown == 0U) {
+      if (waiting_to_boot_countdown == 1U) {
         boot_reset_countdown = 5U;
       }
     }
   }
 
+  /*
+    reset behavior:
+    * only try once per bootkick
+    * once BOOT_RESET is triggered, it stays in that state until the countdown is done (no early exit)
+  */
   if (boot_reset_countdown > 0U) {
-    boot_reset_countdown--;
     boot_state = BOOT_RESET;
     bootkick_reset_triggered = true;
-  } else if (boot_state == BOOT_RESET) {
-    boot_state = BOOT_BOOTKICK;
   } else {
-
+    if (boot_state == BOOT_RESET) {
+      boot_state = BOOT_BOOTKICK;
+    }
   }
 
   // update state
   bootkick_ign_prev = ignition;
   bootkick_harness_status_prev = harness.status;
+  if (waiting_to_boot_countdown > 0U) {
+    waiting_to_boot_countdown--;
+  }
+  if (boot_reset_countdown > 0U) {
+    boot_reset_countdown--;
+  }
   current_board->set_bootkick(boot_state);
 }
