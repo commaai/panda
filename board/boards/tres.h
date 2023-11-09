@@ -16,7 +16,7 @@ void tres_set_ir_power(uint8_t percentage){
 
 void tres_set_bootkick(BootState state) {
   set_gpio_output(GPIOA, 0, state != BOOT_BOOTKICK);
-  set_gpio_output(GPIOC, 12, state != BOOT_RESET);
+  set_gpio_output(GPIOC, 12, 1);
 }
 
 void tres_set_fan_enabled(bool enabled) {
