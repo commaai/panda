@@ -20,8 +20,14 @@ void bootkick_tick(bool ignition, bool recent_heartbeat) {
 
   }
 
-  // ensure SOM boots
-  if ((boot_state == BOOT_BOOTKICK) && (boot_state_prev == BOOT_STANDBY)) {
+  /*
+    Ensure SOM boots in case it goes into QDL mode. Reset behavior:
+    * shouldn't trigger on the first boot after power-on
+    * only try reset once per bootkick, i.e. don't keep trying until booted
+    * only try once per panda boot, since openpilot will reset panda on startup
+    * once BOOT_RESET is triggered, it stays until countdown is finished
+  */
+  if ((boot_state == BOOT_BOOTKICK) && (boot_state_prev == BOOT_STANDBY) && !bootkick_reset_triggered) {
     waiting_to_boot_countdown = 45U;
   }
   if (waiting_to_boot_countdown > 0U) {
@@ -35,11 +41,7 @@ void bootkick_tick(bool ignition, bool recent_heartbeat) {
     }
   }
 
-  /*
-    reset behavior:
-    * only try once per bootkick
-    * once BOOT_RESET is triggered, it stays in that state until the countdown is done (no early exit)
-  */
+  // handle reset state
   if (boot_reset_countdown > 0U) {
     boot_state = BOOT_RESET;
     bootkick_reset_triggered = true;
