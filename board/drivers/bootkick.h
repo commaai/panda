@@ -27,7 +27,7 @@ void bootkick_tick(bool ignition, bool recent_heartbeat) {
     * only try once per panda boot, since openpilot will reset panda on startup
     * once BOOT_RESET is triggered, it stays until countdown is finished
   */
-  if ((boot_state == BOOT_BOOTKICK) && (boot_state_prev == BOOT_STANDBY) && !bootkick_reset_triggered) {
+  if (!bootkick_reset_triggerd && (boot_state == BOOT_BOOTKICK) && (boot_state_prev == BOOT_STANDBY)) {
     waiting_to_boot_countdown = 45U;
   }
   if (waiting_to_boot_countdown > 0U) {

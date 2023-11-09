@@ -14,15 +14,14 @@ def pj():
   jungle = PandaJungle(JUNGLE_SERIAL)
   jungle.flash()
 
-  #jungle.reset()
+  jungle.reset()
   jungle.set_ignition(False)
 
   yield jungle
 
-  #jungle.set_panda_power(False)
+  jungle.set_panda_power(False)
   jungle.close()
 
-# TODO: the on-device script relies on the health packet, so this
 @pytest.fixture(scope="function")
 def p(pj):
   # note that the 3X's panda lib isn't updated, which
@@ -140,15 +139,16 @@ def test_recovery_from_qdl(p, pj):
   # try to boot
   time.sleep(1)
   pj.set_ignition(True)
-
-  # normally, this GPIO is set immediately since it's first enabled in the ABL
-  for i in range(30):
-    assert not p.read_som_gpio()
-    time.sleep(1)
+  time.sleep(3)
 
   # release FORCE_USB_BOOT
   for i in range(10):
     pj.set_header_pin(i, 0)
+
+  # normally, this GPIO is set immediately since it's first enabled in the ABL
+  for i in range(40):
+    assert not p.read_som_gpio()
+    time.sleep(1)
 
   # should boot after 45s
   wait_for_boot(p, pj, reset_expected=True, bootkick=True, timeout=120)
