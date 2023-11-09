@@ -49,7 +49,7 @@ def setup_state(panda, jungle, state):
     wait_for_full_poweroff(jungle)
     jungle.set_panda_individual_power(OBDC_PORT, 1)
     wait_for_boot(panda, jungle)
-    set_som_shutdown_flag()
+    set_som_shutdown_flag(panda)
     panda.send_heartbeat()
     wait_for_som_shutdown(panda, jungle)
   else:
