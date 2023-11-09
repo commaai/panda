@@ -24,6 +24,8 @@ def pj():
 
 @pytest.fixture(scope="function")
 def p(pj):
+  # note that the 3X's panda lib isn't updated, which
+  # shold be fine since it only uses stable APIs
   pj.set_panda_power(True)
   assert Panda.wait_for_panda(PANDA_SERIAL, 10)
   p = Panda(PANDA_SERIAL)
