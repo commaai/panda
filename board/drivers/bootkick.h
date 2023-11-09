@@ -5,6 +5,7 @@ uint8_t bootkick_harness_status_prev = HARNESS_STATUS_NC;
 uint8_t boot_reset_countdown = 0;
 uint8_t waiting_to_boot_countdown = 0;
 bool bootkick_reset_triggered = false;
+uint16_t bootkick_last_serial_ptr = 0;
 
 void bootkick_tick(bool ignition, bool recent_heartbeat) {
   BootState boot_state_prev = boot_state;
@@ -27,11 +28,12 @@ void bootkick_tick(bool ignition, bool recent_heartbeat) {
     * only try once per panda boot, since openpilot will reset panda on startup
     * once BOOT_RESET is triggered, it stays until countdown is finished
   */
-  if (!bootkick_reset_triggerd && (boot_state == BOOT_BOOTKICK) && (boot_state_prev == BOOT_STANDBY)) {
+  if (!bootkick_reset_triggered && (boot_state == BOOT_BOOTKICK) && (boot_state_prev == BOOT_STANDBY)) {
     waiting_to_boot_countdown = 45U;
   }
   if (waiting_to_boot_countdown > 0U) {
-    if (current_board->read_som_gpio() || (boot_state != BOOT_BOOTKICK)) {
+    bool serial_activity = uart_ring_som_debug.w_ptr_tx != bootkick_last_serial_ptr;
+    if (serial_activity || current_board->read_som_gpio() || (boot_state != BOOT_BOOTKICK)) {
       waiting_to_boot_countdown = 0U;
     } else {
       // try a reset
@@ -54,6 +56,7 @@ void bootkick_tick(bool ignition, bool recent_heartbeat) {
   // update state
   bootkick_ign_prev = ignition;
   bootkick_harness_status_prev = harness.status;
+  bootkick_last_serial_ptr = uart_ring_som_debug.w_ptr_tx;
   if (waiting_to_boot_countdown > 0U) {
     waiting_to_boot_countdown--;
   }
