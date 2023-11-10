@@ -97,7 +97,7 @@ class TestHyundaiCanfdHDA1Base(TestHyundaiCanfdBase):
   @classmethod
   def setUpClass(cls):
     super().setUpClass()
-    if cls.__name__ in ("TestHyundaiCanfdHDA1", "TestHyundaiCanfdHDA1AltButtons", "TestHyundaiCanfdHDALong"):
+    if cls.__name__ in ("TestHyundaiCanfdHDA1", "TestHyundaiCanfdHDA1AltButtons"):
       cls.packer = None
       cls.safety = None
       raise unittest.SkipTest
@@ -244,9 +244,7 @@ class TestHyundaiCanfdHDALong(HyundaiLongitudinalBase, TestHyundaiCanfdHDA1Base)
   DISABLED_ECU_ACTUATION_MSG = (0x1a0, 0)
 
   STEER_MSG = "LFA"
-  # GAS_MSG = ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL")
   STEER_BUS = 0
-  # SCC_BUS = 2
 
   @classmethod
   def setUpClass(cls):
@@ -257,7 +255,6 @@ class TestHyundaiCanfdHDALong(HyundaiLongitudinalBase, TestHyundaiCanfdHDA1Base)
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpanda_py.libpanda
-    # self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CAMERA_SCC | Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_HYBRID_GAS)
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, self.SAFETY_PARAM)
     self.safety.init_tests()
 
