@@ -45,5 +45,8 @@ class TestBody(common.PandaSafetyTest):
     # TODO: what is 0xdeadfaceU and 0x0ab00b1eU? no address check?
 
 
+# TODO: add knee tests
+
+
 if __name__ == "__main__":
   unittest.main()
