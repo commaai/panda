@@ -44,6 +44,8 @@ int get_health_pkt(void *dat) {
   health->sbu1_voltage_mV = harness.sbu1_voltage_mV;
   health->sbu2_voltage_mV = harness.sbu2_voltage_mV;
 
+  health->som_reset_triggered = bootkick_reset_triggered;
+
   return sizeof(*health);
 }
 
@@ -196,6 +198,11 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // **** 0xc5: DEBUG: drive relay
     case 0xc5:
       set_intercept_relay((req->param1 & 0x1U), (req->param1 & 0x2U));
+      break;
+    // **** 0xc6: DEBUG: read SOM GPIO
+    case 0xc6:
+      resp[0] = current_board->read_som_gpio();
+      resp_len = 1;
       break;
     // **** 0xd0: fetch serial (aka the provisioned dongle ID)
     case 0xd0:
@@ -470,18 +477,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         bool ret = can_init(CAN_NUM_FROM_BUS_NUM(req->param1));
         UNUSED(ret);
       }
-      break;
-    // *** 0xfd: read logs
-    case 0xfd:
-      if (req->param1 == 1U) {
-        logging_init_read_index();
-      }
-
-      if (req->param2 != 0xFFFFU) {
-        logging_find_read_index(req->param2);
-      }
-
-      resp_len = logging_read(resp);
       break;
     default:
       print("NO HANDLER ");

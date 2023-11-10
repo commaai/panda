@@ -18,12 +18,13 @@ uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
 const int MAX_WRONG_COUNTERS = 5;
 const uint8_t MAX_MISSED_MSGS = 10U;
 #define MAX_ADDR_CHECK_MSGS 3U
+#define MAX_SAMPLE_VALS 6
 // used to represent floating point vehicle speed in a sample_t
 #define VEHICLE_SPEED_FACTOR 100.0
 
 // sample struct that keeps 6 samples in memory
 struct sample_t {
-  int values[6];
+  int values[MAX_SAMPLE_VALS];
   int min;
   int max;
 } sample_t_default = {.values = {0}, .min = 0, .max = 0};
@@ -137,6 +138,7 @@ int safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 int to_signed(int d, int bits);
 void update_sample(struct sample_t *sample, int sample_new);
+void reset_sample(struct sample_t *sample);
 bool max_limit_check(int val, const int MAX, const int MIN);
 bool angle_dist_to_meas_check(int val, struct sample_t *val_meas,
   const int MAX_ERROR, const int MAX_VAL);

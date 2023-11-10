@@ -11,7 +11,6 @@ pytestmark = [
 ]
 
 @pytest.mark.skip("doesn't work, bootloader seems to ignore commands once it sees junk")
-@pytest.mark.expected_logs(0)
 def test_dfu_with_spam(p):
   dfu_serial = p.get_dfu_serial()
 
@@ -38,7 +37,6 @@ class TestSpi:
     assert spy.call_count == 2
     mocker.stop(spy)
 
-  @pytest.mark.expected_logs(2)
   def test_protocol_version_check(self, p):
     for bootstub in (False, True):
       p.reset(enter_bootstub=bootstub)
@@ -50,7 +48,6 @@ class TestSpi:
         with pytest.raises(PandaProtocolMismatch):
           Panda(p._serial)
 
-  @pytest.mark.expected_logs(2)
   def test_protocol_version_data(self, p):
     for bootstub in (False, True):
       p.reset(enter_bootstub=bootstub)
@@ -96,11 +93,11 @@ class TestSpi:
     for _ in range(10):
       ep = random.randint(4, 20)
       with pytest.raises(PandaSpiNackResponse):
-        p._handle.bulkRead(ep, random.randint(1, 1000), timeout=35)
+        p._handle.bulkRead(ep, random.randint(1, 1000), timeout=50)
 
       self._ping(mocker, p)
 
       with pytest.raises(PandaSpiNackResponse):
-        p._handle.bulkWrite(ep, b"abc", timeout=35)
+        p._handle.bulkWrite(ep, b"abc", timeout=50)
 
       self._ping(mocker, p)

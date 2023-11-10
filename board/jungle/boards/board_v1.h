@@ -164,6 +164,7 @@ const board board_v1 = {
   .board_tick = &board_v1_tick,
   .get_button = &board_v1_get_button,
   .set_panda_power = &board_v1_set_panda_power,
+  .set_panda_individual_power = &unused_set_panda_individual_power,
   .set_ignition = &board_v1_set_ignition,
   .set_individual_ignition = &unused_set_individual_ignition,
   .set_harness_orientation = &board_v1_set_harness_orientation,

@@ -119,6 +119,14 @@ def test_gmlan_bad_toggle(p):
     assert comp_kbps_normal > (0.6 * SPEED_NORMAL)
     assert comp_kbps_normal < (1.0 * SPEED_NORMAL)
 
+@pytest.mark.panda_expect_can_error
+@pytest.mark.skip_panda_types(PandaGroup.GMLAN)
+def test_gmlan_bitbang(p):
+  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+  for _ in range(10):
+    p.can_send(0x10, b"data", 3)
+    time.sleep(0.1)
+  assert p.health()['gmlan_send_errs'] == 0
 
 # this will fail if you have hardware serial connected
 def test_serial_debug(p):

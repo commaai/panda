@@ -55,8 +55,8 @@ static int nissan_rx_hook(CANPacket_t *to_push) {
         // Current steering angle
         // Factor -0.1, little endian
         int angle_meas_new = (GET_BYTES(to_push, 0, 4) & 0xFFFFU);
-        // Need to multiply by 10 here as LKAS and Steering wheel are different base unit
-        angle_meas_new = to_signed(angle_meas_new, 16) * 10;
+        // Multiply by -10 to match scale of LKAS angle
+        angle_meas_new = to_signed(angle_meas_new, 16) * -10;
 
         // update array of samples
         update_sample(&angle_meas, angle_meas_new);
@@ -116,8 +116,8 @@ static int nissan_tx_hook(CANPacket_t *to_send) {
     int desired_angle = ((GET_BYTE(to_send, 0) << 10) | (GET_BYTE(to_send, 1) << 2) | ((GET_BYTE(to_send, 2) >> 6) & 0x3U));
     bool lka_active = (GET_BYTE(to_send, 6) >> 4) & 1U;
 
-    // offeset 1310 * NISSAN_STEERING_LIMITS.angle_deg_to_can
-    desired_angle =  desired_angle - 131000;
+    // Factor is -0.01, offset is 1310. Flip to correct sign, but keep units in CAN scale
+    desired_angle = -desired_angle + (1310 * NISSAN_STEERING_LIMITS.angle_deg_to_can);
 
     if (steer_angle_cmd_checks(desired_angle, lka_active, NISSAN_STEERING_LIMITS)) {
       violation = true;
