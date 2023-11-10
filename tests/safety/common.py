@@ -754,8 +754,8 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
 
 class PandaSafetyTest(PandaSafetyTestBase):
-  TX_MSGS: Optional[Set[Tuple[int, int]]] = None
-  SCANNED_ADDRS = {*range(0x800),                      # Entire 11-bit CAN address space
+  TX_MSGS: Optional[List[List[int]]] = None
+  SCANNED_ADDRS = [*range(0x800),                      # Entire 11-bit CAN address space
                    *range(0x18DA00F1, 0x18DB00F1, 0x100),   # 29-bit UDS physical addressing
                    *range(0x18DB00F1, 0x18DC00F1, 0x100),   # 29-bit UDS functional addressing
                    *range(0x3300, 0x3400),                  # Honda

@@ -130,7 +130,6 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
   def _speed_msg_2(self, speed: float, quality_flag=True):
     values = {"Veh_V_ActlEng": speed * 3.6, "VehVActlEng_D_Qf": 3 if quality_flag else 0, "VehVActlEng_No_Cnt": self.cnt_speed_2 % 16}
     self.__class__.cnt_speed_2 += 1
-    # print('EngVehicleSpThrottle2')
     return self.packer.make_can_msg_panda("EngVehicleSpThrottle2", 0, values, fix_checksum=checksum)
 
   # Standstill state
@@ -201,10 +200,7 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
   def test_rx_hook(self):
     # checksum, counter, and quality flag checks
     for quality_flag in [True, False]:
-      for msg in ["speed",
-                  "speed_2",
-                  "yaw"
-                  ]:
+      for msg in ["speed", "speed_2", "yaw"]:
         self.safety.set_controls_allowed(True)
         # send multiple times to verify counter checks
         for _ in range(10):
