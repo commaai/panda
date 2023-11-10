@@ -20,6 +20,7 @@ class TestElm327(TestDefaultRxHookBase):
     self.safety.init_tests()
 
   def test_tx_hook(self):
+    # ensure we can transmit arbitrary data on allowed addresses
     for bus in range(4):
       for addr in self.SCANNED_ADDRS:
         should_tx = [addr, bus] in self.TX_MSGS
