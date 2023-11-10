@@ -38,11 +38,17 @@ class TestBody(common.PandaSafetyTest):
     self.safety.set_controls_allowed(True)
     self.assertTrue(self._tx(self._torque_cmd_msg(0, 0)))
 
+  # TODO: test addr checks (timestep)
+
   def test_can_flasher_msg(self):
     # CAN flasher always allowed
     self.assertTrue(self._tx(common.make_msg(0, 0x1, 8)))
 
+    self.safety.set_controls_allowed(False)
+    self.assertFalse(self._tx(common.make_msg(0, 0x2, 8)))
     # TODO: what is 0xdeadfaceU and 0x0ab00b1eU? no address check?
+    self.assertTrue(self._tx(common.make_msg(0, 0x2, dat=b'\xce\xfa\xad\xde\x1e\x0b\xb0\x0a')))
+
 
 
 # TODO: add knee tests
