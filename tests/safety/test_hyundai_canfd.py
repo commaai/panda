@@ -97,7 +97,7 @@ class TestHyundaiCanfdHDA1Base(TestHyundaiCanfdBase):
   @classmethod
   def setUpClass(cls):
     super().setUpClass()
-    if cls.__name__ in ("TestHyundaiCanfdHDA1", "TestHyundaiCanfdHDA1AltButtons"):
+    if cls.__name__ in ("TestHyundaiCanfdHDA1", "TestHyundaiCanfdHDA1AltButtons", "TestHyundaiCanfdHDALong"):
       cls.packer = None
       cls.safety = None
       raise unittest.SkipTest
@@ -229,7 +229,14 @@ class TestHyundaiCanfdHDA2LongEV(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2EV
     return self.packer.make_can_msg_panda("SCC_CONTROL", 1, values)
 
 
-class TestHyundaiCanfdHDALongHybrid(HyundaiLongitudinalBase, TestHyundaiCanfdHDA1Base):
+# Tests HDA1 longitudinal for ICE, hybrid, EV
+@parameterized_class([
+  # Camera SCC is the only supported configuration for longitudinal, TODO: allow radar SCC
+  {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SCC_BUS": 2, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_CAMERA_SCC},
+  {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SCC_BUS": 2, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_EV_GAS | Panda.FLAG_HYUNDAI_CAMERA_SCC},
+  {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SCC_BUS": 2, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_HYBRID_GAS | Panda.FLAG_HYUNDAI_CAMERA_SCC},
+])
+class TestHyundaiCanfdHDALong(HyundaiLongitudinalBase, TestHyundaiCanfdHDA1Base):
 
   FWD_BLACKLISTED_ADDRS = {2: [0x12a, 0x1e0, 0x1a0]}
 
@@ -237,14 +244,21 @@ class TestHyundaiCanfdHDALongHybrid(HyundaiLongitudinalBase, TestHyundaiCanfdHDA
   DISABLED_ECU_ACTUATION_MSG = (0x1a0, 0)
 
   STEER_MSG = "LFA"
-  GAS_MSG = ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL")
+  # GAS_MSG = ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL")
   STEER_BUS = 0
-  SCC_BUS = 2
+  # SCC_BUS = 2
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "TestHyundaiCanfdHDALong":
+      cls.safety = None
+      raise unittest.SkipTest
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CAMERA_SCC | Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_HYBRID_GAS)
+    # self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CAMERA_SCC | Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_HYBRID_GAS)
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, self.SAFETY_PARAM)
     self.safety.init_tests()
 
   def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
