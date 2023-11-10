@@ -7,7 +7,15 @@ from panda import Panda
 from panda.tests.libpanda import libpanda_py
 
 
-class TestNoOutput(common.PandaSafetyTest):
+class TestDefaultRxHookBase(common.PandaSafetyTest):
+  def test_rx_hook(self):
+    # default rx hook allows all msgs
+    for bus in range(4):
+      for addr in self.SCANNED_ADDRS:
+        self.assertTrue(self._rx(common.make_msg(bus, addr, 8)), f"failed RX {addr=}")
+
+
+class TestNoOutput(TestDefaultRxHookBase):
   TX_MSGS = []
 
   def setUp(self):
@@ -15,18 +23,23 @@ class TestNoOutput(common.PandaSafetyTest):
     self.safety.set_safety_hooks(Panda.SAFETY_NOOUTPUT, 0)
     self.safety.init_tests()
 
-  def test_rx_hook(self):
-    for addr in self.SCANNED_ADDRS:
-      self.assertTrue(self._rx(common.make_msg(0, addr, 8)), f"not allowed RX {addr=}")
-
   def test_tx_lin_hook(self):
     for lin_num in range(2):
-      self.assertFalse(self._tx_lin(lin_num, b'\x00' * 8, 8), f"allowed TX LIN {lin_num=}")
+      self.assertFalse(self._tx_lin(0x0, lin_num, 0x0, 0x0, b'\x00' * 8), f"allowed TX LIN {lin_num=}")
 
 
-class TestAllOutput(common.PandaSafetyTest):
+class TestSilent(TestNoOutput):
+  """SILENT uses same hooks as NOOUTPUT"""
+
+  def setUp(self):
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_SILENT, 0)
+    self.safety.init_tests()
+
+
+class TestAllOutput(TestDefaultRxHookBase):
   # Allow all messages
-  TX_MSGS = [(addr, bus) for addr in common.PandaSafetyTest.SCANNED_ADDRS
+  TX_MSGS = [[addr, bus] for addr in common.PandaSafetyTest.SCANNED_ADDRS
              for bus in range(4)]
 
   def setUp(self):
@@ -34,21 +47,19 @@ class TestAllOutput(common.PandaSafetyTest):
     self.safety.set_safety_hooks(Panda.SAFETY_ALLOUTPUT, 0)
     self.safety.init_tests()
 
-  def test_rx_hook(self):
-    for addr, bus in self.TX_MSGS:
-      self.assertTrue(self._rx(common.make_msg(bus, addr, 8)), f"not allowed RX {addr=}")
-
   def test_tx_lin_hook(self):
     for lin_num in range(2):
-      self.assertTrue(self._tx_lin(lin_num, b'\x00' * 8, 8), f"allowed TX LIN {lin_num=}")
+      self.assertTrue(self._tx_lin(0x0, lin_num, 0x0, 0x0, b'\x00' * 8), f"not allowed TX LIN {lin_num=}")
 
   def test_spam_can_buses(self):
-    # Uses TX_MSGS instead of scanned addrs and asserts all send
+    # asserts tx allowed for all scanned addrs
     for bus in range(4):
-      for addr, bus in self.TX_MSGS:
-        self.assertTrue(self._tx(common.make_msg(bus, addr, 8)), f"not allowed TX {addr=} {bus=}")
+      for addr in self.SCANNED_ADDRS:
+        should_tx = [addr, bus] in self.TX_MSGS
+        self.assertEqual(should_tx, self._tx(common.make_msg(bus, addr, 8)), f"allowed TX {addr=} {bus=}")
 
   def test_default_controls_not_allowed(self):
+    # controls always allowed
     self.assertTrue(self.safety.get_controls_allowed())
 
   def test_tx_hook_on_wrong_safety_mode(self):

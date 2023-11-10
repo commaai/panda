@@ -3,7 +3,7 @@ import abc
 import unittest
 import importlib
 import numpy as np
-from typing import Set, Tuple, Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Tuple
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
@@ -73,8 +73,9 @@ class PandaSafetyTestBase(unittest.TestCase):
   def _tx(self, msg):
     return self.safety.safety_tx_hook(msg)
 
-  def _tx_lin(self, lin_num, data, len):
-    return self.safety.safety_tx_lin_hook(lin_num, data, len)
+  def _tx_lin(self, priority: int, lin_num: int, to_addr: int, from_addr: int, dat: bytes):
+    msg = bytes([priority | len(dat), to_addr, from_addr]) + dat
+    return self.safety.safety_tx_lin_hook(lin_num, msg, len(msg))
 
   def _generic_limit_safety_check(self, msg_function: MessageFunction, min_allowed_value: float, max_allowed_value: float,
                                   min_possible_value: float, max_possible_value: float, test_delta: float = 1, inactive_value: float = 0,
@@ -758,8 +759,8 @@ class PandaSafetyTest(PandaSafetyTestBase):
                    *range(0x18DA00F1, 0x18DB00F1, 0x100),   # 29-bit UDS physical addressing
                    *range(0x18DB00F1, 0x18DC00F1, 0x100),   # 29-bit UDS functional addressing
                    *range(0x3300, 0x3400),                  # Honda
-                   0x10400060, 0x104c006c}                  # GMLAN (exceptions, range/format unclear)
-  FWD_BLACKLISTED_ADDRS: Dict[int, Set[int]] = {}  # {bus: {addr}}
+                   0x10400060, 0x104c006c]                  # GMLAN (exceptions, range/format unclear)
+  FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}  # {bus: [addr]}
   FWD_BUS_LOOKUP: Dict[int, int] = {}
 
   @classmethod
@@ -814,21 +815,20 @@ class PandaSafetyTest(PandaSafetyTestBase):
       test = importlib.import_module("panda.tests.safety."+tf[:-3])
       for attr in dir(test):
         if attr.startswith("Test") and attr != current_test:
-          # print('attr', tf, test, attr, attr.startswith("Test"))
           tc = getattr(test, attr)
           tx = tc.TX_MSGS
           if tx is not None and not attr.endswith('Base'):
             # No point in comparing different Tesla safety modes
             if 'Tesla' in attr and 'Tesla' in current_test:
               continue
-            if attr.startswith('TestToyota') and current_test.startswith('TestToyota'):
-              continue
+            # No point in comparing to ALLOUTPUT which allows all messages
             if attr.startswith('TestAllOutput'):
               continue
-            # if current_test == 'TestAllOutput':
-            #   continue
-            if {attr, current_test}.issubset({'TestSubaruGen1TorqueStockLongitudinalSafety', 'TestSubaruGen2TorqueStockLongitudinalSafety',
-                                              'TestSubaruGen1LongitudinalSafety', 'TestSubaruGen2LongitudinalSafety'}):
+            if attr.startswith('TestToyota') and current_test.startswith('TestToyota'):
+              continue
+            if attr.startswith('TestSubaruGen') and current_test.startswith('TestSubaruGen'):
+              continue
+            if attr.startswith('TestSubaruPreglobal') and current_test.startswith('TestSubaruPreglobal'):
               continue
             if {attr, current_test}.issubset({'TestVolkswagenPqSafety', 'TestVolkswagenPqStockSafety', 'TestVolkswagenPqLongSafety'}):
               continue
@@ -866,8 +866,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
     # make sure we got all the msgs
     self.assertTrue(len(all_tx) >= len(test_files)-1)
 
-    # print(all_tx)
-
     for tx_msgs in all_tx:
       for addr, bus, test_name in tx_msgs:
         msg = make_msg(bus, addr)
@@ -875,16 +873,14 @@ class PandaSafetyTest(PandaSafetyTestBase):
         # TODO: this should be blocked
         if current_test in ["TestNissanSafety", "TestNissanSafetyAltEpsBus", "TestNissanLeafSafety"] and [addr, bus] in self.TX_MSGS:
           continue
-        with self.subTest():
-          self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} during {current_test} was allowed")
+        self.assertFalse(self._tx(msg), f"transmit of {addr=:#x} {bus=} from {test_name} during {current_test} was allowed")
 
 
 @add_regen_tests
 class PandaCarSafetyTest(PandaSafetyTest):
   STANDSTILL_THRESHOLD: Optional[float] = None
   GAS_PRESSED_THRESHOLD = 0
-  RELAY_MALFUNCTION_ADDR: Optional[int] = None
-  RELAY_MALFUNCTION_BUS: Optional[int] = None
+  RELAY_MALFUNCTION_ADDRS: Optional[Dict[int, Tuple[int, ...]]] = None
 
   @classmethod
   def setUpClass(cls):
@@ -915,15 +911,22 @@ class PandaCarSafetyTest(PandaSafetyTest):
   def _pcm_status_msg(self, enable):
     pass
 
-  # ***** standard tests for all car safety modes *****
+  # ***** standard tests for all car-specific safety modes *****
 
   def test_relay_malfunction(self):
     # each car has an addr that is used to detect relay malfunction
     # if that addr is seen on specified bus, triggers the relay malfunction
     # protection logic: both tx_hook and fwd_hook are expected to return failure
     self.assertFalse(self.safety.get_relay_malfunction())
-    self.assertTrue(self._rx(make_msg(self.RELAY_MALFUNCTION_BUS, self.RELAY_MALFUNCTION_ADDR, 8)))
-    self.assertTrue(self.safety.get_relay_malfunction())
+    for bus in range(3):
+      for addr in self.SCANNED_ADDRS:
+        self.safety.set_relay_malfunction(False)
+        self._rx(make_msg(bus, addr, 8))
+        should_relay_malfunction = addr in self.RELAY_MALFUNCTION_ADDRS.get(bus, ())
+        self.assertEqual(should_relay_malfunction, self.safety.get_relay_malfunction(), (bus, addr))
+
+    # test relay malfunction protection logic
+    self.safety.set_relay_malfunction(True)
     for bus in range(3):
       for addr in self.SCANNED_ADDRS:
         self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
