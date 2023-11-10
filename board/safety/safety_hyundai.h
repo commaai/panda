@@ -208,7 +208,7 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
     }
 
     if (addr == 0x394) {
-      brake_pressed = GET_BIT(to_push, 55U) != 0U;
+      brake_pressed = ((GET_BYTE(to_push, 5) >> 5U) & 0x2U) == 0x2U;
     }
 
     bool stock_ecu_detected = (addr == 0x340);
