@@ -5,9 +5,9 @@ set -e
 scons -j$(nproc) -D --coverage
 
 # run safety tests to generate coverage data
-./test.sh
+./test_body.py
 
 # generate and open report
 geninfo ../libpanda/ -o coverage.info
 genhtml coverage.info -o coverage-out
-browse coverage-out/index.html
+#browse coverage-out/index.html
