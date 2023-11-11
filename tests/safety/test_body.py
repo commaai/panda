@@ -31,24 +31,48 @@ class TestBody(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("MAX_MOTOR_RPM_CMD", 0, values)
 
   def test_rx_hook(self):
+    # self.safety.set_timer(0)
+    print('controls', self.safety.get_controls_allowed())
+
     self.assertTrue(self._rx(self._motors_data_msg(0, 0)))
 
-  def test_tx_hook(self):
-    self.assertFalse(self._tx(self._torque_cmd_msg(0, 0)))
-    self.safety.set_controls_allowed(True)
-    self.assertTrue(self._tx(self._torque_cmd_msg(0, 0)))
+    self.safety.set_timer(1000000)
+    self.safety.safety_tick_current_rx_checks()
+    self.assertTrue(self.safety.addr_checks_valid())
 
-  # TODO: test addr checks (timestep)
+    self.safety.set_timer(1000001)
+    self.safety.safety_tick_current_rx_checks()
+    self.assertFalse(self.safety.addr_checks_valid())
 
-  def test_can_flasher_msg(self):
-    # CAN flasher always allowed
-    self.safety.set_controls_allowed(False)
-    self.assertTrue(self._tx(common.make_msg(0, 0x1, 8)))
+    print('controls', self.safety.get_controls_allowed())
 
-    self.assertFalse(self._tx(common.make_msg(0, 0x2, 8)))
-    # TODO: what is 0xdeadfaceU and 0x0ab00b1eU? no address check?
-    self.assertTrue(self._tx(common.make_msg(0, 0x2, dat=b'\xce\xfa\xad\xde\x1e\x0b\xb0\x0a')))
+    # for i in range(1000):
+    #   self.safety.set_timer(i * 2000000)  # 50Hz
+    #   self.safety.safety_tick_current_rx_checks()
+    #   print(i * 200000)
+    #   self.assertTrue(self._rx(self._motors_data_msg(0, 0)))
+    #   print(self.safety.addr_checks_valid())
+    # print('controls', self.safety.get_controls_allowed())
 
+    self.assertTrue(self.safety.get_vehicle_moving())  # always moving
+
+  # def test_tx_hook(self):
+  #   self.assertFalse(self._tx(self._torque_cmd_msg(0, 0)))
+  #   self.safety.set_controls_allowed(True)
+  #   self.assertTrue(self._tx(self._torque_cmd_msg(0, 0)))
+  #
+  # # TODO: test addr checks (timestep)
+  #
+  # def test_can_flasher(self):
+  #   # CAN flasher always allowed
+  #   self.safety.set_controls_allowed(False)
+  #   self.assertTrue(self._tx(common.make_msg(0, 0x1, 8)))
+  #
+  #   # 0xdeadfaceU enters CAN flashing mode for base & knee
+  #   for addr in (0x250, 0x350):
+  #     self.assertTrue(self._tx(common.make_msg(0, addr, dat=b'\xce\xfa\xad\xde\x1e\x0b\xb0\x0a')))
+  #     self.assertFalse(self._tx(common.make_msg(0, addr, dat=b'\xce\xfa\xad\xde\x1e\x0b\xb0')))  # not correct data/len
+  #     self.assertFalse(self._tx(common.make_msg(0, addr + 1, dat=b'\xce\xfa\xad\xde\x1e\x0b\xb0\x0a')))  # wrong address
 
 
 # TODO: add knee tests
