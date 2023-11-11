@@ -81,6 +81,12 @@ int safety_fwd_hook(int bus_num, int addr) {
   return (relay_malfunction ? -1 : current_hooks->fwd(bus_num, addr));
 }
 
+bool get_longitudinal_allowed(void) {
+  return controls_allowed && !gas_pressed_prev;
+}
+
+
+
 bool get_decel_allowed(void) {
   // No longitudinal control when overriding with gas. Only brake is allowed when pre-enabling at a standstill
   return controls_allowed && !gas_pressed_prev;
@@ -88,7 +94,8 @@ bool get_decel_allowed(void) {
 
 bool get_accel_allowed(void) {
   // No positive acceleration/gas command while pre-enabled at a stop with brake
-  return get_decel_allowed() && !brake_pressed_prev && !regen_braking_prev;
+//  return get_decel_allowed() && !brake_pressed_prev && !regen_braking_prev;
+  return get_longitudinal_allowed() && !brake_pressed_prev && !regen_braking_prev;
 }
 
 // Given a CRC-8 poly, generate a static lookup table to use with a fast CRC-8
@@ -510,11 +517,10 @@ int ROUND(float val) {
 
 // Safety checks for longitudinal actuation
 bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits) {
-  bool accel_valid = get_accel_allowed() && !max_limit_check(desired_accel, limits.max_accel, limits.zero_accel);
-  bool decel_valid = get_decel_allowed() && !max_limit_check(desired_accel, limits.zero_accel, limits.min_accel);
+  bool accel_valid = get_longitudinal_allowed() && !max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
+  accel_valid = accel_valid && (get_accel_allowed() || (desired_accel <= limits.zero_accel));
   bool accel_inactive = desired_accel == limits.inactive_accel;
-  print("here: "); puth(desired_accel); print(" "); puth(accel_valid); print(" "); puth(decel_valid); print(" "); puth(accel_inactive); print("\n");
-  return !(accel_valid || decel_valid || accel_inactive);
+  return !(accel_valid || accel_inactive);
 }
 
 bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limits) {
