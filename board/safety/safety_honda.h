@@ -35,6 +35,7 @@ const LongitudinalLimits HONDA_NIDEC_LONG_LIMITS = {
 
 // Nidec and bosch radarless has the powertrain bus on bus 0
 AddrCheckStruct honda_common_addr_checks[] = {
+  {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .expected_timestep = 0U}, { 0 }, { 0 }}},
   {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},                   // SCM_BUTTONS
            {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
   {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // ENGINE_DATA
@@ -46,6 +47,7 @@ AddrCheckStruct honda_common_addr_checks[] = {
 
 // For Nidecs with main on signal on an alternate msg
 AddrCheckStruct honda_nidec_alt_addr_checks[] = {
+  {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .expected_timestep = 0U}, { 0 }, { 0 }}},
   {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
            {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
   {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
@@ -113,8 +115,17 @@ static uint32_t honda_compute_checksum(CANPacket_t *to_push) {
 }
 
 static uint8_t honda_get_counter(CANPacket_t *to_push) {
-  int counter_byte = GET_LEN(to_push) - 1U;
-  return ((uint8_t)(GET_BYTE(to_push, counter_byte)) >> 4U) & 0x3U;
+  int addr = GET_ADDR(to_push);
+
+  uint8_t cnt = 0U;
+  if (addr == 0x201) {
+    // Signal: COUNTER_PEDAL
+    cnt = (GET_BYTE(to_push, 4)) & 0x0FU;
+  } else {
+    int counter_byte = GET_LEN(to_push) - 1U;
+    cnt = ((uint8_t)(GET_BYTE(to_push, counter_byte)) >> 4U) & 0x3U;
+  }
+  return cnt;
 }
 
 static int honda_rx_hook(CANPacket_t *to_push) {
