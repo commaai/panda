@@ -234,6 +234,7 @@ bool addr_safety_check(CANPacket_t *to_push,
     if ((get_checksum != NULL) && (compute_checksum != NULL) && rx_checks->check[index].msg[rx_checks->check[index].index].check_checksum) {
       uint32_t checksum = get_checksum(to_push);
       uint32_t checksum_comp = compute_checksum(to_push);
+//      print("safety checksum: "); puth(checksum); print(", computed checksum: "); puth(checksum_comp); print("\n");
       rx_checks->check[index].valid_checksum = checksum_comp == checksum;
     } else {
       rx_checks->check[index].valid_checksum = true;
