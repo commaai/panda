@@ -35,9 +35,13 @@ class TestBody(common.PandaSafetyTest):
     self.assertFalse(self.safety.get_vehicle_moving())
 
     # controls allowed when we get MOTORS_DATA message
-    self.assertTrue(self._rx(self._motors_data_msg(0, 0)))
-    self.assertTrue(self.safety.get_controls_allowed())
+    self.assertTrue(self._rx(self._torque_cmd_msg(0, 0)))
     self.assertTrue(self.safety.get_vehicle_moving())  # always moving
+    self.assertFalse(self.safety.get_controls_allowed())
+
+    self.assertTrue(self._rx(self._motors_data_msg(0, 0)))
+    self.assertTrue(self.safety.get_vehicle_moving())  # always moving
+    self.assertTrue(self.safety.get_controls_allowed())
 
   # def test_tx_hook(self):
   #   self.assertFalse(self._tx(self._torque_cmd_msg(0, 0)))
