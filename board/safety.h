@@ -82,8 +82,7 @@ int safety_fwd_hook(int bus_num, int addr) {
 }
 
 bool get_longitudinal_allowed(void) {
-  // Gas and brake are allowed if not overriding with gas.
-  // No longitudinal control when overriding with gas.
+  // No longitudinal control when overriding with gas
   return controls_allowed && !gas_pressed_prev;
 }
 
