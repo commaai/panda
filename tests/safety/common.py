@@ -225,7 +225,6 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
             should_tx = False
           else:
             should_tx = controls_allowed and min_accel <= accel <= max_accel
-
             should_tx = should_tx or accel == self.INACTIVE_ACCEL
           self.assertEqual(should_tx, self._tx(self._accel_msg(accel)))
 
@@ -239,15 +238,13 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
     self._rx(self._user_brake_msg(1))
 
     # Test we allow brake but not positive accel
-    for valid_accel in np.concatenate((np.arange(self.MIN_ACCEL, self.MAX_ACCEL, 0.1), [self.INACTIVE_ACCEL])):
-      valid_accel = round(valid_accel, 2)  # floats might not hit exact boundary conditions without rounding
-      should_tx = valid_accel <= 0
-      self.assertEqual(should_tx, self._tx(self._accel_msg(valid_accel)))
+    for valid_accel in (self.MIN_ACCEL, 0, self.INACTIVE_ACCEL):
+      self.assertTrue(self._tx(self._accel_msg(valid_accel)))
+    self.assertFalse(self._tx(self._accel_msg(self.MAX_ACCEL)))
 
     # Make sure we can re-gain longitudinal actuation
     self._rx(self._user_brake_msg(0))
-    for valid_accel in np.concatenate((np.arange(self.MIN_ACCEL, self.MAX_ACCEL, 0.1), [self.INACTIVE_ACCEL])):
-      valid_accel = round(valid_accel, 2)  # floats might not hit exact boundary conditions without rounding
+    for valid_accel in (self.MIN_ACCEL, self.MAX_ACCEL, 0, self.INACTIVE_ACCEL):
       self.assertTrue(self._tx(self._accel_msg(valid_accel)))
 
 
@@ -293,23 +290,17 @@ class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
     self._rx(self._user_brake_msg(1))
 
     # Test we allow brake but not gas
-    self.assertFalse(self._tx(self._send_gas_msg(0)))
+    for brake in (self.MIN_BRAKE, self.MAX_BRAKE, 0):
+      self.assertTrue(self._tx(self._send_brake_msg(brake)))
+
     self.assertTrue(self._tx(self._send_gas_msg(self.INACTIVE_GAS)))
     if self.INACTIVE_GAS != self.MIN_GAS:
       self.assertFalse(self._tx(self._send_gas_msg(self.MIN_GAS)))
 
-    self.assertTrue(self._tx(self._send_brake_msg(0)))
-    self.assertTrue(self._tx(self._send_brake_msg(self.MIN_BRAKE)))
-    self.assertTrue(self._tx(self._send_brake_msg(self.MAX_BRAKE)))
-
-    # for valid_accel in (0, self.INACTIVE_ACCEL, self.MIN_ACCEL):
-    #   self.assertTrue(self._tx(self._accel_msg(valid_accel)))
-    # self.assertFalse(self._tx(self._accel_msg(self.MAX_ACCEL)))
-    #
-    # # Make sure we can re-gain longitudinal actuation
-    # self._rx(self._user_brake_msg(0))
-    # for valid_accel in (0, self.INACTIVE_ACCEL, self.MIN_ACCEL, self.MAX_ACCEL):
-    #   self.assertTrue(self._tx(self._accel_msg(valid_accel)))
+    # Make sure we can re-gain longitudinal actuation
+    self._rx(self._user_brake_msg(0))
+    for gas in (self.MIN_GAS, self.MAX_GAS, self.INACTIVE_GAS):
+      self.assertTrue(self._tx(self._send_gas_msg(gas)))
 
 class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
 

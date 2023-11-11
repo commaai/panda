@@ -186,6 +186,7 @@ class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
     super().test_accel_actuation_limits(stock_longitudinal=stock_longitudinal)
 
   def test_brake_preenable(self):
+    # Stock long blocks longitudinal actuation
     raise unittest.SkipTest
 
   def test_acc_cancel(self):
