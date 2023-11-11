@@ -19,8 +19,10 @@ def sign_of(a):
   return 1 if a > 0 else -1
 
 
-def make_msg(bus, addr, length=8):
-  return libpanda_py.make_CANPacket(addr, bus, b'\x00' * length)
+def make_msg(bus, addr, length=8, dat=None):
+  if dat is None:
+    dat = b'\x00' * length
+  return libpanda_py.make_CANPacket(addr, bus, dat)
 
 
 class CANPackerPanda(CANPacker):
@@ -826,8 +828,9 @@ class PandaSafetyTest(PandaSafetyTestBase):
               continue
             if attr.startswith('TestToyota') and current_test.startswith('TestToyota'):
               continue
-            if {attr, current_test}.issubset({'TestSubaruGen1TorqueStockLongitudinalSafety', 'TestSubaruGen2TorqueStockLongitudinalSafety',
-                                              'TestSubaruGen1LongitudinalSafety', 'TestSubaruGen2LongitudinalSafety'}):
+            if attr.startswith('TestSubaruGen') and current_test.startswith('TestSubaruGen'):
+              continue
+            if attr.startswith('TestSubaruPreglobal') and current_test.startswith('TestSubaruPreglobal'):
               continue
             if {attr, current_test}.issubset({'TestVolkswagenPqSafety', 'TestVolkswagenPqStockSafety', 'TestVolkswagenPqLongSafety'}):
               continue

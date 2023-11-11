@@ -89,7 +89,7 @@ addr_checks hyundai_rx_checks = SET_ADDR_CHECKS(hyundai_addr_checks);
 static uint8_t hyundai_get_counter(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
-  uint8_t cnt;
+  uint8_t cnt = 0;
   if (addr == 0x260) {
     cnt = (GET_BYTE(to_push, 7) >> 4) & 0x3U;
   } else if (addr == 0x386) {
@@ -101,7 +101,6 @@ static uint8_t hyundai_get_counter(CANPacket_t *to_push) {
   } else if (addr == 0x4F1) {
     cnt = (GET_BYTE(to_push, 3) >> 4) & 0xFU;
   } else {
-    cnt = 0;
   }
   return cnt;
 }
@@ -109,7 +108,7 @@ static uint8_t hyundai_get_counter(CANPacket_t *to_push) {
 static uint32_t hyundai_get_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
-  uint8_t chksum;
+  uint8_t chksum = 0;
   if (addr == 0x260) {
     chksum = GET_BYTE(to_push, 7) & 0xFU;
   } else if (addr == 0x386) {
@@ -119,7 +118,6 @@ static uint32_t hyundai_get_checksum(CANPacket_t *to_push) {
   } else if (addr == 0x421) {
     chksum = GET_BYTE(to_push, 7) >> 4;
   } else {
-    chksum = 0;
   }
   return chksum;
 }
@@ -208,7 +206,7 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
     }
 
     if (addr == 0x394) {
-      brake_pressed = GET_BIT(to_push, 55U) != 0U;
+      brake_pressed = ((GET_BYTE(to_push, 5) >> 5U) & 0x2U) == 0x2U;
     }
 
     bool stock_ecu_detected = (addr == 0x340);
