@@ -83,11 +83,10 @@ class PandaJungle(Panda):
       return McuType.H7
     raise ValueError(f"unknown HW type: {hw_type}")
 
-  def up_to_date(self) -> bool:
-    current = self.get_signature()
-    fn = os.path.join(FW_PATH, self.get_mcu_type().config.app_fn.replace("panda", "panda_jungle"))
-    expected = Panda.get_signature_from_firmware(fn)
-    return (current == expected)
+  def up_to_date(self, fn=None) -> bool:
+    if fn is None:
+      fn = os.path.join(FW_PATH, self.get_mcu_type().config.app_fn.replace("panda", "panda_jungle"))
+    return super().up_to_date(fn=fn)
 
   # ******************* health *******************
 

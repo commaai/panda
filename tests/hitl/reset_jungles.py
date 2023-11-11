@@ -4,6 +4,8 @@ import concurrent.futures
 from panda import PandaJungle, PandaJungleDFU, McuType
 from panda.tests.libs.resetter import Resetter
 
+SERIALS = {'180019001451313236343430', '1d0017000c50435635333720'}
+
 def recover(s):
   with PandaJungleDFU(s) as pd:
     pd.recover()
@@ -25,7 +27,8 @@ if __name__ == "__main__":
     r.cycle_power(ports=[1, 2], dfu=True)
 
     dfu_serials = PandaJungleDFU.list()
-    assert len(dfu_serials) == 2
+    print(len(dfu_serials), len(SERIALS))
+    assert len(dfu_serials) == len(SERIALS)
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=len(dfu_serials)) as exc:
       list(exc.map(recover, dfu_serials, timeout=30))
@@ -34,6 +37,6 @@ if __name__ == "__main__":
       r.cycle_power(ports=[1, 2])
 
       serials = PandaJungle.list()
-      assert len(serials) == len(dfu_serials)
-      mcu_types = list(exc.map(flash, serials, timeout=20))
+      assert set(PandaJungle.list()) >= SERIALS
+      mcu_types = list(exc.map(flash, SERIALS, timeout=20))
       assert set(mcu_types) == {McuType.F4, McuType.H7}

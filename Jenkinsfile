@@ -123,6 +123,14 @@ pipeline {
                 }
               }
             }
+            stage('bootkick tests') {
+              steps {
+                script {
+                  docker_run("test", 10, "pytest ./tests/som/test_bootkick.py")
+                }
+              }
+            }
+
             /*
             stage('pedal tests') {
               steps {

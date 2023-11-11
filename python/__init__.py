@@ -169,7 +169,7 @@ class Panda:
   CAN_PACKET_VERSION = 4
   HEALTH_PACKET_VERSION = 14
   CAN_HEALTH_PACKET_VERSION = 5
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfBBHBHH")
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfBBHBHHB")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
 
   F2_DEVICES = [HW_TYPE_PEDAL, ]
@@ -218,6 +218,8 @@ class Panda:
 
   FLAG_SUBARU_GEN2 = 1
   FLAG_SUBARU_LONG = 2
+
+  FLAG_SUBARU_PREGLOBAL_REVERSED_DRIVER_TORQUE = 1
 
   FLAG_NISSAN_ALT_EPS_BUS = 1
 
@@ -492,6 +494,10 @@ class Panda:
       pass
 
   def flash(self, fn=None, code=None, reconnect=True):
+    if self.up_to_date(fn=fn):
+      logging.debug("flash: already up to date")
+      return
+
     if not fn:
       fn = os.path.join(FW_PATH, self._mcu_type.config.app_fn)
     assert os.path.isfile(fn)
@@ -556,9 +562,10 @@ class Panda:
       serials = Panda.list()
     return True
 
-  def up_to_date(self) -> bool:
+  def up_to_date(self, fn=None) -> bool:
     current = self.get_signature()
-    fn = os.path.join(FW_PATH, self.get_mcu_type().config.app_fn)
+    if fn is None:
+      fn = os.path.join(FW_PATH, self.get_mcu_type().config.app_fn)
     expected = Panda.get_signature_from_firmware(fn)
     return (current == expected)
 
@@ -599,6 +606,7 @@ class Panda:
       "fan_stall_count": a[24],
       "sbu1_voltage_mV": a[25],
       "sbu2_voltage_mV": a[26],
+      "som_reset_triggered": a[27],
     }
 
   @ensure_can_health_packet_version
@@ -986,3 +994,7 @@ class Panda:
 
   def force_relay_drive(self, intercept_relay_drive, ignition_relay_drive):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xc5, (int(intercept_relay_drive) | int(ignition_relay_drive) << 1), 0, b'')
+
+  def read_som_gpio(self) -> bool:
+    r = self._handle.controlRead(Panda.REQUEST_IN, 0xc6, 0, 0, 1)
+    return r[0] == 1
