@@ -5,18 +5,13 @@ set -e
 scons -j$(nproc) -D --coverage
 
 # run safety tests to generate coverage data
-#./test.sh
-#./test_toyota.py
-#./test_ford.py TestFordStockSafety.test_rx_hook
-#./test_honda.py # TestHyundaiCanfdHDA2LongEV.test_rx_hook
-#./test_defaults.py
-./test_body.py || true
+./test.sh
 
 # generate and open report
 if [ "$1" == "--report" ]; then
   geninfo ../libpanda/ -o coverage.info
   genhtml coverage.info -o coverage-out
-#  browse coverage-out/index.html
+  browse coverage-out/index.html
 fi
 
 # test coverage
