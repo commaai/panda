@@ -19,8 +19,10 @@ def sign_of(a):
   return 1 if a > 0 else -1
 
 
-def make_msg(bus, addr, length=8):
-  return libpanda_py.make_CANPacket(addr, bus, b'\x00' * length)
+def make_msg(bus, addr, length=8, dat=None):
+  if dat is None:
+    dat = b'\x00' * length
+  return libpanda_py.make_CANPacket(addr, bus, dat)
 
 
 class CANPackerPanda(CANPacker):
