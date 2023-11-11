@@ -86,16 +86,8 @@ bool get_longitudinal_allowed(void) {
   return controls_allowed && !gas_pressed_prev;
 }
 
-
-
-bool get_decel_allowed(void) {
-  // No longitudinal control when overriding with gas. Only brake is allowed when pre-enabling at a standstill
-  return controls_allowed && !gas_pressed_prev;
-}
-
 bool get_accel_allowed(void) {
-  // No positive acceleration/gas command while pre-enabled at a stop with brake
-//  return get_decel_allowed() && !brake_pressed_prev && !regen_braking_prev;
+  // No gas while pre-enabled at a stop with brake
   return get_longitudinal_allowed() && !brake_pressed_prev && !regen_braking_prev;
 }
 
@@ -527,7 +519,7 @@ bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limit
 }
 
 bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limits) {
-  return !get_decel_allowed() && (desired_speed != limits.inactive_speed);
+  return !get_longitudinal_allowed() && (desired_speed != limits.inactive_speed);
 }
 
 bool longitudinal_transmission_rpm_checks(int desired_transmission_rpm, const LongitudinalLimits limits) {
@@ -544,7 +536,7 @@ bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits) {
 
 bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits) {
   bool violation = false;
-  violation |= !get_decel_allowed() && (desired_brake != 0);
+  violation |= !get_longitudinal_allowed() && (desired_brake != 0);
   violation |= desired_brake > limits.max_brake;
   return violation;
 }
