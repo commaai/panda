@@ -24,7 +24,7 @@ const LongitudinalLimits TOYOTA_LONG_LIMITS = {
 //// panda interceptor threshold needs to be equivalent to openpilot threshold to avoid controls mismatches
 //// If thresholds are mismatched then it is possible for panda to see the gas fall and rise while openpilot is in the pre-enabled state
 //// Threshold calculated from DBC gains: round((((15 + 75.555) / 0.159375) + ((15 + 151.111) / 0.159375)) / 2) = 805
-const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 845;
+const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 805;
 
 //// Roughly calculated using the offsets in openpilot +5%:
 //// In openpilot: ((gas1_norm + gas2_norm)/2) > 15
