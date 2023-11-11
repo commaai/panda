@@ -14,7 +14,9 @@ static int body_rx_hook(CANPacket_t *to_push) {
   // body is never at standstill
   vehicle_moving = true;
 
-  controls_allowed = valid;
+  if (valid && (addr == 0x201)) {
+    controls_allowed = true;
+  }
 
   return valid;
 }
