@@ -239,13 +239,15 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
     self._rx(self._user_brake_msg(1))
 
     # Test we allow brake but not positive accel
-    for valid_accel in (0, self.INACTIVE_ACCEL, self.MIN_ACCEL):
-      self.assertTrue(self._tx(self._accel_msg(valid_accel)))
-    self.assertFalse(self._tx(self._accel_msg(self.MAX_ACCEL)))
+    for valid_accel in np.concatenate((np.arange(self.MIN_ACCEL, self.MAX_ACCEL, 0.1), [self.INACTIVE_ACCEL])):
+      valid_accel = round(valid_accel, 2)  # floats might not hit exact boundary conditions without rounding
+      should_tx = valid_accel <= 0
+      self.assertEqual(should_tx, self._tx(self._accel_msg(valid_accel)))
 
     # Make sure we can re-gain longitudinal actuation
     self._rx(self._user_brake_msg(0))
-    for valid_accel in (0, self.INACTIVE_ACCEL, self.MIN_ACCEL, self.MAX_ACCEL):
+    for valid_accel in np.concatenate((np.arange(self.MIN_ACCEL, self.MAX_ACCEL, 0.1), [self.INACTIVE_ACCEL])):
+      valid_accel = round(valid_accel, 2)  # floats might not hit exact boundary conditions without rounding
       self.assertTrue(self._tx(self._accel_msg(valid_accel)))
 
 
