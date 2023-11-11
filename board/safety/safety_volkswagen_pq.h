@@ -39,7 +39,7 @@ const CanMsg VOLKSWAGEN_PQ_LONG_TX_MSGS[] =  {{MSG_HCA_1, 0, 5}, {MSG_LDW_1, 0, 
 
 AddrCheckStruct volkswagen_pq_addr_checks[] = {
   {.msg = {{MSG_LENKHILFE_3, 0, 6, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_BREMSE_1, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_BREMSE_1, 0, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MOTOR_2, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MOTOR_3, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MOTOR_5, 0, 8, .check_checksum = true, .max_counter = 0U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
