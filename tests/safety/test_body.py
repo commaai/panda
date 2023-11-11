@@ -31,29 +31,12 @@ class TestBody(common.PandaSafetyTest):
     return self.packer.make_can_msg_panda("MAX_MOTOR_RPM_CMD", 0, values)
 
   def test_rx_hook(self):
-    # self.safety.set_timer(0)
-    print('controls', self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.get_vehicle_moving())
 
+    # controls allowed when we get MOTORS_DATA message
     self.assertTrue(self._rx(self._motors_data_msg(0, 0)))
-
-    self.safety.set_timer(1000000)
-    self.safety.safety_tick_current_rx_checks()
-    self.assertTrue(self.safety.addr_checks_valid())
-
-    self.safety.set_timer(1000001)
-    self.safety.safety_tick_current_rx_checks()
-    self.assertFalse(self.safety.addr_checks_valid())
-
-    print('controls', self.safety.get_controls_allowed())
-
-    # for i in range(1000):
-    #   self.safety.set_timer(i * 2000000)  # 50Hz
-    #   self.safety.safety_tick_current_rx_checks()
-    #   print(i * 200000)
-    #   self.assertTrue(self._rx(self._motors_data_msg(0, 0)))
-    #   print(self.safety.addr_checks_valid())
-    # print('controls', self.safety.get_controls_allowed())
-
+    self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_vehicle_moving())  # always moving
 
   # def test_tx_hook(self):
@@ -61,7 +44,6 @@ class TestBody(common.PandaSafetyTest):
   #   self.safety.set_controls_allowed(True)
   #   self.assertTrue(self._tx(self._torque_cmd_msg(0, 0)))
   #
-  # # TODO: test addr checks (timestep)
   #
   # def test_can_flasher(self):
   #   # CAN flasher always allowed
