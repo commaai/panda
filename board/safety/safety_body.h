@@ -38,8 +38,6 @@ static int body_tx_hook(CANPacket_t *to_send) {
 
   // Allow going into CAN flashing mode for base & knee even if controls are not allowed
   bool flash_msg = ((addr == 0x250) || (addr == 0x350)) && (len == 8);
-//  print("body_or_knee_addr: "); puth(body_or_knee_addr); print(", flash_msg: "); puth(flash_msg); print("\n");
-  print("addr: "); puth(addr); print("\n");
   if (!controls_allowed && (GET_BYTES(to_send, 0, 4) == 0xdeadfaceU) && (GET_BYTES(to_send, 4, 4) == 0x0ab00b1eU) &&
       flash_msg) {
     tx = 1;

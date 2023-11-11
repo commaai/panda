@@ -168,7 +168,6 @@ void safety_tick(const addr_checks *rx_checks) {
   if (rx_checks != NULL) {
     for (int i=0; i < rx_checks->len; i++) {
       uint32_t elapsed_time = get_ts_elapsed(ts, rx_checks->check[i].last_timestamp);
-      print("elapsed_time: "); puth(elapsed_time); print("\n");
       // lag threshold is max of: 1s and MAX_MISSED_MSGS * expected timestep.
       // Quite conservative to not risk false triggers.
       // 2s of lag is worse case, since the function is called at 1Hz
@@ -223,7 +222,6 @@ bool addr_safety_check(CANPacket_t *to_push,
 
   int index = get_addr_check_index(to_push, rx_checks->check, rx_checks->len);
   update_addr_timestamp(rx_checks->check, index);
-//  print("index: "); puth(index); print("\n");
 
   if (index != -1) {
     // checksum check
