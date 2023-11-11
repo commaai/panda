@@ -512,8 +512,8 @@ int ROUND(float val) {
 bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits) {
   // accel is restricted to < 0 m/s^2 if we are pre-enabling at a stop
   int max_accel = get_accel_allowed() ? limits.max_accel : limits.zero_accel;
-  bool accel_valid = get_longitudinal_allowed() && !max_limit_check(desired_accel, max_accel, limits.min_accel);
 
+  bool accel_valid = get_longitudinal_allowed() && !max_limit_check(desired_accel, max_accel, limits.min_accel);
   bool accel_inactive = desired_accel == limits.inactive_accel;
   return !(accel_valid || accel_inactive);
 }
