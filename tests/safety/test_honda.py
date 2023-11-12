@@ -40,7 +40,7 @@ def interceptor_msg(gas, addr):
 #    * Bosch Radarless with Longitudinal Support
 
 
-class HondaButtonEnableBase(common.PandaSafetyTest):
+class HondaButtonEnableBase(common.PandaCarSafetyTest):
   # pylint: disable=no-member,abstract-method
 
   # override these inherited tests since we're using button enable
@@ -147,7 +147,7 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
     self.assertTrue(self.safety.get_controls_allowed())
 
 
-class HondaPcmEnableBase(common.PandaSafetyTest):
+class HondaPcmEnableBase(common.PandaCarSafetyTest):
   # pylint: disable=no-member,abstract-method
 
   def test_buttons(self):
@@ -175,15 +175,14 @@ class HondaPcmEnableBase(common.PandaSafetyTest):
             self.assertEqual(controls_allowed, self.safety.get_controls_allowed())
 
 
-class HondaBase(common.PandaSafetyTest):
+class HondaBase(common.PandaCarSafetyTest):
   MAX_BRAKE = 255
   PT_BUS: Optional[int] = None  # must be set when inherited
   STEER_BUS: Optional[int] = None  # must be set when inherited
   BUTTONS_BUS: Optional[int] = None  # must be set when inherited, tx on this bus, rx on PT_BUS
 
   STANDSTILL_THRESHOLD = 0
-  RELAY_MALFUNCTION_ADDR = 0xE4
-  RELAY_MALFUNCTION_BUS = 0
+  RELAY_MALFUNCTION_ADDRS = {0: (0xE4, 0x194)}  # STEERING_CONTROL
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   cnt_speed = 0
@@ -494,6 +493,8 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
   STEER_BUS = 1
   TX_MSGS = [[0xE4, 1], [0x1DF, 1], [0x1EF, 1], [0x1FA, 1], [0x30C, 1], [0x33D, 1], [0x33DA, 1], [0x33DB, 1], [0x39F, 1], [0x18DAB0F1, 1]]
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB]}
+  # 0x1DF is to test that radar is disabled
+  RELAY_MALFUNCTION_ADDRS = {0: (0xE4, 0x194), 1: (0x1DF,)}  # STEERING_CONTROL, ACC_CONTROL
 
   def setUp(self):
     super().setUp()
@@ -518,12 +519,6 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
 
     not_tester_present = libpanda_py.make_CANPacket(0x18DAB0F1, self.PT_BUS, b"\x03\xAA\xAA\x00\x00\x00\x00\x00")
     self.assertFalse(self._tx(not_tester_present))
-
-  def test_radar_alive(self):
-    # If the radar knockout failed, make sure the relay malfunction is shown
-    self.assertFalse(self.safety.get_relay_malfunction())
-    self._rx(make_msg(self.PT_BUS, 0x1DF, 8))
-    self.assertTrue(self.safety.get_relay_malfunction())
 
   def test_gas_safety_check(self):
     for controls_allowed in [True, False]:
