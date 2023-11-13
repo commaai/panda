@@ -7,6 +7,8 @@ from panda.tests.safety.common import CANPackerPanda
 
 
 class TestSubaruPreglobalSafety(common.PandaCarSafetyTest, common.DriverTorqueSteeringSafetyTest):
+  FLAGS = 0
+  DBC = "subaru_outback_2015_generated"
   TX_MSGS = [[0x161, 0], [0x164, 0]]
   STANDSTILL_THRESHOLD = 0  # kph
   RELAY_MALFUNCTION_ADDRS = {0: (0x164,)}
@@ -24,9 +26,9 @@ class TestSubaruPreglobalSafety(common.PandaCarSafetyTest, common.DriverTorqueSt
   DRIVER_TORQUE_FACTOR = 10
 
   def setUp(self):
-    self.packer = CANPackerPanda("subaru_outback_2015_generated")
+    self.packer = CANPackerPanda(self.DBC)
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_SUBARU_PREGLOBAL, 0)
+    self.safety.set_safety_hooks(Panda.SAFETY_SUBARU_PREGLOBAL, self.FLAGS)
     self.safety.init_tests()
 
   def _set_prev_torque(self, t):
@@ -57,6 +59,11 @@ class TestSubaruPreglobalSafety(common.PandaCarSafetyTest, common.DriverTorqueSt
   def _pcm_status_msg(self, enable):
     values = {"Cruise_Activated": enable}
     return self.packer.make_can_msg_panda("CruiseControl", 0, values)
+
+
+class TestSubaruPreglobalReversedDriverTorqueSafety(TestSubaruPreglobalSafety):
+  FLAGS = Panda.FLAG_SUBARU_PREGLOBAL_REVERSED_DRIVER_TORQUE
+  DBC = "subaru_outback_2019_generated"
 
 
 if __name__ == "__main__":
