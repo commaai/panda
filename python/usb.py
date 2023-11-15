@@ -34,13 +34,14 @@ class STBootloaderUSBHandle(BaseSTBootloaderHandle):
   def __init__(self, libusb_device, libusb_handle):
     self._libusb_handle = libusb_handle
 
-    # lsusb -v | grep Flash
+    # example from F4: lsusb -v | grep Flash
     # iInterface  4 @Internal Flash  /0x08000000/04*016Kg,01*064Kg,011*128Kg
-    out = libusb_handle.controlRead(0x80, 0x06, 0x0300 | 4, 0, 255)
-    flash_desc = bytes(out[2:]).decode('utf-16le')
-    sector_count = sum([int(s.split('*')[0]) for s in flash_desc.split('/')[-1].split(',')])
-
-    mcu_by_sector_count = {len(m.config.sector_sizes): m for m in McuType}
+    for i in range(20):
+      desc = libusb_handle.getStringDescriptor(i, 0)
+      if desc is not None and desc.startswith("@Internal Flash"):
+        sector_count = sum([int(s.split('*')[0]) for s in desc.split('/')[-1].split(',')])
+        break
+    mcu_by_sector_count = {m.config.sector_count: m for m in McuType}
     assert sector_count in mcu_by_sector_count, f"Unkown MCU: {sector_count=}"
     self._mcu_type = mcu_by_sector_count[sector_count]
 

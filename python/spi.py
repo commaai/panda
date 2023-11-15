@@ -17,10 +17,8 @@ from .utils import crc8_pedal
 
 try:
   import spidev
-  import spidev2
 except ImportError:
   spidev = None
-  spidev2 = None
 
 # Constants
 SYNC = 0x5A
@@ -194,6 +192,7 @@ class PandaSpiHandle(BaseHandle):
       return dat[3:-1]
 
   def _transfer_kernel_driver(self, spi, endpoint: int, data, timeout: int, max_rx_len: int = 1000, expect_disconnect: bool = False) -> bytes:
+    import spidev2
     self.tx_buf[:len(data)] = data
     self.ioctl_data.endpoint = endpoint
     self.ioctl_data.tx_length = len(data)

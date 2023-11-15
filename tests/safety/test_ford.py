@@ -64,10 +64,10 @@ class Buttons:
 #  * CAN FD with stock longitudinal
 #  * CAN FD with openpilot longitudinal
 
-class TestFordSafetyBase(common.PandaSafetyTest):
+class TestFordSafetyBase(common.PandaCarSafetyTest):
   STANDSTILL_THRESHOLD = 1
-  RELAY_MALFUNCTION_ADDR = MSG_IPMA_Data
-  RELAY_MALFUNCTION_BUS = 0
+  RELAY_MALFUNCTION_ADDRS = {0: (MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl,
+                                 MSG_LateralMotionControl2, MSG_IPMA_Data)}
 
   FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl,
                                MSG_LateralMotionControl2, MSG_IPMA_Data]}
@@ -385,6 +385,9 @@ class TestFordCANFDStockSafety(TestFordSafetyBase):
 
 
 class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
+  RELAY_MALFUNCTION_ADDRS = {0: (MSG_ACCDATA, MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl,
+                                 MSG_LateralMotionControl2, MSG_IPMA_Data)}
+
   FWD_BLACKLISTED_ADDRS = {2: [MSG_ACCDATA, MSG_ACCDATA_3, MSG_Lane_Assist_Data1, MSG_LateralMotionControl,
                                MSG_LateralMotionControl2, MSG_IPMA_Data]}
 
