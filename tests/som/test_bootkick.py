@@ -1,12 +1,12 @@
 import time
 import pytest
+import datetime
 
 from panda import Panda, PandaJungle
 
 PANDA_SERIAL = "28002d000451323431333839"
 JUNGLE_SERIAL = "26001c001451313236343430"
 
-AUX_PORT = 6
 OBDC_PORT = 1
 
 @pytest.fixture(autouse=True, scope="function")
@@ -14,6 +14,7 @@ def pj():
   jungle = PandaJungle(JUNGLE_SERIAL)
   jungle.flash()
 
+  jungle.reset()
   jungle.set_ignition(False)
 
   yield jungle
@@ -23,6 +24,8 @@ def pj():
 
 @pytest.fixture(scope="function")
 def p(pj):
+  # note that the 3X's panda lib isn't updated, which
+  # shold be fine since it only uses stable APIs
   pj.set_panda_power(True)
   assert Panda.wait_for_panda(PANDA_SERIAL, 10)
   p = Panda(PANDA_SERIAL)
@@ -39,13 +42,13 @@ def setup_state(panda, jungle, state):
   elif state == "normal boot":
     jungle.set_panda_individual_power(OBDC_PORT, 1)
   elif state == "QDL":
-    jungle.set_panda_individual_power(AUX_PORT, 1)
     time.sleep(0.5)
     jungle.set_panda_individual_power(OBDC_PORT, 1)
   elif state == "ready to bootkick":
     wait_for_full_poweroff(jungle)
     jungle.set_panda_individual_power(OBDC_PORT, 1)
     wait_for_boot(panda, jungle)
+    set_som_shutdown_flag(panda)
     panda.set_safety_mode(Panda.SAFETY_SILENT)
     panda.send_heartbeat()
     wait_for_som_shutdown(panda, jungle)
@@ -59,7 +62,11 @@ def wait_for_som_shutdown(panda, jungle):
     # can take a while for the SOM to fully shutdown
     if time.monotonic() - st > 120:
       raise Exception("SOM didn't shutdown in time")
+    if check_som_boot_flag(panda):
+      raise Exception(f"SOM rebooted instead of shutdown: {time.monotonic() - st}s")
     time.sleep(0.5)
+    dt = time.monotonic() - st
+    print("waiting for shutdown", round(dt))
   dt = time.monotonic() - st
   print(f"took {dt:.2f}s for SOM to shutdown")
 
@@ -78,7 +85,10 @@ def check_som_boot_flag(panda):
   h = panda.health()
   return h['safety_mode'] == Panda.SAFETY_ELM327 and h['safety_param'] == 30
 
-def wait_for_boot(panda, jungle, bootkick=False, timeout=120):
+def set_som_shutdown_flag(panda):
+  panda.set_datetime(datetime.datetime(year=2040, month=8, day=23))
+
+def wait_for_boot(panda, jungle, reset_expected=False, bootkick=False, timeout=120):
   st = time.monotonic()
 
   Panda.wait_for_panda(PANDA_SERIAL, timeout)
@@ -98,6 +108,7 @@ def wait_for_boot(panda, jungle, bootkick=False, timeout=120):
       raise Exception("SOM didn't boot in time")
     time.sleep(1.0)
 
+  assert panda.health()['som_reset_triggered'] == reset_expected
 
 def test_cold_boot(p, pj):
   setup_state(p, pj, "off")
@@ -117,3 +128,27 @@ def test_bootkick_can_ignition(p, pj):
     pj.can_send(0x9E, b'\xc0\x00\x00\x00\x00\x00\x00\x00', 0)
     time.sleep(0.5)
   wait_for_boot(p, pj, bootkick=True)
+
+def test_recovery_from_qdl(p, pj):
+  setup_state(p, pj, "ready to bootkick")
+
+  # put into QDL using the FORCE_USB_BOOT pin
+  for i in range(10):
+    pj.set_header_pin(i, 1)
+
+  # try to boot
+  time.sleep(1)
+  pj.set_ignition(True)
+  time.sleep(3)
+
+  # release FORCE_USB_BOOT
+  for i in range(10):
+    pj.set_header_pin(i, 0)
+
+  # normally, this GPIO is set immediately since it's first enabled in the ABL
+  for i in range(40):
+    assert not p.read_som_gpio()
+    time.sleep(1)
+
+  # should boot after 45s
+  wait_for_boot(p, pj, reset_expected=True, bootkick=True, timeout=120)
