@@ -130,7 +130,11 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
       gas_interceptor_prev = gas_interceptor;
     }
 
-    generic_rx_checks((addr == 0x2E4));
+    bool stock_ecu_detected = addr == 0x2E4;  // STEERING_LKA
+    if (!toyota_stock_longitudinal) {
+      stock_ecu_detected = stock_ecu_detected || (addr == 0x343);  // ACC_CONTROL
+    }
+    generic_rx_checks(stock_ecu_detected);
   }
   return valid;
 }

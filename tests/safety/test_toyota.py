@@ -27,7 +27,7 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.InterceptorSafetyTe
              [0x2E4, 0], [0x191, 0], [0x411, 0], [0x412, 0], [0x343, 0], [0x1D2, 0],  # LKAS + ACC
              [0x200, 0], [0x750, 0]]  # interceptor + blindspot monitor
   STANDSTILL_THRESHOLD = 0  # kph
-  RELAY_MALFUNCTION_ADDRS = {0: (0x2E4,)}
+  RELAY_MALFUNCTION_ADDRS = {0: (0x2E4, 0x343)}
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x343]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   INTERCEPTOR_THRESHOLD = 805
@@ -190,6 +190,8 @@ class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
 
 class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
 
+  # Fine if (0x343) ACC_CONTROL is on bus 0, from camera or radar
+  RELAY_MALFUNCTION_ADDRS = {0: (0x2E4,)}
   # Base fwd addresses minus ACC_CONTROL (0x343)
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191]}
 
