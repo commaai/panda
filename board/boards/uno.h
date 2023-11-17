@@ -1,8 +1,6 @@
 // ///////////// //
 // Uno + Harness //
 // ///////////// //
-#define BOOTKICK_TIME 3U
-uint8_t bootkick_timer = 0U;
 
 void uno_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver){
@@ -51,18 +49,13 @@ void uno_set_led(uint8_t color, bool enabled) {
   }
 }
 
-void uno_set_bootkick(bool enabled){
-  if (enabled) {
+void uno_set_bootkick(BootState state) {
+  if (state == BOOT_BOOTKICK) {
     set_gpio_output(GPIOB, 14, false);
   } else {
     // We want the pin to be floating, not forced high!
     set_gpio_mode(GPIOB, 14, MODE_INPUT);
   }
-}
-
-void uno_bootkick(void) {
-  bootkick_timer = BOOTKICK_TIME;
-  uno_set_bootkick(true);
 }
 
 void uno_set_phone_power(bool enabled){
@@ -99,19 +92,6 @@ void uno_set_can_mode(uint8_t mode) {
       print("Tried to set unsupported CAN mode: "); puth(mode); print("\n");
       break;
   }
-}
-
-bool uno_board_tick(bool ignition, bool usb_enum, bool heartbeat_seen, bool harness_inserted) {
-  UNUSED(ignition);
-  UNUSED(usb_enum);
-  UNUSED(heartbeat_seen);
-  UNUSED(harness_inserted);
-  if (bootkick_timer != 0U) {
-    bootkick_timer--;
-  } else {
-    uno_set_bootkick(false);
-  }
-  return false;
 }
 
 bool uno_check_ignition(void){
@@ -198,7 +178,7 @@ void uno_init(void) {
   }
 
   // Bootkick phone
-  uno_bootkick();
+  uno_set_bootkick(BOOT_BOOTKICK);
 }
 
 void uno_init_bootloader(void) {
@@ -224,7 +204,6 @@ const harness_configuration uno_harness_config = {
 
 const board board_uno = {
   .board_type = "Uno",
-  .board_tick = uno_board_tick,
   .harness_config = &uno_harness_config,
   .has_hw_gmlan = false,
   .has_obd = true,
@@ -248,5 +227,6 @@ const board board_uno = {
   .set_ir_power = uno_set_ir_power,
   .set_phone_power = uno_set_phone_power,
   .set_siren = unused_set_siren,
+  .set_bootkick = uno_set_bootkick,
   .read_som_gpio = unused_read_som_gpio
 };

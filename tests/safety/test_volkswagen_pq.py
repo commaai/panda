@@ -17,12 +17,11 @@ MSG_ACC_GRA_ANZEIGE = 0x56A   # TX by OP, ACC HUD
 MSG_LDW_1 = 0x5BE             # TX by OP, Lane line recognition and text alerts
 
 
-class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestVolkswagenPqSafety(common.PandaCarSafetyTest, common.DriverTorqueSteeringSafetyTest):
   cruise_engaged = False
 
   STANDSTILL_THRESHOLD = 0
-  RELAY_MALFUNCTION_ADDR = MSG_HCA_1
-  RELAY_MALFUNCTION_BUS = 0
+  RELAY_MALFUNCTION_ADDRS = {0: (MSG_HCA_1,)}
 
   MAX_RATE_UP = 6
   MAX_RATE_DOWN = 10

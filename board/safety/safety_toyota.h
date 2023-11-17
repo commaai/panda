@@ -39,8 +39,7 @@ AddrCheckStruct toyota_addr_checks[] = {
   {.msg = {{0x224, 0, 8, .check_checksum = false, .expected_timestep = 25000U},
            {0x226, 0, 8, .check_checksum = false, .expected_timestep = 25000U}, { 0 }}},
 };
-#define TOYOTA_ADDR_CHECKS_LEN (sizeof(toyota_addr_checks) / sizeof(toyota_addr_checks[0]))
-addr_checks toyota_rx_checks = {toyota_addr_checks, TOYOTA_ADDR_CHECKS_LEN};
+addr_checks toyota_rx_checks = SET_ADDR_CHECKS(toyota_addr_checks);
 
 // safety param flags
 // first byte is for eps factor, second is for flags
@@ -222,7 +221,6 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
 }
 
 static const addr_checks* toyota_init(uint16_t param) {
-  gas_interceptor_detected = 0;
   toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;

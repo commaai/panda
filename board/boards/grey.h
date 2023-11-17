@@ -6,7 +6,7 @@
 
 const board board_grey = {
   .board_type = "Grey",
-  .board_tick = unused_board_tick,
+  .set_bootkick = unused_set_bootkick,
   .harness_config = &white_harness_config,
   .has_hw_gmlan = true,
   .has_obd = false,

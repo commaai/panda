@@ -90,6 +90,23 @@ jobs:
                           scons -j$(nproc) ${{ matrix.flags }} && \
                           tests/safety/test.sh"
 
+  safety_coverage:
+    name: safety coverage
+    runs-on: ubuntu-20.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Docker image
+        run: eval "$BUILD"
+      - name: Run safety coverage test
+        timeout-minutes: 5
+        run: |
+          ${{ env.RUN }} "cd .. && \
+                          scons -c && \
+                          scons -j$(nproc) opendbc/ cereal/ && \
+                          cd panda/tests/safety && \
+                          ./test_coverage.sh"
+
   misra:
     name: misra c2012
     runs-on: ubuntu-20.04

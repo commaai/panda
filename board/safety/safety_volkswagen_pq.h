@@ -45,8 +45,7 @@ AddrCheckStruct volkswagen_pq_addr_checks[] = {
   {.msg = {{MSG_MOTOR_5, 0, 8, .check_checksum = true, .max_counter = 0U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_GRA_NEU, 0, 4, .check_checksum = true, .max_counter = 15U, .expected_timestep = 33000U}, { 0 }, { 0 }}},
 };
-#define VOLKSWAGEN_PQ_ADDR_CHECKS_LEN (sizeof(volkswagen_pq_addr_checks) / sizeof(volkswagen_pq_addr_checks[0]))
-addr_checks volkswagen_pq_rx_checks = {volkswagen_pq_addr_checks, VOLKSWAGEN_PQ_ADDR_CHECKS_LEN};
+addr_checks volkswagen_pq_rx_checks = SET_ADDR_CHECKS(volkswagen_pq_addr_checks);
 
 static uint32_t volkswagen_pq_get_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
@@ -63,7 +62,6 @@ static uint8_t volkswagen_pq_get_counter(CANPacket_t *to_push) {
   } else if (addr == MSG_GRA_NEU) {
     counter = (uint8_t)(GET_BYTE(to_push, 2) & 0xF0U) >> 4;
   } else {
-    counter = 0U;
   }
 
   return counter;

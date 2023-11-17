@@ -34,8 +34,7 @@ AddrCheckStruct nissan_addr_checks[] = {
            {0x454, 1, 8, .expected_timestep = 100000U},
            {0x1cc, 0, 4, .expected_timestep = 10000U}}}, // DOORS_LIGHTS (10Hz) / BRAKE (100Hz)
 };
-#define NISSAN_ADDR_CHECK_LEN (sizeof(nissan_addr_checks) / sizeof(nissan_addr_checks[0]))
-addr_checks nissan_rx_checks = {nissan_addr_checks, NISSAN_ADDR_CHECK_LEN};
+addr_checks nissan_rx_checks = SET_ADDR_CHECKS(nissan_addr_checks);
 
 // EPS Location. false = V-CAN, true = C-CAN
 const int NISSAN_PARAM_ALT_EPS_BUS = 1;

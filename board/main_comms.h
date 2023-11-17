@@ -44,6 +44,8 @@ int get_health_pkt(void *dat) {
   health->sbu1_voltage_mV = harness.sbu1_voltage_mV;
   health->sbu2_voltage_mV = harness.sbu2_voltage_mV;
 
+  health->som_reset_triggered = bootkick_reset_triggered;
+
   return sizeof(*health);
 }
 

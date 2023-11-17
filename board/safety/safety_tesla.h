@@ -42,8 +42,7 @@ AddrCheckStruct tesla_addr_checks[] = {
   {.msg = {{0x368, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},  // DI_state (10Hz)
   {.msg = {{0x318, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},  // GTW_carState (10Hz)
 };
-#define TESLA_ADDR_CHECK_LEN (sizeof(tesla_addr_checks) / sizeof(tesla_addr_checks[0]))
-addr_checks tesla_rx_checks = {tesla_addr_checks, TESLA_ADDR_CHECK_LEN};
+addr_checks tesla_rx_checks = SET_ADDR_CHECKS(tesla_addr_checks);
 
 AddrCheckStruct tesla_pt_addr_checks[] = {
   {.msg = {{0x106, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // DI_torque1 (100Hz)
@@ -52,8 +51,7 @@ AddrCheckStruct tesla_pt_addr_checks[] = {
   {.msg = {{0x2bf, 2, 8, .expected_timestep = 40000U}, { 0 }, { 0 }}},   // DAS_control (25Hz)
   {.msg = {{0x256, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},  // DI_state (10Hz)
 };
-#define TESLA_PT_ADDR_CHECK_LEN (sizeof(tesla_pt_addr_checks) / sizeof(tesla_pt_addr_checks[0]))
-addr_checks tesla_pt_rx_checks = {tesla_pt_addr_checks, TESLA_PT_ADDR_CHECK_LEN};
+addr_checks tesla_pt_rx_checks = SET_ADDR_CHECKS(tesla_pt_addr_checks);
 
 bool tesla_longitudinal = false;
 bool tesla_powertrain = false;  // Are we the second panda intercepting the powertrain bus?
@@ -225,6 +223,8 @@ static int tesla_fwd_hook(int bus_num, int addr) {
 static const addr_checks* tesla_init(uint16_t param) {
   tesla_powertrain = GET_FLAG(param, TESLA_FLAG_POWERTRAIN);
   tesla_longitudinal = GET_FLAG(param, TESLA_FLAG_LONGITUDINAL_CONTROL);
+
+  tesla_stock_aeb = false;
 
   return tesla_powertrain ? (&tesla_pt_rx_checks) : (&tesla_rx_checks);
 }

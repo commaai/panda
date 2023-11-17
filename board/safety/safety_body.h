@@ -4,8 +4,7 @@ const CanMsg BODY_TX_MSGS[] = {{0x250, 0, 8}, {0x250, 0, 6}, {0x251, 0, 5},  // 
 AddrCheckStruct body_addr_checks[] = {
   {.msg = {{0x201, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
 };
-#define BODY_ADDR_CHECK_LEN (sizeof(body_addr_checks) / sizeof(body_addr_checks[0]))
-addr_checks body_rx_checks = {body_addr_checks, BODY_ADDR_CHECK_LEN};
+addr_checks body_rx_checks = SET_ADDR_CHECKS(body_addr_checks);
 
 static int body_rx_hook(CANPacket_t *to_push) {
 
@@ -14,7 +13,9 @@ static int body_rx_hook(CANPacket_t *to_push) {
   // body is never at standstill
   vehicle_moving = true;
 
-  controls_allowed = valid;
+  if (valid && (GET_ADDR(to_push) == 0x201U)) {
+    controls_allowed = true;
+  }
 
   return valid;
 }
@@ -23,6 +24,7 @@ static int body_tx_hook(CANPacket_t *to_send) {
 
   int tx = 0;
   int addr = GET_ADDR(to_send);
+  int len = GET_LEN(to_send);
 
   // CAN flasher
   if (addr == 0x1) {
@@ -33,8 +35,9 @@ static int body_tx_hook(CANPacket_t *to_send) {
     tx = 1;
   }
 
-  // Allow going into CAN flashing mode even if controls are not allowed
-  if (!controls_allowed && (GET_BYTES(to_send, 0, 4) == 0xdeadfaceU) && (GET_BYTES(to_send, 4, 4) == 0x0ab00b1eU)) {
+  // Allow going into CAN flashing mode for base & knee even if controls are not allowed
+  bool flash_msg = ((addr == 0x250) || (addr == 0x350)) && (len == 8);
+  if (!controls_allowed && (GET_BYTES(to_send, 0, 4) == 0xdeadfaceU) && (GET_BYTES(to_send, 4, 4) == 0x0ab00b1eU) && flash_msg) {
     tx = 1;
   }
 
