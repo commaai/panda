@@ -106,14 +106,12 @@ const CanMsg SUBARU_GEN2_LONG_TX_MSGS[] = {
 AddrCheckStruct subaru_addr_checks[] = {
   SUBARU_COMMON_ADDR_CHECKS(SUBARU_MAIN_BUS)
 };
-#define SUBARU_ADDR_CHECK_LEN (sizeof(subaru_addr_checks) / sizeof(subaru_addr_checks[0]))
-addr_checks subaru_rx_checks = {subaru_addr_checks, SUBARU_ADDR_CHECK_LEN};
+addr_checks subaru_rx_checks = SET_ADDR_CHECKS(subaru_addr_checks);
 
 AddrCheckStruct subaru_gen2_addr_checks[] = {
   SUBARU_COMMON_ADDR_CHECKS(SUBARU_ALT_BUS)
 };
-#define SUBARU_GEN2_ADDR_CHECK_LEN (sizeof(subaru_gen2_addr_checks) / sizeof(subaru_gen2_addr_checks[0]))
-addr_checks subaru_gen2_rx_checks = {subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_CHECK_LEN};
+addr_checks subaru_gen2_rx_checks = SET_ADDR_CHECKS(subaru_gen2_addr_checks);
 
 
 const uint16_t SUBARU_PARAM_GEN2 = 1;
@@ -300,9 +298,9 @@ static const addr_checks* subaru_init(uint16_t param) {
 #endif
 
   if (subaru_gen2) {
-    subaru_rx_checks = (addr_checks){subaru_gen2_addr_checks, SUBARU_GEN2_ADDR_CHECK_LEN};
+    subaru_rx_checks = SET_ADDR_CHECKS(subaru_gen2_addr_checks);
   } else {
-    subaru_rx_checks = (addr_checks){subaru_addr_checks, SUBARU_ADDR_CHECK_LEN};
+    subaru_rx_checks = SET_ADDR_CHECKS(subaru_addr_checks);
   }
 
   return &subaru_rx_checks;

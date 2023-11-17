@@ -49,8 +49,7 @@ AddrCheckStruct gm_addr_checks[] = {
   {.msg = {{0x1C4, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{0xC9, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
-#define GM_RX_CHECK_LEN (sizeof(gm_addr_checks) / sizeof(gm_addr_checks[0]))
-addr_checks gm_rx_checks = {gm_addr_checks, GM_RX_CHECK_LEN};
+addr_checks gm_rx_checks = SET_ADDR_CHECKS(gm_addr_checks);
 
 const uint16_t GM_PARAM_HW_CAM = 1;
 const uint16_t GM_PARAM_HW_CAM_LONG = 2;
