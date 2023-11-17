@@ -33,31 +33,33 @@ const LongitudinalLimits HONDA_NIDEC_LONG_LIMITS = {
   .inactive_speed = 0,
 };
 
+// All common address checks except SCM_BUTTONS which isn't on one Nidec safety configuration
+#define HONDA_COMMON_NO_SCM_FEEDBACK_ADDR_CHECKS(pt_bus)                                                                                          \
+  {.msg = {{0x1A6, (pt_bus), 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},                   /* SCM_BUTTONS */      \
+           {0x296, (pt_bus), 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},                                 \
+  {.msg = {{0x158, (pt_bus), 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},   /* ENGINE_DATA */      \
+  {.msg = {{0x17C, (pt_bus), 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},                   /* BRAKE_MODULE */     \
+           {0x1BE, (pt_bus), 3, .check_checksum = true, .max_counter = 3U, .expected_timestep = 20000U}, { 0 }}},                                 \
+
+#define HONDA_COMMON_ADDR_CHECKS(pt_bus)                                                                                                \
+  HONDA_COMMON_NO_SCM_FEEDBACK_ADDR_CHECKS(pt_bus)                                                                                      \
+  {.msg = {{0x326, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 100000U}, { 0 }, { 0 }}},  /* SCM_FEEDBACK */  \
+
+
 // Nidec and bosch radarless has the powertrain bus on bus 0
 AddrCheckStruct honda_common_addr_checks[] = {
-  {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},                   // SCM_BUTTONS
-           {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
-  {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // ENGINE_DATA
-  {.msg = {{0x17C, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},                   // POWERTRAIN_DATA
-           {0x1BE, 0, 3, .check_checksum = true, .max_counter = 3U, .expected_timestep = 20000U}, { 0 }}},          // BRAKE_MODULE (for bosch radarless)
-  {.msg = {{0x326, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 100000U}, { 0 }, { 0 }}},  // SCM_FEEDBACK
+  HONDA_COMMON_ADDR_CHECKS(0)
+  {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .expected_timestep = 0U}, { 0 }, { 0 }}},
 };
 
-// For Nidecs with main on signal on an alternate msg
+// For Nidecs with main on signal on an alternate msg (missing 0x326)
 AddrCheckStruct honda_nidec_alt_addr_checks[] = {
-  {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
-           {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
-  {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0x17C, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  HONDA_COMMON_NO_SCM_FEEDBACK_ADDR_CHECKS(0)
 };
 
 // Bosch has pt on bus 1
 AddrCheckStruct honda_bosch_addr_checks[] = {
-  {.msg = {{0x296, 1, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }, { 0 }}},
-  {.msg = {{0x158, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0x17C, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
-           {0x1BE, 1, 3, .check_checksum = true, .max_counter = 3U, .expected_timestep = 20000U}, { 0 }}},
-  {.msg = {{0x326, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+  HONDA_COMMON_ADDR_CHECKS(1)
 };
 
 const uint16_t HONDA_PARAM_ALT_BRAKE = 1;
