@@ -33,7 +33,7 @@ const LongitudinalLimits HONDA_NIDEC_LONG_LIMITS = {
   .inactive_speed = 0,
 };
 
-// All common address checks except SCM_BUTTONS which isn't on a Nidec safety mode
+// All common address checks except SCM_BUTTONS which isn't on one Nidec safety configuration
 #define HONDA_COMMON_NO_SCM_FEEDBACK_ADDR_CHECKS(pt_bus)                                                                                          \
   {.msg = {{0x1A6, (pt_bus), 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},                   /* SCM_BUTTONS */      \
            {0x296, (pt_bus), 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},                                 \
