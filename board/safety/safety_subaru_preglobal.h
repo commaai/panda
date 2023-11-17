@@ -36,8 +36,7 @@ AddrCheckStruct subaru_preglobal_addr_checks[] = {
   {.msg = {{MSG_SUBARU_PG_Steering_Torque, SUBARU_PG_MAIN_BUS, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_SUBARU_PG_CruiseControl,   SUBARU_PG_MAIN_BUS, 8, .expected_timestep = 50000U}, { 0 }, { 0 }}},
 };
-#define SUBARU_PG_ADDR_CHECK_LEN (sizeof(subaru_preglobal_addr_checks) / sizeof(subaru_preglobal_addr_checks[0]))
-addr_checks subaru_preglobal_rx_checks = {subaru_preglobal_addr_checks, SUBARU_PG_ADDR_CHECK_LEN};
+addr_checks subaru_preglobal_rx_checks = SET_ADDR_CHECKS(subaru_preglobal_addr_checks);
 
 
 const int SUBARU_PG_PARAM_REVERSED_DRIVER_TORQUE = 1;
