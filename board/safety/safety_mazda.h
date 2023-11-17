@@ -32,8 +32,7 @@ AddrCheckStruct mazda_addr_checks[] = {
   {.msg = {{MAZDA_ENGINE_DATA,  0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MAZDA_PEDALS,       0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
-#define MAZDA_ADDR_CHECKS_LEN (sizeof(mazda_addr_checks) / sizeof(mazda_addr_checks[0]))
-addr_checks mazda_rx_checks = {mazda_addr_checks, MAZDA_ADDR_CHECKS_LEN};
+addr_checks mazda_rx_checks = SET_ADDR_CHECKS(mazda_addr_checks);
 
 // track msgs coming from OP so that we know what CAM msgs to drop and what to forward
 static int mazda_rx_hook(CANPacket_t *to_push) {
