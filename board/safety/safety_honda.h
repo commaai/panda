@@ -49,7 +49,6 @@ const LongitudinalLimits HONDA_NIDEC_LONG_LIMITS = {
 // Nidec and bosch radarless has the powertrain bus on bus 0
 AddrCheckStruct honda_common_addr_checks[] = {
   HONDA_COMMON_ADDR_CHECKS(0)
-  {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .expected_timestep = 0U}, { 0 }, { 0 }}},
 };
 
 // For Nidecs with main on signal on an alternate msg (missing 0x326)
