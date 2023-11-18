@@ -135,16 +135,19 @@ int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], cons
   int addr = GET_ADDR(to_push);
   int length = GET_LEN(to_push);
 
-
+//  print("rx checks len: "); puth(len); print("\n");
   int index = -1;
   for (int i = 0; i < len; i++) {
+//    print("i: "); puth(i); print(", bus: "); puth(addr_list[i].msg[addr_list[i].index].bus); print(", addr: "); puth(addr_list[i].msg[addr_list[i].index].addr); print(", len: "); puth(addr_list[i].msg[addr_list[i].index].len); print(", index: "); puth(addr_list[i].index); print(", msg_seen: "); puth(addr_list[i].msg_seen); print("\n");
     // if multiple msgs are allowed, determine which one is present on the bus
     if (!addr_list[i].msg_seen) {
       for (uint8_t j = 0U; (j < MAX_ADDR_CHECK_MSGS) && (addr_list[i].msg[j].addr != 0); j++) {
+//        print("i: "); puth(i); print(", j: "); puth(j); print(", addr: "); puth(addr_list[i].msg[j].addr); print(", bus: "); puth(addr_list[i].msg[j].bus); print(", len: "); puth(addr_list[i].msg[j].len); print("\n");
         if ((addr == addr_list[i].msg[j].addr) && (bus == addr_list[i].msg[j].bus) &&
               (length == addr_list[i].msg[j].len)) {
           addr_list[i].index = j;
           addr_list[i].msg_seen = true;
+//          print("found!\n");
           break;
         }
       }
@@ -200,13 +203,13 @@ void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
 bool is_msg_valid(AddrCheckStruct addr_list[], int index) {
   bool valid = true;
   if (index != -1) {
-    print("index: "); puth(index); print(", wrong counters: "); puth(addr_list[index].wrong_counters); print("\n");
+//    print("index: "); puth(index); print(", wrong counters: "); puth(addr_list[index].wrong_counters); print("\n");
     if (!addr_list[index].valid_checksum || !addr_list[index].valid_quality_flag || (addr_list[index].wrong_counters >= MAX_WRONG_COUNTERS)) {
       valid = false;
       controls_allowed = false;
     }
   }
-  print("index: "); puth(index); print(", valid: "); puth(valid); print("\n");
+//  print("index: "); puth(index); print(", valid: "); puth(valid); print("\n");
   return valid;
 }
 

@@ -214,14 +214,14 @@ static int honda_rx_hook(CANPacket_t *to_push) {
     if (honda_alt_brake_msg) {
       if (addr == 0x1BE) {
         brake_pressed = GET_BIT(to_push, 4U) != 0U;
-        print("safety alt brake: "); puth(brake_pressed); print("\n");
+//        print("safety alt brake: "); puth(brake_pressed); print("\n");
       }
     } else {
       if (addr == 0x17C) {
 //        print("safety brake msg\n");
         // also if brake switch is 1 for two CAN frames, as brake pressed is delayed
         const bool brake_switch = GET_BIT(to_push, 32U) != 0U;
-        print("safety brake_pressed: "); puth((GET_BIT(to_push, 53U) != 0U)); print(", brake_switch: "); puth(brake_switch); print(", honda_brake_switch_prev: "); puth(honda_brake_switch_prev); print("\n");
+//        print("safety brake_pressed: "); puth((GET_BIT(to_push, 53U) != 0U)); print(", brake_switch: "); puth(brake_switch); print(", honda_brake_switch_prev: "); puth(honda_brake_switch_prev); print("\n");
         brake_pressed = (GET_BIT(to_push, 53U) != 0U) || (brake_switch && honda_brake_switch_prev);
         honda_brake_switch_prev = brake_switch;
       }
