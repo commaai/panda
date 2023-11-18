@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import numpy as np
+import random
 import unittest
 
 import panda.tests.safety.common as common
@@ -134,7 +135,7 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
 
   # Standstill state
   def _vehicle_moving_msg(self, speed: float):
-    values = {"VehStop_D_Stat": 1 if speed <= self.STANDSTILL_THRESHOLD else 0}
+    values = {"VehStop_D_Stat": 1 if speed <= self.STANDSTILL_THRESHOLD else random.choice((0, 2, 3))}
     return self.packer.make_can_msg_panda("DesiredTorqBrk", 0, values)
 
   # Current curvature
