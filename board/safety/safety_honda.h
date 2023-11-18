@@ -65,6 +65,7 @@ AddrCheckStruct honda_common_alt_brake_addr_checks[] = {
 // For Nidecs with main on signal on an alternate msg (missing 0x326)
 AddrCheckStruct honda_nidec_alt_addr_checks[] = {
   HONDA_COMMON_NO_SCM_FEEDBACK_ADDR_CHECKS(0)
+  {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .expected_timestep = 0U}, { 0 }, { 0 }}},
 };
 
 // Bosch has pt on bus 1
