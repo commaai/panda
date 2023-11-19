@@ -33,12 +33,19 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.InterceptorSafetyTe
   INTERCEPTOR_THRESHOLD = 805
   EPS_SCALE = 73
 
+  cnt_gas_cmd = 0
+  cnt_user_gas = 0
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__.endswith("Base"):
       cls.packer = None
       cls.safety = None
       raise unittest.SkipTest
+
+  def test_int_rx(self):
+    for _ in range(5):
+      self.assertTrue(self._rx(self._interceptor_user_gas(0)))
 
   def _torque_meas_msg(self, torque):
     values = {"STEER_TORQUE_EPS": (torque / self.EPS_SCALE) * 100.}
@@ -75,10 +82,15 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.InterceptorSafetyTe
     return self.packer.make_can_msg_panda("PCM_CRUISE", 0, values)
 
   def _interceptor_gas_cmd(self, gas):
-    return interceptor_msg(gas, 0x200)
+    values = {"GAS_COMMAND": gas, "GAS_COMMAND2": gas, "COUNTER_PEDAL": self.__class__.cnt_gas_cmd}
+    self.__class__.cnt_gas_cmd += 1
+    return self.packer.make_can_msg_panda("GAS_COMMAND", 0, values)
 
   def _interceptor_user_gas(self, gas):
-    return interceptor_msg(gas, 0x201)
+    # gas_untransformed =
+    values = {"INTERCEPTOR_GAS": (gas + 75.555) / 0.159378, "INTERCEPTOR_GAS2": (gas + 151.111) / 0.159375, "COUNTER_PEDAL": self.__class__.cnt_user_gas}
+    self.__class__.cnt_user_gas += 1
+    return self.packer.make_can_msg_panda("GAS_SENSOR", 0, values)
 
   def test_block_aeb(self):
     for controls_allowed in (True, False):
