@@ -60,11 +60,16 @@ safety_config current_safety_config;
 bool safety_rx_hook(CANPacket_t *to_push) {
   bool controls_allowed_prev = controls_allowed;
 
-  bool valid = rx_msg_safety_check(to_push, &current_safety_config, current_hooks->get_checksum,
-                                 current_hooks->compute_checksum, current_hooks->get_counter,
-                                 current_hooks->get_quality_flag_valid);
-  if (valid) {
-    current_hooks->rx(to_push);
+  bool valid = true;
+  int index = get_addr_check_index(to_push, current_safety_config.rx_checks,
+                                   current_safety_config.rx_checks_len);
+  if (index != -1) {
+    valid = rx_msg_safety_check(to_push, index, &current_safety_config, current_hooks->get_checksum,
+                                current_hooks->compute_checksum, current_hooks->get_counter,
+                                current_hooks->get_quality_flag_valid);
+    if (valid) {
+      current_hooks->rx(to_push);
+    }
   }
 
   // reset mismatches on rising edge of controls_allowed to avoid rare race condition
@@ -225,40 +230,37 @@ void update_addr_timestamp(RxCheck addr_list[], int index) {
   }
 }
 
-bool rx_msg_safety_check(CANPacket_t *to_push,
-                       const safety_config *cfg,
-                       const get_checksum_t get_checksum,
-                       const compute_checksum_t compute_checksum,
-                       const get_counter_t get_counter,
-                       const get_quality_flag_valid_t get_quality_flag_valid) {
+bool rx_msg_safety_check(CANPacket_t *to_push, int index,
+                         const safety_config *cfg,
+                         const get_checksum_t get_checksum,
+                         const compute_checksum_t compute_checksum,
+                         const get_counter_t get_counter,
+                         const get_quality_flag_valid_t get_quality_flag_valid) {
 
-  int index = get_addr_check_index(to_push, cfg->rx_checks, cfg->rx_checks_len);
   update_addr_timestamp(cfg->rx_checks, index);
 
-  if (index != -1) {
-    // checksum check
-    if ((get_checksum != NULL) && (compute_checksum != NULL) && cfg->rx_checks[index].msg[cfg->rx_checks[index].index].check_checksum) {
-      uint32_t checksum = get_checksum(to_push);
-      uint32_t checksum_comp = compute_checksum(to_push);
-      cfg->rx_checks[index].valid_checksum = checksum_comp == checksum;
-    } else {
-      cfg->rx_checks[index].valid_checksum = true;
-    }
+  // checksum check
+  if ((get_checksum != NULL) && (compute_checksum != NULL) && cfg->rx_checks[index].msg[cfg->rx_checks[index].index].check_checksum) {
+    uint32_t checksum = get_checksum(to_push);
+    uint32_t checksum_comp = compute_checksum(to_push);
+    cfg->rx_checks[index].valid_checksum = checksum_comp == checksum;
+  } else {
+    cfg->rx_checks[index].valid_checksum = true;
+  }
 
-    // counter check (max_counter == 0 means skip check)
-    if ((get_counter != NULL) && (cfg->rx_checks[index].msg[cfg->rx_checks[index].index].max_counter > 0U)) {
-      uint8_t counter = get_counter(to_push);
-      update_counter(cfg->rx_checks, index, counter);
-    } else {
-      cfg->rx_checks[index].wrong_counters = 0U;
-    }
+  // counter check (max_counter == 0 means skip check)
+  if ((get_counter != NULL) && (cfg->rx_checks[index].msg[cfg->rx_checks[index].index].max_counter > 0U)) {
+    uint8_t counter = get_counter(to_push);
+    update_counter(cfg->rx_checks, index, counter);
+  } else {
+    cfg->rx_checks[index].wrong_counters = 0U;
+  }
 
-    // quality flag check
-    if ((get_quality_flag_valid != NULL) && cfg->rx_checks[index].msg[cfg->rx_checks[index].index].quality_flag) {
-      cfg->rx_checks[index].valid_quality_flag = get_quality_flag_valid(to_push);
-    } else {
-      cfg->rx_checks[index].valid_quality_flag = true;
-    }
+  // quality flag check
+  if ((get_quality_flag_valid != NULL) && cfg->rx_checks[index].msg[cfg->rx_checks[index].index].quality_flag) {
+    cfg->rx_checks[index].valid_quality_flag = get_quality_flag_valid(to_push);
+  } else {
+    cfg->rx_checks[index].valid_quality_flag = true;
   }
   return is_msg_valid(cfg->rx_checks, index);
 }
