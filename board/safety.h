@@ -222,10 +222,10 @@ void update_addr_timestamp(AddrCheckStruct addr_list[], int index) {
 
 bool addr_safety_check(CANPacket_t *to_push,
                        const addr_checks *rx_checks,
-                       uint32_t (*get_checksum)(CANPacket_t *to_push),
-                       uint32_t (*compute_checksum)(CANPacket_t *to_push),
-                       uint8_t (*get_counter)(CANPacket_t *to_push),
-                       bool (*get_quality_flag_valid)(CANPacket_t *to_push)) {
+                       const get_checksum_t get_checksum,
+                       const compute_checksum_t compute_checksum,
+                       const get_counter_t get_counter,
+                       const get_quality_flag_valid_t get_quality_flag_valid) {
 
   int index = get_addr_check_index(to_push, rx_checks->check, rx_checks->len);
   update_addr_timestamp(rx_checks->check, index);
