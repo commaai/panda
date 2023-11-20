@@ -59,14 +59,20 @@ const addr_checks *current_rx_checks = &default_rx_checks;
 
 bool safety_rx_hook(CANPacket_t *to_push) {
   bool controls_allowed_prev = controls_allowed;
-  int ret = current_hooks->rx(to_push);
+
+  bool valid = addr_safety_check(to_push, &current_rx_checks, current_hooks->get_checksum_fn,
+                                 current_hooks->compute_checksum_fn, current_hooks->get_counter_fn,
+                                 NULL);
+  if (valid) {
+    valid = current_hooks->rx(to_push);
+  }
 
   // reset mismatches on rising edge of controls_allowed to avoid rare race condition
   if (controls_allowed && !controls_allowed_prev) {
     heartbeat_engaged_mismatches = 0;
   }
 
-  return ret;
+  return valid;
 }
 
 bool safety_tx_hook(CANPacket_t *to_send) {

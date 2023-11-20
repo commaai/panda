@@ -183,12 +183,22 @@ typedef bool (*tx_hook)(CANPacket_t *to_send);
 typedef bool (*tx_lin_hook)(int lin_num, uint8_t *data, int len);
 typedef int (*fwd_hook)(int bus_num, int addr);
 
+typedef uint32_t (*get_checksum)(CANPacket_t *to_push);
+typedef uint32_t (*compute_checksum)(CANPacket_t *to_push);
+typedef uint8_t (*get_counter)(CANPacket_t *to_push);
+typedef bool (*get_quality_flag_valid)(CANPacket_t *to_push);
+
+
 typedef struct {
   safety_hook_init init;
   rx_hook rx;
   tx_hook tx;
   tx_lin_hook tx_lin;
   fwd_hook fwd;
+  get_checksum get_checksum_fn;
+  compute_checksum compute_checksum_fn;
+  get_counter get_counter_fn;
+  get_quality_flag_valid get_quality_flag_valid_fn;
 } safety_hooks;
 
 void safety_tick(const addr_checks *addr_checks);
