@@ -1,7 +1,7 @@
 const CanMsg BODY_TX_MSGS[] = {{0x250, 0, 8}, {0x250, 0, 6}, {0x251, 0, 5},  // body
                                {0x350, 0, 8}, {0x350, 0, 6}, {0x351, 0, 5}}; // knee
 
-AddrCheckStruct body_addr_checks[] = {
+RxCheck body_rx_checks[] = {
   {.msg = {{0x201, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
 };
 
@@ -37,9 +37,9 @@ static bool body_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static addr_checks body_init(uint16_t param) {
+static safety_config body_init(uint16_t param) {
   UNUSED(param);
-  return SET_ADDR_CHECKS(body_addr_checks);
+  return BUILD_SAFETY_CFG(body_rx_checks);
 }
 
 const safety_hooks body_hooks = {

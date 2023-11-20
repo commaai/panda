@@ -20,7 +20,7 @@ const CanMsg NISSAN_TX_MSGS[] = {
 };
 
 // Signals duplicated below due to the fact that these messages can come in on either CAN bus, depending on car model.
-AddrCheckStruct nissan_addr_checks[] = {
+RxCheck nissan_rx_checks[] = {
   {.msg = {{0x2, 0, 5, .expected_timestep = 10000U},
            {0x2, 1, 5, .expected_timestep = 10000U}, { 0 }}},  // STEER_ANGLE_SENSOR (100Hz)
   {.msg = {{0x285, 0, 8, .expected_timestep = 20000U},
@@ -151,9 +151,9 @@ static int nissan_fwd_hook(int bus_num, int addr) {
   return bus_fwd;
 }
 
-static addr_checks nissan_init(uint16_t param) {
+static safety_config nissan_init(uint16_t param) {
   nissan_alt_eps = GET_FLAG(param, NISSAN_PARAM_ALT_EPS_BUS);
-  return SET_ADDR_CHECKS(nissan_addr_checks);
+  return BUILD_SAFETY_CFG(nissan_rx_checks);
 }
 
 const safety_hooks nissan_hooks = {

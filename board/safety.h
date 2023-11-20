@@ -55,12 +55,12 @@
 uint16_t current_safety_mode = SAFETY_SILENT;
 uint16_t current_safety_param = 0;
 const safety_hooks *current_hooks = &nooutput_hooks;
-addr_checks current_rx_checks;
+safety_config current_safety_config;
 
 bool safety_rx_hook(CANPacket_t *to_push) {
   bool controls_allowed_prev = controls_allowed;
 
-  bool valid = addr_safety_check(to_push, &current_rx_checks, current_hooks->get_checksum,
+  bool valid = rx_msg_safety_check(to_push, &current_safety_config, current_hooks->get_checksum,
                                  current_hooks->compute_checksum, current_hooks->get_counter,
                                  current_hooks->get_quality_flag_valid);
   if (valid) {
@@ -137,7 +137,7 @@ bool msg_allowed(CANPacket_t *to_send, const CanMsg msg_list[], int len) {
   return allowed;
 }
 
-int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], const int len) {
+int get_addr_check_index(CANPacket_t *to_push, RxCheck addr_list[], const int len) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
   int length = GET_LEN(to_push);
@@ -169,7 +169,7 @@ int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], cons
 }
 
 // 1Hz safety function called by main. Now just a check for lagging safety messages
-void safety_tick(const addr_checks *rx_checks) {
+void safety_tick(const safety_config *rx_checks) {
   bool rx_checks_invalid = false;
   uint32_t ts = microsecond_timer_get();
   if (rx_checks != NULL) {
@@ -193,7 +193,7 @@ void safety_tick(const addr_checks *rx_checks) {
   safety_rx_checks_invalid = rx_checks_invalid;
 }
 
-void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
+void update_counter(RxCheck addr_list[], int index, uint8_t counter) {
   if (index != -1) {
     uint8_t expected_counter = (addr_list[index].last_counter + 1U) % (addr_list[index].msg[addr_list[index].index].max_counter + 1U);
     addr_list[index].wrong_counters += (expected_counter == counter) ? -1 : 1;
@@ -202,7 +202,7 @@ void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter) {
   }
 }
 
-bool is_msg_valid(AddrCheckStruct addr_list[], int index) {
+bool is_msg_valid(RxCheck addr_list[], int index) {
   bool valid = true;
   if (index != -1) {
     if (!addr_list[index].valid_checksum || !addr_list[index].valid_quality_flag || (addr_list[index].wrong_counters >= MAX_WRONG_COUNTERS)) {
@@ -213,15 +213,15 @@ bool is_msg_valid(AddrCheckStruct addr_list[], int index) {
   return valid;
 }
 
-void update_addr_timestamp(AddrCheckStruct addr_list[], int index) {
+void update_addr_timestamp(RxCheck addr_list[], int index) {
   if (index != -1) {
     uint32_t ts = microsecond_timer_get();
     addr_list[index].last_timestamp = ts;
   }
 }
 
-bool addr_safety_check(CANPacket_t *to_push,
-                       const addr_checks *rx_checks,
+bool rx_msg_safety_check(CANPacket_t *to_push,
+                       const safety_config *rx_checks,
                        const get_checksum_t get_checksum,
                        const compute_checksum_t compute_checksum,
                        const get_counter_t get_counter,
@@ -361,8 +361,8 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   relay_malfunction_reset();
   safety_rx_checks_invalid = false;
 
-  current_rx_checks.len = 0;
-  current_rx_checks.check = NULL;
+  current_safety_config.len = 0;
+  current_safety_config.check = NULL;
 
   int set_status = -1;  // not set
   int hook_config_count = sizeof(safety_hook_registry) / sizeof(safety_hook_config);
@@ -375,13 +375,13 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
     }
   }
   if ((set_status == 0) && (current_hooks->init != NULL)) {
-    addr_checks cfg = current_hooks->init(param);
-    current_rx_checks.len = cfg.len;
-    current_rx_checks.check = cfg.check;
+    safety_config cfg = current_hooks->init(param);
+    current_safety_config.len = cfg.len;
+    current_safety_config.check = cfg.check;
     // reset message index and seen flags in addr struct
-    for (int j = 0; j < current_rx_checks.len; j++) {
-      current_rx_checks.check[j].index = 0;
-      current_rx_checks.check[j].msg_seen = false;
+    for (int j = 0; j < current_safety_config.len; j++) {
+      current_safety_config.check[j].index = 0;
+      current_safety_config.check[j].msg_seen = false;
     }
   }
   return set_status;

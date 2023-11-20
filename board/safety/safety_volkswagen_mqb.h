@@ -38,7 +38,7 @@ const CanMsg VOLKSWAGEN_MQB_STOCK_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_GRA_ACC_
 const CanMsg VOLKSWAGEN_MQB_LONG_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_LDW_02, 0, 8},
                                               {MSG_ACC_02, 0, 8}, {MSG_ACC_06, 0, 8}, {MSG_ACC_07, 0, 8}};
 
-AddrCheckStruct volkswagen_mqb_addr_checks[] = {
+RxCheck volkswagen_mqb_rx_checks[] = {
   {.msg = {{MSG_ESP_19, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_LH_EPS_03, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_ESP_05, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
@@ -89,7 +89,7 @@ static uint32_t volkswagen_mqb_compute_crc(CANPacket_t *to_push) {
   return (uint8_t)(crc ^ 0xFFU);
 }
 
-static addr_checks volkswagen_mqb_init(uint16_t param) {
+static safety_config volkswagen_mqb_init(uint16_t param) {
   UNUSED(param);
 
   volkswagen_set_button_prev = false;
@@ -101,7 +101,7 @@ static addr_checks volkswagen_mqb_init(uint16_t param) {
   volkswagen_longitudinal = GET_FLAG(param, FLAG_VOLKSWAGEN_LONG_CONTROL);
 #endif
   gen_crc_lookup_table_8(0x2F, volkswagen_crc8_lut_8h2f);
-  return SET_ADDR_CHECKS(volkswagen_mqb_addr_checks);
+  return BUILD_SAFETY_CFG(volkswagen_mqb_rx_checks);
 }
 
 static void volkswagen_mqb_rx_hook(CANPacket_t *to_push) {

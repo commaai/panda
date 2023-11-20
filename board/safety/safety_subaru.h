@@ -73,7 +73,7 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
   {MSG_SUBARU_ES_STATIC_1,       SUBARU_MAIN_BUS, 8}, \
   {MSG_SUBARU_ES_STATIC_2,       SUBARU_MAIN_BUS, 8}, \
 
-#define SUBARU_COMMON_ADDR_CHECKS(alt_bus)                                                                                                            \
+#define SUBARU_COMMON_RX_CHECKS(alt_bus)                                                                                                            \
   {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}}, \
   {.msg = {{MSG_SUBARU_Steering_Torque, SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
   {.msg = {{MSG_SUBARU_Wheel_Speeds,    alt_bus,         8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
@@ -103,12 +103,12 @@ const CanMsg SUBARU_GEN2_LONG_TX_MSGS[] = {
 };
 #define SUBARU_GEN2_LONG_TX_MSGS_LEN (sizeof(SUBARU_GEN2_LONG_TX_MSGS) / sizeof(SUBARU_GEN2_LONG_TX_MSGS[0]))
 
-AddrCheckStruct subaru_addr_checks[] = {
-  SUBARU_COMMON_ADDR_CHECKS(SUBARU_MAIN_BUS)
+RxCheck subaru_rx_checks[] = {
+  SUBARU_COMMON_RX_CHECKS(SUBARU_MAIN_BUS)
 };
 
-AddrCheckStruct subaru_gen2_addr_checks[] = {
-  SUBARU_COMMON_ADDR_CHECKS(SUBARU_ALT_BUS)
+RxCheck subaru_gen2_rx_checks[] = {
+  SUBARU_COMMON_RX_CHECKS(SUBARU_ALT_BUS)
 };
 
 
@@ -281,18 +281,18 @@ static int subaru_fwd_hook(int bus_num, int addr) {
   return bus_fwd;
 }
 
-static addr_checks subaru_init(uint16_t param) {
+static safety_config subaru_init(uint16_t param) {
   subaru_gen2 = GET_FLAG(param, SUBARU_PARAM_GEN2);
 
 #ifdef ALLOW_DEBUG
   subaru_longitudinal = GET_FLAG(param, SUBARU_PARAM_LONGITUDINAL);
 #endif
 
-  addr_checks ret;
+  safety_config ret;
   if (subaru_gen2) {
-    ret = SET_ADDR_CHECKS(subaru_gen2_addr_checks);
+    ret = BUILD_SAFETY_CFG(subaru_gen2_rx_checks);
   } else {
-    ret = SET_ADDR_CHECKS(subaru_addr_checks);
+    ret = BUILD_SAFETY_CFG(subaru_rx_checks);
   }
   return ret;
 }

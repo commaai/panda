@@ -34,7 +34,7 @@ const LongitudinalLimits HONDA_NIDEC_LONG_LIMITS = {
 };
 
 // Nidec and bosch radarless has the powertrain bus on bus 0
-AddrCheckStruct honda_common_addr_checks[] = {
+RxCheck honda_common_rx_checks[] = {
   {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},                   // SCM_BUTTONS
            {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
   {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // ENGINE_DATA
@@ -44,7 +44,7 @@ AddrCheckStruct honda_common_addr_checks[] = {
 };
 
 // For Nidecs with main on signal on an alternate msg
-AddrCheckStruct honda_nidec_alt_addr_checks[] = {
+RxCheck honda_nidec_alt_rx_checks[] = {
   {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
            {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
   {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
@@ -52,7 +52,7 @@ AddrCheckStruct honda_nidec_alt_addr_checks[] = {
 };
 
 // Bosch has pt on bus 1
-AddrCheckStruct honda_bosch_addr_checks[] = {
+RxCheck honda_bosch_rx_checks[] = {
   {.msg = {{0x296, 1, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }, { 0 }}},
   {.msg = {{0x158, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{0x17C, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
@@ -366,7 +366,7 @@ static bool honda_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static addr_checks honda_nidec_init(uint16_t param) {
+static safety_config honda_nidec_init(uint16_t param) {
   honda_hw = HONDA_NIDEC;
   honda_brake = 0;
   honda_fwd_brake = false;
@@ -374,16 +374,16 @@ static addr_checks honda_nidec_init(uint16_t param) {
   honda_bosch_long = false;
   honda_bosch_radarless = false;
 
-  addr_checks ret;
+  safety_config ret;
   if (GET_FLAG(param, HONDA_PARAM_NIDEC_ALT)) {
-    ret = SET_ADDR_CHECKS(honda_nidec_alt_addr_checks);
+    ret = BUILD_SAFETY_CFG(honda_nidec_alt_rx_checks);
   } else {
-    ret= SET_ADDR_CHECKS(honda_common_addr_checks);
+    ret= BUILD_SAFETY_CFG(honda_common_rx_checks);
   }
   return ret;
 }
 
-static addr_checks honda_bosch_init(uint16_t param) {
+static safety_config honda_bosch_init(uint16_t param) {
   honda_hw = HONDA_BOSCH;
   honda_bosch_radarless = GET_FLAG(param, HONDA_PARAM_RADARLESS);
   // Checking for alternate brake override from safety parameter
@@ -394,11 +394,11 @@ static addr_checks honda_bosch_init(uint16_t param) {
   honda_bosch_long = GET_FLAG(param, HONDA_PARAM_BOSCH_LONG);
 #endif
 
-  addr_checks ret;
+  safety_config ret;
   if (honda_bosch_radarless) {
-    ret = SET_ADDR_CHECKS(honda_common_addr_checks);
+    ret = BUILD_SAFETY_CFG(honda_common_rx_checks);
   } else {
-    ret = SET_ADDR_CHECKS(honda_bosch_addr_checks);
+    ret = BUILD_SAFETY_CFG(honda_bosch_rx_checks);
   }
   return ret;
 }

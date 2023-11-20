@@ -4,7 +4,7 @@
 #define GET_BYTE(msg, b) ((msg)->data[(b)])
 #define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask))
 
-#define SET_ADDR_CHECKS(name) ((addr_checks){(name), (sizeof((name)) / sizeof((name)[0]))})
+#define BUILD_SAFETY_CFG(name) ((safety_config){(name), (sizeof((name)) / sizeof((name)[0]))})
 
 uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
   uint32_t ret = 0U;
@@ -116,6 +116,7 @@ typedef struct {
 typedef struct {
   // const params
   const CanMsgCheck msg[MAX_ADDR_CHECK_MSGS];  // check either messages (e.g. honda steer)
+
   // dynamic flags
   bool msg_seen;
   int index;                         // if multiple messages are allowed to be checked, this stores the index of the first one seen. only msg[msg_index] will be used
@@ -125,12 +126,12 @@ typedef struct {
   uint8_t last_counter;              // last counter value
   uint32_t last_timestamp;           // micro-s
   bool lagging;                      // true if and only if the time between updates is excessive
-} AddrCheckStruct;
+} RxCheck;
 
 typedef struct {
-  AddrCheckStruct *check;
+  RxCheck *check;
   int len;
-} addr_checks;
+} safety_config;
 
 typedef uint32_t (*get_checksum_t)(CANPacket_t *to_push);
 typedef uint32_t (*compute_checksum_t)(CANPacket_t *to_push);
@@ -159,16 +160,16 @@ int ROUND(float val);
 void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]);
 void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]);
 bool msg_allowed(CANPacket_t *to_send, const CanMsg msg_list[], int len);
-int get_addr_check_index(CANPacket_t *to_push, AddrCheckStruct addr_list[], const int len);
-void update_counter(AddrCheckStruct addr_list[], int index, uint8_t counter);
-void update_addr_timestamp(AddrCheckStruct addr_list[], int index);
-bool is_msg_valid(AddrCheckStruct addr_list[], int index);
-bool addr_safety_check(CANPacket_t *to_push,
-                       const addr_checks *rx_checks,
-                       const get_checksum_t get_checksum,
-                       const compute_checksum_t compute_checksum,
-                       const get_counter_t get_counter,
-                       const get_quality_flag_valid_t get_quality_flag);
+int get_addr_check_index(CANPacket_t *to_push, RxCheck addr_list[], const int len);
+void update_counter(RxCheck addr_list[], int index, uint8_t counter);
+void update_addr_timestamp(RxCheck addr_list[], int index);
+bool is_msg_valid(RxCheck addr_list[], int index);
+bool rx_msg_safety_check(CANPacket_t *to_push,
+                         const safety_config *rx_checks,
+                         const get_checksum_t get_checksum,
+                         const compute_checksum_t compute_checksum,
+                         const get_counter_t get_counter,
+                         const get_quality_flag_valid_t get_quality_flag);
 void generic_rx_checks(bool stock_ecu_detected);
 void relay_malfunction_set(void);
 void relay_malfunction_reset(void);
@@ -182,7 +183,7 @@ bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limit
 bool longitudinal_interceptor_checks(CANPacket_t *to_send);
 void pcm_cruise_check(bool cruise_engaged);
 
-typedef addr_checks (*safety_hook_init)(uint16_t param);
+typedef safety_config (*safety_hook_init)(uint16_t param);
 typedef void (*rx_hook)(CANPacket_t *to_push);
 typedef bool (*tx_hook)(CANPacket_t *to_send);
 typedef bool (*tx_lin_hook)(int lin_num, uint8_t *data, int len);
@@ -200,7 +201,7 @@ typedef struct {
   get_quality_flag_valid_t get_quality_flag_valid;
 } safety_hooks;
 
-void safety_tick(const addr_checks *addr_checks);
+void safety_tick(const safety_config *safety_config);
 
 // This can be set by the safety hooks
 bool controls_allowed = false;
