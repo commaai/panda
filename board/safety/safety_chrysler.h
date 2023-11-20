@@ -218,7 +218,7 @@ static bool chrysler_tx_hook(CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
 
   // STEERING
-  if (tx && (addr == chrysler_addrs->LKAS_COMMAND)) {
+  if (addr == chrysler_addrs->LKAS_COMMAND) {
     int start_byte = (chrysler_platform == CHRYSLER_PACIFICA) ? 0 : 1;
     int desired_torque = ((GET_BYTE(to_send, start_byte) & 0x7U) << 8) | GET_BYTE(to_send, start_byte + 1);
     desired_torque -= 1024;
