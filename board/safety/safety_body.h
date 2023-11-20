@@ -7,17 +7,14 @@ AddrCheckStruct body_addr_checks[] = {
 addr_checks body_rx_checks = SET_ADDR_CHECKS(body_addr_checks);
 
 static bool body_rx_hook(CANPacket_t *to_push) {
-
-  bool valid = addr_safety_check(to_push, &body_rx_checks, NULL, NULL, NULL, NULL);
-
   // body is never at standstill
   vehicle_moving = true;
 
-  if (valid && (GET_ADDR(to_push) == 0x201U)) {
+  if (GET_ADDR(to_push) == 0x201U) {
     controls_allowed = true;
   }
 
-  return valid;
+  return true;
 }
 
 static bool body_tx_hook(CANPacket_t *to_send) {

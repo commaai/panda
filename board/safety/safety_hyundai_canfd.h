@@ -367,5 +367,5 @@ const safety_hooks hyundai_canfd_hooks = {
   .fwd = hyundai_canfd_fwd_hook,
   .get_counter_fn = hyundai_canfd_get_counter,
   .get_checksum_fn = hyundai_canfd_get_checksum,
-  .compute_checksum_fn = hyundai_compute_checksum,
+  .compute_checksum_fn = hyundai_common_canfd_compute_checksum,
 };
