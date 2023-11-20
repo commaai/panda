@@ -43,7 +43,7 @@ const int SUBARU_PG_PARAM_REVERSED_DRIVER_TORQUE = 1;
 bool subaru_pg_reversed_driver_torque = false;
 
 
-static int subaru_preglobal_rx_hook(CANPacket_t *to_push) {
+static bool subaru_preglobal_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &subaru_preglobal_rx_checks, NULL, NULL, NULL, NULL);
 
@@ -83,7 +83,7 @@ static int subaru_preglobal_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int subaru_preglobal_tx_hook(CANPacket_t *to_send) {
+static bool subaru_preglobal_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);

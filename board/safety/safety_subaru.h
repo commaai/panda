@@ -139,7 +139,7 @@ static uint32_t subaru_compute_checksum(CANPacket_t *to_push) {
   return checksum;
 }
 
-static int subaru_rx_hook(CANPacket_t *to_push) {
+static bool subaru_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &subaru_rx_checks,
                                  subaru_get_checksum, subaru_compute_checksum, subaru_get_counter, NULL);
@@ -193,7 +193,7 @@ static int subaru_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int subaru_tx_hook(CANPacket_t *to_send) {
+static bool subaru_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);

@@ -57,7 +57,7 @@ uint16_t current_safety_param = 0;
 const safety_hooks *current_hooks = &nooutput_hooks;
 const addr_checks *current_rx_checks = &default_rx_checks;
 
-int safety_rx_hook(CANPacket_t *to_push) {
+bool safety_rx_hook(CANPacket_t *to_push) {
   bool controls_allowed_prev = controls_allowed;
   int ret = current_hooks->rx(to_push);
 
@@ -69,11 +69,12 @@ int safety_rx_hook(CANPacket_t *to_push) {
   return ret;
 }
 
-int safety_tx_hook(CANPacket_t *to_send) {
-  return (relay_malfunction ? -1 : current_hooks->tx(to_send));
+bool safety_tx_hook(CANPacket_t *to_send) {
+  const bool safety_allowed = current_hooks->tx(to_send);
+  return !relay_malfunction && safety_allowed;
 }
 
-int safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
+bool safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
   return current_hooks->tx_lin(lin_num, data, len);
 }
 
