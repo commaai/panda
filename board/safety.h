@@ -77,11 +77,9 @@ bool safety_rx_hook(CANPacket_t *to_push) {
 
 bool safety_tx_hook(CANPacket_t *to_send) {
   bool whitelisted = msg_allowed(to_send, current_safety_config.tx_msgs, current_safety_config.tx_msgs_len);
-#ifdef ALLOW_DEBUG
-  if (current_safety_mode == SAFETY_ALLOUTPUT) {
+  if ((current_safety_mode == SAFETY_ALLOUTPUT) || (current_safety_mode == SAFETY_ELM327)) {
     whitelisted = true;
   }
-#endif
 
   const bool safety_allowed = current_hooks->tx(to_send);
   return !relay_malfunction && whitelisted && safety_allowed;
