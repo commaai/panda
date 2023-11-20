@@ -66,10 +66,7 @@ bool gm_cam_long = false;
 bool gm_pcm_cruise = false;
 
 static bool gm_rx_hook(CANPacket_t *to_push) {
-
-  bool valid = addr_safety_check(to_push, &gm_rx_checks, NULL, NULL, NULL, NULL);
-
-  if (valid && (GET_BUS(to_push) == 0U)) {
+  if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
 
     if (addr == 0x184) {
@@ -137,7 +134,7 @@ static bool gm_rx_hook(CANPacket_t *to_push) {
     }
     generic_rx_checks(stock_ecu_detected);
   }
-  return valid;
+  return true;
 }
 
 // all commands: gas/regen, friction brake and steering

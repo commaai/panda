@@ -70,11 +70,7 @@ static uint32_t toyota_get_checksum(CANPacket_t *to_push) {
 }
 
 static bool toyota_rx_hook(CANPacket_t *to_push) {
-
-  bool valid = addr_safety_check(to_push, &toyota_rx_checks,
-                                 toyota_get_checksum, toyota_compute_checksum, NULL, NULL);
-
-  if (valid && (GET_BUS(to_push) == 0U)) {
+  if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
 
     // get eps motor torque (0.66 factor in dbc)
@@ -130,7 +126,7 @@ static bool toyota_rx_hook(CANPacket_t *to_push) {
 
     generic_rx_checks((addr == 0x2E4));
   }
-  return valid;
+  return true;
 }
 
 static bool toyota_tx_hook(CANPacket_t *to_send) {
@@ -262,4 +258,6 @@ const safety_hooks toyota_hooks = {
   .tx = toyota_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = toyota_fwd_hook,
+  .get_checksum_fn = toyota_get_checksum,
+  .compute_checksum_fn = toyota_compute_checksum,
 };

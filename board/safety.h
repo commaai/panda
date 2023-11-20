@@ -62,7 +62,7 @@ bool safety_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, current_rx_checks, current_hooks->get_checksum_fn,
                                  current_hooks->compute_checksum_fn, current_hooks->get_counter_fn,
-                                 NULL);
+                                 current_hooks->get_quality_flag_valid_fn);
   if (valid) {
     valid = current_hooks->rx(to_push);
   }

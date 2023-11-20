@@ -154,17 +154,13 @@ static uint32_t hyundai_canfd_get_checksum(CANPacket_t *to_push) {
 }
 
 static bool hyundai_canfd_rx_hook(CANPacket_t *to_push) {
-
-  bool valid = addr_safety_check(to_push, &hyundai_canfd_rx_checks,
-                                 hyundai_canfd_get_checksum, hyundai_common_canfd_compute_checksum, hyundai_canfd_get_counter, NULL);
-
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
   const int pt_bus = hyundai_canfd_hda2 ? 1 : 0;
   const int scc_bus = hyundai_camera_scc ? 2 : pt_bus;
 
-  if (valid && (bus == pt_bus)) {
+  if (bus == pt_bus) {
     // driver torque
     if (addr == 0xea) {
       int torque_driver_new = ((GET_BYTE(to_push, 11) & 0x1fU) << 8U) | GET_BYTE(to_push, 10);
@@ -210,7 +206,7 @@ static bool hyundai_canfd_rx_hook(CANPacket_t *to_push) {
     }
   }
 
-  if (valid && (bus == scc_bus)) {
+  if (bus == scc_bus) {
     // cruise state
     if ((addr == 0x1a0) && !hyundai_longitudinal) {
       // 1=enabled, 2=driver override
@@ -230,7 +226,7 @@ static bool hyundai_canfd_rx_hook(CANPacket_t *to_push) {
   }
   generic_rx_checks(stock_ecu_detected);
 
-  return valid;
+  return true;
 }
 
 static bool hyundai_canfd_tx_hook(CANPacket_t *to_send) {
@@ -369,4 +365,7 @@ const safety_hooks hyundai_canfd_hooks = {
   .tx = hyundai_canfd_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = hyundai_canfd_fwd_hook,
+  .get_counter_fn = hyundai_canfd_get_counter,
+  .get_checksum_fn = hyundai_canfd_get_checksum,
+  .compute_checksum_fn = hyundai_compute_checksum,
 };

@@ -96,11 +96,7 @@ static const addr_checks* volkswagen_pq_init(uint16_t param) {
 }
 
 static bool volkswagen_pq_rx_hook(CANPacket_t *to_push) {
-
-  bool valid = addr_safety_check(to_push, &volkswagen_pq_rx_checks,
-                                volkswagen_pq_get_checksum, volkswagen_pq_compute_checksum, volkswagen_pq_get_counter, NULL);
-
-  if (valid && (GET_BUS(to_push) == 0U)) {
+  if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
 
     // Update in-motion state from speed value.
@@ -171,7 +167,7 @@ static bool volkswagen_pq_rx_hook(CANPacket_t *to_push) {
 
     generic_rx_checks((addr == MSG_HCA_1));
   }
-  return valid;
+  return true;
 }
 
 static bool volkswagen_pq_tx_hook(CANPacket_t *to_send) {
@@ -262,4 +258,7 @@ const safety_hooks volkswagen_pq_hooks = {
   .tx = volkswagen_pq_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = volkswagen_pq_fwd_hook,
+  .get_counter_fn = volkswagen_pq_get_counter,
+  .get_checksum_fn = volkswagen_pq_get_checksum,
+  .compute_checksum_fn = volkswagen_pq_compute_checksum,
 };

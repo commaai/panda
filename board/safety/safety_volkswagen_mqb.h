@@ -106,11 +106,7 @@ static const addr_checks* volkswagen_mqb_init(uint16_t param) {
 }
 
 static bool volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
-
-  bool valid = addr_safety_check(to_push, &volkswagen_mqb_rx_checks,
-                                 volkswagen_mqb_get_checksum, volkswagen_mqb_compute_crc, volkswagen_mqb_get_counter, NULL);
-
-  if (valid && (GET_BUS(to_push) == 0U)) {
+  if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
 
     // Update in-motion state by sampling wheel speeds
@@ -193,7 +189,7 @@ static bool volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
 
     generic_rx_checks((addr == MSG_HCA_01));
   }
-  return valid;
+  return true;
 }
 
 static bool volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
@@ -295,4 +291,7 @@ const safety_hooks volkswagen_mqb_hooks = {
   .tx = volkswagen_mqb_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = volkswagen_mqb_fwd_hook,
+  .get_counter_fn = volkswagen_mqb_get_counter,
+  .get_checksum_fn = volkswagen_mqb_get_checksum,
+  .compute_checksum_fn = volkswagen_mqb_compute_crc,
 };
