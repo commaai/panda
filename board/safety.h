@@ -81,19 +81,6 @@ bool safety_tx_hook(CANPacket_t *to_send) {
     whitelisted = true;
   }
 
-  if (lateral_only) {
-    int addr = GET_ADDR(to_send);
-    bool is_rx_msg = false;
-    for(int lati = 0; lati < current_safety_config.rx_msgs_len; lati++) {
-      if (current_safety_config.rx_msgs[lati].addr == addr) {
-        is_rx_msg = true;
-      }
-    }
-    if (!is_rx_msg) {
-      whitelisted = false;
-    }
-  }
-
   const bool safety_allowed = current_hooks->tx(to_send);
   return !relay_malfunction && whitelisted && safety_allowed;
 }
