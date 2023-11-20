@@ -56,7 +56,7 @@ RxCheck honda_nidec_alt_rx_checks[] = {
   HONDA_COMMON_NO_SCM_FEEDBACK_RX_CHECKS(0)
 };
 
-// Bosch has pt on bus 1
+// Bosch has pt on bus 1, verified 0x1A6 does not exist
 RxCheck honda_bosch_rx_checks[] = {
   HONDA_COMMON_RX_CHECKS(1)
 };
