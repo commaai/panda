@@ -277,8 +277,8 @@ static addr_checks chrysler_init(uint16_t param) {
     chrysler_platform = CHRYSLER_RAM_DT;
     chrysler_addrs = &CHRYSLER_RAM_DT_ADDRS;
     ret = SET_ADDR_CHECKS(chrysler_ram_dt_addr_checks);
-  } else if (GET_FLAG(param, CHRYSLER_PARAM_RAM_HD)) {
 #ifdef ALLOW_DEBUG
+  } else if (GET_FLAG(param, CHRYSLER_PARAM_RAM_HD)) {
     chrysler_platform = CHRYSLER_RAM_HD;
     chrysler_addrs = &CHRYSLER_RAM_HD_ADDRS;
     ret = SET_ADDR_CHECKS(chrysler_ram_hd_addr_checks);

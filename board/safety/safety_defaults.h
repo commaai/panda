@@ -11,11 +11,7 @@ void default_rx_hook(CANPacket_t *to_push) {
 
 static addr_checks nooutput_init(uint16_t param) {
   UNUSED(param);
-  addr_checks c = {
-    .check = NULL,
-    .len = 0,
-  };
-  return c;
+  return (addr_checks){NULL, 0};
 }
 
 static bool nooutput_tx_hook(CANPacket_t *to_send) {
@@ -53,11 +49,7 @@ bool alloutput_passthrough = false;
 static addr_checks alloutput_init(uint16_t param) {
   controls_allowed = true;
   alloutput_passthrough = GET_FLAG(param, ALLOUTPUT_PARAM_PASSTHROUGH);
-  addr_checks c = {
-    .check = NULL,
-    .len = 0,
-  };
-  return c;
+  return (addr_checks){NULL, 0};
 }
 
 static bool alloutput_tx_hook(CANPacket_t *to_send) {
