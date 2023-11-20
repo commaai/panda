@@ -25,7 +25,6 @@ const CanMsg FORD_STOCK_TX_MSGS[] = {
   {FORD_LateralMotionControl, 0, 8},
   {FORD_IPMA_Data, 0, 8},
 };
-#define FORD_STOCK_TX_LEN (sizeof(FORD_STOCK_TX_MSGS) / sizeof(FORD_STOCK_TX_MSGS[0]))
 
 const CanMsg FORD_LONG_TX_MSGS[] = {
   {FORD_Steering_Data_FD1, 0, 8},
@@ -36,7 +35,6 @@ const CanMsg FORD_LONG_TX_MSGS[] = {
   {FORD_LateralMotionControl, 0, 8},
   {FORD_IPMA_Data, 0, 8},
 };
-#define FORD_LONG_TX_LEN (sizeof(FORD_LONG_TX_MSGS) / sizeof(FORD_LONG_TX_MSGS[0]))
 
 const CanMsg FORD_CANFD_STOCK_TX_MSGS[] = {
   {FORD_Steering_Data_FD1, 0, 8},
@@ -46,7 +44,6 @@ const CanMsg FORD_CANFD_STOCK_TX_MSGS[] = {
   {FORD_LateralMotionControl2, 0, 8},
   {FORD_IPMA_Data, 0, 8},
 };
-#define FORD_CANFD_STOCK_TX_LEN (sizeof(FORD_CANFD_STOCK_TX_MSGS) / sizeof(FORD_CANFD_STOCK_TX_MSGS[0]))
 
 const CanMsg FORD_CANFD_LONG_TX_MSGS[] = {
   {FORD_Steering_Data_FD1, 0, 8},
@@ -57,7 +54,6 @@ const CanMsg FORD_CANFD_LONG_TX_MSGS[] = {
   {FORD_LateralMotionControl2, 0, 8},
   {FORD_IPMA_Data, 0, 8},
 };
-#define FORD_CANFD_LONG_TX_LEN (sizeof(FORD_CANFD_LONG_TX_MSGS) / sizeof(FORD_CANFD_LONG_TX_MSGS[0]))
 
 // warning: quality flags are not yet checked in openpilot's CAN parser,
 // this may be the cause of blocked messages
