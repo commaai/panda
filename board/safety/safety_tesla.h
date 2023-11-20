@@ -58,7 +58,7 @@ bool tesla_powertrain = false;  // Are we the second panda intercepting the powe
 
 bool tesla_stock_aeb = false;
 
-static int tesla_rx_hook(CANPacket_t *to_push) {
+static bool tesla_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, tesla_powertrain ? (&tesla_pt_rx_checks) : (&tesla_rx_checks),
                                  NULL, NULL, NULL, NULL);
 
@@ -126,7 +126,7 @@ static int tesla_rx_hook(CANPacket_t *to_push) {
 }
 
 
-static int tesla_tx_hook(CANPacket_t *to_send) {
+static bool tesla_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);

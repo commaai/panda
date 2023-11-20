@@ -206,7 +206,7 @@ const SteeringLimits FORD_STEERING_LIMITS = {
   .inactive_angle_is_zero = true,
 };
 
-static int ford_rx_hook(CANPacket_t *to_push) {
+static bool ford_rx_hook(CANPacket_t *to_push) {
   bool valid = addr_safety_check(to_push, &ford_rx_checks,
                                  ford_get_checksum, ford_compute_checksum, ford_get_counter, ford_get_quality_flag_valid);
 
@@ -274,7 +274,7 @@ static int ford_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int ford_tx_hook(CANPacket_t *to_send) {
+static bool ford_tx_hook(CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
   int tx;
   if (ford_canfd) {

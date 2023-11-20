@@ -6,7 +6,7 @@ AddrCheckStruct body_addr_checks[] = {
 };
 addr_checks body_rx_checks = SET_ADDR_CHECKS(body_addr_checks);
 
-static int body_rx_hook(CANPacket_t *to_push) {
+static bool body_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &body_rx_checks, NULL, NULL, NULL, NULL);
 
@@ -20,7 +20,7 @@ static int body_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int body_tx_hook(CANPacket_t *to_send) {
+static bool body_tx_hook(CANPacket_t *to_send) {
 
   int tx = 0;
   int addr = GET_ADDR(to_send);

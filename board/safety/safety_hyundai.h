@@ -158,7 +158,7 @@ static uint32_t hyundai_compute_checksum(CANPacket_t *to_push) {
   return chksum;
 }
 
-static int hyundai_rx_hook(CANPacket_t *to_push) {
+static bool hyundai_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &hyundai_rx_checks,
                                  hyundai_get_checksum, hyundai_compute_checksum,
@@ -221,7 +221,7 @@ static int hyundai_rx_hook(CANPacket_t *to_push) {
   return valid;
 }
 
-static int hyundai_tx_hook(CANPacket_t *to_send) {
+static bool hyundai_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);

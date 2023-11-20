@@ -114,7 +114,7 @@ static uint8_t honda_get_counter(CANPacket_t *to_push) {
   return ((uint8_t)(GET_BYTE(to_push, counter_byte)) >> 4U) & 0x3U;
 }
 
-static int honda_rx_hook(CANPacket_t *to_push) {
+static bool honda_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &honda_rx_checks,
                                  honda_get_checksum, honda_compute_checksum, honda_get_counter, NULL);
@@ -256,7 +256,7 @@ static int honda_rx_hook(CANPacket_t *to_push) {
 // else
 //     block all commands that produce actuation
 
-static int honda_tx_hook(CANPacket_t *to_send) {
+static bool honda_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
