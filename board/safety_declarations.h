@@ -4,7 +4,7 @@
 #define GET_BYTE(msg, b) ((msg)->data[(b)])
 #define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask))
 
-#define BUILD_SAFETY_CFG(name) ((safety_config){(name), (sizeof((name)) / sizeof((name)[0]))})
+#define BUILD_SAFETY_CFG(name) ((safety_config){(name), (sizeof((name)) / sizeof((name)[0])), NULL, 0})
 
 uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
   uint32_t ret = 0U;
@@ -129,8 +129,10 @@ typedef struct {
 } RxCheck;
 
 typedef struct {
-  RxCheck *check;
-  int len;
+  RxCheck *rx_checks;
+  int rx_checks_len;
+  CanMsg *tx_msgs;
+  int tx_msgs_len;
 } safety_config;
 
 typedef uint32_t (*get_checksum_t)(CANPacket_t *to_push);
