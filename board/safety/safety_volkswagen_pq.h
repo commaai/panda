@@ -37,7 +37,7 @@ const CanMsg VOLKSWAGEN_PQ_STOCK_TX_MSGS[] = {{MSG_HCA_1, 0, 5}, {MSG_LDW_1, 0, 
 const CanMsg VOLKSWAGEN_PQ_LONG_TX_MSGS[] =  {{MSG_HCA_1, 0, 5}, {MSG_LDW_1, 0, 8},
                                               {MSG_ACC_SYSTEM, 0, 8}, {MSG_ACC_GRA_ANZEIGE, 0, 8}};
 
-AddrCheckStruct volkswagen_pq_addr_checks[] = {
+RxCheck volkswagen_pq_rx_checks[] = {
   {.msg = {{MSG_LENKHILFE_3, 0, 6, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_BREMSE_1, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MOTOR_2, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
@@ -82,7 +82,7 @@ static uint32_t volkswagen_pq_compute_checksum(CANPacket_t *to_push) {
   return checksum;
 }
 
-static addr_checks volkswagen_pq_init(uint16_t param) {
+static safety_config volkswagen_pq_init(uint16_t param) {
   UNUSED(param);
 
   volkswagen_set_button_prev = false;
@@ -91,7 +91,7 @@ static addr_checks volkswagen_pq_init(uint16_t param) {
 #ifdef ALLOW_DEBUG
   volkswagen_longitudinal = GET_FLAG(param, FLAG_VOLKSWAGEN_LONG_CONTROL);
 #endif
-  return SET_ADDR_CHECKS(volkswagen_pq_addr_checks);
+  return BUILD_SAFETY_CFG(volkswagen_pq_rx_checks);
 }
 
 static void volkswagen_pq_rx_hook(CANPacket_t *to_push) {

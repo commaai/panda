@@ -25,7 +25,7 @@ const SteeringLimits MAZDA_STEERING_LIMITS = {
 
 const CanMsg MAZDA_TX_MSGS[] = {{MAZDA_LKAS, 0, 8}, {MAZDA_CRZ_BTNS, 0, 8}, {MAZDA_LKAS_HUD, 0, 8}};
 
-AddrCheckStruct mazda_addr_checks[] = {
+RxCheck mazda_rx_checks[] = {
   {.msg = {{MAZDA_CRZ_CTRL,     0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MAZDA_CRZ_BTNS,     0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{MAZDA_STEER_TORQUE, 0, 8, .expected_timestep = 12000U}, { 0 }, { 0 }}},
@@ -121,9 +121,9 @@ static int mazda_fwd_hook(int bus, int addr) {
   return bus_fwd;
 }
 
-static addr_checks mazda_init(uint16_t param) {
+static safety_config mazda_init(uint16_t param) {
   UNUSED(param);
-  return SET_ADDR_CHECKS(mazda_addr_checks);
+  return BUILD_SAFETY_CFG(mazda_rx_checks);
 }
 
 const safety_hooks mazda_hooks = {

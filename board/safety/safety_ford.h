@@ -61,7 +61,7 @@ const CanMsg FORD_CANFD_LONG_TX_MSGS[] = {
 
 // warning: quality flags are not yet checked in openpilot's CAN parser,
 // this may be the cause of blocked messages
-AddrCheckStruct ford_addr_checks[] = {
+RxCheck ford_rx_checks[] = {
   {.msg = {{FORD_BrakeSysFeatures, 0, 8, .check_checksum = true, .max_counter = 15U, .quality_flag=true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   // TODO: FORD_EngVehicleSpThrottle2 has a counter that skips by 2, understand and enable counter check
   {.msg = {{FORD_EngVehicleSpThrottle2, 0, 8, .check_checksum = true, .quality_flag=true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
@@ -412,13 +412,13 @@ static int ford_fwd_hook(int bus_num, int addr) {
   return bus_fwd;
 }
 
-static addr_checks ford_init(uint16_t param) {
+static safety_config ford_init(uint16_t param) {
   UNUSED(param);
 #ifdef ALLOW_DEBUG
   ford_longitudinal = GET_FLAG(param, FORD_PARAM_LONGITUDINAL);
   ford_canfd = GET_FLAG(param, FORD_PARAM_CANFD);
 #endif
-  return SET_ADDR_CHECKS(ford_addr_checks);
+  return BUILD_SAFETY_CFG(ford_rx_checks);
 }
 
 const safety_hooks ford_hooks = {

@@ -33,7 +33,7 @@ const CanMsg TESLA_PT_TX_MSGS[] = {
 };
 #define TESLA_PT_TX_LEN (sizeof(TESLA_PT_TX_MSGS) / sizeof(TESLA_PT_TX_MSGS[0]))
 
-AddrCheckStruct tesla_addr_checks[] = {
+RxCheck tesla_rx_checks[] = {
   {.msg = {{0x2b9, 2, 8, .expected_timestep = 40000U}, { 0 }, { 0 }}},   // DAS_control (25Hz)
   {.msg = {{0x370, 0, 8, .expected_timestep = 40000U}, { 0 }, { 0 }}},   // EPAS_sysStatus (25Hz)
   {.msg = {{0x108, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // DI_torque1 (100Hz)
@@ -43,7 +43,7 @@ AddrCheckStruct tesla_addr_checks[] = {
   {.msg = {{0x318, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},  // GTW_carState (10Hz)
 };
 
-AddrCheckStruct tesla_pt_addr_checks[] = {
+RxCheck tesla_pt_rx_checks[] = {
   {.msg = {{0x106, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // DI_torque1 (100Hz)
   {.msg = {{0x116, 0, 6, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // DI_torque2 (100Hz)
   {.msg = {{0x1f8, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},   // BrakeMessage (50Hz)
@@ -212,17 +212,17 @@ static int tesla_fwd_hook(int bus_num, int addr) {
   return bus_fwd;
 }
 
-static addr_checks tesla_init(uint16_t param) {
+static safety_config tesla_init(uint16_t param) {
   tesla_powertrain = GET_FLAG(param, TESLA_FLAG_POWERTRAIN);
   tesla_longitudinal = GET_FLAG(param, TESLA_FLAG_LONGITUDINAL_CONTROL);
 
   tesla_stock_aeb = false;
 
-  addr_checks ret;
+  safety_config ret;
   if (tesla_powertrain) {
-    ret = SET_ADDR_CHECKS(tesla_pt_addr_checks);
+    ret = BUILD_SAFETY_CFG(tesla_pt_rx_checks);
   } else {
-    ret = SET_ADDR_CHECKS(tesla_addr_checks);
+    ret = BUILD_SAFETY_CFG(tesla_rx_checks);
   }
   return ret;
 }

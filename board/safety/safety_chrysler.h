@@ -93,7 +93,7 @@ const CanMsg CHRYSLER_RAM_HD_TX_MSGS[] = {
   {CHRYSLER_RAM_HD_ADDRS.DAS_6, 0, 8},
 };
 
-AddrCheckStruct chrysler_addr_checks[] = {
+RxCheck chrysler_rx_checks[] = {
   {.msg = {{CHRYSLER_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   //{.msg = {{ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}}},
@@ -102,7 +102,7 @@ AddrCheckStruct chrysler_addr_checks[] = {
   {.msg = {{CHRYSLER_ADDRS.DAS_3, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 
-AddrCheckStruct chrysler_ram_dt_addr_checks[] = {
+RxCheck chrysler_ram_dt_rx_checks[] = {
   {.msg = {{CHRYSLER_RAM_DT_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_RAM_DT_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_RAM_DT_ADDRS.ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
@@ -110,7 +110,7 @@ AddrCheckStruct chrysler_ram_dt_addr_checks[] = {
   {.msg = {{CHRYSLER_RAM_DT_ADDRS.DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 
-AddrCheckStruct chrysler_ram_hd_addr_checks[] = {
+RxCheck chrysler_ram_hd_rx_checks[] = {
   {.msg = {{CHRYSLER_RAM_HD_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
@@ -271,22 +271,22 @@ static int chrysler_fwd_hook(int bus_num, int addr) {
   return bus_fwd;
 }
 
-static addr_checks chrysler_init(uint16_t param) {
-  addr_checks ret;
+static safety_config chrysler_init(uint16_t param) {
+  safety_config ret;
   if (GET_FLAG(param, CHRYSLER_PARAM_RAM_DT)) {
     chrysler_platform = CHRYSLER_RAM_DT;
     chrysler_addrs = &CHRYSLER_RAM_DT_ADDRS;
-    ret = SET_ADDR_CHECKS(chrysler_ram_dt_addr_checks);
+    ret = BUILD_SAFETY_CFG(chrysler_ram_dt_rx_checks);
 #ifdef ALLOW_DEBUG
   } else if (GET_FLAG(param, CHRYSLER_PARAM_RAM_HD)) {
     chrysler_platform = CHRYSLER_RAM_HD;
     chrysler_addrs = &CHRYSLER_RAM_HD_ADDRS;
-    ret = SET_ADDR_CHECKS(chrysler_ram_hd_addr_checks);
+    ret = BUILD_SAFETY_CFG(chrysler_ram_hd_rx_checks);
 #endif
   } else {
     chrysler_platform = CHRYSLER_PACIFICA;
     chrysler_addrs = &CHRYSLER_ADDRS;
-    ret = SET_ADDR_CHECKS(chrysler_addr_checks);
+    ret = BUILD_SAFETY_CFG(chrysler_rx_checks);
   }
   return ret;
 }
