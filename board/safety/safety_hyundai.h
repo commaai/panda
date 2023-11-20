@@ -340,6 +340,9 @@ const safety_hooks hyundai_hooks = {
   .tx = hyundai_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = hyundai_fwd_hook,
+  .get_counter_fn = hyundai_get_counter,
+  .get_checksum_fn = hyundai_get_checksum,
+  .compute_checksum_fn = hyundai_compute_checksum,
 };
 
 const safety_hooks hyundai_legacy_hooks = {
