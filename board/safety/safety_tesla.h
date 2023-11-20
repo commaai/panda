@@ -26,12 +26,10 @@ const CanMsg TESLA_TX_MSGS[] = {
   {0x45, 2, 8},   // STW_ACTN_RQ
   {0x2b9, 0, 8},  // DAS_control
 };
-#define TESLA_TX_LEN (sizeof(TESLA_TX_MSGS) / sizeof(TESLA_TX_MSGS[0]))
 
 const CanMsg TESLA_PT_TX_MSGS[] = {
   {0x2bf, 0, 8},  // DAS_control
 };
-#define TESLA_PT_TX_LEN (sizeof(TESLA_PT_TX_MSGS) / sizeof(TESLA_PT_TX_MSGS[0]))
 
 RxCheck tesla_rx_checks[] = {
   {.msg = {{0x2b9, 2, 8, .expected_timestep = 40000U}, { 0 }, { 0 }}},   // DAS_control (25Hz)
@@ -119,16 +117,9 @@ static void tesla_rx_hook(CANPacket_t *to_push) {
 
 
 static bool tesla_tx_hook(CANPacket_t *to_send) {
-
   int tx = 1;
   int addr = GET_ADDR(to_send);
   bool violation = false;
-
-  if(!msg_allowed(to_send,
-                  tesla_powertrain ? TESLA_PT_TX_MSGS : TESLA_TX_MSGS,
-                  tesla_powertrain ? TESLA_PT_TX_LEN : TESLA_TX_LEN)) {
-    tx = 0;
-  }
 
   if(!tesla_powertrain && (addr == 0x488)) {
     // Steering control: (0.1 * val) - 1638.35 in deg.
@@ -220,9 +211,9 @@ static safety_config tesla_init(uint16_t param) {
 
   safety_config ret;
   if (tesla_powertrain) {
-    ret = BUILD_SAFETY_CFG(tesla_pt_rx_checks);
+    ret = BUILD_SAFETY_CFG(tesla_pt_rx_checks, TESLA_PT_TX_MSGS);
   } else {
-    ret = BUILD_SAFETY_CFG(tesla_rx_checks);
+    ret = BUILD_SAFETY_CFG(tesla_rx_checks, TESLA_TX_MSGS);
   }
   return ret;
 }

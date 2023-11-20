@@ -28,7 +28,6 @@ const CanMsg SUBARU_PG_TX_MSGS[] = {
   {MSG_SUBARU_PG_ES_Distance, SUBARU_PG_MAIN_BUS, 8},
   {MSG_SUBARU_PG_ES_LKAS,     SUBARU_PG_MAIN_BUS, 8}
 };
-#define SUBARU_PG_TX_MSGS_LEN (sizeof(SUBARU_PG_TX_MSGS) / sizeof(SUBARU_PG_TX_MSGS[0]))
 
 // TODO: do checksum and counter checks after adding the signals to the outback dbc file
 RxCheck subaru_preglobal_rx_checks[] = {
@@ -79,13 +78,8 @@ static void subaru_preglobal_rx_hook(CANPacket_t *to_push) {
 }
 
 static bool subaru_preglobal_tx_hook(CANPacket_t *to_send) {
-
   int tx = 1;
   int addr = GET_ADDR(to_send);
-
-  if (!msg_allowed(to_send, SUBARU_PG_TX_MSGS, SUBARU_PG_TX_MSGS_LEN)) {
-    tx = 0;
-  }
 
   // steer cmd checks
   if (addr == MSG_SUBARU_PG_ES_LKAS) {
@@ -121,7 +115,7 @@ static int subaru_preglobal_fwd_hook(int bus_num, int addr) {
 
 static safety_config subaru_preglobal_init(uint16_t param) {
   subaru_pg_reversed_driver_torque = GET_FLAG(param, SUBARU_PG_PARAM_REVERSED_DRIVER_TORQUE);
-  return BUILD_SAFETY_CFG(subaru_preglobal_rx_checks);
+  return BUILD_SAFETY_CFG(subaru_preglobal_rx_checks, SUBARU_PG_TX_MSGS);
 }
 
 const safety_hooks subaru_preglobal_hooks = {

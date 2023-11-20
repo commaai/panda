@@ -94,14 +94,9 @@ static void nissan_rx_hook(CANPacket_t *to_push) {
 
 
 static bool nissan_tx_hook(CANPacket_t *to_send) {
-
   int tx = 1;
   int addr = GET_ADDR(to_send);
   bool violation = false;
-
-  if (!msg_allowed(to_send, NISSAN_TX_MSGS, sizeof(NISSAN_TX_MSGS) / sizeof(NISSAN_TX_MSGS[0]))) {
-    tx = 0;
-  }
 
   // steer cmd checks
   if (addr == 0x169) {
@@ -153,7 +148,7 @@ static int nissan_fwd_hook(int bus_num, int addr) {
 
 static safety_config nissan_init(uint16_t param) {
   nissan_alt_eps = GET_FLAG(param, NISSAN_PARAM_ALT_EPS_BUS);
-  return BUILD_SAFETY_CFG(nissan_rx_checks);
+  return BUILD_SAFETY_CFG(nissan_rx_checks, NISSAN_TX_MSGS);
 }
 
 const safety_hooks nissan_hooks = {

@@ -185,20 +185,9 @@ static void subaru_rx_hook(CANPacket_t *to_push) {
 }
 
 static bool subaru_tx_hook(CANPacket_t *to_send) {
-
   int tx = 1;
   int addr = GET_ADDR(to_send);
   bool violation = false;
-
-  if (subaru_gen2 && subaru_longitudinal) {
-    tx = msg_allowed(to_send, SUBARU_GEN2_LONG_TX_MSGS, SUBARU_GEN2_LONG_TX_MSGS_LEN);
-  } else if (subaru_gen2) {
-    tx = msg_allowed(to_send, SUBARU_GEN2_TX_MSGS,      SUBARU_GEN2_TX_MSGS_LEN);
-  } else if (subaru_longitudinal) {
-    tx = msg_allowed(to_send, SUBARU_LONG_TX_MSGS,      SUBARU_LONG_TX_MSGS_LEN);
-  } else {
-    tx = msg_allowed(to_send, SUBARU_TX_MSGS,           SUBARU_TX_MSGS_LEN);
-  }
 
   // steer cmd checks
   if (addr == MSG_SUBARU_ES_LKAS) {
@@ -290,9 +279,11 @@ static safety_config subaru_init(uint16_t param) {
 
   safety_config ret;
   if (subaru_gen2) {
-    ret = BUILD_SAFETY_CFG(subaru_gen2_rx_checks);
+    ret = subaru_longitudinal ? BUILD_SAFETY_CFG(subaru_gen2_rx_checks, SUBARU_GEN2_LONG_TX_MSGS) : \
+                                BUILD_SAFETY_CFG(subaru_gen2_rx_checks, SUBARU_GEN2_TX_MSGS);
   } else {
-    ret = BUILD_SAFETY_CFG(subaru_rx_checks);
+    ret = subaru_longitudinal ? BUILD_SAFETY_CFG(subaru_rx_checks, SUBARU_LONG_TX_MSGS) : \
+                                BUILD_SAFETY_CFG(subaru_rx_checks, SUBARU_TX_MSGS);
   }
   return ret;
 }

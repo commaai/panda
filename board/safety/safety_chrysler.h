@@ -214,17 +214,8 @@ static void chrysler_rx_hook(CANPacket_t *to_push) {
 }
 
 static bool chrysler_tx_hook(CANPacket_t *to_send) {
-
   int tx = 1;
   int addr = GET_ADDR(to_send);
-
-  if (chrysler_platform == CHRYSLER_RAM_DT) {
-    tx = msg_allowed(to_send, CHRYSLER_RAM_DT_TX_MSGS, sizeof(CHRYSLER_RAM_DT_TX_MSGS) / sizeof(CHRYSLER_RAM_DT_TX_MSGS[0]));
-  } else if (chrysler_platform == CHRYSLER_RAM_HD) {
-    tx = msg_allowed(to_send, CHRYSLER_RAM_HD_TX_MSGS, sizeof(CHRYSLER_RAM_HD_TX_MSGS) / sizeof(CHRYSLER_RAM_HD_TX_MSGS[0]));
-  } else {
-    tx = msg_allowed(to_send, CHRYSLER_TX_MSGS, sizeof(CHRYSLER_TX_MSGS) / sizeof(CHRYSLER_TX_MSGS[0]));
-  }
 
   // STEERING
   if (tx && (addr == chrysler_addrs->LKAS_COMMAND)) {
@@ -276,17 +267,17 @@ static safety_config chrysler_init(uint16_t param) {
   if (GET_FLAG(param, CHRYSLER_PARAM_RAM_DT)) {
     chrysler_platform = CHRYSLER_RAM_DT;
     chrysler_addrs = &CHRYSLER_RAM_DT_ADDRS;
-    ret = BUILD_SAFETY_CFG(chrysler_ram_dt_rx_checks);
+    ret = BUILD_SAFETY_CFG(chrysler_ram_dt_rx_checks, CHRYSLER_RAM_DT_TX_MSGS);
 #ifdef ALLOW_DEBUG
   } else if (GET_FLAG(param, CHRYSLER_PARAM_RAM_HD)) {
     chrysler_platform = CHRYSLER_RAM_HD;
     chrysler_addrs = &CHRYSLER_RAM_HD_ADDRS;
-    ret = BUILD_SAFETY_CFG(chrysler_ram_hd_rx_checks);
+    ret = BUILD_SAFETY_CFG(chrysler_ram_hd_rx_checks, CHRYSLER_RAM_HD_TX_MSGS);
 #endif
   } else {
     chrysler_platform = CHRYSLER_PACIFICA;
     chrysler_addrs = &CHRYSLER_ADDRS;
-    ret = BUILD_SAFETY_CFG(chrysler_rx_checks);
+    ret = BUILD_SAFETY_CFG(chrysler_rx_checks, CHRYSLER_TX_MSGS);
   }
   return ret;
 }

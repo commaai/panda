@@ -142,19 +142,8 @@ static void gm_rx_hook(CANPacket_t *to_push) {
 //     block all commands that produce actuation
 
 static bool gm_tx_hook(CANPacket_t *to_send) {
-
   int tx = 1;
   int addr = GET_ADDR(to_send);
-
-  if (gm_hw == GM_CAM) {
-    if (gm_cam_long) {
-      tx = msg_allowed(to_send, GM_CAM_LONG_TX_MSGS, sizeof(GM_CAM_LONG_TX_MSGS)/sizeof(GM_CAM_LONG_TX_MSGS[0]));
-    } else {
-      tx = msg_allowed(to_send, GM_CAM_TX_MSGS, sizeof(GM_CAM_TX_MSGS)/sizeof(GM_CAM_TX_MSGS[0]));
-    }
-  } else {
-    tx = msg_allowed(to_send, GM_ASCM_TX_MSGS, sizeof(GM_ASCM_TX_MSGS)/sizeof(GM_ASCM_TX_MSGS[0]));
-  }
 
   // BRAKE: safety check
   if (addr == 0x315) {
@@ -247,7 +236,12 @@ static safety_config gm_init(uint16_t param) {
   gm_cam_long = GET_FLAG(param, GM_PARAM_HW_CAM_LONG);
 #endif
   gm_pcm_cruise = (gm_hw == GM_CAM) && !gm_cam_long;
-  return BUILD_SAFETY_CFG(gm_rx_checks);
+
+  safety_config ret = BUILD_SAFETY_CFG(gm_rx_checks, GM_ASCM_TX_MSGS);
+  if (gm_hw == GM_CAM) {
+    ret = gm_cam_long ? BUILD_SAFETY_CFG(gm_rx_checks, GM_CAM_LONG_TX_MSGS) : BUILD_SAFETY_CFG(gm_rx_checks, GM_CAM_TX_MSGS);
+  }
+  return ret;
 }
 
 const safety_hooks gm_hooks = {

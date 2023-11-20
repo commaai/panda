@@ -24,10 +24,6 @@ static bool body_tx_hook(CANPacket_t *to_send) {
     tx = 1;
   }
 
-  if (msg_allowed(to_send, BODY_TX_MSGS, sizeof(BODY_TX_MSGS)/sizeof(BODY_TX_MSGS[0])) && controls_allowed) {
-    tx = 1;
-  }
-
   // Allow going into CAN flashing mode for base & knee even if controls are not allowed
   bool flash_msg = ((addr == 0x250) || (addr == 0x350)) && (len == 8);
   if (!controls_allowed && (GET_BYTES(to_send, 0, 4) == 0xdeadfaceU) && (GET_BYTES(to_send, 4, 4) == 0x0ab00b1eU) && flash_msg) {
@@ -39,7 +35,7 @@ static bool body_tx_hook(CANPacket_t *to_send) {
 
 static safety_config body_init(uint16_t param) {
   UNUSED(param);
-  return BUILD_SAFETY_CFG(body_rx_checks);
+  return BUILD_SAFETY_CFG(body_rx_checks, BODY_TX_MSGS);
 }
 
 const safety_hooks body_hooks = {

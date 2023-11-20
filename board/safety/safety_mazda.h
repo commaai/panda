@@ -69,14 +69,9 @@ static void mazda_rx_hook(CANPacket_t *to_push) {
 }
 
 static bool mazda_tx_hook(CANPacket_t *to_send) {
-
   int tx = 1;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
-
-  if (!msg_allowed(to_send, MAZDA_TX_MSGS, sizeof(MAZDA_TX_MSGS)/sizeof(MAZDA_TX_MSGS[0]))) {
-    tx = 0;
-  }
 
   // Check if msg is sent on the main BUS
   if (bus == MAZDA_MAIN) {
@@ -123,7 +118,7 @@ static int mazda_fwd_hook(int bus, int addr) {
 
 static safety_config mazda_init(uint16_t param) {
   UNUSED(param);
-  return BUILD_SAFETY_CFG(mazda_rx_checks);
+  return BUILD_SAFETY_CFG(mazda_rx_checks, MAZDA_TX_MSGS);
 }
 
 const safety_hooks mazda_hooks = {
