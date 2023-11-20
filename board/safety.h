@@ -5,6 +5,7 @@
 #include "safety/safety_defaults.h"
 #include "safety/safety_honda.h"
 #include "safety/safety_toyota.h"
+/*
 #include "safety/safety_tesla.h"
 #include "safety/safety_gm.h"
 #include "safety/safety_ford.h"
@@ -23,6 +24,7 @@
 #ifdef CANFD
 #include "safety/safety_hyundai_canfd.h"
 #endif
+*/
 
 // from cereal.car.CarParams.SafetyModel
 #define SAFETY_SILENT 0U
@@ -55,12 +57,12 @@
 uint16_t current_safety_mode = SAFETY_SILENT;
 uint16_t current_safety_param = 0;
 const safety_hooks *current_hooks = &nooutput_hooks;
-const addr_checks *current_rx_checks = &default_rx_checks;
+addr_checks current_rx_checks;
 
 bool safety_rx_hook(CANPacket_t *to_push) {
   bool controls_allowed_prev = controls_allowed;
 
-  bool valid = addr_safety_check(to_push, current_rx_checks, current_hooks->get_checksum,
+  bool valid = addr_safety_check(to_push, &current_rx_checks, current_hooks->get_checksum,
                                  current_hooks->compute_checksum, current_hooks->get_counter,
                                  current_hooks->get_quality_flag_valid);
   if (valid) {
@@ -302,6 +304,7 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_SILENT, &nooutput_hooks},
   {SAFETY_HONDA_NIDEC, &honda_nidec_hooks},
   {SAFETY_TOYOTA, &toyota_hooks},
+  /*
   {SAFETY_ELM327, &elm327_hooks},
   {SAFETY_GM, &gm_hooks},
   {SAFETY_HONDA_BOSCH, &honda_bosch_hooks},
@@ -324,6 +327,7 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
 #endif
+  */
 };
 
 int set_safety_hooks(uint16_t mode, uint16_t param) {
@@ -361,6 +365,9 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   relay_malfunction_reset();
   safety_rx_checks_invalid = false;
 
+  current_rx_checks.len = 0;
+  current_rx_checks.check = NULL;
+
   int set_status = -1;  // not set
   int hook_config_count = sizeof(safety_hook_registry) / sizeof(safety_hook_config);
   for (int i = 0; i < hook_config_count; i++) {
@@ -372,11 +379,13 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
     }
   }
   if ((set_status == 0) && (current_hooks->init != NULL)) {
-    current_rx_checks = current_hooks->init(param);
+    addr_checks cfg = current_hooks->init(param);
+    current_rx_checks.len = cfg.len;
+    current_rx_checks.check = cfg.check;
     // reset message index and seen flags in addr struct
-    for (int j = 0; j < current_rx_checks->len; j++) {
-      current_rx_checks->check[j].index = 0;
-      current_rx_checks->check[j].msg_seen = false;
+    for (int j = 0; j < current_rx_checks.len; j++) {
+      current_rx_checks.check[j].index = 0;
+      current_rx_checks.check[j].msg_seen = false;
     }
   }
   return set_status;

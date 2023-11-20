@@ -39,7 +39,6 @@ AddrCheckStruct toyota_addr_checks[] = {
   {.msg = {{0x224, 0, 8, .check_checksum = false, .expected_timestep = 25000U},
            {0x226, 0, 8, .check_checksum = false, .expected_timestep = 25000U}, { 0 }}},
 };
-addr_checks toyota_rx_checks = SET_ADDR_CHECKS(toyota_addr_checks);
 
 // safety param flags
 // first byte is for eps factor, second is for flags
@@ -215,7 +214,7 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static const addr_checks* toyota_init(uint16_t param) {
+static addr_checks toyota_init(uint16_t param) {
   toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
@@ -225,7 +224,7 @@ static const addr_checks* toyota_init(uint16_t param) {
 #else
   toyota_lta = false;
 #endif
-  return &toyota_rx_checks;
+  return SET_ADDR_CHECKS(toyota_addr_checks);
 }
 
 static int toyota_fwd_hook(int bus_num, int addr) {

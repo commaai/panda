@@ -80,7 +80,6 @@ bool honda_fwd_brake = false;
 bool honda_bosch_long = false;
 bool honda_bosch_radarless = false;
 enum {HONDA_NIDEC, HONDA_BOSCH} honda_hw = HONDA_NIDEC;
-addr_checks honda_rx_checks = SET_ADDR_CHECKS(honda_common_addr_checks);
 
 
 int honda_get_pt_bus(void) {
@@ -367,7 +366,7 @@ static bool honda_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static const addr_checks* honda_nidec_init(uint16_t param) {
+static addr_checks honda_nidec_init(uint16_t param) {
   honda_hw = HONDA_NIDEC;
   honda_brake = 0;
   honda_fwd_brake = false;
@@ -375,15 +374,16 @@ static const addr_checks* honda_nidec_init(uint16_t param) {
   honda_bosch_long = false;
   honda_bosch_radarless = false;
 
+  addr_checks ret;
   if (GET_FLAG(param, HONDA_PARAM_NIDEC_ALT)) {
-    honda_rx_checks = SET_ADDR_CHECKS(honda_nidec_alt_addr_checks);
+    ret = SET_ADDR_CHECKS(honda_nidec_alt_addr_checks);
   } else {
-    honda_rx_checks = SET_ADDR_CHECKS(honda_common_addr_checks);
+    ret= SET_ADDR_CHECKS(honda_common_addr_checks);
   }
-  return &honda_rx_checks;
+  return ret;
 }
 
-static const addr_checks* honda_bosch_init(uint16_t param) {
+static addr_checks honda_bosch_init(uint16_t param) {
   honda_hw = HONDA_BOSCH;
   honda_bosch_radarless = GET_FLAG(param, HONDA_PARAM_RADARLESS);
   // Checking for alternate brake override from safety parameter
@@ -394,12 +394,13 @@ static const addr_checks* honda_bosch_init(uint16_t param) {
   honda_bosch_long = GET_FLAG(param, HONDA_PARAM_BOSCH_LONG);
 #endif
 
+  addr_checks ret;
   if (honda_bosch_radarless) {
-    honda_rx_checks = SET_ADDR_CHECKS(honda_common_addr_checks);
+    ret = SET_ADDR_CHECKS(honda_common_addr_checks);
   } else {
-    honda_rx_checks = SET_ADDR_CHECKS(honda_bosch_addr_checks);
+    ret = SET_ADDR_CHECKS(honda_bosch_addr_checks);
   }
-  return &honda_rx_checks;
+  return ret;
 }
 
 static int honda_nidec_fwd_hook(int bus_num, int addr) {

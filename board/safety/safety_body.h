@@ -4,7 +4,6 @@ const CanMsg BODY_TX_MSGS[] = {{0x250, 0, 8}, {0x250, 0, 6}, {0x251, 0, 5},  // 
 AddrCheckStruct body_addr_checks[] = {
   {.msg = {{0x201, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
 };
-addr_checks body_rx_checks = SET_ADDR_CHECKS(body_addr_checks);
 
 static void body_rx_hook(CANPacket_t *to_push) {
   // body is never at standstill
@@ -13,11 +12,9 @@ static void body_rx_hook(CANPacket_t *to_push) {
   if (GET_ADDR(to_push) == 0x201U) {
     controls_allowed = true;
   }
-
 }
 
 static bool body_tx_hook(CANPacket_t *to_send) {
-
   int tx = 0;
   int addr = GET_ADDR(to_send);
   int len = GET_LEN(to_send);
@@ -40,9 +37,9 @@ static bool body_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static const addr_checks* body_init(uint16_t param) {
+static addr_checks body_init(uint16_t param) {
   UNUSED(param);
-  return &body_rx_checks;
+  return SET_ADDR_CHECKS(body_addr_checks);
 }
 
 const safety_hooks body_hooks = {

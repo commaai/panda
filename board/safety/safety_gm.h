@@ -49,7 +49,6 @@ AddrCheckStruct gm_addr_checks[] = {
   {.msg = {{0x1C4, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{0xC9, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
-addr_checks gm_rx_checks = SET_ADDR_CHECKS(gm_addr_checks);
 
 const uint16_t GM_PARAM_HW_CAM = 1;
 const uint16_t GM_PARAM_HW_CAM_LONG = 2;
@@ -234,7 +233,7 @@ static int gm_fwd_hook(int bus_num, int addr) {
   return bus_fwd;
 }
 
-static const addr_checks* gm_init(uint16_t param) {
+static addr_checks gm_init(uint16_t param) {
   gm_hw = GET_FLAG(param, GM_PARAM_HW_CAM) ? GM_CAM : GM_ASCM;
 
   if (gm_hw == GM_ASCM) {

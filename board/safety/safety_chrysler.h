@@ -119,7 +119,6 @@ AddrCheckStruct chrysler_ram_hd_addr_checks[] = {
 };
 
 
-addr_checks chrysler_rx_checks = SET_ADDR_CHECKS(chrysler_addr_checks);
 
 const uint32_t CHRYSLER_PARAM_RAM_DT = 1U;  // set for Ram DT platform
 const uint32_t CHRYSLER_PARAM_RAM_HD = 2U;  // set for Ram DT platform
@@ -272,7 +271,7 @@ static int chrysler_fwd_hook(int bus_num, int addr) {
   return bus_fwd;
 }
 
-static const addr_checks* chrysler_init(uint16_t param) {
+static addr_checks chrysler_init(uint16_t param) {
   if (GET_FLAG(param, CHRYSLER_PARAM_RAM_DT)) {
     chrysler_platform = CHRYSLER_RAM_DT;
     chrysler_addrs = &CHRYSLER_RAM_DT_ADDRS;

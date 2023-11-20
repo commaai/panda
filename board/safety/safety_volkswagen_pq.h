@@ -45,7 +45,6 @@ AddrCheckStruct volkswagen_pq_addr_checks[] = {
   {.msg = {{MSG_MOTOR_5, 0, 8, .check_checksum = true, .max_counter = 0U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{MSG_GRA_NEU, 0, 4, .check_checksum = true, .max_counter = 15U, .expected_timestep = 33000U}, { 0 }, { 0 }}},
 };
-addr_checks volkswagen_pq_rx_checks = SET_ADDR_CHECKS(volkswagen_pq_addr_checks);
 
 static uint32_t volkswagen_pq_get_checksum(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
@@ -83,7 +82,7 @@ static uint32_t volkswagen_pq_compute_checksum(CANPacket_t *to_push) {
   return checksum;
 }
 
-static const addr_checks* volkswagen_pq_init(uint16_t param) {
+static addr_checks volkswagen_pq_init(uint16_t param) {
   UNUSED(param);
 
   volkswagen_set_button_prev = false;

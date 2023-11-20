@@ -125,7 +125,6 @@ AddrCheckStruct hyundai_canfd_hda2_long_addr_checks[] = {
   HYUNDAI_CANFD_BUTTONS_ADDR_CHECK(1)
 };
 
-addr_checks hyundai_canfd_rx_checks = SET_ADDR_CHECKS(hyundai_canfd_addr_checks);
 
 
 const int HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 32;
@@ -327,7 +326,7 @@ static int hyundai_canfd_fwd_hook(int bus_num, int addr) {
   return bus_fwd;
 }
 
-static const addr_checks* hyundai_canfd_init(uint16_t param) {
+static addr_checks hyundai_canfd_init(uint16_t param) {
   hyundai_common_init(param);
 
   gen_crc_lookup_table_16(0x1021, hyundai_canfd_crc_lut);
