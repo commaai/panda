@@ -36,9 +36,12 @@ RxCheck toyota_rx_checks[] = {
   {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .expected_timestep = 12000U}, { 0 }, { 0 }}},
   {.msg = {{0x260, 0, 8, .check_checksum = true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
   {.msg = {{0x1D2, 0, 8, .check_checksum = true, .expected_timestep = 30000U}, { 0 }, { 0 }}},
+  {.msg = {{0x201, 0, 6, .check_checksum = false, .expected_timestep = 0U}, { 0 }, { 0 }}},
   {.msg = {{0x224, 0, 8, .check_checksum = false, .expected_timestep = 25000U},
            {0x226, 0, 8, .check_checksum = false, .expected_timestep = 25000U}, { 0 }}},
 };
+
+RelayAddr toyota_relay_addrs[] = {{0x2E4, 0, 5}};
 
 // safety param flags
 // first byte is for eps factor, second is for flags
@@ -122,8 +125,6 @@ static void toyota_rx_hook(CANPacket_t *to_push) {
       // TODO: remove this, only left in for gas_interceptor_prev test
       gas_interceptor_prev = gas_interceptor;
     }
-
-    generic_rx_checks((addr == 0x2E4));
   }
 }
 
@@ -219,7 +220,7 @@ static safety_config toyota_init(uint16_t param) {
 #else
   toyota_lta = false;
 #endif
-  return BUILD_SAFETY_CFG(toyota_rx_checks, TOYOTA_TX_MSGS);
+  return BUILD_SAFETY_CFG_TOYOTA(toyota_rx_checks, TOYOTA_TX_MSGS, toyota_relay_addrs);
 }
 
 static int toyota_fwd_hook(int bus_num, int addr) {

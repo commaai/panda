@@ -72,6 +72,21 @@ bool safety_rx_hook(CANPacket_t *to_push) {
     }
   }
 
+  // check relay malfunction and common rx logic
+  bool stock_ecu_detected = false;
+  print("relay_addrs_len: "); puth(current_safety_config.relay_addrs_len); print("\n");
+  for (int i = 0; i < current_safety_config.relay_addrs_len; i++) {
+    print("addr: "); puth(GET_ADDR(to_push)); print("\n");
+    if ((GET_ADDR(to_push) == current_safety_config.relay_addrs[i].addr) && (GET_BUS(to_push) == current_safety_config.relay_addrs[i].bus)) { // &&
+//        (GET_LEN(to_push) == current_safety_config.relay_addrs[i].len)) {
+      print("stock ecu!\n");
+      stock_ecu_detected = true;
+      break;
+    }
+  }
+  generic_rx_checks(stock_ecu_detected);
+
+  // TODO check if this should go in or out of index if
   // reset mismatches on rising edge of controls_allowed to avoid rare race condition
   if (controls_allowed && !controls_allowed_prev) {
     heartbeat_engaged_mismatches = 0;
@@ -372,6 +387,8 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   current_safety_config.rx_checks_len = 0;
   current_safety_config.tx_msgs = NULL;
   current_safety_config.tx_msgs_len = 0;
+  current_safety_config.relay_addrs = NULL;
+  current_safety_config.relay_addrs_len = 0;
 
   int set_status = -1;  // not set
   int hook_config_count = sizeof(safety_hook_registry) / sizeof(safety_hook_config);
@@ -389,6 +406,8 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
     current_safety_config.rx_checks_len = cfg.rx_checks_len;
     current_safety_config.tx_msgs = cfg.tx_msgs;
     current_safety_config.tx_msgs_len = cfg.tx_msgs_len;
+    current_safety_config.relay_addrs = cfg.relay_addrs;
+    current_safety_config.relay_addrs_len = cfg.relay_addrs_len;
     // reset message index and seen flags in addr struct
     for (int j = 0; j < current_safety_config.rx_checks_len; j++) {
       current_safety_config.rx_checks[j].index = 0;

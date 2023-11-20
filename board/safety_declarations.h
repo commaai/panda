@@ -4,8 +4,14 @@
 #define GET_BYTE(msg, b) ((msg)->data[(b)])
 #define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask))
 
+
 #define BUILD_SAFETY_CFG(rx, tx) ((safety_config){(rx), (sizeof((rx)) / sizeof((rx)[0])), \
-                                                  (tx), (sizeof((tx)) / sizeof((tx)[0]))})
+                                                                     (tx), (sizeof((tx)) / sizeof((tx)[0])), \
+                                                                     (NULL), 0})
+
+#define BUILD_SAFETY_CFG_TOYOTA(rx, tx, relay_addr) ((safety_config){(rx), (sizeof((rx)) / sizeof((rx)[0])), \
+                                                                     (tx), (sizeof((tx)) / sizeof((tx)[0])), \
+                                                                     (relay_addr), (sizeof((relay_addr)) / sizeof((relay_addr)[0]))})
 
 uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
   uint32_t ret = 0U;
@@ -130,11 +136,21 @@ typedef struct {
   bool lagging;                      // true if and only if the time between updates is excessive
 } RxCheck;
 
+// TODO: check counter/checksum, etc like normal rx addr checks?
+// just make this a flag with current rx checks?
+typedef struct {
+  const int addr;
+  const int bus;
+  const int len;
+} RelayAddr;
+
 typedef struct {
   RxCheck *rx_checks;
   int rx_checks_len;
   const CanMsg *tx_msgs;
   int tx_msgs_len;
+  RelayAddr *relay_addrs;
+  int relay_addrs_len;
 } safety_config;
 
 typedef uint32_t (*get_checksum_t)(CANPacket_t *to_push);
@@ -168,7 +184,7 @@ int get_addr_check_index(CANPacket_t *to_push, RxCheck addr_list[], const int le
 void update_counter(RxCheck addr_list[], int index, uint8_t counter);
 void update_addr_timestamp(RxCheck addr_list[], int index);
 bool is_msg_valid(RxCheck addr_list[], int index);
-bool rx_msg_safety_check(CANPacket_t *to_push,
+bool rx_msg_safety_check(CANPacket_t *to_push, int index,
                          const safety_config *rx_checks,
                          const get_checksum_t get_checksum,
                          const compute_checksum_t compute_checksum,
