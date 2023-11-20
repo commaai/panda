@@ -25,7 +25,6 @@ const CanMsg FORD_STOCK_TX_MSGS[] = {
   {FORD_LateralMotionControl, 0, 8},
   {FORD_IPMA_Data, 0, 8},
 };
-#define FORD_STOCK_TX_LEN (sizeof(FORD_STOCK_TX_MSGS) / sizeof(FORD_STOCK_TX_MSGS[0]))
 
 const CanMsg FORD_LONG_TX_MSGS[] = {
   {FORD_Steering_Data_FD1, 0, 8},
@@ -36,7 +35,6 @@ const CanMsg FORD_LONG_TX_MSGS[] = {
   {FORD_LateralMotionControl, 0, 8},
   {FORD_IPMA_Data, 0, 8},
 };
-#define FORD_LONG_TX_LEN (sizeof(FORD_LONG_TX_MSGS) / sizeof(FORD_LONG_TX_MSGS[0]))
 
 const CanMsg FORD_CANFD_STOCK_TX_MSGS[] = {
   {FORD_Steering_Data_FD1, 0, 8},
@@ -46,7 +44,6 @@ const CanMsg FORD_CANFD_STOCK_TX_MSGS[] = {
   {FORD_LateralMotionControl2, 0, 8},
   {FORD_IPMA_Data, 0, 8},
 };
-#define FORD_CANFD_STOCK_TX_LEN (sizeof(FORD_CANFD_STOCK_TX_MSGS) / sizeof(FORD_CANFD_STOCK_TX_MSGS[0]))
 
 const CanMsg FORD_CANFD_LONG_TX_MSGS[] = {
   {FORD_Steering_Data_FD1, 0, 8},
@@ -57,7 +54,6 @@ const CanMsg FORD_CANFD_LONG_TX_MSGS[] = {
   {FORD_LateralMotionControl2, 0, 8},
   {FORD_IPMA_Data, 0, 8},
 };
-#define FORD_CANFD_LONG_TX_LEN (sizeof(FORD_CANFD_LONG_TX_MSGS) / sizeof(FORD_CANFD_LONG_TX_MSGS[0]))
 
 // warning: quality flags are not yet checked in openpilot's CAN parser,
 // this may be the cause of blocked messages
@@ -272,19 +268,6 @@ static void ford_rx_hook(CANPacket_t *to_push) {
 static bool ford_tx_hook(CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
   int tx;
-  if (ford_canfd) {
-    if (ford_longitudinal) {
-      tx = msg_allowed(to_send, FORD_CANFD_LONG_TX_MSGS, FORD_CANFD_LONG_TX_LEN);
-    } else {
-      tx = msg_allowed(to_send, FORD_CANFD_STOCK_TX_MSGS, FORD_CANFD_STOCK_TX_LEN);
-    }
-  } else {
-    if (ford_longitudinal) {
-      tx = msg_allowed(to_send, FORD_LONG_TX_MSGS, FORD_LONG_TX_LEN);
-    } else {
-      tx = msg_allowed(to_send, FORD_STOCK_TX_MSGS, FORD_STOCK_TX_LEN);
-    }
-  }
 
   // Safety check for ACCDATA accel and brake requests
   if (addr == FORD_ACCDATA) {
@@ -418,7 +401,16 @@ static safety_config ford_init(uint16_t param) {
   ford_longitudinal = GET_FLAG(param, FORD_PARAM_LONGITUDINAL);
   ford_canfd = GET_FLAG(param, FORD_PARAM_CANFD);
 #endif
-  return BUILD_SAFETY_CFG(ford_rx_checks);
+
+  safety_config ret;
+  if (ford_canfd) {
+    ret = ford_longitudinal ? BUILD_SAFETY_CFG(ford_rx_checks, FORD_CANFD_LONG_TX_MSGS) : \
+                              BUILD_SAFETY_CFG(ford_rx_checks, FORD_CANFD_STOCK_TX_MSGS);
+  } else {
+    ret = ford_longitudinal ? BUILD_SAFETY_CFG(ford_rx_checks, FORD_LONG_TX_MSGS) : \
+                              BUILD_SAFETY_CFG(ford_rx_checks, FORD_STOCK_TX_MSGS);
+  }
+  return ret;
 }
 
 const safety_hooks ford_hooks = {

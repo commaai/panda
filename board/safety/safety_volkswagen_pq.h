@@ -91,7 +91,8 @@ static safety_config volkswagen_pq_init(uint16_t param) {
 #ifdef ALLOW_DEBUG
   volkswagen_longitudinal = GET_FLAG(param, FLAG_VOLKSWAGEN_LONG_CONTROL);
 #endif
-  return BUILD_SAFETY_CFG(volkswagen_pq_rx_checks);
+  return volkswagen_longitudinal ? BUILD_SAFETY_CFG(volkswagen_pq_rx_checks, VOLKSWAGEN_PQ_LONG_TX_MSGS) : \
+                                   BUILD_SAFETY_CFG(volkswagen_pq_rx_checks, VOLKSWAGEN_PQ_STOCK_TX_MSGS);
 }
 
 static void volkswagen_pq_rx_hook(CANPacket_t *to_push) {
@@ -171,12 +172,6 @@ static void volkswagen_pq_rx_hook(CANPacket_t *to_push) {
 static bool volkswagen_pq_tx_hook(CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
   int tx = 1;
-
-  if (volkswagen_longitudinal) {
-    tx = msg_allowed(to_send, VOLKSWAGEN_PQ_LONG_TX_MSGS, sizeof(VOLKSWAGEN_PQ_LONG_TX_MSGS) / sizeof(VOLKSWAGEN_PQ_LONG_TX_MSGS[0]));
-  } else {
-    tx = msg_allowed(to_send, VOLKSWAGEN_PQ_STOCK_TX_MSGS, sizeof(VOLKSWAGEN_PQ_STOCK_TX_MSGS) / sizeof(VOLKSWAGEN_PQ_STOCK_TX_MSGS[0]));
-  }
 
   // Safety check for HCA_1 Heading Control Assist torque
   // Signal: HCA_1.LM_Offset (absolute torque)

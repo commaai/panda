@@ -250,22 +250,9 @@ static void honda_rx_hook(CANPacket_t *to_push) {
 //     block all commands that produce actuation
 
 static bool honda_tx_hook(CANPacket_t *to_send) {
-
   int tx = 1;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
-
-  if ((honda_hw == HONDA_BOSCH) && honda_bosch_radarless && !honda_bosch_long) {
-    tx = msg_allowed(to_send, HONDA_RADARLESS_TX_MSGS, sizeof(HONDA_RADARLESS_TX_MSGS)/sizeof(HONDA_RADARLESS_TX_MSGS[0]));
-  } else if ((honda_hw == HONDA_BOSCH) && honda_bosch_radarless && honda_bosch_long) {
-    tx = msg_allowed(to_send, HONDA_RADARLESS_LONG_TX_MSGS, sizeof(HONDA_RADARLESS_LONG_TX_MSGS)/sizeof(HONDA_RADARLESS_LONG_TX_MSGS[0]));
-  } else if ((honda_hw == HONDA_BOSCH) && !honda_bosch_long) {
-    tx = msg_allowed(to_send, HONDA_BOSCH_TX_MSGS, sizeof(HONDA_BOSCH_TX_MSGS)/sizeof(HONDA_BOSCH_TX_MSGS[0]));
-  } else if ((honda_hw == HONDA_BOSCH) && honda_bosch_long) {
-    tx = msg_allowed(to_send, HONDA_BOSCH_LONG_TX_MSGS, sizeof(HONDA_BOSCH_LONG_TX_MSGS)/sizeof(HONDA_BOSCH_LONG_TX_MSGS[0]));
-  } else {
-    tx = msg_allowed(to_send, HONDA_N_TX_MSGS, sizeof(HONDA_N_TX_MSGS)/sizeof(HONDA_N_TX_MSGS[0]));
-  }
 
   int bus_pt = honda_get_pt_bus();
   int bus_buttons = (honda_bosch_radarless) ? 2 : bus_pt;  // the camera controls ACC on radarless Bosch cars
@@ -376,9 +363,9 @@ static safety_config honda_nidec_init(uint16_t param) {
 
   safety_config ret;
   if (GET_FLAG(param, HONDA_PARAM_NIDEC_ALT)) {
-    ret = BUILD_SAFETY_CFG(honda_nidec_alt_rx_checks);
+    ret = BUILD_SAFETY_CFG(honda_nidec_alt_rx_checks, HONDA_N_TX_MSGS);
   } else {
-    ret= BUILD_SAFETY_CFG(honda_common_rx_checks);
+    ret= BUILD_SAFETY_CFG(honda_common_rx_checks, HONDA_N_TX_MSGS);
   }
   return ret;
 }
@@ -396,9 +383,11 @@ static safety_config honda_bosch_init(uint16_t param) {
 
   safety_config ret;
   if (honda_bosch_radarless) {
-    ret = BUILD_SAFETY_CFG(honda_common_rx_checks);
+    ret = honda_bosch_long ? BUILD_SAFETY_CFG(honda_common_rx_checks, HONDA_RADARLESS_LONG_TX_MSGS) : \
+                             BUILD_SAFETY_CFG(honda_common_rx_checks, HONDA_RADARLESS_TX_MSGS);
   } else {
-    ret = BUILD_SAFETY_CFG(honda_bosch_rx_checks);
+    ret = honda_bosch_long ? BUILD_SAFETY_CFG(honda_bosch_rx_checks, HONDA_BOSCH_LONG_TX_MSGS) : \
+                             BUILD_SAFETY_CFG(honda_bosch_rx_checks, HONDA_BOSCH_TX_MSGS);
   }
   return ret;
 }

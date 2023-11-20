@@ -4,7 +4,8 @@
 #define GET_BYTE(msg, b) ((msg)->data[(b)])
 #define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask))
 
-#define BUILD_SAFETY_CFG(name) ((safety_config){(name), (sizeof((name)) / sizeof((name)[0]))})
+#define BUILD_SAFETY_CFG(rx, tx) ((safety_config){(rx), (sizeof((rx)) / sizeof((rx)[0])), \
+                                                  (tx), (sizeof((tx)) / sizeof((tx)[0]))})
 
 uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
   uint32_t ret = 0U;
@@ -21,6 +22,7 @@ const uint8_t MAX_MISSED_MSGS = 10U;
 #define MAX_SAMPLE_VALS 6
 // used to represent floating point vehicle speed in a sample_t
 #define VEHICLE_SPEED_FACTOR 100.0
+
 
 // sample struct that keeps 6 samples in memory
 struct sample_t {
@@ -129,8 +131,10 @@ typedef struct {
 } RxCheck;
 
 typedef struct {
-  RxCheck *check;
-  int len;
+  RxCheck *rx_checks;
+  int rx_checks_len;
+  const CanMsg *tx_msgs;
+  int tx_msgs_len;
 } safety_config;
 
 typedef uint32_t (*get_checksum_t)(CANPacket_t *to_push);
