@@ -298,7 +298,7 @@ const safety_hooks chrysler_hooks = {
   .tx = chrysler_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = chrysler_fwd_hook,
-  .get_counter_fn = chrysler_get_counter,
-  .get_checksum_fn = chrysler_get_checksum,
-  .compute_checksum_fn = chrysler_compute_checksum,
+  .get_counter = chrysler_get_counter,
+  .get_checksum = chrysler_get_checksum,
+  .compute_checksum = chrysler_compute_checksum,
 };

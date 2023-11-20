@@ -305,7 +305,7 @@ const safety_hooks subaru_hooks = {
   .tx = subaru_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = subaru_fwd_hook,
-  .get_counter_fn = subaru_get_counter,
-  .get_checksum_fn = subaru_get_checksum,
-  .compute_checksum_fn = subaru_compute_checksum,
+  .get_counter = subaru_get_counter,
+  .get_checksum = subaru_get_checksum,
+  .compute_checksum = subaru_compute_checksum,
 };

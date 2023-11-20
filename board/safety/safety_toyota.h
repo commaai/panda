@@ -257,6 +257,6 @@ const safety_hooks toyota_hooks = {
   .tx = toyota_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = toyota_fwd_hook,
-  .get_checksum_fn = toyota_get_checksum,
-  .compute_checksum_fn = toyota_compute_checksum,
+  .get_checksum = toyota_get_checksum,
+  .compute_checksum = toyota_compute_checksum,
 };

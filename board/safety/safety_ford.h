@@ -428,8 +428,8 @@ const safety_hooks ford_hooks = {
   .tx = ford_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = ford_fwd_hook,
-  .get_counter_fn = ford_get_counter,
-  .get_checksum_fn = ford_get_checksum,
-  .compute_checksum_fn = ford_compute_checksum,
-  .get_quality_flag_valid_fn = ford_get_quality_flag_valid,
+  .get_counter = ford_get_counter,
+  .get_checksum = ford_get_checksum,
+  .compute_checksum = ford_compute_checksum,
+  .get_quality_flag_valid = ford_get_quality_flag_valid,
 };

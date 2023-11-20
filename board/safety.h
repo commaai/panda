@@ -60,9 +60,9 @@ const addr_checks *current_rx_checks = &default_rx_checks;
 bool safety_rx_hook(CANPacket_t *to_push) {
   bool controls_allowed_prev = controls_allowed;
 
-  bool valid = addr_safety_check(to_push, current_rx_checks, current_hooks->get_checksum_fn,
-                                 current_hooks->compute_checksum_fn, current_hooks->get_counter_fn,
-                                 current_hooks->get_quality_flag_valid_fn);
+  bool valid = addr_safety_check(to_push, current_rx_checks, current_hooks->get_checksum,
+                                 current_hooks->compute_checksum, current_hooks->get_counter,
+                                 current_hooks->get_quality_flag_valid);
   if (valid) {
     current_hooks->rx(to_push);
   }

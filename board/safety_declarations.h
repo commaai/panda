@@ -194,10 +194,10 @@ typedef struct {
   tx_hook tx;
   tx_lin_hook tx_lin;
   fwd_hook fwd;
-  get_checksum_t get_checksum_fn;
-  compute_checksum_t compute_checksum_fn;
-  get_counter_t get_counter_fn;
-  get_quality_flag_valid_t get_quality_flag_valid_fn;
+  get_checksum_t get_checksum;
+  compute_checksum_t compute_checksum;
+  get_counter_t get_counter;
+  get_quality_flag_valid_t get_quality_flag_valid;
 } safety_hooks;
 
 void safety_tick(const addr_checks *addr_checks);

@@ -450,9 +450,9 @@ const safety_hooks honda_nidec_hooks = {
   .tx = honda_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = honda_nidec_fwd_hook,
-  .get_counter_fn = honda_get_counter,
-  .get_checksum_fn = honda_get_checksum,
-  .compute_checksum_fn = honda_compute_checksum,
+  .get_counter = honda_get_counter,
+  .get_checksum = honda_get_checksum,
+  .compute_checksum = honda_compute_checksum,
 };
 
 const safety_hooks honda_bosch_hooks = {
@@ -461,7 +461,7 @@ const safety_hooks honda_bosch_hooks = {
   .tx = honda_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = honda_bosch_fwd_hook,
-  .get_counter_fn = honda_get_counter,
-  .get_checksum_fn = honda_get_checksum,
-  .compute_checksum_fn = honda_compute_checksum,
+  .get_counter = honda_get_counter,
+  .get_checksum = honda_get_checksum,
+  .compute_checksum = honda_compute_checksum,
 };

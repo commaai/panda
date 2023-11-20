@@ -257,7 +257,7 @@ const safety_hooks volkswagen_pq_hooks = {
   .tx = volkswagen_pq_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = volkswagen_pq_fwd_hook,
-  .get_counter_fn = volkswagen_pq_get_counter,
-  .get_checksum_fn = volkswagen_pq_get_checksum,
-  .compute_checksum_fn = volkswagen_pq_compute_checksum,
+  .get_counter = volkswagen_pq_get_counter,
+  .get_checksum = volkswagen_pq_get_checksum,
+  .compute_checksum = volkswagen_pq_compute_checksum,
 };
