@@ -76,8 +76,9 @@ bool safety_rx_hook(CANPacket_t *to_push) {
 }
 
 bool safety_tx_hook(CANPacket_t *to_send) {
+  const bool whitelisted = msg_allowed(to_send, current_safety_config.tx_msgs, current_safety_config.tx_msgs_len);
   const bool safety_allowed = current_hooks->tx(to_send);
-  return !relay_malfunction && safety_allowed;
+  return !relay_malfunction && whitelisted && safety_allowed;
 }
 
 bool safety_tx_lin_hook(int lin_num, uint8_t *data, int len) {
