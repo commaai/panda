@@ -3,9 +3,8 @@ const addr_checks default_rx_checks = {
   .len = 0,
 };
 
-bool default_rx_hook(CANPacket_t *to_push) {
+void default_rx_hook(CANPacket_t *to_push) {
   UNUSED(to_push);
-  return true;
 }
 
 // *** no output safety mode ***

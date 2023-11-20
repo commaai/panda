@@ -6,7 +6,7 @@ AddrCheckStruct body_addr_checks[] = {
 };
 addr_checks body_rx_checks = SET_ADDR_CHECKS(body_addr_checks);
 
-static bool body_rx_hook(CANPacket_t *to_push) {
+static void body_rx_hook(CANPacket_t *to_push) {
   // body is never at standstill
   vehicle_moving = true;
 
@@ -14,7 +14,6 @@ static bool body_rx_hook(CANPacket_t *to_push) {
     controls_allowed = true;
   }
 
-  return true;
 }
 
 static bool body_tx_hook(CANPacket_t *to_send) {

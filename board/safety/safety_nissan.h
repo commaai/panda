@@ -41,7 +41,7 @@ const int NISSAN_PARAM_ALT_EPS_BUS = 1;
 
 bool nissan_alt_eps = false;
 
-static bool nissan_rx_hook(CANPacket_t *to_push) {
+static void nissan_rx_hook(CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
@@ -91,7 +91,6 @@ static bool nissan_rx_hook(CANPacket_t *to_push) {
   }
 
   generic_rx_checks((addr == 0x169) && (bus == 0));
-  return true;
 }
 
 

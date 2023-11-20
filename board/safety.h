@@ -64,7 +64,7 @@ bool safety_rx_hook(CANPacket_t *to_push) {
                                  current_hooks->compute_checksum_fn, current_hooks->get_counter_fn,
                                  current_hooks->get_quality_flag_valid_fn);
   if (valid) {
-    valid = current_hooks->rx(to_push);
+    current_hooks->rx(to_push);
   }
 
   // reset mismatches on rising edge of controls_allowed to avoid rare race condition

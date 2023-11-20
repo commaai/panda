@@ -173,7 +173,7 @@ static uint8_t chrysler_get_counter(CANPacket_t *to_push) {
   return (uint8_t)(GET_BYTE(to_push, 6) >> 4);
 }
 
-static bool chrysler_rx_hook(CANPacket_t *to_push) {
+static void chrysler_rx_hook(CANPacket_t *to_push) {
   const int bus = GET_BUS(to_push);
   const int addr = GET_ADDR(to_push);
 
@@ -212,7 +212,6 @@ static bool chrysler_rx_hook(CANPacket_t *to_push) {
   }
 
   generic_rx_checks((bus == 0) && (addr == chrysler_addrs->LKAS_COMMAND));
-  return true;
 }
 
 static bool chrysler_tx_hook(CANPacket_t *to_send) {

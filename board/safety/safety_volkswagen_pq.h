@@ -95,7 +95,7 @@ static const addr_checks* volkswagen_pq_init(uint16_t param) {
   return &volkswagen_pq_rx_checks;
 }
 
-static bool volkswagen_pq_rx_hook(CANPacket_t *to_push) {
+static void volkswagen_pq_rx_hook(CANPacket_t *to_push) {
   if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
 
@@ -167,7 +167,6 @@ static bool volkswagen_pq_rx_hook(CANPacket_t *to_push) {
 
     generic_rx_checks((addr == MSG_HCA_1));
   }
-  return true;
 }
 
 static bool volkswagen_pq_tx_hook(CANPacket_t *to_send) {

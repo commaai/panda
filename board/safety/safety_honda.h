@@ -114,7 +114,7 @@ static uint8_t honda_get_counter(CANPacket_t *to_push) {
   return ((uint8_t)(GET_BYTE(to_push, counter_byte)) >> 4U) & 0x3U;
 }
 
-static bool honda_rx_hook(CANPacket_t *to_push) {
+static void honda_rx_hook(CANPacket_t *to_push) {
   const bool pcm_cruise = ((honda_hw == HONDA_BOSCH) && !honda_bosch_long) || \
                           ((honda_hw == HONDA_NIDEC) && !gas_interceptor_detected);
   int pt_bus = honda_get_pt_bus();
@@ -242,7 +242,6 @@ static bool honda_rx_hook(CANPacket_t *to_push) {
 
   generic_rx_checks(stock_ecu_detected);
 
-  return true;
 }
 
 // all commands: gas, brake and steering

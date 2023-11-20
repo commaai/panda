@@ -65,7 +65,7 @@ enum {GM_ASCM, GM_CAM} gm_hw = GM_ASCM;
 bool gm_cam_long = false;
 bool gm_pcm_cruise = false;
 
-static bool gm_rx_hook(CANPacket_t *to_push) {
+static void gm_rx_hook(CANPacket_t *to_push) {
   if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
 
@@ -134,7 +134,6 @@ static bool gm_rx_hook(CANPacket_t *to_push) {
     }
     generic_rx_checks(stock_ecu_detected);
   }
-  return true;
 }
 
 // all commands: gas/regen, friction brake and steering

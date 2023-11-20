@@ -69,7 +69,7 @@ static uint32_t toyota_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)(GET_BYTE(to_push, checksum_byte));
 }
 
-static bool toyota_rx_hook(CANPacket_t *to_push) {
+static void toyota_rx_hook(CANPacket_t *to_push) {
   if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
 
@@ -126,7 +126,6 @@ static bool toyota_rx_hook(CANPacket_t *to_push) {
 
     generic_rx_checks((addr == 0x2E4));
   }
-  return true;
 }
 
 static bool toyota_tx_hook(CANPacket_t *to_send) {

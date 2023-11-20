@@ -35,7 +35,7 @@ AddrCheckStruct mazda_addr_checks[] = {
 addr_checks mazda_rx_checks = SET_ADDR_CHECKS(mazda_addr_checks);
 
 // track msgs coming from OP so that we know what CAM msgs to drop and what to forward
-static bool mazda_rx_hook(CANPacket_t *to_push) {
+static void mazda_rx_hook(CANPacket_t *to_push) {
   if ((int)GET_BUS(to_push) == MAZDA_MAIN) {
     int addr = GET_ADDR(to_push);
 
@@ -67,7 +67,6 @@ static bool mazda_rx_hook(CANPacket_t *to_push) {
 
     generic_rx_checks((addr == MAZDA_LKAS));
   }
-  return true;
 }
 
 static bool mazda_tx_hook(CANPacket_t *to_send) {

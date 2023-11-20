@@ -139,7 +139,7 @@ static uint32_t subaru_compute_checksum(CANPacket_t *to_push) {
   return checksum;
 }
 
-static bool subaru_rx_hook(CANPacket_t *to_push) {
+static void subaru_rx_hook(CANPacket_t *to_push) {
   const int bus = GET_BUS(to_push);
   const int alt_main_bus = subaru_gen2 ? SUBARU_ALT_BUS : SUBARU_MAIN_BUS;
 
@@ -184,7 +184,6 @@ static bool subaru_rx_hook(CANPacket_t *to_push) {
   }
 
   generic_rx_checks((addr == MSG_SUBARU_ES_LKAS) && (bus == SUBARU_MAIN_BUS));
-  return true;
 }
 
 static bool subaru_tx_hook(CANPacket_t *to_send) {

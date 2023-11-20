@@ -153,7 +153,7 @@ static uint32_t hyundai_canfd_get_checksum(CANPacket_t *to_push) {
   return chksum;
 }
 
-static bool hyundai_canfd_rx_hook(CANPacket_t *to_push) {
+static void hyundai_canfd_rx_hook(CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
@@ -226,7 +226,6 @@ static bool hyundai_canfd_rx_hook(CANPacket_t *to_push) {
   }
   generic_rx_checks(stock_ecu_detected);
 
-  return true;
 }
 
 static bool hyundai_canfd_tx_hook(CANPacket_t *to_send) {

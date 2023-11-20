@@ -178,7 +178,7 @@ bool longitudinal_interceptor_checks(CANPacket_t *to_send);
 void pcm_cruise_check(bool cruise_engaged);
 
 typedef const addr_checks* (*safety_hook_init)(uint16_t param);
-typedef bool (*rx_hook)(CANPacket_t *to_push);
+typedef void (*rx_hook)(CANPacket_t *to_push);
 typedef bool (*tx_hook)(CANPacket_t *to_send);
 typedef bool (*tx_lin_hook)(int lin_num, uint8_t *data, int len);
 typedef int (*fwd_hook)(int bus_num, int addr);

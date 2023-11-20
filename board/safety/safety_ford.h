@@ -206,7 +206,7 @@ const SteeringLimits FORD_STEERING_LIMITS = {
   .inactive_angle_is_zero = true,
 };
 
-static bool ford_rx_hook(CANPacket_t *to_push) {
+static void ford_rx_hook(CANPacket_t *to_push) {
   if (GET_BUS(to_push) == FORD_MAIN_BUS) {
     int addr = GET_ADDR(to_push);
 
@@ -268,7 +268,6 @@ static bool ford_rx_hook(CANPacket_t *to_push) {
     generic_rx_checks(stock_ecu_detected);
   }
 
-  return true;
 }
 
 static bool ford_tx_hook(CANPacket_t *to_send) {
