@@ -418,7 +418,7 @@ static addr_checks ford_init(uint16_t param) {
   ford_longitudinal = GET_FLAG(param, FORD_PARAM_LONGITUDINAL);
   ford_canfd = GET_FLAG(param, FORD_PARAM_CANFD);
 #endif
-  return &ford_rx_checks;
+  return SET_ADDR_CHECKS(ford_addr_checks);
 }
 
 const safety_hooks ford_hooks = {

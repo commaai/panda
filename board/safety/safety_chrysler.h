@@ -272,23 +272,23 @@ static int chrysler_fwd_hook(int bus_num, int addr) {
 }
 
 static addr_checks chrysler_init(uint16_t param) {
+  addr_checks ret;
   if (GET_FLAG(param, CHRYSLER_PARAM_RAM_DT)) {
     chrysler_platform = CHRYSLER_RAM_DT;
     chrysler_addrs = &CHRYSLER_RAM_DT_ADDRS;
-    chrysler_rx_checks = SET_ADDR_CHECKS(chrysler_ram_dt_addr_checks);
+    ret = SET_ADDR_CHECKS(chrysler_ram_dt_addr_checks);
   } else if (GET_FLAG(param, CHRYSLER_PARAM_RAM_HD)) {
 #ifdef ALLOW_DEBUG
     chrysler_platform = CHRYSLER_RAM_HD;
     chrysler_addrs = &CHRYSLER_RAM_HD_ADDRS;
-    chrysler_rx_checks = SET_ADDR_CHECKS(chrysler_ram_hd_addr_checks);
+    ret = SET_ADDR_CHECKS(chrysler_ram_hd_addr_checks);
 #endif
   } else {
     chrysler_platform = CHRYSLER_PACIFICA;
     chrysler_addrs = &CHRYSLER_ADDRS;
-    chrysler_rx_checks = SET_ADDR_CHECKS(chrysler_addr_checks);
+    ret = SET_ADDR_CHECKS(chrysler_addr_checks);
   }
-
-  return &chrysler_rx_checks;
+  return ret;
 }
 
 const safety_hooks chrysler_hooks = {

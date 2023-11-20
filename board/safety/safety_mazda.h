@@ -123,7 +123,7 @@ static int mazda_fwd_hook(int bus, int addr) {
 
 static addr_checks mazda_init(uint16_t param) {
   UNUSED(param);
-  return &mazda_rx_checks;
+  return SET_ADDR_CHECKS(mazda_addr_checks);
 }
 
 const safety_hooks mazda_hooks = {

@@ -247,7 +247,7 @@ static addr_checks gm_init(uint16_t param) {
   gm_cam_long = GET_FLAG(param, GM_PARAM_HW_CAM_LONG);
 #endif
   gm_pcm_cruise = (gm_hw == GM_CAM) && !gm_cam_long;
-  return &gm_rx_checks;
+  return SET_ADDR_CHECKS(gm_addr_checks);
 }
 
 const safety_hooks gm_hooks = {

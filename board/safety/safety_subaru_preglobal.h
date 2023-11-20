@@ -121,7 +121,7 @@ static int subaru_preglobal_fwd_hook(int bus_num, int addr) {
 
 static addr_checks subaru_preglobal_init(uint16_t param) {
   subaru_pg_reversed_driver_torque = GET_FLAG(param, SUBARU_PG_PARAM_REVERSED_DRIVER_TORQUE);
-  return &subaru_preglobal_rx_checks;
+  return SET_ADDR_CHECKS(subaru_preglobal_addr_checks);
 }
 
 const safety_hooks subaru_preglobal_hooks = {

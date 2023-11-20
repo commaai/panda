@@ -218,7 +218,13 @@ static addr_checks tesla_init(uint16_t param) {
 
   tesla_stock_aeb = false;
 
-  return tesla_powertrain ? (&tesla_pt_rx_checks) : (&tesla_rx_checks);
+  addr_checks ret;
+  if (tesla_powertrain) {
+    ret = SET_ADDR_CHECKS(tesla_pt_addr_checks);
+  } else {
+    ret = SET_ADDR_CHECKS(tesla_addr_checks);
+  }
+  return ret;
 }
 
 const safety_hooks tesla_hooks = {

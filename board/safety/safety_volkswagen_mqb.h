@@ -101,7 +101,7 @@ static addr_checks volkswagen_mqb_init(uint16_t param) {
   volkswagen_longitudinal = GET_FLAG(param, FLAG_VOLKSWAGEN_LONG_CONTROL);
 #endif
   gen_crc_lookup_table_8(0x2F, volkswagen_crc8_lut_8h2f);
-  return &volkswagen_mqb_rx_checks;
+  return SET_ADDR_CHECKS(volkswagen_mqb_addr_checks);
 }
 
 static void volkswagen_mqb_rx_hook(CANPacket_t *to_push) {

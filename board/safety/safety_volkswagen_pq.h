@@ -91,7 +91,7 @@ static addr_checks volkswagen_pq_init(uint16_t param) {
 #ifdef ALLOW_DEBUG
   volkswagen_longitudinal = GET_FLAG(param, FLAG_VOLKSWAGEN_LONG_CONTROL);
 #endif
-  return &volkswagen_pq_rx_checks;
+  return SET_ADDR_CHECKS(volkswagen_pq_addr_checks);
 }
 
 static void volkswagen_pq_rx_hook(CANPacket_t *to_push) {

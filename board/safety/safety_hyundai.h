@@ -313,14 +313,15 @@ static addr_checks hyundai_init(uint16_t param) {
     hyundai_longitudinal = false;
   }
 
+  addr_checks ret;
   if (hyundai_longitudinal) {
-    hyundai_rx_checks = SET_ADDR_CHECKS(hyundai_long_addr_checks);
+    ret = SET_ADDR_CHECKS(hyundai_long_addr_checks);
   } else if (hyundai_camera_scc) {
-    hyundai_rx_checks = SET_ADDR_CHECKS(hyundai_cam_scc_addr_checks);
+    ret = SET_ADDR_CHECKS(hyundai_cam_scc_addr_checks);
   } else {
-    hyundai_rx_checks = SET_ADDR_CHECKS(hyundai_addr_checks);
+    ret = SET_ADDR_CHECKS(hyundai_addr_checks);
   }
-  return &hyundai_rx_checks;
+  return ret;
 }
 
 static addr_checks hyundai_legacy_init(uint16_t param) {
@@ -328,9 +329,7 @@ static addr_checks hyundai_legacy_init(uint16_t param) {
   hyundai_legacy = true;
   hyundai_longitudinal = false;
   hyundai_camera_scc = false;
-
-  hyundai_rx_checks = SET_ADDR_CHECKS(hyundai_legacy_addr_checks);
-  return &hyundai_rx_checks;
+  return SET_ADDR_CHECKS(hyundai_legacy_addr_checks);
 }
 
 const safety_hooks hyundai_hooks = {

@@ -338,23 +338,24 @@ static addr_checks hyundai_canfd_init(uint16_t param) {
     hyundai_longitudinal = false;
   }
 
+  addr_checks ret;
   if (hyundai_longitudinal) {
     if (hyundai_canfd_hda2) {
-      hyundai_canfd_rx_checks = SET_ADDR_CHECKS(hyundai_canfd_hda2_long_addr_checks);
+      ret = SET_ADDR_CHECKS(hyundai_canfd_hda2_long_addr_checks);
     } else {
-      hyundai_canfd_rx_checks = hyundai_canfd_alt_buttons ? SET_ADDR_CHECKS(hyundai_canfd_long_alt_buttons_addr_checks) : SET_ADDR_CHECKS(hyundai_canfd_long_addr_checks);
+      ret = hyundai_canfd_alt_buttons ? SET_ADDR_CHECKS(hyundai_canfd_long_alt_buttons_addr_checks) : SET_ADDR_CHECKS(hyundai_canfd_long_addr_checks);
     }
   } else {
     if (hyundai_canfd_hda2) {
-      hyundai_canfd_rx_checks = SET_ADDR_CHECKS(hyundai_canfd_hda2_addr_checks);
+      ret = SET_ADDR_CHECKS(hyundai_canfd_hda2_addr_checks);
     } else if (!hyundai_camera_scc) {
-      hyundai_canfd_rx_checks = hyundai_canfd_alt_buttons ? SET_ADDR_CHECKS(hyundai_canfd_radar_scc_alt_buttons_addr_checks) : SET_ADDR_CHECKS(hyundai_canfd_radar_scc_addr_checks);
+      ret = hyundai_canfd_alt_buttons ? SET_ADDR_CHECKS(hyundai_canfd_radar_scc_alt_buttons_addr_checks) : SET_ADDR_CHECKS(hyundai_canfd_radar_scc_addr_checks);
     } else {
-      hyundai_canfd_rx_checks = hyundai_canfd_alt_buttons ? SET_ADDR_CHECKS(hyundai_canfd_alt_buttons_addr_checks) : SET_ADDR_CHECKS(hyundai_canfd_addr_checks);
+      ret = hyundai_canfd_alt_buttons ? SET_ADDR_CHECKS(hyundai_canfd_alt_buttons_addr_checks) : SET_ADDR_CHECKS(hyundai_canfd_addr_checks);
     }
   }
 
-  return &hyundai_canfd_rx_checks;
+  return ret;
 }
 
 const safety_hooks hyundai_canfd_hooks = {

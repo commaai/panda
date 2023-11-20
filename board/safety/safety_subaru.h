@@ -288,13 +288,13 @@ static addr_checks subaru_init(uint16_t param) {
   subaru_longitudinal = GET_FLAG(param, SUBARU_PARAM_LONGITUDINAL);
 #endif
 
+  addr_checks ret;
   if (subaru_gen2) {
-    subaru_rx_checks = SET_ADDR_CHECKS(subaru_gen2_addr_checks);
+    ret = SET_ADDR_CHECKS(subaru_gen2_addr_checks);
   } else {
-    subaru_rx_checks = SET_ADDR_CHECKS(subaru_addr_checks);
+    ret = SET_ADDR_CHECKS(subaru_addr_checks);
   }
-
-  return &subaru_rx_checks;
+  return ret;
 }
 
 const safety_hooks subaru_hooks = {

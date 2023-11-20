@@ -153,7 +153,7 @@ static int nissan_fwd_hook(int bus_num, int addr) {
 
 static addr_checks nissan_init(uint16_t param) {
   nissan_alt_eps = GET_FLAG(param, NISSAN_PARAM_ALT_EPS_BUS);
-  return &nissan_rx_checks;
+  return SET_ADDR_CHECKS(nissan_addr_checks);
 }
 
 const safety_hooks nissan_hooks = {

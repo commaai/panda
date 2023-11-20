@@ -5,7 +5,6 @@
 #include "safety/safety_defaults.h"
 #include "safety/safety_honda.h"
 #include "safety/safety_toyota.h"
-/*
 #include "safety/safety_tesla.h"
 #include "safety/safety_gm.h"
 #include "safety/safety_ford.h"
@@ -24,7 +23,6 @@
 #ifdef CANFD
 #include "safety/safety_hyundai_canfd.h"
 #endif
-*/
 
 // from cereal.car.CarParams.SafetyModel
 #define SAFETY_SILENT 0U
@@ -304,7 +302,6 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_SILENT, &nooutput_hooks},
   {SAFETY_HONDA_NIDEC, &honda_nidec_hooks},
   {SAFETY_TOYOTA, &toyota_hooks},
-  /*
   {SAFETY_ELM327, &elm327_hooks},
   {SAFETY_GM, &gm_hooks},
   {SAFETY_HONDA_BOSCH, &honda_bosch_hooks},
@@ -327,7 +324,6 @@ const safety_hook_config safety_hook_registry[] = {
   {SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},
   {SAFETY_ALLOUTPUT, &alloutput_hooks},
 #endif
-  */
 };
 
 int set_safety_hooks(uint16_t mode, uint16_t param) {
