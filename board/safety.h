@@ -78,7 +78,7 @@ bool safety_rx_hook(CANPacket_t *to_push) {
 bool safety_tx_hook(CANPacket_t *to_send) {
   bool whitelisted = msg_allowed(to_send, current_safety_config.tx_msgs, current_safety_config.tx_msgs_len);
 #ifdef ALLOW_DEBUG
-  if (current_safety_config.tx_msgs_len == ALLOUTPUT_ID) {
+  if (current_safety_mode == SAFETY_ALLOUTPUT) {
     whitelisted = true;
   }
 #endif

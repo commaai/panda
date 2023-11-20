@@ -23,7 +23,6 @@ const uint8_t MAX_MISSED_MSGS = 10U;
 // used to represent floating point vehicle speed in a sample_t
 #define VEHICLE_SPEED_FACTOR 100.0
 
-#define ALLOUTPUT_ID 0x123
 
 // sample struct that keeps 6 samples in memory
 struct sample_t {
