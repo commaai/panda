@@ -6,12 +6,8 @@
 
 
 #define BUILD_SAFETY_CFG(rx, tx) ((safety_config){(rx), (sizeof((rx)) / sizeof((rx)[0])), \
-                                                                     (tx), (sizeof((tx)) / sizeof((tx)[0])), \
-                                                                     (NULL), 0})
-
-#define BUILD_SAFETY_CFG_TOYOTA(rx, tx, relay_addr) ((safety_config){(rx), (sizeof((rx)) / sizeof((rx)[0])), \
-                                                                     (tx), (sizeof((tx)) / sizeof((tx)[0])), \
-                                                                     (relay_addr), (sizeof((relay_addr)) / sizeof((relay_addr)[0]))})
+                                                  (tx), (sizeof((tx)) / sizeof((tx)[0])), \
+                                                  (relay_addr), (sizeof((relay_addr)) / sizeof((relay_addr)[0]))})
 
 uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
   uint32_t ret = 0U;
