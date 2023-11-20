@@ -1,4 +1,4 @@
-static int elm327_tx_hook(CANPacket_t *to_send) {
+static bool elm327_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -18,7 +18,7 @@ static int elm327_tx_hook(CANPacket_t *to_send) {
   return tx;
 }
 
-static int elm327_tx_lin_hook(int lin_num, uint8_t *data, int len) {
+static bool elm327_tx_lin_hook(int lin_num, uint8_t *data, int len) {
   int tx = 1;
   if (lin_num != 0) {
     tx = 0;  //Only operate on LIN 0, aka serial 2

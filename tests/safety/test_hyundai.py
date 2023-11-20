@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import random
 import unittest
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
@@ -85,7 +86,8 @@ class TestHyundaiSafety(HyundaiButtonBase, common.PandaCarSafetyTest, common.Dri
     return self.packer.make_can_msg_panda("EMS16", 0, values, fix_checksum=checksum)
 
   def _user_brake_msg(self, brake):
-    values = {"DriverOverride": 2 if brake else 0, "AliveCounterTCS": self.cnt_brake % 8}
+    values = {"DriverOverride": 2 if brake else random.choice((0, 1, 3)),
+              "AliveCounterTCS": self.cnt_brake % 8}
     self.__class__.cnt_brake += 1
     return self.packer.make_can_msg_panda("TCS13", 0, values, fix_checksum=checksum)
 
