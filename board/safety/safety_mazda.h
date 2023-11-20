@@ -32,7 +32,6 @@ AddrCheckStruct mazda_addr_checks[] = {
   {.msg = {{MAZDA_ENGINE_DATA,  0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{MAZDA_PEDALS,       0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
-addr_checks mazda_rx_checks = SET_ADDR_CHECKS(mazda_addr_checks);
 
 // track msgs coming from OP so that we know what CAM msgs to drop and what to forward
 static void mazda_rx_hook(CANPacket_t *to_push) {
@@ -122,9 +121,9 @@ static int mazda_fwd_hook(int bus, int addr) {
   return bus_fwd;
 }
 
-static const addr_checks* mazda_init(uint16_t param) {
+static addr_checks mazda_init(uint16_t param) {
   UNUSED(param);
-  return &mazda_rx_checks;
+  return SET_ADDR_CHECKS(mazda_addr_checks);
 }
 
 const safety_hooks mazda_hooks = {

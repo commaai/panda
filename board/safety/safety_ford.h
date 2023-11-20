@@ -71,7 +71,6 @@ AddrCheckStruct ford_addr_checks[] = {
   {.msg = {{FORD_EngVehicleSpThrottle, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
   {.msg = {{FORD_DesiredTorqBrk, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
-addr_checks ford_rx_checks = SET_ADDR_CHECKS(ford_addr_checks);
 
 static uint8_t ford_get_counter(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
@@ -413,13 +412,13 @@ static int ford_fwd_hook(int bus_num, int addr) {
   return bus_fwd;
 }
 
-static const addr_checks* ford_init(uint16_t param) {
+static addr_checks ford_init(uint16_t param) {
   UNUSED(param);
 #ifdef ALLOW_DEBUG
   ford_longitudinal = GET_FLAG(param, FORD_PARAM_LONGITUDINAL);
   ford_canfd = GET_FLAG(param, FORD_PARAM_CANFD);
 #endif
-  return &ford_rx_checks;
+  return SET_ADDR_CHECKS(ford_addr_checks);
 }
 
 const safety_hooks ford_hooks = {

@@ -106,12 +106,10 @@ const CanMsg SUBARU_GEN2_LONG_TX_MSGS[] = {
 AddrCheckStruct subaru_addr_checks[] = {
   SUBARU_COMMON_ADDR_CHECKS(SUBARU_MAIN_BUS)
 };
-addr_checks subaru_rx_checks = SET_ADDR_CHECKS(subaru_addr_checks);
 
 AddrCheckStruct subaru_gen2_addr_checks[] = {
   SUBARU_COMMON_ADDR_CHECKS(SUBARU_ALT_BUS)
 };
-addr_checks subaru_gen2_rx_checks = SET_ADDR_CHECKS(subaru_gen2_addr_checks);
 
 
 const uint16_t SUBARU_PARAM_GEN2 = 1;
@@ -283,20 +281,20 @@ static int subaru_fwd_hook(int bus_num, int addr) {
   return bus_fwd;
 }
 
-static const addr_checks* subaru_init(uint16_t param) {
+static addr_checks subaru_init(uint16_t param) {
   subaru_gen2 = GET_FLAG(param, SUBARU_PARAM_GEN2);
 
 #ifdef ALLOW_DEBUG
   subaru_longitudinal = GET_FLAG(param, SUBARU_PARAM_LONGITUDINAL);
 #endif
 
+  addr_checks ret;
   if (subaru_gen2) {
-    subaru_rx_checks = SET_ADDR_CHECKS(subaru_gen2_addr_checks);
+    ret = SET_ADDR_CHECKS(subaru_gen2_addr_checks);
   } else {
-    subaru_rx_checks = SET_ADDR_CHECKS(subaru_addr_checks);
+    ret = SET_ADDR_CHECKS(subaru_addr_checks);
   }
-
-  return &subaru_rx_checks;
+  return ret;
 }
 
 const safety_hooks subaru_hooks = {

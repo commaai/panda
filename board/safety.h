@@ -55,12 +55,12 @@
 uint16_t current_safety_mode = SAFETY_SILENT;
 uint16_t current_safety_param = 0;
 const safety_hooks *current_hooks = &nooutput_hooks;
-const addr_checks *current_rx_checks = &default_rx_checks;
+addr_checks current_rx_checks;
 
 bool safety_rx_hook(CANPacket_t *to_push) {
   bool controls_allowed_prev = controls_allowed;
 
-  bool valid = addr_safety_check(to_push, current_rx_checks, current_hooks->get_checksum,
+  bool valid = addr_safety_check(to_push, &current_rx_checks, current_hooks->get_checksum,
                                  current_hooks->compute_checksum, current_hooks->get_counter,
                                  current_hooks->get_quality_flag_valid);
   if (valid) {
@@ -361,6 +361,9 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   relay_malfunction_reset();
   safety_rx_checks_invalid = false;
 
+  current_rx_checks.len = 0;
+  current_rx_checks.check = NULL;
+
   int set_status = -1;  // not set
   int hook_config_count = sizeof(safety_hook_registry) / sizeof(safety_hook_config);
   for (int i = 0; i < hook_config_count; i++) {
@@ -372,11 +375,13 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
     }
   }
   if ((set_status == 0) && (current_hooks->init != NULL)) {
-    current_rx_checks = current_hooks->init(param);
+    addr_checks cfg = current_hooks->init(param);
+    current_rx_checks.len = cfg.len;
+    current_rx_checks.check = cfg.check;
     // reset message index and seen flags in addr struct
-    for (int j = 0; j < current_rx_checks->len; j++) {
-      current_rx_checks->check[j].index = 0;
-      current_rx_checks->check[j].msg_seen = false;
+    for (int j = 0; j < current_rx_checks.len; j++) {
+      current_rx_checks.check[j].index = 0;
+      current_rx_checks.check[j].msg_seen = false;
     }
   }
   return set_status;

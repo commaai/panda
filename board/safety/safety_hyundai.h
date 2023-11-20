@@ -84,7 +84,6 @@ AddrCheckStruct hyundai_legacy_addr_checks[] = {
 
 bool hyundai_legacy = false;
 
-addr_checks hyundai_rx_checks = SET_ADDR_CHECKS(hyundai_addr_checks);
 
 static uint8_t hyundai_get_counter(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
@@ -306,7 +305,7 @@ static int hyundai_fwd_hook(int bus_num, int addr) {
   return bus_fwd;
 }
 
-static const addr_checks* hyundai_init(uint16_t param) {
+static addr_checks hyundai_init(uint16_t param) {
   hyundai_common_init(param);
   hyundai_legacy = false;
 
@@ -314,24 +313,23 @@ static const addr_checks* hyundai_init(uint16_t param) {
     hyundai_longitudinal = false;
   }
 
+  addr_checks ret;
   if (hyundai_longitudinal) {
-    hyundai_rx_checks = SET_ADDR_CHECKS(hyundai_long_addr_checks);
+    ret = SET_ADDR_CHECKS(hyundai_long_addr_checks);
   } else if (hyundai_camera_scc) {
-    hyundai_rx_checks = SET_ADDR_CHECKS(hyundai_cam_scc_addr_checks);
+    ret = SET_ADDR_CHECKS(hyundai_cam_scc_addr_checks);
   } else {
-    hyundai_rx_checks = SET_ADDR_CHECKS(hyundai_addr_checks);
+    ret = SET_ADDR_CHECKS(hyundai_addr_checks);
   }
-  return &hyundai_rx_checks;
+  return ret;
 }
 
-static const addr_checks* hyundai_legacy_init(uint16_t param) {
+static addr_checks hyundai_legacy_init(uint16_t param) {
   hyundai_common_init(param);
   hyundai_legacy = true;
   hyundai_longitudinal = false;
   hyundai_camera_scc = false;
-
-  hyundai_rx_checks = SET_ADDR_CHECKS(hyundai_legacy_addr_checks);
-  return &hyundai_rx_checks;
+  return SET_ADDR_CHECKS(hyundai_legacy_addr_checks);
 }
 
 const safety_hooks hyundai_hooks = {

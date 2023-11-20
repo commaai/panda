@@ -34,7 +34,6 @@ AddrCheckStruct nissan_addr_checks[] = {
            {0x454, 1, 8, .expected_timestep = 100000U},
            {0x1cc, 0, 4, .expected_timestep = 10000U}}}, // DOORS_LIGHTS (10Hz) / BRAKE (100Hz)
 };
-addr_checks nissan_rx_checks = SET_ADDR_CHECKS(nissan_addr_checks);
 
 // EPS Location. false = V-CAN, true = C-CAN
 const int NISSAN_PARAM_ALT_EPS_BUS = 1;
@@ -152,9 +151,9 @@ static int nissan_fwd_hook(int bus_num, int addr) {
   return bus_fwd;
 }
 
-static const addr_checks* nissan_init(uint16_t param) {
+static addr_checks nissan_init(uint16_t param) {
   nissan_alt_eps = GET_FLAG(param, NISSAN_PARAM_ALT_EPS_BUS);
-  return &nissan_rx_checks;
+  return SET_ADDR_CHECKS(nissan_addr_checks);
 }
 
 const safety_hooks nissan_hooks = {
