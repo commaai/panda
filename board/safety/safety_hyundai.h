@@ -158,23 +158,18 @@ static uint32_t hyundai_compute_checksum(CANPacket_t *to_push) {
   return chksum;
 }
 
-static bool hyundai_rx_hook(CANPacket_t *to_push) {
-
-  bool valid = addr_safety_check(to_push, &hyundai_rx_checks,
-                                 hyundai_get_checksum, hyundai_compute_checksum,
-                                 hyundai_get_counter, NULL);
-
+static void hyundai_rx_hook(CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
   // SCC12 is on bus 2 for camera-based SCC cars, bus 0 on all others
-  if (valid && (addr == 0x421) && (((bus == 0) && !hyundai_camera_scc) || ((bus == 2) && hyundai_camera_scc))) {
+  if ((addr == 0x421) && (((bus == 0) && !hyundai_camera_scc) || ((bus == 2) && hyundai_camera_scc))) {
     // 2 bits: 13-14
     int cruise_engaged = (GET_BYTES(to_push, 0, 4) >> 13) & 0x3U;
     hyundai_common_cruise_state_check(cruise_engaged);
   }
 
-  if (valid && (bus == 0)) {
+  if (bus == 0) {
     if (addr == 0x251) {
       int torque_driver_new = (GET_BYTES(to_push, 0, 2) & 0x7ffU) - 1024U;
       // update array of samples
@@ -218,7 +213,6 @@ static bool hyundai_rx_hook(CANPacket_t *to_push) {
     }
     generic_rx_checks(stock_ecu_detected);
   }
-  return valid;
 }
 
 static bool hyundai_tx_hook(CANPacket_t *to_send) {
@@ -346,6 +340,9 @@ const safety_hooks hyundai_hooks = {
   .tx = hyundai_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = hyundai_fwd_hook,
+  .get_counter = hyundai_get_counter,
+  .get_checksum = hyundai_get_checksum,
+  .compute_checksum = hyundai_compute_checksum,
 };
 
 const safety_hooks hyundai_legacy_hooks = {
@@ -354,4 +351,7 @@ const safety_hooks hyundai_legacy_hooks = {
   .tx = hyundai_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = hyundai_fwd_hook,
+  .get_counter = hyundai_get_counter,
+  .get_checksum = hyundai_get_checksum,
+  .compute_checksum = hyundai_compute_checksum,
 };

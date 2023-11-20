@@ -173,54 +173,45 @@ static uint8_t chrysler_get_counter(CANPacket_t *to_push) {
   return (uint8_t)(GET_BYTE(to_push, 6) >> 4);
 }
 
-static bool chrysler_rx_hook(CANPacket_t *to_push) {
-
-  bool valid = addr_safety_check(to_push, &chrysler_rx_checks,
-                                 chrysler_get_checksum, chrysler_compute_checksum,
-                                 chrysler_get_counter, NULL);
-
+static void chrysler_rx_hook(CANPacket_t *to_push) {
   const int bus = GET_BUS(to_push);
   const int addr = GET_ADDR(to_push);
 
-  if (valid) {
-
-    // Measured EPS torque
-    if ((bus == 0) && (addr == chrysler_addrs->EPS_2)) {
-      int torque_meas_new = ((GET_BYTE(to_push, 4) & 0x7U) << 8) + GET_BYTE(to_push, 5) - 1024U;
-      update_sample(&torque_meas, torque_meas_new);
-    }
-
-    // enter controls on rising edge of ACC, exit controls on ACC off
-    const int das_3_bus = (chrysler_platform == CHRYSLER_PACIFICA) ? 0 : 2;
-    if ((bus == das_3_bus) && (addr == chrysler_addrs->DAS_3)) {
-      bool cruise_engaged = GET_BIT(to_push, 21U) == 1U;
-      pcm_cruise_check(cruise_engaged);
-    }
-
-    // TODO: use the same message for both
-    // update vehicle moving
-    if ((chrysler_platform != CHRYSLER_PACIFICA) && (bus == 0) && (addr == chrysler_addrs->ESP_8)) {
-      vehicle_moving = ((GET_BYTE(to_push, 4) << 8) + GET_BYTE(to_push, 5)) != 0U;
-    }
-    if ((chrysler_platform == CHRYSLER_PACIFICA) && (bus == 0) && (addr == 514)) {
-      int speed_l = (GET_BYTE(to_push, 0) << 4) + (GET_BYTE(to_push, 1) >> 4);
-      int speed_r = (GET_BYTE(to_push, 2) << 4) + (GET_BYTE(to_push, 3) >> 4);
-      vehicle_moving = (speed_l != 0) || (speed_r != 0);
-    }
-
-    // exit controls on rising edge of gas press
-    if ((bus == 0) && (addr == chrysler_addrs->ECM_5)) {
-      gas_pressed = GET_BYTE(to_push, 0U) != 0U;
-    }
-
-    // exit controls on rising edge of brake press
-    if ((bus == 0) && (addr == chrysler_addrs->ESP_1)) {
-      brake_pressed = ((GET_BYTE(to_push, 0U) & 0xFU) >> 2U) == 1U;
-    }
-
-    generic_rx_checks((bus == 0) && (addr == chrysler_addrs->LKAS_COMMAND));
+  // Measured EPS torque
+  if ((bus == 0) && (addr == chrysler_addrs->EPS_2)) {
+    int torque_meas_new = ((GET_BYTE(to_push, 4) & 0x7U) << 8) + GET_BYTE(to_push, 5) - 1024U;
+    update_sample(&torque_meas, torque_meas_new);
   }
-  return valid;
+
+  // enter controls on rising edge of ACC, exit controls on ACC off
+  const int das_3_bus = (chrysler_platform == CHRYSLER_PACIFICA) ? 0 : 2;
+  if ((bus == das_3_bus) && (addr == chrysler_addrs->DAS_3)) {
+    bool cruise_engaged = GET_BIT(to_push, 21U) == 1U;
+    pcm_cruise_check(cruise_engaged);
+  }
+
+  // TODO: use the same message for both
+  // update vehicle moving
+  if ((chrysler_platform != CHRYSLER_PACIFICA) && (bus == 0) && (addr == chrysler_addrs->ESP_8)) {
+    vehicle_moving = ((GET_BYTE(to_push, 4) << 8) + GET_BYTE(to_push, 5)) != 0U;
+  }
+  if ((chrysler_platform == CHRYSLER_PACIFICA) && (bus == 0) && (addr == 514)) {
+    int speed_l = (GET_BYTE(to_push, 0) << 4) + (GET_BYTE(to_push, 1) >> 4);
+    int speed_r = (GET_BYTE(to_push, 2) << 4) + (GET_BYTE(to_push, 3) >> 4);
+    vehicle_moving = (speed_l != 0) || (speed_r != 0);
+  }
+
+  // exit controls on rising edge of gas press
+  if ((bus == 0) && (addr == chrysler_addrs->ECM_5)) {
+    gas_pressed = GET_BYTE(to_push, 0U) != 0U;
+  }
+
+  // exit controls on rising edge of brake press
+  if ((bus == 0) && (addr == chrysler_addrs->ESP_1)) {
+    brake_pressed = ((GET_BYTE(to_push, 0U) & 0xFU) >> 2U) == 1U;
+  }
+
+  generic_rx_checks((bus == 0) && (addr == chrysler_addrs->LKAS_COMMAND));
 }
 
 static bool chrysler_tx_hook(CANPacket_t *to_send) {
@@ -307,4 +298,7 @@ const safety_hooks chrysler_hooks = {
   .tx = chrysler_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = chrysler_fwd_hook,
+  .get_counter = chrysler_get_counter,
+  .get_checksum = chrysler_get_checksum,
+  .compute_checksum = chrysler_compute_checksum,
 };

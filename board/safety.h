@@ -59,14 +59,20 @@ const addr_checks *current_rx_checks = &default_rx_checks;
 
 bool safety_rx_hook(CANPacket_t *to_push) {
   bool controls_allowed_prev = controls_allowed;
-  int ret = current_hooks->rx(to_push);
+
+  bool valid = addr_safety_check(to_push, current_rx_checks, current_hooks->get_checksum,
+                                 current_hooks->compute_checksum, current_hooks->get_counter,
+                                 current_hooks->get_quality_flag_valid);
+  if (valid) {
+    current_hooks->rx(to_push);
+  }
 
   // reset mismatches on rising edge of controls_allowed to avoid rare race condition
   if (controls_allowed && !controls_allowed_prev) {
     heartbeat_engaged_mismatches = 0;
   }
 
-  return ret;
+  return valid;
 }
 
 bool safety_tx_hook(CANPacket_t *to_send) {
@@ -216,10 +222,10 @@ void update_addr_timestamp(AddrCheckStruct addr_list[], int index) {
 
 bool addr_safety_check(CANPacket_t *to_push,
                        const addr_checks *rx_checks,
-                       uint32_t (*get_checksum)(CANPacket_t *to_push),
-                       uint32_t (*compute_checksum)(CANPacket_t *to_push),
-                       uint8_t (*get_counter)(CANPacket_t *to_push),
-                       bool (*get_quality_flag_valid)(CANPacket_t *to_push)) {
+                       const get_checksum_t get_checksum,
+                       const compute_checksum_t compute_checksum,
+                       const get_counter_t get_counter,
+                       const get_quality_flag_valid_t get_quality_flag_valid) {
 
   int index = get_addr_check_index(to_push, rx_checks->check, rx_checks->len);
   update_addr_timestamp(rx_checks->check, index);

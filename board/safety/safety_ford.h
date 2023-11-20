@@ -206,11 +206,8 @@ const SteeringLimits FORD_STEERING_LIMITS = {
   .inactive_angle_is_zero = true,
 };
 
-static bool ford_rx_hook(CANPacket_t *to_push) {
-  bool valid = addr_safety_check(to_push, &ford_rx_checks,
-                                 ford_get_checksum, ford_compute_checksum, ford_get_counter, ford_get_quality_flag_valid);
-
-  if (valid && (GET_BUS(to_push) == FORD_MAIN_BUS)) {
+static void ford_rx_hook(CANPacket_t *to_push) {
+  if (GET_BUS(to_push) == FORD_MAIN_BUS) {
     int addr = GET_ADDR(to_push);
 
     // Update in motion state from standstill signal
@@ -271,7 +268,6 @@ static bool ford_rx_hook(CANPacket_t *to_push) {
     generic_rx_checks(stock_ecu_detected);
   }
 
-  return valid;
 }
 
 static bool ford_tx_hook(CANPacket_t *to_send) {
@@ -432,4 +428,8 @@ const safety_hooks ford_hooks = {
   .tx = ford_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = ford_fwd_hook,
+  .get_counter = ford_get_counter,
+  .get_checksum = ford_get_checksum,
+  .compute_checksum = ford_compute_checksum,
+  .get_quality_flag_valid = ford_get_quality_flag_valid,
 };

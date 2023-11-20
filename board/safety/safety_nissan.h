@@ -41,62 +41,56 @@ const int NISSAN_PARAM_ALT_EPS_BUS = 1;
 
 bool nissan_alt_eps = false;
 
-static bool nissan_rx_hook(CANPacket_t *to_push) {
+static void nissan_rx_hook(CANPacket_t *to_push) {
+  int bus = GET_BUS(to_push);
+  int addr = GET_ADDR(to_push);
 
-  bool valid = addr_safety_check(to_push, &nissan_rx_checks, NULL, NULL, NULL, NULL);
+  if (bus == (nissan_alt_eps ? 1 : 0)) {
+    if (addr == 0x2) {
+      // Current steering angle
+      // Factor -0.1, little endian
+      int angle_meas_new = (GET_BYTES(to_push, 0, 4) & 0xFFFFU);
+      // Multiply by -10 to match scale of LKAS angle
+      angle_meas_new = to_signed(angle_meas_new, 16) * -10;
 
-  if (valid) {
-    int bus = GET_BUS(to_push);
-    int addr = GET_ADDR(to_push);
-
-    if (bus == (nissan_alt_eps ? 1 : 0)) {
-      if (addr == 0x2) {
-        // Current steering angle
-        // Factor -0.1, little endian
-        int angle_meas_new = (GET_BYTES(to_push, 0, 4) & 0xFFFFU);
-        // Multiply by -10 to match scale of LKAS angle
-        angle_meas_new = to_signed(angle_meas_new, 16) * -10;
-
-        // update array of samples
-        update_sample(&angle_meas, angle_meas_new);
-      }
-
-      if (addr == 0x285) {
-        // Get current speed and standstill
-        uint16_t right_rear = (GET_BYTE(to_push, 0) << 8) | (GET_BYTE(to_push, 1));
-        uint16_t left_rear = (GET_BYTE(to_push, 2) << 8) | (GET_BYTE(to_push, 3));
-        vehicle_moving = (right_rear | left_rear) != 0U;
-        update_sample(&vehicle_speed, ROUND((right_rear + left_rear) / 2.0 * 0.005 / 3.6 * VEHICLE_SPEED_FACTOR));
-      }
-
-      // X-Trail 0x15c, Leaf 0x239
-      if ((addr == 0x15c) || (addr == 0x239)) {
-        if (addr == 0x15c){
-          gas_pressed = ((GET_BYTE(to_push, 5) << 2) | ((GET_BYTE(to_push, 6) >> 6) & 0x3U)) > 3U;
-        } else {
-          gas_pressed = GET_BYTE(to_push, 0) > 3U;
-        }
-      }
+      // update array of samples
+      update_sample(&angle_meas, angle_meas_new);
     }
 
-    // X-trail 0x454, Leaf  0x239
-    if ((addr == 0x454) || (addr == 0x239)) {
-      if (addr == 0x454){
-        brake_pressed = (GET_BYTE(to_push, 2) & 0x80U) != 0U;
+    if (addr == 0x285) {
+      // Get current speed and standstill
+      uint16_t right_rear = (GET_BYTE(to_push, 0) << 8) | (GET_BYTE(to_push, 1));
+      uint16_t left_rear = (GET_BYTE(to_push, 2) << 8) | (GET_BYTE(to_push, 3));
+      vehicle_moving = (right_rear | left_rear) != 0U;
+      update_sample(&vehicle_speed, ROUND((right_rear + left_rear) / 2.0 * 0.005 / 3.6 * VEHICLE_SPEED_FACTOR));
+    }
+
+    // X-Trail 0x15c, Leaf 0x239
+    if ((addr == 0x15c) || (addr == 0x239)) {
+      if (addr == 0x15c){
+        gas_pressed = ((GET_BYTE(to_push, 5) << 2) | ((GET_BYTE(to_push, 6) >> 6) & 0x3U)) > 3U;
       } else {
-        brake_pressed = ((GET_BYTE(to_push, 4) >> 5) & 1U) != 0U;
+        gas_pressed = GET_BYTE(to_push, 0) > 3U;
       }
     }
-
-    // Handle cruise enabled
-    if ((addr == 0x30f) && (bus == (nissan_alt_eps ? 1 : 2))) {
-      bool cruise_engaged = (GET_BYTE(to_push, 0) >> 3) & 1U;
-      pcm_cruise_check(cruise_engaged);
-    }
-
-    generic_rx_checks((addr == 0x169) && (bus == 0));
   }
-  return valid;
+
+  // X-trail 0x454, Leaf  0x239
+  if ((addr == 0x454) || (addr == 0x239)) {
+    if (addr == 0x454){
+      brake_pressed = (GET_BYTE(to_push, 2) & 0x80U) != 0U;
+    } else {
+      brake_pressed = ((GET_BYTE(to_push, 4) >> 5) & 1U) != 0U;
+    }
+  }
+
+  // Handle cruise enabled
+  if ((addr == 0x30f) && (bus == (nissan_alt_eps ? 1 : 2))) {
+    bool cruise_engaged = (GET_BYTE(to_push, 0) >> 3) & 1U;
+    pcm_cruise_check(cruise_engaged);
+  }
+
+  generic_rx_checks((addr == 0x169) && (bus == 0));
 }
 
 

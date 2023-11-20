@@ -132,6 +132,11 @@ typedef struct {
   int len;
 } addr_checks;
 
+typedef uint32_t (*get_checksum_t)(CANPacket_t *to_push);
+typedef uint32_t (*compute_checksum_t)(CANPacket_t *to_push);
+typedef uint8_t (*get_counter_t)(CANPacket_t *to_push);
+typedef bool (*get_quality_flag_valid_t)(CANPacket_t *to_push);
+
 bool safety_rx_hook(CANPacket_t *to_push);
 bool safety_tx_hook(CANPacket_t *to_send);
 bool safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
@@ -160,10 +165,10 @@ void update_addr_timestamp(AddrCheckStruct addr_list[], int index);
 bool is_msg_valid(AddrCheckStruct addr_list[], int index);
 bool addr_safety_check(CANPacket_t *to_push,
                        const addr_checks *rx_checks,
-                       uint32_t (*get_checksum)(CANPacket_t *to_push),
-                       uint32_t (*compute_checksum)(CANPacket_t *to_push),
-                       uint8_t (*get_counter)(CANPacket_t *to_push),
-                       bool (*get_quality_flag_valid)(CANPacket_t *to_push));
+                       const get_checksum_t get_checksum,
+                       const compute_checksum_t compute_checksum,
+                       const get_counter_t get_counter,
+                       const get_quality_flag_valid_t get_quality_flag);
 void generic_rx_checks(bool stock_ecu_detected);
 void relay_malfunction_set(void);
 void relay_malfunction_reset(void);
@@ -178,7 +183,7 @@ bool longitudinal_interceptor_checks(CANPacket_t *to_send);
 void pcm_cruise_check(bool cruise_engaged);
 
 typedef const addr_checks* (*safety_hook_init)(uint16_t param);
-typedef bool (*rx_hook)(CANPacket_t *to_push);
+typedef void (*rx_hook)(CANPacket_t *to_push);
 typedef bool (*tx_hook)(CANPacket_t *to_send);
 typedef bool (*tx_lin_hook)(int lin_num, uint8_t *data, int len);
 typedef int (*fwd_hook)(int bus_num, int addr);
@@ -189,6 +194,10 @@ typedef struct {
   tx_hook tx;
   tx_lin_hook tx_lin;
   fwd_hook fwd;
+  get_checksum_t get_checksum;
+  compute_checksum_t compute_checksum;
+  get_counter_t get_counter;
+  get_quality_flag_valid_t get_quality_flag_valid;
 } safety_hooks;
 
 void safety_tick(const addr_checks *addr_checks);
