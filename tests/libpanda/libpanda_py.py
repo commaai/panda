@@ -25,9 +25,9 @@ typedef struct {
 """, packed=True)
 
 ffi.cdef("""
-int safety_rx_hook(CANPacket_t *to_send);
-int safety_tx_hook(CANPacket_t *to_push);
-int safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
+bool safety_rx_hook(CANPacket_t *to_send);
+bool safety_tx_hook(CANPacket_t *to_push);
+bool safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
 int safety_fwd_hook(int bus_num, int addr);
 int set_safety_hooks(uint16_t mode, uint16_t param);
 """)
