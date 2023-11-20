@@ -228,7 +228,7 @@ static void hyundai_canfd_rx_hook(CANPacket_t *to_push) {
 }
 
 static bool hyundai_canfd_tx_hook(CANPacket_t *to_send) {
-  int tx = 0;
+  int tx = 1;
   int addr = GET_ADDR(to_send);
 
   // steering
@@ -335,7 +335,8 @@ static safety_config hyundai_canfd_init(uint16_t param) {
     }
   } else {
     if (hyundai_canfd_hda2) {
-      ret = BUILD_SAFETY_CFG(hyundai_canfd_hda2_rx_checks, HYUNDAI_CANFD_HDA2_TX_MSGS);
+      ret = hyundai_canfd_hda2_alt_steering ? BUILD_SAFETY_CFG(hyundai_canfd_hda2_rx_checks, HYUNDAI_CANFD_HDA2_ALT_STEERING_TX_MSGS) : \
+                                              BUILD_SAFETY_CFG(hyundai_canfd_hda2_rx_checks, HYUNDAI_CANFD_HDA2_TX_MSGS);
     } else if (!hyundai_camera_scc) {
       ret = hyundai_canfd_alt_buttons ? BUILD_SAFETY_CFG(hyundai_canfd_radar_scc_alt_buttons_rx_checks, HYUNDAI_CANFD_HDA1_TX_MSGS) : \
                                         BUILD_SAFETY_CFG(hyundai_canfd_radar_scc_rx_checks, HYUNDAI_CANFD_HDA1_TX_MSGS);
