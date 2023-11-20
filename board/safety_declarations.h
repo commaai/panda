@@ -4,8 +4,7 @@
 #define GET_BYTE(msg, b) ((msg)->data[(b)])
 #define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask))
 
-
-#define BUILD_SAFETY_CFG(rx, tx) ((safety_config){(rx), (sizeof((rx)) / sizeof((rx)[0])), \
+#define BUILD_SAFETY_CFG(rx, tx, relay_addr) ((safety_config){(rx), (sizeof((rx)) / sizeof((rx)[0])), \
                                                   (tx), (sizeof((tx)) / sizeof((tx)[0])), \
                                                   (relay_addr), (sizeof((relay_addr)) / sizeof((relay_addr)[0]))})
 
