@@ -188,7 +188,6 @@ typedef uint32_t (*compute_checksum)(CANPacket_t *to_push);
 typedef uint8_t (*get_counter)(CANPacket_t *to_push);
 typedef bool (*get_quality_flag_valid)(CANPacket_t *to_push);
 
-
 typedef struct {
   safety_hook_init init;
   rx_hook rx;
