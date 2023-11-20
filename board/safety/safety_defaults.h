@@ -44,7 +44,7 @@ bool alloutput_passthrough = false;
 static safety_config alloutput_init(uint16_t param) {
   controls_allowed = true;
   alloutput_passthrough = GET_FLAG(param, ALLOUTPUT_PARAM_PASSTHROUGH);
-  return (safety_config){NULL, 0, NULL, 0};
+  return (safety_config){NULL, 0, NULL, ALLOUTPUT_ID};
 }
 
 static bool alloutput_tx_hook(CANPacket_t *to_send) {
