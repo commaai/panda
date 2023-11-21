@@ -32,12 +32,20 @@ const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0
                                  {0x2E4, 0, 5}, {0x191, 0, 8}, {0x411, 0, 8}, {0x412, 0, 8}, {0x343, 0, 8}, {0x1D2, 0, 8},  // LKAS + ACC
                                  {0x200, 0, 6}};  // interceptor
 
+#define TOYOTA_COMMON_RX_CHECKS \
+  {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .expected_timestep = 12000U}, { 0 }, { 0 }}}, \
+  {.msg = {{0x260, 0, 8, .check_checksum = true, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
+  {.msg = {{0x1D2, 0, 8, .check_checksum = true, .expected_timestep = 30000U}, { 0 }, { 0 }}}, \
+  {.msg = {{0x224, 0, 8, .check_checksum = false, .expected_timestep = 25000U}, \
+           {0x226, 0, 8, .check_checksum = false, .expected_timestep = 25000U}, { 0 }}}, \
+
 RxCheck toyota_rx_checks[] = {
-  {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .expected_timestep = 12000U}, { 0 }, { 0 }}},
-  {.msg = {{0x260, 0, 8, .check_checksum = true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{0x1D2, 0, 8, .check_checksum = true, .expected_timestep = 30000U}, { 0 }, { 0 }}},
-  {.msg = {{0x224, 0, 8, .check_checksum = false, .expected_timestep = 25000U},
-           {0x226, 0, 8, .check_checksum = false, .expected_timestep = 25000U}, { 0 }}},
+  TOYOTA_COMMON_RX_CHECKS
+};
+
+RxCheck toyota_rx_interceptor_checks[] = {
+  TOYOTA_COMMON_RX_CHECKS
+  {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .expected_timestep = 0U}, { 0 }, { 0 }}},
 };
 
 // safety param flags
@@ -47,6 +55,7 @@ const uint32_t TOYOTA_EPS_FACTOR = (1U << TOYOTA_PARAM_OFFSET) - 1U;
 const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1U << TOYOTA_PARAM_OFFSET;
 const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2U << TOYOTA_PARAM_OFFSET;
 const uint32_t TOYOTA_PARAM_LTA = 4U << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_INTERCEPTOR = 8U << TOYOTA_PARAM_OFFSET;  // TODO: make common
 
 bool toyota_alt_brake = false;
 bool toyota_stock_longitudinal = false;
@@ -66,6 +75,17 @@ static uint32_t toyota_compute_checksum(CANPacket_t *to_push) {
 static uint32_t toyota_get_checksum(CANPacket_t *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1U;
   return (uint8_t)(GET_BYTE(to_push, checksum_byte));
+}
+
+static uint8_t toyota_get_counter(CANPacket_t *to_push) {
+  int addr = GET_ADDR(to_push);
+
+  uint8_t cnt = 0U;
+  if (addr == 0x201) {
+    // Signal: COUNTER_PEDAL
+    cnt = (GET_BYTE(to_push, 4)) & 0x0FU;
+  }
+  return cnt;
 }
 
 static void toyota_rx_hook(CANPacket_t *to_push) {
@@ -115,7 +135,7 @@ static void toyota_rx_hook(CANPacket_t *to_push) {
 
     // sample gas interceptor
     if (addr == 0x201) {
-      gas_interceptor_detected = 1;
+//      gas_interceptor_detected = 1;
       int gas_interceptor = TOYOTA_GET_INTERCEPTOR(to_push);
       gas_pressed = gas_interceptor > TOYOTA_GAS_INTERCEPTOR_THRSLD;
 
@@ -213,6 +233,7 @@ static safety_config toyota_init(uint16_t param) {
   toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
+  gas_interceptor_detected = GET_FLAG(param, TOYOTA_PARAM_INTERCEPTOR);
 
 #ifdef ALLOW_DEBUG
   toyota_lta = GET_FLAG(param, TOYOTA_PARAM_LTA);
@@ -253,4 +274,5 @@ const safety_hooks toyota_hooks = {
   .fwd = toyota_fwd_hook,
   .get_checksum = toyota_get_checksum,
   .compute_checksum = toyota_compute_checksum,
+  .get_counter = toyota_get_counter,
 };
