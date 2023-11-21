@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 import numpy as np
 import random
 import unittest
@@ -19,19 +20,25 @@ def interceptor_msg(gas, addr):
   return to_send
 
 
-class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.InterceptorSafetyTest,
-                           common.LongitudinalAccelSafetyTest):
+TOYOTA_COMMON_TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0], [0x366, 0], [0x4CB, 0],  # DSU bus 0
+                         [0x128, 1], [0x141, 1], [0x160, 1], [0x161, 1], [0x470, 1],  # DSU bus 1
+                         [0x2E4, 0], [0x191, 0], [0x411, 0], [0x412, 0], [0x343, 0], [0x1D2, 0],  # LKAS + ACC
+                         [0x750, 0]]  # blindspot monitor
 
-  TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0], [0x366, 0], [0x4CB, 0],  # DSU bus 0
-             [0x128, 1], [0x141, 1], [0x160, 1], [0x161, 1], [0x470, 1],  # DSU bus 1
-             [0x2E4, 0], [0x191, 0], [0x411, 0], [0x412, 0], [0x343, 0], [0x1D2, 0],  # LKAS + ACC
-             [0x200, 0], [0x750, 0]]  # interceptor + blindspot monitor
+
+class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSafetyTest):
+
+  TX_MSGS = TOYOTA_COMMON_TX_MSGS
   STANDSTILL_THRESHOLD = 0  # kph
   RELAY_MALFUNCTION_ADDRS = {0: (0x2E4,)}
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x343]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   INTERCEPTOR_THRESHOLD = 805
   EPS_SCALE = 73
+  SAFETY_PARAM = 0
+
+  cnt_gas_cmd = 0
+  cnt_user_gas = 0
 
   @classmethod
   def setUpClass(cls):
@@ -74,12 +81,6 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.InterceptorSafetyTe
     values = {"CRUISE_ACTIVE": enable}
     return self.packer.make_can_msg_panda("PCM_CRUISE", 0, values)
 
-  def _interceptor_gas_cmd(self, gas):
-    return interceptor_msg(gas, 0x200)
-
-  def _interceptor_user_gas(self, gas):
-    return interceptor_msg(gas, 0x201)
-
   def test_block_aeb(self):
     for controls_allowed in (True, False):
       for bad in (True, False):
@@ -119,6 +120,56 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.InterceptorSafetyTe
       self.assertFalse(self.safety.get_controls_allowed())
 
 
+class TestToyotaSafetyInterceptorBase(TestToyotaSafetyBase, common.InterceptorSafetyTest):
+
+  TX_MSGS = TOYOTA_COMMON_TX_MSGS + [0x200, 0]
+  SAFETY_PARAM = Panda.FLAG_TOYOTA_GAS_INTERCEPTOR
+
+  # def setUp(self):
+  #   self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
+  #   self.safety = libpanda_py.libpanda
+  #   self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_GAS_INTERCEPTOR)
+  #   self.safety.init_tests()
+
+  def _interceptor_gas_cmd(self, gas):
+    # values = {"GAS_COMMAND": (gas + 75.555) / 0.159378,
+    #           "GAS_COMMAND2": (gas + 151.111) / 0.159375,
+    values = {"COUNTER_PEDAL": self.__class__.cnt_gas_cmd & 0xF}
+    if gas > 0:
+      values["GAS_COMMAND"] = gas * 255.
+      values["GAS_COMMAND2"] = gas * 255.
+    self.__class__.cnt_gas_cmd += 1
+    return self.packer.make_can_msg_panda("GAS_COMMAND", 0, values)
+    # return interceptor_msg(gas, 0x200)
+
+  def _interceptor_user_gas(self, gas):
+    # gas_untransformed =
+    values = {"INTERCEPTOR_GAS": gas,
+              "INTERCEPTOR_GAS2": gas,
+              "COUNTER_PEDAL": self.__class__.cnt_user_gas}
+    self.__class__.cnt_user_gas += 1
+    return self.packer.make_can_msg_panda("GAS_SENSOR", 0, values)
+    # return interceptor_msg(gas, 0x201)
+
+  # Skip non-interceptor user gas tests
+  def test_prev_gas(self):
+    print('custom', self.__class__.__name__)
+    pass
+
+  def test_disengage_on_gas(self):
+    pass
+
+  def test_alternative_experience_no_disengage_on_gas(self):
+    pass
+
+
+def add_interceptor_test(cls):
+  name = f"{__name__}.{cls.__name__}Interceptor"
+  globals()[name] = type(name, (cls, TestToyotaSafetyInterceptorBase), {})
+  return cls
+
+
+@add_interceptor_test
 class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSafetyTest, common.SteerRequestCutSafetyTest):
 
   MAX_RATE_UP = 15
@@ -137,7 +188,7 @@ class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSaf
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE)
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.SAFETY_PARAM | self.EPS_SCALE)
     self.safety.init_tests()
 
 

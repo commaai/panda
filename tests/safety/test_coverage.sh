@@ -6,7 +6,7 @@ rm -f ../libpanda/*.gcda
 scons -j$(nproc) -D --coverage
 
 # run safety tests to generate coverage data
-./test.sh
+./test_toyota.py # TestToyotaSafetyTorqueInterceptor
 
 # generate and open report
 if [ "$1" == "--report" ]; then
