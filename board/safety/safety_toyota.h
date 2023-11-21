@@ -27,10 +27,19 @@ const LongitudinalLimits TOYOTA_LONG_LIMITS = {
 const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 805;
 #define TOYOTA_GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + (GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2U) // avg between 2 tracks
 
-const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0x33E, 0, 7}, {0x344, 0, 8}, {0x365, 0, 7}, {0x366, 0, 7}, {0x4CB, 0, 8},  // DSU bus 0
-                                 {0x128, 1, 6}, {0x141, 1, 4}, {0x160, 1, 8}, {0x161, 1, 7}, {0x470, 1, 4},  // DSU bus 1
-                                 {0x2E4, 0, 5}, {0x191, 0, 8}, {0x411, 0, 8}, {0x412, 0, 8}, {0x343, 0, 8}, {0x1D2, 0, 8},  // LKAS + ACC
-                                 {0x200, 0, 6}};  // interceptor
+#define TOYOTOA_COMMON_TX_MSGS                                                                                                              \
+  {0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0x33E, 0, 7}, {0x344, 0, 8}, {0x365, 0, 7}, {0x366, 0, 7}, {0x4CB, 0, 8},  /* DSU bus 0 */  \
+  {0x128, 1, 6}, {0x141, 1, 4}, {0x160, 1, 8}, {0x161, 1, 7}, {0x470, 1, 4},  /* DSU bus 1 */                                               \
+  {0x2E4, 0, 5}, {0x191, 0, 8}, {0x411, 0, 8}, {0x412, 0, 8}, {0x343, 0, 8}, {0x1D2, 0, 8},  /* LKAS + ACC */                               \
+
+const CanMsg TOYOTA_TX_MSGS[] = {
+  TOYOTOA_COMMON_TX_MSGS
+};
+
+const CanMsg TOYOTA_TX_INTERCEPTOR_MSGS[] = {
+  TOYOTOA_COMMON_TX_MSGS
+  {0x200, 0, 6},  // interceptor
+};
 
 #define TOYOTA_COMMON_RX_CHECKS                                                                  \
   {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .expected_timestep = 12000U}, { 0 }, { 0 }}},  \
@@ -242,7 +251,7 @@ static safety_config toyota_init(uint16_t param) {
 #endif
 
   if (gas_interceptor_detected) {
-    return BUILD_SAFETY_CFG(toyota_rx_interceptor_checks, TOYOTA_TX_MSGS);
+    return BUILD_SAFETY_CFG(toyota_rx_interceptor_checks, TOYOTA_TX_INTERCEPTOR_MSGS);
   } else {
     return BUILD_SAFETY_CFG(toyota_rx_checks, TOYOTA_TX_MSGS);
   }
