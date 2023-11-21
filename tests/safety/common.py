@@ -126,19 +126,28 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
 
   INTERCEPTOR_THRESHOLD = 0
 
+  cnt_gas_cmd = 0
+  cnt_user_gas = 0
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "InterceptorSafetyTest":
       cls.safety = None
       raise unittest.SkipTest
 
-  @abc.abstractmethod
   def _interceptor_gas_cmd(self, gas):
-    pass
+    values = {"COUNTER_PEDAL": self.__class__.cnt_gas_cmd & 0xF}
+    if gas > 0:
+      values["GAS_COMMAND"] = gas * 255.
+      values["GAS_COMMAND2"] = gas * 255.
+    self.__class__.cnt_gas_cmd += 1
+    return self.packer.make_can_msg_panda("GAS_COMMAND", 0, values)
 
-  @abc.abstractmethod
   def _interceptor_user_gas(self, gas):
-    pass
+    values = {"INTERCEPTOR_GAS": gas, "INTERCEPTOR_GAS2": gas,
+              "COUNTER_PEDAL": self.__class__.cnt_user_gas}
+    self.__class__.cnt_user_gas += 1
+    return self.packer.make_can_msg_panda("GAS_SENSOR", 0, values)
 
   def test_prev_gas_interceptor(self):
     self._rx(self._interceptor_user_gas(0x0))
