@@ -406,14 +406,12 @@ static safety_config honda_bosch_init(uint16_t param) {
     SET_RX_CHECKS(honda_bosch_rx_checks, ret);
   }
 
-  if (honda_bosch_radarless && honda_bosch_long) {
-    SET_TX_MSGS(HONDA_RADARLESS_LONG_TX_MSGS, ret);
-  } else if (honda_bosch_radarless) {
-    SET_TX_MSGS(HONDA_RADARLESS_TX_MSGS, ret);
-  } else if (honda_bosch_long) {
-    SET_TX_MSGS(HONDA_BOSCH_LONG_TX_MSGS, ret);
+  if (honda_bosch_radarless) {
+    honda_bosch_long ? SET_TX_MSGS(HONDA_RADARLESS_LONG_TX_MSGS, ret) : \
+                       SET_TX_MSGS(HONDA_RADARLESS_TX_MSGS, ret);
   } else {
-    SET_TX_MSGS(HONDA_BOSCH_TX_MSGS, ret);
+    honda_bosch_long ? SET_TX_MSGS(HONDA_BOSCH_LONG_TX_MSGS, ret) : \
+                       SET_TX_MSGS(HONDA_BOSCH_TX_MSGS, ret);
   }
   return ret;
 }
