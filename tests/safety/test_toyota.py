@@ -122,26 +122,6 @@ class TestToyotaSafetyInterceptorBase(TestToyotaSafetyBase, common.InterceptorSa
   #   self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_GAS_INTERCEPTOR)
   #   self.safety.init_tests()
 
-  def _interceptor_gas_cmd(self, gas):
-    # values = {"GAS_COMMAND": (gas + 75.555) / 0.159378,
-    #           "GAS_COMMAND2": (gas + 151.111) / 0.159375,
-    values = {"COUNTER_PEDAL": self.__class__.cnt_gas_cmd & 0xF}
-    if gas > 0:
-      values["GAS_COMMAND"] = gas * 255.
-      values["GAS_COMMAND2"] = gas * 255.
-    self.__class__.cnt_gas_cmd += 1
-    return self.packer.make_can_msg_panda("GAS_COMMAND", 0, values)
-    # return interceptor_msg(gas, 0x200)
-
-  def _interceptor_user_gas(self, gas):
-    # gas_untransformed =
-    values = {"INTERCEPTOR_GAS": gas,
-              "INTERCEPTOR_GAS2": gas,
-              "COUNTER_PEDAL": self.__class__.cnt_user_gas}
-    self.__class__.cnt_user_gas += 1
-    return self.packer.make_can_msg_panda("GAS_SENSOR", 0, values)
-    # return interceptor_msg(gas, 0x201)
-
   # Skip non-interceptor user gas tests
   def test_prev_gas(self):
     print('custom', self.__class__.__name__)
