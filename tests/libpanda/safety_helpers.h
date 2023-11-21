@@ -35,10 +35,6 @@ void set_gas_interceptor_detected(bool c){
   gas_interceptor_detected = c;
 }
 
-void set_enable_gas_interceptor(bool c){
-  enable_gas_interceptor = c;
-}
-
 bool get_controls_allowed(void){
   return controls_allowed;
 }
