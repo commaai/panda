@@ -462,19 +462,9 @@ class TestHondaBoschSafetyBase(HondaBase):
     self.assertTrue(self._tx(self._button_msg(Btn.RESUME, bus=self.BUTTONS_BUS)))
 
 
-class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
+class TestHondaBoschAltBrakeSafetyBase(TestHondaBoschSafetyBase):
   """
-    Covers the Honda Bosch safety mode with stock longitudinal
-  """
-  def setUp(self):
-    super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, 0)
-    self.safety.init_tests()
-
-
-class TestHondaBoschAltBrakeSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
-  """
-    Covers the Honda Bosch safety mode with stock longitudinal
+    Base Bosch safety test class with an alternate brake message
   """
   def setUp(self):
     super().setUp()
@@ -492,6 +482,22 @@ class TestHondaBoschAltBrakeSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase)
     to_push[0].data[2] = to_push[0].data[2] & 0xF0  # invalidate checksum
     self.assertFalse(self._rx(to_push))
     self.assertFalse(self.safety.get_controls_allowed())
+
+
+class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
+  """
+    Covers the Honda Bosch safety mode with stock longitudinal
+  """
+  def setUp(self):
+    super().setUp()
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, 0)
+    self.safety.init_tests()
+
+
+class TestHondaBoschAltBrakeSafety(HondaPcmEnableBase, TestHondaBoschAltBrakeSafetyBase):
+  """
+    Covers the Honda Bosch safety mode with stock longitudinal and an alternate brake message
+  """
 
 
 class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
@@ -575,9 +581,9 @@ class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschRadarlessS
     self.safety.init_tests()
 
 
-class TestHondaBoschRadarlessAltBrakeSafety(TestHondaBoschAltBrakeSafety, HondaPcmEnableBase, TestHondaBoschRadarlessSafetyBase):
+class TestHondaBoschRadarlessAltBrakeSafety(HondaPcmEnableBase, TestHondaBoschRadarlessSafetyBase, TestHondaBoschAltBrakeSafetyBase):
   """
-    Covers the Honda Bosch Radarless safety mode with stock longitudinal
+    Covers the Honda Bosch Radarless safety mode with stock longitudinal and an alternate brake message
   """
 
   def setUp(self):
