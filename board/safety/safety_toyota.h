@@ -55,7 +55,7 @@ const uint32_t TOYOTA_EPS_FACTOR = (1U << TOYOTA_PARAM_OFFSET) - 1U;
 const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1U << TOYOTA_PARAM_OFFSET;
 const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2U << TOYOTA_PARAM_OFFSET;
 const uint32_t TOYOTA_PARAM_LTA = 4U << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_INTERCEPTOR = 8U << TOYOTA_PARAM_OFFSET;  // TODO: make common
+const uint32_t TOYOTA_PARAM_GAS_INTERCEPTOR = 8U << TOYOTA_PARAM_OFFSET;  // TODO: make common
 
 bool toyota_alt_brake = false;
 bool toyota_stock_longitudinal = false;
@@ -233,14 +233,19 @@ static safety_config toyota_init(uint16_t param) {
   toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
-  gas_interceptor_detected = GET_FLAG(param, TOYOTA_PARAM_INTERCEPTOR);
+  gas_interceptor_detected = GET_FLAG(param, TOYOTA_PARAM_GAS_INTERCEPTOR);
 
 #ifdef ALLOW_DEBUG
   toyota_lta = GET_FLAG(param, TOYOTA_PARAM_LTA);
 #else
   toyota_lta = false;
 #endif
-  return BUILD_SAFETY_CFG(toyota_rx_checks, TOYOTA_TX_MSGS);
+
+  if (gas_interceptor_detected) {
+    return BUILD_SAFETY_CFG(toyota_rx_interceptor_checks, TOYOTA_TX_MSGS);
+  } else {
+    return BUILD_SAFETY_CFG(toyota_rx_checks, TOYOTA_TX_MSGS);
+  }
 }
 
 static int toyota_fwd_hook(int bus_num, int addr) {
