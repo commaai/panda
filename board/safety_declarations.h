@@ -6,10 +6,6 @@
 
 #define BUILD_SAFETY_CFG(rx, tx) ((safety_config){(rx), (sizeof((rx)) / sizeof((rx)[0])), \
                                                   (tx), (sizeof((tx)) / sizeof((tx)[0]))})
-#define SET_RX_CHECKS(checks, config) ((config).rx_checks = checks,
-                                       (config).rx_checks_len = sizeof(checks) / sizeof(checks[0]))
-#define SET_TX_CHECKS(msgs, config) ((config).tx_msgs = msgs,
-                                     (config).tx_msgs_len = sizeof(msgs) / sizeof(msgs[0]))
 
 uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
   uint32_t ret = 0U;
@@ -140,6 +136,9 @@ typedef struct {
   const CanMsg *tx_msgs;
   int tx_msgs_len;
 } safety_config;
+
+#define SET_RX_CHECKS(checks, config) ((config).rx_checks = checks, (config).rx_checks_len = sizeof(checks) / sizeof(checks[0]))
+#define SET_TX_CHECKS(msgs, config) ((config).tx_msgs = msgs, (config).tx_msgs_len = sizeof(msgs) / sizeof(msgs[0]))
 
 typedef uint32_t (*get_checksum_t)(CANPacket_t *to_push);
 typedef uint32_t (*compute_checksum_t)(CANPacket_t *to_push);
