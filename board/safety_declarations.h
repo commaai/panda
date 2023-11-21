@@ -7,9 +7,9 @@
 #define BUILD_SAFETY_CFG(rx, tx) ((safety_config){(rx), (sizeof((rx)) / sizeof((rx)[0])), \
                                                   (tx), (sizeof((tx)) / sizeof((tx)[0]))})
 #define SET_RX_CHECKS(rx, config) ((config).rx_checks = rx, \
-                                       (config).rx_checks_len = sizeof((rx)) / sizeof((rx)[0]))
+                                   (config).rx_checks_len = sizeof((rx)) / sizeof((rx)[0]))
 #define SET_TX_MSGS(tx, config) ((config).tx_msgs = (tx), \
-                                   (config).tx_msgs_len = sizeof((tx)) / sizeof((tx)[0]))
+                                 (config).tx_msgs_len = sizeof((tx)) / sizeof((tx)[0]))
 
 uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
   uint32_t ret = 0U;
