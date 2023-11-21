@@ -396,58 +396,23 @@ static safety_config honda_bosch_init(uint16_t param) {
   honda_bosch_long = GET_FLAG(param, HONDA_PARAM_BOSCH_LONG);
 #endif
 
-  const CanMsg *tx_msgs;
-  UNUSED(tx_msgs);
-  if (honda_bosch_radarless) {
-    tx_msgs = honda_bosch_long ? HONDA_RADARLESS_LONG_TX_MSGS : HONDA_RADARLESS_TX_MSGS;
-  } else {
-    tx_msgs = honda_bosch_long ? HONDA_BOSCH_LONG_TX_MSGS : HONDA_BOSCH_TX_MSGS;
-  }
-
-  RxCheck *rx_checks;
-  UNUSED(rx_checks);
-  rx_checks = honda_common_alt_brake_rx_checks;
-
-  safety_config final_ret;
-  UNUSED(final_ret);
-
-  if (honda_bosch_radarless && honda_alt_brake_msg) {
-    SET_RX_CHECKS(honda_common_alt_brake_rx_checks, final_ret);
-  } else if (honda_bosch_radarless) {
-    SET_RX_CHECKS(honda_common_rx_checks, final_ret);
-  } else if (honda_alt_brake_msg) {
-    SET_RX_CHECKS(honda_bosch_alt_brake_rx_checks, final_ret);
-  } else {
-    SET_RX_CHECKS(honda_bosch_rx_checks, final_ret);
-  }
-
-  if (honda_bosch_radarless) {
-    honda_bosch_long ? SET_TX_CHECKS(HONDA_RADARLESS_LONG_TX_MSGS, final_ret) : \
-                       SET_TX_CHECKS(HONDA_RADARLESS_TX_MSGS, final_ret);
-  } else {
-    honda_bosch_long ? SET_TX_CHECKS(HONDA_BOSCH_LONG_TX_MSGS, final_ret) : \
-                       SET_TX_CHECKS(HONDA_BOSCH_TX_MSGS, final_ret);
-  }
-
-//  if (honda_bosch_radarless && honda_alt_brake_msg) {
-//    honda_rx_checks = SET_ADDR_CHECKS(honda_common_alt_brake_addr_checks);
-//  } else if (honda_bosch_radarless) {
-//    honda_rx_checks = SET_ADDR_CHECKS(honda_common_addr_checks);
-//  } else if (honda_alt_brake_msg) {
-//    honda_rx_checks = SET_ADDR_CHECKS(honda_bosch_alt_brake_addr_checks);
-//  } else {
-//    honda_rx_checks = SET_ADDR_CHECKS(honda_bosch_addr_checks);
-//  }
-
-
-
   safety_config ret;
-  if (honda_bosch_radarless) {
-    ret = honda_bosch_long ? BUILD_SAFETY_CFG(honda_common_rx_checks, HONDA_RADARLESS_LONG_TX_MSGS) : \
-                             BUILD_SAFETY_CFG(honda_common_rx_checks, HONDA_RADARLESS_TX_MSGS);
+  if (honda_bosch_radarless && honda_alt_brake_msg) {
+    SET_RX_CHECKS(honda_common_alt_brake_rx_checks, ret);
+  } else if (honda_bosch_radarless) {
+    SET_RX_CHECKS(honda_common_rx_checks, ret);
+  } else if (honda_alt_brake_msg) {
+    SET_RX_CHECKS(honda_bosch_alt_brake_rx_checks, ret);
   } else {
-    ret = honda_bosch_long ? BUILD_SAFETY_CFG(honda_bosch_rx_checks, HONDA_BOSCH_LONG_TX_MSGS) : \
-                             BUILD_SAFETY_CFG(honda_bosch_rx_checks, HONDA_BOSCH_TX_MSGS);
+    SET_RX_CHECKS(honda_bosch_rx_checks, ret);
+  }
+
+  if (honda_bosch_radarless) {
+    honda_bosch_long ? SET_TX_MSGS(HONDA_RADARLESS_LONG_TX_MSGS, ret) :
+                       SET_TX_MSGS(HONDA_RADARLESS_TX_MSGS, ret);
+  } else {
+    honda_bosch_long ? SET_TX_MSGS(HONDA_BOSCH_LONG_TX_MSGS, ret) :
+                       SET_TX_MSGS(HONDA_BOSCH_TX_MSGS, ret);
   }
   return ret;
 }
