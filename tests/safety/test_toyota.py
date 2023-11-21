@@ -26,7 +26,6 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   INTERCEPTOR_THRESHOLD = 805
   EPS_SCALE = 73
-  SAFETY_PARAM = 0
 
   cnt_gas_cmd = 0
   cnt_user_gas = 0
@@ -114,17 +113,9 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
 class TestToyotaSafetyInterceptorBase(TestToyotaSafetyBase, common.InterceptorSafetyTest):
 
   TX_MSGS = TOYOTA_COMMON_TX_MSGS + [[0x200, 0]]
-  SAFETY_PARAM = Panda.FLAG_TOYOTA_GAS_INTERCEPTOR
-
-  # def setUp(self):
-  #   self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-  #   self.safety = libpanda_py.libpanda
-  #   self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_GAS_INTERCEPTOR)
-  #   self.safety.init_tests()
 
   # Skip non-interceptor user gas tests
   def test_prev_gas(self):
-    print('custom', self.__class__.__name__)
     pass
 
   def test_disengage_on_gas(self):
@@ -134,13 +125,38 @@ class TestToyotaSafetyInterceptorBase(TestToyotaSafetyBase, common.InterceptorSa
     pass
 
 
-def add_interceptor_test(cls):
-  name = f"{__name__}.{cls.__name__}Interceptor"
-  globals()[name] = type(name, (cls, TestToyotaSafetyInterceptorBase), {})
-  return cls
+def create_new_test(inherit_class, suffix, safety_param):
+  """Creates a version of the base class testing the interceptor"""
+
+  def wrapper(base_class):
+    name = f"{__name__}.{base_class.__name__}{suffix}"
+    def newSetUp(self):
+      base_class.setUp(self)
+      self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.safety.get_current_safety_param() | safety_param)
+      self.safety.init_tests()
+
+    new_class = type(name, (base_class, TestToyotaSafetyInterceptorBase), {})
+    new_class.setUp = newSetUp
+    globals()[name] = new_class
+    return base_class
+  return wrapper
 
 
-@add_interceptor_test
+# def create_interceptor_test(base_class):
+#   """Creates a version of the base class testing the interceptor"""
+#   name = f"{__name__}.{base_class.__name__}Interceptor"
+#   def newSetUp(self):
+#     base_class.setUp(self)
+#     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.safety.get_current_safety_param() | Panda.FLAG_TOYOTA_GAS_INTERCEPTOR)
+#     self.safety.init_tests()
+#
+#   new_class = type(name, (base_class, TestToyotaSafetyInterceptorBase), {})
+#   new_class.setUp = newSetUp
+#   globals()[name] = new_class
+#   return base_class
+
+
+@create_new_test(TestToyotaSafetyInterceptorBase, "Interceptor", Panda.FLAG_TOYOTA_GAS_INTERCEPTOR)
 class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSafetyTest, common.SteerRequestCutSafetyTest):
 
   MAX_RATE_UP = 15
@@ -159,10 +175,11 @@ class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSaf
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.SAFETY_PARAM | self.EPS_SCALE)
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE)
     self.safety.init_tests()
 
 
+@create_new_test(TestToyotaSafetyInterceptorBase, "Interceptor", Panda.FLAG_TOYOTA_GAS_INTERCEPTOR)
 class TestToyotaSafetyAngle(TestToyotaSafetyBase):
 
   def setUp(self):
@@ -182,6 +199,7 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase):
       self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(torque, steer_req)))
 
 
+@create_new_test(TestToyotaSafetyInterceptorBase, "Interceptor", Panda.FLAG_TOYOTA_GAS_INTERCEPTOR)
 class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
 
   def setUp(self):
