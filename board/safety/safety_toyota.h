@@ -32,12 +32,12 @@ const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0
                                  {0x2E4, 0, 5}, {0x191, 0, 8}, {0x411, 0, 8}, {0x412, 0, 8}, {0x343, 0, 8}, {0x1D2, 0, 8},  // LKAS + ACC
                                  {0x200, 0, 6}};  // interceptor
 
-#define TOYOTA_COMMON_RX_CHECKS \
-  {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .expected_timestep = 12000U}, { 0 }, { 0 }}}, \
-  {.msg = {{0x260, 0, 8, .check_checksum = true, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
-  {.msg = {{0x1D2, 0, 8, .check_checksum = true, .expected_timestep = 30000U}, { 0 }, { 0 }}}, \
-  {.msg = {{0x224, 0, 8, .check_checksum = false, .expected_timestep = 25000U}, \
-           {0x226, 0, 8, .check_checksum = false, .expected_timestep = 25000U}, { 0 }}}, \
+#define TOYOTA_COMMON_RX_CHECKS                                                                  \
+  {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .expected_timestep = 12000U}, { 0 }, { 0 }}},  \
+  {.msg = {{0x260, 0, 8, .check_checksum = true, .expected_timestep = 20000U}, { 0 }, { 0 }}},   \
+  {.msg = {{0x1D2, 0, 8, .check_checksum = true, .expected_timestep = 30000U}, { 0 }, { 0 }}},   \
+  {.msg = {{0x224, 0, 8, .check_checksum = false, .expected_timestep = 25000U},                  \
+           {0x226, 0, 8, .check_checksum = false, .expected_timestep = 25000U}, { 0 }}},         \
 
 RxCheck toyota_rx_checks[] = {
   TOYOTA_COMMON_RX_CHECKS
@@ -45,7 +45,7 @@ RxCheck toyota_rx_checks[] = {
 
 RxCheck toyota_rx_interceptor_checks[] = {
   TOYOTA_COMMON_RX_CHECKS
-  {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .expected_timestep = 0U}, { 0 }, { 0 }}},
+  {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
 };
 
 // safety param flags
