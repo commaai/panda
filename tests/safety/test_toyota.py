@@ -122,7 +122,7 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
 
 class TestToyotaSafetyInterceptorBase(TestToyotaSafetyBase, common.InterceptorSafetyTest):
 
-  TX_MSGS = TOYOTA_COMMON_TX_MSGS + [0x200, 0]
+  TX_MSGS = TOYOTA_COMMON_TX_MSGS + [[0x200, 0]]
   SAFETY_PARAM = Panda.FLAG_TOYOTA_GAS_INTERCEPTOR
 
   # def setUp(self):
