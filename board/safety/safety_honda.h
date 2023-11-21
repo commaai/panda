@@ -195,7 +195,6 @@ static void honda_rx_hook(CANPacket_t *to_push) {
   if (honda_alt_brake_msg) {
     if (addr == 0x1BE) {
       brake_pressed = GET_BIT(to_push, 4U) != 0U;
-      print("safety brake_pressed:"); puth(brake_pressed); print("\n");
     }
   } else {
     if (addr == 0x17C) {
@@ -408,10 +407,10 @@ static safety_config honda_bosch_init(uint16_t param) {
   }
 
   if (honda_bosch_radarless) {
-    honda_bosch_long ? SET_TX_MSGS(HONDA_RADARLESS_LONG_TX_MSGS, ret) :
+    honda_bosch_long ? SET_TX_MSGS(HONDA_RADARLESS_LONG_TX_MSGS, ret) : \
                        SET_TX_MSGS(HONDA_RADARLESS_TX_MSGS, ret);
   } else {
-    honda_bosch_long ? SET_TX_MSGS(HONDA_BOSCH_LONG_TX_MSGS, ret) :
+    honda_bosch_long ? SET_TX_MSGS(HONDA_BOSCH_LONG_TX_MSGS, ret) : \
                        SET_TX_MSGS(HONDA_BOSCH_TX_MSGS, ret);
   }
   return ret;
