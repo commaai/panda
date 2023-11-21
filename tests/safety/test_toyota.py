@@ -8,16 +8,7 @@ import itertools
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, make_msg
-
-
-def interceptor_msg(gas, addr):
-  to_send = make_msg(0, addr, 6)
-  to_send[0].data[0] = (gas & 0xFF00) >> 8
-  to_send[0].data[1] = gas & 0xFF
-  to_send[0].data[2] = (gas & 0xFF00) >> 8
-  to_send[0].data[3] = gas & 0xFF
-  return to_send
+from panda.tests.safety.common import CANPackerPanda
 
 
 TOYOTA_COMMON_TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0], [0x366, 0], [0x4CB, 0],  # DSU bus 0
