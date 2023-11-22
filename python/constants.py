@@ -20,7 +20,7 @@ class McuConfig(NamedTuple):
   bootstub_address: int
   bootstub_fn: str
 
-  def sector_address(self, i):
+  def sector_address(self, i: int) -> int:
     # assume bootstub is in sector 0
     return self.bootstub_address + sum(self.sector_sizes[:i])
 
@@ -58,7 +58,7 @@ class McuType(enum.Enum):
   H7 = H7Config
 
   @property
-  def config(self):
+  def config(self) -> McuConfig:
     return self.value
 
 MCU_TYPE_BY_IDCODE = {m.config.mcu_idcode: m for m in McuType}
