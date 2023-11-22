@@ -356,6 +356,21 @@ class TestHondaNidecInterceptorSafety(TestHondaNidecSafety, common.InterceptorSa
   """
     Covers the Honda Nidec safety mode with a gas interceptor
   """
+  def setUp(self):
+    self.packer = CANPackerPanda("honda_civic_touring_2016_can_generated")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_GAS_INTERCEPTOR)
+    self.safety.init_tests()
+
+  # Skip non-interceptor user gas tests
+  def test_prev_gas(self):
+    pass
+
+  def test_disengage_on_gas(self):
+    pass
+
+  def test_alternative_experience_no_disengage_on_gas(self):
+    pass
 
 
 class TestHondaNidecAltSafety(TestHondaNidecSafety):
@@ -387,7 +402,7 @@ class TestHondaNidecAltInterceptorSafety(TestHondaNidecSafety, common.Intercepto
   def setUp(self):
     self.packer = CANPackerPanda("acura_ilx_2016_can_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT)
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT | Panda.FLAG_HONDA_GAS_INTERCEPTOR)
     self.safety.init_tests()
 
   def _acc_state_msg(self, main_on):
