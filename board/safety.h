@@ -336,7 +336,6 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   safety_mode_cnt = 0U;
   relay_malfunction = false;
   enable_gas_interceptor = false;
-  gas_interceptor_detected = false;
   gas_interceptor_prev = 0;
   gas_pressed = false;
   gas_pressed_prev = false;

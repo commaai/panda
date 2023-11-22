@@ -64,7 +64,7 @@ const uint32_t TOYOTA_EPS_FACTOR = (1U << TOYOTA_PARAM_OFFSET) - 1U;
 const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1U << TOYOTA_PARAM_OFFSET;
 const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2U << TOYOTA_PARAM_OFFSET;
 const uint32_t TOYOTA_PARAM_LTA = 4U << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_GAS_INTERCEPTOR = 8U << TOYOTA_PARAM_OFFSET;  // TODO: make common
+const uint32_t TOYOTA_PARAM_GAS_INTERCEPTOR = 8U << TOYOTA_PARAM_OFFSET;
 
 bool toyota_alt_brake = false;
 bool toyota_stock_longitudinal = false;
