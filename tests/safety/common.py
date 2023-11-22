@@ -126,19 +126,28 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
 
   INTERCEPTOR_THRESHOLD = 0
 
+  cnt_gas_cmd = 0
+  cnt_user_gas = 0
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "InterceptorSafetyTest":
       cls.safety = None
       raise unittest.SkipTest
 
-  @abc.abstractmethod
   def _interceptor_gas_cmd(self, gas):
-    pass
+    values = {"COUNTER_PEDAL": self.__class__.cnt_gas_cmd & 0xF}
+    if gas > 0:
+      values["GAS_COMMAND"] = gas * 255.
+      values["GAS_COMMAND2"] = gas * 255.
+    self.__class__.cnt_gas_cmd += 1
+    return self.packer.make_can_msg_panda("GAS_COMMAND", 0, values)
 
-  @abc.abstractmethod
   def _interceptor_user_gas(self, gas):
-    pass
+    values = {"INTERCEPTOR_GAS": gas, "INTERCEPTOR_GAS2": gas,
+              "COUNTER_PEDAL": self.__class__.cnt_user_gas}
+    self.__class__.cnt_user_gas += 1
+    return self.packer.make_can_msg_panda("GAS_SENSOR", 0, values)
 
   def test_prev_gas_interceptor(self):
     self._rx(self._interceptor_user_gas(0x0))
@@ -147,6 +156,16 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
     self.assertTrue(self.safety.get_gas_interceptor_prev())
     self._rx(self._interceptor_user_gas(0x0))
     self.safety.set_gas_interceptor_detected(False)
+
+  def test_rx_hook_interceptor(self):
+    # Ensure pedal counter is checked
+    for i in range(MAX_WRONG_COUNTERS * 2):
+      self.__class__.cnt_user_gas = 0
+      self.assertEqual(i + 1 < MAX_WRONG_COUNTERS, self._rx(self._interceptor_user_gas(0)))
+
+    # Only one is needed to recover
+    for _ in range(MAX_WRONG_COUNTERS):
+      self.assertTrue(self._rx(self._interceptor_user_gas(0)))
 
   def test_disengage_on_gas_interceptor(self):
     for g in range(0x1000):
@@ -862,7 +881,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
             # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
             if attr.startswith('TestHonda'):
               # exceptions for common msgs across different hondas
-              tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C, 0x33D], tx))
+              tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C, 0x33D, 0x33DB], tx))
             all_tx.append([[m[0], m[1], attr] for m in tx])
 
     # make sure we got all the msgs
@@ -931,7 +950,7 @@ class PandaCarSafetyTest(PandaSafetyTest):
     self.safety.set_relay_malfunction(True)
     for bus in range(3):
       for addr in self.SCANNED_ADDRS:
-        self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
+        self.assertFalse(self._tx(make_msg(bus, addr, 8)))
         self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr))
 
   def test_prev_gas(self):
