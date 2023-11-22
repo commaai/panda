@@ -50,7 +50,7 @@ class TestNissanSafety(common.PandaCarSafetyTest, common.AngleSteeringSafetyTest
 
   def _user_brake_msg(self, brake):
     values = {"USER_BRAKE_PRESSED": brake}
-    return self.packer.make_can_msg_panda("DOORS_LIGHTS", 1, values)
+    return self.packer.make_can_msg_panda("DOORS_LIGHTS", self.EPS_BUS, values)
 
   def _user_gas_msg(self, gas):
     values = {"GAS_PEDAL": gas}
