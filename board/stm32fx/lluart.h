@@ -79,8 +79,6 @@ void uart_interrupt_handler(uart_ring *q) {
 }
 
 void USART2_IRQ_Handler(void) { uart_interrupt_handler(&uart_ring_debug); }
-void USART3_IRQ_Handler(void) { uart_interrupt_handler(&uart_ring_lin2); }
-void UART5_IRQ_Handler(void) { uart_interrupt_handler(&uart_ring_lin1); }
 
 // ***************************** Hardware setup *****************************
 
@@ -98,10 +96,6 @@ void uart_init(uart_ring *q, int baud) {
     // Register interrupts (max data rate: 115200 baud)
     if (q->uart == USART2){
       REGISTER_INTERRUPT(USART2_IRQn, USART2_IRQ_Handler, 150000U, FAULT_INTERRUPT_RATE_UART_2)
-    } else if (q->uart == USART3){
-      REGISTER_INTERRUPT(USART3_IRQn, USART3_IRQ_Handler, 150000U, FAULT_INTERRUPT_RATE_UART_3)
-    } else if (q->uart == UART5){
-      REGISTER_INTERRUPT(UART5_IRQn, UART5_IRQ_Handler, 150000U, FAULT_INTERRUPT_RATE_UART_5)
     } else {
       // UART not used. Skip registering interrupts
     }
