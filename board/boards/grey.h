@@ -10,7 +10,6 @@ const board board_grey = {
   .harness_config = &white_harness_config,
   .has_hw_gmlan = true,
   .has_obd = false,
-  .has_lin = true,
   .has_spi = false,
   .has_canfd = false,
   .has_rtc_battery = false,

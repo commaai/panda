@@ -346,14 +346,6 @@ int main(void) {
   // panda has an FPU, let's use it!
   enable_fpu();
 
-  if (current_board->has_lin) {
-    // enable LIN
-    uart_init(&uart_ring_lin1, 10400);
-    UART5->CR2 |= USART_CR2_LINEN;
-    uart_init(&uart_ring_lin2, 10400);
-    USART3->CR2 |= USART_CR2_LINEN;
-  }
-
   if (current_board->fan_max_rpm > 0U) {
     fan_init();
   }
