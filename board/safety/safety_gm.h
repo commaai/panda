@@ -136,7 +136,7 @@ static void gm_rx_hook(CANPacket_t *to_push) {
 }
 
 static bool gm_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
+  bool tx = true;
   int addr = GET_ADDR(to_send);
 
   // BRAKE: safety check
@@ -144,7 +144,7 @@ static bool gm_tx_hook(CANPacket_t *to_send) {
     int brake = ((GET_BYTE(to_send, 0) & 0xFU) << 8) + GET_BYTE(to_send, 1);
     brake = (0x1000 - brake) & 0xFFF;
     if (longitudinal_brake_checks(brake, *gm_long_limits)) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -156,7 +156,7 @@ static bool gm_tx_hook(CANPacket_t *to_send) {
     bool steer_req = (GET_BIT(to_send, 3U) != 0U);
 
     if (steer_torque_cmd_checks(desired_torque, steer_req, GM_STEERING_LIMITS)) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -171,7 +171,7 @@ static bool gm_tx_hook(CANPacket_t *to_send) {
     violation |= longitudinal_gas_checks(gas_regen, *gm_long_limits);
 
     if (violation) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -181,7 +181,7 @@ static bool gm_tx_hook(CANPacket_t *to_send) {
 
     bool allowed_cancel = (button == 6) && cruise_engaged_prev;
     if (!allowed_cancel) {
-      tx = 0;
+      tx = false;
     }
   }
 
