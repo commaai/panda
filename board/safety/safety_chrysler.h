@@ -121,7 +121,7 @@ RxCheck chrysler_ram_hd_rx_checks[] = {
 
 
 const uint32_t CHRYSLER_PARAM_RAM_DT = 1U;  // set for Ram DT platform
-const uint32_t CHRYSLER_PARAM_RAM_HD = 2U;  // set for Ram DT platform
+const uint32_t CHRYSLER_PARAM_RAM_HD = 2U;  // set for Ram HD platform
 
 enum {
   CHRYSLER_RAM_DT,

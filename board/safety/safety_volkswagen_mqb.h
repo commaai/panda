@@ -82,7 +82,8 @@ static uint32_t volkswagen_mqb_compute_crc(CANPacket_t *to_push) {
     crc ^= (uint8_t[]){0xC4,0xE2,0x4F,0xE4,0xF8,0x2F,0x56,0x81,0x9F,0xE5,0x83,0x44,0x05,0x3F,0x97,0xDF}[counter];
   } else if (addr == MSG_MOTOR_20) {
     crc ^= (uint8_t[]){0xE9,0x65,0xAE,0x6B,0x7B,0x35,0xE5,0x5F,0x4E,0xC7,0x86,0xA2,0xBB,0xDD,0xEB,0xB4}[counter];
-  } else {  // Undefined CAN message, CRC check expected to fail
+  } else {
+    // Undefined CAN message, CRC check expected to fail
   }
   crc = volkswagen_crc8_lut_8h2f[crc];
 
@@ -245,7 +246,6 @@ static bool volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
     }
   }
 
-  // 1 allows the message through
   return tx;
 }
 

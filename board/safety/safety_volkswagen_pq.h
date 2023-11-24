@@ -213,7 +213,6 @@ static bool volkswagen_pq_tx_hook(CANPacket_t *to_send) {
     }
   }
 
-  // 1 allows the message through
   return tx;
 }
 

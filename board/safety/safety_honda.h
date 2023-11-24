@@ -1,11 +1,3 @@
-// board enforces
-//   in-state
-//      accel set/resume
-//   out-state
-//      cancel button
-//      accel rising edge
-//      brake rising edge
-//      brake > 0mph
 const CanMsg HONDA_N_TX_MSGS[] = {{0xE4, 0, 5}, {0x194, 0, 4}, {0x1FA, 0, 8}, {0x200, 0, 6}, {0x30C, 0, 8}, {0x33D, 0, 5}};
 const CanMsg HONDA_BOSCH_TX_MSGS[] = {{0xE4, 0, 5}, {0xE5, 0, 8}, {0x296, 1, 4}, {0x33D, 0, 5}, {0x33DA, 0, 5}, {0x33DB, 0, 8}};  // Bosch
 const CanMsg HONDA_BOSCH_LONG_TX_MSGS[] = {{0xE4, 1, 5}, {0x1DF, 1, 8}, {0x1EF, 1, 8}, {0x1FA, 1, 8}, {0x30C, 1, 8}, {0x33D, 1, 5}, {0x33DA, 1, 5}, {0x33DB, 1, 8}, {0x39F, 1, 8}, {0x18DAB0F1, 1, 8}};  // Bosch w/ gas and brakes
@@ -268,12 +260,6 @@ static void honda_rx_hook(CANPacket_t *to_push) {
 
 }
 
-// all commands: gas, brake and steering
-// if controls_allowed and no pedals pressed
-//     allow all commands up to limit
-// else
-//     block all commands that produce actuation
-
 static bool honda_tx_hook(CANPacket_t *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -374,7 +360,6 @@ static bool honda_tx_hook(CANPacket_t *to_send) {
     }
   }
 
-  // 1 allows the message through
   return tx;
 }
 
