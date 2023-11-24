@@ -42,6 +42,5 @@ const safety_hooks body_hooks = {
   .init = body_init,
   .rx = body_rx_hook,
   .tx = body_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
   .fwd = default_fwd_hook,
 };

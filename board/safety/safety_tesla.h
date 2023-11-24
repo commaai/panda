@@ -222,6 +222,5 @@ const safety_hooks tesla_hooks = {
   .init = tesla_init,
   .rx = tesla_rx_hook,
   .tx = tesla_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
   .fwd = tesla_fwd_hook,
 };
