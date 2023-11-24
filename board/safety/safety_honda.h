@@ -261,7 +261,7 @@ static void honda_rx_hook(CANPacket_t *to_push) {
 }
 
 static bool honda_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
+  bool tx = true;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
 
@@ -277,7 +277,7 @@ static bool honda_tx_hook(CANPacket_t *to_send) {
     violation |= longitudinal_speed_checks(pcm_speed, HONDA_NIDEC_LONG_LIMITS);
     violation |= longitudinal_gas_checks(pcm_gas, HONDA_NIDEC_LONG_LIMITS);
     if (violation) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -285,10 +285,10 @@ static bool honda_tx_hook(CANPacket_t *to_send) {
   if ((addr == 0x1FA) && (bus == bus_pt)) {
     honda_brake = (GET_BYTE(to_send, 0) << 2) + ((GET_BYTE(to_send, 1) >> 6) & 0x3U);
     if (longitudinal_brake_checks(honda_brake, HONDA_NIDEC_LONG_LIMITS)) {
-      tx = 0;
+      tx = false;
     }
     if (honda_fwd_brake) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -304,7 +304,7 @@ static bool honda_tx_hook(CANPacket_t *to_send) {
     violation |= longitudinal_accel_checks(accel, HONDA_BOSCH_LONG_LIMITS);
     violation |= longitudinal_gas_checks(gas, HONDA_BOSCH_LONG_LIMITS);
     if (violation) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -316,7 +316,7 @@ static bool honda_tx_hook(CANPacket_t *to_send) {
     bool violation = false;
     violation |= longitudinal_accel_checks(accel, HONDA_BOSCH_LONG_LIMITS);
     if (violation) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -325,7 +325,7 @@ static bool honda_tx_hook(CANPacket_t *to_send) {
     if (!controls_allowed) {
       bool steer_applied = GET_BYTE(to_send, 0) | GET_BYTE(to_send, 1);
       if (steer_applied) {
-        tx = 0;
+        tx = false;
       }
     }
   }
@@ -333,14 +333,14 @@ static bool honda_tx_hook(CANPacket_t *to_send) {
   // Bosch supplemental control check
   if (addr == 0xE5) {
     if ((GET_BYTES(to_send, 0, 4) != 0x10800004U) || ((GET_BYTES(to_send, 4, 4) & 0x00FFFFFFU) != 0x0U)) {
-      tx = 0;
+      tx = false;
     }
   }
 
   // GAS: safety check (interceptor)
   if (addr == 0x200) {
     if (longitudinal_interceptor_checks(to_send)) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -349,14 +349,14 @@ static bool honda_tx_hook(CANPacket_t *to_send) {
   // This avoids unintended engagements while still allowing resume spam
   if ((addr == 0x296) && !controls_allowed && (bus == bus_buttons)) {
     if (((GET_BYTE(to_send, 0) >> 5) & 0x7U) != 2U) {
-      tx = 0;
+      tx = false;
     }
   }
 
   // Only tester present ("\x02\x3E\x80\x00\x00\x00\x00\x00") allowed on diagnostics address
   if (addr == 0x18DAB0F1) {
     if ((GET_BYTES(to_send, 0, 4) != 0x00803E02U) || (GET_BYTES(to_send, 4, 4) != 0x0U)) {
-      tx = 0;
+      tx = false;
     }
   }
 

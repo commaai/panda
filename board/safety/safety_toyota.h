@@ -140,7 +140,7 @@ static void toyota_rx_hook(CANPacket_t *to_push) {
 }
 
 static bool toyota_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
+  bool tx = true;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
 
@@ -150,7 +150,7 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
     // GAS PEDAL: safety check
     if (addr == 0x200) {
       if (longitudinal_interceptor_checks(to_send)) {
-        tx = 0;
+        tx = false;
       }
     }
 
@@ -174,7 +174,7 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
       }
 
       if (violation) {
-        tx = 0;
+        tx = false;
       }
     }
 
@@ -183,7 +183,7 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
       // only allow the checksum, which is the last byte
       bool block = (GET_BYTES(to_send, 0, 4) != 0U) || (GET_BYTE(to_send, 4) != 0U) || (GET_BYTE(to_send, 5) != 0U);
       if (block) {
-        tx = 0;
+        tx = false;
       }
     }
 
@@ -199,7 +199,7 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
 
       // block LTA msgs with actuation requests
       if (lta_request || lta_request2 || (lta_angle != 0) || (setme_x64 != 0)) {
-        tx = 0;
+        tx = false;
       }
     }
 
@@ -209,11 +209,11 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
       desired_torque = to_signed(desired_torque, 16);
       bool steer_req = GET_BIT(to_send, 0U) != 0U;
       if (steer_torque_cmd_checks(desired_torque, steer_req, TOYOTA_STEERING_LIMITS)) {
-        tx = 0;
+        tx = false;
       }
       // When using LTA (angle control), assert no actuation on LKA message
       if (toyota_lta && ((desired_torque != 0) || steer_req)) {
-        tx = 0;
+        tx = false;
       }
     }
   }

@@ -171,7 +171,7 @@ static void volkswagen_pq_rx_hook(CANPacket_t *to_push) {
 
 static bool volkswagen_pq_tx_hook(CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
-  int tx = 1;
+  bool tx = true;
 
   // Safety check for HCA_1 Heading Control Assist torque
   // Signal: HCA_1.LM_Offset (absolute torque)
@@ -188,7 +188,7 @@ static bool volkswagen_pq_tx_hook(CANPacket_t *to_send) {
     bool steer_req = (hca_status == 5U);
 
     if (steer_torque_cmd_checks(desired_torque, steer_req, VOLKSWAGEN_PQ_STEERING_LIMITS)) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -199,7 +199,7 @@ static bool volkswagen_pq_tx_hook(CANPacket_t *to_send) {
     int desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
 
     if (longitudinal_accel_checks(desired_accel, VOLKSWAGEN_PQ_LONG_LIMITS)) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -209,7 +209,7 @@ static bool volkswagen_pq_tx_hook(CANPacket_t *to_send) {
     // Signal: GRA_Neu.GRA_Neu_Setzen
     // Signal: GRA_Neu.GRA_Neu_Recall
     if (GET_BIT(to_send, 16U) || GET_BIT(to_send, 17U)) {
-      tx = 0;
+      tx = false;
     }
   }
 

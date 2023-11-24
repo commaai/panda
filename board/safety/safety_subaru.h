@@ -181,7 +181,7 @@ static void subaru_rx_hook(CANPacket_t *to_push) {
 }
 
 static bool subaru_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
+  bool tx = true;
   int addr = GET_ADDR(to_send);
   bool violation = false;
 
@@ -234,7 +234,7 @@ static bool subaru_tx_hook(CANPacket_t *to_send) {
   }
 
   if (violation){
-    tx = 0;
+    tx = false;
   }
   return tx;
 }
