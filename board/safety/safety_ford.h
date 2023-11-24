@@ -417,7 +417,6 @@ const safety_hooks ford_hooks = {
   .init = ford_init,
   .rx = ford_rx_hook,
   .tx = ford_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
   .fwd = ford_fwd_hook,
   .get_counter = ford_get_counter,
   .get_checksum = ford_get_checksum,

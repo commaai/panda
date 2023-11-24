@@ -59,7 +59,7 @@ int get_rtc_pkt(void *dat) {
 void comms_endpoint2_write(uint8_t *data, uint32_t len) {
   uart_ring *ur = get_ring_by_number(data[0]);
   if ((len != 0U) && (ur != NULL)) {
-    if ((data[0] < 2U) || (data[0] >= 4U) || safety_tx_lin_hook(data[0] - 2U, &data[1], len - 1U)) {
+    if ((data[0] < 2U) || (data[0] >= 4U)) {
       for (uint32_t i = 1; i < len; i++) {
         while (!putc(ur, data[i])) {
           // wait

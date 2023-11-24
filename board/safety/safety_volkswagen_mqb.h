@@ -282,7 +282,6 @@ const safety_hooks volkswagen_mqb_hooks = {
   .init = volkswagen_mqb_init,
   .rx = volkswagen_mqb_rx_hook,
   .tx = volkswagen_mqb_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
   .fwd = volkswagen_mqb_fwd_hook,
   .get_counter = volkswagen_mqb_get_counter,
   .get_checksum = volkswagen_mqb_get_checksum,

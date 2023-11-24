@@ -353,7 +353,6 @@ const safety_hooks hyundai_canfd_hooks = {
   .init = hyundai_canfd_init,
   .rx = hyundai_canfd_rx_hook,
   .tx = hyundai_canfd_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
   .fwd = hyundai_canfd_fwd_hook,
   .get_counter = hyundai_canfd_get_counter,
   .get_checksum = hyundai_canfd_get_checksum,

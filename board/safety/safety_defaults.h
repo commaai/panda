@@ -14,13 +14,6 @@ static bool nooutput_tx_hook(CANPacket_t *to_send) {
   return false;
 }
 
-static bool nooutput_tx_lin_hook(int lin_num, uint8_t *data, int len) {
-  UNUSED(lin_num);
-  UNUSED(data);
-  UNUSED(len);
-  return false;
-}
-
 static int default_fwd_hook(int bus_num, int addr) {
   UNUSED(bus_num);
   UNUSED(addr);
@@ -31,7 +24,6 @@ const safety_hooks nooutput_hooks = {
   .init = nooutput_init,
   .rx = default_rx_hook,
   .tx = nooutput_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
   .fwd = default_fwd_hook,
 };
 
@@ -49,13 +41,6 @@ static safety_config alloutput_init(uint16_t param) {
 
 static bool alloutput_tx_hook(CANPacket_t *to_send) {
   UNUSED(to_send);
-  return true;
-}
-
-static bool alloutput_tx_lin_hook(int lin_num, uint8_t *data, int len) {
-  UNUSED(lin_num);
-  UNUSED(data);
-  UNUSED(len);
   return true;
 }
 
@@ -79,6 +64,5 @@ const safety_hooks alloutput_hooks = {
   .init = alloutput_init,
   .rx = default_rx_hook,
   .tx = alloutput_tx_hook,
-  .tx_lin = alloutput_tx_lin_hook,
   .fwd = alloutput_fwd_hook,
 };
