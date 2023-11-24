@@ -75,10 +75,6 @@ class PandaSafetyTestBase(unittest.TestCase):
   def _tx(self, msg):
     return self.safety.safety_tx_hook(msg)
 
-  def _tx_lin(self, priority: int, lin_num: int, to_addr: int, from_addr: int, dat: bytes):
-    msg = bytes([priority | len(dat), to_addr, from_addr]) + dat
-    return self.safety.safety_tx_lin_hook(lin_num, msg, len(msg))
-
   def _generic_limit_safety_check(self, msg_function: MessageFunction, min_allowed_value: float, max_allowed_value: float,
                                   min_possible_value: float, max_possible_value: float, test_delta: float = 1, inactive_value: float = 0,
                                   msg_allowed = True, additional_setup: Optional[Callable[[float], None]] = None):
