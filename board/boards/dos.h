@@ -196,7 +196,6 @@ const board board_dos = {
   .harness_config = &dos_harness_config,
   .has_hw_gmlan = false,
   .has_obd = true,
-  .has_lin = false,
 #ifdef ENABLE_SPI
   .has_spi = true,
 #else

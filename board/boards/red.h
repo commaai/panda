@@ -176,7 +176,6 @@ const board board_red = {
   .harness_config = &red_harness_config,
   .has_hw_gmlan = false,
   .has_obd = true,
-  .has_lin = false,
   .has_spi = false,
   .has_canfd = true,
   .has_rtc_battery = false,

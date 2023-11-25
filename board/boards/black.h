@@ -168,7 +168,6 @@ const board board_black = {
   .harness_config = &black_harness_config,
   .has_hw_gmlan = false,
   .has_obd = true,
-  .has_lin = false,
   .has_spi = false,
   .has_canfd = false,
   .has_rtc_battery = false,

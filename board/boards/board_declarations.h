@@ -25,7 +25,6 @@ struct board {
   const harness_configuration *harness_config;
   const bool has_hw_gmlan;
   const bool has_obd;
-  const bool has_lin;
   const bool has_spi;
   const bool has_canfd;
   const bool has_rtc_battery;

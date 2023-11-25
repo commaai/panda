@@ -121,7 +121,7 @@ RxCheck chrysler_ram_hd_rx_checks[] = {
 
 
 const uint32_t CHRYSLER_PARAM_RAM_DT = 1U;  // set for Ram DT platform
-const uint32_t CHRYSLER_PARAM_RAM_HD = 2U;  // set for Ram DT platform
+const uint32_t CHRYSLER_PARAM_RAM_HD = 2U;  // set for Ram HD platform
 
 enum {
   CHRYSLER_RAM_DT,
@@ -214,7 +214,7 @@ static void chrysler_rx_hook(CANPacket_t *to_push) {
 }
 
 static bool chrysler_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
+  bool tx = true;
   int addr = GET_ADDR(to_send);
 
   // STEERING
@@ -228,7 +228,7 @@ static bool chrysler_tx_hook(CANPacket_t *to_send) {
 
     bool steer_req = (chrysler_platform == CHRYSLER_PACIFICA) ? (GET_BIT(to_send, 4U) != 0U) : ((GET_BYTE(to_send, 3) & 0x7U) == 2U);
     if (steer_torque_cmd_checks(desired_torque, steer_req, limits)) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -238,7 +238,7 @@ static bool chrysler_tx_hook(CANPacket_t *to_send) {
     const bool is_resume = GET_BYTE(to_send, 0) == 0x10U;
     const bool allowed = is_cancel || (is_resume && controls_allowed);
     if (!allowed) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -286,7 +286,6 @@ const safety_hooks chrysler_hooks = {
   .init = chrysler_init,
   .rx = chrysler_rx_hook,
   .tx = chrysler_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
   .fwd = chrysler_fwd_hook,
   .get_counter = chrysler_get_counter,
   .get_checksum = chrysler_get_checksum,

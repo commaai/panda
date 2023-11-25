@@ -72,7 +72,6 @@ const board board_pedal = {
   .harness_config = &pedal_harness_config,
   .has_hw_gmlan = false,
   .has_obd = false,
-  .has_lin = false,
   .has_spi = false,
   .has_canfd = false,
   .has_rtc_battery = false,

@@ -78,7 +78,7 @@ static void subaru_preglobal_rx_hook(CANPacket_t *to_push) {
 }
 
 static bool subaru_preglobal_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
+  bool tx = true;
   int addr = GET_ADDR(to_send);
 
   // steer cmd checks
@@ -89,7 +89,7 @@ static bool subaru_preglobal_tx_hook(CANPacket_t *to_send) {
     bool steer_req = (GET_BIT(to_send, 24U) != 0U);
 
     if (steer_torque_cmd_checks(desired_torque, steer_req, SUBARU_PG_STEERING_LIMITS)) {
-      tx = 0;
+      tx = false;
     }
 
   }
@@ -122,6 +122,5 @@ const safety_hooks subaru_preglobal_hooks = {
   .init = subaru_preglobal_init,
   .rx = subaru_preglobal_rx_hook,
   .tx = subaru_preglobal_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
   .fwd = subaru_preglobal_fwd_hook,
 };
