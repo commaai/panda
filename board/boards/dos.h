@@ -217,7 +217,6 @@ const board board_dos = {
   .read_current = unused_read_current,
   .set_fan_enabled = dos_set_fan_enabled,
   .set_ir_power = dos_set_ir_power,
-  .set_phone_power = unused_set_phone_power,
   .set_siren = dos_set_siren,
   .set_bootkick = dos_set_bootkick,
   .read_som_gpio = dos_read_som_gpio
