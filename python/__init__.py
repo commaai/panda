@@ -920,10 +920,6 @@ class Panda:
     a = struct.unpack("H", dat)
     return a[0]
 
-  # ****************** Phone *****************
-  def set_phone_power(self, enabled):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xb3, int(enabled), 0, b'')
-
   # ****************** Siren *****************
   def set_siren(self, enabled):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf6, int(enabled), 0, b'')

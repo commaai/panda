@@ -152,10 +152,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       resp[1] = ((fan_state.rpm & 0xFF00U) >> 8U);
       resp_len = 2;
       break;
-    // **** 0xb3: set phone power
-    case 0xb3:
-      current_board->set_phone_power(req->param1 > 0U);
-      break;
     // **** 0xc0: reset communications
     case 0xc0:
       comms_can_reset();

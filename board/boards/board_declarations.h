@@ -15,7 +15,6 @@ typedef bool (*board_check_ignition)(void);
 typedef uint32_t (*board_read_current)(void);
 typedef void (*board_set_ir_power)(uint8_t percentage);
 typedef void (*board_set_fan_enabled)(bool enabled);
-typedef void (*board_set_phone_power)(bool enabled);
 typedef void (*board_set_siren)(bool enabled);
 typedef void (*board_set_bootkick)(BootState state);
 typedef bool (*board_read_som_gpio)(void);
@@ -42,7 +41,6 @@ struct board {
   board_read_current read_current;
   board_set_ir_power set_ir_power;
   board_set_fan_enabled set_fan_enabled;
-  board_set_phone_power set_phone_power;
   board_set_siren set_siren;
   board_set_bootkick set_bootkick;
   board_read_som_gpio read_som_gpio;
