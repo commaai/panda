@@ -38,7 +38,6 @@ RxCheck toyota_rx_checks[] = {
   {.msg = {{0x1D2, 0, 8, .check_checksum = true, .expected_timestep = 30000U}, { 0 }, { 0 }}},
   {.msg = {{0x224, 0, 8, .check_checksum = false, .expected_timestep = 25000U},
            {0x226, 0, 8, .check_checksum = false, .expected_timestep = 25000U}, { 0 }}},
-  {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .expected_timestep = 0U}, { 0 }, { 0 }}},
 };
 
 // safety param flags
@@ -67,17 +66,6 @@ static uint32_t toyota_compute_checksum(CANPacket_t *to_push) {
 static uint32_t toyota_get_checksum(CANPacket_t *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1U;
   return (uint8_t)(GET_BYTE(to_push, checksum_byte));
-}
-
-static uint8_t toyota_get_counter(CANPacket_t *to_push) {
-  int addr = GET_ADDR(to_push);
-
-  uint8_t cnt = 0U;
-  if (addr == 0x201) {
-    // Signal: COUNTER_PEDAL
-    cnt = GET_BYTE(to_push, 4) & 0x0FU;
-  }
-  return cnt;
 }
 
 static void toyota_rx_hook(CANPacket_t *to_push) {
@@ -264,5 +252,4 @@ const safety_hooks toyota_hooks = {
   .fwd = toyota_fwd_hook,
   .get_checksum = toyota_get_checksum,
   .compute_checksum = toyota_compute_checksum,
-  .get_counter = toyota_get_counter,
 };
