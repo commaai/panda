@@ -6,7 +6,7 @@ from typing import Optional
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, make_msg, MAX_WRONG_COUNTERS
+from panda.tests.safety.common import CANPackerPanda, MAX_WRONG_COUNTERS
 
 class Btn:
   NONE = 0
@@ -17,15 +17,6 @@ class Btn:
 
 HONDA_NIDEC = 0
 HONDA_BOSCH = 1
-
-
-def interceptor_msg(gas, addr):
-  to_send = make_msg(0, addr, 6)
-  to_send[0].data[0] = (gas & 0xFF00) >> 8
-  to_send[0].data[1] = gas & 0xFF
-  to_send[0].data[2] = (gas & 0xFF00) >> 8
-  to_send[0].data[3] = gas & 0xFF
-  return to_send
 
 
 # Honda safety has several different configurations tested here:
@@ -280,12 +271,6 @@ class TestHondaNidecSafetyBase(HondaBase):
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, 0)
     self.safety.init_tests()
-
-  def _interceptor_gas_cmd(self, gas):
-    return interceptor_msg(gas, 0x200)
-
-  def _interceptor_user_gas(self, gas):
-    return interceptor_msg(gas, 0x201)
 
   def _send_brake_msg(self, brake, aeb_req=0, bus=0):
     values = {"COMPUTER_BRAKE": brake, "AEB_REQ_1": aeb_req}

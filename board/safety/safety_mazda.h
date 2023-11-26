@@ -69,7 +69,7 @@ static void mazda_rx_hook(CANPacket_t *to_push) {
 }
 
 static bool mazda_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
+  bool tx = true;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
 
@@ -81,7 +81,7 @@ static bool mazda_tx_hook(CANPacket_t *to_send) {
       int desired_torque = (((GET_BYTE(to_send, 0) & 0x0FU) << 8) | GET_BYTE(to_send, 1)) - 2048U;
 
       if (steer_torque_cmd_checks(desired_torque, -1, MAZDA_STEERING_LIMITS)) {
-        tx = 0;
+        tx = false;
       }
     }
 
@@ -91,7 +91,7 @@ static bool mazda_tx_hook(CANPacket_t *to_send) {
       // only allow cancel while contrls not allowed
       bool cancel_cmd = (GET_BYTE(to_send, 0) == 0x1U);
       if (!controls_allowed && !cancel_cmd) {
-        tx = 0;
+        tx = false;
       }
     }
   }
@@ -125,6 +125,5 @@ const safety_hooks mazda_hooks = {
   .init = mazda_init,
   .rx = mazda_rx_hook,
   .tx = mazda_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
   .fwd = mazda_fwd_hook,
 };

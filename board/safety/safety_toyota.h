@@ -41,7 +41,7 @@ RxCheck toyota_rx_checks[] = {
 };
 
 // safety param flags
-// first byte is for eps factor, second is for flags
+// first byte is for EPS factor, second is for flags
 const uint32_t TOYOTA_PARAM_OFFSET = 8U;
 const uint32_t TOYOTA_EPS_FACTOR = (1U << TOYOTA_PARAM_OFFSET) - 1U;
 const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1U << TOYOTA_PARAM_OFFSET;
@@ -128,7 +128,7 @@ static void toyota_rx_hook(CANPacket_t *to_push) {
 }
 
 static bool toyota_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
+  bool tx = true;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
 
@@ -138,7 +138,7 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
     // GAS PEDAL: safety check
     if (addr == 0x200) {
       if (longitudinal_interceptor_checks(to_send)) {
-        tx = 0;
+        tx = false;
       }
     }
 
@@ -162,7 +162,7 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
       }
 
       if (violation) {
-        tx = 0;
+        tx = false;
       }
     }
 
@@ -171,7 +171,7 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
       // only allow the checksum, which is the last byte
       bool block = (GET_BYTES(to_send, 0, 4) != 0U) || (GET_BYTE(to_send, 4) != 0U) || (GET_BYTE(to_send, 5) != 0U);
       if (block) {
-        tx = 0;
+        tx = false;
       }
     }
 
@@ -187,7 +187,7 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
 
       // block LTA msgs with actuation requests
       if (lta_request || lta_request2 || (lta_angle != 0) || (setme_x64 != 0)) {
-        tx = 0;
+        tx = false;
       }
     }
 
@@ -197,11 +197,11 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
       desired_torque = to_signed(desired_torque, 16);
       bool steer_req = GET_BIT(to_send, 0U) != 0U;
       if (steer_torque_cmd_checks(desired_torque, steer_req, TOYOTA_STEERING_LIMITS)) {
-        tx = 0;
+        tx = false;
       }
       // When using LTA (angle control), assert no actuation on LKA message
       if (toyota_lta && ((desired_torque != 0) || steer_req)) {
-        tx = 0;
+        tx = false;
       }
     }
   }
@@ -249,7 +249,6 @@ const safety_hooks toyota_hooks = {
   .init = toyota_init,
   .rx = toyota_rx_hook,
   .tx = toyota_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
   .fwd = toyota_fwd_hook,
   .get_checksum = toyota_get_checksum,
   .compute_checksum = toyota_compute_checksum,

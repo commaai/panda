@@ -181,7 +181,7 @@ static void subaru_rx_hook(CANPacket_t *to_push) {
 }
 
 static bool subaru_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
+  bool tx = true;
   int addr = GET_ADDR(to_send);
   bool violation = false;
 
@@ -234,7 +234,7 @@ static bool subaru_tx_hook(CANPacket_t *to_send) {
   }
 
   if (violation){
-    tx = 0;
+    tx = false;
   }
   return tx;
 }
@@ -288,7 +288,6 @@ const safety_hooks subaru_hooks = {
   .init = subaru_init,
   .rx = subaru_rx_hook,
   .tx = subaru_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
   .fwd = subaru_fwd_hook,
   .get_counter = subaru_get_counter,
   .get_checksum = subaru_get_checksum,

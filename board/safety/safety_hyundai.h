@@ -215,7 +215,7 @@ static void hyundai_rx_hook(CANPacket_t *to_push) {
 }
 
 static bool hyundai_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
+  bool tx = true;
   int addr = GET_ADDR(to_send);
 
   // FCA11: Block any potential actuation
@@ -225,7 +225,7 @@ static bool hyundai_tx_hook(CANPacket_t *to_send) {
     int CF_VSM_DecCmdAct = GET_BIT(to_send, 31U);
 
     if ((CR_VSM_DecCmd != 0) || (FCA_CmdAct != 0) || (CF_VSM_DecCmdAct != 0)) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -245,7 +245,7 @@ static bool hyundai_tx_hook(CANPacket_t *to_send) {
     violation |= (aeb_req != 0);
 
     if (violation) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -256,14 +256,14 @@ static bool hyundai_tx_hook(CANPacket_t *to_send) {
 
     const SteeringLimits limits = hyundai_alt_limits ? HYUNDAI_STEERING_LIMITS_ALT : HYUNDAI_STEERING_LIMITS;
     if (steer_torque_cmd_checks(desired_torque, steer_req, limits)) {
-      tx = 0;
+      tx = false;
     }
   }
 
   // UDS: Only tester present ("\x02\x3E\x80\x00\x00\x00\x00\x00") allowed on diagnostics address
   if (addr == 0x7D0) {
     if ((GET_BYTES(to_send, 0, 4) != 0x00803E02U) || (GET_BYTES(to_send, 4, 4) != 0x0U)) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -274,7 +274,7 @@ static bool hyundai_tx_hook(CANPacket_t *to_send) {
     bool allowed_resume = (button == 1) && controls_allowed;
     bool allowed_cancel = (button == 4) && cruise_engaged_prev;
     if (!(allowed_resume || allowed_cancel)) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -327,7 +327,6 @@ const safety_hooks hyundai_hooks = {
   .init = hyundai_init,
   .rx = hyundai_rx_hook,
   .tx = hyundai_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
   .fwd = hyundai_fwd_hook,
   .get_counter = hyundai_get_counter,
   .get_checksum = hyundai_get_checksum,
@@ -338,7 +337,6 @@ const safety_hooks hyundai_legacy_hooks = {
   .init = hyundai_legacy_init,
   .rx = hyundai_rx_hook,
   .tx = hyundai_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
   .fwd = hyundai_fwd_hook,
   .get_counter = hyundai_get_counter,
   .get_checksum = hyundai_get_checksum,

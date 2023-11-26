@@ -135,14 +135,8 @@ static void gm_rx_hook(CANPacket_t *to_push) {
   }
 }
 
-// all commands: gas/regen, friction brake and steering
-// if controls_allowed and no pedals pressed
-//     allow all commands up to limit
-// else
-//     block all commands that produce actuation
-
 static bool gm_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
+  bool tx = true;
   int addr = GET_ADDR(to_send);
 
   // BRAKE: safety check
@@ -150,7 +144,7 @@ static bool gm_tx_hook(CANPacket_t *to_send) {
     int brake = ((GET_BYTE(to_send, 0) & 0xFU) << 8) + GET_BYTE(to_send, 1);
     brake = (0x1000 - brake) & 0xFFF;
     if (longitudinal_brake_checks(brake, *gm_long_limits)) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -162,7 +156,7 @@ static bool gm_tx_hook(CANPacket_t *to_send) {
     bool steer_req = (GET_BIT(to_send, 3U) != 0U);
 
     if (steer_torque_cmd_checks(desired_torque, steer_req, GM_STEERING_LIMITS)) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -177,7 +171,7 @@ static bool gm_tx_hook(CANPacket_t *to_send) {
     violation |= longitudinal_gas_checks(gas_regen, *gm_long_limits);
 
     if (violation) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -187,16 +181,14 @@ static bool gm_tx_hook(CANPacket_t *to_send) {
 
     bool allowed_cancel = (button == 6) && cruise_engaged_prev;
     if (!allowed_cancel) {
-      tx = 0;
+      tx = false;
     }
   }
 
-  // 1 allows the message through
   return tx;
 }
 
 static int gm_fwd_hook(int bus_num, int addr) {
-
   int bus_fwd = -1;
 
   if (gm_hw == GM_CAM) {
@@ -248,6 +240,5 @@ const safety_hooks gm_hooks = {
   .init = gm_init,
   .rx = gm_rx_hook,
   .tx = gm_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
   .fwd = gm_fwd_hook,
 };

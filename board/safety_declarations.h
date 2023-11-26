@@ -144,7 +144,6 @@ typedef bool (*get_quality_flag_valid_t)(CANPacket_t *to_push);
 
 bool safety_rx_hook(CANPacket_t *to_push);
 bool safety_tx_hook(CANPacket_t *to_send);
-bool safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 int to_signed(int d, int bits);
 void update_sample(struct sample_t *sample, int sample_new);
@@ -190,14 +189,12 @@ void pcm_cruise_check(bool cruise_engaged);
 typedef safety_config (*safety_hook_init)(uint16_t param);
 typedef void (*rx_hook)(CANPacket_t *to_push);
 typedef bool (*tx_hook)(CANPacket_t *to_send);
-typedef bool (*tx_lin_hook)(int lin_num, uint8_t *data, int len);
 typedef int (*fwd_hook)(int bus_num, int addr);
 
 typedef struct {
   safety_hook_init init;
   rx_hook rx;
   tx_hook tx;
-  tx_lin_hook tx_lin;
   fwd_hook fwd;
   get_checksum_t get_checksum;
   compute_checksum_t compute_checksum;
