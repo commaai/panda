@@ -25,31 +25,45 @@ const LongitudinalLimits HONDA_NIDEC_LONG_LIMITS = {
   .inactive_speed = 0,
 };
 
+// All common address checks except SCM_BUTTONS which isn't on one Nidec safety configuration
+#define HONDA_COMMON_NO_SCM_FEEDBACK_RX_CHECKS(pt_bus)                                                                                           \
+  {.msg = {{0x1A6, (pt_bus), 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},                  /* SCM_BUTTONS */      \
+           {0x296, (pt_bus), 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},                                \
+  {.msg = {{0x158, (pt_bus), 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},  /* ENGINE_DATA */      \
+  {.msg = {{0x17C, (pt_bus), 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},  /* POWERTRAIN_DATA */  \
+
+#define HONDA_COMMON_RX_CHECKS(pt_bus)                                                                                                         \
+  HONDA_COMMON_NO_SCM_FEEDBACK_RX_CHECKS(pt_bus)                                                                                               \
+  {.msg = {{0x326, (pt_bus), 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 100000U}, { 0 }, { 0 }}},  /* SCM_FEEDBACK */  \
+
+// Alternate brake message is used on some Honda Bosch, and Honda Bosch radarless (where PT bus is 0)
+#define HONDA_ALT_BRAKE_ADDR_CHECK(pt_bus)                                                                                                    \
+  {.msg = {{0x1BE, (pt_bus), 3, .check_checksum = true, .max_counter = 3U, .expected_timestep = 20000U}, { 0 }, { 0 }}},  /* BRAKE_MODULE */  \
+
+
 // Nidec and bosch radarless has the powertrain bus on bus 0
 RxCheck honda_common_rx_checks[] = {
-  {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},                   // SCM_BUTTONS
-           {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
-  {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // ENGINE_DATA
-  {.msg = {{0x17C, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},                   // POWERTRAIN_DATA
-           {0x1BE, 0, 3, .check_checksum = true, .max_counter = 3U, .expected_timestep = 20000U}, { 0 }}},          // BRAKE_MODULE (for bosch radarless)
-  {.msg = {{0x326, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 100000U}, { 0 }, { 0 }}},  // SCM_FEEDBACK
+  HONDA_COMMON_RX_CHECKS(0)
 };
 
-// For Nidecs with main on signal on an alternate msg
+RxCheck honda_common_alt_brake_rx_checks[] = {
+  HONDA_COMMON_RX_CHECKS(0)
+  HONDA_ALT_BRAKE_ADDR_CHECK(0)
+};
+
+// For Nidecs with main on signal on an alternate msg (missing 0x326)
 RxCheck honda_nidec_alt_rx_checks[] = {
-  {.msg = {{0x1A6, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U},
-           {0x296, 0, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }}},
-  {.msg = {{0x158, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0x17C, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  HONDA_COMMON_NO_SCM_FEEDBACK_RX_CHECKS(0)
 };
 
-// Bosch has pt on bus 1
+// Bosch has pt on bus 1, verified 0x1A6 does not exist
 RxCheck honda_bosch_rx_checks[] = {
-  {.msg = {{0x296, 1, 4, .check_checksum = true, .max_counter = 3U, .expected_timestep = 40000U}, { 0 }, { 0 }}},
-  {.msg = {{0x158, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{0x17C, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},
-           {0x1BE, 1, 3, .check_checksum = true, .max_counter = 3U, .expected_timestep = 20000U}, { 0 }}},
-  {.msg = {{0x326, 1, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+  HONDA_COMMON_RX_CHECKS(1)
+};
+
+RxCheck honda_bosch_alt_brake_rx_checks[] = {
+  HONDA_COMMON_RX_CHECKS(1)
+  HONDA_ALT_BRAKE_ADDR_CHECK(1)
 };
 
 const uint16_t HONDA_PARAM_ALT_BRAKE = 1;
@@ -367,12 +381,22 @@ static safety_config honda_bosch_init(uint16_t param) {
 #endif
 
   safety_config ret;
-  if (honda_bosch_radarless) {
-    ret = honda_bosch_long ? BUILD_SAFETY_CFG(honda_common_rx_checks, HONDA_RADARLESS_LONG_TX_MSGS) : \
-                             BUILD_SAFETY_CFG(honda_common_rx_checks, HONDA_RADARLESS_TX_MSGS);
+  if (honda_bosch_radarless && honda_alt_brake_msg) {
+    SET_RX_CHECKS(honda_common_alt_brake_rx_checks, ret);
+  } else if (honda_bosch_radarless) {
+    SET_RX_CHECKS(honda_common_rx_checks, ret);
+  } else if (honda_alt_brake_msg) {
+    SET_RX_CHECKS(honda_bosch_alt_brake_rx_checks, ret);
   } else {
-    ret = honda_bosch_long ? BUILD_SAFETY_CFG(honda_bosch_rx_checks, HONDA_BOSCH_LONG_TX_MSGS) : \
-                             BUILD_SAFETY_CFG(honda_bosch_rx_checks, HONDA_BOSCH_TX_MSGS);
+    SET_RX_CHECKS(honda_bosch_rx_checks, ret);
+  }
+
+  if (honda_bosch_radarless) {
+    honda_bosch_long ? SET_TX_MSGS(HONDA_RADARLESS_LONG_TX_MSGS, ret) : \
+                       SET_TX_MSGS(HONDA_RADARLESS_TX_MSGS, ret);
+  } else {
+    honda_bosch_long ? SET_TX_MSGS(HONDA_BOSCH_LONG_TX_MSGS, ret) : \
+                       SET_TX_MSGS(HONDA_BOSCH_TX_MSGS, ret);
   }
   return ret;
 }
