@@ -72,14 +72,14 @@ static void nissan_rx_hook(CANPacket_t *to_push) {
         gas_pressed = GET_BYTE(to_push, 0) > 3U;
       }
     }
-  }
 
-  // X-trail 0x454, Leaf  0x239
-  if ((addr == 0x454) || (addr == 0x239)) {
-    if (addr == 0x454){
-      brake_pressed = (GET_BYTE(to_push, 2) & 0x80U) != 0U;
-    } else {
-      brake_pressed = ((GET_BYTE(to_push, 4) >> 5) & 1U) != 0U;
+    // X-trail 0x454, Leaf 0x239
+    if ((addr == 0x454) || (addr == 0x239)) {
+      if (addr == 0x454){
+        brake_pressed = (GET_BYTE(to_push, 2) & 0x80U) != 0U;
+      } else {
+        brake_pressed = ((GET_BYTE(to_push, 4) >> 5) & 1U) != 0U;
+      }
     }
   }
 
