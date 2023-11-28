@@ -266,8 +266,9 @@ static void ford_rx_hook(CANPacket_t *to_push) {
 }
 
 static bool ford_tx_hook(CANPacket_t *to_send) {
+  bool tx = true;
+
   int addr = GET_ADDR(to_send);
-  int tx;
 
   // Safety check for ACCDATA accel and brake requests
   if (addr == FORD_ACCDATA) {
@@ -359,7 +360,6 @@ static bool ford_tx_hook(CANPacket_t *to_send) {
     }
   }
 
-  // 1 allows the message through
   return tx;
 }
 
