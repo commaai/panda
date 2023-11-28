@@ -586,7 +586,6 @@ class Panda:
       "safety_rx_invalid": a[4],
       "tx_buffer_overflow": a[5],
       "rx_buffer_overflow": a[6],
-      "gmlan_send_errs": a[7],
       "faults": a[8],
       "ignition_line": a[9],
       "ignition_can": a[10],
@@ -751,15 +750,7 @@ class Panda:
   def set_safety_mode(self, mode=SAFETY_SILENT, param=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
 
-  def set_gmlan(self, bus=2):
-    # TODO: check panda type
-    if bus is None:
-      self._handle.controlWrite(Panda.REQUEST_OUT, 0xdb, 0, 0, b'')
-    elif bus in (Panda.GMLAN_CAN2, Panda.GMLAN_CAN3):
-      self._handle.controlWrite(Panda.REQUEST_OUT, 0xdb, 1, bus, b'')
-
   def set_obd(self, obd):
-    # TODO: check panda type
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdb, int(obd), 0, b'')
 
   def set_can_loopback(self, enable):

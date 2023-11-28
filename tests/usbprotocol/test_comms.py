@@ -8,7 +8,7 @@ from panda.tests.libpanda import libpanda_py
 lpp = libpanda_py.libpanda
 
 CHUNK_SIZE = USBPACKET_MAX_SIZE
-TX_QUEUES = (lpp.tx1_q, lpp.tx2_q, lpp.tx3_q, lpp.txgmlan_q)
+TX_QUEUES = (lpp.tx1_q, lpp.tx2_q, lpp.tx3_q)
 
 
 def unpackage_can_msg(pkt):

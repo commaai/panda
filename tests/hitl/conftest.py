@@ -204,7 +204,6 @@ def fixture_panda_setup(request):
       p.reset(reconnect=True)
 
       p.set_can_loopback(False)
-      p.set_gmlan(None)
       p.set_power_save(False)
       for bus, speed in BUS_SPEEDS:
         p.set_can_speed_kbps(bus, speed)
