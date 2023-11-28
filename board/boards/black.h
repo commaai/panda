@@ -166,7 +166,6 @@ const board board_black = {
   .board_type = "Black",
   .set_bootkick = unused_set_bootkick,
   .harness_config = &black_harness_config,
-  .has_hw_gmlan = false,
   .has_obd = true,
   .has_spi = false,
   .has_canfd = false,

@@ -14,7 +14,6 @@ const board board_red_v2 = {
   .board_type = "Red_v2",
   .set_bootkick = unused_set_bootkick,
   .harness_config = &red_chiplet_harness_config,
-  .has_hw_gmlan = false,
   .has_obd = true,
   .has_spi = false,
   .has_canfd = true,

@@ -84,40 +84,6 @@ void white_set_can_mode(uint8_t mode){
       set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
       set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
       break;
-    case CAN_MODE_GMLAN_CAN2:
-      // B5,B6: disable CAN2 mode
-      set_gpio_mode(GPIOB, 5, MODE_INPUT);
-      set_gpio_mode(GPIOB, 6, MODE_INPUT);
-
-      // B3,B4: disable GMLAN mode
-      set_gpio_mode(GPIOB, 3, MODE_INPUT);
-      set_gpio_mode(GPIOB, 4, MODE_INPUT);
-
-      // B12,B13: GMLAN mode
-      set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
-      set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
-
-      // A8,A15: normal CAN3 mode
-      set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
-      set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
-      break;
-    case CAN_MODE_GMLAN_CAN3:
-      // A8,A15: disable CAN3 mode
-      set_gpio_mode(GPIOA, 8, MODE_INPUT);
-      set_gpio_mode(GPIOA, 15, MODE_INPUT);
-
-      // B12,B13: disable GMLAN mode
-      set_gpio_mode(GPIOB, 12, MODE_INPUT);
-      set_gpio_mode(GPIOB, 13, MODE_INPUT);
-
-      // B3,B4: GMLAN mode
-      set_gpio_alternate(GPIOB, 3, GPIO_AF11_CAN3);
-      set_gpio_alternate(GPIOB, 4, GPIO_AF11_CAN3);
-
-      // B5,B6: normal CAN2 mode
-      set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
-      set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
-      break;
     default:
       print("Tried to set unsupported CAN mode: "); puth(mode); print("\n");
       break;
@@ -225,7 +191,6 @@ const board board_white = {
   .board_type = "White",
   .set_bootkick = unused_set_bootkick,
   .harness_config = &white_harness_config,
-  .has_hw_gmlan = true,
   .has_obd = false,
   .has_spi = false,
   .has_canfd = false,

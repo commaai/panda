@@ -22,7 +22,6 @@ typedef bool (*board_read_som_gpio)(void);
 struct board {
   const char *board_type;
   const harness_configuration *harness_config;
-  const bool has_hw_gmlan;
   const bool has_obd;
   const bool has_spi;
   const bool has_canfd;
@@ -72,6 +71,4 @@ struct board {
 
 // CAN modes
 #define CAN_MODE_NORMAL 0U
-#define CAN_MODE_GMLAN_CAN2 1U
-#define CAN_MODE_GMLAN_CAN3 2U
 #define CAN_MODE_OBD_CAN2 3U

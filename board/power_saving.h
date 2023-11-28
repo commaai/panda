@@ -36,12 +36,6 @@ void set_power_save_state(int state) {
 
     current_board->enable_can_transceivers(enable);
 
-    if(current_board->has_hw_gmlan){
-      // turn on GMLAN
-      set_gpio_output(GPIOB, 14, enable);
-      set_gpio_output(GPIOB, 15, enable);
-    }
-
     // Switch off IR when in power saving
     if(!enable){
       current_board->set_ir_power(0U);

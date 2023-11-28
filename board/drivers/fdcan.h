@@ -35,11 +35,6 @@ bool can_set_speed(uint8_t can_number) {
   return ret;
 }
 
-void can_set_gmlan(uint8_t bus) {
-  UNUSED(bus);
-  print("GMLAN not available on red panda\n");
-}
-
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   FDCAN_GlobalTypeDef *FDCANx = CANIF_FROM_CAN_NUM(can_number);
   uint32_t psr_reg = FDCANx->PSR;
