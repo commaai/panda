@@ -75,10 +75,6 @@ class PandaSafetyTestBase(unittest.TestCase):
   def _tx(self, msg):
     return self.safety.safety_tx_hook(msg)
 
-  def _tx_lin(self, priority: int, lin_num: int, to_addr: int, from_addr: int, dat: bytes):
-    msg = bytes([priority | len(dat), to_addr, from_addr]) + dat
-    return self.safety.safety_tx_lin_hook(lin_num, msg, len(msg))
-
   def _generic_limit_safety_check(self, msg_function: MessageFunction, min_allowed_value: float, max_allowed_value: float,
                                   min_possible_value: float, max_possible_value: float, test_delta: float = 1, inactive_value: float = 0,
                                   msg_allowed = True, additional_setup: Optional[Callable[[float], None]] = None):
@@ -132,13 +128,16 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
       cls.safety = None
       raise unittest.SkipTest
 
-  @abc.abstractmethod
   def _interceptor_gas_cmd(self, gas):
-    pass
+    values = {}
+    if gas > 0:
+      values["GAS_COMMAND"] = gas * 255.
+      values["GAS_COMMAND2"] = gas * 255.
+    return self.packer.make_can_msg_panda("GAS_COMMAND", 0, values)
 
-  @abc.abstractmethod
   def _interceptor_user_gas(self, gas):
-    pass
+    values = {"INTERCEPTOR_GAS": gas, "INTERCEPTOR_GAS2": gas}
+    return self.packer.make_can_msg_panda("GAS_SENSOR", 0, values)
 
   def test_prev_gas_interceptor(self):
     self._rx(self._interceptor_user_gas(0x0))
@@ -884,7 +883,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
             # TODO: Temporary, should be fixed in panda firmware, safety_honda.h
             if attr.startswith('TestHonda'):
               # exceptions for common msgs across different hondas
-              tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C, 0x33D], tx))
+              tx = list(filter(lambda m: m[0] not in [0x1FA, 0x30C, 0x33D, 0x33DB], tx))
             all_tx.append([[m[0], m[1], attr] for m in tx])
 
     # make sure we got all the msgs
@@ -953,7 +952,7 @@ class PandaCarSafetyTest(PandaSafetyTest):
     self.safety.set_relay_malfunction(True)
     for bus in range(3):
       for addr in self.SCANNED_ADDRS:
-        self.assertEqual(-1, self._tx(make_msg(bus, addr, 8)))
+        self.assertFalse(self._tx(make_msg(bus, addr, 8)))
         self.assertEqual(-1, self.safety.safety_fwd_hook(bus, addr))
 
   def test_prev_gas(self):

@@ -1,15 +1,15 @@
-void safety_tick_current_rx_checks() {
-  safety_tick(current_rx_checks);
+void safety_tick_current_safety_config() {
+  safety_tick(&current_safety_config);
 }
 
-bool addr_checks_valid() {
-  if (current_rx_checks->len <= 0) {
+bool safety_config_valid() {
+  if (current_safety_config.rx_checks_len <= 0) {
     printf("missing RX checks\n");
     return false;
   }
 
-  for (int i = 0; i < current_rx_checks->len; i++) {
-    const AddrCheckStruct addr = current_rx_checks->check[i];
+  for (int i = 0; i < current_safety_config.rx_checks_len; i++) {
+    const RxCheck addr = current_safety_config.rx_checks[i];
     bool valid = addr.msg_seen && !addr.lagging && addr.valid_checksum && (addr.wrong_counters < MAX_WRONG_COUNTERS) && addr.valid_quality_flag;
     if (!valid) {
       printf("i %d seen %d lagging %d valid checksum %d wrong counters %d valid quality flag %d\n", i, addr.msg_seen, addr.lagging, addr.valid_checksum, addr.wrong_counters, addr.valid_quality_flag);
