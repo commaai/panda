@@ -133,7 +133,7 @@ typedef struct {
 // params and flags about checksum, counter and frequency checks for each monitored address
 typedef struct {
   const CanMsgCheck msg[MAX_ADDR_CHECK_MSGS];  // check either messages (e.g. honda steer)
-  RxStatus rx_status;
+  RxStatus status;
 } RxCheck;
 
 typedef struct {
