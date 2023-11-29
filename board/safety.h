@@ -497,7 +497,6 @@ float interpolate(struct lookup_t xy, float x) {
 
   } else {
     // find the index such that (xy.x[i] <= x < xy.x[i+1]) and linearly interp
-    print("\nx: "); puth(x * 100); print("\n");
     for (int i=0; i < (size - 1); i++) {
       if (x < xy.x[i+1]) {
         float x0 = xy.x[i];
