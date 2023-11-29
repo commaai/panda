@@ -146,19 +146,19 @@ int get_addr_check_index(CANPacket_t *to_push, RxCheck addr_list[], const int le
   int index = -1;
   for (int i = 0; i < len; i++) {
     // if multiple msgs are allowed, determine which one is present on the bus
-    if (!addr_list[i].rx_status.msg_seen) {
+    if (!addr_list[i].status.msg_seen) {
       for (uint8_t j = 0U; (j < MAX_ADDR_CHECK_MSGS) && (addr_list[i].msg[j].addr != 0); j++) {
         if ((addr == addr_list[i].msg[j].addr) && (bus == addr_list[i].msg[j].bus) &&
               (length == addr_list[i].msg[j].len)) {
-          addr_list[i].rx_status.index = j;
-          addr_list[i].rx_status.msg_seen = true;
+          addr_list[i].status.index = j;
+          addr_list[i].status.msg_seen = true;
           break;
         }
       }
     }
 
-    if (addr_list[i].rx_status.msg_seen) {
-      int idx = addr_list[i].rx_status.index;
+    if (addr_list[i].status.msg_seen) {
+      int idx = addr_list[i].status.index;
       if ((addr == addr_list[i].msg[idx].addr) && (bus == addr_list[i].msg[idx].bus) &&
           (length == addr_list[i].msg[idx].len)) {
         index = i;
@@ -175,12 +175,12 @@ void safety_tick(const safety_config *cfg) {
   uint32_t ts = microsecond_timer_get();
   if (cfg != NULL) {
     for (int i=0; i < cfg->rx_checks_len; i++) {
-      uint32_t elapsed_time = get_ts_elapsed(ts, cfg->rx_checks[i].rx_status.last_timestamp);
+      uint32_t elapsed_time = get_ts_elapsed(ts, cfg->rx_checks[i].status.last_timestamp);
       // lag threshold is max of: 1s and MAX_MISSED_MSGS * expected timestep.
       // Quite conservative to not risk false triggers.
       // 2s of lag is worse case, since the function is called at 1Hz
-      bool lagging = elapsed_time > MAX(cfg->rx_checks[i].msg[cfg->rx_checks[i].rx_status.index].expected_timestep * MAX_MISSED_MSGS, 1e6);
-      cfg->rx_checks[i].rx_status.lagging = lagging;
+      bool lagging = elapsed_time > MAX(cfg->rx_checks[i].msg[cfg->rx_checks[i].status.index].expected_timestep * MAX_MISSED_MSGS, 1e6);
+      cfg->rx_checks[i].status.lagging = lagging;
       if (lagging) {
         controls_allowed = false;
       }
@@ -196,17 +196,17 @@ void safety_tick(const safety_config *cfg) {
 
 void update_counter(RxCheck addr_list[], int index, uint8_t counter) {
   if (index != -1) {
-    uint8_t expected_counter = (addr_list[index].rx_status.last_counter + 1U) % (addr_list[index].msg[addr_list[index].rx_status.index].max_counter + 1U);
-    addr_list[index].rx_status.wrong_counters += (expected_counter == counter) ? -1 : 1;
-    addr_list[index].rx_status.wrong_counters = CLAMP(addr_list[index].rx_status.wrong_counters, 0, MAX_WRONG_COUNTERS);
-    addr_list[index].rx_status.last_counter = counter;
+    uint8_t expected_counter = (addr_list[index].status.last_counter + 1U) % (addr_list[index].msg[addr_list[index].status.index].max_counter + 1U);
+    addr_list[index].status.wrong_counters += (expected_counter == counter) ? -1 : 1;
+    addr_list[index].status.wrong_counters = CLAMP(addr_list[index].status.wrong_counters, 0, MAX_WRONG_COUNTERS);
+    addr_list[index].status.last_counter = counter;
   }
 }
 
 bool is_msg_valid(RxCheck addr_list[], int index) {
   bool valid = true;
   if (index != -1) {
-    if (!addr_list[index].rx_status.valid_checksum || !addr_list[index].rx_status.valid_quality_flag || (addr_list[index].rx_status.wrong_counters >= MAX_WRONG_COUNTERS)) {
+    if (!addr_list[index].status.valid_checksum || !addr_list[index].status.valid_quality_flag || (addr_list[index].status.wrong_counters >= MAX_WRONG_COUNTERS)) {
       valid = false;
       controls_allowed = false;
     }
@@ -217,7 +217,7 @@ bool is_msg_valid(RxCheck addr_list[], int index) {
 void update_addr_timestamp(RxCheck addr_list[], int index) {
   if (index != -1) {
     uint32_t ts = microsecond_timer_get();
-    addr_list[index].rx_status.last_timestamp = ts;
+    addr_list[index].status.last_timestamp = ts;
   }
 }
 
@@ -233,27 +233,27 @@ bool rx_msg_safety_check(CANPacket_t *to_push,
 
   if (index != -1) {
     // checksum check
-    if ((get_checksum != NULL) && (compute_checksum != NULL) && cfg->rx_checks[index].msg[cfg->rx_checks[index].rx_status.index].check_checksum) {
+    if ((get_checksum != NULL) && (compute_checksum != NULL) && cfg->rx_checks[index].msg[cfg->rx_checks[index].status.index].check_checksum) {
       uint32_t checksum = get_checksum(to_push);
       uint32_t checksum_comp = compute_checksum(to_push);
-      cfg->rx_checks[index].rx_status.valid_checksum = checksum_comp == checksum;
+      cfg->rx_checks[index].status.valid_checksum = checksum_comp == checksum;
     } else {
-      cfg->rx_checks[index].rx_status.valid_checksum = true;
+      cfg->rx_checks[index].status.valid_checksum = true;
     }
 
     // counter check (max_counter == 0 means skip check)
-    if ((get_counter != NULL) && (cfg->rx_checks[index].msg[cfg->rx_checks[index].rx_status.index].max_counter > 0U)) {
+    if ((get_counter != NULL) && (cfg->rx_checks[index].msg[cfg->rx_checks[index].status.index].max_counter > 0U)) {
       uint8_t counter = get_counter(to_push);
       update_counter(cfg->rx_checks, index, counter);
     } else {
-      cfg->rx_checks[index].rx_status.wrong_counters = 0U;
+      cfg->rx_checks[index].status.wrong_counters = 0U;
     }
 
     // quality flag check
-    if ((get_quality_flag_valid != NULL) && cfg->rx_checks[index].msg[cfg->rx_checks[index].rx_status.index].quality_flag) {
-      cfg->rx_checks[index].rx_status.valid_quality_flag = get_quality_flag_valid(to_push);
+    if ((get_quality_flag_valid != NULL) && cfg->rx_checks[index].msg[cfg->rx_checks[index].status.index].quality_flag) {
+      cfg->rx_checks[index].status.valid_quality_flag = get_quality_flag_valid(to_push);
     } else {
-      cfg->rx_checks[index].rx_status.valid_quality_flag = true;
+      cfg->rx_checks[index].status.valid_quality_flag = true;
     }
   }
   return is_msg_valid(cfg->rx_checks, index);
@@ -385,7 +385,7 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
     current_safety_config.tx_msgs_len = cfg.tx_msgs_len;
     // reset all dynamic fields in addr struct
     for (int j = 0; j < current_safety_config.rx_checks_len; j++) {
-      current_safety_config.rx_checks[j].rx_status = (RxStatus){0};
+      current_safety_config.rx_checks[j].status = (RxStatus){0};
     }
   }
   return set_status;
