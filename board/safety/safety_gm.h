@@ -39,7 +39,7 @@ const CanMsg GM_CAM_LONG_TX_MSGS[] = {{0x180, 0, 4}, {0x315, 0, 5}, {0x2CB, 0, 8
                                       {0x184, 2, 8}};  // camera bus
 
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
-AddrCheckStruct gm_addr_checks[] = {
+RxCheck gm_rx_checks[] = {
   {.msg = {{0x184, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{0x34A, 0, 5, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{0x1E1, 0, 7, .expected_timestep = 100000U}, { 0 }, { 0 }}},
@@ -49,8 +49,6 @@ AddrCheckStruct gm_addr_checks[] = {
   {.msg = {{0x1C4, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
   {.msg = {{0xC9, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
 };
-#define GM_RX_CHECK_LEN (sizeof(gm_addr_checks) / sizeof(gm_addr_checks[0]))
-addr_checks gm_rx_checks = {gm_addr_checks, GM_RX_CHECK_LEN};
 
 const uint16_t GM_PARAM_HW_CAM = 1;
 const uint16_t GM_PARAM_HW_CAM_LONG = 2;
@@ -66,11 +64,8 @@ enum {GM_ASCM, GM_CAM} gm_hw = GM_ASCM;
 bool gm_cam_long = false;
 bool gm_pcm_cruise = false;
 
-static int gm_rx_hook(CANPacket_t *to_push) {
-
-  bool valid = addr_safety_check(to_push, &gm_rx_checks, NULL, NULL, NULL, NULL);
-
-  if (valid && (GET_BUS(to_push) == 0U)) {
+static void gm_rx_hook(CANPacket_t *to_push) {
+  if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
 
     if (addr == 0x184) {
@@ -138,7 +133,6 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     }
     generic_rx_checks(stock_ecu_detected);
   }
-  return valid;
 }
 
 // all commands: gas/regen, friction brake and steering
@@ -147,20 +141,9 @@ static int gm_rx_hook(CANPacket_t *to_push) {
 // else
 //     block all commands that produce actuation
 
-static int gm_tx_hook(CANPacket_t *to_send) {
-
+static bool gm_tx_hook(CANPacket_t *to_send) {
   int tx = 1;
   int addr = GET_ADDR(to_send);
-
-  if (gm_hw == GM_CAM) {
-    if (gm_cam_long) {
-      tx = msg_allowed(to_send, GM_CAM_LONG_TX_MSGS, sizeof(GM_CAM_LONG_TX_MSGS)/sizeof(GM_CAM_LONG_TX_MSGS[0]));
-    } else {
-      tx = msg_allowed(to_send, GM_CAM_TX_MSGS, sizeof(GM_CAM_TX_MSGS)/sizeof(GM_CAM_TX_MSGS[0]));
-    }
-  } else {
-    tx = msg_allowed(to_send, GM_ASCM_TX_MSGS, sizeof(GM_ASCM_TX_MSGS)/sizeof(GM_ASCM_TX_MSGS[0]));
-  }
 
   // BRAKE: safety check
   if (addr == 0x315) {
@@ -239,7 +222,7 @@ static int gm_fwd_hook(int bus_num, int addr) {
   return bus_fwd;
 }
 
-static const addr_checks* gm_init(uint16_t param) {
+static safety_config gm_init(uint16_t param) {
   gm_hw = GET_FLAG(param, GM_PARAM_HW_CAM) ? GM_CAM : GM_ASCM;
 
   if (gm_hw == GM_ASCM) {
@@ -253,7 +236,12 @@ static const addr_checks* gm_init(uint16_t param) {
   gm_cam_long = GET_FLAG(param, GM_PARAM_HW_CAM_LONG);
 #endif
   gm_pcm_cruise = (gm_hw == GM_CAM) && !gm_cam_long;
-  return &gm_rx_checks;
+
+  safety_config ret = BUILD_SAFETY_CFG(gm_rx_checks, GM_ASCM_TX_MSGS);
+  if (gm_hw == GM_CAM) {
+    ret = gm_cam_long ? BUILD_SAFETY_CFG(gm_rx_checks, GM_CAM_LONG_TX_MSGS) : BUILD_SAFETY_CFG(gm_rx_checks, GM_CAM_TX_MSGS);
+  }
+  return ret;
 }
 
 const safety_hooks gm_hooks = {
