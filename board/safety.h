@@ -385,16 +385,9 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
     current_safety_config.rx_checks_len = cfg.rx_checks_len;
     current_safety_config.tx_msgs = cfg.tx_msgs;
     current_safety_config.tx_msgs_len = cfg.tx_msgs_len;
-    // reset message index and seen flags in addr struct
+    // reset all dynamic fields in addr struct
     for (int j = 0; j < current_safety_config.rx_checks_len; j++) {
-//      current_safety_config.rx_checks[j].index = 0;
-//      current_safety_config.rx_checks[j].msg_seen = false;
       current_safety_config.rx_checks[j].rx_status = (RxStatus){0};
-//      RxCheck new_rx_check = {};
-//      UNUSED(new_rx_check);
-//      current_safety_config.rx_checks[j] = new_rx_check;
-//      memset(&(current_safety_config.rx_checks[j]) + offsetof(RxCheck, msg_seen),
-//             0, sizeof(RxCheck) - offsetof(RxCheck, msg_seen));
     }
   }
   return set_status;
