@@ -1,5 +1,3 @@
-#include <stddef.h>
-
 #include "safety_declarations.h"
 #include "can_definitions.h"
 
