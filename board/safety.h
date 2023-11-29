@@ -497,11 +497,18 @@ float interpolate(struct lookup_t xy, float x) {
 
   } else {
     // find the index such that (xy.x[i] <= x < xy.x[i+1]) and linearly interp
+    print("\nx: "); puth(x * 100); print("\n");
     for (int i=0; i < (size - 1); i++) {
       if (x < xy.x[i+1]) {
         float x0 = xy.x[i];
         float y0 = xy.y[i];
+        print("i: "); puth(i); print(", x0: "); puth(x0 * 100); print(", x+1: "); puth(xy.x[i+1] * 100); print("\n");
         float dx = xy.x[i+1] - x0;
+        if (dx <= 0) {
+          print("dx: -"); puth(ABS(dx * 100)); print("\n");
+        } else {
+          print("dx: "); puth(ABS(dx * 100)); print("\n");
+        }
         float dy = xy.y[i+1] - y0;
         // dx should not be zero as xy.x is supposed to be monotonic
         if (dx <= 0.) {
