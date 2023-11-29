@@ -119,6 +119,7 @@ typedef struct {
 } CanMsgCheck;
 
 typedef struct {
+  // dynamic flags, reset on safety mode init
   bool msg_seen;
   int index;                         // if multiple messages are allowed to be checked, this stores the index of the first one seen. only msg[msg_index] will be used
   bool valid_checksum;               // true if and only if checksum check is passed
@@ -131,10 +132,7 @@ typedef struct {
 
 // params and flags about checksum, counter and frequency checks for each monitored address
 typedef struct {
-  // const params
   const CanMsgCheck msg[MAX_ADDR_CHECK_MSGS];  // check either messages (e.g. honda steer)
-
-  // dynamic flags
   RxStatus rx_status;
 } RxCheck;
 
