@@ -805,12 +805,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.safety.set_controls_allowed(0)
     self.assertFalse(self.safety.get_controls_allowed())
 
-  def test_safety_tick(self):
-    self.safety.set_timer(int(2e6))
-    self.safety.set_controls_allowed(True)
-    self.safety.safety_tick_current_safety_config()
-    self.assertFalse(self.safety.get_controls_allowed())
-
   def test_tx_hook_on_wrong_safety_mode(self):
     files = os.listdir(os.path.dirname(os.path.realpath(__file__)))
     test_files = [f for f in files if f.startswith("test_") and f.endswith(".py")]
@@ -1052,3 +1046,9 @@ class PandaCarSafetyTest(PandaSafetyTest):
     # past threshold
     self._rx(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD + 1))
     self.assertTrue(self.safety.get_vehicle_moving())
+
+  def test_safety_tick(self):
+    self.safety.set_timer(int(2e6))
+    self.safety.set_controls_allowed(True)
+    self.safety.safety_tick_current_safety_config()
+    self.assertFalse(self.safety.get_controls_allowed())
