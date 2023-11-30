@@ -71,4 +71,5 @@ def init_segment(safety, lr, mode, param):
   elif angle != 0:
     safety.set_controls_allowed(1)
     safety.set_desired_angle_last(angle)
+    safety.set_angle_meas(angle, angle)
   assert safety.safety_tx_hook(to_send), "failed to initialize panda safety for segment"
