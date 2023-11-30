@@ -612,16 +612,12 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
       self.assertTrue(self._tx(self._torque_cmd_msg(sign * (self.MAX_RT_DELTA + 1))))
 
   def test_torque_measurements(self):
-    # print('HERE!', self.__class__.__name__)
     trq = 50
     for t in [trq, -trq, 0, 0, 0, 0]:
-      # print(t)
       self._rx(self._torque_meas_msg(t))
 
     max_range = range(trq, trq + self.TORQUE_MEAS_TOLERANCE + 1)
     min_range = range(-(trq + self.TORQUE_MEAS_TOLERANCE), -trq + 1)
-    # print(max_range, max_range)
-    # print(self.safety.get_torque_meas_max(), self.safety.get_torque_meas_min())
     self.assertTrue(self.safety.get_torque_meas_min() in min_range)
     self.assertTrue(self.safety.get_torque_meas_max() in max_range)
 
