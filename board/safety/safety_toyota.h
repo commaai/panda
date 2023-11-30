@@ -33,11 +33,11 @@ const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0
                                  {0x200, 0, 6}};  // interceptor
 
 RxCheck toyota_rx_checks[] = {
-  {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .expected_timestep = 12000U}, { 0 }, { 0 }}},
-  {.msg = {{0x260, 0, 8, .check_checksum = true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{0x1D2, 0, 8, .check_checksum = true, .expected_timestep = 30000U}, { 0 }, { 0 }}},
-  {.msg = {{0x224, 0, 8, .check_checksum = false, .expected_timestep = 25000U},
-           {0x226, 0, 8, .check_checksum = false, .expected_timestep = 25000U}, { 0 }}},
+  {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .expected_freq = 83U}, { 0 }, { 0 }}},
+  {.msg = {{0x260, 0, 8, .check_checksum = true, .expected_freq = 50U}, { 0 }, { 0 }}},
+  {.msg = {{0x1D2, 0, 8, .check_checksum = true, .expected_freq = 33U}, { 0 }, { 0 }}},
+  {.msg = {{0x224, 0, 8, .check_checksum = false, .expected_freq = 40U},
+           {0x226, 0, 8, .check_checksum = false, .expected_freq = 40U}, { 0 }}},
 };
 
 // safety param flags
