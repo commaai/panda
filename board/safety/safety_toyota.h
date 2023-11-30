@@ -228,10 +228,10 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
       }
     }
 
-    // LTA steering check
+    // LTA angle steering check
     // sent to prevent dash errors, no actuation is accepted
     if (addr == 0x191) {
-      // check the STEER_REQUEST, STEER_REQUEST_2, SETME_X64 STEER_ANGLE_CMD signals
+      // check the STEER_REQUEST, STEER_REQUEST_2, SETME_X64, STEER_ANGLE_CMD signals
       bool lta_request = GET_BIT(to_send, 0U) != 0U;
       bool lta_request2 = GET_BIT(to_send, 25U) != 0U;
       int setme_x64 = GET_BYTE(to_send, 5);
@@ -243,22 +243,28 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
         if (steer_angle_cmd_checks(lta_angle, steer_control_enabled, TOYOTA_STEERING_LIMITS)) {
           tx = false;
         }
-//        int driver_torque = MIN(ABS(torque_driver.min), ABS(torque_driver.max));
-//        if ((driver_torque > TOYOTA_LTA_MAX_DRIVER_TORQUE) && (setme_x64 != 0)) {
-//          tx = false;
-//        }
-        int eps_torque = MIN(ABS(torque_meas.min), ABS(torque_meas.max));
-        if ((eps_torque > TOYOTA_STEERING_LIMITS.max_steer) && (setme_x64 != 0)) {
-          tx = false;
+
+        // if allowing torque, ensure we're not violating any max/user torque limits
+        if (setme_x64 != 0) {
+          int driver_torque = MIN(ABS(torque_driver.min), ABS(torque_driver.max));
+          if (driver_torque > TOYOTA_LTA_MAX_DRIVER_TORQUE) {
+            tx = false;
+          }
+          int eps_torque = MIN(ABS(torque_meas.min), ABS(torque_meas.max));
+          if (eps_torque > TOYOTA_STEERING_LIMITS.max_steer) {
+            tx = false;
+          }
+          if (!steer_control_enabled) {
+            tx = false;
+          }
         }
-        if ((!steer_control_enabled) && (setme_x64 != 0)) {
-          tx = false;
-        }
+
         if ((setme_x64 != 0) && (setme_x64 != 100)) {
           tx = false;
         }
+
       } else {
-        // block LTA msgs with actuation requests
+        // using torque (LKA), block LTA msgs with actuation requests
         if (steer_control_enabled || (lta_angle != 0) || (setme_x64 != 0)) {
           tx = false;
         }

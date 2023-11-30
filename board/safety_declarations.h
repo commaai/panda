@@ -76,7 +76,6 @@ typedef struct {
   const bool has_steer_req_tolerance;
 
   // angle cmd limits
-  const int max_angle;
   const float angle_deg_to_can;
   const struct lookup_t angle_rate_up_lookup;
   const struct lookup_t angle_rate_down_lookup;
