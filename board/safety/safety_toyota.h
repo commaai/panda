@@ -229,7 +229,6 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
     }
 
     // LTA angle steering check
-    // sent to prevent dash errors, no actuation is accepted
     if (addr == 0x191) {
       // check the STEER_REQUEST, STEER_REQUEST_2, SETME_X64, STEER_ANGLE_CMD signals
       bool lta_request = GET_BIT(to_send, 0U) != 0U;
@@ -277,12 +276,13 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
       desired_torque = to_signed(desired_torque, 16);
       bool steer_req = GET_BIT(to_send, 0U) != 0U;
       // When using LTA (angle control), assert no actuation on LKA message
-      if (toyota_lta) {
-        if ((desired_torque != 0) || steer_req) {
+      if (!toyota_lta) {
+        if (steer_torque_cmd_checks(desired_torque, steer_req, TOYOTA_STEERING_LIMITS)) {
           tx = false;
         }
+
       } else {
-        if (steer_torque_cmd_checks(desired_torque, steer_req, TOYOTA_STEERING_LIMITS)) {
+        if ((desired_torque != 0) || steer_req) {
           tx = false;
         }
       }
