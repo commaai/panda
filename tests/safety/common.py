@@ -694,10 +694,10 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
     self._common_measurement_test(self._angle_meas_msg, -180, 180, self.DEG_TO_CAN, self.safety.get_angle_meas_min, self.safety.get_angle_meas_max)
 
   def test_angle_cmd_when_enabled(self):
-    return
+    # return
     # when controls are allowed, angle cmd rate limit is enforced
     speeds = [0., 1., 5., 10., 15., 50.]
-    angles = [-300, -100, -10, 0, 10, 100, 300]
+    angles = [-90, -10, 0, 10, 90]
     for a in angles:
       for s in speeds:
         max_delta_up = np.interp(s, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
