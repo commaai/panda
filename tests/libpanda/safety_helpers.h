@@ -145,11 +145,6 @@ void set_desired_angle_last(int t){
   desired_angle_last = t;
 }
 
-void set_angle_meas(int min, int max){
-  angle_meas.min = min;
-  angle_meas.max = max;
-}
-
 int get_desired_angle_last(void){
   return desired_angle_last;
 }
