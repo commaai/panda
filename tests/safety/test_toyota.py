@@ -198,8 +198,8 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
           self.assertEqual(not steer_angle_initializing,
                            self._rx(self._angle_meas_msg(a, steer_angle_initializing)))
 
-        clipped_angle = min(angle, self.MAX_LTA_ANGLE)
-        final_angle = round(clipped_angle * self.DEG_TO_CAN) if not steer_angle_initializing else 0
+        final_angle = (0 if steer_angle_initializing else
+                       round(min(angle, self.MAX_LTA_ANGLE) * self.DEG_TO_CAN))
         self.assertEqual(self.safety.get_angle_meas_min(), -final_angle)
         self.assertEqual(self.safety.get_angle_meas_max(), final_angle)
 
