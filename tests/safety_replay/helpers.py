@@ -24,7 +24,7 @@ def is_steering_msg(mode, param, addr):
   elif mode == Panda.SAFETY_FORD:
     ret = addr == 0x3d3
   elif mode == Panda.SAFETY_NISSAN:
-    ret = addr == 361
+    ret = addr == 0x169
   return ret
 
 def get_steer_value(mode, param, to_send):
