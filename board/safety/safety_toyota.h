@@ -27,6 +27,7 @@ const SteeringLimits TOYOTA_STEERING_LIMITS = {
   },
 };
 
+const int TOYOTA_LTA_MAX_MEAS_TORQUE = 1500;
 const int TOYOTA_LTA_MAX_ANGLE = 1657;  // EPS only accepts up to 94.9461
 const int TOYOTA_LTA_MAX_DRIVER_TORQUE = 150;
 
@@ -251,6 +252,7 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
           }
           int eps_torque = MIN(ABS(torque_meas.min), ABS(torque_meas.max));
           if (eps_torque > TOYOTA_STEERING_LIMITS.max_steer) {
+          if (eps_torque > TOYOTA_LTA_MAX_MEAS_TORQUE) {
             tx = false;
           }
           if (!steer_control_enabled) {
