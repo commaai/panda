@@ -98,12 +98,8 @@ static bool toyota_get_quality_flag_valid(CANPacket_t *to_push) {
   return valid;
 }
 
-static int toyota_rx_hook(CANPacket_t *to_push) {
-
-  bool valid = addr_safety_check(to_push, &toyota_rx_checks,
-                                 toyota_get_checksum, toyota_compute_checksum, NULL, toyota_get_quality_flag_valid);
-
-  if (valid && (GET_BUS(to_push) == 0U)) {
+static void toyota_rx_hook(CANPacket_t *to_push) {
+  if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
 
     // get eps motor torque (0.66 factor in dbc)
@@ -333,4 +329,5 @@ const safety_hooks toyota_hooks = {
   .fwd = toyota_fwd_hook,
   .get_checksum = toyota_get_checksum,
   .compute_checksum = toyota_compute_checksum,
+  .get_quality_flag_valid = toyota_get_quality_flag_valid,
 };
