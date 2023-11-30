@@ -183,30 +183,33 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
     super().test_lta_steer_cmd()
     # TODO: test more
 
-  def test_quality_flag(self):
-    self.assertTrue(self._rx(self._angle_meas_msg(0)))
-    self.assertFalse(self._rx(self._angle_meas_msg(0, steer_angle_initializing=True)))
-
   def test_steering_angle_measurements(self):
     self._common_measurement_test(self._angle_meas_msg, -90, 90, self.DEG_TO_CAN, self.safety.get_angle_meas_min, self.safety.get_angle_meas_max)
 
   def test_angle_measurements(self):
-    """Tests rx hook correctly clips the angle measurement, since it is to be compared to LTA cmd when inactive"""
-    for angle in np.arange(0, self.MAX_LTA_ANGLE * 2, 1):
-      for a in (angle, -angle, 0, 0, 0, 0):
-        self._rx(self._angle_meas_msg(a))
+    """
+    * Tests angle meas quality flag dictates whether angle measurement is parsed, and if rx is valid
+    * Tests rx hook correctly clips the angle measurement, since it is to be compared to LTA cmd when inactive
+    """
+    for steer_angle_initializing in (True, False):
+      for angle in np.arange(0, self.MAX_LTA_ANGLE * 2, 1):
+        # If init flag is set, do not rx or parse any angle measurements
+        for a in (angle, -angle, 0, 0, 0, 0):
+          self.assertEqual(not steer_angle_initializing,
+                           self._rx(self._angle_meas_msg(a, steer_angle_initializing)))
 
-      clipped_angle = min(angle, self.MAX_LTA_ANGLE)
-      self.assertEqual(self.safety.get_angle_meas_min(), round(-clipped_angle * self.DEG_TO_CAN))
-      self.assertEqual(self.safety.get_angle_meas_max(), round(clipped_angle * self.DEG_TO_CAN))
+        clipped_angle = min(angle, self.MAX_LTA_ANGLE)
+        final_angle = round(clipped_angle * self.DEG_TO_CAN) if not steer_angle_initializing else 0
+        self.assertEqual(self.safety.get_angle_meas_min(), -final_angle)
+        self.assertEqual(self.safety.get_angle_meas_max(), final_angle)
 
-      self._rx(self._angle_meas_msg(0))
-      self.assertEqual(self.safety.get_angle_meas_min(), round(-clipped_angle * self.DEG_TO_CAN))
-      self.assertEqual(self.safety.get_angle_meas_max(), 0)
+        self._rx(self._angle_meas_msg(0))
+        self.assertEqual(self.safety.get_angle_meas_min(), -final_angle)
+        self.assertEqual(self.safety.get_angle_meas_max(), 0)
 
-      self._rx(self._angle_meas_msg(0))
-      self.assertEqual(self.safety.get_angle_meas_min(), 0)
-      self.assertEqual(self.safety.get_angle_meas_max(), 0)
+        self._rx(self._angle_meas_msg(0))
+        self.assertEqual(self.safety.get_angle_meas_min(), 0)
+        self.assertEqual(self.safety.get_angle_meas_max(), 0)
 
   # def test_angle_cmd_when_enabled(self):
   #   self.safety.set_controls_allowed(True)
