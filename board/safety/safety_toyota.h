@@ -280,7 +280,6 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
         if (steer_torque_cmd_checks(desired_torque, steer_req, TOYOTA_STEERING_LIMITS)) {
           tx = false;
         }
-
       } else {
         if ((desired_torque != 0) || steer_req) {
           tx = false;

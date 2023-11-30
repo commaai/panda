@@ -101,7 +101,7 @@ class PandaSafetyTestBase(unittest.TestCase):
         should_tx = (should_tx or v == inactive_value) and msg_allowed
         self.assertEqual(self._tx(msg_function(v)), should_tx, (controls_allowed, should_tx, v))
 
-  def _common_measurement_test(self, msg_func: Callable, min_value: float, max_value: float, factor: int,
+  def _common_measurement_test(self, msg_func: Callable, min_value: float, max_value: float, factor: float,
                                meas_min_func: Callable[[], int], meas_max_func: Callable[[], int]):
     """Tests accurate measurement parsing, and that the struct is reset on safety mode init"""
     for val in np.arange(min_value, max_value, 0.5):
@@ -652,7 +652,7 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
 class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
-  DEG_TO_CAN: int
+  DEG_TO_CAN: float
   ANGLE_RATE_BP: List[float]
   ANGLE_RATE_UP: List[float]  # windup limit
   ANGLE_RATE_DOWN: List[float]  # unwind limit
@@ -687,27 +687,11 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
     for _ in range(MAX_SAMPLE_VALS):
       self._rx(self._speed_msg(speed))
 
-  def _common_measurement_test(self, msg_func, min_value, max_value, factor, get_min_func, get_max_func):
-    for val in np.arange(min_value, max_value, 0.5):
-      for i in range(MAX_SAMPLE_VALS):
-        print('rxing', val + i * 0.1)
-        self.assertTrue(self._rx(msg_func(val + i * 0.1)))
-      print()
-
-      # assert close by one decimal place
-      self.assertAlmostEqual(get_min_func() / factor, val, delta=0.1)
-      self.assertAlmostEqual(get_max_func() / factor - 0.5, val, delta=0.1)
-
-      # ensure sample_t is reset on safety init
-      self._reset_safety_hooks()
-      self.assertEqual(get_min_func(), 0)
-      self.assertEqual(get_max_func(), 0)
-
   def test_vehicle_speed_measurements(self):
     self._common_measurement_test(self._speed_msg, 0, 80, VEHICLE_SPEED_FACTOR, self.safety.get_vehicle_speed_min, self.safety.get_vehicle_speed_max)
 
-  # def test_steering_angle_measurements(self):
-  #   self._common_measurement_test(self._angle_meas_msg, -180, 180, self.DEG_TO_CAN, self.safety.get_angle_meas_min, self.safety.get_angle_meas_max)
+  def test_steering_angle_measurements(self):
+    self._common_measurement_test(self._angle_meas_msg, -180, 180, self.DEG_TO_CAN, self.safety.get_angle_meas_min, self.safety.get_angle_meas_max)
 
   def test_angle_cmd_when_enabled(self):
     return

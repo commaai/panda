@@ -155,8 +155,8 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
   DEG_TO_CAN = 17.452007  # 1 / 0.0573
 
   ANGLE_RATE_BP = [5., 25., 25.]
-  ANGLE_RATE_UP = [10., 1.6, .3]  # windup limit
-  ANGLE_RATE_DOWN = [10., 7.0, .8]  # unwind limit
+  ANGLE_RATE_UP = [0.3, 0.15, 0.15]  # windup limit
+  ANGLE_RATE_DOWN = [0.36, 0.26, 0.26]  # unwind limit
 
   def setUp(self):
     # raise unittest.SkipTest
@@ -178,6 +178,13 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
   def test_lta_steer_cmd(self):
     super().test_lta_steer_cmd()
     # TODO: test more
+
+  def test_quality_flag(self):
+    self.assertTrue(self._rx(self._angle_meas_msg(0)))
+    self.assertFalse(self._rx(self._angle_meas_msg(0, steer_angle_initializing=True)))
+
+  def test_steering_angle_measurements(self):
+    self._common_measurement_test(self._angle_meas_msg, -90, 90, self.DEG_TO_CAN, self.safety.get_angle_meas_min, self.safety.get_angle_meas_max)
 
 
 class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
