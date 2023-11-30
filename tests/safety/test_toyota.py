@@ -158,6 +158,10 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
   ANGLE_RATE_UP = [0.3, 0.15, 0.15]  # windup limit
   ANGLE_RATE_DOWN = [0.36, 0.26, 0.26]  # unwind limit
 
+  MAX_MEAS_TORQUE = 1500  # max allowed measured EPS torque before wind down
+  MAX_LTA_ANGLE = 94.9461  # PCS faults if commanding above this, deg
+  MAX_LTA_DRIVER_TORQUE_ALLOWANCE = 150  # max allowed driver torque before wind down
+
   def setUp(self):
     # raise unittest.SkipTest
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
@@ -185,6 +189,40 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
 
   def test_steering_angle_measurements(self):
     self._common_measurement_test(self._angle_meas_msg, -90, 90, self.DEG_TO_CAN, self.safety.get_angle_meas_min, self.safety.get_angle_meas_max)
+
+  def test_angle_measurements(self):
+    """Tests rx hook correctly clips the angle measurement, since it is to be compared to LTA cmd when inactive"""
+    for angle in np.arange(0, self.MAX_LTA_ANGLE * 2, 1):
+      for a in (angle, -angle, 0, 0, 0, 0):
+        self._rx(self._angle_meas_msg(a))
+
+      clipped_angle = min(angle, self.MAX_LTA_ANGLE)
+      self.assertEqual(self.safety.get_angle_meas_min(), round(-clipped_angle * self.DEG_TO_CAN))
+      self.assertEqual(self.safety.get_angle_meas_max(), round(clipped_angle * self.DEG_TO_CAN))
+
+      self._rx(self._angle_meas_msg(0))
+      self.assertEqual(self.safety.get_angle_meas_min(), round(-clipped_angle * self.DEG_TO_CAN))
+      self.assertEqual(self.safety.get_angle_meas_max(), 0)
+
+      self._rx(self._angle_meas_msg(0))
+      self.assertEqual(self.safety.get_angle_meas_min(), 0)
+      self.assertEqual(self.safety.get_angle_meas_max(), 0)
+
+  # def test_angle_cmd_when_enabled(self):
+  #   self.safety.set_controls_allowed(True)
+  #   # def _lta_msg(self, req, req2, angle_cmd, setme_x64=100):
+  #   self.assertTrue(self._tx(self._lta_msg(1, 1, 0, 100)))
+  #   for _ in range(6):
+  #     self.assertTrue(self._rx(self._torque_meas_msg(self.MAX_MEAS_TORQUE + 1)))
+  #
+  #   self.assertTrue(self._tx(self._lta_msg(1, 1, 0, 100)))
+  #   for _ in range(6):
+  #     self.assertTrue(self._rx(self._torque_meas_msg(self.MAX_MEAS_TORQUE + 2)))
+  #
+  #   self.assertFalse(self._tx(self._lta_msg(1, 1, 0, 100)))
+  #   self.assertFalse(self._tx(self._lta_msg(0, 0, 0, 100)))
+  #   self.assertTrue(self._tx(self._lta_msg(1, 1, 0, 0)))
+  #   self.assertTrue(self._tx(self._lta_msg(0, 0, 0, 0)))
 
 
 class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
