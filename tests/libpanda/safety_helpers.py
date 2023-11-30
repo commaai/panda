@@ -33,6 +33,7 @@ def setup_safety_helpers(ffi):
   void set_desired_angle_last(int t);
   void set_angle_meas(int min, int max);
   int get_desired_angle_last();
+  void set_angle_meas(int min, int max);
   int get_angle_meas_min(void);
   int get_angle_meas_max(void);
 
@@ -85,6 +86,7 @@ class PandaSafety(Protocol):
   def set_desired_angle_last(self, t: int) -> None: ...
   def set_angle_meas(self, min: int, max: int) -> None: ...  # noqa: A002
   def get_desired_angle_last(self) -> int: ...
+  def set_angle_meas(self, min: int, max: int) -> None: ...  # noqa: A002
   def get_angle_meas_min(self) -> int: ...
   def get_angle_meas_max(self) -> int: ...
 
