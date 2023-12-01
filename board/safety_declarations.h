@@ -115,7 +115,7 @@ typedef struct {
   const bool check_checksum;         // true is checksum check is performed
   const uint8_t max_counter;         // maximum value of the counter. 0 means that the counter check is skipped
   const bool quality_flag;           // true is quality flag check is performed
-  const uint32_t expected_freq;      // expected frequency of the message [Hz]
+  const uint32_t frequency;      // expected frequency of the message [Hz]
 } CanMsgCheck;
 
 // params and flags about checksum, counter and frequency checks for each monitored address
