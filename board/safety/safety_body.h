@@ -3,7 +3,7 @@ const CanMsg BODY_TX_MSGS[] = {{0x250, 0, 8}, {0x250, 0, 6}, {0x251, 0, 5},  // 
                                {0x1, 0, 8}}; // CAN flasher
 
 RxCheck body_rx_checks[] = {
-  {.msg = {{0x201, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_freq = 100U}, { 0 }, { 0 }}},
+  {.msg = {{0x201, 0, 8, .check_checksum = false, .max_counter = 0U, .frequency = 100U}, { 0 }, { 0 }}},
 };
 
 static void body_rx_hook(CANPacket_t *to_push) {

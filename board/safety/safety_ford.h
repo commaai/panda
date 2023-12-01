@@ -58,14 +58,14 @@ const CanMsg FORD_CANFD_LONG_TX_MSGS[] = {
 // warning: quality flags are not yet checked in openpilot's CAN parser,
 // this may be the cause of blocked messages
 RxCheck ford_rx_checks[] = {
-  {.msg = {{FORD_BrakeSysFeatures, 0, 8, .check_checksum = true, .max_counter = 15U, .quality_flag=true, .expected_freq = 50U}, { 0 }, { 0 }}},
+  {.msg = {{FORD_BrakeSysFeatures, 0, 8, .check_checksum = true, .max_counter = 15U, .quality_flag=true, .frequency = 50U}, { 0 }, { 0 }}},
   // TODO: FORD_EngVehicleSpThrottle2 has a counter that skips by 2, understand and enable counter check
-  {.msg = {{FORD_EngVehicleSpThrottle2, 0, 8, .check_checksum = true, .quality_flag=true, .expected_freq = 50U}, { 0 }, { 0 }}},
-  {.msg = {{FORD_Yaw_Data_FD1, 0, 8, .check_checksum = true, .max_counter = 255U, .quality_flag=true, .expected_freq = 100U}, { 0 }, { 0 }}},
+  {.msg = {{FORD_EngVehicleSpThrottle2, 0, 8, .check_checksum = true, .quality_flag=true, .frequency = 50U}, { 0 }, { 0 }}},
+  {.msg = {{FORD_Yaw_Data_FD1, 0, 8, .check_checksum = true, .max_counter = 255U, .quality_flag=true, .frequency = 100U}, { 0 }, { 0 }}},
   // These messages have no counter or checksum
-  {.msg = {{FORD_EngBrakeData, 0, 8, .expected_freq = 10U}, { 0 }, { 0 }}},
-  {.msg = {{FORD_EngVehicleSpThrottle, 0, 8, .expected_freq = 100U}, { 0 }, { 0 }}},
-  {.msg = {{FORD_DesiredTorqBrk, 0, 8, .expected_freq = 50U}, { 0 }, { 0 }}},
+  {.msg = {{FORD_EngBrakeData, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},
+  {.msg = {{FORD_EngVehicleSpThrottle, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},
+  {.msg = {{FORD_DesiredTorqBrk, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},
 };
 
 static uint8_t ford_get_counter(CANPacket_t *to_push) {
