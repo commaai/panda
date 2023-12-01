@@ -141,18 +141,8 @@ class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSaf
 
 class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest):
 
-  # # Curvature control limits
-  # DEG_TO_CAN = 50000  # 1 / (2e-5) rad to can
-  # MAX_CURVATURE = 0.02
-  # MAX_CURVATURE_ERROR = 0.002
-  # CURVATURE_ERROR_MIN_SPEED = 10.0  # m/s
-  #
-  # ANGLE_RATE_BP = [5., 25., 25.]
-  # ANGLE_RATE_UP = [0.0002, 0.0001, 0.0001]  # windup limit
-  # ANGLE_RATE_DOWN = [0.000225, 0.00015, 0.00015]  # unwind limit
-
   # Angle control limits
-  DEG_TO_CAN = 17.452007  # 1 / 0.0573
+  DEG_TO_CAN = 17.452007  # 1 / 0.0573 deg to can
 
   ANGLE_RATE_BP = [5., 25., 25.]
   ANGLE_RATE_UP = [0.3, 0.15, 0.15]  # windup limit
