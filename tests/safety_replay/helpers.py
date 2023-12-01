@@ -23,6 +23,8 @@ def is_steering_msg(mode, param, addr):
     ret = addr == 0x122
   elif mode == Panda.SAFETY_FORD:
     ret = addr == 0x3d3
+  elif mode == Panda.SAFETY_NISSAN:
+    ret = addr == 0x169
   return ret
 
 def get_steer_value(mode, param, to_send):
@@ -49,6 +51,9 @@ def get_steer_value(mode, param, to_send):
     torque = -to_signed(torque, 13)
   elif mode == Panda.SAFETY_FORD:
     angle = ((to_send.data[0] << 3) | (to_send.data[1] >> 5)) - 1000
+  elif mode == Panda.SAFETY_NISSAN:
+    angle = (to_send.data[0] << 10) | (to_send.data[1] << 2) | (to_send.data[2] >> 6)
+    angle = -angle + (1310 * 100)
   return torque, angle
 
 def package_can_msg(msg):
@@ -71,4 +76,5 @@ def init_segment(safety, lr, mode, param):
   elif angle != 0:
     safety.set_controls_allowed(1)
     safety.set_desired_angle_last(angle)
+    safety.set_angle_meas(angle, angle)
   assert safety.safety_tx_hook(to_send), "failed to initialize panda safety for segment"

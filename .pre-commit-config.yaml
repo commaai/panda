@@ -9,7 +9,7 @@ repos:
     - id: check-executables-have-shebangs
     - id: check-shebang-scripts-are-executable
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.7.0
+  rev: v1.7.1
   hooks:
     - id: mypy
       additional_dependencies: ['git+https://github.com/numpy/numpy-stubs', 'types-requests', 'types-atomicwrites',
