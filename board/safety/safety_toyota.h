@@ -129,6 +129,7 @@ static void toyota_rx_hook(CANPacket_t *to_push) {
       if (!steer_angle_initializing) {
         int angle_meas_new = (GET_BYTE(to_push, 3) << 8U) | GET_BYTE(to_push, 4);
         angle_meas_new = CLAMP(to_signed(angle_meas_new, 16), -TOYOTA_LTA_MAX_ANGLE, TOYOTA_LTA_MAX_ANGLE);
+//        print("angle_meas_new: "); puth(ABS(angle_meas_new)); print("\n");
         update_sample(&angle_meas, angle_meas_new);
       }
     }
@@ -237,11 +238,16 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
       int setme_x64 = GET_BYTE(to_send, 5);
       int lta_angle = (GET_BYTE(to_send, 1) << 8) | GET_BYTE(to_send, 2);
       lta_angle = to_signed(lta_angle, 16);
+//      print("lta_angle tx: "); puth(ABS(lta_angle)); print("\n");
 
       bool steer_control_enabled = lta_request || lta_request2;
       if (toyota_lta) {
         // check angle rate limits and inactive angle
         if (steer_angle_cmd_checks(lta_angle, steer_control_enabled, TOYOTA_STEERING_LIMITS)) {
+          tx = false;
+        }
+
+        if (lta_request != lta_request2) {
           tx = false;
         }
 
