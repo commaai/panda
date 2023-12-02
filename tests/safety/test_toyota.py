@@ -41,7 +41,6 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.InterceptorSafetyTe
     return self.packer.make_can_msg_panda("STEERING_LKA", 0, values)
 
   def _angle_meas_msg(self, angle: float, steer_angle_initializing: bool = False):
-    # TODO: test STEER_ANGLE_INITIALIZING flag
     # This creates a steering torque angle message. Not set on all platforms,
     # relative to init angle on some older TSS2 platforms. Only to be used with LTA
     values = {"STEER_ANGLE": angle, "STEER_ANGLE_INITIALIZING": int(steer_angle_initializing)}
