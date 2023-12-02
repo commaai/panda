@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import unittest
+import itertools
+
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
-
 
 class TestChryslerSafety(common.PandaCarSafetyTest, common.MotorTorqueSteeringSafetyTest):
   TX_MSGS = [[0x23B, 0], [0x292, 0], [0x2A6, 0]]
@@ -24,14 +25,17 @@ class TestChryslerSafety(common.PandaCarSafetyTest, common.MotorTorqueSteeringSa
 
   DAS_BUS = 0
 
+  cnt_button = 0
+
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_pacifica_2017_hybrid_generated")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, 0)
     self.safety.init_tests()
 
-  def _button_msg(self, cancel=False, resume=False):
-    values = {"ACC_Cancel": cancel, "ACC_Resume": resume}
+  def _button_msg(self, cancel=False, resume=False, accel=False, decel=False):
+    values = {"ACC_Cancel": cancel, "ACC_Resume": resume, "ACC_Accel": accel, "ACC_Decel": decel, "COUNTER": self.cnt_button}
+    self.__class__.cnt_button += 1
     return self.packer.make_can_msg_panda("CRUISE_BUTTONS", self.DAS_BUS, values)
 
   def _pcm_status_msg(self, enable):
@@ -96,8 +100,9 @@ class TestChryslerRamDTSafety(TestChryslerSafety):
     values = {"Vehicle_Speed": speed}
     return self.packer.make_can_msg_panda("ESP_8", 0, values)
 
+
 class TestChryslerRamHDSafety(TestChryslerSafety):
-  TX_MSGS = [[0x275, 0], [0x276, 0], [0x23A, 2]]
+  TX_MSGS = [[0x23A, 2], [0x275, 0], [0x276, 0]]
   RELAY_MALFUNCTION_ADDRS = {0: (0x276,)}
   FWD_BLACKLISTED_ADDRS = {2: [0x275, 0x276]}
 
@@ -119,6 +124,127 @@ class TestChryslerRamHDSafety(TestChryslerSafety):
   def _speed_msg(self, speed):
     values = {"Vehicle_Speed": speed}
     return self.packer.make_can_msg_panda("ESP_8", 0, values)
+
+
+class ChryslerLongitudinalBase(common.PandaSafetyTestBase):
+  # pylint: disable=no-member,abstract-method
+
+  DAS_BUS = 0
+
+  MIN_ENGINE_TORQUE = -500
+  MAX_ENGINE_TORQUE = 500
+  INACTIVE_ENGINE_TORQUE = 0
+  MIN_POSSIBLE_ENGINE_TORQUE = -500
+  MAX_POSSIBLE_ENGINE_TORQUE = 1548
+
+  MIN_ACCEL = -3.5
+  MAX_ACCEL = 2.0
+  INACTIVE_ACCEL = 4.0
+  MIN_POSSIBLE_ACCEL = -16.0
+  MAX_POSSIBLE_ACCEL = 4.0
+
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "ChryslerLongitudinalBase":
+      cls.safety = None
+      raise unittest.SkipTest
+
+  # override these tests from PandaCarSafetyTest, chrysler longitudinal uses button enable
+  def test_disable_control_allowed_from_cruise(self):
+    pass
+
+  def test_enable_control_allowed_from_cruise(self):
+    pass
+
+  def test_sampling_cruise_buttons(self):
+    pass
+
+  def test_cruise_engaged_prev(self):
+    pass
+
+  def test_button_sends(self):
+    pass
+
+  def _pcm_status_msg(self, enable):
+    raise Exception
+
+  def _send_torque_accel_msg(self, enable, torque_active, torque, accel_active, accel):
+    values = {
+      "ACC_AVAILABLE": 1,
+      "ACC_ACTIVE": enable,
+      "ENGINE_TORQUE_REQUEST": torque,
+      "ENGINE_TORQUE_REQUEST_MAX": torque_active,
+      "ACC_DECEL": accel,
+      "ACC_DECEL_REQ": accel_active,
+    }
+    return self.packer.make_can_msg_panda("DAS_3", self.DAS_BUS, values)
+
+  def _send_accel_msg(self, accel):
+    return self._send_torque_accel_msg(1, 0, self.INACTIVE_ENGINE_TORQUE, 1, accel)
+
+  def _send_torque_msg(self, torque):
+    return self._send_torque_accel_msg(1, 1, torque, 0, self.INACTIVE_ACCEL)
+
+  def test_accel_torque_safety_check(self):
+    self._generic_limit_safety_check(self._send_accel_msg,
+                                     self.MIN_ACCEL, self.MAX_ACCEL,
+                                     self.MIN_POSSIBLE_ACCEL, self.MAX_POSSIBLE_ACCEL,
+                                     test_delta=0.1, inactive_value=self.INACTIVE_ACCEL)
+    self._generic_limit_safety_check(self._send_torque_msg,
+                                     self.MIN_ENGINE_TORQUE, self.MAX_ENGINE_TORQUE,
+                                     self.MIN_POSSIBLE_ENGINE_TORQUE, self.MAX_POSSIBLE_ENGINE_TORQUE,
+                                     test_delta=10, inactive_value=self.INACTIVE_ENGINE_TORQUE)
+
+  def test_buttons(self):
+    enable_buttons = {1 << 2: "resume", 1 << 3: "accel", 1 << 4: "decel"}
+    for cancel_cur, resume_cur, accel_cur, decel_cur in itertools.product([0, 1], repeat=4):
+      for cancel_prev, resume_prev, accel_prev, decel_prev in itertools.product([0, 1], repeat=4):
+        self._rx(self._button_msg(cancel=False, resume=False, accel=False, decel=False))
+        self.safety.set_controls_allowed(0)
+        for _ in range(10):
+          self._rx(self._button_msg(cancel_prev, resume_prev, accel_prev, decel_prev))
+          self.assertFalse(self.safety.get_controls_allowed())
+
+        # should enter controls allowed on falling edge and not transitioning to cancel
+        button_cur = enable_buttons.get(cancel_cur if cancel_cur else (resume_cur << 2) | (accel_cur << 3) | (decel_cur << 4))
+        button_prev = enable_buttons.get(cancel_prev if cancel_prev else (resume_prev << 2) | (accel_prev << 3) | (decel_prev << 4))
+        should_enable = not cancel_cur and not cancel_prev and button_prev is not None and button_prev != button_cur
+
+        self._rx(self._button_msg(cancel_cur, resume_cur, accel_cur, decel_cur))
+        self.assertEqual(should_enable, self.safety.get_controls_allowed())
+
+
+class TestChryslerLongitudinalSafety(ChryslerLongitudinalBase, TestChryslerSafety):
+  TX_MSGS = [[0x23B, 0], [0x292, 0], [0x2A6, 0], [0x1F4, 0], [0x1F5, 0], [0x271, 0]]
+  FWD_BLACKLISTED_ADDRS = {0: [0x23B], 2: [0x292, 0x2A6, 0x1F4, 0x1F5, 0x271]}
+
+  def setUp(self):
+    self.packer = CANPackerPanda("chrysler_pacifica_2017_hybrid_generated")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, Panda.FLAG_CHRYSLER_LONG)
+    self.safety.init_tests()
+
+
+class TestChryslerRamDTLongitudinalSafety(ChryslerLongitudinalBase, TestChryslerRamDTSafety):
+  TX_MSGS = [[0xB1, 0], [0xA6, 0], [0xFA, 0], [0x99, 0], [0xE8, 0], [0xA3, 0]]
+  FWD_BLACKLISTED_ADDRS = {0: [0xB1], 2: [0xA6, 0xFA, 0x99, 0xE8, 0xA3]}
+
+  def setUp(self):
+    self.packer = CANPackerPanda("chrysler_ram_dt_generated")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, Panda.FLAG_CHRYSLER_RAM_DT | Panda.FLAG_CHRYSLER_LONG)
+    self.safety.init_tests()
+
+
+class TestChryslerRamHDLongitudinalSafety(ChryslerLongitudinalBase, TestChryslerRamHDSafety):
+  TX_MSGS = [[0x23A, 0], [0x275, 0], [0x276, 0], [0x1F4, 0], [0x1F5, 0], [0x271, 0]]
+  FWD_BLACKLISTED_ADDRS = {0: [0x23A], 2: [0x275, 0x276, 0x1F4, 0x1F5, 0x271]}
+
+  def setUp(self):
+    self.packer = CANPackerPanda("chrysler_ram_hd_generated")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, Panda.FLAG_CHRYSLER_RAM_HD | Panda.FLAG_CHRYSLER_LONG)
+    self.safety.init_tests()
 
 
 if __name__ == "__main__":
