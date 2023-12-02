@@ -93,14 +93,10 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.InterceptorSafetyTe
                                                                   [0, 1], [0, 1],
                                                                   [0, 50, 100],
                                                                   np.linspace(-20, 20, 5)):
-      with self.subTest(engaged=engaged, req=req, req2=req2, setme_x64=setme_x64, angle=angle):
-        self.safety.set_controls_allowed(engaged)
-        self._rx(self._angle_meas_msg(angle))
+      self.safety.set_controls_allowed(engaged)
 
-        should_tx = int(not req and not req2 and angle == 0 and setme_x64 == 0)
-        did_tx = self._tx(self._lta_msg(req, req2, angle, setme_x64))
-        # print(f'{engaged=}, {req=}, {req2=}, {setme_x64=}, {angle=}, {should_tx=}, {did_tx=}')
-        self.assertEqual(should_tx, did_tx)
+      should_tx = not req and not req2 and angle == 0 and setme_x64 == 0
+      self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle, setme_x64)))
 
   def test_rx_hook(self):
     # checksum checks
@@ -169,11 +165,6 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
 
       should_tx = not steer_req and torque == 0
       self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(torque, steer_req)))
-
-  # def test_lta_steer_cmd(self):
-  #   # super().test_lta_steer_cmd()
-  #   pass
-  #   # TODO: test more
 
   def test_lta_steer_cmd(self):
     """
