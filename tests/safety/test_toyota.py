@@ -24,6 +24,9 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.InterceptorSafetyTe
   INTERCEPTOR_THRESHOLD = 805
   EPS_SCALE = 73
 
+  packer: CANPackerPanda
+  safety: libpanda_py.Panda
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__.endswith("Base"):
