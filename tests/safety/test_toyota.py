@@ -165,6 +165,7 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
                                                         [0, 1],
                                                         np.linspace(-1500, 1500, 7)):
       self.safety.set_controls_allowed(engaged)
+      self.safety.set_desired_torque_last(int(torque))
 
       should_tx = not steer_req and torque == 0
       self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(torque, steer_req)))
