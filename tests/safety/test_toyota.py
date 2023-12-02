@@ -188,7 +188,7 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
           # Test the two steer request bits and SETME_X64 torque wind down signal
           for req, req2, setme_x64 in itertools.product([0, 1], [0, 1], [0, 50, 100]):
             mismatch = not (req or req2) and setme_x64 != 0
-            should_tx = (setme_x64 in (0, 100)) and not mismatch
+            should_tx = req == req2 and (setme_x64 in (0, 100)) and not mismatch
             with self.subTest(req=req, req2=req2, setme_x64=setme_x64):
               self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle, setme_x64)))
 
