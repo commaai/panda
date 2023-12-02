@@ -24,8 +24,6 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.InterceptorSafetyTe
   INTERCEPTOR_THRESHOLD = 805
   EPS_SCALE = 73
 
-  DEG_TO_CAN = 17.452007  # 1 / 0.0573 deg to can
-
   @classmethod
   def setUpClass(cls):
     if cls.__name__.endswith("Base"):
@@ -144,6 +142,8 @@ class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSaf
 class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest):
 
   # Angle control limits
+  DEG_TO_CAN = 17.452007  # 1 / 0.0573 deg to can
+
   ANGLE_RATE_BP = [5., 25., 25.]
   ANGLE_RATE_UP = [0.3, 0.15, 0.15]  # windup limit
   ANGLE_RATE_DOWN = [0.36, 0.26, 0.26]  # unwind limit
