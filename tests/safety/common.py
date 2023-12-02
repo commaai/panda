@@ -707,9 +707,8 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
         # Stay within limits
         # Up
-        with self.subTest(a=a, max_delta_up=max_delta_up):
-          self.assertTrue(self._tx(self._angle_cmd_msg(a + sign_of(a) * max_delta_up, True)))
-          self.assertTrue(self.safety.get_controls_allowed())
+        self.assertTrue(self._tx(self._angle_cmd_msg(a + sign_of(a) * max_delta_up, True)))
+        self.assertTrue(self.safety.get_controls_allowed())
 
         # Don't change
         self.assertTrue(self._tx(self._angle_cmd_msg(a, True)))
