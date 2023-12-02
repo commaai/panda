@@ -31,8 +31,10 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.InterceptorSafetyTe
       cls.safety = None
       raise unittest.SkipTest
 
-  def _torque_meas_msg(self, torque):
+  def _torque_meas_msg(self, torque, driver_torque=None):
     values = {"STEER_TORQUE_EPS": (torque / self.EPS_SCALE) * 100.}
+    if driver_torque is not None:
+      values["STEER_TORQUE_DRIVER"] = driver_torque
     return self.packer.make_can_msg_panda("STEER_TORQUE_SENSOR", 0, values)
 
   # Both torque and angle safety modes test with each other's steering commands
@@ -93,6 +95,7 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.InterceptorSafetyTe
                                                                   np.linspace(-20, 20, 5)):
       with self.subTest(engaged=engaged, req=req, req2=req2, setme_x64=setme_x64, angle=angle):
         self.safety.set_controls_allowed(engaged)
+        self._rx(self._angle_meas_msg(angle))
 
         should_tx = int(not req and not req2 and angle == 0 and setme_x64 == 0)
         did_tx = self._tx(self._lta_msg(req, req2, angle, setme_x64))
@@ -152,7 +155,6 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
   MAX_LTA_DRIVER_TORQUE_ALLOWANCE = 150  # max allowed driver torque before wind down
 
   def setUp(self):
-    # raise unittest.SkipTest
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_LTA)
@@ -168,9 +170,59 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
       should_tx = not steer_req and torque == 0
       self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(torque, steer_req)))
 
+  # def test_lta_steer_cmd(self):
+  #   # super().test_lta_steer_cmd()
+  #   pass
+  #   # TODO: test more
+
   def test_lta_steer_cmd(self):
-    super().test_lta_steer_cmd()
-    # TODO: test more
+    """
+    Tests the LTA steering command message
+    controls_allowed:
+    * STEER_REQUEST and STEER_REQUEST_2 do not mismatch
+    * SETME_X64 is only set to 0 or 100 when STEER_REQUEST and STEER_REQUEST_2 are both 1
+    * Full torque messages are blocked if either EPS torque or driver torque is above the threshold
+
+    not controls_allowed:
+    * STEER_REQUEST, STEER_REQUEST_2, and SETME_X64 are all 0
+    """
+    for controls_allowed in (True, False):
+      for angle in np.arange(-90, 90, 1):
+        self.safety.set_controls_allowed(controls_allowed)
+        self._reset_angle_measurement(angle)
+        self._set_prev_desired_angle(angle)
+
+        self.assertTrue(self._tx(self._lta_msg(0, 0, angle, 0)))
+        if controls_allowed:
+          # Test the two steer request bits and SETME_X64 torque wind down signal
+          for req, req2, setme_x64 in itertools.product([0, 1], [0, 1], [0, 50, 100]):
+            mismatch = not (req or req2) and setme_x64 != 0
+            should_tx = (setme_x64 in (0, 100)) and not mismatch
+            with self.subTest(req=req, req2=req2, setme_x64=setme_x64):
+              self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle, setme_x64)))
+
+          # Test max EPS torque and driver override thresholds
+          cases = itertools.product(
+            (0, self.MAX_MEAS_TORQUE - 1, self.MAX_MEAS_TORQUE, self.MAX_MEAS_TORQUE + 1, self.MAX_MEAS_TORQUE * 2),
+            (0, self.MAX_LTA_DRIVER_TORQUE_ALLOWANCE - 1, self.MAX_LTA_DRIVER_TORQUE_ALLOWANCE,
+             self.MAX_LTA_DRIVER_TORQUE_ALLOWANCE + 1, self.MAX_LTA_DRIVER_TORQUE_ALLOWANCE * 2)
+          )
+
+          for eps_torque, driver_torque in cases:
+            for sign in (-1, 1):
+              for _ in range(6):
+                self._rx(self._torque_meas_msg(sign * eps_torque, sign * driver_torque))
+
+              # Toyota adds 1 to EPS torque since it is rounded after EPS factor
+              should_tx = (eps_torque - 1) <= self.MAX_MEAS_TORQUE and driver_torque <= self.MAX_LTA_DRIVER_TORQUE_ALLOWANCE
+              self.assertEqual(should_tx, self._tx(self._lta_msg(1, 1, angle, 100)))
+              self.assertTrue(self._tx(self._lta_msg(1, 1, angle, 0)))  # should tx if we wind down torque
+
+        else:
+          # Controls not allowed
+          for req, req2, setme_x64 in itertools.product([0, 1], [0, 1], [0, 50, 100]):
+            should_tx = not (req or req2) and setme_x64 == 0
+            self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle, setme_x64)))
 
   def test_steering_angle_measurements(self, max_angle=None):
     # Measurement test tests max angle + 0.5 which will fail
