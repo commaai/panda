@@ -205,22 +205,6 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
         self.assertEqual(self.safety.get_angle_meas_min(), 0)
         self.assertEqual(self.safety.get_angle_meas_max(), 0)
 
-  # def test_angle_cmd_when_enabled(self):
-  #   self.safety.set_controls_allowed(True)
-  #   # def _lta_msg(self, req, req2, angle_cmd, setme_x64=100):
-  #   self.assertTrue(self._tx(self._lta_msg(1, 1, 0, 100)))
-  #   for _ in range(6):
-  #     self.assertTrue(self._rx(self._torque_meas_msg(self.MAX_MEAS_TORQUE + 1)))
-  #
-  #   self.assertTrue(self._tx(self._lta_msg(1, 1, 0, 100)))
-  #   for _ in range(6):
-  #     self.assertTrue(self._rx(self._torque_meas_msg(self.MAX_MEAS_TORQUE + 2)))
-  #
-  #   self.assertFalse(self._tx(self._lta_msg(1, 1, 0, 100)))
-  #   self.assertFalse(self._tx(self._lta_msg(0, 0, 0, 100)))
-  #   self.assertTrue(self._tx(self._lta_msg(1, 1, 0, 0)))
-  #   self.assertTrue(self._tx(self._lta_msg(0, 0, 0, 0)))
-
 
 class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
 
