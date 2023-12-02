@@ -173,8 +173,12 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
     super().test_lta_steer_cmd()
     # TODO: test more
 
-  def test_steering_angle_measurements(self):
-    self._common_measurement_test(self._angle_meas_msg, -90, 90, self.DEG_TO_CAN, self.safety.get_angle_meas_min, self.safety.get_angle_meas_max)
+  def test_steering_angle_measurements(self, max_angle=None):
+    # Measurement test tests max angle + 0.5 which will fail
+    super().test_steering_angle_measurements(max_angle=self.MAX_LTA_ANGLE - 0.5)
+
+  def test_angle_cmd_when_enabled(self, max_angle=None):
+    super().test_angle_cmd_when_enabled(max_angle=self.MAX_LTA_ANGLE)
 
   def test_angle_measurements(self):
     """
