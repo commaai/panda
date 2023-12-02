@@ -2,7 +2,6 @@
 import argparse
 import os
 from collections import Counter
-from tqdm import tqdm
 
 from panda.tests.libpanda import libpanda_py
 from panda.tests.safety_replay.helpers import package_can_msg, init_segment
@@ -27,7 +26,7 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
   can_msgs = [m for m in lr if m.which() in ('can', 'sendcan')]
   start_t = can_msgs[0].logMonoTime
   end_t = can_msgs[-1].logMonoTime
-  for msg in tqdm(can_msgs):
+  for msg in can_msgs:
     safety.set_timer((msg.logMonoTime // 1000) % 0xFFFFFFFF)
 
     # skip start and end of route, warm up/down period
@@ -40,7 +39,6 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
         to_send = package_can_msg(canmsg)
         sent = safety.safety_tx_hook(to_send)
         if not sent:
-          print('blocked!')
           tx_blocked += 1
           tx_controls_blocked += safety.get_controls_allowed()
           blocked_addrs[canmsg.address] += 1
@@ -88,7 +86,7 @@ if __name__ == "__main__":
   s = SegmentName(args.route_or_segment_name[0], allow_route_name=True)
 
   r = Route(s.route_name.canonical_name)
-  logs = r.log_paths()[s.segment_num:s.segment_num+1] if s.segment_num >= 0 else r.log_paths()[1:]
+  logs = r.log_paths()[s.segment_num:s.segment_num+1] if s.segment_num >= 0 else r.log_paths()
   lr = MultiLogIterator(logs, sort_by_time=True)
 
   if None in (args.mode, args.param, args.alternative_experience):
