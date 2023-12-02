@@ -240,26 +240,29 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
 
       bool steer_control_enabled = lta_request || lta_request2;
       if (toyota_lta) {
+        // check angle rate limits and inactive angle
         if (steer_angle_cmd_checks(lta_angle, steer_control_enabled, TOYOTA_STEERING_LIMITS)) {
           tx = false;
         }
 
-        // if allowing torque, ensure we're not violating any max/user torque limits
-        if (setme_x64 != 0) {
-          int driver_torque = MIN(ABS(torque_driver.min), ABS(torque_driver.max));
-          if (driver_torque > TOYOTA_LTA_MAX_DRIVER_TORQUE) {
-            tx = false;
-          }
-          int eps_torque = MIN(ABS(torque_meas.min), ABS(torque_meas.max));
-          if (eps_torque > TOYOTA_LTA_MAX_MEAS_TORQUE) {
-            tx = false;
-          }
-          if (!steer_control_enabled) {
-            tx = false;
-          }
+        // SETME_X64 is gated on steer request
+        if (!steer_control_enabled && (setme_x64 != 0)) {
+          tx = false;
         }
 
+        // SETME_X64 can only be no or full torque
         if ((setme_x64 != 0) && (setme_x64 != 100)) {
+          tx = false;
+        }
+
+        // check if we should wind down torque
+        int driver_torque = MIN(ABS(torque_driver.min), ABS(torque_driver.max));
+        if ((driver_torque > TOYOTA_LTA_MAX_DRIVER_TORQUE) && (setme_x64 != 0)) {
+          tx = false;
+        }
+
+        int eps_torque = MIN(ABS(torque_meas.min), ABS(torque_meas.max));
+        if ((eps_torque > TOYOTA_LTA_MAX_MEAS_TORQUE) && (setme_x64 != 0)) {
           tx = false;
         }
 
