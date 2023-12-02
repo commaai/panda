@@ -91,7 +91,7 @@ static bool toyota_get_quality_flag_valid(CANPacket_t *to_push) {
   if (toyota_lta) {
     if (addr == 0x260) {
       // This is always 1 on non-TSS2 platforms
-      valid = GET_BIT(to_push, 3) == 0U;  // STEER_ANGLE_INITIALIZING
+      valid = GET_BIT(to_push, 3U) == 0U;  // STEER_ANGLE_INITIALIZING
     }
   } else {
     valid = true;
@@ -125,7 +125,7 @@ static void toyota_rx_hook(CANPacket_t *to_push) {
 
       // LTA request angle should match current angle while inactive, clipped to max accepted angle.
       // note that angle can be relative to init angle on some TSS2 platforms, LTA has the same offset
-      bool steer_angle_initializing = GET_BIT(to_push, 3) != 0U;
+      bool steer_angle_initializing = GET_BIT(to_push, 3U) != 0U;
       if (!steer_angle_initializing) {
         int angle_meas_new = (GET_BYTE(to_push, 3) << 8U) | GET_BYTE(to_push, 4);
         angle_meas_new = CLAMP(to_signed(angle_meas_new, 16), -TOYOTA_LTA_MAX_ANGLE, TOYOTA_LTA_MAX_ANGLE);
