@@ -34,7 +34,7 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.InterceptorSafetyTe
       cls.safety = None
       raise unittest.SkipTest
 
-  def _torque_meas_msg(self, torque, driver_torque=None):
+  def _torque_meas_msg(self, torque: int, driver_torque: int | None = None):
     values = {"STEER_TORQUE_EPS": (torque / self.EPS_SCALE) * 100.}
     if driver_torque is not None:
       values["STEER_TORQUE_DRIVER"] = driver_torque
@@ -193,8 +193,7 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
           for req, req2, setme_x64 in itertools.product([0, 1], [0, 1], [0, 50, 100]):
             mismatch = not (req or req2) and setme_x64 != 0
             should_tx = req == req2 and (setme_x64 in (0, 100)) and not mismatch
-            with self.subTest(req=req, req2=req2, setme_x64=setme_x64):
-              self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle, setme_x64)))
+            self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle, setme_x64)))
 
           # Test max EPS torque and driver override thresholds
           cases = itertools.product(
