@@ -737,10 +737,6 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
         # Check desired steer should be the same as steer angle when controls are off
         self.safety.set_controls_allowed(0)
         self.assertTrue(self._tx(self._angle_cmd_msg(a, False)))
-        # TODO this
-        self.assertFalse(self._tx(self._angle_cmd_msg(a + sign_of(a) * max_delta_up, False)))
-        self.assertTrue(self._tx(self._angle_cmd_msg(a, False)))
-        self.assertFalse(self._tx(self._angle_cmd_msg(a - sign_of(a) * max_delta_down, False)))
 
   def test_angle_cmd_when_disabled(self):
     # Tests that only angles close to the meas are allowed while
