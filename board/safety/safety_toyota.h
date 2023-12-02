@@ -239,7 +239,12 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
       lta_angle = to_signed(lta_angle, 16);
 
       bool steer_control_enabled = lta_request || lta_request2;
-      if (toyota_lta) {
+      if (!toyota_lta) {
+        // using torque (LKA), block LTA msgs with actuation requests
+        if (steer_control_enabled || (lta_angle != 0) || (setme_x64 != 0)) {
+          tx = false;
+        }
+      } else {
         // check angle rate limits and inactive angle
         if (steer_angle_cmd_checks(lta_angle, steer_control_enabled, TOYOTA_STEERING_LIMITS)) {
           tx = false;
@@ -267,12 +272,6 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
 
         int eps_torque = MIN(ABS(torque_meas.min), ABS(torque_meas.max));
         if ((eps_torque > TOYOTA_LTA_MAX_MEAS_TORQUE) && (setme_x64 != 0)) {
-          tx = false;
-        }
-
-      } else {
-        // using torque (LKA), block LTA msgs with actuation requests
-        if (steer_control_enabled || (lta_angle != 0) || (setme_x64 != 0)) {
           tx = false;
         }
       }
