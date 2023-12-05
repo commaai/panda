@@ -60,7 +60,7 @@ RxCheck toyota_rx_checks[] = {
 };
 
 RxCheck toyota_lta_rx_checks[] = {
-  // Check quality flag for angle measurement
+  // Check the quality flag for angle measurement when using LTA, since it's not set on TSS-P cars
   TOYOTA_COMMON_RX_CHECKS(true)
 };
 
@@ -97,7 +97,6 @@ static bool toyota_get_quality_flag_valid(CANPacket_t *to_push) {
 
   bool valid = false;
   if (addr == 0x260) {
-    // This is always 1 on non-TSS2 platforms
     valid = GET_BIT(to_push, 3U) == 0U;  // STEER_ANGLE_INITIALIZING
   }
   return valid;
