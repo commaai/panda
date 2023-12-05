@@ -15,7 +15,7 @@ typedef struct {
   const int ACCEL_GAS;
   const int LKAS_COMMAND;
   const int CRUISE_BUTTONS;
-  const int LKAS_HUD;
+  const int DAS_6;
   const int ACC_1;
 } ChryslerCuswAddrs;
 
@@ -27,14 +27,14 @@ const ChryslerCuswAddrs CHRYSLER_CUSW_ADDRS = {
   .ACCEL_GAS        = 0x1FE,
   .LKAS_COMMAND     = 0x1F6,
   .CRUISE_BUTTONS   = 0x2FA,
-  .LKAS_HUD         = 0x5DC,
+  .DAS_6            = 0x5DC,
   .ACC_1            = 0x3EE,
 };
 
 const CanMsg CHRYSLER_CUSW_TX_MSGS[] = {
   {CHRYSLER_CUSW_ADDRS.CRUISE_BUTTONS, 0, 8},
   {CHRYSLER_CUSW_ADDRS.LKAS_COMMAND, 0, 4},
-  {CHRYSLER_CUSW_ADDRS.LKAS_HUD, 0, 8},
+  {CHRYSLER_CUSW_ADDRS.DAS_6, 0, 4},
 };
 
 RxCheck chrysler_cusw_rx_checks[] = {
@@ -169,7 +169,7 @@ static int chrysler_cusw_fwd_hook(int bus_num, int addr) {
   }
 
   // forward all messages from camera except LKAS messages
-  const bool is_lkas = ((addr == chrysler_cusw_addrs->LKAS_COMMAND) || (addr == chrysler_cusw_addrs->LKAS_HUD));
+  const bool is_lkas = ((addr == chrysler_cusw_addrs->LKAS_COMMAND) || (addr == chrysler_cusw_addrs->DAS_6));
   if ((bus_num == 2) && !is_lkas){
     bus_fwd = 0;
   }
