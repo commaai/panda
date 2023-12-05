@@ -32,21 +32,21 @@ const CanMsg TESLA_PT_TX_MSGS[] = {
 };
 
 RxCheck tesla_rx_checks[] = {
-  {.msg = {{0x2b9, 2, 8, .expected_timestep = 40000U}, { 0 }, { 0 }}},   // DAS_control (25Hz)
-  {.msg = {{0x370, 0, 8, .expected_timestep = 40000U}, { 0 }, { 0 }}},   // EPAS_sysStatus (25Hz)
-  {.msg = {{0x108, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // DI_torque1 (100Hz)
-  {.msg = {{0x118, 0, 6, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // DI_torque2 (100Hz)
-  {.msg = {{0x20a, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},   // BrakeMessage (50Hz)
-  {.msg = {{0x368, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},  // DI_state (10Hz)
-  {.msg = {{0x318, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},  // GTW_carState (10Hz)
+  {.msg = {{0x2b9, 2, 8, .frequency = 25U}, { 0 }, { 0 }}},   // DAS_control
+  {.msg = {{0x370, 0, 8, .frequency = 25U}, { 0 }, { 0 }}},   // EPAS_sysStatus
+  {.msg = {{0x108, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},  // DI_torque1
+  {.msg = {{0x118, 0, 6, .frequency = 100U}, { 0 }, { 0 }}},  // DI_torque2
+  {.msg = {{0x20a, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},   // BrakeMessage
+  {.msg = {{0x368, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},   // DI_state
+  {.msg = {{0x318, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},   // GTW_carState
 };
 
 RxCheck tesla_pt_rx_checks[] = {
-  {.msg = {{0x106, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // DI_torque1 (100Hz)
-  {.msg = {{0x116, 0, 6, .expected_timestep = 10000U}, { 0 }, { 0 }}},   // DI_torque2 (100Hz)
-  {.msg = {{0x1f8, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},   // BrakeMessage (50Hz)
-  {.msg = {{0x2bf, 2, 8, .expected_timestep = 40000U}, { 0 }, { 0 }}},   // DAS_control (25Hz)
-  {.msg = {{0x256, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},  // DI_state (10Hz)
+  {.msg = {{0x106, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},  // DI_torque1
+  {.msg = {{0x116, 0, 6, .frequency = 100U}, { 0 }, { 0 }}},  // DI_torque2
+  {.msg = {{0x1f8, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},   // BrakeMessage
+  {.msg = {{0x2bf, 2, 8, .frequency = 25U}, { 0 }, { 0 }}},   // DAS_control
+  {.msg = {{0x256, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},   // DI_state
 };
 
 bool tesla_longitudinal = false;

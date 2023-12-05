@@ -49,7 +49,7 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.InterceptorSafetyTe
     return self.packer.make_can_msg_panda("ACC_CONTROL", 0, values)
 
   def _speed_msg(self, speed):
-    values = {("WHEEL_SPEED_%s" % n): speed for n in ["FR", "FL", "RR", "RL"]}
+    values = {("WHEEL_SPEED_%s" % n): speed * 3.6 for n in ["FR", "FL", "RR", "RL"]}
     return self.packer.make_can_msg_panda("WHEEL_SPEEDS", 0, values)
 
   def _user_brake_msg(self, brake):
