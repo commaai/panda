@@ -313,13 +313,7 @@ static safety_config toyota_init(uint16_t param) {
   toyota_lta = false;
 #endif
 
-  safety_config ret;
-  if (toyota_lta) {
-    ret = BUILD_SAFETY_CFG(toyota_lta_rx_checks, TOYOTA_TX_MSGS);
-  } else {
-    ret = BUILD_SAFETY_CFG(toyota_rx_checks, TOYOTA_TX_MSGS);
-  }
-  return ret;
+  return BUILD_SAFETY_CFG(toyota_lta ? toyota_lta_rx_checks : toyota_rx_checks, TOYOTA_TX_MSGS);
 }
 
 static int toyota_fwd_hook(int bus_num, int addr) {
