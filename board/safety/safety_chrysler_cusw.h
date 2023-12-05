@@ -100,7 +100,7 @@ static void chrysler_cusw_rx_hook(CANPacket_t *to_push) {
 
   // Measured EPS torque
   if ((bus == 0) && (addr == chrysler_cusw_addrs->EPS_STATUS)) {
-    int torque_meas_new = ((GET_BYTE(to_push, 3) & 0x7U) << 8) + GET_BYTE(to_push, 4) - 2048U;
+    int torque_meas_new = ((GET_BYTE(to_push, 3) & 0xFU) << 8) + GET_BYTE(to_push, 4) - 2048U;
     update_sample(&torque_meas, torque_meas_new);
   }
 
