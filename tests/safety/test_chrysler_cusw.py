@@ -20,7 +20,8 @@ class TestChryslerCusw_Safety(common.PandaCarSafetyTest, common.MotorTorqueSteer
   RT_INTERVAL = 250000
   MAX_TORQUE_ERROR = 80
 
-  LKAS_ACTIVE_VALUE = 1
+  # CUSW actually does not set any bit when requesting torque
+  NO_STEER_REQ_BIT = True
 
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_cusw")
@@ -65,10 +66,6 @@ class TestChryslerCusw_Safety(common.PandaCarSafetyTest, common.MotorTorqueSteer
 
       # can always cancel
       self.assertTrue(self._tx(self._button_msg(cancel=True)))
-
-  def test_steer_req_bit(self):
-    # Control bit doesn't exist for this platform
-    pass
 
 
 if __name__ == "__main__":
