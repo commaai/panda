@@ -160,8 +160,7 @@ static void toyota_rx_hook(CANPacket_t *to_push) {
       // check that all wheel speeds are at zero value
       vehicle_moving = speed != 0;
 
-      speed = ROUND(speed / 4.0 * 0.01 / 3.6 * VEHICLE_SPEED_FACTOR);
-      update_sample(&vehicle_speed, speed);
+      UPDATE_VEHICLE_SPEED(speed / 4.0 * 0.01);
     }
 
     // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224

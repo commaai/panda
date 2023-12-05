@@ -10,6 +10,7 @@
                                    (config).rx_checks_len = sizeof((rx)) / sizeof((rx)[0]))
 #define SET_TX_MSGS(tx, config) ((config).tx_msgs = (tx), \
                                  (config).tx_msgs_len = sizeof((tx)) / sizeof((tx)[0]))
+#define UPDATE_VEHICLE_SPEED(val_kph) (update_sample(&vehicle_speed, ROUND((val_kph) / 3.6 * VEHICLE_SPEED_FACTOR)))
 
 uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
   uint32_t ret = 0U;
@@ -220,7 +221,7 @@ bool brake_pressed_prev = false;
 bool regen_braking = false;
 bool regen_braking_prev = false;
 bool cruise_engaged_prev = false;
-struct sample_t vehicle_speed;
+struct sample_t vehicle_speed;  // m/s
 bool vehicle_moving = false;
 bool acc_main_on = false;  // referred to as "ACC off" in ISO 15622:2018
 int cruise_button_prev = 0;
