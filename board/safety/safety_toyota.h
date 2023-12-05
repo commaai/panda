@@ -48,12 +48,20 @@ const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0
                                  {0x2E4, 0, 5}, {0x191, 0, 8}, {0x411, 0, 8}, {0x412, 0, 8}, {0x343, 0, 8}, {0x1D2, 0, 8},  // LKAS + ACC
                                  {0x200, 0, 6}};  // interceptor
 
+#define TOYOTA_COMMON_RX_CHECKS(lta)                                                                        \
+  {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .frequency = 83U}, { 0 }, { 0 }}},                        \
+  {.msg = {{0x260, 0, 8, .check_checksum = true, .quality_flag = (lta), .frequency = 50U}, { 0 }, { 0 }}},  \
+  {.msg = {{0x1D2, 0, 8, .check_checksum = true, .frequency = 33U}, { 0 }, { 0 }}},                         \
+  {.msg = {{0x224, 0, 8, .check_checksum = false, .frequency = 40U},                                        \
+           {0x226, 0, 8, .check_checksum = false, .frequency = 40U}, { 0 }}},                               \
+
 RxCheck toyota_rx_checks[] = {
-  {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .frequency = 83U}, { 0 }, { 0 }}},
-  {.msg = {{0x260, 0, 8, .check_checksum = true, .quality_flag = true, .frequency = 50U}, { 0 }, { 0 }}},
-  {.msg = {{0x1D2, 0, 8, .check_checksum = true, .frequency = 33U}, { 0 }, { 0 }}},
-  {.msg = {{0x224, 0, 8, .check_checksum = false, .frequency = 40U},
-           {0x226, 0, 8, .check_checksum = false, .frequency = 40U}, { 0 }}},
+  TOYOTA_COMMON_RX_CHECKS(false)
+};
+
+RxCheck toyota_lta_rx_checks[] = {
+  // Check quality flag for angle measurement
+  TOYOTA_COMMON_RX_CHECKS(true)
 };
 
 // safety param flags
@@ -88,13 +96,9 @@ static bool toyota_get_quality_flag_valid(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   bool valid = false;
-  if (toyota_lta) {
-    if (addr == 0x260) {
-      // This is always 1 on non-TSS2 platforms
-      valid = GET_BIT(to_push, 3U) == 0U;  // STEER_ANGLE_INITIALIZING
-    }
-  } else {
-    valid = true;
+  if (addr == 0x260) {
+    // This is always 1 on non-TSS2 platforms
+    valid = GET_BIT(to_push, 3U) == 0U;  // STEER_ANGLE_INITIALIZING
   }
   return valid;
 }
@@ -308,7 +312,14 @@ static safety_config toyota_init(uint16_t param) {
 #else
   toyota_lta = false;
 #endif
-  return BUILD_SAFETY_CFG(toyota_rx_checks, TOYOTA_TX_MSGS);
+
+  safety_config ret;
+  if (toyota_lta) {
+    ret = BUILD_SAFETY_CFG(toyota_lta_rx_checks, TOYOTA_TX_MSGS);
+  } else {
+    ret = BUILD_SAFETY_CFG(toyota_rx_checks, TOYOTA_TX_MSGS);
+  }
+  return ret;
 }
 
 static int toyota_fwd_hook(int bus_num, int addr) {
