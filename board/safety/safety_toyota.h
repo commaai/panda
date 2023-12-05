@@ -178,15 +178,15 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
     // LTA steering check
     // only sent to prevent dash errors, no actuation is accepted
     if (addr == 0x191) {
-      // check the STEER_REQUEST, STEER_REQUEST_2, SETME_X64 STEER_ANGLE_CMD signals
+      // check the STEER_REQUEST, STEER_REQUEST_2, TORQUE_WIND_DOWN, STEER_ANGLE_CMD signals
       bool lta_request = GET_BIT(to_send, 0U) != 0U;
       bool lta_request2 = GET_BIT(to_send, 25U) != 0U;
-      int setme_x64 = GET_BYTE(to_send, 5);
+      int torque_wind_down = GET_BYTE(to_send, 5);
       int lta_angle = (GET_BYTE(to_send, 1) << 8) | GET_BYTE(to_send, 2);
       lta_angle = to_signed(lta_angle, 16);
 
       // block LTA msgs with actuation requests
-      if (lta_request || lta_request2 || (lta_angle != 0) || (setme_x64 != 0)) {
+      if (lta_request || lta_request2 || (lta_angle != 0) || (torque_wind_down != 0)) {
         tx = false;
       }
     }
