@@ -257,24 +257,24 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
           tx = false;
         }
 
-        // SETME_X64 is gated on steer request
-        if (!steer_control_enabled && (setme_x64 != 0)) {
+        // TORQUE_WIND_DOWN is gated on steer request
+        if (!steer_control_enabled && (torque_wind_down != 0)) {
           tx = false;
         }
 
-        // SETME_X64 can only be no or full torque
-        if ((setme_x64 != 0) && (setme_x64 != 100)) {
+        // TORQUE_WIND_DOWN can only be no or full torque
+        if ((torque_wind_down != 0) && (torque_wind_down != 100)) {
           tx = false;
         }
 
         // check if we should wind down torque
         int driver_torque = MIN(ABS(torque_driver.min), ABS(torque_driver.max));
-        if ((driver_torque > TOYOTA_LTA_MAX_DRIVER_TORQUE) && (setme_x64 != 0)) {
+        if ((driver_torque > TOYOTA_LTA_MAX_DRIVER_TORQUE) && (torque_wind_down != 0)) {
           tx = false;
         }
 
         int eps_torque = MIN(ABS(torque_meas.min), ABS(torque_meas.max));
-        if ((eps_torque > TOYOTA_LTA_MAX_MEAS_TORQUE) && (setme_x64 != 0)) {
+        if ((eps_torque > TOYOTA_LTA_MAX_MEAS_TORQUE) && (torque_wind_down != 0)) {
           tx = false;
         }
       }
@@ -312,7 +312,13 @@ static safety_config toyota_init(uint16_t param) {
   toyota_lta = false;
 #endif
 
-  return BUILD_SAFETY_CFG(toyota_lta ? toyota_lta_rx_checks : toyota_rx_checks, TOYOTA_TX_MSGS);
+  safety_config ret;
+  if (toyota_lta) {
+    ret = BUILD_SAFETY_CFG(toyota_lta_rx_checks, TOYOTA_TX_MSGS);
+  } else {
+    ret = BUILD_SAFETY_CFG(toyota_rx_checks, TOYOTA_TX_MSGS);
+  }
+  return ret;
 }
 
 static int toyota_fwd_hook(int bus_num, int addr) {
