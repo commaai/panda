@@ -20,9 +20,6 @@ class TestChryslerCusw_Safety(common.PandaCarSafetyTest, common.MotorTorqueSteer
   RT_INTERVAL = 250000
   MAX_TORQUE_ERROR = 80
 
-  # CUSW actually does not set any bit when requesting torque
-  NO_STEER_REQ_BIT = True
-
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_cusw")
     self.safety = libpanda_py.libpanda
@@ -54,7 +51,7 @@ class TestChryslerCusw_Safety(common.PandaCarSafetyTest, common.MotorTorqueSteer
     return self.packer.make_can_msg_panda("EPS_STATUS", 0, values)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
-    values = {"STEERING_TORQUE": torque}
+    values = {"STEERING_TORQUE": torque, "LKAS_CONTROL_BIT": steer_req}
     return self.packer.make_can_msg_panda("LKAS_COMMAND", 0, values)
 
   def test_buttons(self):

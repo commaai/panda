@@ -136,12 +136,12 @@ static bool chrysler_cusw_tx_hook(CANPacket_t *to_send) {
 
   // STEERING
   if (addr == chrysler_cusw_addrs->LKAS_COMMAND) {
-    int desired_torque = ((GET_BYTE(to_send, 0)) << 4) | ((GET_BYTE(to_send, 1) & 0xF0U) >> 4);
-    desired_torque -= 2048;
+    int desired_torque = ((GET_BYTE(to_send, 0)) << 3) | ((GET_BYTE(to_send, 1) & 0xE0U) >> 5);
+    desired_torque -= 1024;
 
     const SteeringLimits limits = CHRYSLER_CUSW_STEERING_LIMITS;
 
-    bool steer_req = desired_torque != 0;
+    bool steer_req = GET_BIT(to_send, 12);
     if (steer_torque_cmd_checks(desired_torque, steer_req, limits)) {
       tx = false;
     }
