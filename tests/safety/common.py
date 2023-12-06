@@ -279,19 +279,19 @@ class TorqueSteeringSafetyTestBase(PandaSafetyTestBase, abc.ABC):
   def _torque_cmd_msg(self, torque, steer_req=1):
     pass
 
-  def _set_prev_torque(self, torque):
-    self.safety.set_desired_torque_last(torque)
-    self.safety.set_rt_torque_last(torque)
+  def _set_prev_torque(self, t):
+    self.safety.set_desired_torque_last(t)
+    self.safety.set_rt_torque_last(t)
 
   def test_steer_safety_check(self):
     for enabled in [0, 1]:
-      for torque in range(int(-self.MAX_TORQUE * 1.25), int(self.MAX_TORQUE * 1.25)):
+      for t in range(int(-self.MAX_TORQUE * 1.5), int(self.MAX_TORQUE * 1.5)):
         self.safety.set_controls_allowed(enabled)
-        self._set_prev_torque(torque)
-        if abs(torque) > self.MAX_TORQUE or (not enabled and abs(torque) > 0):
-          self.assertFalse(self._tx(self._torque_cmd_msg(torque)), f"{enabled=} {torque=}")
+        self._set_prev_torque(t)
+        if abs(t) > self.MAX_TORQUE or (not enabled and abs(t) > 0):
+          self.assertFalse(self._tx(self._torque_cmd_msg(t)))
         else:
-          self.assertTrue(self._tx(self._torque_cmd_msg(torque)), f"{enabled=} {torque=}")
+          self.assertTrue(self._tx(self._torque_cmd_msg(t)))
 
   def test_non_realtime_limit_up(self):
     self.safety.set_controls_allowed(True)
@@ -560,7 +560,7 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
         else:
           send = torque == 0
 
-        self.assertEqual(send, self._tx(self._torque_cmd_msg(torque)), f"{torque=}")
+        self.assertEqual(send, self._tx(self._torque_cmd_msg(torque)))
 
   def test_non_realtime_limit_down(self):
     self.safety.set_controls_allowed(True)
@@ -582,9 +582,9 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
     for sign in [-1, 1]:
       self._set_prev_torque(0)
-      for torque in np.arange(0, self.MAX_TORQUE_ERROR + 2, 2):  # step needs to be smaller than MAX_TORQUE_ERROR
-        torque *= sign
-        self.assertTrue(self._tx(self._torque_cmd_msg(torque)), f"{torque=}")
+      for t in np.arange(0, self.MAX_TORQUE_ERROR + 2, 2):  # step needs to be smaller than MAX_TORQUE_ERROR
+        t *= sign
+        self.assertTrue(self._tx(self._torque_cmd_msg(t)))
 
       self.assertFalse(self._tx(self._torque_cmd_msg(sign * (self.MAX_TORQUE_ERROR + 2))))
 
@@ -618,10 +618,8 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
     max_range = range(trq, trq + self.TORQUE_MEAS_TOLERANCE + 1)
     min_range = range(-(trq + self.TORQUE_MEAS_TOLERANCE), -trq + 1)
-    meas_min = self.safety.get_torque_meas_min()
-    meas_max = self.safety.get_torque_meas_max()
-    self.assertTrue(meas_min in min_range, f"{meas_min=}, {min_range=}")
-    self.assertTrue(meas_max in max_range, f"{meas_max=}, {max_range=}")
+    self.assertTrue(self.safety.get_torque_meas_min() in min_range)
+    self.assertTrue(self.safety.get_torque_meas_max() in max_range)
 
     max_range = range(self.TORQUE_MEAS_TOLERANCE + 1)
     min_range = range(-(trq + self.TORQUE_MEAS_TOLERANCE), -trq + 1)
