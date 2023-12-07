@@ -672,7 +672,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
     pass
 
   def _set_prev_desired_angle(self, t):
-    t = round(t * self.DEG_TO_CAN)
+    t = int(t * self.DEG_TO_CAN)
     self.safety.set_desired_angle_last(t)
 
   def _reset_angle_measurement(self, angle):
