@@ -151,7 +151,7 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
 
   MAX_LTA_ANGLE = 94.9461  # PCS faults if commanding above this, deg
   MAX_MEAS_TORQUE = 1500  # max allowed measured EPS torque before wind down
-  MAX_LTA_DRIVER_TORQUE_ALLOWANCE = 150  # max allowed driver torque before wind down
+  MAX_LTA_DRIVER_TORQUE = 150  # max allowed driver torque before wind down
 
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
@@ -201,8 +201,7 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
           # Test max EPS torque and driver override thresholds
           cases = itertools.product(
             (0, self.MAX_MEAS_TORQUE - 1, self.MAX_MEAS_TORQUE, self.MAX_MEAS_TORQUE + 1, self.MAX_MEAS_TORQUE * 2),
-            (0, self.MAX_LTA_DRIVER_TORQUE_ALLOWANCE - 1, self.MAX_LTA_DRIVER_TORQUE_ALLOWANCE,
-             self.MAX_LTA_DRIVER_TORQUE_ALLOWANCE + 1, self.MAX_LTA_DRIVER_TORQUE_ALLOWANCE * 2)
+            (0, self.MAX_LTA_DRIVER_TORQUE - 1, self.MAX_LTA_DRIVER_TORQUE, self.MAX_LTA_DRIVER_TORQUE + 1, self.MAX_LTA_DRIVER_TORQUE * 2)
           )
 
           for eps_torque, driver_torque in cases:
@@ -211,7 +210,7 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
                 self._rx(self._torque_meas_msg(sign * eps_torque, sign * driver_torque))
 
               # Toyota adds 1 to EPS torque since it is rounded after EPS factor
-              should_tx = (eps_torque - 1) <= self.MAX_MEAS_TORQUE and driver_torque <= self.MAX_LTA_DRIVER_TORQUE_ALLOWANCE
+              should_tx = (eps_torque - 1) <= self.MAX_MEAS_TORQUE and driver_torque <= self.MAX_LTA_DRIVER_TORQUE
               self.assertEqual(should_tx, self._tx(self._lta_msg(1, 1, angle, 100)))
               self.assertTrue(self._tx(self._lta_msg(1, 1, angle, 0)))  # should tx if we wind down torque
 
