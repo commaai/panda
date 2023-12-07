@@ -154,8 +154,8 @@ static void toyota_rx_hook(CANPacket_t *to_push) {
       int speed = 0;
       // sum 4 wheel speeds. conversion: raw * 0.01 - 67.67
       for (uint8_t i = 0U; i < 8U; i += 2U) {
-        int wheel_speed = (GET_BYTE(to_push, i) << 8U) + GET_BYTE(to_push, (i + 1U));
-        speed += wheel_speed - 0x1a6f;
+        int wheel_speed = (GET_BYTE(to_push, i) << 8U) | GET_BYTE(to_push, (i + 1U));
+        speed += wheel_speed - 6767;
       }
       // check that all wheel speeds are at zero value
       vehicle_moving = speed != 0;
