@@ -10,6 +10,7 @@
                                    (config).rx_checks_len = sizeof((rx)) / sizeof((rx)[0]))
 #define SET_TX_MSGS(tx, config) ((config).tx_msgs = (tx), \
                                  (config).tx_msgs_len = sizeof((tx)) / sizeof((tx)[0]))
+#define UPDATE_VEHICLE_SPEED(val_ms) (update_sample(&vehicle_speed, ROUND((val_ms) * VEHICLE_SPEED_FACTOR)))
 
 uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
   uint32_t ret = 0U;
