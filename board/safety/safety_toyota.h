@@ -55,7 +55,7 @@ const CanMsg TOYOTA_TX_MSGS[] = {{0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0
   {.msg = {{0x224, 0, 8, .check_checksum = false, .frequency = 40U},                                        \
            {0x226, 0, 8, .check_checksum = false, .frequency = 40U}, { 0 }}},                               \
 
-RxCheck toyota_rx_checks[] = {
+RxCheck toyota_lka_rx_checks[] = {
   TOYOTA_COMMON_RX_CHECKS(false)
 };
 
@@ -310,7 +310,7 @@ static safety_config toyota_init(uint16_t param) {
   if (toyota_lta) {
     ret = BUILD_SAFETY_CFG(toyota_lta_rx_checks, TOYOTA_TX_MSGS);
   } else {
-    ret = BUILD_SAFETY_CFG(toyota_rx_checks, TOYOTA_TX_MSGS);
+    ret = BUILD_SAFETY_CFG(toyota_lka_rx_checks, TOYOTA_TX_MSGS);
   }
   return ret;
 }
