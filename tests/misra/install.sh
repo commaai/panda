@@ -10,6 +10,6 @@ fi
 
 cd $CPPCHECK_DIR
 git fetch --all
-git checkout 2.12.0
+git checkout 2.13.0
 make clean
 make MATCHCOMPILTER=yes CXXFLAGS="-O2" -j8
