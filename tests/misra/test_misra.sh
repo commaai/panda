@@ -21,7 +21,7 @@ if [ -f "$RULES" ]; then
 fi
 
 # install cppcheck if missing
-if [ ! -d cppcheck/ ]; then
+if [ ! -d $CPPCHECK_DIR ]; then
   $DIR/install.sh
 fi
 
