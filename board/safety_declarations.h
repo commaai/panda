@@ -10,6 +10,7 @@
                                    (config).rx_checks_len = sizeof((rx)) / sizeof((rx)[0]))
 #define SET_TX_MSGS(tx, config) ((config).tx_msgs = (tx), \
                                  (config).tx_msgs_len = sizeof((tx)) / sizeof((tx)[0]))
+#define UPDATE_VEHICLE_SPEED(val_ms) (update_sample(&vehicle_speed, ROUND((val_ms) * VEHICLE_SPEED_FACTOR)))
 
 uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
   uint32_t ret = 0U;
@@ -115,7 +116,7 @@ typedef struct {
   const bool check_checksum;         // true is checksum check is performed
   const uint8_t max_counter;         // maximum value of the counter. 0 means that the counter check is skipped
   const bool quality_flag;           // true is quality flag check is performed
-  const uint32_t expected_timestep;  // expected time between message updates [us]
+  const uint32_t frequency;      // expected frequency of the message [Hz]
 } CanMsgCheck;
 
 // params and flags about checksum, counter and frequency checks for each monitored address
@@ -148,7 +149,6 @@ typedef bool (*get_quality_flag_valid_t)(CANPacket_t *to_push);
 
 bool safety_rx_hook(CANPacket_t *to_push);
 bool safety_tx_hook(CANPacket_t *to_send);
-bool safety_tx_lin_hook(int lin_num, uint8_t *data, int len);
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 int to_signed(int d, int bits);
 void update_sample(struct sample_t *sample, int sample_new);
@@ -194,14 +194,12 @@ void pcm_cruise_check(bool cruise_engaged);
 typedef safety_config (*safety_hook_init)(uint16_t param);
 typedef void (*rx_hook)(CANPacket_t *to_push);
 typedef bool (*tx_hook)(CANPacket_t *to_send);
-typedef bool (*tx_lin_hook)(int lin_num, uint8_t *data, int len);
 typedef int (*fwd_hook)(int bus_num, int addr);
 
 typedef struct {
   safety_hook_init init;
   rx_hook rx;
   tx_hook tx;
-  tx_lin_hook tx_lin;
   fwd_hook fwd;
   get_checksum_t get_checksum;
   compute_checksum_t compute_checksum;
