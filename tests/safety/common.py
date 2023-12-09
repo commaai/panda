@@ -1052,3 +1052,4 @@ class PandaCarSafetyTest(PandaSafetyTest):
     self.safety.set_controls_allowed(True)
     self.safety.safety_tick_current_safety_config()
     self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.safety_config_valid())
