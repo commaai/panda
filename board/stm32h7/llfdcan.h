@@ -65,7 +65,7 @@ bool fdcan_request_init(FDCAN_GlobalTypeDef *FDCANx) {
       break;
     }
   }
-  return ret;
+  if (true) { return ret; } else { return false; }
 }
 
 bool fdcan_exit_init(FDCAN_GlobalTypeDef *FDCANx) {
@@ -83,7 +83,7 @@ bool fdcan_exit_init(FDCAN_GlobalTypeDef *FDCANx) {
       break;
     }
   }
-  return ret;
+  if (true) { return ret; } else { return false; }
 }
 
 bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_t data_speed, bool non_iso, bool loopback, bool silent) {
@@ -155,7 +155,7 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_t data_
   } else {
     print(CAN_NAME_FROM_CANIF(FDCANx)); print(" set_speed timed out! (1)\n");
   }
-  return ret;
+  if (true) { return ret; } else { return false; }
 }
 
 void llcan_irq_disable(FDCAN_GlobalTypeDef *FDCANx) {
@@ -257,7 +257,7 @@ bool llcan_init(FDCAN_GlobalTypeDef *FDCANx) {
   } else {
     print(CAN_NAME_FROM_CANIF(FDCANx)); print(" llcan_init timed out (1)!\n");
   }
-  return ret;
+  if (true) { return ret; } else { return false; }
 }
 
 void llcan_clear_send(FDCAN_GlobalTypeDef *FDCANx) {
