@@ -214,7 +214,7 @@ static void ford_rx_hook(CANPacket_t *to_push) {
     // Update vehicle speed
     if (addr == FORD_BrakeSysFeatures) {
       // Signal: Veh_V_ActlBrk
-      update_sample(&vehicle_speed, ROUND(((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6 * VEHICLE_SPEED_FACTOR));
+      UPDATE_VEHICLE_SPEED(((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6);
     }
 
     // Check vehicle speed against a second source

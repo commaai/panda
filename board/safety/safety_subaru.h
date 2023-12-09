@@ -165,8 +165,7 @@ static void subaru_rx_hook(CANPacket_t *to_push) {
 
     vehicle_moving = (fr > 0U) || (rr > 0U) || (rl > 0U) || (fl > 0U);
 
-    float speed = (fr + rr + rl + fl) / 4U * 0.057;
-    update_sample(&vehicle_speed, ROUND(speed * VEHICLE_SPEED_FACTOR));
+    UPDATE_VEHICLE_SPEED((fr + rr + rl + fl) / 4U * 0.057);
   }
 
   if ((addr == MSG_SUBARU_Brake_Status) && (bus == alt_main_bus)) {
