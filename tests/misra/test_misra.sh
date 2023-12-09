@@ -31,15 +31,15 @@ cd $PANDA_DIR
 scons -j8
 
 printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
-$CPPCHECK -DPANDA -DSTM32F4 -UPEDAL -DUID_BASE board/main.c
+$CPPCHECK -DCAN3 -DPANDA -DSTM32F4 -UPEDAL -DUID_BASE board/main.c
 $MISRA board/main.c.dump
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-$CPPCHECK -DPANDA -DSTM32H7 -UPEDAL -DUID_BASE board/main.c
+$CPPCHECK -DCAN3 -DPANDA -DSTM32H7 -UPEDAL -DUID_BASE board/main.c
 $MISRA board/main.c.dump
 
 printf "\n${GREEN}** PEDAL CODE **${NC}\n"
-$CPPCHECK -UPANDA -DSTM32F2 -DPEDAL -UUID_BASE board/pedal/main.c
+$CPPCHECK -UCAN3 -UPANDA -DSTM32F2 -DPEDAL -UUID_BASE board/pedal/main.c
 $MISRA board/pedal/main.c.dump
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
