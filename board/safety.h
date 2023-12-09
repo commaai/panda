@@ -503,6 +503,8 @@ float interpolate(struct lookup_t xy, float x) {
         float x0 = xy.x[i];
         float y0 = xy.y[i];
         float dx = xy.x[i+1] - x0;
+        // dx should not be zero as xy.x is supposed to be monotonic
+        dx = MAX(dx, 0.0001);
         float dy = xy.y[i+1] - y0;
         ret = (dy * (x - x0) / dx) + y0;
         break;
