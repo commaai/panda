@@ -224,15 +224,46 @@ class TestHyundaiCanfdHDA2LongEV(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2EV
     return self.packer.make_can_msg_panda("SCC_CONTROL", 1, values)
 
 
+class TestHyundaiCanfdHDA1ICERadarLong(TestHyundaiCanfdHDA1Base):
+  """Longitudinal with HDA1 + radar-SCC is not supported, assert we can't send messages."""
+
+  SCC_BUS = 0
+  GAS_MSG = ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED")
+
+  def setUp(self):
+    self.packer = CANPackerPanda("hyundai_canfd")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_LONG)  # ICE radar-SCC
+    self.safety.init_tests()
+
+  def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
+    values = {
+      "aReqRaw": accel,
+      "aReqValue": accel,
+    }
+    return self.packer.make_can_msg_panda("SCC_CONTROL", 0, values)
+
+  def test_send_scc(self):
+    self.safety.set_controls_allowed(True)
+    self.assertFalse(self._tx(self._accel_msg(1)))
+
+  # def test_sampling_cruise_buttons(self):
+  #   pass
+
+
+
 # Tests HDA1 longitudinal for ICE, hybrid, EV
 @parameterized_class([
-  # Camera SCC is the only supported configuration for longitudinal, TODO: allow radar SCC
+  # Camera SCC is the only supported configuration for HDA1 longitudinal, TODO: allow radar SCC
   {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SAFETY_PARAM": Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_CAMERA_SCC},
   {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SAFETY_PARAM": Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_EV_GAS | Panda.FLAG_HYUNDAI_CAMERA_SCC},
   {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SAFETY_PARAM": Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_HYBRID_GAS |
                                                                         Panda.FLAG_HYUNDAI_CAMERA_SCC},
+  # {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SAFETY_PARAM": Panda.FLAG_HYUNDAI_LONG},
+  # {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SAFETY_PARAM": Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_EV_GAS},
+  # {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SAFETY_PARAM": Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_HYBRID_GAS},
 ])
-class TestHyundaiCanfdHDALong(HyundaiLongitudinalBase, TestHyundaiCanfdHDA1Base):
+class TestHyundaiCanfdHDA1Long(HyundaiLongitudinalBase, TestHyundaiCanfdHDA1Base):
 
   FWD_BLACKLISTED_ADDRS = {2: [0x12a, 0x1e0, 0x1a0]}
 
@@ -247,7 +278,7 @@ class TestHyundaiCanfdHDALong(HyundaiLongitudinalBase, TestHyundaiCanfdHDA1Base)
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "TestHyundaiCanfdHDALong":
+    if cls.__name__ == "TestHyundaiCanfdHDA1Long":
       cls.safety = None
       raise unittest.SkipTest
 
