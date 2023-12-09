@@ -17,7 +17,7 @@ fi
 
 # test coverage
 GCOV_OUTPUT=$(gcov -n ../libpanda/panda.c)
-INCOMPLETE_COVERAGE=$(echo "$GCOV_OUTPUT" | paste -s -d' \n' | grep "File.*safety/safety_.*.h" | grep -v "100.00%" || true)
+INCOMPLETE_COVERAGE=$(echo "$GCOV_OUTPUT" | paste -s -d' \n' | grep -E "File.*(safety\/safety_.*)|(safety)\.h" | grep -v "100.00%" || true)
 if [ -n "$INCOMPLETE_COVERAGE" ]; then
   echo "FAILED: Some files have less than 100% coverage:"
   echo "$INCOMPLETE_COVERAGE"
