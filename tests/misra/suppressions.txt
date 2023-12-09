@@ -10,3 +10,8 @@ misra-c2012-19.2
 misra-c2012-20.10
 # Required: it's ok re-defining potentially reserved Macro names. Not likely to cause confusion
 misra-c2012-21.1
+
+constParameterCallback
+constParameterPointer
+unmatchedSuppression
+missingIncludeSystem
