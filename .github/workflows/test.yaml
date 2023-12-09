@@ -117,11 +117,11 @@ jobs:
       - name: Build FW
         run: ${{ env.RUN }} "scons -j$(nproc)"
       - name: Run MISRA C:2012 analysis
-        timeout-minutes: 4
+        timeout-minutes: 1
         run: ${{ env.RUN }} "cd tests/misra && ./test_misra.sh"
       - name: MISRA mutation tests
-        timeout-minutes: 4
-        run: ${{ env.RUN }} "cd tests/misra && pytest test_mutation.py"
+        timeout-minutes: 2
+        run: ${{ env.RUN }} "cd tests/misra && ./test_mutation.py"
 
   python_linter:
     name: python linter
