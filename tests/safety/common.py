@@ -1046,3 +1046,10 @@ class PandaCarSafetyTest(PandaSafetyTest):
     # past threshold
     self._rx(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD + 1))
     self.assertTrue(self.safety.get_vehicle_moving())
+
+  def test_safety_tick(self):
+    self.safety.set_timer(int(2e6))
+    self.safety.set_controls_allowed(True)
+    self.safety.safety_tick_current_safety_config()
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.safety_config_valid())
