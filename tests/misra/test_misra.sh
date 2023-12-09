@@ -25,7 +25,13 @@ if [ ! -d $CPPCHECK_DIR ]; then
 fi
 
 # generate coverage matrix
-#python tests/misra/cppcheck/addons/misra.py -generate-table > tests/misra/coverage_table
+cd $DIR
+python $CPPCHECK_DIR/addons/misra.py -generate-table > new_table
+if ! cmp -s new_table coverage_table; then
+  echo "MISRA coverage table doesn't match. Update and commit:"
+  echo "mv new_table coverage_table && git add . && git commit -m 'update table'"
+  exit 1
+fi
 
 cd $PANDA_DIR
 scons -j8
