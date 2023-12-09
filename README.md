@@ -3,11 +3,7 @@
 ![panda tests](https://github.com/commaai/panda/workflows/tests/badge.svg)
 ![panda drivers](https://github.com/commaai/panda/workflows/drivers/badge.svg)
 
-[panda](http://github.com/commaai/panda) is the nicest universal car interface ever.
-
-<a href="https://comma.ai/shop/products/panda-obd-ii-dongle"><img src="https://github.com/commaai/panda/blob/master/panda.png?raw=true"></a>
-
-panda speaks CAN, CAN FD, LIN, and GMLAN. panda supports [STM32F205](https://www.st.com/resource/en/reference_manual/rm0033-stm32f205xx-stm32f207xx-stm32f215xx-and-stm32f217xx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf), [STM32F413](https://www.st.com/resource/en/reference_manual/rm0430-stm32f413423-advanced-armbased-32bit-mcus-stmicroelectronics.pdf), and [STM32H725](https://www.st.com/resource/en/reference_manual/rm0468-stm32h723733-stm32h725735-and-stm32h730-value-line-advanced-armbased-32bit-mcus-stmicroelectronics.pdf).
+panda speaks CAN and CAN FD. panda supports [STM32F205](https://www.st.com/resource/en/reference_manual/rm0033-stm32f205xx-stm32f207xx-stm32f215xx-and-stm32f217xx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf), [STM32F413](https://www.st.com/resource/en/reference_manual/rm0430-stm32f413423-advanced-armbased-32bit-mcus-stmicroelectronics.pdf), and [STM32H725](https://www.st.com/resource/en/reference_manual/rm0468-stm32h723733-stm32h725735-and-stm32h730-value-line-advanced-armbased-32bit-mcus-stmicroelectronics.pdf).
 
 ## Usage
 
@@ -84,15 +80,11 @@ As a universal car interface, it should support every reasonable software interf
 
 See [`board/README.md`](board/README.md)
 
-## Debugging
-
-To print out the serial console from the STM32, run `tests/debug_console.py`
-
 ## Safety Model
 
-When a panda powers up, by default it's in `SAFETY_SILENT` mode. While in `SAFETY_SILENT` mode, the buses are also forced to be silent. In order to send messages, you have to select a safety mode. Currently, setting safety modes is only supported over USB. Some of safety modes (for example `SAFETY_ALLOUTPUT`) are disabled in release firmwares. In order to use them, compile and flash your own build.
+When a panda powers up, by default it's in `SAFETY_SILENT` mode. While in `SAFETY_SILENT` mode, the CAN buses are forced to be silent. In order to send messages, you have to select a safety mode. Some of safety modes (for example `SAFETY_ALLOUTPUT`) are disabled in release firmwares. In order to use them, compile and flash your own build.
 
-Safety modes optionally supports `controls_allowed`, which allows or blocks a subset of messages based on a customizable state in the board.
+Safety modes optionally support `controls_allowed`, which allows or blocks a subset of messages based on a customizable state in the board.
 
 ## Code Rigor
 
