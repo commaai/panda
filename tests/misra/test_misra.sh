@@ -7,16 +7,17 @@ PANDA_DIR=$DIR/../../
 GREEN='\033[0;32m'
 NC='\033[0m'
 
+GCC_INC="$(arm-none-eabi-gcc -print-file-name=include)"
 : "${CPPCHECK_DIR:=$DIR/cppcheck/}"
-CPPCHECK="$CPPCHECK_DIR/cppcheck --dump --enable=all --force --inline-suppr -I $PANDA_DIR/board/ \
-          --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* --error-exitcode=2"
+CPPCHECK="$CPPCHECK_DIR/cppcheck --dump --enable=all --force --inline-suppr -I $PANDA_DIR/board/ -I $GCC_INC \
+          --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
+          --suppress=*:*include/* --error-exitcode=2"
 
 RULES="$DIR/MISRA_C_2012.txt"
 MISRA="python $CPPCHECK_DIR/addons/misra.py"
 if [ -f "$RULES" ]; then
   MISRA="$MISRA --rule-texts $RULES"
 fi
-MISRA="$MISRA $PANDA_DIR/board/main.c.dump"
 
 # install cppcheck if missing
 if [ ! -d cppcheck/ ]; then
@@ -27,6 +28,7 @@ fi
 #python tests/misra/cppcheck/addons/misra.py -generate-table > tests/misra/coverage_table
 
 cd $PANDA_DIR
+scons -j8
 
 printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
 $CPPCHECK -DPANDA -DSTM32F4 -UPEDAL -DUID_BASE board/main.c
@@ -40,4 +42,4 @@ printf "\n${GREEN}** PEDAL CODE **${NC}\n"
 $CPPCHECK -UPANDA -DSTM32F2 -DPEDAL -UUID_BASE board/pedal/main.c
 $MISRA board/pedal/main.c.dump
 
-print "\n${GREEN}Success!${NC}"
+printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
