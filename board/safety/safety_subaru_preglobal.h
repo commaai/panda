@@ -31,9 +31,9 @@ const CanMsg SUBARU_PG_TX_MSGS[] = {
 
 // TODO: do checksum and counter checks after adding the signals to the outback dbc file
 RxCheck subaru_preglobal_rx_checks[] = {
-  {.msg = {{MSG_SUBARU_PG_Throttle,        SUBARU_PG_MAIN_BUS, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_PG_Steering_Torque, SUBARU_PG_MAIN_BUS, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_PG_CruiseControl,   SUBARU_PG_MAIN_BUS, 8, .expected_timestep = 50000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_PG_Throttle,        SUBARU_PG_MAIN_BUS, 8, .frequency = 100U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_PG_Steering_Torque, SUBARU_PG_MAIN_BUS, 8, .frequency = 50U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_PG_CruiseControl,   SUBARU_PG_MAIN_BUS, 8, .frequency = 20U}, { 0 }, { 0 }}},
 };
 
 
