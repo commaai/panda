@@ -10,15 +10,16 @@ ROOT = os.path.join(HERE, "../../")
 # TODO: test more cases (e.g. one violation in each safety*.h) and all rules
 mutations = [
   # F4 only
-  ("board/stm32fx/bxcan.h", "s/1U/1/g"),
+  ("board/stm32fx/llbxcan.h", "s/1U/1/g"),
   # H7 only
-  ("board/stm32h7/", "s/return ret;/if (true) { return ret; } else { return false; }/g"),
+  ("board/stm32h7/llfdcan.h", "s/return ret;/if (true) { return ret; } else { return false; }/g"),
   # general safety
   ("board/safety/safety_toyota.h", "s/is_lkas_msg =.*;/is_lkas_msg = addr == 1 || addr == 2;/g"),
 ]
 
-def patch(fn, pt):
-  r = os.system(f"cd {ROOT} && git checkout . && sed -i '{pt}' {fn}")
+def patch(fn, pt=None):
+  sed = "" if fn is None else f"&& sed -i '{pt}' {fn}"
+  r = os.system(f"cd {ROOT} && git checkout board/ {sed}")
   assert r == 0
 
 def run_misra():
@@ -26,11 +27,13 @@ def run_misra():
   return r.returncode == 0
 
 def test_misra_mutation():
-  #assert run_misra()
+  patch(None)
+  assert run_misra()
   for fn, pt in mutations:
     print(f"file: {fn}, patch: {pt}")
     patch(fn, pt)
     assert not run_misra()
+  patch(None)
 
 if __name__ == "__main__":
   pytest.main()
