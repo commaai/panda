@@ -26,16 +26,18 @@ fi
 # generate coverage matrix
 #python tests/misra/cppcheck/addons/misra.py -generate-table > tests/misra/coverage_table
 
+cd $PANDA_DIR
+
 printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
-$CPPCHECK -DPANDA -DSTM32F4 -UPEDAL -DUID_BASE $PANDA_DIR/board/main.c
-$MISRA
+$CPPCHECK -DPANDA -DSTM32F4 -UPEDAL -DUID_BASE board/main.c
+$MISRA board/main.c.dump
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-$CPPCHECK -DPANDA -DSTM32H7 -UPEDAL -DUID_BASE $PANDA_DIR/board/main.c
-$MISRA
+$CPPCHECK -DPANDA -DSTM32H7 -UPEDAL -DUID_BASE board/main.c
+$MISRA board/main.c.dump
 
 printf "\n${GREEN}** PEDAL CODE **${NC}\n"
-$CPPCHECK -UPANDA -DSTM32F2 -DPEDAL -UUID_BASE $PANDA_DIR/board/main.c
-$MISRA
+$CPPCHECK -UPANDA -DSTM32F2 -DPEDAL -UUID_BASE board/pedal/main.c
+$MISRA board/pedal/main.c.dump
 
-echo "${GREEN}Success${NC}"
+print "\n${GREEN}Success!${NC}"
