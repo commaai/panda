@@ -24,7 +24,7 @@ if [ ! -d $CPPCHECK_DIR ]; then
   $DIR/install.sh
 fi
 
-# generate coverage matrix
+# ensure checked in coverage table is up to date
 cd $DIR
 python $CPPCHECK_DIR/addons/misra.py -generate-table > new_table
 if ! cmp -s new_table coverage_table; then
