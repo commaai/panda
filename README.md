@@ -110,7 +110,11 @@ to ensure that the behavior remains unchanged.
     * compiling the code and flashing it through USB.
     * receiving, sending, and forwarding CAN messages on all buses, over USB.
 
-In addition, we run the [ruff linter](https://github.com/astral-sh/ruff) on all python files within the panda repo.
+The above tests are futher enforced by:
+* a [mutation test](tests/misra/test_mutation.py) for the MISRA coverage
+* a [check](tests/safety/test_coverage.sh) for 100% line coverage on the safety unit tests
+
+In addition, we run the [ruff linter](https://github.com/astral-sh/ruff) and [mypy](https://mypy-lang.org/) on panda's Python library.
 
 ## Licensing
 
