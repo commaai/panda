@@ -112,10 +112,6 @@ to ensure that the behavior remains unchanged.
 
 In addition, we run the [ruff linter](https://github.com/astral-sh/ruff) on all python files within the panda repo.
 
-## Hardware
-
-Check out the hardware [guide](https://github.com/commaai/panda/blob/master/docs/guide.pdf)
-
 ## Licensing
 
 panda software is released under the MIT license unless otherwise specified.
