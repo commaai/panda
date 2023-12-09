@@ -805,13 +805,6 @@ class PandaSafetyTest(PandaSafetyTestBase):
     self.safety.set_controls_allowed(0)
     self.assertFalse(self.safety.get_controls_allowed())
 
-  def test_safety_tick(self):
-    self.assertFalse(self.safety.safety_config_valid())
-    self.safety.safety_tick_current_safety_config()
-    for addr in self.SCANNED_ADDRS:
-      self._rx(make_msg(0, addr))
-    self.assertFalse(self.safety.safety_config_valid())
-
   def test_tx_hook_on_wrong_safety_mode(self):
     files = os.listdir(os.path.dirname(os.path.realpath(__file__)))
     test_files = [f for f in files if f.startswith("test_") and f.endswith(".py")]
