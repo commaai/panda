@@ -114,6 +114,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build Docker image
         run: eval "$BUILD"
+      - name: Build FW
+        run: ${{ env.RUN }} "scons -j$(nproc)"
       - name: Run MISRA C:2012 analysis
         timeout-minutes: 4
         run: ${{ env.RUN }} "cd tests/misra && ./test_misra.sh"

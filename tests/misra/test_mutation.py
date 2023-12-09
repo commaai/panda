@@ -19,7 +19,7 @@ mutations = [
 def patch(fn, pt=None):
   sed = "" if fn is None else f"&& sed -i '{pt}' {fn}"
   r = os.system(f"cd {ROOT} && git checkout board/ {sed}")
-  assert r == 1
+  assert r == 0
 
 def run_misra():
   r = subprocess.run("./test_misra.sh", cwd=HERE, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
