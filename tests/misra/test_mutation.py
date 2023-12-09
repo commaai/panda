@@ -1,38 +1,41 @@
 #!/usr/bin/env python3
 import os
 import pytest
+import shutil
 import subprocess
+import tempfile
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT = os.path.join(HERE, "../../")
 
-# TODO: test more cases (e.g. one violation in each safety*.h) and all rules
+# TODO: test more cases
+# - at least one violation in each safety/safety*.h file
+# - come up with a pattern for each rule (cppcheck tests probably have good ones?)
 mutations = [
+  (None, None, False),
   # F4 only
-  ("board/stm32fx/llbxcan.h", "s/1U/1/g"),
+  ("board/stm32fx/llbxcan.h", "s/1U/1/g", True),
   # H7 only
-  ("board/stm32h7/llfdcan.h", "s/return ret;/if (true) { return ret; } else { return false; }/g"),
+  ("board/stm32h7/llfdcan.h", "s/return ret;/if (true) { return ret; } else { return false; }/g", True),
   # general safety
-  ("board/safety/safety_toyota.h", "s/is_lkas_msg =.*;/is_lkas_msg = addr == 1 || addr == 2;/g"),
+  ("board/safety/safety_toyota.h", "s/is_lkas_msg =.*;/is_lkas_msg = addr == 1 || addr == 2;/g", True),
 ]
 
-def patch(fn, pt=None):
-  sed = "" if fn is None else f"&& sed -i '{pt}' {fn}"
-  r = os.system(f"cd {ROOT} && git checkout board/ {sed}")
-  assert r == 0
+@pytest.mark.parametrize("fn, patch, should_fail", mutations)
+def test_misra_mutation(fn, patch, should_fail):
+  with tempfile.TemporaryDirectory() as tmp:
+    shutil.copytree(ROOT, tmp, dirs_exist_ok=True)
 
-def run_misra():
-  r = subprocess.run("./test_misra.sh", cwd=HERE, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-  return r.returncode == 0
+    # apply patch
+    if fn is not None:
+      r = os.system(f"cd {tmp} && sed -i '{patch}' {fn}")
+      assert r == 0
 
-def test_misra_mutation():
-  patch(None)
-  assert run_misra()
-  for fn, pt in mutations:
-    print(f"file: {fn}, patch: {pt}")
-    patch(fn, pt)
-    assert not run_misra()
-  patch(None)
+    # run test
+    r = subprocess.run("tests/misra/test_misra.sh", cwd=tmp, shell=True,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    failed = r.returncode != 0
+    assert failed == should_fail
 
 if __name__ == "__main__":
-  pytest.main()
+  pytest.main([__file__, "-n 4"])
