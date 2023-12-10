@@ -32,9 +32,10 @@ These are the [CI regression tests](https://github.com/commaai/panda/actions) we
 * Compiler options are relatively strict: the flags `-Wall -Wextra -Wstrict-prototypes -Werror` are enforced.
 * The [safety logic](https://github.com/commaai/panda/tree/master/board/safety) is tested and verified by [unit tests](https://github.com/commaai/panda/tree/master/tests/safety) for each supported car variant.
 to ensure that the behavior remains unchanged.
-* An internal Hardware-in-the-loop test, which currently only runs on pull requests opened by comma.ai's organization members, verifies the following functionalities:
-    * compiling the code and flashing it through USB.
-    * receiving, sending, and forwarding CAN messages on all buses, over USB.
+* A hardware-in-the-loop test verifies panda's functionalities, including:
+    * additional afety model checks
+    * compiling the code and flashing it through USB and SPI
+    * receiving, sending, and forwarding CAN messages on all buses, over USB and SPI
 
 The above tests are themselves tested by:
 * a [mutation test](tests/misra/test_mutation.py) on the MISRA coverage
