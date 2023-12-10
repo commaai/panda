@@ -11,26 +11,21 @@ Setup dependencies:
 ```bash
 # Ubuntu
 sudo apt-get install dfu-util gcc-arm-none-eabi python3-pip libffi-dev git
-```
-```bash
+
 # macOS
 brew install --cask gcc-arm-embedded
 brew install python3 dfu-util gcc@13
 ```
 
-Clone panda repository:
+Clone panda repository and install:
 ``` bash
 git clone https://github.com/commaai/panda.git
 cd panda
-```
 
-Install requirements:
-```bash
+# install dependencies
 pip install -r requirements.txt
-```
 
-Install library:
-``` bash
+# install panda
 python setup.py install
 ```
 
@@ -102,9 +97,9 @@ to ensure that the behavior remains unchanged.
     * compiling the code and flashing it through USB.
     * receiving, sending, and forwarding CAN messages on all buses, over USB.
 
-The above tests are futher enforced by:
-* a [mutation test](tests/misra/test_mutation.py) for the MISRA coverage
-* a [check](tests/safety/test_coverage.sh) for 100% line coverage on the safety unit tests
+The above tests are themselves tested by:
+* a [mutation test](tests/misra/test_mutation.py) on the MISRA coverage
+* 100% line coverage enforced on the safety unit tests
 
 In addition, we run the [ruff linter](https://github.com/astral-sh/ruff) and [mypy](https://mypy-lang.org/) on panda's Python library.
 
