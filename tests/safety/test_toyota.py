@@ -283,8 +283,6 @@ class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
 
 class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
 
-  # Fine if (0x343) ACC_CONTROL is on bus 0, from camera or radar
-  RELAY_MALFUNCTION_ADDRS = {0: (0x2E4,)}
   # Base fwd addresses minus ACC_CONTROL (0x343)
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191]}
 
