@@ -21,18 +21,18 @@ const CanMsg NISSAN_TX_MSGS[] = {
 
 // Signals duplicated below due to the fact that these messages can come in on either CAN bus, depending on car model.
 RxCheck nissan_rx_checks[] = {
-  {.msg = {{0x2, 0, 5, .expected_timestep = 10000U},
-           {0x2, 1, 5, .expected_timestep = 10000U}, { 0 }}},  // STEER_ANGLE_SENSOR (100Hz)
-  {.msg = {{0x285, 0, 8, .expected_timestep = 20000U},
-           {0x285, 1, 8, .expected_timestep = 20000U}, { 0 }}}, // WHEEL_SPEEDS_REAR (50Hz)
-  {.msg = {{0x30f, 2, 3, .expected_timestep = 100000U},
-           {0x30f, 1, 3, .expected_timestep = 100000U}, { 0 }}}, // CRUISE_STATE (10Hz)
-  {.msg = {{0x15c, 0, 8, .expected_timestep = 20000U},
-           {0x15c, 1, 8, .expected_timestep = 20000U},
-           {0x239, 0, 8, .expected_timestep = 20000U}}}, // GAS_PEDAL (100Hz / 50Hz)
-  {.msg = {{0x454, 0, 8, .expected_timestep = 100000U},
-           {0x454, 1, 8, .expected_timestep = 100000U},
-           {0x1cc, 0, 4, .expected_timestep = 10000U}}}, // DOORS_LIGHTS (10Hz) / BRAKE (100Hz)
+  {.msg = {{0x2, 0, 5, .frequency = 100U},
+           {0x2, 1, 5, .frequency = 100U}, { 0 }}},  // STEER_ANGLE_SENSOR
+  {.msg = {{0x285, 0, 8, .frequency = 50U},
+           {0x285, 1, 8, .frequency = 50U}, { 0 }}}, // WHEEL_SPEEDS_REAR
+  {.msg = {{0x30f, 2, 3, .frequency = 10U},
+           {0x30f, 1, 3, .frequency = 10U}, { 0 }}}, // CRUISE_STATE
+  {.msg = {{0x15c, 0, 8, .frequency = 50U},
+           {0x15c, 1, 8, .frequency = 50U},
+           {0x239, 0, 8, .frequency = 50U}}}, // GAS_PEDAL
+  {.msg = {{0x454, 0, 8, .frequency = 10U},
+           {0x454, 1, 8, .frequency = 10U},
+           {0x1cc, 0, 4, .frequency = 100U}}}, // DOORS_LIGHTS / BRAKE
 };
 
 // EPS Location. false = V-CAN, true = C-CAN
@@ -61,7 +61,7 @@ static void nissan_rx_hook(CANPacket_t *to_push) {
       uint16_t right_rear = (GET_BYTE(to_push, 0) << 8) | (GET_BYTE(to_push, 1));
       uint16_t left_rear = (GET_BYTE(to_push, 2) << 8) | (GET_BYTE(to_push, 3));
       vehicle_moving = (right_rear | left_rear) != 0U;
-      update_sample(&vehicle_speed, ROUND((right_rear + left_rear) / 2.0 * 0.005 / 3.6 * VEHICLE_SPEED_FACTOR));
+      UPDATE_VEHICLE_SPEED((right_rear + left_rear) / 2.0 * 0.005 / 3.6);
     }
 
     // X-Trail 0x15c, Leaf 0x239
@@ -72,14 +72,14 @@ static void nissan_rx_hook(CANPacket_t *to_push) {
         gas_pressed = GET_BYTE(to_push, 0) > 3U;
       }
     }
-  }
 
-  // X-trail 0x454, Leaf  0x239
-  if ((addr == 0x454) || (addr == 0x239)) {
-    if (addr == 0x454){
-      brake_pressed = (GET_BYTE(to_push, 2) & 0x80U) != 0U;
-    } else {
-      brake_pressed = ((GET_BYTE(to_push, 4) >> 5) & 1U) != 0U;
+    // X-trail 0x454, Leaf 0x239
+    if ((addr == 0x454) || (addr == 0x239)) {
+      if (addr == 0x454){
+        brake_pressed = (GET_BYTE(to_push, 2) & 0x80U) != 0U;
+      } else {
+        brake_pressed = ((GET_BYTE(to_push, 4) >> 5) & 1U) != 0U;
+      }
     }
   }
 
@@ -94,7 +94,7 @@ static void nissan_rx_hook(CANPacket_t *to_push) {
 
 
 static bool nissan_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
+  bool tx = true;
   int addr = GET_ADDR(to_send);
   bool violation = false;
 
@@ -118,7 +118,7 @@ static bool nissan_tx_hook(CANPacket_t *to_send) {
   }
 
   if (violation) {
-    tx = 0;
+    tx = false;
   }
 
   return tx;

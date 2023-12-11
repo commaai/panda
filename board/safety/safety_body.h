@@ -3,7 +3,7 @@ const CanMsg BODY_TX_MSGS[] = {{0x250, 0, 8}, {0x250, 0, 6}, {0x251, 0, 5},  // 
                                {0x1, 0, 8}}; // CAN flasher
 
 RxCheck body_rx_checks[] = {
-  {.msg = {{0x201, 0, 8, .check_checksum = false, .max_counter = 0U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{0x201, 0, 8, .check_checksum = false, .max_counter = 0U, .frequency = 100U}, { 0 }, { 0 }}},
 };
 
 static void body_rx_hook(CANPacket_t *to_push) {
@@ -16,18 +16,18 @@ static void body_rx_hook(CANPacket_t *to_push) {
 }
 
 static bool body_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
+  bool tx = true;
   int addr = GET_ADDR(to_send);
   int len = GET_LEN(to_send);
 
   if (!controls_allowed && (addr != 0x1)) {
-    tx = 0;
+    tx = false;
   }
 
   // Allow going into CAN flashing mode for base & knee even if controls are not allowed
   bool flash_msg = ((addr == 0x250) || (addr == 0x350)) && (len == 8);
   if (!controls_allowed && (GET_BYTES(to_send, 0, 4) == 0xdeadfaceU) && (GET_BYTES(to_send, 4, 4) == 0x0ab00b1eU) && flash_msg) {
-    tx = 1;
+    tx = true;
   }
 
   return tx;

@@ -59,7 +59,7 @@ float volvo_speed = 0;
 
 // safety params
 const float DEG_TO_CAN_VOLVO_C1 = 1/0.04395;            // 22.75312855517634‬, inverse of dbc scaling
-const int VOLVO_MAX_DELTA_OFFSET_ANGLE = 20/0.04395-1;  // max degrees divided by k factor in dbc 0.04395. -1 to give a little safety margin. 
+const int VOLVO_MAX_DELTA_OFFSET_ANGLE = 20/0.04395-1;  // max degrees divided by k factor in dbc 0.04395. -1 to give a little safety margin.
                                                         // 25 degrees allowed, more will trigger disengage by servo.
 const int VOLVO_MAX_ANGLE_REQ = 8189;                   // max, min angle req, set at 2steps from max and min values.
 const int VOLVO_MIN_ANGLE_REQ = -8190;                  // 14 bits long, min -8192 -> 8191.
@@ -75,7 +75,7 @@ const struct lookup_t VOLVO_LOOKUP_ANGLE_RATE_DOWN = {
 
 struct sample_t volvo_angle_meas;  // last 3 steer angles
 
-/* 
+/*
 // saved for documentation purpose
 // allowed messages to forward from bus 0 -> 2
 const int ALLOWED_MSG_C1[] = {
@@ -90,7 +90,7 @@ const int ALLOWED_MSG_C1[] = {
 //0x80,
 0xb0,     // ECM
 //0xc0,
-0xe0,     // PSCM 
+0xe0,     // PSCM
 //0xf0,
 0xf5,     // BCM
 //0x100,
@@ -99,7 +99,7 @@ const int ALLOWED_MSG_C1[] = {
 //0x123,
 //0x125,  // PSCM - Do not forward. FSM sets fault code if it sees LKAActive and LKATorque when not requesting steering,
           //        Forwarding and manipulation of bits done in carcontroller.py
-0x130,    // BCM critical for ACC 
+0x130,    // BCM critical for ACC
 0x145,    // ECM critical for ACC
 0x150,    // BCM
 //0x1a8,
@@ -108,14 +108,14 @@ const int ALLOWED_MSG_C1[] = {
 0x1d0,    // DIM, Infotainment A , ACC ok, blis lka fcw off.
 //0x1d8,
 0x1e0,    // BCM , blis fcw nok.
-0x210,    // CEM, Infotainment A, ACC ok, lka blis fcw off. 
+0x210,    // CEM, Infotainment A, ACC ok, lka blis fcw off.
 0x260,    // ECM (When disconnecting CVM this message disappears. Why fault code for ECM?)
-0x288,    // SRS 
+0x288,    // SRS
 0x28c,    // ECM
 0x290,    // ECM
 0x291,    // ECM
-0x2a9,    // CEM, not critical 
-0x2b5,    // ECM 
+0x2a9,    // CEM, not critical
+0x2b5,    // ECM
 //0x2c0,
 //0x2c3,
 0x2c5,    // ECM
@@ -123,22 +123,22 @@ const int ALLOWED_MSG_C1[] = {
 //0x340,
 //0x350,
 0x360,    // CEM
-//0x370,  
-0x390,    // CEM, DIM 
+//0x370,
+0x390,    // CEM, DIM
 //0x3a0,
 //0x3af,
 //0x3b0,
 0x3c8,    // SRS
-//0x3ca, 
-//0x3d0, 
-//0x3e0, 
+//0x3ca,
+//0x3d0,
+//0x3e0,
 //0x3e5,
-//0x400, 
+//0x400,
 0x405,    // CEM, BCM, CanBus System Program failure, C0 01 55,
-//0x425,   
-//0x430,  
-//0x581,   
-0x764,    // Diagnostic messages 
+//0x425,
+//0x430,
+//0x581,
+0x764,    // Diagnostic messages
 0x7df,    // Diagnostic messages
 }; */
 
@@ -165,7 +165,7 @@ const int ALLOWED_MSG_EUCD[] = {
 0x20A,
 0x220,
 0x235,
-//0x246, PSCM1 
+//0x246, PSCM1
 0x261,
 0x264,
 0x265,
@@ -217,7 +217,7 @@ const int ALLOWED_MSG_EUCD[] = {
 
 
 //const int ALLOWED_MSG_C1_LEN = sizeof(ALLOWED_MSG_C1) / sizeof(ALLOWED_MSG_C1[0]);
-const int ALLOWED_MSG_EUCD_LEN = sizeof(ALLOWED_MSG_EUCD) / sizeof(ALLOWED_MSG_EUCD[0]);
+//const int ALLOWED_MSG_EUCD_LEN = sizeof(ALLOWED_MSG_EUCD) / sizeof(ALLOWED_MSG_EUCD[0]);
 
 // TX checks
 // platform c1
@@ -231,7 +231,7 @@ const CanMsg VOLVO_C1_TX_MSGS[] = { {MSG_FSM0_VOLVO_C1, 0, 8}, {MSG_FSM1_VOLVO_C
                                      {MSG_DIAG_BROADCAST, 0, 8}, {MSG_DIAG_BROADCAST, 2, 8},
                                     };
 
-const int VOLVO_C1_TX_MSGS_LEN = sizeof(VOLVO_C1_TX_MSGS) / sizeof(VOLVO_C1_TX_MSGS[0]);
+//const int VOLVO_C1_TX_MSGS_LEN = sizeof(VOLVO_C1_TX_MSGS) / sizeof(VOLVO_C1_TX_MSGS[0]);
 // platform eucd
 const CanMsg VOLVO_EUCD_TX_MSGS[] = { {MSG_FSM0_VOLVO_V60, 0, 8}, {MSG_FSM1_VOLVO_V60, 0, 8},
                                        {MSG_FSM2_VOLVO_V60, 0, 8}, {MSG_FSM3_VOLVO_V60, 0, 8},
@@ -242,21 +242,21 @@ const CanMsg VOLVO_EUCD_TX_MSGS[] = { {MSG_FSM0_VOLVO_V60, 0, 8}, {MSG_FSM1_VOLV
                                        {MSG_DIAG_CEM, 0, 8}, {MSG_DIAG_CVM, 0, 8},
                                        {MSG_DIAG_BROADCAST, 0, 8}, {MSG_DIAG_BROADCAST, 2, 8},
                                     };
-const int VOLVO_EUCD_TX_MSGS_LEN = sizeof(VOLVO_EUCD_TX_MSGS) / sizeof(VOLVO_EUCD_TX_MSGS[0]);
+//const int VOLVO_EUCD_TX_MSGS_LEN = sizeof(VOLVO_EUCD_TX_MSGS) / sizeof(VOLVO_EUCD_TX_MSGS[0]);
 
 // expected_timestep in microseconds between messages.
-AddrCheckStruct volvo_c1_checks[] = {
-  {.msg = {{MSG_FSM0_VOLVO_C1,       2, 8, .check_checksum = false, .expected_timestep = 10000U}}},
-  {.msg = {{MSG_FSM1_VOLVO_C1,       2, 8, .check_checksum = false, .expected_timestep = 20000U}}},
-  {.msg = {{MSG_PSCM0_VOLVO_C1,      0, 8, .check_checksum = false, .expected_timestep = 20000U}}},
-  {.msg = {{MSG_PSCM1_VOLVO_C1,      0, 8, .check_checksum = false, .expected_timestep = 20000U}}},
-  {.msg = {{MSG_ACC_PEDAL_VOLVO_C1,  0, 8, .check_checksum = false, .expected_timestep = 20000U}}},
+RxCheck volvo_c1_checks[] = {
+  {.msg = {{MSG_FSM0_VOLVO_C1,       2, 8, .check_checksum = false, .frequency = 100U}}},
+  {.msg = {{MSG_FSM1_VOLVO_C1,       2, 8, .check_checksum = false, .frequency = 50U}}},
+  {.msg = {{MSG_PSCM0_VOLVO_C1,      0, 8, .check_checksum = false, .frequency = 50U}}},
+  {.msg = {{MSG_PSCM1_VOLVO_C1,      0, 8, .check_checksum = false, .frequency = 50U}}},
+  {.msg = {{MSG_ACC_PEDAL_VOLVO_C1,  0, 8, .check_checksum = false, .frequency = 50U}}},
 };
 
-AddrCheckStruct volvo_eucd_checks[] = {
-  {.msg = {{MSG_PSCM1_VOLVO_V60,     0, 8, .check_checksum = false, .expected_timestep = 20000U}}},
-  {.msg = {{MSG_FSM0_VOLVO_V60,      2, 8, .check_checksum = false, .expected_timestep = 10000U}}},
-  {.msg = {{MSG_ACC_PEDAL_VOLVO_V60, 0, 8, .check_checksum = false, .expected_timestep = 10000U}}},
+RxCheck volvo_eucd_checks[] = {
+  {.msg = {{MSG_PSCM1_VOLVO_V60,     0, 8, .check_checksum = false, .frequency = 50U}}},
+  {.msg = {{MSG_FSM0_VOLVO_V60,      2, 8, .check_checksum = false, .frequency = 100U}}},
+  {.msg = {{MSG_ACC_PEDAL_VOLVO_V60, 0, 8, .check_checksum = false, .frequency = 100U}}},
 };
 
 #define VOLVO_C1_RX_CHECKS_LEN sizeof(volvo_c1_checks) / sizeof(volvo_c1_checks[0])
@@ -436,9 +436,9 @@ static int volvo_c1_tx_hook(CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
   bool violation = 0;
 
-  if ( !msg_allowed(to_send, VOLVO_C1_TX_MSGS, VOLVO_C1_TX_MSGS_LEN) || relay_malfunction ) {
-    tx = 0;
-  }
+//  if ( !msg_allowed(to_send, VOLVO_C1_TX_MSGS, VOLVO_C1_TX_MSGS_LEN) || relay_malfunction ) {
+//    tx = 0;
+//  }
 
   if ( addr == MSG_FSM1_VOLVO_C1 ) {
     int desired_angle = ((GET_BYTE(to_send, 4) & 0x3f) << 8) | (GET_BYTE(to_send, 5)); // 14 bits long
@@ -504,9 +504,9 @@ static int volvo_eucd_tx_hook(CANPacket_t *to_send) {
 
   int tx = 1;
 
-  if ( !msg_allowed(to_send, VOLVO_EUCD_TX_MSGS, VOLVO_EUCD_TX_MSGS_LEN) || relay_malfunction ) {
-    tx = 0;
-  }
+//  if ( !msg_allowed(to_send, VOLVO_EUCD_TX_MSGS, VOLVO_EUCD_TX_MSGS_LEN) || relay_malfunction ) {
+//    tx = 0;
+//  }
 
   return tx;
 }
@@ -561,6 +561,16 @@ static int volvo_eucd_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
   return bus_fwd;
 }
 
+// rick - @todo need volvo guys
+static uint8_t volvo_c1_get_counter(CANPacket_t *to_push) {
+  UNUSED(to_push);
+}
+static uint32_t volvo_c1_get_checksum(CANPacket_t *to_push) {
+  UNUSED(to_push);
+}
+static uint32_t volvo_c1_compute_checksum(CANPacket_t *to_push) {
+  UNUSED(to_push);
+}
 
 const safety_hooks volvo_c1_hooks = {
   .init = volvo_c1_init,
@@ -568,8 +578,21 @@ const safety_hooks volvo_c1_hooks = {
   .tx = volvo_c1_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = volvo_c1_fwd_hook,
+  .get_counter = volvo_c1_get_counter,
+  .get_checksum = volvo_c1_get_checksum,
+  .compute_checksum = volvo_c1_compute_checksum,
 };
 
+// rick - @todo need volvo guys
+static uint8_t volvo_eucd_get_counter(CANPacket_t *to_push) {
+  UNUSED(to_push);
+}
+static uint32_t volvo_eucd_get_checksum(CANPacket_t *to_push) {
+  UNUSED(to_push);
+}
+static uint32_t volvo_eucd_compute_checksum(CANPacket_t *to_push) {
+  UNUSED(to_push);
+}
 
 const safety_hooks volvo_eucd_hooks = {
   .init = volvo_eucd_init,
@@ -577,4 +600,7 @@ const safety_hooks volvo_eucd_hooks = {
   .tx = volvo_eucd_tx_hook,
   .tx_lin = nooutput_tx_lin_hook,
   .fwd = volvo_eucd_fwd_hook,
+  .get_counter = volvo_eucd_get_counter,
+  .get_checksum = volvo_eucd_get_checksum,
+  .compute_checksum = volvo_eucd_compute_checksum,
 };

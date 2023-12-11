@@ -40,14 +40,14 @@ const CanMsg GM_CAM_LONG_TX_MSGS[] = {{0x180, 0, 4}, {0x315, 0, 5}, {0x2CB, 0, 8
 
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
 RxCheck gm_rx_checks[] = {
-  {.msg = {{0x184, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
-  {.msg = {{0x34A, 0, 5, .expected_timestep = 100000U}, { 0 }, { 0 }}},
-  {.msg = {{0x1E1, 0, 7, .expected_timestep = 100000U}, { 0 }, { 0 }}},
-  {.msg = {{0xBE, 0, 6, .expected_timestep = 100000U},    // Volt, Silverado, Acadia Denali
-           {0xBE, 0, 7, .expected_timestep = 100000U},    // Bolt EUV
-           {0xBE, 0, 8, .expected_timestep = 100000U}}},  // Escalade
-  {.msg = {{0x1C4, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
-  {.msg = {{0xC9, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
+  {.msg = {{0x184, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},
+  {.msg = {{0x34A, 0, 5, .frequency = 10U}, { 0 }, { 0 }}},
+  {.msg = {{0x1E1, 0, 7, .frequency = 10U}, { 0 }, { 0 }}},
+  {.msg = {{0xBE, 0, 6, .frequency = 10U},    // Volt, Silverado, Acadia Denali
+           {0xBE, 0, 7, .frequency = 10U},    // Bolt EUV
+           {0xBE, 0, 8, .frequency = 10U}}},  // Escalade
+  {.msg = {{0x1C4, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},
+  {.msg = {{0xC9, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},
 };
 
 const uint16_t GM_PARAM_HW_CAM = 1;
@@ -135,14 +135,8 @@ static void gm_rx_hook(CANPacket_t *to_push) {
   }
 }
 
-// all commands: gas/regen, friction brake and steering
-// if controls_allowed and no pedals pressed
-//     allow all commands up to limit
-// else
-//     block all commands that produce actuation
-
 static bool gm_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
+  bool tx = true;
   int addr = GET_ADDR(to_send);
 
   // BRAKE: safety check
@@ -150,7 +144,7 @@ static bool gm_tx_hook(CANPacket_t *to_send) {
     int brake = ((GET_BYTE(to_send, 0) & 0xFU) << 8) + GET_BYTE(to_send, 1);
     brake = (0x1000 - brake) & 0xFFF;
     if (longitudinal_brake_checks(brake, *gm_long_limits)) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -162,7 +156,7 @@ static bool gm_tx_hook(CANPacket_t *to_send) {
     bool steer_req = (GET_BIT(to_send, 3U) != 0U);
 
     if (steer_torque_cmd_checks(desired_torque, steer_req, GM_STEERING_LIMITS)) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -177,7 +171,7 @@ static bool gm_tx_hook(CANPacket_t *to_send) {
     violation |= longitudinal_gas_checks(gas_regen, *gm_long_limits);
 
     if (violation) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -187,16 +181,14 @@ static bool gm_tx_hook(CANPacket_t *to_send) {
 
     bool allowed_cancel = (button == 6) && cruise_engaged_prev;
     if (!allowed_cancel) {
-      tx = 0;
+      tx = false;
     }
   }
 
-  // 1 allows the message through
   return tx;
 }
 
 static int gm_fwd_hook(int bus_num, int addr) {
-
   int bus_fwd = -1;
 
   if (gm_hw == GM_CAM) {
