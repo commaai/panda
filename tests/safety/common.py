@@ -101,7 +101,7 @@ class PandaSafetyTestBase(unittest.TestCase):
         should_tx = (should_tx or v == inactive_value) and msg_allowed
         self.assertEqual(self._tx(msg_function(v)), should_tx, (controls_allowed, should_tx, v))
 
-  def _common_measurement_test(self, msg_func: Callable, min_value: float, max_value: float, factor: int,
+  def _common_measurement_test(self, msg_func: Callable, min_value: float, max_value: float, factor: float,
                                meas_min_func: Callable[[], int], meas_max_func: Callable[[], int]):
     """Tests accurate measurement parsing, and that the struct is reset on safety mode init"""
     for val in np.arange(min_value, max_value, 0.5):
@@ -648,7 +648,7 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 
 class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
-  DEG_TO_CAN: int
+  DEG_TO_CAN: float
   ANGLE_RATE_BP: List[float]
   ANGLE_RATE_UP: List[float]  # windup limit
   ANGLE_RATE_DOWN: List[float]  # unwind limit
@@ -672,7 +672,7 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
     pass
 
   def _set_prev_desired_angle(self, t):
-    t = int(t * self.DEG_TO_CAN)
+    t = round(t * self.DEG_TO_CAN)
     self.safety.set_desired_angle_last(t)
 
   def _reset_angle_measurement(self, angle):
@@ -686,13 +686,13 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
   def test_vehicle_speed_measurements(self):
     self._common_measurement_test(self._speed_msg, 0, 80, VEHICLE_SPEED_FACTOR, self.safety.get_vehicle_speed_min, self.safety.get_vehicle_speed_max)
 
-  def test_steering_angle_measurements(self):
-    self._common_measurement_test(self._angle_meas_msg, -180, 180, self.DEG_TO_CAN, self.safety.get_angle_meas_min, self.safety.get_angle_meas_max)
+  def test_steering_angle_measurements(self, max_angle=300):
+    self._common_measurement_test(self._angle_meas_msg, -max_angle, max_angle, self.DEG_TO_CAN, self.safety.get_angle_meas_min, self.safety.get_angle_meas_max)
 
-  def test_angle_cmd_when_enabled(self):
+  def test_angle_cmd_when_enabled(self, max_angle=300):
     # when controls are allowed, angle cmd rate limit is enforced
     speeds = [0., 1., 5., 10., 15., 50.]
-    angles = [-300, -100, -10, 0, 10, 100, 300]
+    angles = np.concatenate((np.arange(-max_angle, max_angle, 5), [0]))
     for a in angles:
       for s in speeds:
         max_delta_up = np.interp(s, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
@@ -1046,3 +1046,10 @@ class PandaCarSafetyTest(PandaSafetyTest):
     # past threshold
     self._rx(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD + 1))
     self.assertTrue(self.safety.get_vehicle_moving())
+
+  def test_safety_tick(self):
+    self.safety.set_timer(int(2e6))
+    self.safety.set_controls_allowed(True)
+    self.safety.safety_tick_current_safety_config()
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.safety_config_valid())

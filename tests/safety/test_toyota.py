@@ -24,6 +24,9 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.InterceptorSafetyTe
   INTERCEPTOR_THRESHOLD = 805
   EPS_SCALE = 73
 
+  packer: CANPackerPanda
+  safety: libpanda_py.Panda
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__.endswith("Base"):
@@ -31,14 +34,25 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.InterceptorSafetyTe
       cls.safety = None
       raise unittest.SkipTest
 
-  def _torque_meas_msg(self, torque):
+  def _torque_meas_msg(self, torque: int, driver_torque: int | None = None):
     values = {"STEER_TORQUE_EPS": (torque / self.EPS_SCALE) * 100.}
+    if driver_torque is not None:
+      values["STEER_TORQUE_DRIVER"] = driver_torque
     return self.packer.make_can_msg_panda("STEER_TORQUE_SENSOR", 0, values)
 
   # Both torque and angle safety modes test with each other's steering commands
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"STEER_TORQUE_CMD": torque, "STEER_REQUEST": steer_req}
     return self.packer.make_can_msg_panda("STEERING_LKA", 0, values)
+
+  def _angle_meas_msg(self, angle: float, steer_angle_initializing: bool = False):
+    # This creates a steering torque angle message. Not set on all platforms,
+    # relative to init angle on some older TSS2 platforms. Only to be used with LTA
+    values = {"STEER_ANGLE": angle, "STEER_ANGLE_INITIALIZING": int(steer_angle_initializing)}
+    return self.packer.make_can_msg_panda("STEER_TORQUE_SENSOR", 0, values)
+
+  def _angle_cmd_msg(self, angle: float, enabled: bool):
+    return self._lta_msg(int(enabled), int(enabled), angle, torque_wind_down=100 if enabled else 0)
 
   def _lta_msg(self, req, req2, angle_cmd, torque_wind_down=100):
     values = {"STEER_REQUEST": req, "STEER_REQUEST_2": req2, "STEER_ANGLE_CMD": angle_cmd, "TORQUE_WIND_DOWN": torque_wind_down}
@@ -126,7 +140,18 @@ class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSaf
     self.safety.init_tests()
 
 
-class TestToyotaSafetyAngle(TestToyotaSafetyBase):
+class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest):
+
+  # Angle control limits
+  DEG_TO_CAN = 17.452007  # 1 / 0.0573 deg to can
+
+  ANGLE_RATE_BP = [5., 25., 25.]
+  ANGLE_RATE_UP = [0.3, 0.15, 0.15]  # windup limit
+  ANGLE_RATE_DOWN = [0.36, 0.26, 0.26]  # unwind limit
+
+  MAX_LTA_ANGLE = 94.9461  # PCS faults if commanding above this, deg
+  MAX_MEAS_TORQUE = 1500  # max allowed measured EPS torque before wind down
+  MAX_LTA_DRIVER_TORQUE = 150  # max allowed driver torque before wind down
 
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
@@ -147,6 +172,85 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase):
 
       should_tx = not steer_req and torque == 0
       self.assertEqual(should_tx, self._tx(self._torque_cmd_msg(torque, steer_req)))
+
+  def test_lta_steer_cmd(self):
+    """
+    Tests the LTA steering command message
+    controls_allowed:
+    * STEER_REQUEST and STEER_REQUEST_2 do not mismatch
+    * TORQUE_WIND_DOWN is only set to 0 or 100 when STEER_REQUEST and STEER_REQUEST_2 are both 1
+    * Full torque messages are blocked if either EPS torque or driver torque is above the threshold
+
+    not controls_allowed:
+    * STEER_REQUEST, STEER_REQUEST_2, and TORQUE_WIND_DOWN are all 0
+    """
+    for controls_allowed in (True, False):
+      for angle in np.arange(-90, 90, 1):
+        self.safety.set_controls_allowed(controls_allowed)
+        self._reset_angle_measurement(angle)
+        self._set_prev_desired_angle(angle)
+
+        self.assertTrue(self._tx(self._lta_msg(0, 0, angle, 0)))
+        if controls_allowed:
+          # Test the two steer request bits and TORQUE_WIND_DOWN torque wind down signal
+          for req, req2, torque_wind_down in itertools.product([0, 1], [0, 1], [0, 50, 100]):
+            mismatch = not (req or req2) and torque_wind_down != 0
+            should_tx = req == req2 and (torque_wind_down in (0, 100)) and not mismatch
+            self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle, torque_wind_down)))
+
+          # Test max EPS torque and driver override thresholds
+          cases = itertools.product(
+            (0, self.MAX_MEAS_TORQUE - 1, self.MAX_MEAS_TORQUE, self.MAX_MEAS_TORQUE + 1, self.MAX_MEAS_TORQUE * 2),
+            (0, self.MAX_LTA_DRIVER_TORQUE - 1, self.MAX_LTA_DRIVER_TORQUE, self.MAX_LTA_DRIVER_TORQUE + 1, self.MAX_LTA_DRIVER_TORQUE * 2)
+          )
+
+          for eps_torque, driver_torque in cases:
+            for sign in (-1, 1):
+              for _ in range(6):
+                self._rx(self._torque_meas_msg(sign * eps_torque, sign * driver_torque))
+
+              # Toyota adds 1 to EPS torque since it is rounded after EPS factor
+              should_tx = (eps_torque - 1) <= self.MAX_MEAS_TORQUE and driver_torque <= self.MAX_LTA_DRIVER_TORQUE
+              self.assertEqual(should_tx, self._tx(self._lta_msg(1, 1, angle, 100)))
+              self.assertTrue(self._tx(self._lta_msg(1, 1, angle, 0)))  # should tx if we wind down torque
+
+        else:
+          # Controls not allowed
+          for req, req2, torque_wind_down in itertools.product([0, 1], [0, 1], [0, 50, 100]):
+            should_tx = not (req or req2) and torque_wind_down == 0
+            self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle, torque_wind_down)))
+
+  def test_steering_angle_measurements(self, max_angle=None):
+    # Measurement test tests max angle + 0.5 which will fail
+    super().test_steering_angle_measurements(max_angle=self.MAX_LTA_ANGLE - 0.5)
+
+  def test_angle_cmd_when_enabled(self, max_angle=None):
+    super().test_angle_cmd_when_enabled(max_angle=self.MAX_LTA_ANGLE)
+
+  def test_angle_measurements(self):
+    """
+    * Tests angle meas quality flag dictates whether angle measurement is parsed, and if rx is valid
+    * Tests rx hook correctly clips the angle measurement, since it is to be compared to LTA cmd when inactive
+    """
+    for steer_angle_initializing in (True, False):
+      for angle in np.arange(0, self.MAX_LTA_ANGLE * 2, 1):
+        # If init flag is set, do not rx or parse any angle measurements
+        for a in (angle, -angle, 0, 0, 0, 0):
+          self.assertEqual(not steer_angle_initializing,
+                           self._rx(self._angle_meas_msg(a, steer_angle_initializing)))
+
+        final_angle = (0 if steer_angle_initializing else
+                       round(min(angle, self.MAX_LTA_ANGLE) * self.DEG_TO_CAN))
+        self.assertEqual(self.safety.get_angle_meas_min(), -final_angle)
+        self.assertEqual(self.safety.get_angle_meas_max(), final_angle)
+
+        self._rx(self._angle_meas_msg(0))
+        self.assertEqual(self.safety.get_angle_meas_min(), -final_angle)
+        self.assertEqual(self.safety.get_angle_meas_max(), 0)
+
+        self._rx(self._angle_meas_msg(0))
+        self.assertEqual(self.safety.get_angle_meas_min(), 0)
+        self.assertEqual(self.safety.get_angle_meas_max(), 0)
 
 
 class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):

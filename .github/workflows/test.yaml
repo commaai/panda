@@ -12,7 +12,6 @@ concurrency:
 
 env:
   RUN: docker run -v ${{ github.workspace }}:/tmp/openpilot/panda -w /tmp/openpilot/panda --rm panda /bin/bash -c
-  PERSIST: docker run -v ${{ github.workspace }}:/tmp/openpilot/panda -w /tmp/openpilot/panda --name panda panda /bin/bash -c
   BUILD: |
       export DOCKER_BUILDKIT=1
       docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile .
@@ -108,30 +107,21 @@ jobs:
                           ./test_coverage.sh"
 
   misra:
-    name: misra c2012
+    name: MISRA C:2012
     runs-on: ubuntu-20.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker image
         run: eval "$BUILD"
-      - name: Run Misra C 2012 analysis
-        timeout-minutes: 4
-        run: ${{ env.PERSIST }} "cd tests/misra && ./test_misra.sh"
-      - name: Copy analysis outputs
-        run: docker cp panda:/tmp/misra /tmp
-      - uses: actions/upload-artifact@v2
-        if: always()
-        with:
-          name: cppcheck_output
-          path: /tmp/misra/cppcheck_*_output.txt
-      - uses: actions/upload-artifact@v2
-        if: always()
-        with:
-          name: misra_output
-          path: /tmp/misra/misra_*_output.txt
-      - run: docker rm panda
-        if: always()
+      - name: Build FW
+        run: ${{ env.RUN }} "scons -j$(nproc)"
+      - name: Run MISRA C:2012 analysis
+        timeout-minutes: 1
+        run: ${{ env.RUN }} "cd tests/misra && ./test_misra.sh"
+      - name: MISRA mutation tests
+        timeout-minutes: 2
+        run: ${{ env.RUN }} "cd tests/misra && ./test_mutation.py"
 
   python_linter:
     name: python linter
@@ -144,5 +134,3 @@ jobs:
       - name: Run static analysis
         timeout-minutes: 3
         run: ${{ env.RUN }} "pre-commit run --all"
-
-
