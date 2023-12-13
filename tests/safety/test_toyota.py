@@ -128,6 +128,14 @@ class TestToyotaSafetyInterceptorBase(TestToyotaSafetyBase, common.InterceptorSa
 
   TX_MSGS = TOYOTA_COMMON_TX_MSGS + [[0x200, 0]]
 
+  def setUp(self):
+    print('in interceptor base, running super().setUp()')
+    super().setUp()
+    print('done running super setup')
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.safety.get_current_safety_param() |
+                                 Panda.FLAG_TOYOTA_GAS_INTERCEPTOR)
+    self.safety.init_tests()
+
   # Skip non-interceptor user gas tests
   def test_prev_gas(self):
     pass
@@ -215,13 +223,18 @@ class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSaf
   MIN_VALID_STEERING_RT_INTERVAL = 170000  # a ~10% buffer, can send steer up to 110Hz
 
   def setUp(self):
+    print('in TestToyotaSafetyTorque setUp')
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE)
     self.safety.init_tests()
 
 
-@create_interceptor_test
+class TestToyotaSafetyTorqueInterceptor(TestToyotaSafetyInterceptorBase, TestToyotaSafetyTorque):
+  pass
+
+
+# @create_interceptor_test
 class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest):
 
   # Angle control limits
@@ -335,7 +348,11 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
         self.assertEqual(self.safety.get_angle_meas_max(), 0)
 
 
-@create_interceptor_test
+class TestToyotaSafetyAngleInterceptor(TestToyotaSafetyInterceptorBase, TestToyotaSafetyAngle):
+  pass
+
+
+# @create_interceptor_test
 class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
 
   def setUp(self):
@@ -351,6 +368,10 @@ class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
   # No LTA message in the DBC
   def test_lta_steer_cmd(self):
     pass
+
+
+class TestToyotaAltBrakeSafetyInterceptor(TestToyotaSafetyInterceptorBase, TestToyotaAltBrakeSafety):
+  pass
 
 
 class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
