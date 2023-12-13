@@ -145,7 +145,6 @@ class GasInterceptorSafetyTest(PandaSafetyTestBase):
     self._rx(self._interceptor_user_gas(0x1000))
     self.assertTrue(self.safety.get_gas_interceptor_prev())
     self._rx(self._interceptor_user_gas(0x0))
-    self.safety.set_gas_interceptor_detected(False)
 
   def test_disengage_on_gas_interceptor(self):
     for g in range(0x1000):
@@ -155,7 +154,6 @@ class GasInterceptorSafetyTest(PandaSafetyTestBase):
       remain_enabled = g <= self.INTERCEPTOR_THRESHOLD
       self.assertEqual(remain_enabled, self.safety.get_controls_allowed())
       self._rx(self._interceptor_user_gas(0))
-      self.safety.set_gas_interceptor_detected(False)
 
   def test_alternative_experience_no_disengage_on_gas_interceptor(self):
     self.safety.set_controls_allowed(True)
