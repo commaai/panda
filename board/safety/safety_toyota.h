@@ -78,6 +78,12 @@ RxCheck toyota_lta_rx_checks[] = {
   TOYOTA_COMMON_RX_CHECKS(true)
 };
 
+RxCheck toyota_lta_interceptor_rx_checks[] = {
+  // Check the quality flag for angle measurement when using LTA, since it's not set on TSS-P cars
+  TOYOTA_COMMON_RX_CHECKS(true)
+  {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
+};
+
 // safety param flags
 // first byte is for EPS factor, second is for flags
 const uint32_t TOYOTA_PARAM_OFFSET = 8U;
@@ -335,6 +341,8 @@ static safety_config toyota_init(uint16_t param) {
   safety_config ret;
   if (toyota_lta) {
     ret = BUILD_SAFETY_CFG(toyota_lta_rx_checks, TOYOTA_TX_MSGS);
+    ret = enable_gas_interceptor ? BUILD_SAFETY_CFG(toyota_lta_interceptor_rx_checks, TOYOTA_INTERCEPTOR_TX_MSGS) : \
+                                   BUILD_SAFETY_CFG(toyota_lta_rx_checks, TOYOTA_TX_MSGS);
   } else {
     ret = enable_gas_interceptor ? BUILD_SAFETY_CFG(toyota_lka_interceptor_rx_checks, TOYOTA_INTERCEPTOR_TX_MSGS) : \
                                    BUILD_SAFETY_CFG(toyota_lka_rx_checks, TOYOTA_TX_MSGS);
