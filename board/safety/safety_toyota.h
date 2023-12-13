@@ -43,17 +43,17 @@ const LongitudinalLimits TOYOTA_LONG_LIMITS = {
 const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 805;
 #define TOYOTA_GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + (GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2U) // avg between 2 tracks
 
-#define TOYOTOA_COMMON_TX_MSGS                                                                                                              \
+#define TOYOTA_COMMON_TX_MSGS                                                                                                               \
   {0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0x33E, 0, 7}, {0x344, 0, 8}, {0x365, 0, 7}, {0x366, 0, 7}, {0x4CB, 0, 8},  /* DSU bus 0 */  \
   {0x128, 1, 6}, {0x141, 1, 4}, {0x160, 1, 8}, {0x161, 1, 7}, {0x470, 1, 4},  /* DSU bus 1 */                                               \
   {0x2E4, 0, 5}, {0x191, 0, 8}, {0x411, 0, 8}, {0x412, 0, 8}, {0x343, 0, 8}, {0x1D2, 0, 8},  /* LKAS + ACC */                               \
 
 const CanMsg TOYOTA_TX_MSGS[] = {
-  TOYOTOA_COMMON_TX_MSGS
+  TOYOTA_COMMON_TX_MSGS
 };
 
-const CanMsg TOYOTA_TX_INTERCEPTOR_MSGS[] = {
-  TOYOTOA_COMMON_TX_MSGS
+const CanMsg TOYOTA_INTERCEPTOR_TX_MSGS[] = {
+  TOYOTA_COMMON_TX_MSGS
   {0x200, 0, 6},  // interceptor
 };
 
@@ -329,15 +329,15 @@ static safety_config toyota_init(uint16_t param) {
   toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
   toyota_lta = GET_FLAG(param, TOYOTA_PARAM_LTA);
-  toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
   enable_gas_interceptor = GET_FLAG(param, TOYOTA_PARAM_GAS_INTERCEPTOR);
+  toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
 
   safety_config ret;
-  if (enable_gas_interceptor) {
-    ret = BUILD_SAFETY_CFG(toyota_lka_interceptor_rx_checks, TOYOTA_TX_INTERCEPTOR_MSGS);
+  if (toyota_lta) {
+    ret = BUILD_SAFETY_CFG(toyota_lta_rx_checks, TOYOTA_TX_MSGS);
   } else {
-    ret = toyota_lta ? BUILD_SAFETY_CFG(toyota_lta_rx_checks, TOYOTA_TX_MSGS) :
-                       BUILD_SAFETY_CFG(toyota_lka_rx_checks, TOYOTA_TX_MSGS);
+    ret = enable_gas_interceptor ? BUILD_SAFETY_CFG(toyota_lka_interceptor_rx_checks, TOYOTA_INTERCEPTOR_TX_MSGS) : \
+                                   BUILD_SAFETY_CFG(toyota_lka_rx_checks, TOYOTA_TX_MSGS);
   }
   return ret;
 }
