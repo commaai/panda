@@ -181,6 +181,22 @@ def create_interceptor_test_new(safety_param, safety_test):
   return wrapper
 
 
+  # print(base_class)
+  # """Creates a version of the base class testing the interceptor"""
+  # name = f"{base_class.__name__}Interceptor"
+  # def newSetUp(thing, self):
+  #   print('newSetUp', thing)
+  #   base_class.setUp(self)
+  #   self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.safety.get_current_safety_param() |
+  #                                Panda.FLAG_TOYOTA_GAS_INTERCEPTOR)
+  #   self.safety.init_tests()
+  #
+  # new_class = type(name, (base_class, TestToyotaSafetyInterceptorBase), {})
+  # new_class.setUp = newSetUp
+  # globals()[f"{__name__}.{name}"] = new_class
+  # return base_class
+
+
 # @create_interceptor_test
 @create_interceptor_test_new(Panda.FLAG_TOYOTA_GAS_INTERCEPTOR, TestToyotaSafetyInterceptorBase)
 class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSafetyTest, common.SteerRequestCutSafetyTest):
