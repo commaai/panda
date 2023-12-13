@@ -73,13 +73,12 @@ RxCheck toyota_lka_interceptor_rx_checks[] = {
   {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
 };
 
+// Check the quality flag for angle measurement when using LTA, since it's not set on TSS-P cars
 RxCheck toyota_lta_rx_checks[] = {
-  // Check the quality flag for angle measurement when using LTA, since it's not set on TSS-P cars
   TOYOTA_COMMON_RX_CHECKS(true)
 };
 
 RxCheck toyota_lta_interceptor_rx_checks[] = {
-  // Check the quality flag for angle measurement when using LTA, since it's not set on TSS-P cars
   TOYOTA_COMMON_RX_CHECKS(true)
   {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
 };
