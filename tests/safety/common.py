@@ -184,7 +184,6 @@ class GasInterceptorSafetyTest(PandaSafetyTestBase):
 
   def test_gas_interceptor_safety_check(self):
     for gas in np.arange(0, 4000, 100):
-      gas = int(gas)
       for controls_allowed in [True, False]:
         self.safety.set_controls_allowed(controls_allowed)
         if controls_allowed:
