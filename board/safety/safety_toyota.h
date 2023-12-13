@@ -337,6 +337,11 @@ static safety_config toyota_init(uint16_t param) {
   enable_gas_interceptor = GET_FLAG(param, TOYOTA_PARAM_GAS_INTERCEPTOR);
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
 
+  // Gas interceptor should not be used if openpilot is not controlling longitudinal
+  if (toyota_stock_longitudinal) {
+    enable_gas_interceptor = false;
+  }
+
   safety_config ret;
   if (toyota_lta) {
     ret = BUILD_SAFETY_CFG(toyota_lta_rx_checks, TOYOTA_TX_MSGS);

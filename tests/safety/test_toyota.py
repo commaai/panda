@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import sys
 import numpy as np
 import random
 import unittest
@@ -133,6 +132,20 @@ class TestToyotaSafetyGasInterceptorBase(TestToyotaSafetyBase, common.GasInterce
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.safety.get_current_safety_param() |
                                  Panda.FLAG_TOYOTA_GAS_INTERCEPTOR)
     self.safety.init_tests()
+
+  def test_stock_longitudinal(self):
+    # If stock longitudinal is set, the gas interceptor safety param should not be respected
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.safety.get_current_safety_param() |
+                                 Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL)
+    self.safety.init_tests()
+
+    # Spot check a few gas interceptor tests: (1) reading interceptor,
+    # (2) behavior around interceptor, and (3) txing interceptor msgs
+    for test in (self.test_prev_gas_interceptor, self.test_disengage_on_gas_interceptor,
+                 self.test_gas_interceptor_safety_check):
+      with self.subTest(test=test.__name__):
+        with self.assertRaises(AssertionError):
+          test()
 
   # Skip non-interceptor user gas tests
   def test_prev_gas(self):
