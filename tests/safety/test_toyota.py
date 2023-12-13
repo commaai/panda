@@ -129,9 +129,7 @@ class TestToyotaSafetyInterceptorBase(TestToyotaSafetyBase, common.InterceptorSa
   TX_MSGS = TOYOTA_COMMON_TX_MSGS + [[0x200, 0]]
 
   def setUp(self):
-    print('in interceptor base, running super().setUp()')
     super().setUp()
-    print('done running super setup')
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.safety.get_current_safety_param() |
                                  Panda.FLAG_TOYOTA_GAS_INTERCEPTOR)
     self.safety.init_tests()
