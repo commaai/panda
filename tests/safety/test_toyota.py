@@ -124,7 +124,7 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
       self.assertFalse(self.safety.get_controls_allowed())
 
 
-class TestToyotaSafetyInterceptorBase(TestToyotaSafetyBase, common.InterceptorSafetyTest):
+class TestToyotaSafetyGasInterceptorBase(TestToyotaSafetyBase, common.GasInterceptorSafetyTest):
 
   TX_MSGS = TOYOTA_COMMON_TX_MSGS + [[0x200, 0]]
 
@@ -167,7 +167,7 @@ class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSaf
     self.safety.init_tests()
 
 
-class TestToyotaSafetyTorqueInterceptor(TestToyotaSafetyInterceptorBase, TestToyotaSafetyTorque):
+class TestToyotaSafetyTorqueGasInterceptor(TestToyotaSafetyGasInterceptorBase, TestToyotaSafetyTorque):
   pass
 
 
@@ -284,7 +284,7 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
         self.assertEqual(self.safety.get_angle_meas_max(), 0)
 
 
-class TestToyotaSafetyAngleInterceptor(TestToyotaSafetyInterceptorBase, TestToyotaSafetyAngle):
+class TestToyotaSafetyAngleGasInterceptor(TestToyotaSafetyGasInterceptorBase, TestToyotaSafetyAngle):
   pass
 
 
@@ -305,7 +305,7 @@ class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
     pass
 
 
-class TestToyotaAltBrakeSafetyInterceptor(TestToyotaSafetyInterceptorBase, TestToyotaAltBrakeSafety):
+class TestToyotaAltBrakeSafetyGasInterceptor(TestToyotaSafetyGasInterceptorBase, TestToyotaAltBrakeSafety):
   pass
 
 

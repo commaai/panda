@@ -118,7 +118,7 @@ class PandaSafetyTestBase(unittest.TestCase):
       self.assertEqual(meas_max_func(), 0)
 
 
-class InterceptorSafetyTest(PandaSafetyTestBase):
+class GasInterceptorSafetyTest(PandaSafetyTestBase):
 
   INTERCEPTOR_THRESHOLD = 0
 
@@ -127,7 +127,7 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "InterceptorSafetyTest":
+    if cls.__name__ == "GasInterceptorSafetyTest":
       cls.safety = None
       raise unittest.SkipTest
 

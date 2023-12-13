@@ -54,7 +54,7 @@ const CanMsg TOYOTA_TX_MSGS[] = {
 
 const CanMsg TOYOTA_INTERCEPTOR_TX_MSGS[] = {
   TOYOTA_COMMON_TX_MSGS
-  {0x200, 0, 6},  // interceptor
+  {0x200, 0, 6},  // gas interceptor
 };
 
 #define TOYOTA_COMMON_RX_CHECKS(lta)                                                                        \

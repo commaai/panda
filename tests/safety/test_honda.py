@@ -23,8 +23,8 @@ HONDA_BOSCH = 1
 #  * Nidec
 #    * normal
 #    * alt SCM messages
-#    * interceptor
-#    * interceptor with alt SCM messages
+#    * gas interceptor
+#    * gas interceptor with alt SCM messages
 #  * Bosch
 #    * Bosch with Longitudinal Support
 #  * Bosch Radarless
@@ -352,7 +352,7 @@ class TestHondaNidecSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):
     pass
 
 
-class TestHondaNidecInterceptorSafety(TestHondaNidecSafety, common.InterceptorSafetyTest):
+class TestHondaNidecGasInterceptorSafety(TestHondaNidecSafety, common.GasInterceptorSafetyTest):
   """
     Covers the Honda Nidec safety mode with a gas interceptor
   """
@@ -395,7 +395,7 @@ class TestHondaNidecAltSafety(TestHondaNidecSafety):
     return self.packer.make_can_msg_panda("SCM_BUTTONS", bus, values)
 
 
-class TestHondaNidecAltInterceptorSafety(TestHondaNidecSafety, common.InterceptorSafetyTest):
+class TestHondaNidecAltGasInterceptorSafety(TestHondaNidecSafety, common.GasInterceptorSafetyTest):
   """
     Covers the Honda Nidec safety mode with alt SCM messages and gas interceptor
   """
