@@ -21,10 +21,10 @@ HONDA_BOSCH = 1
 
 # Honda safety has several different configurations tested here:
 #  * Nidec
-#    * normal
-#    * alt SCM messages
-#    * gas interceptor
-#    * gas interceptor with alt SCM messages
+#    * normal (PCM-enable)
+#    * alt SCM messages  (PCM-enable)
+#    * gas interceptor (button-enable)
+#    * gas interceptor with alt SCM messages (button-enable)
 #  * Bosch
 #    * Bosch with Longitudinal Support
 #  * Bosch Radarless
@@ -411,29 +411,6 @@ class TestHondaNidecAltGasInterceptorSafety(common.GasInterceptorSafetyTest, Hon
     values = {"CRUISE_BUTTONS": buttons, "MAIN_ON": main_on, "COUNTER": self.cnt_button % 4}
     self.__class__.cnt_button += 1
     return self.packer.make_can_msg_panda("SCM_BUTTONS", bus, values)
-
-
-# class TestHondaNidecAltGasInterceptorSafety(TestHondaNidecGasInterceptorSafety):
-#   """
-#     Covers the Honda Nidec safety mode with alt SCM messages and gas interceptor, switches to button-enable car
-#   """
-#   def setUp(self):
-#     self.packer = CANPackerPanda("acura_ilx_2016_can_generated")
-#     self.safety = libpanda_py.libpanda
-#     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT | Panda.FLAG_HONDA_GAS_INTERCEPTOR)
-#     self.safety.init_tests()
-#
-#   def _acc_state_msg(self, main_on):
-#     values = {"MAIN_ON": main_on, "COUNTER": self.cnt_acc_state % 4}
-#     self.__class__.cnt_acc_state += 1
-#     return self.packer.make_can_msg_panda("SCM_BUTTONS", self.PT_BUS, values)
-#
-#   def _button_msg(self, buttons, main_on=False, bus=None):
-#     bus = self.PT_BUS if bus is None else bus
-#     values = {"CRUISE_BUTTONS": buttons, "MAIN_ON": main_on, "COUNTER": self.cnt_button % 4}
-#     self.__class__.cnt_button += 1
-#     return self.packer.make_can_msg_panda("SCM_BUTTONS", bus, values)
-
 
 
 # ********************* Honda Bosch **********************
