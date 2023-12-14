@@ -600,7 +600,7 @@ class Panda:
       "power_save_enabled": a[16],
       "heartbeat_lost": a[17],
       "alternative_experience": a[18],
-      "interrupt_load": a[29],
+      "interrupt_load": a[19],
       "fan_power": a[20],
       "safety_rx_checks_invalid": a[21],
       "spi_checksum_error_count": a[22],
