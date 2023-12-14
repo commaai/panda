@@ -122,21 +122,29 @@ class GasInterceptorSafetyTest(PandaSafetyTestBase):
 
   INTERCEPTOR_THRESHOLD = 0
 
+  cnt_gas_cmd = 0
+  cnt_user_gas = 0
+
+  packer: CANPackerPanda
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "GasInterceptorSafetyTest":
       cls.safety = None
       raise unittest.SkipTest
 
-  def _interceptor_gas_cmd(self, gas):
-    values = {}
+  def _interceptor_gas_cmd(self, gas: int):
+    values: dict[str, float | int] = {"COUNTER_PEDAL": self.__class__.cnt_gas_cmd & 0xF}
     if gas > 0:
       values["GAS_COMMAND"] = gas * 255.
       values["GAS_COMMAND2"] = gas * 255.
+    self.__class__.cnt_gas_cmd += 1
     return self.packer.make_can_msg_panda("GAS_COMMAND", 0, values)
 
-  def _interceptor_user_gas(self, gas):
-    values = {"INTERCEPTOR_GAS": gas, "INTERCEPTOR_GAS2": gas}
+  def _interceptor_user_gas(self, gas: int):
+    values = {"INTERCEPTOR_GAS": gas, "INTERCEPTOR_GAS2": gas,
+              "COUNTER_PEDAL": self.__class__.cnt_user_gas}
+    self.__class__.cnt_user_gas += 1
     return self.packer.make_can_msg_panda("GAS_SENSOR", 0, values)
 
   def test_prev_gas_interceptor(self):
