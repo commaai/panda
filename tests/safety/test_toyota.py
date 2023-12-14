@@ -25,9 +25,6 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   EPS_SCALE = 73
 
-  cnt_gas_cmd = 0
-  cnt_user_gas = 0
-
   packer: CANPackerPanda
   safety: libpanda_py.Panda
 
