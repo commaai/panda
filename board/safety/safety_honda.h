@@ -62,6 +62,11 @@ RxCheck honda_nidec_alt_rx_checks[] = {
   HONDA_COMMON_NO_SCM_FEEDBACK_RX_CHECKS(0)
 };
 
+RxCheck honda_nidec_alt_interceptor_rx_checks[] = {
+  HONDA_COMMON_NO_SCM_FEEDBACK_RX_CHECKS(0)
+  {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
+};
+
 // Bosch has pt on bus 1, verified 0x1A6 does not exist
 RxCheck honda_bosch_rx_checks[] = {
   HONDA_COMMON_RX_CHECKS(1)
@@ -378,9 +383,11 @@ static safety_config honda_nidec_init(uint16_t param) {
 
   safety_config ret;
   if (GET_FLAG(param, HONDA_PARAM_NIDEC_ALT)) {
-    SET_RX_CHECKS(honda_nidec_alt_rx_checks, ret);
+    enable_gas_interceptor ? SET_RX_CHECKS(honda_nidec_alt_interceptor_rx_checks, ret) : \
+                             SET_RX_CHECKS(honda_nidec_alt_rx_checks, ret);
   } else {
-    SET_RX_CHECKS(honda_common_rx_checks, ret);
+    enable_gas_interceptor ? SET_RX_CHECKS(honda_common_interceptor_rx_checks, ret) : \
+                             SET_RX_CHECKS(honda_common_rx_checks, ret);
   }
 
   if (enable_gas_interceptor) {
