@@ -359,7 +359,6 @@ class TestHondaNidecGasInterceptorSafety(common.GasInterceptorSafetyTest, HondaB
   """
 
   TX_MSGS = HONDA_N_COMMON_TX_MSGS + [[0x200, 0]]
-
   INTERCEPTOR_THRESHOLD = 492
 
   def setUp(self):
@@ -397,7 +396,6 @@ class TestHondaNidecAltGasInterceptorSafety(common.GasInterceptorSafetyTest, Hon
   """
 
   TX_MSGS = HONDA_N_COMMON_TX_MSGS + [[0x200, 0]]
-
   INTERCEPTOR_THRESHOLD = 492
 
   def setUp(self):
@@ -416,6 +414,7 @@ class TestHondaNidecAltGasInterceptorSafety(common.GasInterceptorSafetyTest, Hon
     values = {"CRUISE_BUTTONS": buttons, "MAIN_ON": main_on, "COUNTER": self.cnt_button % 4}
     self.__class__.cnt_button += 1
     return self.packer.make_can_msg_panda("SCM_BUTTONS", bus, values)
+
 
 
 # ********************* Honda Bosch **********************
