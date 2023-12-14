@@ -129,7 +129,7 @@ class GasInterceptorSafetyTest(PandaSafetyTestBase):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "GasInterceptorSafetyTest":
+    if cls.__name__ == "GasInterceptorSafetyTest" or cls.__name__.endswith("Base"):
       cls.safety = None
       raise unittest.SkipTest
 
@@ -146,6 +146,16 @@ class GasInterceptorSafetyTest(PandaSafetyTestBase):
               "COUNTER_PEDAL": self.__class__.cnt_user_gas}
     self.__class__.cnt_user_gas += 1
     return self.packer.make_can_msg_panda("GAS_SENSOR", 0, values)
+
+  # Skip non-interceptor user gas tests
+  def test_prev_gas(self):
+    pass
+
+  def test_disengage_on_gas(self):
+    pass
+
+  def test_alternative_experience_no_disengage_on_gas(self):
+    pass
 
   def test_prev_gas_interceptor(self):
     self._rx(self._interceptor_user_gas(0x0))
