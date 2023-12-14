@@ -152,16 +152,6 @@ class GasInterceptorSafetyTest(PandaSafetyTestBase):
     self.assertTrue(self.safety.get_gas_interceptor_prev())
     self._rx(self._interceptor_user_gas(0x0))
 
-  def test_rx_hook_interceptor(self):
-    # Ensure pedal counter is checked
-    for i in range(MAX_WRONG_COUNTERS * 2):
-      self.__class__.cnt_user_gas = 0
-      self.assertEqual(i + 1 < MAX_WRONG_COUNTERS, self._rx(self._interceptor_user_gas(0)))
-
-    # Only one is needed to recover
-    for _ in range(MAX_WRONG_COUNTERS):
-      self.assertTrue(self._rx(self._interceptor_user_gas(0)))
-
   def test_disengage_on_gas_interceptor(self):
     for g in range(0x1000):
       self._rx(self._interceptor_user_gas(0))

@@ -92,17 +92,6 @@ static uint32_t toyota_get_checksum(CANPacket_t *to_push) {
   return (uint8_t)(GET_BYTE(to_push, checksum_byte));
 }
 
-static uint8_t toyota_get_counter(CANPacket_t *to_push) {
-  int addr = GET_ADDR(to_push);
-
-  uint8_t cnt = 0U;
-  if (addr == 0x201) {
-    // Signal: COUNTER_PEDAL
-    cnt = GET_BYTE(to_push, 4) & 0x0FU;
-  }
-  return cnt;
-}
-
 static bool toyota_get_quality_flag_valid(CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
@@ -356,6 +345,5 @@ const safety_hooks toyota_hooks = {
   .fwd = toyota_fwd_hook,
   .get_checksum = toyota_get_checksum,
   .compute_checksum = toyota_compute_checksum,
-  .get_counter = toyota_get_counter,
   .get_quality_flag_valid = toyota_get_quality_flag_valid,
 };
