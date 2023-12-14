@@ -118,7 +118,7 @@ static uint8_t toyota_get_counter(CANPacket_t *to_push) {
   uint8_t cnt = 0U;
   if (addr == 0x201) {
     // Signal: COUNTER_PEDAL
-    cnt = (GET_BYTE(to_push, 4)) & 0x0FU;
+    cnt = GET_BYTE(to_push, 4) & 0x0FU;
   }
   return cnt;
 }
