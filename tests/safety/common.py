@@ -147,6 +147,16 @@ class GasInterceptorSafetyTest(PandaSafetyTestBase):
     self.__class__.cnt_user_gas += 1
     return self.packer.make_can_msg_panda("GAS_SENSOR", 0, values)
 
+  # Skip non-interceptor user gas tests
+  def test_prev_gas(self):
+    pass
+
+  def test_disengage_on_gas(self):
+    pass
+
+  def test_alternative_experience_no_disengage_on_gas(self):
+    pass
+
   def test_prev_gas_interceptor(self):
     self._rx(self._interceptor_user_gas(0x0))
     self.assertFalse(self.safety.get_gas_interceptor_prev())
