@@ -8,6 +8,8 @@ from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, MAX_WRONG_COUNTERS
 
+HONDA_N_COMMON_TX_MSGS = [[0xE4, 0], [0x194, 0], [0x1FA, 0], [0x30C, 0], [0x33D, 0]]
+
 class Btn:
   NONE = 0
   MAIN = 1
@@ -256,7 +258,7 @@ class HondaBase(common.PandaCarSafetyTest):
 
 
 class TestHondaNidecSafetyBase(HondaBase):
-  TX_MSGS = [[0xE4, 0], [0x194, 0], [0x1FA, 0], [0x200, 0], [0x30C, 0], [0x33D, 0]]
+  TX_MSGS = HONDA_N_COMMON_TX_MSGS
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0x194, 0x33D, 0x30C]}
 
   PT_BUS = 0
@@ -356,6 +358,8 @@ class TestHondaNidecGasInterceptorSafety(common.GasInterceptorSafetyTest, HondaB
     Covers the Honda Nidec safety mode with a gas interceptor, switches to a button-enable car
   """
 
+  TX_MSGS = HONDA_N_COMMON_TX_MSGS + [[0x200, 0]]
+
   INTERCEPTOR_THRESHOLD = 492
 
   def setUp(self):
@@ -391,6 +395,8 @@ class TestHondaNidecAltGasInterceptorSafety(common.GasInterceptorSafetyTest, Hon
   """
     Covers the Honda Nidec safety mode with alt SCM messages and gas interceptor, switches to a button-enable car
   """
+
+  TX_MSGS = HONDA_N_COMMON_TX_MSGS + [[0x200, 0]]
 
   INTERCEPTOR_THRESHOLD = 492
 
