@@ -23,7 +23,6 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
   RELAY_MALFUNCTION_ADDRS = {0: (0x2E4,)}
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x343]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
-  INTERCEPTOR_THRESHOLD = 805
   EPS_SCALE = 73
 
   cnt_gas_cmd = 0
@@ -123,9 +122,10 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
       self.assertFalse(self.safety.get_controls_allowed())
 
 
-class TestToyotaSafetyGasInterceptorBase(TestToyotaSafetyBase, common.GasInterceptorSafetyTest):
+class TestToyotaSafetyGasInterceptorBase(common.GasInterceptorSafetyTest, TestToyotaSafetyBase):
 
   TX_MSGS = TOYOTA_COMMON_TX_MSGS + [[0x200, 0]]
+  INTERCEPTOR_THRESHOLD = 805
 
   def setUp(self):
     super().setUp()
@@ -146,16 +146,6 @@ class TestToyotaSafetyGasInterceptorBase(TestToyotaSafetyBase, common.GasInterce
       with self.subTest(test=test.__name__):
         with self.assertRaises(AssertionError):
           test()
-
-  # Skip non-interceptor user gas tests
-  def test_prev_gas(self):
-    pass
-
-  def test_disengage_on_gas(self):
-    pass
-
-  def test_alternative_experience_no_disengage_on_gas(self):
-    pass
 
 
 class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSafetyTest, common.SteerRequestCutSafetyTest):

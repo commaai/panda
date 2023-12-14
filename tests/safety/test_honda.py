@@ -343,7 +343,7 @@ class TestHondaNidecSafetyBase(HondaBase):
 
 class TestHondaNidecPcmSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):
   """
-    Covers the Honda Nidec safety mode (no gas interceptor)
+    Covers the Honda Nidec safety mode
   """
 
   # Nidec doesn't disengage on falling edge of cruise. See comment in safety_honda.h

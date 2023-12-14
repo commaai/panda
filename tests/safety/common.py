@@ -129,7 +129,7 @@ class GasInterceptorSafetyTest(PandaSafetyTestBase):
 
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "GasInterceptorSafetyTest":
+    if cls.__name__ == "GasInterceptorSafetyTest" or cls.__name__.endswith("Base"):
       cls.safety = None
       raise unittest.SkipTest
 
