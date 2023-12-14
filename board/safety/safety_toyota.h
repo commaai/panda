@@ -344,7 +344,6 @@ static safety_config toyota_init(uint16_t param) {
 
   safety_config ret;
   if (toyota_lta) {
-    ret = BUILD_SAFETY_CFG(toyota_lta_rx_checks, TOYOTA_TX_MSGS);
     ret = enable_gas_interceptor ? BUILD_SAFETY_CFG(toyota_lta_interceptor_rx_checks, TOYOTA_INTERCEPTOR_TX_MSGS) : \
                                    BUILD_SAFETY_CFG(toyota_lta_rx_checks, TOYOTA_TX_MSGS);
   } else {
