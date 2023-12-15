@@ -31,20 +31,6 @@ class TestElm327(TestDefaultRxHookBase):
       should_tx = msg_len == 8
       self.assertEqual(should_tx, self._tx(common.make_msg(0, 0x700, msg_len)))
 
-  def test_tx_lin_hook(self):
-    # spot check some cases
-    self.assertFalse(self._tx_lin(0xC0, 1, 0x33, 0xF1, b'\x01\x0F'))  # wrong lin number/bus
-    self.assertFalse(self._tx_lin(0xC0, 0, 0x33, 0xF1, b''))  # wrong length
-    self.assertFalse(self._tx_lin(0xB0, 0, 0x33, 0xF1, b'\x01\x0E'))  # bad priority
-    self.assertFalse(self._tx_lin(0xC0, 0, 0x00, 0xF1, b'\x01\x0D'))  # bad addr
-    self.assertFalse(self._tx_lin(0xC0, 0, 0x33, 0x00, b'\x01\x0C'))  # bad addr
-
-    for msg_len in range(8 + 1):
-      # first three bytes are made up of priority, len, rx/tx addresses
-      # payload is not checked, try sending 0xFF
-      should_tx = 2 <= (msg_len) <= 7
-      self.assertEqual(should_tx, self._tx_lin(0xC0, 0, 0x33, 0xF1, b'\xFF' * msg_len))
-
   def test_tx_hook_on_wrong_safety_mode(self):
     # No point, since we allow many diagnostic addresses
     pass
