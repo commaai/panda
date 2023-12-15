@@ -157,7 +157,7 @@ const LongitudinalLimits FORD_LONG_LIMITS = {
   .inactive_accel = 5128,  // -0.0008 m/s^2
 
   // gas cmd limits
-  // Signal: AccPrpl_A_Rq
+  // Signal: AccPrpl_A_Rq & AccPrpl_A_Pred
   .max_gas = 700,          //  2.0 m/s^2
   .min_gas = 450,          // -0.5 m/s^2
   .inactive_gas = 0,       // -5.0 m/s^2
@@ -274,6 +274,8 @@ static bool ford_tx_hook(CANPacket_t *to_send) {
   if (addr == FORD_ACCDATA) {
     // Signal: AccPrpl_A_Rq
     int gas = ((GET_BYTE(to_send, 6) & 0x3U) << 8) | GET_BYTE(to_send, 7);
+    // Signal: AccPrpl_A_Pred
+    int gas_pred = ((GET_BYTE(to_send, 2) & 0x3U) << 8) | GET_BYTE(to_send, 3);
     // Signal: AccBrkTot_A_Rq
     int accel = ((GET_BYTE(to_send, 0) & 0x1FU) << 8) | GET_BYTE(to_send, 1);
     // Signal: CmbbDeny_B_Actl
@@ -282,6 +284,7 @@ static bool ford_tx_hook(CANPacket_t *to_send) {
     bool violation = false;
     violation |= longitudinal_accel_checks(accel, FORD_LONG_LIMITS);
     violation |= longitudinal_gas_checks(gas, FORD_LONG_LIMITS);
+    violation |= longitudinal_gas_checks(gas_pred, FORD_LONG_LIMITS);
 
     // Safety check for stock AEB
     violation |= cmbb_deny != 0; // do not prevent stock AEB actuation
