@@ -90,7 +90,6 @@ namespace panda {
 		uint8_t ignition_line;
 		uint8_t ignition_can;
 		uint8_t controls_allowed;
-		uint8_t gas_interceptor_detected;
 		uint8_t car_harness_status;
 		uint8_t usb_power_mode;
 		uint8_t safety_mode;
