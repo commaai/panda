@@ -153,6 +153,7 @@ static uint32_t subaru_compute_checksum(CANPacket_t *to_push) {
 static void subaru_rx_hook(CANPacket_t *to_push) {
   const int bus = GET_BUS(to_push);
   const int alt_main_bus = subaru_gen2 ? SUBARU_ALT_BUS : SUBARU_MAIN_BUS;
+  const int stock_lkas_msg = subaru_lkas_angle ? MSG_SUBARU_ES_LKAS_ANGLE : MSG_SUBARU_ES_LKAS;
 
   int addr = GET_ADDR(to_push);
   if ((addr == MSG_SUBARU_Steering_Torque) && (bus == SUBARU_MAIN_BUS)) {
@@ -193,7 +194,7 @@ static void subaru_rx_hook(CANPacket_t *to_push) {
     gas_pressed = GET_BYTE(to_push, 4) != 0U;
   }
 
-  generic_rx_checks((addr == MSG_SUBARU_ES_LKAS) && (bus == SUBARU_MAIN_BUS));
+  generic_rx_checks((addr == stock_lkas_msg) && (bus == SUBARU_MAIN_BUS));
 }
 
 static bool subaru_tx_hook(CANPacket_t *to_send) {
@@ -301,7 +302,10 @@ static safety_config subaru_init(uint16_t param) {
 #endif
 
   safety_config ret;
-  if (subaru_gen2) {
+  if (subaru_lkas_angle) {
+    ret = BUILD_SAFETY_CFG(subaru_rx_checks, SUBARU_LKAS_ANGLE_TX_MSGS);
+  }
+  else if (subaru_gen2) {
     ret = subaru_longitudinal ? BUILD_SAFETY_CFG(subaru_gen2_rx_checks, SUBARU_GEN2_LONG_TX_MSGS) : \
                                 BUILD_SAFETY_CFG(subaru_gen2_rx_checks, SUBARU_GEN2_TX_MSGS);
   } else {
