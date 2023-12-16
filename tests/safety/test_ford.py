@@ -409,6 +409,7 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
   def _acc_command_msg(self, gas: float, brake: float, cmbb_deny: bool = False):
     values = {
       "AccPrpl_A_Rq": gas,                       # [-5|5.23] m/s^2
+      "AccPrpl_A_Pred": gas,                     # [-5|5.23] m/s^2
       "AccBrkTot_A_Rq": brake,                   # [-20|11.9449] m/s^2
       "CmbbDeny_B_Actl": 1 if cmbb_deny else 0,  # [0|1] deny AEB actuation
     }
