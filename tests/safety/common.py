@@ -3,7 +3,7 @@ import abc
 import unittest
 import importlib
 import numpy as np
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
@@ -69,7 +69,11 @@ class PandaSafetyTestBase(unittest.TestCase):
     self.safety.set_safety_hooks(self.safety.get_current_safety_mode(),
                                  self.safety.get_current_safety_param())
 
-  def _rx(self, msg):
+  def _rx(self, msg: Union[libpanda_py.CANPacket, List[libpanda_py.CANPacket]]):
+    if isinstance(msg, list):
+      for m in msg:
+        self._rx(m)
+      return
     return self.safety.safety_rx_hook(msg)
 
   def _tx(self, msg):
