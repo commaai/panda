@@ -23,8 +23,10 @@ const CanMsg NISSAN_TX_MSGS[] = {
 RxCheck nissan_rx_checks[] = {
   {.msg = {{0x2, 0, 5, .frequency = 100U},
            {0x2, 1, 5, .frequency = 100U}, { 0 }}},  // STEER_ANGLE_SENSOR
+  {.msg = {{0x284, 0, 8, .frequency = 50U},
+           {0x284, 1, 8, .frequency = 50U}, { 0 }}}, // WHEEL_SPEEDS_FRONT
   {.msg = {{0x285, 0, 8, .frequency = 50U},
-           {0x285, 1, 8, .frequency = 50U}, { 0 }}}, // WHEEL_SPEEDS_REAR
+           {0x285, 1, 8, .frequency = 50U}, { 0 }}}, // WHEEL_SPEEDS_FRONT
   {.msg = {{0x30f, 2, 3, .frequency = 10U},
            {0x30f, 1, 3, .frequency = 10U}, { 0 }}}, // CRUISE_STATE
   {.msg = {{0x15c, 0, 8, .frequency = 50U},
@@ -39,6 +41,8 @@ RxCheck nissan_rx_checks[] = {
 const int NISSAN_PARAM_ALT_EPS_BUS = 1;
 
 bool nissan_alt_eps = false;
+
+uint16_t wheel_speeds[4] = {0,0,0,0}; // FR, FL, RR, RL
 
 static void nissan_rx_hook(CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
@@ -56,12 +60,21 @@ static void nissan_rx_hook(CANPacket_t *to_push) {
       update_sample(&angle_meas, angle_meas_new);
     }
 
+    if (addr == 0x284) {
+      // Get current speed and standstill
+      wheel_speeds[2] = (GET_BYTE(to_push, 0) << 8) | (GET_BYTE(to_push, 1));
+      wheel_speeds[3] = (GET_BYTE(to_push, 2) << 8) | (GET_BYTE(to_push, 3));
+    }
+
     if (addr == 0x285) {
       // Get current speed and standstill
-      uint16_t right_rear = (GET_BYTE(to_push, 0) << 8) | (GET_BYTE(to_push, 1));
-      uint16_t left_rear = (GET_BYTE(to_push, 2) << 8) | (GET_BYTE(to_push, 3));
-      vehicle_moving = (right_rear | left_rear) != 0U;
-      UPDATE_VEHICLE_SPEED((right_rear + left_rear) / 2.0 * 0.005 / 3.6);
+      wheel_speeds[0] = (GET_BYTE(to_push, 0) << 8) | (GET_BYTE(to_push, 1));
+      wheel_speeds[1] = (GET_BYTE(to_push, 2) << 8) | (GET_BYTE(to_push, 3));
+    }
+
+    if (addr == 0x284 || addr == 0x285) {
+      vehicle_moving = (wheel_speeds[0] | wheel_speeds[1] | wheel_speeds[2] | wheel_speeds[3]) != 0U;
+      UPDATE_VEHICLE_SPEED((wheel_speeds[0] + wheel_speeds[1] + wheel_speeds[2] + wheel_speeds[3]) / 4.0 * 0.005 / 3.6);
     }
 
     // X-Trail 0x15c, Leaf 0x239

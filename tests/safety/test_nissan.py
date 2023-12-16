@@ -44,8 +44,12 @@ class TestNissanSafety(common.PandaCarSafetyTest, common.AngleSteeringSafetyTest
     return self.packer.make_can_msg_panda("CRUISE_STATE", self.CRUISE_BUS, values)
 
   def _speed_msg(self, speed):
-    values = {"WHEEL_SPEED_%s" % s: speed * 3.6 for s in ["RR", "RL"]}
-    return self.packer.make_can_msg_panda("WHEEL_SPEEDS_REAR", self.EPS_BUS, values)
+    values_front = {"WHEEL_SPEED_%s" % s: speed * 3.6 for s in ["FR", "FL"]}
+    values_rear = {"WHEEL_SPEED_%s" % s: speed * 3.6 for s in ["RR", "RL"]}
+
+    front_msg = self.packer.make_can_msg_panda("WHEEL_SPEEDS_FRONT", self.EPS_BUS, values_front)
+    rear_msg = self.packer.make_can_msg_panda("WHEEL_SPEEDS_REAR", self.EPS_BUS, values_rear)
+    return [front_msg, rear_msg]
 
   def _user_brake_msg(self, brake):
     values = {"USER_BRAKE_PRESSED": brake}
