@@ -65,21 +65,21 @@ static void nissan_rx_hook(CANPacket_t *to_push) {
     }
 
     // X-Trail 0x15c, Leaf 0x239
-    if ((addr == 0x15c) || (addr == 0x239)) {
-      if (addr == 0x15c){
-        gas_pressed = ((GET_BYTE(to_push, 5) << 2) | ((GET_BYTE(to_push, 6) >> 6) & 0x3U)) > 3U;
-      } else {
-        gas_pressed = GET_BYTE(to_push, 0) > 3U;
-      }
+    if (addr == 0x15c){
+      gas_pressed = ((GET_BYTE(to_push, 5) << 2) | ((GET_BYTE(to_push, 6) >> 6) & 0x3U)) > 3U;
+    }
+    
+    if (addr == 0x239) {
+      gas_pressed = GET_BYTE(to_push, 0) > 3U;
     }
 
     // X-trail 0x454, Leaf 0x239
-    if ((addr == 0x454) || (addr == 0x239)) {
-      if (addr == 0x454){
-        brake_pressed = (GET_BYTE(to_push, 2) & 0x80U) != 0U;
-      } else {
-        brake_pressed = ((GET_BYTE(to_push, 4) >> 5) & 1U) != 0U;
-      }
+    if (addr == 0x454){
+      brake_pressed = (GET_BYTE(to_push, 2) & 0x80U) != 0U;
+    } 
+    
+    if (addr == 0x239) {
+      brake_pressed = ((GET_BYTE(to_push, 4) >> 5) & 1U) != 0U;
     }
   }
 
