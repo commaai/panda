@@ -167,9 +167,9 @@ class Panda:
   HW_TYPE_TRES = b'\x09'
 
   CAN_PACKET_VERSION = 4
-  HEALTH_PACKET_VERSION = 14
+  HEALTH_PACKET_VERSION = 15
   CAN_HEALTH_PACKET_VERSION = 5
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBBHBBBHfBBHBHHB")
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBHBBBHfBBHBHHB")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
 
   F2_DEVICES = [HW_TYPE_PEDAL, ]
@@ -193,11 +193,13 @@ class Panda:
   FLAG_TOYOTA_ALT_BRAKE = (1 << 8)
   FLAG_TOYOTA_STOCK_LONGITUDINAL = (2 << 8)
   FLAG_TOYOTA_LTA = (4 << 8)
+  FLAG_TOYOTA_GAS_INTERCEPTOR = (8 << 8)
 
   FLAG_HONDA_ALT_BRAKE = 1
   FLAG_HONDA_BOSCH_LONG = 2
   FLAG_HONDA_NIDEC_ALT = 4
   FLAG_HONDA_RADARLESS = 8
+  FLAG_HONDA_GAS_INTERCEPTOR = 16
 
   FLAG_HYUNDAI_EV_GAS = 1
   FLAG_HYUNDAI_HYBRID_GAS = 2
@@ -591,22 +593,21 @@ class Panda:
       "ignition_line": a[9],
       "ignition_can": a[10],
       "controls_allowed": a[11],
-      "gas_interceptor_detected": a[12],
-      "car_harness_status": a[13],
-      "safety_mode": a[14],
-      "safety_param": a[15],
-      "fault_status": a[16],
-      "power_save_enabled": a[17],
-      "heartbeat_lost": a[18],
-      "alternative_experience": a[19],
-      "interrupt_load": a[20],
-      "fan_power": a[21],
-      "safety_rx_checks_invalid": a[22],
-      "spi_checksum_error_count": a[23],
-      "fan_stall_count": a[24],
-      "sbu1_voltage_mV": a[25],
-      "sbu2_voltage_mV": a[26],
-      "som_reset_triggered": a[27],
+      "car_harness_status": a[12],
+      "safety_mode": a[13],
+      "safety_param": a[14],
+      "fault_status": a[15],
+      "power_save_enabled": a[16],
+      "heartbeat_lost": a[17],
+      "alternative_experience": a[18],
+      "interrupt_load": a[19],
+      "fan_power": a[20],
+      "safety_rx_checks_invalid": a[21],
+      "spi_checksum_error_count": a[22],
+      "fan_stall_count": a[23],
+      "sbu1_voltage_mV": a[24],
+      "sbu2_voltage_mV": a[25],
+      "som_reset_triggered": a[26],
     }
 
   @ensure_can_health_packet_version

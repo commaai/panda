@@ -332,7 +332,7 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   // reset state set by safety mode
   safety_mode_cnt = 0U;
   relay_malfunction = false;
-  gas_interceptor_detected = false;
+  enable_gas_interceptor = false;
   gas_interceptor_prev = 0;
   gas_pressed = false;
   gas_pressed_prev = false;
@@ -504,9 +504,7 @@ float interpolate(struct lookup_t xy, float x) {
         float dx = xy.x[i+1] - x0;
         float dy = xy.y[i+1] - y0;
         // dx should not be zero as xy.x is supposed to be monotonic
-        if (dx <= 0.) {
-          dx = 0.0001;
-        }
+        dx = MAX(dx, 0.0001);
         ret = (dy * (x - x0) / dx) + y0;
         break;
       }

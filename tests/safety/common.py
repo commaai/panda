@@ -118,26 +118,44 @@ class PandaSafetyTestBase(unittest.TestCase):
       self.assertEqual(meas_max_func(), 0)
 
 
-class InterceptorSafetyTest(PandaSafetyTestBase):
+class GasInterceptorSafetyTest(PandaSafetyTestBase):
 
   INTERCEPTOR_THRESHOLD = 0
 
+  cnt_gas_cmd = 0
+  cnt_user_gas = 0
+
+  packer: CANPackerPanda
+
   @classmethod
   def setUpClass(cls):
-    if cls.__name__ == "InterceptorSafetyTest":
+    if cls.__name__ == "GasInterceptorSafetyTest" or cls.__name__.endswith("Base"):
       cls.safety = None
       raise unittest.SkipTest
 
-  def _interceptor_gas_cmd(self, gas):
-    values = {}
+  def _interceptor_gas_cmd(self, gas: int):
+    values: dict[str, float | int] = {"COUNTER_PEDAL": self.__class__.cnt_gas_cmd & 0xF}
     if gas > 0:
       values["GAS_COMMAND"] = gas * 255.
       values["GAS_COMMAND2"] = gas * 255.
+    self.__class__.cnt_gas_cmd += 1
     return self.packer.make_can_msg_panda("GAS_COMMAND", 0, values)
 
-  def _interceptor_user_gas(self, gas):
-    values = {"INTERCEPTOR_GAS": gas, "INTERCEPTOR_GAS2": gas}
+  def _interceptor_user_gas(self, gas: int):
+    values = {"INTERCEPTOR_GAS": gas, "INTERCEPTOR_GAS2": gas,
+              "COUNTER_PEDAL": self.__class__.cnt_user_gas}
+    self.__class__.cnt_user_gas += 1
     return self.packer.make_can_msg_panda("GAS_SENSOR", 0, values)
+
+  # Skip non-interceptor user gas tests
+  def test_prev_gas(self):
+    pass
+
+  def test_disengage_on_gas(self):
+    pass
+
+  def test_alternative_experience_no_disengage_on_gas(self):
+    pass
 
   def test_prev_gas_interceptor(self):
     self._rx(self._interceptor_user_gas(0x0))
@@ -145,7 +163,6 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
     self._rx(self._interceptor_user_gas(0x1000))
     self.assertTrue(self.safety.get_gas_interceptor_prev())
     self._rx(self._interceptor_user_gas(0x0))
-    self.safety.set_gas_interceptor_detected(False)
 
   def test_disengage_on_gas_interceptor(self):
     for g in range(0x1000):
@@ -155,7 +172,6 @@ class InterceptorSafetyTest(PandaSafetyTestBase):
       remain_enabled = g <= self.INTERCEPTOR_THRESHOLD
       self.assertEqual(remain_enabled, self.safety.get_controls_allowed())
       self._rx(self._interceptor_user_gas(0))
-      self.safety.set_gas_interceptor_detected(False)
 
   def test_alternative_experience_no_disengage_on_gas_interceptor(self):
     self.safety.set_controls_allowed(True)
@@ -1046,3 +1062,10 @@ class PandaCarSafetyTest(PandaSafetyTest):
     # past threshold
     self._rx(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD + 1))
     self.assertTrue(self.safety.get_vehicle_moving())
+
+  def test_safety_tick(self):
+    self.safety.set_timer(int(2e6))
+    self.safety.set_controls_allowed(True)
+    self.safety.safety_tick_current_safety_config()
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.assertFalse(self.safety.safety_config_valid())
