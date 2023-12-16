@@ -71,9 +71,7 @@ class PandaSafetyTestBase(unittest.TestCase):
 
   def _rx(self, msg: Union[libpanda_py.CANPacket, List[libpanda_py.CANPacket]]):
     if isinstance(msg, list):
-      for m in msg:
-        self._rx(m)
-      return
+      return all([self._rx(m) for m in msg])
     return self.safety.safety_rx_hook(msg)
 
   def _tx(self, msg):
