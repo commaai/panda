@@ -345,7 +345,7 @@ static bool toyota_tx_hook(CANPacket_t *to_send) {
   if (addr == 0x750) {
     // this address is sub-addressed. only allow tester present to radar (0xF)
     bool invalid_uds_msg = (GET_BYTES(to_send, 0, 4) != 0x003E020FU) || (GET_BYTES(to_send, 4, 4) != 0x0U);
-    if (invalid_uds_msg || toyota_stock_longitudinal) {
+    if (invalid_uds_msg) {
       tx = 0;
     }
   }
