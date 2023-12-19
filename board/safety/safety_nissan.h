@@ -25,6 +25,8 @@ RxCheck nissan_rx_checks[] = {
            {0x2, 1, 5, .frequency = 100U}, { 0 }}},  // STEER_ANGLE_SENSOR
   {.msg = {{0x285, 0, 8, .frequency = 50U},
            {0x285, 1, 8, .frequency = 50U}, { 0 }}}, // WHEEL_SPEEDS_REAR
+  {.msg = {{0x284, 0, 8, .frequency = 50U},
+           {0x29a, 0, 8, .frequency = 50U}, { 0 }}}, // WHEEL_SPEEDS_FRONT
   {.msg = {{0x30f, 2, 3, .frequency = 10U},
            {0x30f, 1, 3, .frequency = 10U}, { 0 }}}, // CRUISE_STATE
   {.msg = {{0x15c, 0, 8, .frequency = 50U},
