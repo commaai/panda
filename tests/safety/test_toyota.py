@@ -319,8 +319,8 @@ class TestToyotaAltBrakeSafetyGasInterceptor(TestToyotaSafetyGasInterceptorBase,
 class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
 
   # Base addresses minus ACC_CONTROL (0x343)
-  FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191]}
   RELAY_MALFUNCTION_ADDRS = {0: (0x2E4,)}
+  FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191]}
 
   def test_diagnostics(self, stock_longitudinal: bool = True):
     super().test_diagnostics(stock_longitudinal=stock_longitudinal)
