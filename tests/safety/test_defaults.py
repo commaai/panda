@@ -23,10 +23,6 @@ class TestNoOutput(TestDefaultRxHookBase):
     self.safety.set_safety_hooks(Panda.SAFETY_NOOUTPUT, 0)
     self.safety.init_tests()
 
-  def test_tx_lin_hook(self):
-    for lin_num in range(2):
-      self.assertFalse(self._tx_lin(0x0, lin_num, 0x0, 0x0, b'\x00' * 8), f"allowed TX LIN {lin_num=}")
-
 
 class TestSilent(TestNoOutput):
   """SILENT uses same hooks as NOOUTPUT"""
@@ -46,10 +42,6 @@ class TestAllOutput(TestDefaultRxHookBase):
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_ALLOUTPUT, 0)
     self.safety.init_tests()
-
-  def test_tx_lin_hook(self):
-    for lin_num in range(2):
-      self.assertTrue(self._tx_lin(0x0, lin_num, 0x0, 0x0, b'\x00' * 8), f"not allowed TX LIN {lin_num=}")
 
   def test_spam_can_buses(self):
     # asserts tx allowed for all scanned addrs

@@ -1,4 +1,4 @@
 *.pdf
+*.txt
+new_table
 cppcheck/
-
-MISRA_C_2012.txt

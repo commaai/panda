@@ -1,18 +1,18 @@
-void safety_tick_current_rx_checks() {
-  safety_tick(current_rx_checks);
+void safety_tick_current_safety_config() {
+  safety_tick(&current_safety_config);
 }
 
-bool addr_checks_valid() {
-  if (current_rx_checks->len <= 0) {
+bool safety_config_valid() {
+  if (current_safety_config.rx_checks_len <= 0) {
     printf("missing RX checks\n");
     return false;
   }
 
-  for (int i = 0; i < current_rx_checks->len; i++) {
-    const AddrCheckStruct addr = current_rx_checks->check[i];
-    bool valid = addr.msg_seen && !addr.lagging && addr.valid_checksum && (addr.wrong_counters < MAX_WRONG_COUNTERS) && addr.valid_quality_flag;
+  for (int i = 0; i < current_safety_config.rx_checks_len; i++) {
+    const RxCheck addr = current_safety_config.rx_checks[i];
+    bool valid = addr.status.msg_seen && !addr.status.lagging && addr.status.valid_checksum && (addr.status.wrong_counters < MAX_WRONG_COUNTERS) && addr.status.valid_quality_flag;
     if (!valid) {
-      printf("i %d seen %d lagging %d valid checksum %d wrong counters %d valid quality flag %d\n", i, addr.msg_seen, addr.lagging, addr.valid_checksum, addr.wrong_counters, addr.valid_quality_flag);
+      // printf("i %d seen %d lagging %d valid checksum %d wrong counters %d valid quality flag %d\n", i, addr.status.msg_seen, addr.status.lagging, addr.status.valid_checksum, addr.status.wrong_counters, addr.status.valid_quality_flag);
       return false;
     }
   }
@@ -31,10 +31,6 @@ void set_relay_malfunction(bool c){
   relay_malfunction = c;
 }
 
-void set_gas_interceptor_detected(bool c){
-  gas_interceptor_detected = c;
-}
-
 bool get_controls_allowed(void){
   return controls_allowed;
 }
@@ -45,10 +41,6 @@ int get_alternative_experience(void){
 
 bool get_relay_malfunction(void){
   return relay_malfunction;
-}
-
-bool get_gas_interceptor_detected(void){
-  return gas_interceptor_detected;
 }
 
 int get_gas_interceptor_prev(void){
@@ -89,6 +81,10 @@ int get_vehicle_speed_min(void){
 
 int get_vehicle_speed_max(void){
   return vehicle_speed.max;
+}
+
+int get_vehicle_speed_last(void){
+  return vehicle_speed.values[0];
 }
 
 int get_current_safety_mode(void){
@@ -147,6 +143,11 @@ void set_desired_angle_last(int t){
 
 int get_desired_angle_last(void){
   return desired_angle_last;
+}
+
+void set_angle_meas(int min, int max){
+  angle_meas.min = min;
+  angle_meas.max = max;
 }
 
 int get_angle_meas_min(void){
