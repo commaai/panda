@@ -119,12 +119,8 @@ typedef struct {
   const uint32_t frequency;      // expected frequency of the message [Hz]
 } CanMsgCheck;
 
-// params and flags about checksum, counter and frequency checks for each monitored address
 typedef struct {
-  // const params
-  const CanMsgCheck msg[MAX_ADDR_CHECK_MSGS];  // check either messages (e.g. honda steer)
-
-  // dynamic flags
+  // dynamic flags, reset on safety mode init
   bool msg_seen;
   int index;                         // if multiple messages are allowed to be checked, this stores the index of the first one seen. only msg[msg_index] will be used
   bool valid_checksum;               // true if and only if checksum check is passed
@@ -133,6 +129,12 @@ typedef struct {
   uint8_t last_counter;              // last counter value
   uint32_t last_timestamp;           // micro-s
   bool lagging;                      // true if and only if the time between updates is excessive
+} RxStatus;
+
+// params and flags about checksum, counter and frequency checks for each monitored address
+typedef struct {
+  const CanMsgCheck msg[MAX_ADDR_CHECK_MSGS];  // check either messages (e.g. honda steer)
+  RxStatus status;
 } RxCheck;
 
 typedef struct {
