@@ -122,7 +122,7 @@ class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.Longitudinal
   MIN_GAS = 808
   MAX_GAS = 3400
   INACTIVE_GAS = 1818
-  MAX_POSSIBLE_GAS = 2**12
+  MAX_POSSIBLE_GAS = 2**13
 
   MIN_BRAKE = 0
   MAX_BRAKE = 600
