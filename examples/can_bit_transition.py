@@ -97,7 +97,7 @@ def PrintUnique(log_file, low_range, high_range):
   high.load(log_file, start, end)
   # print messages that go from low to high
   found = False
-  for message_id in sorted(high.messages):
+  for message_id in sorted(high.messages, key=lambda x: int(x.split(':')[1], 16)):
     if message_id in low.messages:
       high.messages[message_id].printBitDiff(low.messages[message_id])
       found = True
