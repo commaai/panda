@@ -374,14 +374,14 @@ static int chrysler_fwd_hook(int bus_num, int addr) {
 
   // forward to camera
   const bool is_buttons = (addr == chrysler_addrs->CRUISE_BUTTONS);
-  if ((bus_num == 0) && (!chrysler_longitudinal || !is_buttons)) {
+  if ((bus_num == 0) && !(chrysler_longitudinal && is_buttons)) {
     bus_fwd = 2;
   }
 
   // forward all messages from camera except LKAS messages
   const bool is_lkas = ((addr == chrysler_addrs->LKAS_COMMAND) || (addr == chrysler_addrs->DAS_6));
   const bool is_acc = ((addr == chrysler_addrs->DAS_3) || (addr == chrysler_addrs->DAS_4) || (addr == chrysler_addrs->DAS_5));
-  if ((bus_num == 2) && !is_lkas && (!chrysler_longitudinal || !is_acc)){
+  if ((bus_num == 2) && !is_lkas && !(chrysler_longitudinal && is_acc)) {
     bus_fwd = 0;
   }
 
