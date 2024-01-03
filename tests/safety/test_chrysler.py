@@ -157,22 +157,22 @@ class ChryslerLongitudinalBase(TestChryslerSafety):
     # TODO: falsify the above tests
     raise Exception
 
-  def _send_torque_accel_msg(self, enable, torque_active, torque, accel_active, accel):
+  def _send_torque_accel_msg(self, enable: bool, torque_active: bool, torque: float, accel_active: int, accel: float):
     values = {
       "ACC_AVAILABLE": 1,
-      "ACC_ACTIVE": enable,
+      "ACC_ACTIVE": int(enable),
       "ENGINE_TORQUE_REQUEST": torque,
-      "ENGINE_TORQUE_REQUEST_MAX": torque_active,
+      "ENGINE_TORQUE_REQUEST_MAX": int(torque_active),
       "ACC_DECEL": accel,
       "ACC_DECEL_REQ": accel_active,
     }
     return self.packer.make_can_msg_panda("DAS_3", self.DAS_BUS, values)
 
   def _send_accel_msg(self, accel):
-    return self._send_torque_accel_msg(1, 0, self.INACTIVE_ENGINE_TORQUE, 1, accel)
+    return self._send_torque_accel_msg(True, False, self.INACTIVE_ENGINE_TORQUE, 1, accel)
 
   def _send_torque_msg(self, torque):
-    return self._send_torque_accel_msg(1, 1, torque, 0, self.INACTIVE_ACCEL)
+    return self._send_torque_accel_msg(True, True, torque, 0, self.INACTIVE_ACCEL)
 
   def test_accel_torque_safety_check(self):
     self._generic_limit_safety_check(self._send_accel_msg,
