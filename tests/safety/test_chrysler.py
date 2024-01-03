@@ -127,8 +127,7 @@ class TestChryslerRamHDSafety(TestChryslerSafety):
     return self.packer.make_can_msg_panda("ESP_8", 0, values)
 
 
-class ChryslerLongitudinalBase(common.PandaSafetyTestBase):
-  # pylint: disable=no-member,abstract-method
+class ChryslerLongitudinalBase(TestChryslerSafety):
 
   DAS_BUS = 0
 
@@ -143,12 +142,6 @@ class ChryslerLongitudinalBase(common.PandaSafetyTestBase):
   INACTIVE_ACCEL = 4.0
   MIN_POSSIBLE_ACCEL = -16.0
   MAX_POSSIBLE_ACCEL = 4.0
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "ChryslerLongitudinalBase":
-      cls.safety = None
-      raise unittest.SkipTest
 
   # override these tests from PandaCarSafetyTest, chrysler longitudinal uses button enable
   def test_disable_control_allowed_from_cruise(self):
@@ -201,7 +194,7 @@ class ChryslerLongitudinalBase(common.PandaSafetyTestBase):
     for cancel_cur, resume_cur, accel_cur, decel_cur in itertools.product([0, 1], repeat=4):
       for cancel_prev, resume_prev, accel_prev, decel_prev in itertools.product([0, 1], repeat=4):
         self._rx(self._button_msg(cancel=False, resume=False, accel=False, decel=False))
-        self.safety.set_controls_allowed(0)
+        self.safety.set_controls_allowed(False)
         for _ in range(10):
           self._rx(self._button_msg(cancel_prev, resume_prev, accel_prev, decel_prev))
           self.assertFalse(self.safety.get_controls_allowed())
