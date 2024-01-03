@@ -153,6 +153,10 @@ class ChryslerLongitudinalBase(TestChryslerSafety):
   def test_cruise_engaged_prev(self):
     pass
 
+  def _pcm_status_msg(self, enable):
+    # TODO: falsify the above tests
+    raise Exception
+
   def _send_torque_accel_msg(self, enable, torque_active, torque, accel_active, accel):
     values = {
       "ACC_AVAILABLE": 1,
