@@ -150,13 +150,7 @@ class ChryslerLongitudinalBase(TestChryslerSafety):
   def test_enable_control_allowed_from_cruise(self):
     pass
 
-  def test_sampling_cruise_buttons(self):
-    pass
-
   def test_cruise_engaged_prev(self):
-    pass
-
-  def test_button_sends(self):
     pass
 
   def _pcm_status_msg(self, enable):
