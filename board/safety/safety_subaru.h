@@ -203,7 +203,7 @@ static bool subaru_tx_hook(CANPacket_t *to_send) {
 
   // check es_distance cruise_throttle limits
   if (addr == MSG_SUBARU_ES_Distance) {
-    int cruise_throttle = (GET_BYTES(to_send, 2, 2) & 0xFFFU);
+    int cruise_throttle = (GET_BYTES(to_send, 2, 2) & 0x1FFFU);
     bool cruise_cancel = GET_BIT(to_send, 56U) != 0U;
 
     if (subaru_longitudinal) {
@@ -218,7 +218,7 @@ static bool subaru_tx_hook(CANPacket_t *to_send) {
 
   // check es_status transmission_rpm limits
   if (addr == MSG_SUBARU_ES_Status) {
-    int transmission_rpm = (GET_BYTES(to_send, 2, 2) & 0xFFFU);
+    int transmission_rpm = (GET_BYTES(to_send, 2, 2) & 0x1FFFU);
     violation |= longitudinal_transmission_rpm_checks(transmission_rpm, SUBARU_LONG_LIMITS);
   }
 

@@ -122,7 +122,7 @@ class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.Longitudinal
   MIN_GAS = 808
   MAX_GAS = 3400
   INACTIVE_GAS = 1818
-  MAX_POSSIBLE_GAS = 2**12
+  MAX_POSSIBLE_GAS = 2**13
 
   MIN_BRAKE = 0
   MAX_BRAKE = 600
@@ -130,7 +130,7 @@ class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.Longitudinal
 
   MIN_RPM = 0
   MAX_RPM = 2400
-  MAX_POSSIBLE_RPM = 2**12
+  MAX_POSSIBLE_RPM = 2**13
 
   FWD_BLACKLISTED_ADDRS = {2: [SubaruMsg.ES_LKAS, SubaruMsg.ES_Brake, SubaruMsg.ES_Distance,
                                SubaruMsg.ES_Status, SubaruMsg.ES_DashStatus,
