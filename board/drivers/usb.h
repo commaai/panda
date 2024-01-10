@@ -563,7 +563,7 @@ void usb_setup(void) {
                 // 96 bits = 12 bytes
                 for (int i = 0; i < 12; i++){
                   uint8_t cc = ((uint8_t *)UID_BASE)[i];
-                  resp[2 + (i * 4) + 0] = to_hex_char((cc >> 4) & 0xFU);
+                  resp[2 + (i * 4)] = to_hex_char((cc >> 4) & 0xFU);
                   resp[2 + (i * 4) + 1] = '\0';
                   resp[2 + (i * 4) + 2] = to_hex_char((cc >> 0) & 0xFU);
                   resp[2 + (i * 4) + 3] = '\0';
