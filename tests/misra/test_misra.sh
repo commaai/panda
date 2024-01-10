@@ -26,14 +26,16 @@ fi
 cd $PANDA_DIR
 scons -j8
 
-# TODO: sanity check the coverage report output from --checkers-report
-
 cppcheck() {
+  build_dir=/tmp/cppcheck_build
+  mkdir -p $build_dir
+
   report="$(mktemp)"
   $CPPCHECK_DIR/cppcheck --enable=all --force --inline-suppr -I $PANDA_DIR/board/ \
           -I $gcc_inc "$(arm-none-eabi-gcc -print-file-name=include)" \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
           --suppress=*:*include/* --error-exitcode=2 --addon=misra --checkers-report=$report  \
+          --cppcheck-build-dir=$build_dir \
           "$@"
 
   # sanity check the reported coverage
