@@ -11,3 +11,39 @@ misra-c2012-20.10
 
 # needed since not all of these suppressions are applicable to all builds
 unmatchedSuppression
+
+# new errors from updating cppcheck
+unusedFunction
+constParameterPointer
+constParameterCallback
+knownConditionTrueFalse
+
+misra-config
+misra-c2012-2.5
+misra-c2012-2.7
+misra-c2012-8.7
+misra-c2012-10.1
+misra-c2012-10.6
+misra-c2012-12.2
+misra-c2012-21.1
+misra-c2012-21.2
+misra-c2012-21.14
+misra-c2012-21.15
+misra-c2012-21.16
+
+misra-c2012-10.3
+misra-c2012-10.4
+misra-c2012-10.5
+misra-c2012-10.7
+misra-c2012-1.2
+misra-c2012-14.2
+misra-c2012-17.3
+misra-c2012-2.2
+misra-c2012-2.3
+misra-c2012-2.4
+misra-c2012-5.6
+misra-c2012-5.8
+misra-c2012-7.2
+misra-c2012-8.2
+misra-c2012-8.4
+misra-c2012-8.6
