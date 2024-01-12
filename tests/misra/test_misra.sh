@@ -61,4 +61,7 @@ cppcheck -DCAN3 -DPANDA -DSTM32H7 -UPEDAL -DUID_BASE board/main.c
 printf "\n${GREEN}** PEDAL CODE **${NC}\n"
 cppcheck -UCAN3 -UPANDA -DSTM32F2 -DPEDAL -UUID_BASE board/pedal/main.c
 
+printf "\n${GREEN}** SAFETY CODE **${NC}\n"
+cppcheck board/safety/*
+
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
