@@ -579,6 +579,19 @@ class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschRadarlessS
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS)
     self.safety.init_tests()
 
+  # Test Add-on. Radarless must be able to send all buttons when controls_allowed
+  def test_spam_cancel_safety_check(self):
+    super().test_spam_cancel_safety_check()
+    for button in (Btn.MAIN, Btn.SET, Btn.NONE):
+      self.assertTrue(self._tx(self._button_msg(button, bus=self.BUTTONS_BUS)))
+
+  # Test that buttons don't forward when engaged.
+  def test_button_fwd_radarless(self):
+    self.safety.set_controls_allowed(True)
+    self.FWD_BLACKLISTED_ADDRS[0] = [0x296]
+    super().test_fwd_hook()
+    # reset for the following iterations
+    self.FWD_BLACKLISTED_ADDRS[0] = []
 
 class TestHondaBoschRadarlessAltBrakeSafety(HondaPcmEnableBase, TestHondaBoschRadarlessSafetyBase, TestHondaBoschAltBrakeSafetyBase):
   """
