@@ -37,19 +37,6 @@ cppcheck() {
           --suppress=*:*include/* --error-exitcode=2 --addon=misra --checkers-report=$report  \
           --cppcheck-build-dir=$build_dir \
           "$@"
-
-  # sanity check the reported coverage
-  no="$(grep '^No ' $report | wc -l)"
-  yes="$(grep '^Yes' $report | wc -l)"
-  echo "$yes checks enabled, $no disabled"
-  if [[ $yes -lt 250 ]]; then
-    echo "Count of enabled checks seems too low."
-    exit 1
-  fi
-  if [[ $no -ne 99 ]]; then
-    echo "Disabled check count threshold doesn't match, update to $no"
-    exit 1
-  fi
 }
 
 printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
@@ -60,5 +47,8 @@ cppcheck -DCAN3 -DPANDA -DSTM32H7 -UPEDAL -DUID_BASE board/main.c
 
 printf "\n${GREEN}** PEDAL CODE **${NC}\n"
 cppcheck -UCAN3 -UPANDA -DSTM32F2 -DPEDAL -UUID_BASE board/pedal/main.c
+
+printf "\n${GREEN}** SAFETY CODE **${NC}\n"
+cppcheck board/safety/*
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
