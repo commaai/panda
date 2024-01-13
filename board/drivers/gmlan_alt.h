@@ -22,7 +22,7 @@ int do_bitstuff(char *out, char *in, int in_len) {
     j++;
 
     // do the stuffing
-    if (bit == last_bit) {
+    if (bit == (char)last_bit) {
       bit_cnt++;
       if (bit_cnt == 5) {
         // 5 in a row the same, do stuff
@@ -205,7 +205,7 @@ void TIM12_IRQ_Handler(void) {
         bool retry = 0;
         // in send loop
         if ((gmlan_sending > 0) &&  // not first bit
-           ((read == 0) && (pkt_stuffed[gmlan_sending-1] == 1)) &&  // bus wrongly dominant
+           ((read == 0) && (pkt_stuffed[gmlan_sending-1] == (char)1)) &&  // bus wrongly dominant
            (gmlan_sending != (gmlan_sendmax - 11))) {    //not ack bit
           print("GMLAN ERR: bus driven at ");
           puth(gmlan_sending);
