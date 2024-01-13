@@ -98,7 +98,6 @@ As a universal car interface, it should support every reasonable software interf
 - [Python library](https://github.com/commaai/panda/tree/master/python)
 - [C++ library](https://github.com/commaai/openpilot/tree/master/selfdrive/boardd)
 - [socketcan in kernel](https://github.com/commaai/panda/tree/master/drivers/linux) (alpha)
-- [Windows J2534](https://github.com/commaai/panda/tree/master/drivers/windows)
 
 ## Licensing
 
