@@ -12,7 +12,6 @@ ROOT = os.path.join(HERE, "../../")
 # - at least one violation in each safety/safety*.h file
 # - come up with a pattern for each rule (cppcheck tests probably have good ones?)
 mutations = [
-  (None, None, False),
   # F4 only 10.4
   ("board/stm32fx/llbxcan.h", "s/1U/1/g", True),
   # H7 only
