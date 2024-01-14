@@ -29,12 +29,7 @@ scons -j8
 cppcheck() {
   hashed_args=$(echo -n "$@" | md5sum | awk '{print $1}')
   build_dir=/tmp/cppcheck_build/$hashed_args
-  if [ -d $build_dir ]; then
-    build_dir_exists=true
-  else
-    build_dir_exists=false
-    mkdir -p $build_dir
-  fi
+  mkdir -p $build_dir
 
   $CPPCHECK_DIR/cppcheck --enable=all --force --inline-suppr -I $PANDA_DIR/board/ \
           -I $gcc_inc "$(arm-none-eabi-gcc -print-file-name=include)" \
