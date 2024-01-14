@@ -29,7 +29,7 @@ mutations = [
   # misra-c2012-13.6
   ("board/safety/safety_defaults.h", "s/bus_fwd = 2;/int temp = 0; if (sizeof(temp++)) { bus_fwd = 2; }/g", True),
   # misra-c2012-14.1
-  ("board/safety/safety_elm327.h", "$ a for (float j = 0; j < (float)1; j++) {continue)",True),
+  ("board/safety/safety_elm327.h", "$ a for (float j = 0; j < (float)1; j++) {continue;}",True),
   # misra-c2012-14.4
   ("board/safety/safety_elm327.h", "$ a int len = 10; if (len - 8) {;}", True),
   # misra-c2012-16.4
