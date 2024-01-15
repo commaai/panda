@@ -21,16 +21,11 @@ mutations = [
   ("board/safety/safety_toyota.h", "s/is_lkas_msg =.*;/is_lkas_msg = addr == 1 || addr == 2;/g", True),
 ]
 
-def ignore_folder(dir, contents):
-  ignore_list = [".git"]
-  return [item for item in contents if item in ignore_list]
-
 @pytest.mark.parametrize("fn, patch, should_fail", mutations)
 def test_misra_mutation(fn, patch, should_fail):
-  tmp_path = "tmp/main.temp" if fn == None else fn
-  temp_dir_name = f"misra_check_tmp_{os.path.basename(tmp_path).split('.')[0]}"
+  temp_dir_name = f"misra_check_tmp_{os.path.basename(fn if fn is not None else 'main')}"
   tmp = os.path.join(tempfile.gettempdir(), temp_dir_name)
-  shutil.copytree(ROOT, tmp, dirs_exist_ok=True, ignore=ignore_folder)
+  shutil.copytree(ROOT, tmp, dirs_exist_ok=True)
 
   # apply patch
   if fn is not None:

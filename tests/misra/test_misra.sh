@@ -27,7 +27,7 @@ cd $PANDA_DIR
 scons -j8
 
 cppcheck() {
-  hashed_args=$(echo -n "$@" | md5sum | awk '{print $1}')
+  hashed_args=$(echo -n "$@$DIR" | md5sum | awk '{print $1}')
   build_dir=/tmp/cppcheck_build/$hashed_args
   mkdir -p $build_dir
 
