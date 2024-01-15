@@ -4,6 +4,7 @@ import pytest
 import shutil
 import subprocess
 import tempfile
+import hashlib
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT = os.path.join(HERE, "../../")
@@ -23,7 +24,7 @@ mutations = [
 
 @pytest.mark.parametrize("fn, patch, should_fail", mutations)
 def test_misra_mutation(fn, patch, should_fail):
-  temp_dir_name = f"misra_check_tmp_{os.path.basename(fn if fn is not None else 'main')}"
+  temp_dir_name = hashlib.md5((fn + patch if (fn is not None and patch is not None) else "main").encode()).hexdigest()
   tmp = os.path.join(tempfile.gettempdir(), temp_dir_name)
   shutil.copytree(ROOT, tmp, dirs_exist_ok=True)
 
