@@ -24,9 +24,12 @@ mutations = [
 
 @pytest.mark.parametrize("fn, patch, should_fail", mutations)
 def test_misra_mutation(fn, patch, should_fail):
-  temp_dir_name = hashlib.md5((fn + patch if (fn is not None and patch is not None) else "main").encode()).hexdigest()
-  tmp = os.path.join(tempfile.gettempdir(), temp_dir_name)
-  shutil.copytree(ROOT, tmp, dirs_exist_ok=True)
+  key = hashlib.md5((str(fn) + str(patch)).encode()).hexdigest()
+  tmp = os.path.join(tempfile.gettempdir(), key)
+
+  if os.path.exists(tmp):
+    shutil.rmtree(tmp)
+  shutil.copytree(ROOT, tmp)
 
   # apply patch
   if fn is not None:
@@ -34,10 +37,10 @@ def test_misra_mutation(fn, patch, should_fail):
     assert r == 0
 
   # run test
-  r = subprocess.run("tests/misra/test_misra.sh", cwd=tmp, shell=True,
-                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+  r = subprocess.run("tests/misra/test_misra.sh", cwd=tmp, shell=True)
   failed = r.returncode != 0
   assert failed == should_fail
+
   shutil.rmtree(tmp)
 
 if __name__ == "__main__":
