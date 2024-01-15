@@ -23,7 +23,6 @@ knownConditionTrueFalse
 
 misra-config
 misra-c2012-1.2  # this is from the extensions (e.g. __typeof__) used in the MIN, MAX, ABS, and CLAMP macros
-misra-c2012-2.3
 misra-c2012-2.4
 misra-c2012-2.5
 misra-c2012-2.7

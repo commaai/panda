@@ -15,7 +15,8 @@ const uint8_t PANDA_BUS_CNT = 4U;
   #define CANPACKET_DATA_SIZE_MAX 8U
 #endif
 
-typedef struct {
+// cppcheck-suppress [misra-c2012-2.3]
+typedef struct { 
   unsigned char reserved : 1;
   unsigned char bus : 3;
   unsigned char data_len_code : 4;  // lookup length with dlc_to_len
