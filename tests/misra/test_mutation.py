@@ -21,21 +21,28 @@ mutations = [
   ("board/safety/safety_toyota.h", "s/is_lkas_msg =.*;/is_lkas_msg = addr == 1 || addr == 2;/g", True),
 ]
 
+def ignore_folder(dir, contents):
+  ignore_list = [".git"]
+  return [item for item in contents if item in ignore_list]
+
 @pytest.mark.parametrize("fn, patch, should_fail", mutations)
 def test_misra_mutation(fn, patch, should_fail):
-  with tempfile.TemporaryDirectory() as tmp:
-    shutil.copytree(ROOT, tmp, dirs_exist_ok=True)
+  tmp_path = "tmp/main.temp" if fn == None else fn
+  temp_dir_name = f"misra_check_tmp_{os.path.basename(tmp_path).split('.')[0]}"
+  tmp = os.path.join(tempfile.gettempdir(), temp_dir_name)
+  shutil.copytree(ROOT, tmp, dirs_exist_ok=True, ignore=ignore_folder)
 
-    # apply patch
-    if fn is not None:
-      r = os.system(f"cd {tmp} && sed -i '{patch}' {fn}")
-      assert r == 0
+  # apply patch
+  if fn is not None:
+    r = os.system(f"cd {tmp} && sed -i '{patch}' {fn}")
+    assert r == 0
 
-    # run test
-    r = subprocess.run("tests/misra/test_misra.sh", cwd=tmp, shell=True,
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    failed = r.returncode != 0
-    assert failed == should_fail
+  # run test
+  r = subprocess.run("tests/misra/test_misra.sh", cwd=tmp, shell=True,
+                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+  failed = r.returncode != 0
+  assert failed == should_fail
+  shutil.rmtree(tmp)
 
 if __name__ == "__main__":
   pytest.main([__file__, "-n 4"])
