@@ -23,6 +23,7 @@
 })
 
 #ifndef NULL
+// cppcheck-suppress [misra-c2012-21.1]
 #define NULL ((void*)0)
 #endif
 
