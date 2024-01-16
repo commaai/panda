@@ -109,7 +109,7 @@ void process_can(uint8_t can_number) {
           uint8_t tx_index = (FDCANx->TXFQS >> FDCAN_TXFQS_TFQPI_Pos) & 0x1F;
           // only send if we have received a packet
           canfd_fifo *fifo;
-          fifo = (canfd_fifo *)(TxFIFOSA + (tx_index * FDCAN_TX_FIFO_EL_SIZE));
+          fifo = (canfd_fifo *)(TxFIFOSA + ((uint32_t) tx_index * FDCAN_TX_FIFO_EL_SIZE));
 
           fifo->header[0] = (to_send.extended << 30) | ((to_send.extended != 0U) ? (to_send.addr) : (to_send.addr << 18));
           uint32_t canfd_enabled_header = bus_config[can_number].canfd_enabled ? (1 << 21) : 0;
@@ -178,7 +178,7 @@ void can_rx(uint8_t can_number) {
     canfd_fifo *fifo;
 
     // getting address
-    fifo = (canfd_fifo *)(RxFIFO0SA + (rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE));
+    fifo = (canfd_fifo *)(RxFIFO0SA + ((uint32_t) rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE));
 
     to_push.returned = 0U;
     to_push.rejected = 0U;
