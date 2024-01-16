@@ -39,7 +39,6 @@ misra-c2012-10.3
 misra-c2012-10.5
 misra-c2012-10.7
 misra-c2012-12.2
-misra-c2012-14.2
 misra-c2012-17.3
 misra-c2012-21.1
 misra-c2012-21.2
