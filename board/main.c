@@ -385,8 +385,8 @@ int main(void) {
 
   // LED should keep on blinking all the time
   uint64_t cnt = 0;
-
-  for (cnt=0;;cnt++) {
+  while (true) {
+    cnt++;
     if (power_save_status == POWER_SAVE_STATUS_DISABLED) {
       #ifdef DEBUG_FAULTS
       if (fault_status == FAULT_STATUS_NONE) {

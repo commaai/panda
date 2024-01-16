@@ -27,7 +27,7 @@ cd $PANDA_DIR
 scons -j8
 
 cppcheck() {
-  hashed_args=$(echo -n "$@" | md5sum | awk '{print $1}')
+  hashed_args=$(echo -n "$@$DIR" | md5sum | awk '{print $1}')
   build_dir=/tmp/cppcheck_build/$hashed_args
   mkdir -p $build_dir
 
@@ -40,12 +40,12 @@ cppcheck() {
 }
 
 printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
-cppcheck -DCAN3 -DPANDA -DSTM32F4 -UPEDAL -DUID_BASE board/main.c
+cppcheck -DCAN3 -DPANDA -DSTM32F4 -UPEDAL -DUID_BASE $PANDA_DIR/board/main.c
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-cppcheck -DCAN3 -DPANDA -DSTM32H7 -UPEDAL -DUID_BASE board/main.c
+cppcheck -DCAN3 -DPANDA -DSTM32H7 -UPEDAL -DUID_BASE $PANDA_DIR/board/main.c
 
 printf "\n${GREEN}** PEDAL CODE **${NC}\n"
-cppcheck -UCAN3 -UPANDA -DSTM32F2 -DPEDAL -UUID_BASE board/pedal/main.c
+cppcheck -UCAN3 -UPANDA -DSTM32F2 -DPEDAL -UUID_BASE $PANDA_DIR/board/pedal/main.c
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"

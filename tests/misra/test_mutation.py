@@ -4,6 +4,7 @@ import pytest
 import shutil
 import subprocess
 import tempfile
+import hashlib
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT = os.path.join(HERE, "../../")
@@ -23,19 +24,24 @@ mutations = [
 
 @pytest.mark.parametrize("fn, patch, should_fail", mutations)
 def test_misra_mutation(fn, patch, should_fail):
-  with tempfile.TemporaryDirectory() as tmp:
-    shutil.copytree(ROOT, tmp, dirs_exist_ok=True)
+  key = hashlib.md5((str(fn) + str(patch)).encode()).hexdigest()
+  tmp = os.path.join(tempfile.gettempdir(), key)
 
-    # apply patch
-    if fn is not None:
-      r = os.system(f"cd {tmp} && sed -i '{patch}' {fn}")
-      assert r == 0
+  if os.path.exists(tmp):
+    shutil.rmtree(tmp)
+  shutil.copytree(ROOT, tmp)
 
-    # run test
-    r = subprocess.run("tests/misra/test_misra.sh", cwd=tmp, shell=True,
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    failed = r.returncode != 0
-    assert failed == should_fail
+  # apply patch
+  if fn is not None:
+    r = os.system(f"cd {tmp} && sed -i '{patch}' {fn}")
+    assert r == 0
+
+  # run test
+  r = subprocess.run("tests/misra/test_misra.sh", cwd=tmp, shell=True)
+  failed = r.returncode != 0
+  assert failed == should_fail
+
+  shutil.rmtree(tmp)
 
 if __name__ == "__main__":
   pytest.main([__file__, "-n 4"])
