@@ -109,7 +109,7 @@ void spi_init(void) {
   llspi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
 }
 
-bool check_checksum(uint8_t *data, uint16_t len) {
+bool validate_checksum(uint8_t *data, uint16_t len) {
   // TODO: can speed this up by casting the bulk to uint32_t and xor-ing the bytes afterwards
   uint8_t checksum = SPI_CHECKSUM_START;
   for(uint16_t i = 0U; i < len; i++){
@@ -132,7 +132,7 @@ void spi_rx_done(void) {
     response_len = spi_version_packet(spi_buf_tx);
     next_rx_state = SPI_STATE_HEADER_NACK;;
   } else if (spi_state == SPI_STATE_HEADER) {
-    checksum_valid = check_checksum(spi_buf_rx, SPI_HEADER_SIZE);
+    checksum_valid = validate_checksum(spi_buf_rx, SPI_HEADER_SIZE);
     if ((spi_buf_rx[0] == SPI_SYNC_BYTE) && checksum_valid) {
       // response: ACK and start receiving data portion
       spi_buf_tx[0] = SPI_HACK;
@@ -148,7 +148,7 @@ void spi_rx_done(void) {
   } else if (spi_state == SPI_STATE_DATA_RX) {
     // We got everything! Based on the endpoint specified, call the appropriate handler
     bool response_ack = false;
-    checksum_valid = check_checksum(&(spi_buf_rx[SPI_HEADER_SIZE]), spi_data_len_mosi + 1U);
+    checksum_valid = validate_checksum(&(spi_buf_rx[SPI_HEADER_SIZE]), spi_data_len_mosi + 1U);
     if (checksum_valid) {
       if (spi_endpoint == 0U) {
         if (spi_data_len_mosi >= sizeof(ControlPacket_t)) {

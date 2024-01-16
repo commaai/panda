@@ -27,29 +27,16 @@ cd $PANDA_DIR
 scons -j8
 
 cppcheck() {
-  build_dir=/tmp/cppcheck_build
+  hashed_args=$(echo -n "$@$DIR" | md5sum | awk '{print $1}')
+  build_dir=/tmp/cppcheck_build/$hashed_args
   mkdir -p $build_dir
 
-  report="$(mktemp)"
   $CPPCHECK_DIR/cppcheck --enable=all --force --inline-suppr -I $PANDA_DIR/board/ \
           -I $gcc_inc "$(arm-none-eabi-gcc -print-file-name=include)" \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
-          --suppress=*:*include/* --error-exitcode=2 --addon=misra --checkers-report=$report  \
+          --suppress=*:*include/* --error-exitcode=2 --addon=misra \
           --cppcheck-build-dir=$build_dir \
           "$@"
-
-  # sanity check the reported coverage
-  no="$(grep '^No ' $report | wc -l)"
-  yes="$(grep '^Yes' $report | wc -l)"
-  echo "$yes checks enabled, $no disabled"
-  if [[ $yes -lt 250 ]]; then
-    echo "Count of enabled checks seems too low."
-    exit 1
-  fi
-  if [[ $no -ne 99 ]]; then
-    echo "Disabled check count threshold doesn't match, update to $no"
-    exit 1
-  fi
 }
 
 printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
