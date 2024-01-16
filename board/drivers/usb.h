@@ -369,7 +369,7 @@ int current_int0_alt_setting = 0;
 
 void *USB_ReadPacket(void *dest, uint16_t len) {
   uint32_t *dest_copy = (uint32_t *)dest;
-  uint32_t count32b = (len + 3U) / 4U;
+  uint16_t count32b = (len + 3U) / 4U;
 
   for (uint32_t i = 0; i < count32b; i++) {
     *dest_copy = USBx_DFIFO(0);
@@ -384,8 +384,8 @@ void USB_WritePacket(const void *src, uint16_t len, uint32_t ep) {
   hexdump(src, len);
   #endif
 
-  uint32_t numpacket = (len + (USBPACKET_MAX_SIZE - 1U)) / USBPACKET_MAX_SIZE;
-  uint32_t count32b = 0;
+  uint16_t numpacket = (len + (USBPACKET_MAX_SIZE - 1U)) / USBPACKET_MAX_SIZE;
+  uint16_t count32b = 0;
   count32b = (len + 3U) / 4U;
 
   // TODO: revisit this

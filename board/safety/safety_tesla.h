@@ -98,7 +98,7 @@ static void tesla_rx_hook(CANPacket_t *to_push) {
   }
 
   if (bus == 2) {
-    int das_control_addr = (tesla_powertrain ? 0x2bf : 0x2b9);
+    int das_control_addr = (tesla_powertrain ? (int) 0x2bf : (int) 0x2b9);
     if (tesla_longitudinal && (addr == das_control_addr)) {
       // "AEB_ACTIVE"
       tesla_stock_aeb = ((GET_BYTE(to_push, 2) & 0x03U) == 1U);
@@ -184,7 +184,7 @@ static int tesla_fwd_hook(int bus_num, int addr) {
 
   if(bus_num == 2) {
     // Autopilot to chassis/PT
-    int das_control_addr = (tesla_powertrain ? 0x2bf : 0x2b9);
+    int das_control_addr = (tesla_powertrain ? (int) 0x2bf : (int) 0x2b9);
 
     bool block_msg = false;
     if (!tesla_powertrain && (addr == 0x488)) {
