@@ -119,6 +119,7 @@ end:
   return ret;
 }
 
+// cppcheck-suppress misra-c2012-2.7; not sure why it triggers here?
 bool i2c_set_reg_bits(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t bits) {
   uint8_t value;
   bool ret = i2c_read_reg(I2C, addr, reg, &value);
@@ -128,6 +129,7 @@ bool i2c_set_reg_bits(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t bits)
   return ret;
 }
 
+// cppcheck-suppress misra-c2012-2.7; not sure why it triggers here?
 bool i2c_clear_reg_bits(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t bits) {
   uint8_t value;
   bool ret = i2c_read_reg(I2C, addr, reg, &value);
@@ -137,6 +139,7 @@ bool i2c_clear_reg_bits(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t bit
   return ret;
 }
 
+// cppcheck-suppress misra-c2012-2.7; not sure why it triggers here?
 bool i2c_set_reg_mask(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t value, uint8_t mask) {
   uint8_t old_value;
   bool ret = i2c_read_reg(I2C, addr, reg, &old_value);
