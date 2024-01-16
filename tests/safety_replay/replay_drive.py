@@ -2,6 +2,7 @@
 import argparse
 import os
 from collections import Counter
+from openpilot.tools.lib.logreader import LogReader
 
 from panda.tests.libpanda import libpanda_py
 from panda.tests.safety_replay.helpers import package_can_msg, init_segment
@@ -73,7 +74,6 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
 
 if __name__ == "__main__":
   from openpilot.tools.lib.route import Route, SegmentName
-  from openpilot.tools.lib.logreader import MultiLogIterator  # pylint: disable=import-error
 
   parser = argparse.ArgumentParser(description="Replay CAN messages from a route or segment through a safety mode",
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -83,11 +83,7 @@ if __name__ == "__main__":
   parser.add_argument("--alternative-experience", type=int, help="Override the alternative experience from the log")
   args = parser.parse_args()
 
-  s = SegmentName(args.route_or_segment_name[0], allow_route_name=True)
-
-  r = Route(s.route_name.canonical_name)
-  logs = r.log_paths()[s.segment_num:s.segment_num+1] if s.segment_num >= 0 else r.log_paths()
-  lr = MultiLogIterator(logs, sort_by_time=True)
+  lr = LogReader(args.route_or_segment_name[0])
 
   if None in (args.mode, args.param, args.alternative_experience):
     for msg in lr:
