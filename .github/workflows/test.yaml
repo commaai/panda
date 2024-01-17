@@ -111,7 +111,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Setup ci cache
-        if: setup-ci-cache
+        id: setup-ci-cache
         uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/ci_cache
