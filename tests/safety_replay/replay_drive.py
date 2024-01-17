@@ -100,4 +100,4 @@ if __name__ == "__main__":
     lr.reset()
 
   print(f"replaying {args.route_or_segment_name[0]} with safety mode {args.mode}, param {args.param}, alternative experience {args.alternative_experience}")
-  replay_drive(lr, args.mode, args.param, args.alternative_experience, segment=len(lr.lrs) == 1)
+  replay_drive(lr, args.mode, args.param, args.alternative_experience, segment=len(lr.logreader_identifiers) == 1)
