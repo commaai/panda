@@ -106,10 +106,10 @@ void process_can(uint8_t can_number) {
 
           uint32_t TxFIFOSA = FDCAN_START_ADDRESS + (can_number * FDCAN_OFFSET) + (FDCAN_RX_FIFO_0_EL_CNT * FDCAN_RX_FIFO_0_EL_SIZE);
           // get the index of the next TX FIFO element (0 to FDCAN_TX_FIFO_EL_CNT - 1)
-          uint8_t tx_index = (FDCANx->TXFQS >> FDCAN_TXFQS_TFQPI_Pos) & 0x1F;
+          uint32_t tx_index = (FDCANx->TXFQS >> FDCAN_TXFQS_TFQPI_Pos) & 0x1F;
           // only send if we have received a packet
           canfd_fifo *fifo;
-          fifo = (canfd_fifo *)(TxFIFOSA + ((uint32_t) tx_index * FDCAN_TX_FIFO_EL_SIZE));
+          fifo = (canfd_fifo *)(TxFIFOSA + (tx_index * FDCAN_TX_FIFO_EL_SIZE));
 
           fifo->header[0] = (to_send.extended << 30) | ((to_send.extended != 0U) ? (to_send.addr) : (to_send.addr << 18));
           uint32_t canfd_enabled_header = bus_config[can_number].canfd_enabled ? (1UL << 21) : 0UL;
@@ -165,7 +165,7 @@ void can_rx(uint8_t can_number) {
     pending_can_live = 1;
 
     // get the index of the next RX FIFO element (0 to FDCAN_RX_FIFO_0_EL_CNT - 1)
-    uint8_t rx_fifo_idx = (uint8_t)((FDCANx->RXF0S >> FDCAN_RXF0S_F0GI_Pos) & 0x3F);
+    uint32_t rx_fifo_idx = (uint8_t)((FDCANx->RXF0S >> FDCAN_RXF0S_F0GI_Pos) & 0x3F);
 
     // Recommended to offset get index by at least +1 if RX FIFO is in overwrite mode and full (datasheet)
     if((FDCANx->RXF0S & FDCAN_RXF0S_F0F) == FDCAN_RXF0S_F0F) {
@@ -178,7 +178,7 @@ void can_rx(uint8_t can_number) {
     canfd_fifo *fifo;
 
     // getting address
-    fifo = (canfd_fifo *)(RxFIFO0SA + ((uint32_t) rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE));
+    fifo = (canfd_fifo *)(RxFIFO0SA + (rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE));
 
     to_push.returned = 0U;
     to_push.rejected = 0U;
