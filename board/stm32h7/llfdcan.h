@@ -113,7 +113,7 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_t data_
 
     // Set the nominal bit timing values
     uint16_t tq = CAN_QUANTA(speed, prescaler);
-    uint8_t sp = CAN_SP_NOMINAL;
+    uint16_t sp = CAN_SP_NOMINAL;
     uint8_t seg1 = CAN_SEG1(tq, sp);
     uint8_t seg2 = CAN_SEG2(tq, sp);
     uint8_t sjw = MIN(127U, seg2);
