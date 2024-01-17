@@ -112,8 +112,8 @@ void process_can(uint8_t can_number) {
           fifo = (canfd_fifo *)(TxFIFOSA + ((uint32_t) tx_index * FDCAN_TX_FIFO_EL_SIZE));
 
           fifo->header[0] = (to_send.extended << 30) | ((to_send.extended != 0U) ? (to_send.addr) : (to_send.addr << 18));
-          uint32_t canfd_enabled_header = bus_config[can_number].canfd_enabled ? (1 << 21) : 0;
-          uint32_t brs_enabled_header = bus_config[can_number].brs_enabled ? (1 << 20) : 0;
+          uint32_t canfd_enabled_header = bus_config[can_number].canfd_enabled ? (1UL << 21) : 0UL;
+          uint32_t brs_enabled_header = bus_config[can_number].brs_enabled ? (1UL << 20) : 0UL;
           fifo->header[1] = (to_send.data_len_code << 16) | canfd_enabled_header | brs_enabled_header;
 
           uint8_t data_len_w = (dlc_to_len[to_send.data_len_code] / 4U);
