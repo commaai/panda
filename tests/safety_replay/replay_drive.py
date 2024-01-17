@@ -2,7 +2,6 @@
 import argparse
 import os
 from collections import Counter
-from openpilot.tools.lib.logreader import LogReader
 
 from panda.tests.libpanda import libpanda_py
 from panda.tests.safety_replay.helpers import package_can_msg, init_segment
@@ -73,6 +72,7 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
   return tx_controls_blocked == 0 and rx_invalid == 0 and not safety_tick_rx_invalid
 
 if __name__ == "__main__":
+  from openpilot.tools.lib.logreader import LogReader
 
   parser = argparse.ArgumentParser(description="Replay CAN messages from a route or segment through a safety mode",
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
