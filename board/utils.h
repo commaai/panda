@@ -23,6 +23,9 @@
 })
 
 #ifndef NULL
+// this just provides a standard implementation of NULL
+// in lieu of including libc in the panda build
+// cppcheck-suppress [misra-c2012-21.1]
 #define NULL ((void*)0)
 #endif
 
