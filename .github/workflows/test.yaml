@@ -2,8 +2,6 @@ name: tests
 
 on:
   push:
-    branches:
-      - master
   pull_request:
 
 concurrency:
@@ -11,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  RUN: docker run -v ${{ github.workspace }}:/tmp/openpilot/panda -w /tmp/openpilot/panda --rm panda /bin/bash -c
+  RUN: docker run -v ${{ github.workspace }}:/tmp/openpilot/panda -w /tmp/openpilot/panda -v ${{ github.workspace }}/ci_cache/scons_cache:/tmp/scons_cache -v ${{ github.workspace }}/ci_cache/cppcheck_build:/tmp/cppcheck_build -e CI=1 --rm panda /bin/bash -c
   BUILD: |
       export DOCKER_BUILDKIT=1
       docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile .
@@ -112,6 +110,16 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
+      - name: Setup ci cache
+        if: setup-ci-cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ github.workspace }}/ci_cache
+          key: ci_cache-${{ runner.os }}-${{ hashFiles('**/test_misra.sh') }}-${{ hashFiles('**/test_mutation.py') }}
+      - if: steps.setup-ci-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ${{ github.workspace }}/ci_cache/scons_cache
+          mkdir -p ${{ github.workspace }}/ci_cache/cppcheck_build
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Build FW
