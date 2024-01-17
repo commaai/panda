@@ -2,6 +2,8 @@ name: tests
 
 on:
   push:
+    branches:
+      - master
   pull_request:
 
 concurrency:
@@ -103,7 +105,6 @@ jobs:
                           scons -j$(nproc) opendbc/ cereal/ && \
                           cd panda/tests/safety && \
                           ./test_coverage.sh"
-
 
   misra:
     name: MISRA C:2012
