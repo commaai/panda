@@ -104,6 +104,7 @@ jobs:
                           cd panda/tests/safety && \
                           ./test_coverage.sh"
 
+
   misra:
     name: MISRA C:2012
     runs-on: ubuntu-20.04
