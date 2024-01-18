@@ -29,11 +29,15 @@ if [ -z "${CI}" ]; then
 fi
 
 cppcheck() {
+  hashed_args=$(echo -n "$@$DIR" | md5sum | awk '{print $1}')
+  build_dir=/tmp/cppcheck_build/$hashed_args
+  mkdir -p $build_dir
 
   $CPPCHECK_DIR/cppcheck --enable=all --force --inline-suppr -I $PANDA_DIR/board/ \
           -I $gcc_inc "$(arm-none-eabi-gcc -print-file-name=include)" \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
           --suppress=*:*include/* --error-exitcode=2 --addon=misra \
+          --cppcheck-build-dir=$build_dir \
           "$@"
 }
 
