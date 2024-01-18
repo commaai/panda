@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  RUN: docker run -v ${{ github.workspace }}:/tmp/openpilot/panda -w /tmp/openpilot/panda --rm panda /bin/bash -c
+  RUN: docker run -e CI -v ${{ github.workspace }}:/tmp/openpilot/panda -w /tmp/openpilot/panda --rm panda /bin/bash -c
   BUILD: |
       export DOCKER_BUILDKIT=1
       docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile .
