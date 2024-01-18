@@ -39,6 +39,7 @@ mutations = [
   ("board/main.c", r"1i #define auto 1\n", True),
   # misra-c2012-20.5
   ("board/main.c", r"1i #define TEST 1\n#undef TEST\n", True),
+  # default
   (None, None, False),
 ]
 
