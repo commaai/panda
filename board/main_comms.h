@@ -60,7 +60,7 @@ void comms_endpoint2_write(uint8_t *data, uint32_t len) {
   if ((len != 0U) && (ur != NULL)) {
     if ((data[0] < 2U) || (data[0] >= 4U)) {
       for (uint32_t i = 1; i < len; i++) {
-        while (!putc(ur, data[i])) {
+        while (!put_char(ur, data[i])) {
           // wait
         }
       }
@@ -325,7 +325,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
 
       // read
       while ((resp_len < MIN(req->length, USBPACKET_MAX_SIZE)) &&
-                         getc(ur, (char*)&resp[resp_len])) {
+                         get_char(ur, (char*)&resp[resp_len])) {
         ++resp_len;
       }
       break;
