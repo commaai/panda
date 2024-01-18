@@ -128,7 +128,7 @@ void spi_rx_done(void) {
   spi_data_len_mosi = (spi_buf_rx[3] << 8) | spi_buf_rx[2];
   spi_data_len_miso = (spi_buf_rx[5] << 8) | spi_buf_rx[4];
 
-  if (memcmp(spi_buf_rx, "VERSION", 7) == 0) {
+  if (memory_compare(spi_buf_rx, "VERSION", 7) == 0) {
     response_len = spi_version_packet(spi_buf_tx);
     next_rx_state = SPI_STATE_HEADER_NACK;;
   } else if (spi_state == SPI_STATE_HEADER) {

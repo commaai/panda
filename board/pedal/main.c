@@ -36,8 +36,8 @@ void __initialize_hardware_early(void) {
 
 void debug_ring_callback(uart_ring *ring) {
   char rcv;
-  while (getc(ring, &rcv) != 0) {
-    (void)putc(ring, rcv);
+  while (get_char(ring, &rcv) != 0) {
+    (void)put_char(ring, rcv);
   }
 }
 
@@ -73,7 +73,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       }
       // read
       while ((resp_len < MIN(req->length, USBPACKET_MAX_SIZE)) &&
-                         getc(ur, (char*)&resp[resp_len])) {
+                         get_char(ur, (char*)&resp[resp_len])) {
         ++resp_len;
       }
       break;
