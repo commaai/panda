@@ -50,7 +50,8 @@ void *memcpy(void *dest, const void *src, unsigned int len) {
   return dest;
 }
 
-int memory_compare(const void * ptr1, const void * ptr2, unsigned int num) {
+// cppcheck-suppress misra-c2012-21.2
+int memcmp(const void * ptr1, const void * ptr2, unsigned int num) {
   int ret = 0;
   const uint8_t *p1 = ptr1;
   const uint8_t *p2 = ptr2;
