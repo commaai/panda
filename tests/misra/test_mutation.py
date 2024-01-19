@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import tempfile
 import hashlib
+from typing import List
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT = os.path.join(HERE, "../../")
@@ -12,7 +13,7 @@ ROOT = os.path.join(HERE, "../../")
 # TODO: test more cases
 # - at least one violation in each safety/safety*.h file
 # - come up with a pattern for each rule (cppcheck tests probably have good ones?)
-mutations = [
+mutations: List[List] = [
   # default
   [None, None, False, None],
   # misra-c2012-10.4
