@@ -205,7 +205,7 @@ class ChryslerLongitudinalBase(TestChryslerSafety):
 
 class TestChryslerLongitudinalSafety(ChryslerLongitudinalBase, TestChryslerSafety):
   TX_MSGS = [[0x23B, 0], [0x292, 0], [0x2A6, 0], [0x1F4, 0], [0x1F5, 0], [0x271, 0]]
-  FWD_BLACKLISTED_ADDRS = {0: [0x23B], 2: [0x292, 0x2A6, 0x1F4, 0x1F5, 0x271]}
+  FWD_BLACKLISTED_ADDRS = {2: [0x292, 0x2A6, 0x1F4, 0x1F5, 0x271]}
 
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_pacifica_2017_hybrid_generated")
@@ -216,7 +216,7 @@ class TestChryslerLongitudinalSafety(ChryslerLongitudinalBase, TestChryslerSafet
 
 class TestChryslerRamDTLongitudinalSafety(ChryslerLongitudinalBase, TestChryslerRamDTSafety):
   TX_MSGS = [[0xB1, 0], [0xA6, 0], [0xFA, 0], [0x99, 0], [0xE8, 0], [0xA3, 0]]
-  FWD_BLACKLISTED_ADDRS = {0: [0xB1], 2: [0xA6, 0xFA, 0x99, 0xE8, 0xA3]}
+  FWD_BLACKLISTED_ADDRS = {2: [0xA6, 0xFA, 0x99, 0xE8, 0xA3]}
 
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_ram_dt_generated")
@@ -227,7 +227,7 @@ class TestChryslerRamDTLongitudinalSafety(ChryslerLongitudinalBase, TestChrysler
 
 class TestChryslerRamHDLongitudinalSafety(ChryslerLongitudinalBase, TestChryslerRamHDSafety):
   TX_MSGS = [[0x23A, 0], [0x275, 0], [0x276, 0], [0x1F4, 0], [0x1F5, 0], [0x271, 0]]
-  FWD_BLACKLISTED_ADDRS = {0: [0x23A], 2: [0x275, 0x276, 0x1F4, 0x1F5, 0x271]}
+  FWD_BLACKLISTED_ADDRS = {2: [0x275, 0x276, 0x1F4, 0x1F5, 0x271]}
 
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_ram_hd_generated")
