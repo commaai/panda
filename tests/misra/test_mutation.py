@@ -48,7 +48,7 @@ def test_misra_mutation(fn, patch, should_fail):
   key = hashlib.md5((str(fn) + str(patch)).encode()).hexdigest()
   tmp = os.path.join(tempfile.gettempdir(), key)
 
-  del_header = "/[#include, #ifdef, #else]/d" if fn is not None else None
+  del_header = r"-e '/#include/d' -e '/REGISTER_INTERRUPT/d'" if fn is not None else None
 
   if os.path.exists(tmp):
     shutil.rmtree(tmp)
@@ -56,7 +56,7 @@ def test_misra_mutation(fn, patch, should_fail):
 
   # apply patch
   if fn is not None:
-    r = os.system(f"cd {tmp} && sed -i -e '{patch}' -e '{del_header}' {fn}")
+    r = os.system(f"cd {tmp} && sed -i -e '{patch}' {del_header} {fn}")
     assert r == 0
 
   # run test
