@@ -11,14 +11,14 @@ import random
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT = os.path.join(HERE, "../../")
 
-IGNORED_PATHS = [
+IGNORED_PATHS = (
   'board/obj',
   'board/jungle',
   'board/stm32h7/inc',
   'board/stm32fx/inc',
   'board/bootstub.c',
   'board/bootstub_declarations.h',
-]
+)
 
 mutations = [
   # default
