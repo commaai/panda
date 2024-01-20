@@ -24,7 +24,9 @@ if ! cmp -s new_table coverage_table; then
 fi
 
 cd $PANDA_DIR
-scons -j8
+if [ -z "${SKIP_BUILD}" ]; then
+  scons -j8
+fi
 
 cppcheck() {
   hashed_args=$(echo -n "$@$DIR" | md5sum | awk '{print $1}')

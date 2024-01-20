@@ -8,6 +8,7 @@ pytest
 pytest-mock
 pytest-xdist
 pytest-timeout
+pytest-randomly
 parameterized
 cffi
 pre-commit
