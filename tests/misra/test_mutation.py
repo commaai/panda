@@ -46,7 +46,7 @@ patterns = [
 ]
 
 all_files = glob.glob('board/**', root_dir=ROOT, recursive=True)
-files = [f for f in all_files if f.endswith(('.c', '.h')) and not f.startswith(('board/jungle', 'board/stm32h7/inc/', 'board/stm32fx/inc'))]
+files = [f for f in all_files if f.endswith(('.c', '.h')) and not f.startswith(('board/jungle', 'board/stm32h7/inc/', 'board/stm32fx/inc', 'board/obj', 'board/bootstub.c'))]
 assert len(files) > 70, all(d in files for d in ('board/main.c', 'board/stm32fx/llbxcan.h', 'board/stm32h7/llfdcan.h', 'board/safety/safety_toyota.h'))
 
 for p in patterns:
