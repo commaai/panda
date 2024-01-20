@@ -95,7 +95,7 @@ int get_bit_message(char *out, CANPacket_t *to_bang) {
     // extended identifier
     len = append_int(pkt, len, GET_ADDR(to_bang) >> 18, 11);  // Identifier
     len = append_int(pkt, len, 3, 2);    // SRR+IDE
-    len = append_int(pkt, len, (GET_ADDR(to_bang)) & ((1U << 18) - 1U), 18);  // Identifier
+    len = append_int(pkt, len, (GET_ADDR(to_bang)) & ((1UL << 18) - 1U), 18);  // Identifier
     len = append_int(pkt, len, 0, 3);    // RTR+r1+r0
   } else {
     // standard identifier
@@ -175,9 +175,9 @@ void reset_gmlan_switch_timeout(void) {
 
 void set_bitbanged_gmlan(int val) {
   if (val != 0) {
-    register_set_bits(&(GPIOB->ODR), (1U << 13));
+    register_set_bits(&(GPIOB->ODR), (1UL << 13));
   } else {
-    register_clear_bits(&(GPIOB->ODR), (1U << 13));
+    register_clear_bits(&(GPIOB->ODR), (1UL << 13));
   }
 }
 
