@@ -31,7 +31,7 @@
 
 void debug_ring_callback(uart_ring *ring) {
   char rcv;
-  while (getc(ring, &rcv)) {
+  while (get_char(ring, &rcv)) {
     (void)injectc(ring, rcv);
   }
 }

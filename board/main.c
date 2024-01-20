@@ -40,8 +40,8 @@ bool check_started(void) {
 
 void debug_ring_callback(uart_ring *ring) {
   char rcv;
-  while (getc(ring, &rcv)) {
-    (void)putc(ring, rcv);  // misra-c2012-17.7: cast to void is ok: debug function
+  while (get_char(ring, &rcv)) {
+    (void)put_char(ring, rcv);  // misra-c2012-17.7: cast to void is ok: debug function
 
     // only allow bootloader entry on debug builds
     #ifdef ALLOW_DEBUG

@@ -69,7 +69,7 @@ uart_ring *get_ring_by_number(int a) {
 }
 
 // ************************* Low-level buffer functions *************************
-bool getc(uart_ring *q, char *elem) {
+bool get_char(uart_ring *q, char *elem) {
   bool ret = false;
 
   ENTER_CRITICAL();
@@ -105,7 +105,7 @@ bool injectc(uart_ring *q, char elem) {
   return ret;
 }
 
-bool putc(uart_ring *q, char elem) {
+bool put_char(uart_ring *q, char elem) {
   bool ret = false;
   uint16_t next_w_ptr;
 
