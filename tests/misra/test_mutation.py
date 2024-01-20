@@ -52,8 +52,6 @@ files = ["board/main.c"] + [f"board/safety/{f}" for f in os.listdir(f"{ROOT}/boa
 for p in patterns:
   mutations.append((random.choice(files), p, True))
 
-mutations = [mutations[0]] + sorted(mutations[1:])
-
 @pytest.mark.parametrize("fn, patch, should_fail", mutations)
 def test_misra_mutation(fn, patch, should_fail):
   key = hashlib.md5((str(fn) + str(patch)).encode()).hexdigest()
