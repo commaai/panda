@@ -192,7 +192,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // **** 0xe0: debug read
     case 0xe0:
       // read
-      while ((resp_len < MIN(req->length, USBPACKET_MAX_SIZE)) && getc(get_ring_by_number(0), (char*)&resp[resp_len])) {
+      while ((resp_len < MIN(req->length, USBPACKET_MAX_SIZE)) && get_char(get_ring_by_number(0), (char*)&resp[resp_len])) {
         ++resp_len;
       }
       break;
