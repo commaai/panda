@@ -16,8 +16,13 @@ IGNORED_PATHS = (
   'board/jungle',
   'board/stm32h7/inc',
   'board/stm32fx/inc',
+  'board/fake_stm.h',
+
+  # bootstub only files
+  'board/flasher.h',
   'board/bootstub.c',
   'board/bootstub_declarations.h',
+  'board/stm32fx/llflash.h'
 )
 
 mutations = [
