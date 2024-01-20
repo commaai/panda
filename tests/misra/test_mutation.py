@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import glob
 import pytest
 import shutil
 import subprocess
@@ -44,7 +45,9 @@ patterns = [
   r"$a #define TEST 1\n#undef TEST\n",
 ]
 
-files = ["board/main.c"] + [f"board/safety/{f}" for f in os.listdir(f"{ROOT}/board/safety")]
+all_files = glob.glob('board/**', root_dir=ROOT, recursive=True)
+files = [f for f in all_files if f.endswith(('.c', '.h')) and not f.startswith(('board/jungle', 'board/stm32h7/inc/', 'board/stm32fx/inc'))]
+assert len(files) > 70, all(d in files for d in ('board/main.c', 'board/stm32fx/llbxcan.h', 'board/stm32h7/llfdcan.h', 'board/safety/safety_toyota.h'))
 
 for p in patterns:
   mutations.append((random.choice(files), p, True))
@@ -64,7 +67,7 @@ def test_misra_mutation(fn, patch, should_fail):
     assert r == 0
 
   # run test
-  env = {'SKIP_BUILD': 1} | os.environ.copy()
+  env = {'SKIP_BUILD': '1'} | os.environ.copy()
   r = subprocess.run("tests/misra/test_misra.sh", cwd=tmp, shell=True, env=env)
   failed = r.returncode != 0
   assert failed == should_fail
