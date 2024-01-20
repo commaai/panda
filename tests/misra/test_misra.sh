@@ -24,9 +24,7 @@ if ! cmp -s new_table coverage_table; then
 fi
 
 cd $PANDA_DIR
-if [ -z "${CI}" ]; then
-  scons -j8
-fi
+scons -j8
 
 cppcheck() {
   hashed_args=$(echo -n "$@$DIR" | md5sum | awk '{print $1}')
@@ -37,8 +35,8 @@ cppcheck() {
           -I $gcc_inc "$(arm-none-eabi-gcc -print-file-name=include)" \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
           --suppress=*:*include/* --error-exitcode=2 --addon=misra \
-          --cppcheck-build-dir=$build_dir \
           "$@"
+          #--cppcheck-build-dir=$build_dir \
 }
 
 printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
