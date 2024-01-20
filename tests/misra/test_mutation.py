@@ -48,7 +48,6 @@ patterns = [
 ]
 
 files = ["board/main.c"] + [f"board/safety/{f}" for f in os.listdir(f"{ROOT}/board/safety")]
-
 for p in patterns:
   mutations.append((random.choice(files), p, True))
 
