@@ -272,22 +272,25 @@ bool bitbang_gmlan(CANPacket_t *to_bang) {
   gmlan_send_ok = true;
   gmlan_alt_mode = BITBANG;
 
-#ifndef STM32H7
-  if (gmlan_sendmax == -1) {
-    int len = get_bit_message(pkt_stuffed, to_bang);
-    gmlan_fail_count = 0;
-    gmlan_silent_count = 0;
-    gmlan_sending = 0;
-    gmlan_sendmax = len;
-    // setup for bitbang loop
-    set_bitbanged_gmlan(1); // recessive
-    set_gpio_mode(GPIOB, 13, MODE_OUTPUT);
+#ifdef HW_TYPE_DOS
+  if (hw_type == HW_TYPE_DOS) {
+    if (gmlan_sendmax == -1) {
+      int len = get_bit_message(pkt_stuffed, to_bang);
+      gmlan_fail_count = 0;
+      gmlan_silent_count = 0;
+      gmlan_sending = 0;
+      gmlan_sendmax = len;
+      // setup for bitbang loop
+      set_bitbanged_gmlan(1); // recessive
+      set_gpio_mode(GPIOB, 13, MODE_OUTPUT);
 
-    // 33kbps
-    setup_timer();
+      // 33kbps
+      setup_timer();
+    }
   }
 #else
   UNUSED(to_bang);
 #endif
+
   return gmlan_send_ok;
 }
