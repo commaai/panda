@@ -5,7 +5,7 @@
 #define I2C_TIMEOUT_US 100000U
 
 // cppcheck-suppress misra-c2012-2.7; not sure why it triggers here?
-bool i2c_status_wait(volatile uint32_t *reg, uint32_t mask, uint32_t val) {
+bool i2c_status_wait(const volatile uint32_t *reg, uint32_t mask, uint32_t val) {
   uint32_t start_time = microsecond_timer_get();
   while(((*reg & mask) != val) && (get_ts_elapsed(microsecond_timer_get(), start_time) < I2C_TIMEOUT_US));
   return ((*reg & mask) == val);

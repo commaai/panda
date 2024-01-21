@@ -160,7 +160,7 @@ bool angle_dist_to_meas_check(int val, struct sample_t *val_meas,
   const int MAX_ERROR, const int MAX_VAL);
 bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
   const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR);
-bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
+bool driver_limit_check(int val, int val_last, const struct sample_t *val_driver,
   const int MAX, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
   const int MAX_ALLOWANCE, const int DRIVER_FACTOR);
 bool get_longitudinal_allowed(void);
@@ -169,8 +169,8 @@ float interpolate(struct lookup_t xy, float x);
 int ROUND(float val);
 void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]);
 void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]);
-bool msg_allowed(CANPacket_t *to_send, const CanMsg msg_list[], int len);
-int get_addr_check_index(CANPacket_t *to_push, RxCheck addr_list[], const int len);
+bool msg_allowed(const CANPacket_t *to_send, const CanMsg msg_list[], int len);
+int get_addr_check_index(const CANPacket_t *to_push, RxCheck addr_list[], const int len);
 void update_counter(RxCheck addr_list[], int index, uint8_t counter);
 void update_addr_timestamp(RxCheck addr_list[], int index);
 bool is_msg_valid(RxCheck addr_list[], int index);

@@ -64,7 +64,7 @@ void set_gpio_pullup(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
   EXIT_CRITICAL();
 }
 
-int get_gpio_input(GPIO_TypeDef *GPIO, unsigned int pin) {
+int get_gpio_input(const GPIO_TypeDef *GPIO, unsigned int pin) {
   return (GPIO->IDR & (1UL << pin)) == (1UL << pin);
 }
 

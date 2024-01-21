@@ -12,7 +12,7 @@
 int gmlan_alt_mode = DISABLED;
 
 // returns out_len
-int do_bitstuff(char *out, char *in, int in_len) {
+int do_bitstuff(char *out, const char *in, int in_len) {
   int last_bit = -1;
   int bit_cnt = 0;
   int j = 0;
@@ -57,7 +57,7 @@ int append_crc(char *in, int in_len) {
   return in_len_copy;
 }
 
-int append_bits(char *in, int in_len, char *app, int app_len) {
+int append_bits(char *in, int in_len, const char *app, int app_len) {
   int in_len_copy = in_len;
   for (int i = 0; i < app_len; i++) {
     in[in_len_copy] = app[i];
@@ -75,7 +75,7 @@ int append_int(char *in, int in_len, int val, int val_len) {
   return in_len_copy;
 }
 
-int get_bit_message(char *out, CANPacket_t *to_bang) {
+int get_bit_message(char *out, const CANPacket_t *to_bang) {
   char pkt[MAX_BITS_CAN_PACKET];
   char footer[] = {
     1,  // CRC delimiter
@@ -268,7 +268,7 @@ void TIM12_IRQ_Handler(void) {
   TIM12->SR = 0;
 }
 
-bool bitbang_gmlan(CANPacket_t *to_bang) {
+bool bitbang_gmlan(const CANPacket_t *to_bang) {
   gmlan_send_ok = true;
   gmlan_alt_mode = BITBANG;
 
