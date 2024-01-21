@@ -19,7 +19,7 @@ uint8_t can_irq_number[3][2] = {
 
 #define CAN_ACK_ERROR 3U
 
-bool can_set_speed(uint8_t can_number) {
+static bool can_set_speed(uint8_t can_number) {
   bool ret = true;
   FDCAN_GlobalTypeDef *FDCANx = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
@@ -242,14 +242,14 @@ void can_rx(uint8_t can_number) {
   }
 }
 
-void FDCAN1_IT0_IRQ_Handler(void) { can_rx(0); }
-void FDCAN1_IT1_IRQ_Handler(void) { process_can(0); }
+static void FDCAN1_IT0_IRQ_Handler(void) { can_rx(0); }
+static void FDCAN1_IT1_IRQ_Handler(void) { process_can(0); }
 
-void FDCAN2_IT0_IRQ_Handler(void) { can_rx(1); }
-void FDCAN2_IT1_IRQ_Handler(void) { process_can(1); }
+static void FDCAN2_IT0_IRQ_Handler(void) { can_rx(1); }
+static void FDCAN2_IT1_IRQ_Handler(void) { process_can(1); }
 
-void FDCAN3_IT0_IRQ_Handler(void) { can_rx(2);  }
-void FDCAN3_IT1_IRQ_Handler(void) { process_can(2); }
+static void FDCAN3_IT0_IRQ_Handler(void) { can_rx(2);  }
+static void FDCAN3_IT1_IRQ_Handler(void) { process_can(2); }
 
 bool can_init(uint8_t can_number) {
   bool ret = false;

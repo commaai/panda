@@ -1,25 +1,5 @@
 #include "safety_volkswagen_common.h"
 
-// lateral limits
-const SteeringLimits VOLKSWAGEN_MQB_STEERING_LIMITS = {
-  .max_steer = 300,              // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
-  .max_rt_delta = 75,            // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
-  .max_rt_interval = 250000,     // 250ms between real time checks
-  .max_rate_up = 4,              // 2.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
-  .max_rate_down = 10,           // 5.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
-  .driver_torque_allowance = 80,
-  .driver_torque_factor = 3,
-  .type = TorqueDriverLimited,
-};
-
-// longitudinal limits
-// acceleration in m/s2 * 1000 to avoid floating point math
-const LongitudinalLimits VOLKSWAGEN_MQB_LONG_LIMITS = {
-  .max_accel = 2000,
-  .min_accel = -3500,
-  .inactive_accel = 3010,  // VW sends one increment above the max range when inactive
-};
-
 #define MSG_ESP_19      0x0B2   // RX from ABS, for wheel speeds
 #define MSG_LH_EPS_03   0x09F   // RX from EPS, for driver steering torque
 #define MSG_ESP_05      0x106   // RX from ABS, for brake switch state
@@ -194,6 +174,26 @@ static void volkswagen_mqb_rx_hook(const CANPacket_t *to_push) {
 }
 
 static bool volkswagen_mqb_tx_hook(const CANPacket_t *to_send) {
+  // lateral limits
+  static const SteeringLimits VOLKSWAGEN_MQB_STEERING_LIMITS = {
+    .max_steer = 300,              // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
+    .max_rt_delta = 75,            // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
+    .max_rt_interval = 250000,     // 250ms between real time checks
+    .max_rate_up = 4,              // 2.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
+    .max_rate_down = 10,           // 5.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
+    .driver_torque_allowance = 80,
+    .driver_torque_factor = 3,
+    .type = TorqueDriverLimited,
+  };
+
+  // longitudinal limits
+  // acceleration in m/s2 * 1000 to avoid floating point math
+  static const LongitudinalLimits VOLKSWAGEN_MQB_LONG_LIMITS = {
+    .max_accel = 2000,
+    .min_accel = -3500,
+    .inactive_accel = 3010,  // VW sends one increment above the max range when inactive
+  };
+
   int addr = GET_ADDR(to_send);
   bool tx = true;
 

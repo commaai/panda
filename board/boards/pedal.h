@@ -2,7 +2,7 @@
 // Pedal //
 // ///// //
 
-void pedal_enable_can_transceiver(uint8_t transceiver, bool enabled) {
+static void pedal_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver){
     case 1:
       set_gpio_output(GPIOB, 3, !enabled);
@@ -13,7 +13,7 @@ void pedal_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-void pedal_enable_can_transceivers(bool enabled) {
+static void pedal_enable_can_transceivers(bool enabled) {
   pedal_enable_can_transceiver(1U, enabled);
 }
 
@@ -62,7 +62,7 @@ void pedal_init(void) {
   pedal_set_led(LED_GREEN, false);
 }
 
-const harness_configuration pedal_harness_config = {
+static const harness_configuration pedal_harness_config = {
   .has_harness = false
 };
 

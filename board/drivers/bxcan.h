@@ -9,7 +9,7 @@ uint8_t can_irq_number[3][3] = {
   { CAN3_TX_IRQn, CAN3_RX0_IRQn, CAN3_SCE_IRQn },
 };
 
-bool can_set_speed(uint8_t can_number) {
+static bool can_set_speed(uint8_t can_number) {
   bool ret = true;
   CAN_TypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
@@ -227,17 +227,17 @@ void can_rx(uint8_t can_number) {
   }
 }
 
-void CAN1_TX_IRQ_Handler(void) { process_can(0); }
-void CAN1_RX0_IRQ_Handler(void) { can_rx(0); }
-void CAN1_SCE_IRQ_Handler(void) { can_sce(0); }
+static void CAN1_TX_IRQ_Handler(void) { process_can(0); }
+static void CAN1_RX0_IRQ_Handler(void) { can_rx(0); }
+static void CAN1_SCE_IRQ_Handler(void) { can_sce(0); }
 
-void CAN2_TX_IRQ_Handler(void) { process_can(1); }
-void CAN2_RX0_IRQ_Handler(void) { can_rx(1); }
-void CAN2_SCE_IRQ_Handler(void) { can_sce(1); }
+static void CAN2_TX_IRQ_Handler(void) { process_can(1); }
+static void CAN2_RX0_IRQ_Handler(void) { can_rx(1); }
+static void CAN2_SCE_IRQ_Handler(void) { can_sce(1); }
 
-void CAN3_TX_IRQ_Handler(void) { process_can(2); }
-void CAN3_RX0_IRQ_Handler(void) { can_rx(2); }
-void CAN3_SCE_IRQ_Handler(void) { can_sce(2); }
+static void CAN3_TX_IRQ_Handler(void) { process_can(2); }
+static void CAN3_RX0_IRQ_Handler(void) { can_rx(2); }
+static void CAN3_SCE_IRQ_Handler(void) { can_sce(2); }
 
 bool can_init(uint8_t can_number) {
   bool ret = false;

@@ -23,7 +23,7 @@ void red_chiplet_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-void red_chiplet_enable_can_transceivers(bool enabled) {
+static void red_chiplet_enable_can_transceivers(bool enabled) {
   uint8_t main_bus = (harness.status == HARNESS_STATUS_FLIPPED) ? 3U : 1U;
   for (uint8_t i=1U; i<=4U; i++) {
     // Leave main CAN always on for CAN-based ignition detection
@@ -35,7 +35,7 @@ void red_chiplet_enable_can_transceivers(bool enabled) {
   }
 }
 
-void red_chiplet_set_can_mode(uint8_t mode) {
+static void red_chiplet_set_can_mode(uint8_t mode) {
   red_chiplet_enable_can_transceiver(2U, false);
   red_chiplet_enable_can_transceiver(4U, false);
   switch (mode) {

@@ -8,13 +8,13 @@ void tres_update_fan_ir_power(void) {
   red_chiplet_set_fan_or_usb_load_switch(tres_ir_enabled || tres_fan_enabled);
 }
 
-void tres_set_ir_power(uint8_t percentage){
+static void tres_set_ir_power(uint8_t percentage){
   tres_ir_enabled = (percentage > 0U);
   tres_update_fan_ir_power();
   pwm_set(TIM3, 4, percentage);
 }
 
-void tres_set_bootkick(BootState state) {
+static void tres_set_bootkick(BootState state) {
   set_gpio_output(GPIOA, 0, state != BOOT_BOOTKICK);
   set_gpio_output(GPIOC, 12, state != BOOT_RESET);
 }

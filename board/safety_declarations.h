@@ -34,7 +34,7 @@ struct sample_t {
   int values[MAX_SAMPLE_VALS];
   int min;
   int max;
-} sample_t_default = {.values = {0}, .min = 0, .max = 0};
+};
 
 // safety code requires floats
 struct lookup_t {
@@ -174,28 +174,28 @@ void reset_sample(struct sample_t *sample);
 bool max_limit_check(int val, const int MAX, const int MIN);
 bool angle_dist_to_meas_check(int val, struct sample_t *val_meas,
   const int MAX_ERROR, const int MAX_VAL);
-bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
+static bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
   const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR);
-bool driver_limit_check(int val, int val_last, const struct sample_t *val_driver,
+static bool driver_limit_check(int val, int val_last, const struct sample_t *val_driver,
   const int MAX, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
   const int MAX_ALLOWANCE, const int DRIVER_FACTOR);
 bool get_longitudinal_allowed(void);
-bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
+static bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 float interpolate(struct lookup_t xy, float x);
 int ROUND(float val);
 void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]);
 void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]);
-bool msg_allowed(const CANPacket_t *to_send, const CanMsg msg_list[], int len);
-int get_addr_check_index(const CANPacket_t *to_push, RxCheck addr_list[], const int len);
-void update_counter(RxCheck addr_list[], int index, uint8_t counter);
-void update_addr_timestamp(RxCheck addr_list[], int index);
+static bool msg_allowed(const CANPacket_t *to_send, const CanMsg msg_list[], int len);
+static int get_addr_check_index(const CANPacket_t *to_push, RxCheck addr_list[], const int len);
+static void update_counter(RxCheck addr_list[], int index, uint8_t counter);
+static void update_addr_timestamp(RxCheck addr_list[], int index);
 bool is_msg_valid(RxCheck addr_list[], int index);
-bool rx_msg_safety_check(const CANPacket_t *to_push,
+static bool rx_msg_safety_check(const CANPacket_t *to_push,
                          const safety_config *cfg,
                          const safety_hooks *safety_hooks);
 void generic_rx_checks(bool stock_ecu_detected);
-void relay_malfunction_set(void);
-void relay_malfunction_reset(void);
+static void relay_malfunction_set(void);
+static void relay_malfunction_reset(void);
 bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLimits limits);
 bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const SteeringLimits limits);
 bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits);

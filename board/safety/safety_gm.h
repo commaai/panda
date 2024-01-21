@@ -1,28 +1,3 @@
-const SteeringLimits GM_STEERING_LIMITS = {
-  .max_steer = 300,
-  .max_rate_up = 10,
-  .max_rate_down = 15,
-  .driver_torque_allowance = 65,
-  .driver_torque_factor = 4,
-  .max_rt_delta = 128,
-  .max_rt_interval = 250000,
-  .type = TorqueDriverLimited,
-};
-
-const LongitudinalLimits GM_ASCM_LONG_LIMITS = {
-  .max_gas = 3072,
-  .min_gas = 1404,
-  .inactive_gas = 1404,
-  .max_brake = 400,
-};
-
-const LongitudinalLimits GM_CAM_LONG_LIMITS = {
-  .max_gas = 3400,
-  .min_gas = 1514,
-  .inactive_gas = 1554,
-  .max_brake = 400,
-};
-
 const LongitudinalLimits *gm_long_limits;
 
 const int GM_STANDSTILL_THRSLD = 10;  // 0.311kph
@@ -136,6 +111,17 @@ static void gm_rx_hook(const CANPacket_t *to_push) {
 }
 
 static bool gm_tx_hook(const CANPacket_t *to_send) {
+  const SteeringLimits GM_STEERING_LIMITS = {
+    .max_steer = 300,
+    .max_rate_up = 10,
+    .max_rate_down = 15,
+    .driver_torque_allowance = 65,
+    .driver_torque_factor = 4,
+    .max_rt_delta = 128,
+    .max_rt_interval = 250000,
+    .type = TorqueDriverLimited,
+  };
+
   bool tx = true;
   int addr = GET_ADDR(to_send);
 
@@ -215,6 +201,20 @@ static int gm_fwd_hook(int bus_num, int addr) {
 }
 
 static safety_config gm_init(uint16_t param) {
+  static const LongitudinalLimits GM_ASCM_LONG_LIMITS = {
+    .max_gas = 3072,
+    .min_gas = 1404,
+    .inactive_gas = 1404,
+    .max_brake = 400,
+  };
+
+  static const LongitudinalLimits GM_CAM_LONG_LIMITS = {
+    .max_gas = 3400,
+    .min_gas = 1514,
+    .inactive_gas = 1554,
+    .max_brake = 400,
+  };
+
   gm_hw = GET_FLAG(param, GM_PARAM_HW_CAM) ? GM_CAM : GM_ASCM;
 
   if (gm_hw == GM_ASCM) {

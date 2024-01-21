@@ -20,7 +20,7 @@
 #include "boards/tres.h"
 
 
-uint8_t get_board_id(void) {
+static uint8_t get_board_id(void) {
   return detect_with_pull(GPIOF, 7, PULL_UP) |
          (detect_with_pull(GPIOF, 8, PULL_UP) << 1U) |
          (detect_with_pull(GPIOF, 9, PULL_UP) << 2U) |

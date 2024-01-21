@@ -96,7 +96,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
 #define CAN_GAS_SIZE 6
 #define COUNTER_CYCLE 0xFU
 
-void CAN1_TX_IRQ_Handler(void) {
+static void CAN1_TX_IRQ_Handler(void) {
   // clear interrupt
   CAN->TSR |= CAN_TSR_RQCP0;
 }
@@ -119,7 +119,7 @@ uint32_t current_index = 0;
 uint8_t state = FAULT_STARTUP;
 const uint8_t crc_poly = 0xD5U;  // standard crc8
 
-void CAN1_RX0_IRQ_Handler(void) {
+static void CAN1_RX0_IRQ_Handler(void) {
   while ((CAN->RF0R & CAN_RF0R_FMP0) != 0) {
     #ifdef DEBUG
       print("CAN RX\n");
@@ -182,7 +182,7 @@ void CAN1_RX0_IRQ_Handler(void) {
   }
 }
 
-void CAN1_SCE_IRQ_Handler(void) {
+static void CAN1_SCE_IRQ_Handler(void) {
   state = FAULT_SCE;
   llcan_clear_send(CAN);
 }
@@ -193,7 +193,7 @@ unsigned int pkt_idx = 0;
 
 int led_value = 0;
 
-void TIM3_IRQ_Handler(void) {
+static void TIM3_IRQ_Handler(void) {
   #ifdef DEBUG
     puth(TIM3->CNT);
     print(" ");
@@ -242,7 +242,7 @@ void TIM3_IRQ_Handler(void) {
 
 // ***************************** main code *****************************
 
-void pedal(void) {
+static void pedal(void) {
   // read/write
   pdl0 = adc_get_raw(ADCCHAN_ACCEL0);
   pdl1 = adc_get_raw(ADCCHAN_ACCEL1);

@@ -12,7 +12,7 @@
 int gmlan_alt_mode = DISABLED;
 
 // returns out_len
-int do_bitstuff(char *out, const char *in, int in_len) {
+static int do_bitstuff(char *out, const char *in, int in_len) {
   int last_bit = -1;
   int bit_cnt = 0;
   int j = 0;
@@ -40,7 +40,7 @@ int do_bitstuff(char *out, const char *in, int in_len) {
   return j;
 }
 
-int append_crc(char *in, int in_len) {
+static int append_crc(char *in, int in_len) {
   unsigned int crc = 0;
   for (int i = 0; i < in_len; i++) {
     crc <<= 1;
@@ -57,7 +57,7 @@ int append_crc(char *in, int in_len) {
   return in_len_copy;
 }
 
-int append_bits(char *in, int in_len, const char *app, int app_len) {
+static int append_bits(char *in, int in_len, const char *app, int app_len) {
   int in_len_copy = in_len;
   for (int i = 0; i < app_len; i++) {
     in[in_len_copy] = app[i];
@@ -75,7 +75,7 @@ int append_int(char *in, int in_len, int val, int val_len) {
   return in_len_copy;
 }
 
-int get_bit_message(char *out, const CANPacket_t *to_bang) {
+static int get_bit_message(char *out, const CANPacket_t *to_bang) {
   char pkt[MAX_BITS_CAN_PACKET];
   char footer[] = {
     1,  // CRC delimiter
@@ -121,9 +121,9 @@ int get_bit_message(char *out, const CANPacket_t *to_bang) {
   return len;
 }
 
-void TIM12_IRQ_Handler(void);
+static void TIM12_IRQ_Handler(void);
 
-void setup_timer(void) {
+static void setup_timer(void) {
   // register interrupt
   REGISTER_INTERRUPT(TIM8_BRK_TIM12_IRQn, TIM12_IRQ_Handler, 40000U, FAULT_INTERRUPT_RATE_GMLAN)
 
@@ -191,7 +191,7 @@ int gmlan_fail_count = 0;
 #define REQUIRED_SILENT_TIME 10
 #define MAX_FAIL_COUNT 10
 
-void TIM12_IRQ_Handler(void) {
+static void TIM12_IRQ_Handler(void) {
   if (gmlan_alt_mode == BITBANG) {
     if ((TIM12->SR & TIM_SR_UIF) && (gmlan_sendmax != -1)) {
       int read = get_gpio_input(GPIOB, 12);
@@ -290,6 +290,7 @@ bool bitbang_gmlan(const CANPacket_t *to_bang) {
   }
 #else
   UNUSED(to_bang);
+  UNUSED(get_bit_message);
 #endif
 
   return gmlan_send_ok;

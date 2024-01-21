@@ -20,7 +20,7 @@ void uart_tx_ring(uart_ring *q){
   EXIT_CRITICAL();
 }
 
-void uart_rx_ring(uart_ring *q){
+static void uart_rx_ring(uart_ring *q){
   ENTER_CRITICAL();
 
   // Read out RX buffer
@@ -53,7 +53,7 @@ void uart_send_break(uart_ring *u) {
 // This read after reading SR clears all error interrupts. We don't want compiler warnings, nor optimizations
 #define UART_READ_DR(uart) volatile uint8_t t = (uart)->DR; UNUSED(t);
 
-void uart_interrupt_handler(uart_ring *q) {
+static void uart_interrupt_handler(uart_ring *q) {
   ENTER_CRITICAL();
 
   // Read UART status. This is also the first step necessary in clearing most interrupts
@@ -78,7 +78,7 @@ void uart_interrupt_handler(uart_ring *q) {
   EXIT_CRITICAL();
 }
 
-void USART2_IRQ_Handler(void) { uart_interrupt_handler(&uart_ring_debug); }
+static void USART2_IRQ_Handler(void) { uart_interrupt_handler(&uart_ring_debug); }
 
 // ***************************** Hardware setup *****************************
 
