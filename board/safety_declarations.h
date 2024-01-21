@@ -149,6 +149,22 @@ typedef uint32_t (*compute_checksum_t)(const CANPacket_t *to_push);
 typedef uint8_t (*get_counter_t)(const CANPacket_t *to_push);
 typedef bool (*get_quality_flag_valid_t)(const CANPacket_t *to_push);
 
+typedef safety_config (*safety_hook_init)(uint16_t param);
+typedef void (*rx_hook)(const CANPacket_t *to_push);
+typedef bool (*tx_hook)(const CANPacket_t *to_send);
+typedef int (*fwd_hook)(int bus_num, int addr);
+
+typedef struct {
+  safety_hook_init init;
+  rx_hook rx;
+  tx_hook tx;
+  fwd_hook fwd;
+  get_checksum_t get_checksum;
+  compute_checksum_t compute_checksum;
+  get_counter_t get_counter;
+  get_quality_flag_valid_t get_quality_flag_valid;
+} safety_hooks;
+
 bool safety_rx_hook(const CANPacket_t *to_push);
 bool safety_tx_hook(CANPacket_t *to_send);
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
@@ -175,11 +191,8 @@ void update_counter(RxCheck addr_list[], int index, uint8_t counter);
 void update_addr_timestamp(RxCheck addr_list[], int index);
 bool is_msg_valid(RxCheck addr_list[], int index);
 bool rx_msg_safety_check(const CANPacket_t *to_push,
-                         const safety_config *rx_checks,
-                         const get_checksum_t get_checksum,
-                         const compute_checksum_t compute_checksum,
-                         const get_counter_t get_counter,
-                         const get_quality_flag_valid_t get_quality_flag);
+                         const safety_config *cfg,
+                         const safety_hooks *safety_hooks);
 void generic_rx_checks(bool stock_ecu_detected);
 void relay_malfunction_set(void);
 void relay_malfunction_reset(void);
@@ -192,22 +205,6 @@ bool longitudinal_transmission_rpm_checks(int desired_transmission_rpm, const Lo
 bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits);
 bool longitudinal_interceptor_checks(const CANPacket_t *to_send);
 void pcm_cruise_check(bool cruise_engaged);
-
-typedef safety_config (*safety_hook_init)(uint16_t param);
-typedef void (*rx_hook)(const CANPacket_t *to_push);
-typedef bool (*tx_hook)(const CANPacket_t *to_send);
-typedef int (*fwd_hook)(int bus_num, int addr);
-
-typedef struct {
-  safety_hook_init init;
-  rx_hook rx;
-  tx_hook tx;
-  fwd_hook fwd;
-  get_checksum_t get_checksum;
-  compute_checksum_t compute_checksum;
-  get_counter_t get_counter;
-  get_quality_flag_valid_t get_quality_flag_valid;
-} safety_hooks;
 
 void safety_tick(const safety_config *safety_config);
 
