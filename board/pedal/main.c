@@ -92,7 +92,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
 
 // addresses to be used on CAN
 #define CAN_GAS_INPUT  0x200
-#define CAN_GAS_OUTPUT 0x201U
+#define CAN_GAS_OUTPUT 0x201UL
 #define CAN_GAS_SIZE 6
 #define COUNTER_CYCLE 0xFU
 

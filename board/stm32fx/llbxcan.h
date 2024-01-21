@@ -140,7 +140,7 @@ bool llcan_init(CAN_TypeDef *CANx) {
     CANx->sFilterRegister[0].FR2 = 0U;
     CANx->sFilterRegister[14].FR1 = 0U;
     CANx->sFilterRegister[14].FR2 = 0U;
-    CANx->FA1R |= 1U | (1U << 14);
+    CANx->FA1R |= 1U | (1UL << 14);
 
     // Exit init mode, do not wait
     register_clear_bits(&(CANx->FMR), CAN_FMR_FINIT);
