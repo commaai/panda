@@ -40,7 +40,7 @@ const int NISSAN_PARAM_ALT_EPS_BUS = 1;
 
 bool nissan_alt_eps = false;
 
-static void nissan_rx_hook(CANPacket_t *to_push) {
+static void nissan_rx_hook(const CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
@@ -93,7 +93,7 @@ static void nissan_rx_hook(CANPacket_t *to_push) {
 }
 
 
-static bool nissan_tx_hook(CANPacket_t *to_send) {
+static bool nissan_tx_hook(const CANPacket_t *to_send) {
   bool tx = true;
   int addr = GET_ADDR(to_send);
   bool violation = false;

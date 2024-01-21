@@ -52,16 +52,16 @@ uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F
 bool volkswagen_mqb_brake_pedal_switch = false;
 bool volkswagen_mqb_brake_pressure_detected = false;
 
-static uint32_t volkswagen_mqb_get_checksum(CANPacket_t *to_push) {
+static uint32_t volkswagen_mqb_get_checksum(const CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
 }
 
-static uint8_t volkswagen_mqb_get_counter(CANPacket_t *to_push) {
+static uint8_t volkswagen_mqb_get_counter(const CANPacket_t *to_push) {
   // MQB message counters are consistently found at LSB 8.
   return (uint8_t)GET_BYTE(to_push, 1) & 0xFU;
 }
 
-static uint32_t volkswagen_mqb_compute_crc(CANPacket_t *to_push) {
+static uint32_t volkswagen_mqb_compute_crc(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
 
@@ -107,7 +107,7 @@ static safety_config volkswagen_mqb_init(uint16_t param) {
                                    BUILD_SAFETY_CFG(volkswagen_mqb_rx_checks, VOLKSWAGEN_MQB_STOCK_TX_MSGS);
 }
 
-static void volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
+static void volkswagen_mqb_rx_hook(const CANPacket_t *to_push) {
   if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
 
@@ -193,7 +193,7 @@ static void volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
   }
 }
 
-static bool volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
+static bool volkswagen_mqb_tx_hook(const CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
   bool tx = true;
 

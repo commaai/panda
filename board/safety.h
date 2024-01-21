@@ -57,7 +57,7 @@ uint16_t current_safety_param = 0;
 const safety_hooks *current_hooks = &nooutput_hooks;
 safety_config current_safety_config;
 
-bool safety_rx_hook(CANPacket_t *to_push) {
+bool safety_rx_hook(const CANPacket_t *to_push) {
   bool controls_allowed_prev = controls_allowed;
 
   bool valid = rx_msg_safety_check(to_push, &current_safety_config, current_hooks->get_checksum,
@@ -222,7 +222,7 @@ void update_addr_timestamp(RxCheck addr_list[], int index) {
   }
 }
 
-bool rx_msg_safety_check(CANPacket_t *to_push,
+bool rx_msg_safety_check(const CANPacket_t *to_push,
                        const safety_config *cfg,
                        const get_checksum_t get_checksum,
                        const compute_checksum_t compute_checksum,
@@ -547,7 +547,7 @@ bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limit
   return violation;
 }
 
-bool longitudinal_interceptor_checks(CANPacket_t *to_send) {
+bool longitudinal_interceptor_checks(const CANPacket_t *to_send) {
   return !get_longitudinal_allowed() && (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1));
 }
 

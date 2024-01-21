@@ -17,7 +17,6 @@ unmatchedSuppression
 # fixing the violations and all are intended to be removed soon after
 
 unusedFunction
-constParameterCallback
 
 misra-config
 misra-c2012-1.2  # this is from the extensions (e.g. __typeof__) used in the MIN, MAX, ABS, and CLAMP macros
