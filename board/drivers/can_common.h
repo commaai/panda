@@ -227,6 +227,13 @@ void ignition_can_hook(CANPacket_t *to_push) {
       ignition_can_cnt = 0U;
     }
 
+  } else if (bus == 2) {
+    // GM exception, SDGM cars have this message on bus 2
+    if ((addr == 0x1F1) && (len == 8)) {
+      // SystemPowerMode (2=Run, 3=Crank Request)
+      ignition_can = (GET_BYTE(to_push, 0) & 0x2U) != 0U;
+      ignition_can_cnt = 0U;
+    }
   }
 }
 
