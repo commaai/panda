@@ -111,7 +111,7 @@ void spi_init(void) {
   llspi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
 }
 
-bool validate_checksum(uint8_t *data, uint16_t len) {
+bool validate_checksum(const uint8_t *data, uint16_t len) {
   // TODO: can speed this up by casting the bulk to uint32_t and xor-ing the bytes afterwards
   uint8_t checksum = SPI_CHECKSUM_START;
   for(uint16_t i = 0U; i < len; i++){

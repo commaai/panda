@@ -17,7 +17,6 @@ unmatchedSuppression
 # fixing the violations and all are intended to be removed soon after
 
 unusedFunction
-constParameterPointer
 constParameterCallback
 
 misra-config

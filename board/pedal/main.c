@@ -46,11 +46,11 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
   UNUSED(max_len);
   return 0;
 }
-void comms_can_write(uint8_t *data, uint32_t len) {
+void comms_can_write(const uint8_t *data, uint32_t len) {
   UNUSED(data);
   UNUSED(len);
 }
-void comms_endpoint2_write(uint8_t *data, uint32_t len) {
+void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   UNUSED(data);
   UNUSED(len);
 }
