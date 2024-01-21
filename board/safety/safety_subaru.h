@@ -115,15 +115,15 @@ bool subaru_gen2 = false;
 bool subaru_longitudinal = false;
 
 
-static uint32_t subaru_get_checksum(CANPacket_t *to_push) {
+static uint32_t subaru_get_checksum(const CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
 }
 
-static uint8_t subaru_get_counter(CANPacket_t *to_push) {
+static uint8_t subaru_get_counter(const CANPacket_t *to_push) {
   return (uint8_t)(GET_BYTE(to_push, 1) & 0xFU);
 }
 
-static uint32_t subaru_compute_checksum(CANPacket_t *to_push) {
+static uint32_t subaru_compute_checksum(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
   uint8_t checksum = (uint8_t)(addr) + (uint8_t)((unsigned int)(addr) >> 8U);
@@ -133,7 +133,7 @@ static uint32_t subaru_compute_checksum(CANPacket_t *to_push) {
   return checksum;
 }
 
-static void subaru_rx_hook(CANPacket_t *to_push) {
+static void subaru_rx_hook(const CANPacket_t *to_push) {
   const int bus = GET_BUS(to_push);
   const int alt_main_bus = subaru_gen2 ? SUBARU_ALT_BUS : SUBARU_MAIN_BUS;
 
@@ -179,7 +179,7 @@ static void subaru_rx_hook(CANPacket_t *to_push) {
   generic_rx_checks((addr == MSG_SUBARU_ES_LKAS) && (bus == SUBARU_MAIN_BUS));
 }
 
-static bool subaru_tx_hook(CANPacket_t *to_send) {
+static bool subaru_tx_hook(const CANPacket_t *to_send) {
   bool tx = true;
   int addr = GET_ADDR(to_send);
   bool violation = false;
