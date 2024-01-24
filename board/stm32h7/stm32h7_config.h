@@ -51,7 +51,7 @@ separate IRQs for RX and TX.
   0x1 = LQFP100 Legacy / TFBGA100 Legacy
 */
 #define STM32H7_IS_723 ((SYSCFG->PKGR & SYSCFG_PKGR_PKG) == 0x1U)
-#define STM32H7_IS_100PIN STM32H7_IS_723
+#define STM32H7_IS_100PIN ((SYSCFG->PKGR & SYSCFG_PKGR_PKG) == 0x1U)
 
 #include "can_definitions.h"
 #include "comms_definitions.h"
