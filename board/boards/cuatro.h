@@ -1,4 +1,4 @@
-void quatro_set_led(uint8_t color, bool enabled) {
+void cuatro_set_led(uint8_t color, bool enabled) {
   switch (color) {
     case LED_RED:
       set_gpio_output(GPIOD, 15, !enabled);
@@ -14,7 +14,7 @@ void quatro_set_led(uint8_t color, bool enabled) {
   }
 }
 
-void quatro_init(void) {
+void cuatro_init(void) {
   red_chiplet_init();
 
   // C2: SOM GPIO used as input (fan control at boot)
@@ -44,7 +44,7 @@ void quatro_init(void) {
   clock_source_init();
 }
 
-const board board_quatro = {
+const board board_cuatro = {
   .harness_config = &red_chiplet_harness_config,
   .has_hw_gmlan = false,
   .has_obd = true,
@@ -55,11 +55,11 @@ const board board_quatro = {
   .avdd_mV = 1800U,
   .fan_stall_recovery = false,
   .fan_enable_cooldown_time = 3U,
-  .init = quatro_init,
+  .init = cuatro_init,
   .init_bootloader = unused_init_bootloader,
   .enable_can_transceiver = red_chiplet_enable_can_transceiver,
   .enable_can_transceivers = red_chiplet_enable_can_transceivers,
-  .set_led = quatro_set_led,
+  .set_led = cuatro_set_led,
   .set_can_mode = red_chiplet_set_can_mode,
   .check_ignition = red_check_ignition,
   .read_current = unused_read_current,

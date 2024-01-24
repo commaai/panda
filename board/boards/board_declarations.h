@@ -57,7 +57,7 @@ struct board {
 #define HW_TYPE_RED_PANDA 7U
 #define HW_TYPE_RED_PANDA_V2 8U
 #define HW_TYPE_TRES 9U
-#define HW_TYPE_QUATRO 10U
+#define HW_TYPE_CUATRO 10U
 
 // LED colors
 #define LED_RED 0U
