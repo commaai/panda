@@ -18,7 +18,7 @@ def gpio_set(pin, high):
 def reflash_bootstub():
   # we have to try a few times since there's a race condition
   # between SPI and USB in the ST bootloader
-  for tryy in range(5):
+  for _ in range(5):
     print("resetting into DFU")
     gpio_set(GPIO.STM_RST_N, 1)
     gpio_set(GPIO.STM_BOOT0, 1)
