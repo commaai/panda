@@ -21,10 +21,23 @@
 
 
 uint8_t get_board_id(void) {
-  return detect_with_pull(GPIOF, 7, PULL_UP) |
-         (detect_with_pull(GPIOF, 8, PULL_UP) << 1U) |
-         (detect_with_pull(GPIOF, 9, PULL_UP) << 2U) |
-         (detect_with_pull(GPIOF, 10, PULL_UP) << 3U);
+  // for pandas with an STM32H725/35
+  uint8_t id7x5 = detect_with_pull(GPIOF, 7, PULL_UP) |
+                  (detect_with_pull(GPIOF, 8, PULL_UP) << 1U) |
+                  (detect_with_pull(GPIOF, 9, PULL_UP) << 2U) |
+                  (detect_with_pull(GPIOF, 10, PULL_UP) << 3U);
+
+  // for pandas with an STM32H723
+  uint8_t id723 = detect_with_pull(GPIOD, 4, PULL_UP) |
+                  (detect_with_pull(GPIOD, 5, PULL_UP) << 1U) |
+                  (detect_with_pull(GPIOD, 6, PULL_UP) << 2U) |
+                  (detect_with_pull(GPIOD, 7, PULL_UP) << 3U);
+
+  // for panda, a 723 is no SPMS and TFBGA100 package
+  const bool no_spms = ((PWR->CR3 & PWR_CR3_SMPSEXTRDY) == 0U);
+  const bool pkg723 = (SYSCFG->PKGR & SYSCFG_PKGR_PKG) == 0x1U;
+
+  return (no_spms && pkg723) ? id723 : id7x5;
 }
 
 void detect_board_type(void) {
@@ -33,23 +46,14 @@ void detect_board_type(void) {
   if (board_id == 0U) {
     hw_type = HW_TYPE_RED_PANDA;
     current_board = &board_red;
-  } else if (board_id == 1U) {
-    // deprecated
-    //hw_type = HW_TYPE_RED_PANDA_V2;
   } else if (board_id == 2U) {
     hw_type = HW_TYPE_TRES;
     current_board = &board_tres;
   } else if (board_id == 3U) {
     hw_type = HW_TYPE_CUATRO;
-    current_board = &board_tres;
+    current_board = &board_cuatro;
   } else {
     hw_type = HW_TYPE_UNKNOWN;
     print("Hardware type is UNKNOWN!\n");
   }
-
-  // TODO: detect this live
-#ifdef STM32H723
-  hw_type = HW_TYPE_CUATRO;
-  current_board = &board_cuatro;
-#endif
 }
