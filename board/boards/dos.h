@@ -192,7 +192,6 @@ const harness_configuration dos_harness_config = {
 };
 
 const board board_dos = {
-  .board_type = "Dos",
   .harness_config = &dos_harness_config,
   .has_hw_gmlan = false,
   .has_obd = true,

@@ -338,7 +338,7 @@ int main(void) {
   }
 
   print("Config:\n");
-  print("  Board type: "); print(current_board->board_type); print("\n");
+  print("  Board type: 0x"); puth(hw_type); print("\n");
 
   // init board
   current_board->init();

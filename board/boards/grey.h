@@ -5,7 +5,6 @@
 // Most hardware functionality is similar to white panda
 
 const board board_grey = {
-  .board_type = "Grey",
   .set_bootkick = unused_set_bootkick,
   .harness_config = &white_harness_config,
   .has_hw_gmlan = true,

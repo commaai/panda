@@ -199,7 +199,6 @@ const harness_configuration uno_harness_config = {
 };
 
 const board board_uno = {
-  .board_type = "Uno",
   .harness_config = &uno_harness_config,
   .has_hw_gmlan = false,
   .has_obd = true,
