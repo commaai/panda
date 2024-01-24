@@ -43,9 +43,9 @@ if __name__ == "__main__":
   gpio_set(GPIO.HUB_RST_N, 1)
 
   reflash_bootstub()
-  #time.sleep(1)
+  time.sleep(1)
 
-  #print("flashing app")
-  #p = Panda()
-  #assert p.bootstub
-  #p.flash()
+  print("flashing app")
+  p = Panda()
+  assert p.bootstub
+  p.flash()
