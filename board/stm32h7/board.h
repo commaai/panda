@@ -17,6 +17,7 @@
 #include "boards/red.h"
 #include "boards/red_chiplet.h"
 #include "boards/tres.h"
+#include "boards/quatro.h"
 
 
 uint8_t get_board_id(void) {
@@ -38,8 +39,17 @@ void detect_board_type(void) {
   } else if (board_id == 2U) {
     hw_type = HW_TYPE_TRES;
     current_board = &board_tres;
+  } else if (board_id == 3U) {
+    hw_type = HW_TYPE_QUATRO;
+    current_board = &board_tres;
   } else {
     hw_type = HW_TYPE_UNKNOWN;
     print("Hardware type is UNKNOWN!\n");
   }
+
+  // TODO: detect this live
+#ifdef STM32H723
+  hw_type = HW_TYPE_QUATRO;
+  current_board = &board_quatro;
+#endif
 }
