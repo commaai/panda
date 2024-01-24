@@ -19,7 +19,6 @@
 #include "boards/tres.h"
 #include "boards/cuatro.h"
 
-
 uint8_t get_board_id(void) {
   // for pandas with an STM32H725/35
   uint8_t id7x5 = detect_with_pull(GPIOF, 7, PULL_UP) |
@@ -33,11 +32,7 @@ uint8_t get_board_id(void) {
                   (detect_with_pull(GPIOD, 6, PULL_UP) << 2U) |
                   (detect_with_pull(GPIOD, 7, PULL_UP) << 3U);
 
-  // for panda, a 723 is no SPMS and TFBGA100 package
-  const bool no_spms = ((PWR->CR3 & PWR_CR3_SMPSEXTRDY) == 0U);
-  const bool pkg723 = (SYSCFG->PKGR & SYSCFG_PKGR_PKG) == 0x1U;
-
-  return (no_spms && pkg723) ? id723 : id7x5;
+  return STM32H7_IS_723 ? id723 : id7x5;
 }
 
 void detect_board_type(void) {

@@ -46,6 +46,12 @@ separate IRQs for RX and TX.
 #define PROVISION_CHUNK_ADDRESS 0x080FFFE0U
 #define DEVICE_SERIAL_NUMBER_ADDRESS 0x080FFFC0U
 
+/*
+  panda supports 723 and 725-35, and sometimes we need to tell the difference.
+  0x1 = LQFP100 Legacy / TFBGA100 Legacy
+*/
+#define STM32H7_IS_723 ((SYSCFG->PKGR & SYSCFG_PKGR_PKG) == 0x1U)
+
 #include "can_definitions.h"
 #include "comms_definitions.h"
 
