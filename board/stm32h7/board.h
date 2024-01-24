@@ -17,9 +17,11 @@
 #include "boards/red.h"
 #include "boards/red_chiplet.h"
 #include "boards/tres.h"
+#include "boards/quatro.h"
 
 
 uint8_t get_board_id(void) {
+  // TODO: detect MCU type first
   return detect_with_pull(GPIOF, 7, PULL_UP) |
          (detect_with_pull(GPIOF, 8, PULL_UP) << 1U) |
          (detect_with_pull(GPIOF, 9, PULL_UP) << 2U) |
@@ -27,6 +29,7 @@ uint8_t get_board_id(void) {
 }
 
 void detect_board_type(void) {
+  /*
   const uint8_t board_id = get_board_id();
 
   if (board_id == 0U) {
@@ -38,8 +41,14 @@ void detect_board_type(void) {
   } else if (board_id == 2U) {
     hw_type = HW_TYPE_TRES;
     current_board = &board_tres;
+  } else if (board_id == 3U) {
+    hw_type = HW_TYPE_QUATRO;
+    current_board = &board_tres;
   } else {
     hw_type = HW_TYPE_UNKNOWN;
     print("Hardware type is UNKNOWN!\n");
   }
+  */
+  hw_type = HW_TYPE_QUATRO;
+  current_board = &board_quatro;
 }
