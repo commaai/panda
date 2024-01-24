@@ -20,19 +20,19 @@
 #include "boards/cuatro.h"
 
 uint8_t get_board_id(void) {
-  // for pandas with >100 pin packages, also happens to be STM32H725/35
-  uint8_t id7x5 = detect_with_pull(GPIOF, 7, PULL_UP) |
-                  (detect_with_pull(GPIOF, 8, PULL_UP) << 1U) |
-                  (detect_with_pull(GPIOF, 9, PULL_UP) << 2U) |
-                  (detect_with_pull(GPIOF, 10, PULL_UP) << 3U);
+  uint8_t id = detect_with_pull(GPIOF, 7, PULL_UP) |
+               (detect_with_pull(GPIOF, 8, PULL_UP) << 1U) |
+               (detect_with_pull(GPIOF, 9, PULL_UP) << 2U) |
+               (detect_with_pull(GPIOF, 10, PULL_UP) << 3U);
 
-  // for pandas with a 100 pin package, happens to only be STM32H723
-  uint8_t id723 = detect_with_pull(GPIOD, 4, PULL_UP) |
-                  (detect_with_pull(GPIOD, 5, PULL_UP) << 1U) |
-                  (detect_with_pull(GPIOD, 6, PULL_UP) << 2U) |
-                  (detect_with_pull(GPIOD, 7, PULL_UP) << 3U);
+  if (STM32H7_IS_100PIN) {
+    id = detect_with_pull(GPIOD, 4, PULL_UP) |
+         (detect_with_pull(GPIOD, 5, PULL_UP) << 1U) |
+         (detect_with_pull(GPIOD, 6, PULL_UP) << 2U) |
+         (detect_with_pull(GPIOD, 7, PULL_UP) << 3U);
+  }
 
-  return STM32H7_IS_723 ? id723 : id7x5;
+  return id;
 }
 
 void detect_board_type(void) {
