@@ -16,7 +16,6 @@
 #include "drivers/clock_source.h"
 #include "boards/red.h"
 #include "boards/red_chiplet.h"
-#include "boards/red_v2.h"
 #include "boards/tres.h"
 
 
@@ -34,8 +33,8 @@ void detect_board_type(void) {
     hw_type = HW_TYPE_RED_PANDA;
     current_board = &board_red;
   } else if (board_id == 1U) {
-    hw_type = HW_TYPE_RED_PANDA_V2;
-    current_board = &board_red_v2;
+    // deprecated
+    //hw_type = HW_TYPE_RED_PANDA_V2;
   } else if (board_id == 2U) {
     hw_type = HW_TYPE_TRES;
     current_board = &board_tres;
