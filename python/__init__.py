@@ -28,7 +28,6 @@ logging.basicConfig(level=LOGLEVEL, format='%(message)s')
 CANPACKET_HEAD_SIZE = 0x6
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
 LEN_TO_DLC = {length: dlc for (dlc, length) in enumerate(DLC_TO_LEN)}
-PANDA_CAN_CNT = 3
 PANDA_BUS_CNT = 4
 
 
