@@ -14,7 +14,7 @@ int get_health_pkt(void *dat) {
 
   // Use the GPIO pin to determine ignition or use a CAN based logic
   health->ignition_line_pkt = (uint8_t)(current_board->check_ignition());
-  health->ignition_can_pkt = (uint8_t)(ignition_can);
+  health->ignition_can_pkt = ignition_can;
 
   health->controls_allowed_pkt = controls_allowed;
   health->safety_tx_blocked_pkt = safety_tx_blocked;
@@ -26,8 +26,8 @@ int get_health_pkt(void *dat) {
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
   health->safety_param_pkt = current_safety_param;
   health->alternative_experience_pkt = alternative_experience;
-  health->power_save_enabled_pkt = (uint8_t)(power_save_status == POWER_SAVE_STATUS_ENABLED);
-  health->heartbeat_lost_pkt = (uint8_t)(heartbeat_lost);
+  health->power_save_enabled_pkt = power_save_status == POWER_SAVE_STATUS_ENABLED;
+  health->heartbeat_lost_pkt = heartbeat_lost;
   health->safety_rx_checks_invalid = safety_rx_checks_invalid;
 
   health->spi_checksum_error_count = spi_checksum_error_count;
@@ -55,12 +55,12 @@ int get_rtc_pkt(void *dat) {
 }
 
 // send on serial, first byte to select the ring
-void comms_endpoint2_write(uint8_t *data, uint32_t len) {
+void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   uart_ring *ur = get_ring_by_number(data[0]);
   if ((len != 0U) && (ur != NULL)) {
     if ((data[0] < 2U) || (data[0] >= 4U)) {
       for (uint32_t i = 1; i < len; i++) {
-        while (!putc(ur, data[i])) {
+        while (!put_char(ur, data[i])) {
           // wait
         }
       }
@@ -325,7 +325,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
 
       // read
       while ((resp_len < MIN(req->length, USBPACKET_MAX_SIZE)) &&
-                         getc(ur, (char*)&resp[resp_len])) {
+                         get_char(ur, (char*)&resp[resp_len])) {
         ++resp_len;
       }
       break;

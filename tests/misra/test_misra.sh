@@ -4,20 +4,10 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PANDA_DIR=$DIR/../../
 
-GREEN='\033[0;32m'
+GREEN="\e[1;32m"
 NC='\033[0m'
 
-GCC_INC="$(arm-none-eabi-gcc -print-file-name=include)"
 : "${CPPCHECK_DIR:=$DIR/cppcheck/}"
-CPPCHECK="$CPPCHECK_DIR/cppcheck --dump --enable=all --force --inline-suppr -I $PANDA_DIR/board/ -I $GCC_INC \
-          --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
-          --suppress=*:*include/* --error-exitcode=2"
-
-RULES="$DIR/MISRA_C_2012.txt"
-MISRA="python $CPPCHECK_DIR/addons/misra.py"
-if [ -f "$RULES" ]; then
-  MISRA="$MISRA --rule-texts $RULES"
-fi
 
 # install cppcheck if missing
 if [ ! -d $CPPCHECK_DIR ]; then
@@ -34,18 +24,30 @@ if ! cmp -s new_table coverage_table; then
 fi
 
 cd $PANDA_DIR
-scons -j8
+if [ -z "${SKIP_BUILD}" ]; then
+  scons -j8
+fi
+
+cppcheck() {
+  hashed_args=$(echo -n "$@$DIR" | md5sum | awk '{print $1}')
+  build_dir=/tmp/cppcheck_build/$hashed_args
+  mkdir -p $build_dir
+
+  $CPPCHECK_DIR/cppcheck --enable=all --force --inline-suppr -I $PANDA_DIR/board/ \
+          -I $gcc_inc "$(arm-none-eabi-gcc -print-file-name=include)" \
+          --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
+          --suppress=*:*include/* --error-exitcode=2 --addon=misra \
+          --cppcheck-build-dir=$build_dir \
+          "$@"
+}
 
 printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
-$CPPCHECK -DCAN3 -DPANDA -DSTM32F4 -UPEDAL -DUID_BASE board/main.c
-$MISRA board/main.c.dump
+cppcheck -DCAN3 -DPANDA -DSTM32F4 -UPEDAL -DUID_BASE $PANDA_DIR/board/main.c
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-$CPPCHECK -DCAN3 -DPANDA -DSTM32H7 -UPEDAL -DUID_BASE board/main.c
-$MISRA board/main.c.dump
+cppcheck -DCAN3 -DPANDA -DSTM32H7 -UPEDAL -DUID_BASE $PANDA_DIR/board/main.c
 
 printf "\n${GREEN}** PEDAL CODE **${NC}\n"
-$CPPCHECK -UCAN3 -UPANDA -DSTM32F2 -DPEDAL -UUID_BASE board/pedal/main.c
-$MISRA board/pedal/main.c.dump
+cppcheck -UCAN3 -UPANDA -DSTM32F2 -DPEDAL -UUID_BASE $PANDA_DIR/board/pedal/main.c
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"

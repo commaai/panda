@@ -20,7 +20,6 @@ typedef void (*board_set_bootkick)(BootState state);
 typedef bool (*board_read_som_gpio)(void);
 
 struct board {
-  const char *board_type;
   const harness_configuration *harness_config;
   const bool has_hw_gmlan;
   const bool has_obd;
@@ -58,6 +57,7 @@ struct board {
 #define HW_TYPE_RED_PANDA 7U
 #define HW_TYPE_RED_PANDA_V2 8U
 #define HW_TYPE_TRES 9U
+#define HW_TYPE_CUATRO 10U
 
 // LED colors
 #define LED_RED 0U

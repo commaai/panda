@@ -68,7 +68,7 @@ RxCheck ford_rx_checks[] = {
   {.msg = {{FORD_DesiredTorqBrk, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},
 };
 
-static uint8_t ford_get_counter(CANPacket_t *to_push) {
+static uint8_t ford_get_counter(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   uint8_t cnt = 0;
@@ -83,7 +83,7 @@ static uint8_t ford_get_counter(CANPacket_t *to_push) {
   return cnt;
 }
 
-static uint32_t ford_get_checksum(CANPacket_t *to_push) {
+static uint32_t ford_get_checksum(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   uint8_t chksum = 0;
@@ -101,7 +101,7 @@ static uint32_t ford_get_checksum(CANPacket_t *to_push) {
   return chksum;
 }
 
-static uint32_t ford_compute_checksum(CANPacket_t *to_push) {
+static uint32_t ford_compute_checksum(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   uint8_t chksum = 0;
@@ -128,7 +128,7 @@ static uint32_t ford_compute_checksum(CANPacket_t *to_push) {
   return chksum;
 }
 
-static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
+static bool ford_get_quality_flag_valid(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   bool valid = false;
@@ -201,7 +201,7 @@ const SteeringLimits FORD_STEERING_LIMITS = {
   .inactive_angle_is_zero = true,
 };
 
-static void ford_rx_hook(CANPacket_t *to_push) {
+static void ford_rx_hook(const CANPacket_t *to_push) {
   if (GET_BUS(to_push) == FORD_MAIN_BUS) {
     int addr = GET_ADDR(to_push);
 
@@ -265,7 +265,7 @@ static void ford_rx_hook(CANPacket_t *to_push) {
 
 }
 
-static bool ford_tx_hook(CANPacket_t *to_send) {
+static bool ford_tx_hook(const CANPacket_t *to_send) {
   bool tx = true;
 
   int addr = GET_ADDR(to_send);

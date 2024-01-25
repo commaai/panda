@@ -104,12 +104,12 @@ int honda_get_pt_bus(void) {
   return ((honda_hw == HONDA_BOSCH) && !honda_bosch_radarless) ? 1 : 0;
 }
 
-static uint32_t honda_get_checksum(CANPacket_t *to_push) {
+static uint32_t honda_get_checksum(const CANPacket_t *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1U;
   return (uint8_t)(GET_BYTE(to_push, checksum_byte)) & 0xFU;
 }
 
-static uint32_t honda_compute_checksum(CANPacket_t *to_push) {
+static uint32_t honda_compute_checksum(const CANPacket_t *to_push) {
   int len = GET_LEN(to_push);
   uint8_t checksum = 0U;
   unsigned int addr = GET_ADDR(to_push);
@@ -126,7 +126,7 @@ static uint32_t honda_compute_checksum(CANPacket_t *to_push) {
   return (uint8_t)((8U - checksum) & 0xFU);
 }
 
-static uint8_t honda_get_counter(CANPacket_t *to_push) {
+static uint8_t honda_get_counter(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   uint8_t cnt = 0U;
@@ -140,7 +140,7 @@ static uint8_t honda_get_counter(CANPacket_t *to_push) {
   return cnt;
 }
 
-static void honda_rx_hook(CANPacket_t *to_push) {
+static void honda_rx_hook(const CANPacket_t *to_push) {
   const bool pcm_cruise = ((honda_hw == HONDA_BOSCH) && !honda_bosch_long) || \
                           ((honda_hw == HONDA_NIDEC) && !enable_gas_interceptor);
   int pt_bus = honda_get_pt_bus();
@@ -269,7 +269,7 @@ static void honda_rx_hook(CANPacket_t *to_push) {
 
 }
 
-static bool honda_tx_hook(CANPacket_t *to_send) {
+static bool honda_tx_hook(const CANPacket_t *to_send) {
   bool tx = true;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);

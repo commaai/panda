@@ -86,18 +86,18 @@ RxCheck toyota_lta_interceptor_rx_checks[] = {
 // safety param flags
 // first byte is for EPS factor, second is for flags
 const uint32_t TOYOTA_PARAM_OFFSET = 8U;
-const uint32_t TOYOTA_EPS_FACTOR = (1U << TOYOTA_PARAM_OFFSET) - 1U;
-const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1U << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2U << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_LTA = 4U << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_GAS_INTERCEPTOR = 8U << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_EPS_FACTOR = (1UL << TOYOTA_PARAM_OFFSET) - 1U;
+const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1UL << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2UL << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_LTA = 4UL << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_GAS_INTERCEPTOR = 8UL << TOYOTA_PARAM_OFFSET;
 
 bool toyota_alt_brake = false;
 bool toyota_stock_longitudinal = false;
 bool toyota_lta = false;
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
-static uint32_t toyota_compute_checksum(CANPacket_t *to_push) {
+static uint32_t toyota_compute_checksum(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
   uint8_t checksum = (uint8_t)(addr) + (uint8_t)((unsigned int)(addr) >> 8U) + (uint8_t)(len);
@@ -107,12 +107,12 @@ static uint32_t toyota_compute_checksum(CANPacket_t *to_push) {
   return checksum;
 }
 
-static uint32_t toyota_get_checksum(CANPacket_t *to_push) {
+static uint32_t toyota_get_checksum(const CANPacket_t *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1U;
   return (uint8_t)(GET_BYTE(to_push, checksum_byte));
 }
 
-static uint8_t toyota_get_counter(CANPacket_t *to_push) {
+static uint8_t toyota_get_counter(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   uint8_t cnt = 0U;
@@ -123,7 +123,7 @@ static uint8_t toyota_get_counter(CANPacket_t *to_push) {
   return cnt;
 }
 
-static bool toyota_get_quality_flag_valid(CANPacket_t *to_push) {
+static bool toyota_get_quality_flag_valid(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   bool valid = false;
@@ -133,7 +133,7 @@ static bool toyota_get_quality_flag_valid(CANPacket_t *to_push) {
   return valid;
 }
 
-static void toyota_rx_hook(CANPacket_t *to_push) {
+static void toyota_rx_hook(const CANPacket_t *to_push) {
   if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
 
@@ -213,7 +213,7 @@ static void toyota_rx_hook(CANPacket_t *to_push) {
   }
 }
 
-static bool toyota_tx_hook(CANPacket_t *to_send) {
+static bool toyota_tx_hook(const CANPacket_t *to_send) {
   bool tx = true;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
