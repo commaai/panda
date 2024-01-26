@@ -36,24 +36,22 @@ bool i2c_write_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t value) {
   }
 
   if (!ret) {
-    goto end;
+    return ret;
   }
 
   // Send data
   ret = i2c_status_wait(&I2C->ISR, I2C_ISR_TXIS, I2C_ISR_TXIS);
   if(!ret) {
-    goto end;
+    return ret;
   }
   I2C->TXDR = reg;
 
   ret = i2c_status_wait(&I2C->ISR, I2C_ISR_TXIS, I2C_ISR_TXIS);
   if(!ret) {
-    goto end;
+    return ret;
   }
   I2C->TXDR = value;
 
-end:
-  return ret;
 }
 
 bool i2c_read_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t *value) {
@@ -81,13 +79,13 @@ bool i2c_read_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t *value) {
   }
 
   if (!ret) {
-    goto end;
+    return ret;
   }
 
   // Send data
   ret = i2c_status_wait(&I2C->ISR, I2C_ISR_TXIS, I2C_ISR_TXIS);
   if(!ret) {
-    goto end;
+    return ret;
   }
   I2C->TXDR = reg;
 
@@ -95,28 +93,26 @@ bool i2c_read_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t *value) {
   I2C->CR2 = (((addr << 1) | 0x1U) & I2C_CR2_SADD_Msk) | (1U << I2C_CR2_NBYTES_Pos) | I2C_CR2_RD_WRN | I2C_CR2_START;
   ret = i2c_status_wait(&I2C->CR2, I2C_CR2_START, 0U);
   if(!ret) {
-    goto end;
+    return ret;
   }
 
   // check if we lost arbitration
   if ((I2C->ISR & I2C_ISR_ARLO) != 0U) {
     register_set_bits(&I2C->ICR, I2C_ICR_ARLOCF);
     ret = false;
-    goto end;
+    return ret;
   }
 
   // Read data
   ret = i2c_status_wait(&I2C->ISR, I2C_ISR_RXNE, I2C_ISR_RXNE);
   if(!ret) {
-    goto end;
+    return ret;
   }
   *value = I2C->RXDR;
 
   // Stop
   I2C->CR2 |= I2C_CR2_STOP;
 
-end:
-  return ret;
 }
 
 bool i2c_set_reg_bits(I2C_TypeDef *I2C, uint8_t address, uint8_t regis, uint8_t bits) {

@@ -201,7 +201,7 @@ static netdev_tx_t panda_usb_xmit(struct panda_inf_priv *priv, struct panda_usb_
   buf = usb_alloc_coherent(priv->priv_dev->udev, PANDA_USB_TX_BUFF_SIZE, GFP_ATOMIC, &urb->transfer_dma);
   if (!buf) {
     err = -ENOMEM;
-    goto nomembuf;
+    usb_free_urb(urb);
   }
 
   memcpy(buf, usb_msg, PANDA_USB_TX_BUFF_SIZE);
@@ -215,25 +215,20 @@ static netdev_tx_t panda_usb_xmit(struct panda_inf_priv *priv, struct panda_usb_
   usb_anchor_urb(urb, &priv->tx_submitted);
 
   err = usb_submit_urb(urb, GFP_ATOMIC);
-  if (unlikely(err))
-    goto failed;
+  if (unlikely(err)){
+    usb_unanchor_urb(urb);
+    usb_free_coherent(priv->priv_dev->udev, PANDA_USB_TX_BUFF_SIZE, buf, urb->transfer_dma);
+  }
 
   /* Release our reference to this URB, the USB core will eventually free it entirely. */
   usb_free_urb(urb);
 
   return 0;
 
- failed:
-  usb_unanchor_urb(urb);
-  usb_free_coherent(priv->priv_dev->udev, PANDA_USB_TX_BUFF_SIZE, buf, urb->transfer_dma);
-
   if (err == -ENODEV)
     netif_device_detach(priv->netdev);
   else
     netdev_warn(priv->netdev, "failed tx_urb %d\n", err);
-
- nomembuf:
-  usb_free_urb(urb);
 
   return err;
 }
@@ -303,7 +298,10 @@ static void panda_usb_read_bulk_callback(struct urb *urb)
     return;
   default:
     dev_info(priv_dev->dev, "Rx URB aborted (%d)\n", urb->status);
-    goto resubmit_urb;
+    usb_fill_bulk_urb(urb, priv_dev->udev,
+    usb_rcvbulkpipe(priv_dev->udev, 1),
+    urb->transfer_buffer, PANDA_USB_RX_BUFF_SIZE,
+    panda_usb_read_bulk_callback, priv_dev);
   }
 
   while (pos < urb->actual_length) {
@@ -320,12 +318,6 @@ static void panda_usb_read_bulk_callback(struct urb *urb)
 
     pos += sizeof(struct panda_usb_can_msg);
   }
-
- resubmit_urb:
-  usb_fill_bulk_urb(urb, priv_dev->udev,
-    usb_rcvbulkpipe(priv_dev->udev, 1),
-    urb->transfer_buffer, PANDA_USB_RX_BUFF_SIZE,
-    panda_usb_read_bulk_callback, priv_dev);
 
   retval = usb_submit_urb(urb, GFP_ATOMIC);
 
@@ -465,16 +457,12 @@ static netdev_tx_t panda_usb_start_xmit(struct sk_buff *skb, struct net_device *
   // printk("Received data from socket. bus: %x; canid: %x; len: %d\n", priv_inf->mcu_can_ifnum, cf->can_id, cf->can_dlc);
 
   err = panda_usb_xmit(priv_inf, &usb_msg, ctx);
-  if (err)
-    goto xmit_failed;
-
-  return NETDEV_TX_OK;
-
- xmit_failed:
-  can_free_echo_skb(priv_inf->netdev, ctx->ndx, NULL);
-  panda_usb_free_ctx(ctx);
-  dev_kfree_skb_any(skb);
-  stats->tx_dropped++;
+  if (err){
+    can_free_echo_skb(priv_inf->netdev, ctx->ndx, NULL);
+    panda_usb_free_ctx(ctx);
+    dev_kfree_skb_any(skb);
+    stats->tx_dropped++;
+  }
 
   return NETDEV_TX_OK;
 }
@@ -508,7 +496,7 @@ static int panda_usb_probe(struct usb_interface *intf, const struct usb_device_i
     netdev = alloc_candev(sizeof(struct panda_inf_priv), PANDA_MAX_TX_URBS);
     if (!netdev) {
       dev_err(&intf->dev, "Couldn't alloc candev\n");
-      goto cleanup_candev;
+      cleanup_candev();
     }
     netdev->netdev_ops = &panda_netdev_ops;
     netdev->flags |= IFF_ECHO; /* we support local echo */
@@ -532,7 +520,7 @@ static int panda_usb_probe(struct usb_interface *intf, const struct usb_device_i
     if (err) {
       netdev_err(netdev, "couldn't register PANDA CAN device: %d\n", err);
       free_candev(priv_inf->netdev);
-      goto cleanup_candev;
+      cleanup_candev();
     }
 
     priv_dev->interfaces[inf_num] = priv_inf;
@@ -541,28 +529,28 @@ static int panda_usb_probe(struct usb_interface *intf, const struct usb_device_i
   err = panda_usb_start(priv_dev);
   if (err) {
     dev_err(&intf->dev, "Failed to initialize Comma.ai Panda CAN controller\n");
-    goto cleanup_candev;
+    cleanup_candev();
   }
 
   err = panda_set_output_enable(priv_inf, true);
   if (err) {
     dev_info(&intf->dev, "Failed to initialize send enable message to Panda.\n");
-    goto cleanup_candev;
+    cleanup_candev();
   }
 
   dev_info(&intf->dev, "Comma.ai Panda CAN controller connected\n");
 
   return 0;
 
- cleanup_candev:
-  for (inf_num = 0; inf_num < PANDA_NUM_CAN_INTERFACES; inf_num++) {
-    priv_inf = priv_dev->interfaces[inf_num];
-    if (priv_inf) {
-      unregister_candev(priv_inf->netdev);
-      free_candev(priv_inf->netdev);
-    } else {
-      break;
-    }
+  void cleanup_candev(){
+    for (inf_num = 0; inf_num < PANDA_NUM_CAN_INTERFACES; inf_num++) {
+      priv_inf = priv_dev->interfaces[inf_num];
+      if (priv_inf) {
+        unregister_candev(priv_inf->netdev);
+        free_candev(priv_inf->netdev);
+      } else{
+        break;
+      }
   }
 
   kfree(priv_dev);

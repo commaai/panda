@@ -244,7 +244,8 @@ static int spidev_message(struct spidev_data *spidev,
 		 */
 		if (total > INT_MAX || k_tmp->len > INT_MAX) {
 			status = -EMSGSIZE;
-			goto done;
+			kfree(k_xfers);
+	        return status;
 		}
 
 		if (u_tmp->rx_buf) {
@@ -252,13 +253,16 @@ static int spidev_message(struct spidev_data *spidev,
 			rx_total += k_tmp->len;
 			if (rx_total > bufsiz) {
 				status = -EMSGSIZE;
-				goto done;
+				kfree(k_xfers);
+	            return status;
 			}
 			k_tmp->rx_buf = rx_buf;
 			if (!access_ok(VERIFY_WRITE, (u8 __user *)
 						(uintptr_t) u_tmp->rx_buf,
-						u_tmp->len))
-				goto done;
+						u_tmp->len)){
+							kfree(k_xfers);
+	                        return status;
+						}
 			rx_buf += k_tmp->len;
 		}
 		if (u_tmp->tx_buf) {
@@ -266,13 +270,16 @@ static int spidev_message(struct spidev_data *spidev,
 			tx_total += k_tmp->len;
 			if (tx_total > bufsiz) {
 				status = -EMSGSIZE;
-				goto done;
+				kfree(k_xfers);
+	            return status;
 			}
 			k_tmp->tx_buf = tx_buf;
 			if (copy_from_user(tx_buf, (const u8 __user *)
 						(uintptr_t) u_tmp->tx_buf,
-					u_tmp->len))
-				goto done;
+					u_tmp->len)){
+						kfree(k_xfers);
+	                    return status;
+					}
 			tx_buf += k_tmp->len;
 		}
 
@@ -299,8 +306,10 @@ static int spidev_message(struct spidev_data *spidev,
 	}
 
 	status = spidev_sync(spidev, &msg);
-	if (status < 0)
-		goto done;
+	if (status < 0){
+		kfree(k_xfers);
+	    return status;
+	}
 
 	/* copy any rx data out of bounce buffer */
 	rx_buf = spidev->rx_buffer;
@@ -310,16 +319,14 @@ static int spidev_message(struct spidev_data *spidev,
 					(uintptr_t) u_tmp->rx_buf, rx_buf,
 					u_tmp->len)) {
 				status = -EFAULT;
-				goto done;
+				kfree(k_xfers);
+	            return status;
 			}
 			rx_buf += u_tmp->len;
 		}
 	}
 	status = total;
 
-done:
-	kfree(k_xfers);
-	return status;
 }
 
 static struct spi_ioc_transfer *
@@ -551,10 +558,17 @@ spidev_compat_ioc_message(struct file *filp, unsigned int cmd,
 	ioc = spidev_get_ioc_message(cmd, u_ioc, &n_ioc);
 	if (IS_ERR(ioc)) {
 		retval = PTR_ERR(ioc);
-		goto done;
+		mutex_unlock(&spidev->buf_lock);
+		spi_dev_put(spi);
+		return retval;
+
 	}
-	if (!ioc)
-		goto done;	/* n_ioc is also 0 */
+	if (!ioc){/* n_ioc is also 0 */
+		mutex_unlock(&spidev->buf_lock);
+		spi_dev_put(spi);
+		return retval;
+
+	}
 
 	/* Convert buffer pointers */
 	for (n = 0; n < n_ioc; n++) {
@@ -566,10 +580,6 @@ spidev_compat_ioc_message(struct file *filp, unsigned int cmd,
 	retval = spidev_message(spidev, ioc, n_ioc);
 	kfree(ioc);
 
-done:
-	mutex_unlock(&spidev->buf_lock);
-	spi_dev_put(spi);
-	return retval;
 }
 
 static long
@@ -602,7 +612,8 @@ static int spidev_open(struct inode *inode, struct file *filp)
 
 	if (status) {
 		pr_debug("spidev: nothing for minor %d\n", iminor(inode));
-		goto err_find_dev;
+		mutex_unlock(&device_list_lock);
+		return status;
 	}
 
 	if (!spidev->tx_buffer) {
@@ -610,7 +621,8 @@ static int spidev_open(struct inode *inode, struct file *filp)
 		if (!spidev->tx_buffer) {
 			dev_dbg(&spidev->spi->dev, "open/ENOMEM\n");
 			status = -ENOMEM;
-			goto err_find_dev;
+			mutex_unlock(&device_list_lock);
+			return status;
 		}
 	}
 
@@ -619,7 +631,8 @@ static int spidev_open(struct inode *inode, struct file *filp)
 		if (!spidev->rx_buffer) {
 			dev_dbg(&spidev->spi->dev, "open/ENOMEM\n");
 			status = -ENOMEM;
-			goto err_alloc_rx_buf;
+			kfree(spidev->tx_buffer);
+			spidev->tx_buffer = NULL;
 		}
 	}
 
