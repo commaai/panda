@@ -104,7 +104,7 @@ uint8_t resp[USBPACKET_MAX_SIZE];
 
 // Convert machine byte order to USB byte order
 #define TOUSBORDER(num)\
-  ((num) & 0xFFU), (((num) >> 8) & 0xFFU)
+  ((num) & 0xFFU), (((uint16_t)(num) >> 8) & 0xFFU)
 
 // take in string length and return the first 2 bytes of a string descriptor
 #define STRING_DESCRIPTOR_HEADER(size)\
@@ -425,15 +425,15 @@ void USB_WritePacket_EP0(uint8_t *src, uint16_t len) {
 
 void usb_reset(void) {
   // unmask endpoint interrupts, so many sets
-  USBx_DEVICE->DAINT = 0xFFFFFFFF;
-  USBx_DEVICE->DAINTMSK = 0xFFFFFFFF;
+  USBx_DEVICE->DAINT = 0xFFFFFFFFU;
+  USBx_DEVICE->DAINTMSK = 0xFFFFFFFFU;
   //USBx_DEVICE->DOEPMSK = (USB_OTG_DOEPMSK_STUPM | USB_OTG_DOEPMSK_XFRCM | USB_OTG_DOEPMSK_EPDM);
   //USBx_DEVICE->DIEPMSK = (USB_OTG_DIEPMSK_TOM | USB_OTG_DIEPMSK_XFRCM | USB_OTG_DIEPMSK_EPDM | USB_OTG_DIEPMSK_ITTXFEMSK);
   //USBx_DEVICE->DIEPMSK = (USB_OTG_DIEPMSK_TOM | USB_OTG_DIEPMSK_XFRCM | USB_OTG_DIEPMSK_EPDM);
 
   // all interrupts for debugging
-  USBx_DEVICE->DIEPMSK = 0xFFFFFFFF;
-  USBx_DEVICE->DOEPMSK = 0xFFFFFFFF;
+  USBx_DEVICE->DIEPMSK = 0xFFFFFFFFU;
+  USBx_DEVICE->DOEPMSK = 0xFFFFFFFFU;
 
   // clear interrupts
   USBx_INEP(0)->DIEPINT = 0xFF;
@@ -447,10 +447,10 @@ void usb_reset(void) {
   USBx->GRXFSIZ = 0x40;
 
   // 0x100 to offset past GRXFSIZ
-  USBx->DIEPTXF0_HNPTXFSIZ = (0x40U << 16) | 0x40U;
+  USBx->DIEPTXF0_HNPTXFSIZ = (0x40UL << 16) | 0x40U;
 
   // EP1, massive
-  USBx->DIEPTXF[0] = (0x40U << 16) | 0x80U;
+  USBx->DIEPTXF[0] = (0x40UL << 16) | 0x80U;
 
   // flush TX fifo
   USBx->GRSTCTL = USB_OTG_GRSTCTL_TXFFLSH | USB_OTG_GRSTCTL_TXFNUM_4;
@@ -463,7 +463,7 @@ void usb_reset(void) {
   USBx_DEVICE->DCTL |= USB_OTG_DCTL_CGINAK;
 
   // ready to receive setup packets
-  USBx_OUTEP(0)->DOEPTSIZ = USB_OTG_DOEPTSIZ_STUPCNT | (USB_OTG_DOEPTSIZ_PKTCNT & (1U << 19)) | (3U << 3);
+  USBx_OUTEP(0)->DOEPTSIZ = USB_OTG_DOEPTSIZ_STUPCNT | (USB_OTG_DOEPTSIZ_PKTCNT & (1UL << 19)) | (3U << 3);
 }
 
 char to_hex_char(int a) {
@@ -490,17 +490,17 @@ void usb_setup(void) {
   switch (setup.b.bRequest) {
     case USB_REQ_SET_CONFIGURATION:
       // enable other endpoints, has to be here?
-      USBx_INEP(1)->DIEPCTL = (0x40U & USB_OTG_DIEPCTL_MPSIZ) | (2U << 18) | (1U << 22) |
+      USBx_INEP(1)->DIEPCTL = (0x40U & USB_OTG_DIEPCTL_MPSIZ) | (2UL << 18) | (1UL << 22) |
                               USB_OTG_DIEPCTL_SD0PID_SEVNFRM | USB_OTG_DIEPCTL_USBAEP;
       USBx_INEP(1)->DIEPINT = 0xFF;
 
-      USBx_OUTEP(2)->DOEPTSIZ = (1U << 19) | 0x40U;
-      USBx_OUTEP(2)->DOEPCTL = (0x40U & USB_OTG_DOEPCTL_MPSIZ) | (2U << 18) |
+      USBx_OUTEP(2)->DOEPTSIZ = (1UL << 19) | 0x40U;
+      USBx_OUTEP(2)->DOEPCTL = (0x40U & USB_OTG_DOEPCTL_MPSIZ) | (2UL << 18) |
                                USB_OTG_DOEPCTL_SD0PID_SEVNFRM | USB_OTG_DOEPCTL_USBAEP;
       USBx_OUTEP(2)->DOEPINT = 0xFF;
 
-      USBx_OUTEP(3)->DOEPTSIZ = (32U << 19) | 0x800U;
-      USBx_OUTEP(3)->DOEPCTL = (0x40U & USB_OTG_DOEPCTL_MPSIZ) | (2U << 18) |
+      USBx_OUTEP(3)->DOEPTSIZ = (32UL << 19) | 0x800U;
+      USBx_OUTEP(3)->DOEPCTL = (0x40U & USB_OTG_DOEPCTL_MPSIZ) | (2UL << 18) |
                                USB_OTG_DOEPCTL_SD0PID_SEVNFRM | USB_OTG_DOEPCTL_USBAEP;
       USBx_OUTEP(3)->DOEPINT = 0xFF;
 
@@ -563,7 +563,7 @@ void usb_setup(void) {
                 // 96 bits = 12 bytes
                 for (int i = 0; i < 12; i++){
                   uint8_t cc = ((uint8_t *)UID_BASE)[i];
-                  resp[2 + (i * 4) + 0] = to_hex_char((cc >> 4) & 0xFU);
+                  resp[2 + (i * 4)] = to_hex_char((cc >> 4) & 0xFU);
                   resp[2 + (i * 4) + 1] = '\0';
                   resp[2 + (i * 4) + 2] = to_hex_char((cc >> 0) & 0xFU);
                   resp[2 + (i * 4) + 3] = '\0';
@@ -802,7 +802,7 @@ void usb_irqhandler(void) {
       #ifdef DEBUG_USB
         print("  OUT2 PACKET XFRC\n");
       #endif
-      USBx_OUTEP(2)->DOEPTSIZ = (1U << 19) | 0x40U;
+      USBx_OUTEP(2)->DOEPTSIZ = (1UL << 19) | 0x40U;
       USBx_OUTEP(2)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
     }
 
@@ -833,7 +833,7 @@ void usb_irqhandler(void) {
 
     if ((USBx_OUTEP(0)->DOEPINT & USB_OTG_DIEPINT_XFRC) != 0) {
       // ready for next packet
-      USBx_OUTEP(0)->DOEPTSIZ = USB_OTG_DOEPTSIZ_STUPCNT | (USB_OTG_DOEPTSIZ_PKTCNT & (1U << 19)) | (1U << 3);
+      USBx_OUTEP(0)->DOEPTSIZ = USB_OTG_DOEPTSIZ_STUPCNT | (USB_OTG_DOEPTSIZ_PKTCNT & (1UL << 19)) | (1U << 3);
     }
 
     // respond to setup packets
@@ -933,7 +933,7 @@ void usb_irqhandler(void) {
 void can_tx_comms_resume_usb(void) {
   ENTER_CRITICAL();
   if (!outep3_processing && (USBx_OUTEP(3)->DOEPCTL & USB_OTG_DOEPCTL_NAKSTS) != 0) {
-    USBx_OUTEP(3)->DOEPTSIZ = (32U << 19) | 0x800U;
+    USBx_OUTEP(3)->DOEPTSIZ = (32UL << 19) | 0x800U;
     USBx_OUTEP(3)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
   }
   EXIT_CRITICAL();

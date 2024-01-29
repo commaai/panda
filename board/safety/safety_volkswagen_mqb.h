@@ -34,8 +34,9 @@ const LongitudinalLimits VOLKSWAGEN_MQB_LONG_LIMITS = {
 #define MSG_LDW_02      0x397   // TX by OP, Lane line recognition and text alerts
 
 // Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
-const CanMsg VOLKSWAGEN_MQB_STOCK_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_GRA_ACC_01, 0, 8}, {MSG_GRA_ACC_01, 2, 8}, {MSG_LDW_02, 0, 8}};
-const CanMsg VOLKSWAGEN_MQB_LONG_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_LDW_02, 0, 8},
+const CanMsg VOLKSWAGEN_MQB_STOCK_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_GRA_ACC_01, 0, 8}, {MSG_GRA_ACC_01, 2, 8},
+                                               {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
+const CanMsg VOLKSWAGEN_MQB_LONG_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8},
                                               {MSG_ACC_02, 0, 8}, {MSG_ACC_06, 0, 8}, {MSG_ACC_07, 0, 8}};
 
 RxCheck volkswagen_mqb_rx_checks[] = {
@@ -51,16 +52,16 @@ uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F
 bool volkswagen_mqb_brake_pedal_switch = false;
 bool volkswagen_mqb_brake_pressure_detected = false;
 
-static uint32_t volkswagen_mqb_get_checksum(CANPacket_t *to_push) {
+static uint32_t volkswagen_mqb_get_checksum(const CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
 }
 
-static uint8_t volkswagen_mqb_get_counter(CANPacket_t *to_push) {
+static uint8_t volkswagen_mqb_get_counter(const CANPacket_t *to_push) {
   // MQB message counters are consistently found at LSB 8.
   return (uint8_t)GET_BYTE(to_push, 1) & 0xFU;
 }
 
-static uint32_t volkswagen_mqb_compute_crc(CANPacket_t *to_push) {
+static uint32_t volkswagen_mqb_compute_crc(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
 
@@ -106,7 +107,7 @@ static safety_config volkswagen_mqb_init(uint16_t param) {
                                    BUILD_SAFETY_CFG(volkswagen_mqb_rx_checks, VOLKSWAGEN_MQB_STOCK_TX_MSGS);
 }
 
-static void volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
+static void volkswagen_mqb_rx_hook(const CANPacket_t *to_push) {
   if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
 
@@ -192,7 +193,7 @@ static void volkswagen_mqb_rx_hook(CANPacket_t *to_push) {
   }
 }
 
-static bool volkswagen_mqb_tx_hook(CANPacket_t *to_send) {
+static bool volkswagen_mqb_tx_hook(const CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
   bool tx = true;
 
@@ -254,8 +255,13 @@ static int volkswagen_mqb_fwd_hook(int bus_num, int addr) {
 
   switch (bus_num) {
     case 0:
-      // Forward all traffic from the Extended CAN onward
-      bus_fwd = 2;
+      if (addr == MSG_LH_EPS_03) {
+        // openpilot needs to replace apparent driver steering input torque to pacify VW Emergency Assist
+        bus_fwd = -1;
+      } else {
+        // Forward all remaining traffic from Extended CAN onward
+        bus_fwd = 2;
+      }
       break;
     case 2:
       if ((addr == MSG_HCA_01) || (addr == MSG_LDW_02)) {

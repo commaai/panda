@@ -171,7 +171,6 @@ const harness_configuration red_harness_config = {
 };
 
 const board board_red = {
-  .board_type = "Red",
   .set_bootkick = unused_set_bootkick,
   .harness_config = &red_harness_config,
   .has_hw_gmlan = false,

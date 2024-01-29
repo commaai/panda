@@ -1,4 +1,4 @@
-static bool elm327_tx_hook(CANPacket_t *to_send) {
+static bool elm327_tx_hook(const CANPacket_t *to_send) {
   bool tx = true;
   int addr = GET_ADDR(to_send);
   int len = GET_LEN(to_send);

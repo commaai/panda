@@ -36,8 +36,8 @@ void __initialize_hardware_early(void) {
 
 void debug_ring_callback(uart_ring *ring) {
   char rcv;
-  while (getc(ring, &rcv) != 0) {
-    (void)putc(ring, rcv);
+  while (get_char(ring, &rcv) != 0) {
+    (void)put_char(ring, rcv);
   }
 }
 
@@ -46,11 +46,11 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
   UNUSED(max_len);
   return 0;
 }
-void comms_can_write(uint8_t *data, uint32_t len) {
+void comms_can_write(const uint8_t *data, uint32_t len) {
   UNUSED(data);
   UNUSED(len);
 }
-void comms_endpoint2_write(uint8_t *data, uint32_t len) {
+void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   UNUSED(data);
   UNUSED(len);
 }
@@ -73,7 +73,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       }
       // read
       while ((resp_len < MIN(req->length, USBPACKET_MAX_SIZE)) &&
-                         getc(ur, (char*)&resp[resp_len])) {
+                         get_char(ur, (char*)&resp[resp_len])) {
         ++resp_len;
       }
       break;
@@ -92,7 +92,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
 
 // addresses to be used on CAN
 #define CAN_GAS_INPUT  0x200
-#define CAN_GAS_OUTPUT 0x201U
+#define CAN_GAS_OUTPUT 0x201UL
 #define CAN_GAS_SIZE 6
 #define COUNTER_CYCLE 0xFU
 
@@ -127,7 +127,7 @@ void CAN1_RX0_IRQ_Handler(void) {
     int address = CAN->sFIFOMailBox[0].RIR >> 21;
     if (address == CAN_GAS_INPUT) {
       // softloader entry
-      if (GET_MAILBOX_BYTES_04(&CAN->sFIFOMailBox[0]) == 0xdeadface) {
+      if (GET_MAILBOX_BYTES_04(&CAN->sFIFOMailBox[0]) == 0xdeadfaceU) {
         if (GET_MAILBOX_BYTES_48(&CAN->sFIFOMailBox[0]) == 0x0ab00b1e) {
           enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
           NVIC_SystemReset();

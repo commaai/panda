@@ -95,7 +95,7 @@ bool can_pop(can_ring *q, CANPacket_t *elem) {
   return ret;
 }
 
-bool can_push(can_ring *q, CANPacket_t *elem) {
+bool can_push(can_ring *q, const CANPacket_t *elem) {
   bool ret = false;
   uint32_t next_w_ptr;
 
@@ -133,7 +133,7 @@ bool can_push(can_ring *q, CANPacket_t *elem) {
   return ret;
 }
 
-uint32_t can_slots_empty(can_ring *q) {
+uint32_t can_slots_empty(const can_ring *q) {
   uint32_t ret = 0;
 
   ENTER_CRITICAL();
@@ -238,7 +238,7 @@ bool can_tx_check_min_slots_free(uint32_t min) {
     (can_slots_empty(&can_txgmlan_q) >= min);
 }
 
-uint8_t calculate_checksum(uint8_t *dat, uint32_t len) {
+uint8_t calculate_checksum(const uint8_t *dat, uint32_t len) {
   uint8_t checksum = 0U;
   for (uint32_t i = 0U; i < len; i++) {
     checksum ^= dat[i];

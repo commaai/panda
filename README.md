@@ -33,7 +33,7 @@ These are the [CI regression tests](https://github.com/commaai/panda/actions) we
 * The [safety logic](https://github.com/commaai/panda/tree/master/board/safety) is tested and verified by [unit tests](https://github.com/commaai/panda/tree/master/tests/safety) for each supported car variant.
 to ensure that the behavior remains unchanged.
 * A hardware-in-the-loop test verifies panda's functionalities on all active panda variants, including:
-  * additional afety model checks
+  * additional safety model checks
   * compiling and flashing the bootstub and app code
   * receiving, sending, and forwarding CAN messages on all buses
   * CAN loopback and latency tests through USB and SPI
@@ -98,7 +98,6 @@ As a universal car interface, it should support every reasonable software interf
 - [Python library](https://github.com/commaai/panda/tree/master/python)
 - [C++ library](https://github.com/commaai/openpilot/tree/master/selfdrive/boardd)
 - [socketcan in kernel](https://github.com/commaai/panda/tree/master/drivers/linux) (alpha)
-- [Windows J2534](https://github.com/commaai/panda/tree/master/drivers/windows)
 
 ## Licensing
 

@@ -130,12 +130,12 @@ enum {
 } chrysler_platform = CHRYSLER_PACIFICA;
 const ChryslerAddrs *chrysler_addrs = &CHRYSLER_ADDRS;
 
-static uint32_t chrysler_get_checksum(CANPacket_t *to_push) {
+static uint32_t chrysler_get_checksum(const CANPacket_t *to_push) {
   int checksum_byte = GET_LEN(to_push) - 1U;
   return (uint8_t)(GET_BYTE(to_push, checksum_byte));
 }
 
-static uint32_t chrysler_compute_checksum(CANPacket_t *to_push) {
+static uint32_t chrysler_compute_checksum(const CANPacket_t *to_push) {
   // TODO: clean this up
   // http://illmatics.com/Remote%20Car%20Hacking.pdf
   uint8_t checksum = 0xFFU;
@@ -168,11 +168,11 @@ static uint32_t chrysler_compute_checksum(CANPacket_t *to_push) {
   return (uint8_t)(~checksum);
 }
 
-static uint8_t chrysler_get_counter(CANPacket_t *to_push) {
+static uint8_t chrysler_get_counter(const CANPacket_t *to_push) {
   return (uint8_t)(GET_BYTE(to_push, 6) >> 4);
 }
 
-static void chrysler_rx_hook(CANPacket_t *to_push) {
+static void chrysler_rx_hook(const CANPacket_t *to_push) {
   const int bus = GET_BUS(to_push);
   const int addr = GET_ADDR(to_push);
 
@@ -213,7 +213,7 @@ static void chrysler_rx_hook(CANPacket_t *to_push) {
   generic_rx_checks((bus == 0) && (addr == chrysler_addrs->LKAS_COMMAND));
 }
 
-static bool chrysler_tx_hook(CANPacket_t *to_send) {
+static bool chrysler_tx_hook(const CANPacket_t *to_send) {
   bool tx = true;
   int addr = GET_ADDR(to_send);
 
