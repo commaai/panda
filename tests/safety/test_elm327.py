@@ -33,16 +33,15 @@ class TestElm327(TestDefaultRxHookBase):
       should_tx = msg_len == 8
       self.assertEqual(should_tx, self._tx(common.make_msg(0, 0x700, msg_len)))
 
+    # TODO: perform this check for all addresses
+    # 4 to 15 are reserved ISO-TP frame types (https://en.wikipedia.org/wiki/ISO_15765-2)
+    for byte in range(0xff):
+      should_tx = (byte >> 4) <= 3
+      self.assertEqual(should_tx, self._tx(common.make_msg(0, GM_CAMERA_DIAG_ADDR, dat=bytes([byte] * 8))))
+
   def test_tx_hook_on_wrong_safety_mode(self):
     # No point, since we allow many diagnostic addresses
     pass
-
-  def test_gm_diagnostic_msg(self):
-    # TODO: perform this check for all addresses
-    for byte in range(0xff):
-      # 4 to 15 are reserved ISO-TP frame types (https://en.wikipedia.org/wiki/ISO_15765-2)
-      should_tx = (byte >> 4) <= 3
-      self.assertEqual(should_tx, self._tx(common.make_msg(0, GM_CAMERA_DIAG_ADDR, dat=bytes([byte] * 8))))
 
 
 if __name__ == "__main__":
