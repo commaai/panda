@@ -9,7 +9,7 @@ from panda.tests.safety.test_defaults import TestDefaultRxHookBase
 
 
 class TestElm327(TestDefaultRxHookBase):
-  TX_MSGS = [[addr, bus] for addr in [*range(0x600, 0x800),
+  TX_MSGS = [[addr, bus] for addr in [*range(0x200, 0x300), *range(0x600, 0x800),
                                       *range(0x18DA00F1, 0x18DB00F1, 0x100),  # 29-bit UDS physical addressing
                                       *[0x18DB33F1],  # 29-bit UDS functional address
                                       ] for bus in range(4)]
