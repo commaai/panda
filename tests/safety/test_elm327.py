@@ -7,7 +7,7 @@ from panda import DLC_TO_LEN, Panda
 from panda.tests.libpanda import libpanda_py
 from panda.tests.safety.test_defaults import TestDefaultRxHookBase
 
-GM_CAMERA_DIAG_ADDR = 0x24B
+GM_CAMERA_DIAG_ADDR = 0x24B  # frontview camera
 
 
 class TestElm327(TestDefaultRxHookBase):
