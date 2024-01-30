@@ -9,7 +9,7 @@ from panda.tests.safety.test_defaults import TestDefaultRxHookBase
 
 
 class TestElm327(TestDefaultRxHookBase):
-  TX_MSGS = [[addr, bus] for addr in [*range(0x200, 0x300), *range(0x600, 0x800),
+  TX_MSGS = [[addr, bus] for addr in [0x24B, *range(0x600, 0x800),
                                       *range(0x18DA00F1, 0x18DB00F1, 0x100),  # 29-bit UDS physical addressing
                                       *[0x18DB33F1],  # 29-bit UDS functional address
                                       ] for bus in range(4)]
@@ -24,7 +24,7 @@ class TestElm327(TestDefaultRxHookBase):
     for bus in range(4):
       for addr in self.SCANNED_ADDRS:
         should_tx = [addr, bus] in self.TX_MSGS
-        self.assertEqual(should_tx, self._tx(common.make_msg(bus, addr, 8)))
+        self.assertEqual(should_tx, self._tx(common.make_msg(bus, addr, 8)), (bus, addr))
 
     # ELM only allows 8 byte UDS/KWP messages under ISO 15765-4
     for msg_len in DLC_TO_LEN:
