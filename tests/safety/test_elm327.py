@@ -7,6 +7,8 @@ from panda import DLC_TO_LEN, Panda
 from panda.tests.libpanda import libpanda_py
 from panda.tests.safety.test_defaults import TestDefaultRxHookBase
 
+GM_CAMERA_DIAG_ADDR = 0x24B
+
 
 class TestElm327(TestDefaultRxHookBase):
   TX_MSGS = [[addr, bus] for addr in [0x24B, *range(0x600, 0x800),
@@ -24,7 +26,7 @@ class TestElm327(TestDefaultRxHookBase):
     for bus in range(4):
       for addr in self.SCANNED_ADDRS:
         should_tx = [addr, bus] in self.TX_MSGS
-        self.assertEqual(should_tx, self._tx(common.make_msg(bus, addr, 8)), (bus, addr))
+        self.assertEqual(should_tx, self._tx(common.make_msg(bus, addr, 8)))
 
     # ELM only allows 8 byte UDS/KWP messages under ISO 15765-4
     for msg_len in DLC_TO_LEN:
@@ -34,6 +36,13 @@ class TestElm327(TestDefaultRxHookBase):
   def test_tx_hook_on_wrong_safety_mode(self):
     # No point, since we allow many diagnostic addresses
     pass
+
+  def test_gm_diagnostic_msg(self):
+    # TODO: perform this check for all addresses
+    for byte in range(0xff):
+      # 4 to 15 are reserved ISO-TP frame types (https://en.wikipedia.org/wiki/ISO_15765-2)
+      should_tx = (byte >> 4) <= 3
+      self.assertEqual(should_tx, self._tx(common.make_msg(0, GM_CAMERA_DIAG_ADDR, dat=bytes([byte] * 8))))
 
 
 if __name__ == "__main__":
