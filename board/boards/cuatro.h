@@ -15,9 +15,9 @@ void cuatro_set_led(uint8_t color, bool enabled) {
 }
 
 void cuatro_enable_can_transceiver(uint8_t transceiver, bool enabled) {
-  if (transceiver == 1) {
+  if (transceiver == 1U) {
     set_gpio_output(GPIOB, 7, !enabled);
-  } else if (transceiver == 3) {
+  } else if (transceiver == 3U) {
     set_gpio_output(GPIOD, 8, !enabled);
   } else {
     red_enable_can_transceiver(transceiver, enabled);
