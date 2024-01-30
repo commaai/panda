@@ -10,7 +10,7 @@ fi
 
 cd $CPPCHECK_DIR
 VERS="2.13.0"
-git fetch origin $VERS
+git fetch --tags origin $VERS
 git checkout $VERS
-make clean
+#make clean
 make MATCHCOMPILTER=yes CXXFLAGS="-O2" -j8
