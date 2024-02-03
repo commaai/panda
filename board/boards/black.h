@@ -107,8 +107,8 @@ void black_init(void) {
   set_gpio_output(GPIOC, 5, 0);
   set_gpio_output(GPIOC, 12, 0);
 
-  // C10: OBD_SBU1_RELAY (harness relay driving output)
-  // C11: OBD_SBU2_RELAY (harness relay driving output)
+  // C10: OBD_SBU1_SWITCH (switch driving harness relay)
+  // C11: OBD_SBU2_SWITCH (switch driving harness relay)
   set_gpio_mode(GPIOC, 10, MODE_OUTPUT);
   set_gpio_mode(GPIOC, 11, MODE_OUTPUT);
   set_gpio_output_type(GPIOC, 10, OUTPUT_TYPE_OPEN_DRAIN);
@@ -152,12 +152,12 @@ const harness_configuration black_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOC,
-  .GPIO_relay_SBU1 = GPIOC,
-  .GPIO_relay_SBU2 = GPIOC,
+  .GPIO_switch_SBU1 = GPIOC,
+  .GPIO_switch_SBU2 = GPIOC,
   .pin_SBU1 = 0,
   .pin_SBU2 = 3,
-  .pin_relay_SBU1 = 10,
-  .pin_relay_SBU2 = 11,
+  .pin_switch_SBU1 = 10,
+  .pin_switch_SBU2 = 11,
   .adc_channel_SBU1 = 10,
   .adc_channel_SBU2 = 13
 };

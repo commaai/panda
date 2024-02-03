@@ -84,7 +84,7 @@ void red_chiplet_set_fan_or_usb_load_switch(bool enabled) {
 void red_chiplet_init(void) {
   common_init_gpio();
 
-  // A8, A3: OBD_SBU1_RELAY, OBD_SBU2_RELAY
+  // A8, A3: OBD_SBU1_SWITCH, OBD_SBU2_SWITCH
   set_gpio_output_type(GPIOA, 8, OUTPUT_TYPE_OPEN_DRAIN);
   set_gpio_pullup(GPIOA, 8, PULL_NONE);
   set_gpio_output(GPIOA, 8, 1);
@@ -143,12 +143,12 @@ const harness_configuration red_chiplet_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
-  .GPIO_relay_SBU1 = GPIOA,
-  .GPIO_relay_SBU2 = GPIOA,
+  .GPIO_switch_SBU1 = GPIOA,
+  .GPIO_switch_SBU2 = GPIOA,
   .pin_SBU1 = 4,
   .pin_SBU2 = 1,
-  .pin_relay_SBU1 = 8,
-  .pin_relay_SBU2 = 3,
+  .pin_switch_SBU1 = 8,
+  .pin_switch_SBU2 = 3,
   .adc_channel_SBU1 = 4, // ADC12_INP4
   .adc_channel_SBU2 = 17 // ADC1_INP17
 };
