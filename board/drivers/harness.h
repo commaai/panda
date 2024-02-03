@@ -15,12 +15,12 @@ struct harness_configuration {
   const bool has_harness;
   GPIO_TypeDef *GPIO_SBU1;
   GPIO_TypeDef *GPIO_SBU2;
-  GPIO_TypeDef *GPIO_relay_SBU1;
-  GPIO_TypeDef *GPIO_relay_SBU2;
+  GPIO_TypeDef *GPIO_switch_SBU1;
+  GPIO_TypeDef *GPIO_switch_SBU2;
   uint8_t pin_SBU1;
   uint8_t pin_SBU2;
-  uint8_t pin_relay_SBU1;
-  uint8_t pin_relay_SBU2;
+  uint8_t pin_switch_SBU1;
+  uint8_t pin_switch_SBU2;
   uint8_t adc_channel_SBU1;
   uint8_t adc_channel_SBU2;
 };
@@ -42,11 +42,11 @@ void set_intercept_relay(bool intercept, bool ignition_relay) {
     while (harness.sbu_adc_lock) {}
 
     if (harness.status == HARNESS_STATUS_NORMAL) {
-      set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, !ignition_relay);
-      set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, !drive_relay);
+      set_gpio_output(current_board->harness_config->GPIO_switch_SBU1, current_board->harness_config->pin_switch_SBU1, !ignition_relay);
+      set_gpio_output(current_board->harness_config->GPIO_switch_SBU2, current_board->harness_config->pin_switch_SBU2, !drive_relay);
     } else {
-      set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, !drive_relay);
-      set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, !ignition_relay);
+      set_gpio_output(current_board->harness_config->GPIO_switch_SBU1, current_board->harness_config->pin_switch_SBU1, !drive_relay);
+      set_gpio_output(current_board->harness_config->GPIO_switch_SBU2, current_board->harness_config->pin_switch_SBU2, !ignition_relay);
     }
 
     if (!(drive_relay || ignition_relay)) {

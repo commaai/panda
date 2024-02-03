@@ -99,7 +99,7 @@ bool red_check_ignition(void) {
 void red_init(void) {
   common_init_gpio();
 
-  //C10,C11 : OBD_SBU1_RELAY, OBD_SBU2_RELAY
+  //C10,C11 : OBD_SBU1_SWITCH, OBD_SBU2_SWITCH
   set_gpio_output_type(GPIOC, 10, OUTPUT_TYPE_OPEN_DRAIN);
   set_gpio_pullup(GPIOC, 10, PULL_NONE);
   set_gpio_mode(GPIOC, 10, MODE_OUTPUT);
@@ -160,12 +160,12 @@ const harness_configuration red_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
-  .GPIO_relay_SBU1 = GPIOC,
-  .GPIO_relay_SBU2 = GPIOC,
+  .GPIO_switch_SBU1 = GPIOC,
+  .GPIO_switch_SBU2 = GPIOC,
   .pin_SBU1 = 4,
   .pin_SBU2 = 1,
-  .pin_relay_SBU1 = 10,
-  .pin_relay_SBU2 = 11,
+  .pin_switch_SBU1 = 10,
+  .pin_switch_SBU2 = 11,
   .adc_channel_SBU1 = 4, //ADC12_INP4
   .adc_channel_SBU2 = 17 //ADC1_INP17
 };
