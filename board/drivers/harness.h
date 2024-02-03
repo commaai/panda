@@ -25,8 +25,9 @@ struct harness_configuration {
   uint8_t adc_channel_SBU2;
 };
 
-// The ignition relay is only used for testing purposes
-void set_intercept_relay(bool intercept, bool ignition_relay) {
+// Intercept - drives a relay that severs CAN0 and CAN2 and puts Panda in the middle
+// Ignition test probe - only for debugging
+void set_intercept_relay(bool intercept, bool ignition_testprobe) {
   if (current_board->harness_config->has_harness) {
     bool drive_relay = intercept;
     if (harness.status == HARNESS_STATUS_NC) {
@@ -34,7 +35,7 @@ void set_intercept_relay(bool intercept, bool ignition_relay) {
       drive_relay = false;
     }
 
-    if (drive_relay || ignition_relay) {
+    if (drive_relay || ignition_testprobe) {
       harness.relay_driven = true;
     }
 
@@ -42,14 +43,14 @@ void set_intercept_relay(bool intercept, bool ignition_relay) {
     while (harness.sbu_adc_lock) {}
 
     if (harness.status == HARNESS_STATUS_NORMAL) {
-      set_gpio_output(current_board->harness_config->GPIO_switch_SBU1, current_board->harness_config->pin_switch_SBU1, !ignition_relay);
+      set_gpio_output(current_board->harness_config->GPIO_switch_SBU1, current_board->harness_config->pin_switch_SBU1, !ignition_testprobe);
       set_gpio_output(current_board->harness_config->GPIO_switch_SBU2, current_board->harness_config->pin_switch_SBU2, !drive_relay);
     } else {
       set_gpio_output(current_board->harness_config->GPIO_switch_SBU1, current_board->harness_config->pin_switch_SBU1, !drive_relay);
-      set_gpio_output(current_board->harness_config->GPIO_switch_SBU2, current_board->harness_config->pin_switch_SBU2, !ignition_relay);
+      set_gpio_output(current_board->harness_config->GPIO_switch_SBU2, current_board->harness_config->pin_switch_SBU2, !ignition_testprobe);
     }
 
-    if (!(drive_relay || ignition_relay)) {
+    if (!(drive_relay || ignition_testprobe)) {
       harness.relay_driven = false;
     }
   }
