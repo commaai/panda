@@ -136,7 +136,7 @@ void black_init(void) {
   // Set normal CAN mode
   black_set_can_mode(CAN_MODE_NORMAL);
 
-  // flip CAN0 and CAN2 if we are flipped
+  // flip CAN1 and CAN3 if we are flipped
   if (harness.status == HARNESS_STATUS_FLIPPED) {
     can_flip_buses(0, 2);
   }
