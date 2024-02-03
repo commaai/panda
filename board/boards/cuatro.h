@@ -74,6 +74,7 @@ const board board_cuatro = {
   .init = cuatro_init,
   .init_bootloader = unused_init_bootloader,
   .enable_can_transceiver = cuatro_enable_can_transceiver,
+  .enable_can_transceivers = red_chiplet_enable_can_transceivers,
   .set_led = cuatro_set_led,
   .set_can_mode = red_chiplet_set_can_mode,
   .check_ignition = red_check_ignition,
