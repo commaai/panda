@@ -941,8 +941,8 @@ class Panda:
   def set_clock_source_period(self, period):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe6, period, 0, b'')
 
-  def force_relay_drive(self, intercept_relay_drive, ignition_relay_drive):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xc5, (int(intercept_relay_drive) | int(ignition_relay_drive) << 1), 0, b'')
+  def force_relay_drive(self, intercept_relay_drive, ignition_testprobe):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xc5, (int(intercept_relay_drive) | int(ignition_testprobe) << 1), 0, b'')
 
   def read_som_gpio(self) -> bool:
     r = self._handle.controlRead(Panda.REQUEST_IN, 0xc6, 0, 0, 1)
