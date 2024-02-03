@@ -35,15 +35,6 @@ void common_init_gpio(void) {
   set_gpio_mode(GPIOC, 2, MODE_ANALOG);
 
   gpio_usb_init();
-
-   // B8,B9: CAN 1
-  #ifdef STM32F4
-    set_gpio_alternate(GPIOB, 8, GPIO_AF8_CAN1);
-    set_gpio_alternate(GPIOB, 9, GPIO_AF8_CAN1);
-  #else
-    set_gpio_alternate(GPIOB, 8, GPIO_AF9_CAN1);
-    set_gpio_alternate(GPIOB, 9, GPIO_AF9_CAN1);
-  #endif
 }
 
 void flasher_peripherals_init(void) {
