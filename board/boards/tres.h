@@ -1,5 +1,5 @@
 // /////////////////
-// Tres + Harness //
+// Tres (STM32H7) + Harness //
 // /////////////////
 
 bool tres_ir_enabled;

@@ -1,5 +1,5 @@
 // ///////////////////// //
-// Red Panda chiplet + Harness //
+// Red Panda chiplet (STM32H7) + Harness //
 // ///////////////////// //
 
 // Most hardware functionality is similar to red panda

@@ -1,3 +1,7 @@
+// ///////////// //
+// Cuatro (STM32H7) + Harness //
+// ///////////// //
+
 void cuatro_set_led(uint8_t color, bool enabled) {
   switch (color) {
     case LED_RED:

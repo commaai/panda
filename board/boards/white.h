@@ -1,5 +1,5 @@
 // /////////// //
-// White Panda //
+// White Panda (STM32F4) //
 // /////////// //
 
 void white_enable_can_transceiver(uint8_t transceiver, bool enabled) {

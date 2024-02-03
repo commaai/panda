@@ -1,5 +1,5 @@
 // ///////////////////// //
-// Black Panda + Harness //
+// Black Panda (STM32F4) + Harness //
 // ///////////////////// //
 
 void black_enable_can_transceiver(uint8_t transceiver, bool enabled) {
