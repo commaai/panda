@@ -69,7 +69,6 @@ const harness_configuration pedal_harness_config = {
 const board board_pedal = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &pedal_harness_config,
-  .has_hw_gmlan = false,
   .has_obd = false,
   .has_spi = false,
   .has_canfd = false,

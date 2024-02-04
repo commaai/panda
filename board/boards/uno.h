@@ -200,7 +200,6 @@ const harness_configuration uno_harness_config = {
 
 const board board_uno = {
   .harness_config = &uno_harness_config,
-  .has_hw_gmlan = false,
   .has_obd = true,
   .has_spi = false,
   .has_canfd = false,
