@@ -57,12 +57,10 @@ uint16_t current_safety_param = 0;
 const safety_hooks *current_hooks = &nooutput_hooks;
 safety_config current_safety_config;
 
-bool safety_rx_hook(CANPacket_t *to_push) {
+bool safety_rx_hook(const CANPacket_t *to_push) {
   bool controls_allowed_prev = controls_allowed;
 
-  bool valid = rx_msg_safety_check(to_push, &current_safety_config, current_hooks->get_checksum,
-                                 current_hooks->compute_checksum, current_hooks->get_counter,
-                                 current_hooks->get_quality_flag_valid);
+  bool valid = rx_msg_safety_check(to_push, &current_safety_config, current_hooks);
   if (valid) {
     current_hooks->rx(to_push);
   }
@@ -123,7 +121,7 @@ void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]) {
   }
 }
 
-bool msg_allowed(CANPacket_t *to_send, const CanMsg msg_list[], int len) {
+bool msg_allowed(const CANPacket_t *to_send, const CanMsg msg_list[], int len) {
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
   int length = GET_LEN(to_send);
@@ -138,7 +136,7 @@ bool msg_allowed(CANPacket_t *to_send, const CanMsg msg_list[], int len) {
   return allowed;
 }
 
-int get_addr_check_index(CANPacket_t *to_push, RxCheck addr_list[], const int len) {
+int get_addr_check_index(const CANPacket_t *to_push, RxCheck addr_list[], const int len) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
   int length = GET_LEN(to_push);
@@ -146,19 +144,19 @@ int get_addr_check_index(CANPacket_t *to_push, RxCheck addr_list[], const int le
   int index = -1;
   for (int i = 0; i < len; i++) {
     // if multiple msgs are allowed, determine which one is present on the bus
-    if (!addr_list[i].msg_seen) {
+    if (!addr_list[i].status.msg_seen) {
       for (uint8_t j = 0U; (j < MAX_ADDR_CHECK_MSGS) && (addr_list[i].msg[j].addr != 0); j++) {
         if ((addr == addr_list[i].msg[j].addr) && (bus == addr_list[i].msg[j].bus) &&
               (length == addr_list[i].msg[j].len)) {
-          addr_list[i].index = j;
-          addr_list[i].msg_seen = true;
+          addr_list[i].status.index = j;
+          addr_list[i].status.msg_seen = true;
           break;
         }
       }
     }
 
-    if (addr_list[i].msg_seen) {
-      int idx = addr_list[i].index;
+    if (addr_list[i].status.msg_seen) {
+      int idx = addr_list[i].status.index;
       if ((addr == addr_list[i].msg[idx].addr) && (bus == addr_list[i].msg[idx].bus) &&
           (length == addr_list[i].msg[idx].len)) {
         index = i;
@@ -175,12 +173,13 @@ void safety_tick(const safety_config *cfg) {
   uint32_t ts = microsecond_timer_get();
   if (cfg != NULL) {
     for (int i=0; i < cfg->rx_checks_len; i++) {
-      uint32_t elapsed_time = get_ts_elapsed(ts, cfg->rx_checks[i].last_timestamp);
+      uint32_t elapsed_time = get_ts_elapsed(ts, cfg->rx_checks[i].status.last_timestamp);
       // lag threshold is max of: 1s and MAX_MISSED_MSGS * expected timestep.
       // Quite conservative to not risk false triggers.
       // 2s of lag is worse case, since the function is called at 1Hz
-      bool lagging = elapsed_time > MAX(cfg->rx_checks[i].msg[cfg->rx_checks[i].index].expected_timestep * MAX_MISSED_MSGS, 1e6);
-      cfg->rx_checks[i].lagging = lagging;
+      uint32_t timestep = 1e6 / cfg->rx_checks[i].msg[cfg->rx_checks[i].status.index].frequency;
+      bool lagging = elapsed_time > MAX(timestep * MAX_MISSED_MSGS, 1e6);
+      cfg->rx_checks[i].status.lagging = lagging;
       if (lagging) {
         controls_allowed = false;
       }
@@ -196,17 +195,17 @@ void safety_tick(const safety_config *cfg) {
 
 void update_counter(RxCheck addr_list[], int index, uint8_t counter) {
   if (index != -1) {
-    uint8_t expected_counter = (addr_list[index].last_counter + 1U) % (addr_list[index].msg[addr_list[index].index].max_counter + 1U);
-    addr_list[index].wrong_counters += (expected_counter == counter) ? -1 : 1;
-    addr_list[index].wrong_counters = CLAMP(addr_list[index].wrong_counters, 0, MAX_WRONG_COUNTERS);
-    addr_list[index].last_counter = counter;
+    uint8_t expected_counter = (addr_list[index].status.last_counter + 1U) % (addr_list[index].msg[addr_list[index].status.index].max_counter + 1U);
+    addr_list[index].status.wrong_counters += (expected_counter == counter) ? -1 : 1;
+    addr_list[index].status.wrong_counters = CLAMP(addr_list[index].status.wrong_counters, 0, MAX_WRONG_COUNTERS);
+    addr_list[index].status.last_counter = counter;
   }
 }
 
 bool is_msg_valid(RxCheck addr_list[], int index) {
   bool valid = true;
   if (index != -1) {
-    if (!addr_list[index].valid_checksum || !addr_list[index].valid_quality_flag || (addr_list[index].wrong_counters >= MAX_WRONG_COUNTERS)) {
+    if (!addr_list[index].status.valid_checksum || !addr_list[index].status.valid_quality_flag || (addr_list[index].status.wrong_counters >= MAX_WRONG_COUNTERS)) {
       valid = false;
       controls_allowed = false;
     }
@@ -217,43 +216,40 @@ bool is_msg_valid(RxCheck addr_list[], int index) {
 void update_addr_timestamp(RxCheck addr_list[], int index) {
   if (index != -1) {
     uint32_t ts = microsecond_timer_get();
-    addr_list[index].last_timestamp = ts;
+    addr_list[index].status.last_timestamp = ts;
   }
 }
 
-bool rx_msg_safety_check(CANPacket_t *to_push,
-                       const safety_config *cfg,
-                       const get_checksum_t get_checksum,
-                       const compute_checksum_t compute_checksum,
-                       const get_counter_t get_counter,
-                       const get_quality_flag_valid_t get_quality_flag_valid) {
+bool rx_msg_safety_check(const CANPacket_t *to_push,
+                         const safety_config *cfg,
+                         const safety_hooks *safety_hooks) {
 
   int index = get_addr_check_index(to_push, cfg->rx_checks, cfg->rx_checks_len);
   update_addr_timestamp(cfg->rx_checks, index);
 
   if (index != -1) {
     // checksum check
-    if ((get_checksum != NULL) && (compute_checksum != NULL) && cfg->rx_checks[index].msg[cfg->rx_checks[index].index].check_checksum) {
-      uint32_t checksum = get_checksum(to_push);
-      uint32_t checksum_comp = compute_checksum(to_push);
-      cfg->rx_checks[index].valid_checksum = checksum_comp == checksum;
+    if ((safety_hooks->get_checksum != NULL) && (safety_hooks->compute_checksum != NULL) && cfg->rx_checks[index].msg[cfg->rx_checks[index].status.index].check_checksum) {
+      uint32_t checksum = safety_hooks->get_checksum(to_push);
+      uint32_t checksum_comp = safety_hooks->compute_checksum(to_push);
+      cfg->rx_checks[index].status.valid_checksum = checksum_comp == checksum;
     } else {
-      cfg->rx_checks[index].valid_checksum = true;
+      cfg->rx_checks[index].status.valid_checksum = true;
     }
 
     // counter check (max_counter == 0 means skip check)
-    if ((get_counter != NULL) && (cfg->rx_checks[index].msg[cfg->rx_checks[index].index].max_counter > 0U)) {
-      uint8_t counter = get_counter(to_push);
+    if ((safety_hooks->get_counter != NULL) && (cfg->rx_checks[index].msg[cfg->rx_checks[index].status.index].max_counter > 0U)) {
+      uint8_t counter = safety_hooks->get_counter(to_push);
       update_counter(cfg->rx_checks, index, counter);
     } else {
-      cfg->rx_checks[index].wrong_counters = 0U;
+      cfg->rx_checks[index].status.wrong_counters = 0U;
     }
 
     // quality flag check
-    if ((get_quality_flag_valid != NULL) && cfg->rx_checks[index].msg[cfg->rx_checks[index].index].quality_flag) {
-      cfg->rx_checks[index].valid_quality_flag = get_quality_flag_valid(to_push);
+    if ((safety_hooks->get_quality_flag_valid != NULL) && cfg->rx_checks[index].msg[cfg->rx_checks[index].status.index].quality_flag) {
+      cfg->rx_checks[index].status.valid_quality_flag = safety_hooks->get_quality_flag_valid(to_push);
     } else {
-      cfg->rx_checks[index].valid_quality_flag = true;
+      cfg->rx_checks[index].status.valid_quality_flag = true;
     }
   }
   return is_msg_valid(cfg->rx_checks, index);
@@ -331,7 +327,7 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   // reset state set by safety mode
   safety_mode_cnt = 0U;
   relay_malfunction = false;
-  gas_interceptor_detected = false;
+  enable_gas_interceptor = false;
   gas_interceptor_prev = 0;
   gas_pressed = false;
   gas_pressed_prev = false;
@@ -383,10 +379,9 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
     current_safety_config.rx_checks_len = cfg.rx_checks_len;
     current_safety_config.tx_msgs = cfg.tx_msgs;
     current_safety_config.tx_msgs_len = cfg.tx_msgs_len;
-    // reset message index and seen flags in addr struct
+    // reset all dynamic fields in addr struct
     for (int j = 0; j < current_safety_config.rx_checks_len; j++) {
-      current_safety_config.rx_checks[j].index = 0;
-      current_safety_config.rx_checks[j].msg_seen = false;
+      current_safety_config.rx_checks[j].status = (RxStatus){0};
     }
   }
   return set_status;
@@ -450,7 +445,7 @@ bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
 }
 
 // check that commanded value isn't fighting against driver
-bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
+bool driver_limit_check(int val, int val_last, const struct sample_t *val_driver,
                         const int MAX_VAL, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
                         const int MAX_ALLOWANCE, const int DRIVER_FACTOR) {
 
@@ -504,9 +499,7 @@ float interpolate(struct lookup_t xy, float x) {
         float dx = xy.x[i+1] - x0;
         float dy = xy.y[i+1] - y0;
         // dx should not be zero as xy.x is supposed to be monotonic
-        if (dx <= 0.) {
-          dx = 0.0001;
-        }
+        dx = MAX(dx, 0.0001);
         ret = (dy * (x - x0) / dx) + y0;
         break;
       }
@@ -549,7 +542,7 @@ bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limit
   return violation;
 }
 
-bool longitudinal_interceptor_checks(CANPacket_t *to_send) {
+bool longitudinal_interceptor_checks(const CANPacket_t *to_send) {
   return !get_longitudinal_allowed() && (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1));
 }
 

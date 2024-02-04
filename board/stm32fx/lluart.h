@@ -82,13 +82,13 @@ void USART2_IRQ_Handler(void) { uart_interrupt_handler(&uart_ring_debug); }
 
 // ***************************** Hardware setup *****************************
 
-#define __DIV(_PCLK_, _BAUD_)                    (((_PCLK_) * 25U) / (4U * (_BAUD_)))
-#define __DIVMANT(_PCLK_, _BAUD_)                (__DIV((_PCLK_), (_BAUD_)) / 100U)
-#define __DIVFRAQ(_PCLK_, _BAUD_)                ((((__DIV((_PCLK_), (_BAUD_)) - (__DIVMANT((_PCLK_), (_BAUD_)) * 100U)) * 16U) + 50U) / 100U)
-#define __USART_BRR(_PCLK_, _BAUD_)              ((__DIVMANT((_PCLK_), (_BAUD_)) << 4) | (__DIVFRAQ((_PCLK_), (_BAUD_)) & 0x0FU))
+#define DIV_(_PCLK_, _BAUD_)                    (((_PCLK_) * 25U) / (4U * (_BAUD_)))
+#define DIVMANT_(_PCLK_, _BAUD_)                (DIV_((_PCLK_), (_BAUD_)) / 100U)
+#define DIVFRAQ_(_PCLK_, _BAUD_)                ((((DIV_((_PCLK_), (_BAUD_)) - (DIVMANT_((_PCLK_), (_BAUD_)) * 100U)) * 16U) + 50U) / 100U)
+#define USART_BRR_(_PCLK_, _BAUD_)              ((DIVMANT_((_PCLK_), (_BAUD_)) << 4) | (DIVFRAQ_((_PCLK_), (_BAUD_)) & 0x0FU))
 
 void uart_set_baud(USART_TypeDef *u, unsigned int baud) {
-  u->BRR = __USART_BRR(APB1_FREQ*1000000U, baud);
+  u->BRR = USART_BRR_(APB1_FREQ*1000000U, baud);
 }
 
 void uart_init(uart_ring *q, int baud) {

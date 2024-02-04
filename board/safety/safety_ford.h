@@ -58,17 +58,17 @@ const CanMsg FORD_CANFD_LONG_TX_MSGS[] = {
 // warning: quality flags are not yet checked in openpilot's CAN parser,
 // this may be the cause of blocked messages
 RxCheck ford_rx_checks[] = {
-  {.msg = {{FORD_BrakeSysFeatures, 0, 8, .check_checksum = true, .max_counter = 15U, .quality_flag=true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{FORD_BrakeSysFeatures, 0, 8, .check_checksum = true, .max_counter = 15U, .quality_flag=true, .frequency = 50U}, { 0 }, { 0 }}},
   // TODO: FORD_EngVehicleSpThrottle2 has a counter that skips by 2, understand and enable counter check
-  {.msg = {{FORD_EngVehicleSpThrottle2, 0, 8, .check_checksum = true, .quality_flag=true, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{FORD_Yaw_Data_FD1, 0, 8, .check_checksum = true, .max_counter = 255U, .quality_flag=true, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+  {.msg = {{FORD_EngVehicleSpThrottle2, 0, 8, .check_checksum = true, .quality_flag=true, .frequency = 50U}, { 0 }, { 0 }}},
+  {.msg = {{FORD_Yaw_Data_FD1, 0, 8, .check_checksum = true, .max_counter = 255U, .quality_flag=true, .frequency = 100U}, { 0 }, { 0 }}},
   // These messages have no counter or checksum
-  {.msg = {{FORD_EngBrakeData, 0, 8, .expected_timestep = 100000U}, { 0 }, { 0 }}},
-  {.msg = {{FORD_EngVehicleSpThrottle, 0, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{FORD_DesiredTorqBrk, 0, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{FORD_EngBrakeData, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},
+  {.msg = {{FORD_EngVehicleSpThrottle, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},
+  {.msg = {{FORD_DesiredTorqBrk, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},
 };
 
-static uint8_t ford_get_counter(CANPacket_t *to_push) {
+static uint8_t ford_get_counter(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   uint8_t cnt = 0;
@@ -83,7 +83,7 @@ static uint8_t ford_get_counter(CANPacket_t *to_push) {
   return cnt;
 }
 
-static uint32_t ford_get_checksum(CANPacket_t *to_push) {
+static uint32_t ford_get_checksum(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   uint8_t chksum = 0;
@@ -101,7 +101,7 @@ static uint32_t ford_get_checksum(CANPacket_t *to_push) {
   return chksum;
 }
 
-static uint32_t ford_compute_checksum(CANPacket_t *to_push) {
+static uint32_t ford_compute_checksum(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   uint8_t chksum = 0;
@@ -128,7 +128,7 @@ static uint32_t ford_compute_checksum(CANPacket_t *to_push) {
   return chksum;
 }
 
-static bool ford_get_quality_flag_valid(CANPacket_t *to_push) {
+static bool ford_get_quality_flag_valid(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   bool valid = false;
@@ -157,7 +157,7 @@ const LongitudinalLimits FORD_LONG_LIMITS = {
   .inactive_accel = 5128,  // -0.0008 m/s^2
 
   // gas cmd limits
-  // Signal: AccPrpl_A_Rq
+  // Signal: AccPrpl_A_Rq & AccPrpl_A_Pred
   .max_gas = 700,          //  2.0 m/s^2
   .min_gas = 450,          // -0.5 m/s^2
   .inactive_gas = 0,       // -5.0 m/s^2
@@ -201,7 +201,7 @@ const SteeringLimits FORD_STEERING_LIMITS = {
   .inactive_angle_is_zero = true,
 };
 
-static void ford_rx_hook(CANPacket_t *to_push) {
+static void ford_rx_hook(const CANPacket_t *to_push) {
   if (GET_BUS(to_push) == FORD_MAIN_BUS) {
     int addr = GET_ADDR(to_push);
 
@@ -214,7 +214,7 @@ static void ford_rx_hook(CANPacket_t *to_push) {
     // Update vehicle speed
     if (addr == FORD_BrakeSysFeatures) {
       // Signal: Veh_V_ActlBrk
-      update_sample(&vehicle_speed, ROUND(((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6 * VEHICLE_SPEED_FACTOR));
+      UPDATE_VEHICLE_SPEED(((GET_BYTE(to_push, 0) << 8) | GET_BYTE(to_push, 1)) * 0.01 / 3.6);
     }
 
     // Check vehicle speed against a second source
@@ -265,7 +265,7 @@ static void ford_rx_hook(CANPacket_t *to_push) {
 
 }
 
-static bool ford_tx_hook(CANPacket_t *to_send) {
+static bool ford_tx_hook(const CANPacket_t *to_send) {
   bool tx = true;
 
   int addr = GET_ADDR(to_send);
@@ -274,6 +274,8 @@ static bool ford_tx_hook(CANPacket_t *to_send) {
   if (addr == FORD_ACCDATA) {
     // Signal: AccPrpl_A_Rq
     int gas = ((GET_BYTE(to_send, 6) & 0x3U) << 8) | GET_BYTE(to_send, 7);
+    // Signal: AccPrpl_A_Pred
+    int gas_pred = ((GET_BYTE(to_send, 2) & 0x3U) << 8) | GET_BYTE(to_send, 3);
     // Signal: AccBrkTot_A_Rq
     int accel = ((GET_BYTE(to_send, 0) & 0x1FU) << 8) | GET_BYTE(to_send, 1);
     // Signal: CmbbDeny_B_Actl
@@ -282,6 +284,7 @@ static bool ford_tx_hook(CANPacket_t *to_send) {
     bool violation = false;
     violation |= longitudinal_accel_checks(accel, FORD_LONG_LIMITS);
     violation |= longitudinal_gas_checks(gas, FORD_LONG_LIMITS);
+    violation |= longitudinal_gas_checks(gas_pred, FORD_LONG_LIMITS);
 
     // Safety check for stock AEB
     violation |= cmbb_deny != 0; // do not prevent stock AEB actuation

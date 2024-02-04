@@ -52,13 +52,13 @@ const CanMsg HYUNDAI_CAMERA_SCC_TX_MSGS[] = {
 };
 
 #define HYUNDAI_COMMON_RX_CHECKS(legacy)                                                                                              \
-  {.msg = {{0x260, 0, 8, .check_checksum = true, .max_counter = 3U, .expected_timestep = 10000U},                                       \
-           {0x371, 0, 8, .expected_timestep = 10000U}, { 0 }}},                                                                         \
-  {.msg = {{0x386, 0, 8, .check_checksum = !(legacy), .max_counter = (legacy) ? 0U : 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}}, \
-  {.msg = {{0x394, 0, 8, .check_checksum = !(legacy), .max_counter = (legacy) ? 0U : 7U, .expected_timestep = 10000U}, { 0 }, { 0 }}},  \
+  {.msg = {{0x260, 0, 8, .check_checksum = true, .max_counter = 3U, .frequency = 100U},                                       \
+           {0x371, 0, 8, .frequency = 100U}, { 0 }}},                                                                         \
+  {.msg = {{0x386, 0, 8, .check_checksum = !(legacy), .max_counter = (legacy) ? 0U : 15U, .frequency = 100U}, { 0 }, { 0 }}}, \
+  {.msg = {{0x394, 0, 8, .check_checksum = !(legacy), .max_counter = (legacy) ? 0U : 7U, .frequency = 100U}, { 0 }, { 0 }}},  \
 
 #define HYUNDAI_SCC12_ADDR_CHECK(scc_bus)                                                                                  \
-  {.msg = {{0x421, (scc_bus), 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
+  {.msg = {{0x421, (scc_bus), 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}}, \
 
 RxCheck hyundai_rx_checks[] = {
    HYUNDAI_COMMON_RX_CHECKS(false)
@@ -73,7 +73,7 @@ RxCheck hyundai_cam_scc_rx_checks[] = {
 RxCheck hyundai_long_rx_checks[] = {
   HYUNDAI_COMMON_RX_CHECKS(false)
   // Use CLU11 (buttons) to manage controls allowed instead of SCC cruise state
-  {.msg = {{0x4F1, 0, 4, .check_checksum = false, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
+  {.msg = {{0x4F1, 0, 4, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
 };
 
 // older hyundai models have less checks due to missing counters and checksums
@@ -85,7 +85,7 @@ RxCheck hyundai_legacy_rx_checks[] = {
 bool hyundai_legacy = false;
 
 
-static uint8_t hyundai_get_counter(CANPacket_t *to_push) {
+static uint8_t hyundai_get_counter(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   uint8_t cnt = 0;
@@ -104,7 +104,7 @@ static uint8_t hyundai_get_counter(CANPacket_t *to_push) {
   return cnt;
 }
 
-static uint32_t hyundai_get_checksum(CANPacket_t *to_push) {
+static uint32_t hyundai_get_checksum(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   uint8_t chksum = 0;
@@ -121,7 +121,7 @@ static uint32_t hyundai_get_checksum(CANPacket_t *to_push) {
   return chksum;
 }
 
-static uint32_t hyundai_compute_checksum(CANPacket_t *to_push) {
+static uint32_t hyundai_compute_checksum(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   uint8_t chksum = 0;
@@ -157,7 +157,7 @@ static uint32_t hyundai_compute_checksum(CANPacket_t *to_push) {
   return chksum;
 }
 
-static void hyundai_rx_hook(CANPacket_t *to_push) {
+static void hyundai_rx_hook(const CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
@@ -214,7 +214,7 @@ static void hyundai_rx_hook(CANPacket_t *to_push) {
   }
 }
 
-static bool hyundai_tx_hook(CANPacket_t *to_send) {
+static bool hyundai_tx_hook(const CANPacket_t *to_send) {
   bool tx = true;
   int addr = GET_ADDR(to_send);
 

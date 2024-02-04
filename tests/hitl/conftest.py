@@ -90,11 +90,8 @@ def pytest_configure(config):
 @pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(items):
   for item in items:
-    if item.get_closest_marker('execution_timeout') is None:
-      item.add_marker(pytest.mark.execution_timeout(10))
-
-    item.add_marker(pytest.mark.setup_timeout(20))
-    item.add_marker(pytest.mark.teardown_timeout(20))
+    if item.get_closest_marker('timeout') is None:
+      item.add_marker(pytest.mark.timeout(60))
 
     # xdist grouping by panda
     serial = item.name.split("serial=")[1].split(",")[0]

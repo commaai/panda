@@ -71,7 +71,6 @@ void tres_init(void) {
 }
 
 const board board_tres = {
-  .board_type = "Tres",
   .harness_config = &red_chiplet_harness_config,
   .has_obd = true,
   .has_spi = true,

@@ -8,5 +8,22 @@ misra-c2012-15.1
 misra-c2012-19.2
 # Advisory: The # and ## preprocessor operators should not be used
 misra-c2012-20.10
-# Required: it's ok re-defining potentially reserved Macro names. Not likely to cause confusion
-misra-c2012-21.1
+
+# needed since not all of these suppressions are applicable to all builds
+unmatchedSuppression
+
+# all of the below suppressions are from new checks introduced after updating
+# cppcheck from 2.5 -> 2.13. they are listed here to separate the update from
+# fixing the violations and all are intended to be removed soon after
+
+unusedFunction
+
+misra-config
+misra-c2012-1.2  # this is from the extensions (e.g. __typeof__) used in the MIN, MAX, ABS, and CLAMP macros
+misra-c2012-2.5
+misra-c2012-8.7
+misra-c2012-8.4
+misra-c2012-10.6
+misra-c2012-10.3
+misra-c2012-17.3
+misra-c2012-21.15
