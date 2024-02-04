@@ -311,7 +311,8 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       }
 
       // read
-      while ((resp_len < MIN(req->length, USBPACKET_MAX_SIZE)) &&
+      uint16_t req_length = MIN(req->length, USBPACKET_MAX_SIZE);
+      while ((resp_len < req_length) &&
                          get_char(ur, (char*)&resp[resp_len])) {
         ++resp_len;
       }
