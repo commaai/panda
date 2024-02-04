@@ -40,8 +40,8 @@ int get_health_pkt(void *dat) {
   health->fan_power = fan_state.power;
   health->fan_stall_count = fan_state.total_stall_count;
 
-  health->sbu1_voltage_mV = harness.sbu1_voltage_mV;
-  health->sbu2_voltage_mV = harness.sbu2_voltage_mV;
+  health->sbu1_voltage_mV = adc_get_mV(current_board->harness_config->adc_channel_SBU1);
+  health->sbu2_voltage_mV = adc_get_mV(current_board->harness_config->adc_channel_SBU2);
 
   health->som_reset_triggered = bootkick_reset_triggered;
 
