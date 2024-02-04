@@ -165,7 +165,6 @@ const harness_configuration black_harness_config = {
 const board board_black = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &black_harness_config,
-  .has_hw_gmlan = false,
   .has_obd = true,
   .has_spi = false,
   .has_canfd = false,

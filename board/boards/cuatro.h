@@ -62,7 +62,6 @@ void cuatro_init(void) {
 
 const board board_cuatro = {
   .harness_config = &red_chiplet_harness_config,
-  .has_hw_gmlan = false,
   .has_obd = true,
   .has_spi = true,
   .has_canfd = true,

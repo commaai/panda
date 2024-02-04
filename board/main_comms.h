@@ -274,19 +274,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
           // Disable OBD CAN
           current_board->set_can_mode(CAN_MODE_NORMAL);
         }
-      } else {
-        if (req->param1 == 1U) {
-          // GMLAN ON
-          if (req->param2 == 1U) {
-            can_set_gmlan(1);
-          } else if (req->param2 == 2U) {
-            can_set_gmlan(2);
-          } else {
-            print("Invalid bus num for GMLAN CAN set\n");
-          }
-        } else {
-          can_set_gmlan(-1);
-        }
       }
       break;
 
