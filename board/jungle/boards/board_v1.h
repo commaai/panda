@@ -126,6 +126,10 @@ uint16_t board_v1_get_sbu_mV(uint8_t channel, uint8_t sbu) {
 void board_v1_init(void) {
   common_init_gpio();
 
+  // B8,B9: normal CAN 1
+  set_gpio_alternate(GPIOB, 8, GPIO_AF8_CAN1);
+  set_gpio_alternate(GPIOB, 9, GPIO_AF8_CAN1);
+
   // A8,A15: normal CAN3 mode
   set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
   set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);

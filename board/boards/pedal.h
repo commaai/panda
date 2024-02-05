@@ -48,6 +48,10 @@ bool pedal_check_ignition(void){
 void pedal_init(void) {
   common_init_gpio();
 
+  // B8,B9: normal CAN 1
+  set_gpio_alternate(GPIOB, 8, GPIO_AF9_CAN1);
+  set_gpio_alternate(GPIOB, 9, GPIO_AF9_CAN1);
+
   // C0, C1: Throttle inputs
   set_gpio_mode(GPIOC, 0, MODE_ANALOG);
   set_gpio_mode(GPIOC, 1, MODE_ANALOG);
