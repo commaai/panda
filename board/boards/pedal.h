@@ -1,6 +1,6 @@
-// ///// //
-// Pedal //
-// ///// //
+// ///////////// //
+// Pedal STM32F2 //
+// ///////////// //
 
 void pedal_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver){

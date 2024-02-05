@@ -1,6 +1,6 @@
-// ///////////// //
-// Uno + Harness //
-// ///////////// //
+// /////////////////////// //
+// Uno (STM32F4) + Harness //
+// /////////////////////// //
 
 void uno_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver){
