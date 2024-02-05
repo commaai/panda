@@ -467,7 +467,7 @@ void usb_reset(void) {
 }
 
 char to_hex_char(int a) {
-  char ret;
+  uint32_t ret;
   if (a < 10) {
     ret = '0' + a;
   } else {

@@ -191,7 +191,7 @@ uint32_t pdl0 = 0;
 uint32_t pdl1 = 0;
 unsigned int pkt_idx = 0;
 
-int led_value = 0;
+bool led_value = 0;
 
 void TIM3_IRQ_Handler(void) {
   #ifdef DEBUG

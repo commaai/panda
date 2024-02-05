@@ -95,7 +95,7 @@ bool get_longitudinal_allowed(void) {
 // algorithm. Called at init time for safety modes using CRC-8.
 void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]) {
   for (int i = 0; i < 256; i++) {
-    uint8_t crc = i;
+    uint32_t crc = i;
     for (int j = 0; j < 8; j++) {
       if ((crc & 0x80U) != 0U) {
         crc = (uint8_t)((crc << 1) ^ poly);

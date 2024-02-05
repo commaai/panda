@@ -86,11 +86,11 @@ RxCheck toyota_lta_interceptor_rx_checks[] = {
 // safety param flags
 // first byte is for EPS factor, second is for flags
 const uint32_t TOYOTA_PARAM_OFFSET = 8U;
-const uint32_t TOYOTA_EPS_FACTOR = (1UL << TOYOTA_PARAM_OFFSET) - 1U;
-const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1UL << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2UL << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_LTA = 4UL << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_GAS_INTERCEPTOR = 8UL << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_EPS_FACTOR = (uint32_t)(1UL << TOYOTA_PARAM_OFFSET) - 1U;
+const uint64_t TOYOTA_PARAM_ALT_BRAKE = 1UL << TOYOTA_PARAM_OFFSET;
+const uint64_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2UL << TOYOTA_PARAM_OFFSET;
+const uint64_t TOYOTA_PARAM_LTA = 4UL << TOYOTA_PARAM_OFFSET;
+const uint64_t TOYOTA_PARAM_GAS_INTERCEPTOR = 8UL << TOYOTA_PARAM_OFFSET;
 
 bool toyota_alt_brake = false;
 bool toyota_stock_longitudinal = false;
@@ -364,10 +364,10 @@ static int toyota_fwd_hook(int bus_num, int addr) {
   if (bus_num == 2) {
     // block stock lkas messages and stock acc messages (if OP is doing ACC)
     // in TSS2, 0x191 is LTA which we need to block to avoid controls collision
-    int is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412) || (addr == 0x191));
+    bool is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412) || (addr == 0x191));
     // in TSS2 the camera does ACC as well, so filter 0x343
-    int is_acc_msg = (addr == 0x343);
-    int block_msg = is_lkas_msg || (is_acc_msg && !toyota_stock_longitudinal);
+    bool is_acc_msg = (addr == 0x343);
+    bool block_msg = is_lkas_msg || (is_acc_msg && !toyota_stock_longitudinal);
     if (!block_msg) {
       bus_fwd = 0;
     }

@@ -45,7 +45,7 @@ void hyundai_common_init(uint16_t param) {
 #endif
 }
 
-void hyundai_common_cruise_state_check(const int cruise_engaged) {
+void hyundai_common_cruise_state_check(const bool cruise_engaged) {
   // some newer HKG models can re-enable after spamming cancel button,
   // so keep track of user button presses to deny engagement if no interaction
 
