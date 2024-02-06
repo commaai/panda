@@ -387,12 +387,12 @@ class CanClient():
 
 class IsoTpMessage():
   def __init__(self, can_client: CanClient, timeout: float = 1, single_frame_mode: bool = False, separation_time: float = 0,
-               debug: bool = False, max_tx_len: int = 8):
+               debug: bool = False, max_len: int = 8):
     self._can_client = can_client
     self.timeout = timeout
     self.single_frame_mode = single_frame_mode
     self.debug = debug
-    self.max_tx_len = max_tx_len
+    self.max_len = max_len
 
     # <= 127, separation time in milliseconds
     # 0xF1 to 0xF9 UF, 100 to 900 microseconds
@@ -408,7 +408,7 @@ class IsoTpMessage():
       0x30,  # flow control
       0x01 if self.single_frame_mode else 0x00,  # block size
       separation_time,
-    ]).ljust(self.max_tx_len, b"\x00")
+    ]).ljust(self.max_len, b"\x00")
 
   def send(self, dat: bytes, setup_only: bool = False) -> None:
     # throw away any stale data
@@ -429,17 +429,17 @@ class IsoTpMessage():
     self._tx_first_frame(setup_only=setup_only)
 
   def _tx_first_frame(self, setup_only: bool = False) -> None:
-    if self.tx_len < self.max_tx_len:
+    if self.tx_len < self.max_len:
       # single frame (send all bytes)
       if self.debug and not setup_only:
         print(f"ISO-TP: TX - single frame - {hex(self._can_client.tx_addr)}")
-      msg = (bytes([self.tx_len]) + self.tx_dat).ljust(self.max_tx_len, b"\x00")
+      msg = (bytes([self.tx_len]) + self.tx_dat).ljust(self.max_len, b"\x00")
       self.tx_done = True
     else:
       # first frame (send first 6 bytes)
       if self.debug and not setup_only:
         print(f"ISO-TP: TX - first frame - {hex(self._can_client.tx_addr)}")
-      msg = (struct.pack("!H", 0x1000 | self.tx_len) + self.tx_dat[:self.max_tx_len - 2]).ljust(self.max_tx_len - 2, b"\x00")
+      msg = (struct.pack("!H", 0x1000 | self.tx_len) + self.tx_dat[:self.max_len - 2]).ljust(self.max_len - 2, b"\x00")
     if not setup_only:
       self._can_client.send([msg])
 
@@ -490,7 +490,7 @@ class IsoTpMessage():
     elif rx_data[0] >> 4 == ISOTP_FRAME_TYPE.FIRST:
       # should work with CAN FD. maybe a check for max 62 bytes from the spec?
       self.rx_len = ((rx_data[0] & 0x0F) << 8) + rx_data[1]
-      assert self.max_tx_len <= self.rx_len, f"isotp - rx: invalid first frame length: {self.rx_len}"
+      assert self.max_len <= self.rx_len, f"isotp - rx: invalid first frame length: {self.rx_len}"
       self.rx_dat = rx_data[2:]
       self.rx_idx = 0
       self.rx_done = False
@@ -530,15 +530,15 @@ class IsoTpMessage():
         delay_sec = delay_ts / delay_div
 
         # first frame = 6 bytes, each consecutive frame = 7 bytes
-        num_bytes = self.max_tx_len - 1
-        start = self.max_tx_len - 2 + self.tx_idx * num_bytes
+        num_bytes = self.max_len - 1
+        start = self.max_len - 2 + self.tx_idx * num_bytes
         count = rx_data[1]
         end = start + count * num_bytes if count > 0 else self.tx_len
         tx_msgs = []
         for i in range(start, end, num_bytes):
           self.tx_idx += 1
           # consecutive tx messages
-          msg = (bytes([0x20 | (self.tx_idx & 0xF)]) + self.tx_dat[i:i + num_bytes]).ljust(self.max_tx_len, b"\x00")
+          msg = (bytes([0x20 | (self.tx_idx & 0xF)]) + self.tx_dat[i:i + num_bytes]).ljust(self.max_len, b"\x00")
           tx_msgs.append(msg)
         # send consecutive tx messages
         self._can_client.send(tx_msgs, delay=delay_sec)
@@ -599,7 +599,7 @@ class UdsClient():
 
     # send request, wait for response
     max_len = 8 if self.sub_addr is None else 7
-    isotp_msg = IsoTpMessage(self._can_client, timeout=self.timeout, debug=self.debug, max_tx_len=max_tx_len)
+    isotp_msg = IsoTpMessage(self._can_client, timeout=self.timeout, debug=self.debug, max_len=max_len)
     isotp_msg.send(req)
     response_pending = False
     while True:
