@@ -1,6 +1,6 @@
-// ///////////////////// //
-// Red Panda + Harness //
-// ///////////////////// //
+// ///////////////////////////// //
+// Red Panda (STM32H7) + Harness //
+// ///////////////////////////// //
 
 void red_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver) {

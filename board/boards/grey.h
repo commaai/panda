@@ -1,6 +1,6 @@
-// ////////// //
-// Grey Panda //
-// ////////// //
+// //////////////////// //
+// Grey Panda (STM32F4) //
+// //////////////////// //
 
 // Most hardware functionality is similar to white panda
 

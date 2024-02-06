@@ -1,6 +1,6 @@
-// ///////////// //
-// Dos + Harness //
-// ///////////// //
+// /////////////////////// //
+// Dos (STM32F4) + Harness //
+// /////////////////////// //
 
 void dos_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver){
