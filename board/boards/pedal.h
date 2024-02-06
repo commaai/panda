@@ -30,11 +30,6 @@ void pedal_set_led(uint8_t color, bool enabled) {
   }
 }
 
-void pedal_set_gps_mode(uint8_t mode) {
-  UNUSED(mode);
-  print("Trying to set ESP/GPS mode on pedal. This is not supported.\n");
-}
-
 void pedal_set_can_mode(uint8_t mode){
   switch (mode) {
     case CAN_MODE_NORMAL:
@@ -72,13 +67,9 @@ const harness_configuration pedal_harness_config = {
 };
 
 const board board_pedal = {
-  .board_type = "Pedal",
-  .board_tick = unused_board_tick,
+  .set_bootkick = unused_set_bootkick,
   .harness_config = &pedal_harness_config,
-  .has_gps = false,
-  .has_hw_gmlan = false,
   .has_obd = false,
-  .has_lin = false,
   .has_spi = false,
   .has_canfd = false,
   .has_rtc_battery = false,
@@ -87,16 +78,15 @@ const board board_pedal = {
   .fan_stall_recovery = false,
   .fan_enable_cooldown_time = 0U,
   .init = pedal_init,
+  .init_bootloader = unused_init_bootloader,
   .enable_can_transceiver = pedal_enable_can_transceiver,
   .enable_can_transceivers = pedal_enable_can_transceivers,
   .set_led = pedal_set_led,
-  .set_gps_mode = pedal_set_gps_mode,
   .set_can_mode = pedal_set_can_mode,
   .check_ignition = pedal_check_ignition,
   .read_current = unused_read_current,
   .set_fan_enabled = unused_set_fan_enabled,
   .set_ir_power = unused_set_ir_power,
-  .set_phone_power = unused_set_phone_power,
   .set_siren = unused_set_siren,
   .read_som_gpio = unused_read_som_gpio
 };

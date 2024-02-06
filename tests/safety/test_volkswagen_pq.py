@@ -17,12 +17,11 @@ MSG_ACC_GRA_ANZEIGE = 0x56A   # TX by OP, ACC HUD
 MSG_LDW_1 = 0x5BE             # TX by OP, Lane line recognition and text alerts
 
 
-class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestVolkswagenPqSafety(common.PandaCarSafetyTest, common.DriverTorqueSteeringSafetyTest):
   cruise_engaged = False
 
   STANDSTILL_THRESHOLD = 0
-  RELAY_MALFUNCTION_ADDR = MSG_HCA_1
-  RELAY_MALFUNCTION_BUS = 0
+  RELAY_MALFUNCTION_ADDRS = {0: (MSG_HCA_1,)}
 
   MAX_RATE_UP = 6
   MAX_RATE_DOWN = 10
@@ -71,7 +70,7 @@ class TestVolkswagenPqSafety(common.PandaSafetyTest, common.DriverTorqueSteering
 
   # openpilot steering output torque
   def _torque_cmd_msg(self, torque, steer_req=1):
-    values = {"LM_Offset": abs(torque), "LM_OffSign": torque < 0}
+    values = {"LM_Offset": abs(torque), "LM_OffSign": torque < 0, "HCA_Status": 5 if steer_req else 3}
     return self.packer.make_can_msg_panda("HCA_1", 0, values)
 
   # ACC engagement and brake light switch status

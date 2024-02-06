@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 import os
 import time
-import subprocess
 import unittest
-from panda import Panda, BASEDIR
-from panda_jungle import PandaJungle  # pylint: disable=import-error
-from panda.tests.pedal.canhandle import CanHandle
+
+from panda import Panda, PandaJungle, CanHandle, McuType, BASEDIR
 
 
 JUNGLE_SERIAL = os.getenv("PEDAL_JUNGLE")
-PEDAL_SERIAL = 'none'
 PEDAL_BUS = 1
 
 class TestPedal(unittest.TestCase):
@@ -30,7 +27,7 @@ class TestPedal(unittest.TestCase):
 
     time.sleep(0.1)
     with open(fw_file, "rb") as code:
-      PandaJungle.flash_static(CanHandle(self.jungle, bus), code.read())
+      PandaJungle.flash_static(CanHandle(self.jungle, bus), code.read(), McuType.F2)
 
   def _listen_can_frames(self):
     self.jungle.can_clear(0xFFFF)
@@ -45,16 +42,14 @@ class TestPedal(unittest.TestCase):
     return msgs
 
   def test_usb_fw(self):
-    subprocess.check_output(f"cd {BASEDIR} && PEDAL=1 PEDAL_USB=1 scons", shell=True)
-    self._flash_over_can(PEDAL_BUS, f"{BASEDIR}board/obj/pedal_usb.bin.signed")
+    self._flash_over_can(PEDAL_BUS, f"{BASEDIR}/board/pedal/obj/pedal_usb.bin.signed")
     time.sleep(2)
-    with Panda(PEDAL_SERIAL) as p:
+    with Panda('pedal') as p:
       self.assertTrue(p.get_type() == Panda.HW_TYPE_PEDAL)
     self.assertTrue(self._listen_can_frames() > 40)
 
   def test_nonusb_fw(self):
-    subprocess.check_output(f"cd {BASEDIR} && PEDAL=1 scons", shell=True)
-    self._flash_over_can(PEDAL_BUS, f"{BASEDIR}board/obj/pedal.bin.signed")
+    self._flash_over_can(PEDAL_BUS, f"{BASEDIR}board/pedal/obj/pedal.bin.signed")
     time.sleep(2)
     self.assertTrue(self._listen_can_frames() > 40)
 

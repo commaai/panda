@@ -25,7 +25,6 @@ sudo abctl --set_success
 
 # patch sshd config
 sudo mount -o rw,remount /
-echo tici-$(cat /proc/cmdline | sed -e 's/^.*androidboot.serialno=//' -e 's/ .*$//') | sudo tee /etc/hostname
 sudo sed -i "s,/data/params/d/GithubSshKeys,/usr/comma/setup_keys," /etc/ssh/sshd_config
 sudo systemctl daemon-reload
 sudo systemctl restart ssh
@@ -49,16 +48,6 @@ chmod +x $CONTINUE_PATH
 if [ ! -d "$SOURCE_DIR" ]; then
   git clone https://github.com/commaai/panda.git $SOURCE_DIR
 fi
-
-# setup panda_jungle
-cd $SOURCE_DIR/../
-if [ ! -d panda_jungle/ ]; then
-  git clone https://github.com/commaai/panda_jungle.git
-fi
-cd panda_jungle
-git fetch --all
-git checkout -f master
-git reset --hard origin/master
 
 # setup device/SOM state
 SOM_ST_IO=49

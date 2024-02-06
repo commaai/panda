@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 
 import os
-import sys
 import time
 import random
 import argparse
-
-from hexdump import hexdump
 from itertools import permutations
 
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda  # noqa: E402
+from panda import Panda
 
 def get_test_string():
   return b"test" + os.urandom(10)
@@ -20,13 +16,12 @@ def run_test(sleep_duration):
   print(pandas)
 
   if len(pandas) < 2:
-    print("Two pandas are needed for test")
-    assert False
+    raise Exception("Two pandas are needed for test")
 
   run_test_w_pandas(pandas, sleep_duration)
 
 def run_test_w_pandas(pandas, sleep_duration):
-  h = list([Panda(x) for x in pandas])
+  h = [Panda(x) for x in pandas]
   print("H", h)
 
   for hh in h:
@@ -40,27 +35,6 @@ def run_test_w_pandas(pandas, sleep_duration):
 
     # **** test health packet ****
     print("health", ho[0], h[ho[0]].health())
-
-    # **** test K/L line loopback ****
-    for bus in [2, 3]:
-      # flush the output
-      h[ho[1]].kline_drain(bus=bus)
-
-      # send the characters
-      st = get_test_string()
-      st = bytes([0xaa, len(st) + 3]) + st
-      h[ho[0]].kline_send(st, bus=bus, checksum=False)
-
-      # check for receive
-      ret = h[ho[1]].kline_drain(bus=bus)
-
-      print("ST Data:")
-      hexdump(st)
-      print("RET Data:")
-      hexdump(ret)
-      assert st == ret
-      print("K/L pass", bus, ho, "\n")
-      time.sleep(sleep_duration)
 
     # **** test can line loopback ****
     #    for bus, gmlan in [(0, None), (1, False), (2, False), (1, True), (2, True)]:
@@ -114,5 +88,5 @@ if __name__ == "__main__":
     while True:
       run_test(sleep_duration=args.sleep)
   else:
-    for i in range(args.n):
+    for _ in range(args.n):
       run_test(sleep_duration=args.sleep)

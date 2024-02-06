@@ -6,12 +6,11 @@ import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
 
-class TestMazdaSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestMazdaSafety(common.PandaCarSafetyTest, common.DriverTorqueSteeringSafetyTest):
 
   TX_MSGS = [[0x243, 0], [0x09d, 0], [0x440, 0]]
   STANDSTILL_THRESHOLD = .1
-  RELAY_MALFUNCTION_ADDR = 0x243
-  RELAY_MALFUNCTION_BUS = 0
+  RELAY_MALFUNCTION_ADDRS = {0: (0x243,)}
   FWD_BLACKLISTED_ADDRS = {2: [0x243, 0x440]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
@@ -24,6 +23,9 @@ class TestMazdaSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyT
 
   DRIVER_TORQUE_ALLOWANCE = 15
   DRIVER_TORQUE_FACTOR = 1
+
+  # Mazda actually does not set any bit when requesting torque
+  NO_STEER_REQ_BIT = True
 
   def setUp(self):
     self.packer = CANPackerPanda("mazda_2017")

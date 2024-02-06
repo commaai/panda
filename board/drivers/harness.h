@@ -25,7 +25,8 @@ struct harness_configuration {
   uint8_t adc_channel_SBU2;
 };
 
-void set_intercept_relay(bool intercept) {
+// The ignition relay is only used for testing purposes
+void set_intercept_relay(bool intercept, bool ignition_relay) {
   if (current_board->harness_config->has_harness) {
     bool drive_relay = intercept;
     if (harness.status == HARNESS_STATUS_NC) {
@@ -33,22 +34,22 @@ void set_intercept_relay(bool intercept) {
       drive_relay = false;
     }
 
-    if (drive_relay) {
+    if (drive_relay || ignition_relay) {
       harness.relay_driven = true;
     }
 
     // wait until we're not reading the analog voltages anymore
-    while (harness.sbu_adc_lock == true) {}
+    while (harness.sbu_adc_lock) {}
 
     if (harness.status == HARNESS_STATUS_NORMAL) {
-      set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, true);
+      set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, !ignition_relay);
       set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, !drive_relay);
     } else {
       set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, !drive_relay);
-      set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, true);
+      set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, !ignition_relay);
     }
 
-    if (!drive_relay) {
+    if (!(drive_relay || ignition_relay)) {
       harness.relay_driven = false;
     }
   }
@@ -58,7 +59,7 @@ bool harness_check_ignition(void) {
   bool ret = false;
 
   // wait until we're not reading the analog voltages anymore
-  while (harness.sbu_adc_lock == true) {}
+  while (harness.sbu_adc_lock) {}
 
   switch(harness.status){
     case HARNESS_STATUS_NORMAL:
@@ -129,5 +130,5 @@ void harness_init(void) {
   }
 
   // keep buses connected by default
-  set_intercept_relay(false);
+  set_intercept_relay(false, false);
 }

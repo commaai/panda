@@ -6,7 +6,9 @@ from typing import Optional
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
-from panda.tests.safety.common import CANPackerPanda, make_msg, MAX_WRONG_COUNTERS
+from panda.tests.safety.common import CANPackerPanda, MAX_WRONG_COUNTERS
+
+HONDA_N_COMMON_TX_MSGS = [[0xE4, 0], [0x194, 0], [0x1FA, 0], [0x30C, 0], [0x33D, 0]]
 
 class Btn:
   NONE = 0
@@ -19,28 +21,19 @@ HONDA_NIDEC = 0
 HONDA_BOSCH = 1
 
 
-def interceptor_msg(gas, addr):
-  to_send = make_msg(0, addr, 6)
-  to_send[0].data[0] = (gas & 0xFF00) >> 8
-  to_send[0].data[1] = gas & 0xFF
-  to_send[0].data[2] = (gas & 0xFF00) >> 8
-  to_send[0].data[3] = gas & 0xFF
-  return to_send
-
-
 # Honda safety has several different configurations tested here:
 #  * Nidec
-#    * normal
-#    * alt SCM messages
-#    * interceptor
-#    * interceptor with alt SCM messages
+#    * normal (PCM-enable)
+#    * alt SCM messages  (PCM-enable)
+#    * gas interceptor (button-enable)
+#    * gas interceptor with alt SCM messages (button-enable)
 #  * Bosch
 #    * Bosch with Longitudinal Support
 #  * Bosch Radarless
 #    * Bosch Radarless with Longitudinal Support
 
 
-class HondaButtonEnableBase(common.PandaSafetyTest):
+class HondaButtonEnableBase(common.PandaCarSafetyTest):
   # pylint: disable=no-member,abstract-method
 
   # override these inherited tests since we're using button enable
@@ -64,18 +57,24 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
     """
       Both SET and RES should enter controls allowed on their falling edge.
     """
-    for btn in (Btn.SET, Btn.RESUME):
-      for main_on in (True, False):
-        self._rx(self._acc_state_msg(main_on))
-        self.safety.set_controls_allowed(0)
+    for main_on in (True, False):
+      self._rx(self._acc_state_msg(main_on))
+      for btn_prev in range(8):
+        for btn_cur in range(8):
+          self._rx(self._button_msg(Btn.NONE))
+          self.safety.set_controls_allowed(0)
+          for _ in range(10):
+            self._rx(self._button_msg(btn_prev))
+            self.assertFalse(self.safety.get_controls_allowed())
 
-        # nothing until falling edge
-        for _ in range(10):
-          self._rx(self._button_msg(btn, main_on=main_on))
-        self.assertFalse(self.safety.get_controls_allowed())
+          # should enter controls allowed on falling edge and not transitioning to cancel or main
+          should_enable = (main_on and
+                           btn_cur != btn_prev and
+                           btn_prev in (Btn.RESUME, Btn.SET) and
+                           btn_cur not in (Btn.CANCEL, Btn.MAIN))
 
-        self._rx(self._button_msg(Btn.NONE, main_on=main_on))
-        self.assertEqual(main_on, self.safety.get_controls_allowed(), msg=f"{main_on=} {btn=}")
+          self._rx(self._button_msg(btn_cur, main_on=main_on))
+          self.assertEqual(should_enable, self.safety.get_controls_allowed(), msg=f"{main_on=} {btn_prev=} {btn_cur=}")
 
   def test_main_cancel_buttons(self):
     """
@@ -132,16 +131,16 @@ class HondaButtonEnableBase(common.PandaSafetyTest):
         self.assertFalse(self.safety.get_controls_allowed())
 
     # restore counters for future tests with a couple of good messages
-    for i in range(2):
+    for _ in range(2):
       self.safety.set_controls_allowed(1)
-      self._rx(self._button_msg(Btn.SET))
+      self._rx(self._button_msg(Btn.SET, main_on=True))
       self._rx(self._speed_msg(0))
       self._rx(self._user_gas_msg(0))
     self._rx(self._button_msg(Btn.SET, main_on=True))
     self.assertTrue(self.safety.get_controls_allowed())
 
 
-class HondaPcmEnableBase(common.PandaSafetyTest):
+class HondaPcmEnableBase(common.PandaCarSafetyTest):
   # pylint: disable=no-member,abstract-method
 
   def test_buttons(self):
@@ -169,15 +168,14 @@ class HondaPcmEnableBase(common.PandaSafetyTest):
             self.assertEqual(controls_allowed, self.safety.get_controls_allowed())
 
 
-class HondaBase(common.PandaSafetyTest):
-  MAX_BRAKE: float = 255
+class HondaBase(common.PandaCarSafetyTest):
+  MAX_BRAKE = 255
   PT_BUS: Optional[int] = None  # must be set when inherited
   STEER_BUS: Optional[int] = None  # must be set when inherited
   BUTTONS_BUS: Optional[int] = None  # must be set when inherited, tx on this bus, rx on PT_BUS
 
   STANDSTILL_THRESHOLD = 0
-  RELAY_MALFUNCTION_ADDR = 0xE4
-  RELAY_MALFUNCTION_BUS = 0
+  RELAY_MALFUNCTION_ADDRS = {0: (0xE4, 0x194)}  # STEERING_CONTROL
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   cnt_speed = 0
@@ -260,14 +258,13 @@ class HondaBase(common.PandaSafetyTest):
 
 
 class TestHondaNidecSafetyBase(HondaBase):
-  TX_MSGS = [[0xE4, 0], [0x194, 0], [0x1FA, 0], [0x200, 0], [0x30C, 0], [0x33D, 0]]
+  TX_MSGS = HONDA_N_COMMON_TX_MSGS
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0x194, 0x33D, 0x30C]}
 
   PT_BUS = 0
   STEER_BUS = 0
   BUTTONS_BUS = 0
 
-  INTERCEPTOR_THRESHOLD = 492
   MAX_GAS = 198
 
   def setUp(self):
@@ -276,15 +273,12 @@ class TestHondaNidecSafetyBase(HondaBase):
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, 0)
     self.safety.init_tests()
 
-  def _interceptor_gas_cmd(self, gas):
-    return interceptor_msg(gas, 0x200)
+  def _send_brake_msg(self, brake, aeb_req=0, bus=0):
+    values = {"COMPUTER_BRAKE": brake, "AEB_REQ_1": aeb_req}
+    return self.packer.make_can_msg_panda("BRAKE_COMMAND", bus, values)
 
-  def _interceptor_user_gas(self, gas):
-    return interceptor_msg(gas, 0x201)
-
-  def _send_brake_msg(self, brake):
-    values = {"COMPUTER_BRAKE": brake}
-    return self.packer.make_can_msg_panda("BRAKE_COMMAND", 0, values)
+  def _rx_brake_msg(self, brake, aeb_req=0):
+    return self._send_brake_msg(brake, aeb_req, bus=2)
 
   def _send_acc_hud_msg(self, pcm_gas, pcm_speed):
     # Used to control ACC on Nidec without pedal
@@ -294,8 +288,8 @@ class TestHondaNidecSafetyBase(HondaBase):
   def test_acc_hud_safety_check(self):
     for controls_allowed in [True, False]:
       self.safety.set_controls_allowed(controls_allowed)
-      for pcm_gas in range(0, 255):
-        for pcm_speed in range(0, 100):
+      for pcm_gas in range(255):
+        for pcm_speed in range(100):
           send = (controls_allowed and pcm_gas <= self.MAX_GAS) or (pcm_gas == 0 and pcm_speed == 0)
           self.assertEqual(send, self._tx(self._send_acc_hud_msg(pcm_gas, pcm_speed)))
 
@@ -305,11 +299,34 @@ class TestHondaNidecSafetyBase(HondaBase):
     self.safety.set_honda_fwd_brake(False)
     super().test_fwd_hook()
 
-    # TODO: test latching until AEB event is over?
     # forwarding AEB brake signal
     self.FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0x194, 0x33D, 0x30C]}
     self.safety.set_honda_fwd_brake(True)
     super().test_fwd_hook()
+
+  def test_honda_fwd_brake_latching(self):
+    # Shouldn't fwd stock Honda requesting brake without AEB
+    self.assertTrue(self._rx(self._rx_brake_msg(self.MAX_BRAKE, aeb_req=0)))
+    self.assertFalse(self.safety.get_honda_fwd_brake())
+
+    # Now allow controls and request some brake
+    openpilot_brake = round(self.MAX_BRAKE / 2.0)
+    self.safety.set_controls_allowed(True)
+    self.assertTrue(self._tx(self._send_brake_msg(openpilot_brake)))
+
+    # Still shouldn't fwd stock Honda brake until it's more than openpilot's
+    for stock_honda_brake in range(self.MAX_BRAKE + 1):
+      self.assertTrue(self._rx(self._rx_brake_msg(stock_honda_brake, aeb_req=1)))
+      should_fwd_brake = stock_honda_brake >= openpilot_brake
+      self.assertEqual(should_fwd_brake, self.safety.get_honda_fwd_brake())
+
+    # Shouldn't stop fwding until AEB event is over
+    for stock_honda_brake in range(self.MAX_BRAKE + 1)[::-1]:
+      self.assertTrue(self._rx(self._rx_brake_msg(stock_honda_brake, aeb_req=1)))
+      self.assertTrue(self.safety.get_honda_fwd_brake())
+
+    self.assertTrue(self._rx(self._rx_brake_msg(0, aeb_req=0)))
+    self.assertFalse(self.safety.get_honda_fwd_brake())
 
   def test_brake_safety_check(self):
     for fwd_brake in [False, True]:
@@ -324,10 +341,9 @@ class TestHondaNidecSafetyBase(HondaBase):
           else:
             send = brake == 0
           self.assertEqual(send, self._tx(self._send_brake_msg(brake)))
-    self.safety.set_honda_fwd_brake(False)
 
 
-class TestHondaNidecSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):
+class TestHondaNidecPcmSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):
   """
     Covers the Honda Nidec safety mode
   """
@@ -337,13 +353,22 @@ class TestHondaNidecSafety(HondaPcmEnableBase, TestHondaNidecSafetyBase):
     pass
 
 
-class TestHondaNidecInterceptorSafety(TestHondaNidecSafety, common.InterceptorSafetyTest):
+class TestHondaNidecGasInterceptorSafety(common.GasInterceptorSafetyTest, HondaButtonEnableBase, TestHondaNidecSafetyBase):
   """
-    Covers the Honda Nidec safety mode with a gas interceptor
+    Covers the Honda Nidec safety mode with a gas interceptor, switches to a button-enable car
   """
 
+  TX_MSGS = HONDA_N_COMMON_TX_MSGS + [[0x200, 0]]
+  INTERCEPTOR_THRESHOLD = 492
 
-class TestHondaNidecAltSafety(TestHondaNidecSafety):
+  def setUp(self):
+    self.packer = CANPackerPanda("honda_civic_touring_2016_can_generated")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_GAS_INTERCEPTOR)
+    self.safety.init_tests()
+
+
+class TestHondaNidecPcmAltSafety(TestHondaNidecPcmSafety):
   """
     Covers the Honda Nidec safety mode with alt SCM messages
   """
@@ -365,14 +390,18 @@ class TestHondaNidecAltSafety(TestHondaNidecSafety):
     return self.packer.make_can_msg_panda("SCM_BUTTONS", bus, values)
 
 
-class TestHondaNidecAltInterceptorSafety(TestHondaNidecSafety, common.InterceptorSafetyTest):
+class TestHondaNidecAltGasInterceptorSafety(common.GasInterceptorSafetyTest, HondaButtonEnableBase, TestHondaNidecSafetyBase):
   """
-    Covers the Honda Nidec safety mode with alt SCM messages and gas interceptor
+    Covers the Honda Nidec safety mode with alt SCM messages and gas interceptor, switches to a button-enable car
   """
+
+  TX_MSGS = HONDA_N_COMMON_TX_MSGS + [[0x200, 0]]
+  INTERCEPTOR_THRESHOLD = 492
+
   def setUp(self):
     self.packer = CANPackerPanda("acura_ilx_2016_can_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT)
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT | Panda.FLAG_HONDA_GAS_INTERCEPTOR)
     self.safety.init_tests()
 
   def _acc_state_msg(self, main_on):
@@ -411,15 +440,6 @@ class TestHondaBoschSafetyBase(HondaBase):
   def _send_brake_msg(self, brake):
     pass
 
-  # TODO: add back in once alternative brake checksum/counter validation is added
-  # def test_alt_brake_rx_hook(self):
-  #   self.safety.set_honda_alt_brake_msg(1)
-  #   self.safety.set_controls_allowed(1)
-  #   to_push = self._alt_brake_msg(0)
-  #   self.assertTrue(self._rx(to_push))
-  #   to_push[0].RDLR = to_push[0].RDLR & 0xFFF0FFFF # invalidate checksum
-  #   self.assertFalse(self._rx(to_push))
-  #   self.assertFalse(self.safety.get_controls_allowed())
   def test_alt_disengage_on_brake(self):
     self.safety.set_honda_alt_brake_msg(1)
     self.safety.set_controls_allowed(1)
@@ -441,6 +461,28 @@ class TestHondaBoschSafetyBase(HondaBase):
     self.assertTrue(self._tx(self._button_msg(Btn.RESUME, bus=self.BUTTONS_BUS)))
 
 
+class TestHondaBoschAltBrakeSafetyBase(TestHondaBoschSafetyBase):
+  """
+    Base Bosch safety test class with an alternate brake message
+  """
+  def setUp(self):
+    super().setUp()
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_ALT_BRAKE)
+    self.safety.init_tests()
+
+  def _user_brake_msg(self, brake):
+    return self._alt_brake_msg(brake)
+
+  def test_alt_brake_rx_hook(self):
+    self.safety.set_honda_alt_brake_msg(1)
+    self.safety.set_controls_allowed(1)
+    to_push = self._alt_brake_msg(0)
+    self.assertTrue(self._rx(to_push))
+    to_push[0].data[2] = to_push[0].data[2] & 0xF0  # invalidate checksum
+    self.assertFalse(self._rx(to_push))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+
 class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
   """
     Covers the Honda Bosch safety mode with stock longitudinal
@@ -449,6 +491,12 @@ class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
     super().setUp()
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, 0)
     self.safety.init_tests()
+
+
+class TestHondaBoschAltBrakeSafety(HondaPcmEnableBase, TestHondaBoschAltBrakeSafetyBase):
+  """
+    Covers the Honda Bosch safety mode with stock longitudinal and an alternate brake message
+  """
 
 
 class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
@@ -463,6 +511,8 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
   STEER_BUS = 1
   TX_MSGS = [[0xE4, 1], [0x1DF, 1], [0x1EF, 1], [0x1FA, 1], [0x30C, 1], [0x33D, 1], [0x33DA, 1], [0x33DB, 1], [0x39F, 1], [0x18DAB0F1, 1]]
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB]}
+  # 0x1DF is to test that radar is disabled
+  RELAY_MALFUNCTION_ADDRS = {0: (0xE4, 0x194), 1: (0x1DF,)}  # STEERING_CONTROL, ACC_CONTROL
 
   def setUp(self):
     super().setUp()
@@ -487,12 +537,6 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
 
     not_tester_present = libpanda_py.make_CANPacket(0x18DAB0F1, self.PT_BUS, b"\x03\xAA\xAA\x00\x00\x00\x00\x00")
     self.assertFalse(self._tx(not_tester_present))
-
-  def test_radar_alive(self):
-    # If the radar knockout failed, make sure the relay malfunction is shown
-    self.assertFalse(self.safety.get_relay_malfunction())
-    self._rx(make_msg(self.PT_BUS, 0x1DF, 8))
-    self.assertTrue(self.safety.get_relay_malfunction())
 
   def test_gas_safety_check(self):
     for controls_allowed in [True, False]:
@@ -533,6 +577,17 @@ class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschRadarlessS
   def setUp(self):
     super().setUp()
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS)
+    self.safety.init_tests()
+
+
+class TestHondaBoschRadarlessAltBrakeSafety(HondaPcmEnableBase, TestHondaBoschRadarlessSafetyBase, TestHondaBoschAltBrakeSafetyBase):
+  """
+    Covers the Honda Bosch Radarless safety mode with stock longitudinal and an alternate brake message
+  """
+
+  def setUp(self):
+    super().setUp()
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS | Panda.FLAG_HONDA_ALT_BRAKE)
     self.safety.init_tests()
 
 

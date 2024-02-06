@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa
 
 import binascii
 from panda import Panda
@@ -16,7 +15,8 @@ def tesla_tester():
   print("Setting Panda to output mode...")
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
-  # BDY 0x248 is the MCU_commands message, which includes folding mirrors, opening the trunk, frunk, setting the cars lock state and more. For our test, we will edit the 3rd byte, which is MCU_lockRequest. 0x01 will lock, 0x02 will unlock:
+  # BDY 0x248 is the MCU_commands message, which includes folding mirrors, opening the trunk, frunk, setting the cars lock state and more.
+  # For our test, we will edit the 3rd byte, which is MCU_lockRequest. 0x01 will lock, 0x02 will unlock:
   print("Unlocking Tesla...")
   p.can_send(0x248, b"\x00\x00\x02\x00\x00\x00\x00\x00", body_bus_num)
 

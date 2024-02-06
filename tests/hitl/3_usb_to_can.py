@@ -1,4 +1,3 @@
-import sys
 import time
 import pytest
 from flaky import flaky
@@ -60,9 +59,6 @@ def test_reliability(p):
     et = (time.monotonic() - st) * 1000.0
     assert et < 20
 
-    sys.stdout.write("P")
-    sys.stdout.flush()
-
 @flaky(max_runs=6, min_passes=1)
 def test_throughput(p):
   # enable output mode
@@ -89,10 +85,6 @@ def test_throughput(p):
 def test_gmlan(p):
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
   p.set_can_loopback(True)
-
-  p.set_can_speed_kbps(1, SPEED_NORMAL)
-  p.set_can_speed_kbps(2, SPEED_NORMAL)
-  p.set_can_speed_kbps(3, SPEED_GMLAN)
 
   # set gmlan on CAN2
   for bus in [Panda.GMLAN_CAN2, Panda.GMLAN_CAN3, Panda.GMLAN_CAN2, Panda.GMLAN_CAN3]:

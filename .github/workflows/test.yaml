@@ -1,5 +1,10 @@
 name: tests
-on: [push, pull_request]
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref != 'refs/heads/master' && github.ref || github.run_id }}-${{ github.event_name }}
@@ -7,7 +12,6 @@ concurrency:
 
 env:
   RUN: docker run -v ${{ github.workspace }}:/tmp/openpilot/panda -w /tmp/openpilot/panda --rm panda /bin/bash -c
-  PERSIST: docker run -v ${{ github.workspace }}:/tmp/openpilot/panda -w /tmp/openpilot/panda --name panda panda /bin/bash -c
   BUILD: |
       export DOCKER_BUILDKIT=1
       docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile .
@@ -48,6 +52,8 @@ jobs:
         run: ${{ env.RUN }} "ENABLE_SPI=1 scons -j4"
       - name: Build with UBSan
         run: ${{ env.RUN }} "scons -j4 --ubsan"
+      - name: Build jungle firmware with FINAL_PROVISIONING support
+        run: ${{ env.RUN }} "FINAL_PROVISIONING=1 scons -j4 board/jungle"
 
   unit_tests:
     name: unit tests
@@ -61,8 +67,6 @@ jobs:
         run: $RUN "scons -j4"
       - name: Test communication protocols
         run: $RUN "cd tests/usbprotocol && ./test.sh"
-      - name: Test logging
-        run: $RUN "cd tests/logging && ./test.sh"
 
   safety:
     name: safety
@@ -76,7 +80,7 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Run safety tests
-        timeout-minutes: 4
+        timeout-minutes: 5
         run: |
           ${{ env.RUN }} "cd .. && \
                           scons -c && \
@@ -85,48 +89,39 @@ jobs:
                           scons -j$(nproc) ${{ matrix.flags }} && \
                           tests/safety/test.sh"
 
-  safety_replay:
-    name: safety replay
+  safety_coverage:
+    name: safety coverage
     runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        flags: ['', '--ubsan']
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker image
         run: eval "$BUILD"
-      - name: Run safety replay
+      - name: Run safety coverage test
+        timeout-minutes: 5
         run: |
-          ${{ env.RUN }} "scons -j$(nproc) ${{ matrix.flags }} && \
-                          cd tests/safety_replay && \
-                          ./test_safety_replay.py"
+          ${{ env.RUN }} "cd .. && \
+                          scons -c && \
+                          scons -j$(nproc) opendbc/ cereal/ && \
+                          cd panda/tests/safety && \
+                          ./test_coverage.sh"
 
   misra:
-    name: misra c2012
+    name: MISRA C:2012
     runs-on: ubuntu-20.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker image
         run: eval "$BUILD"
-      - name: Run Misra C 2012 analysis
-        timeout-minutes: 4
-        run: ${{ env.PERSIST }} "cd tests/misra && ./test_misra.sh"
-      - name: Copy analysis outputs
-        run: docker cp panda:/tmp/misra /tmp
-      - uses: actions/upload-artifact@v2
-        if: always()
-        with:
-          name: cppcheck_output
-          path: /tmp/misra/cppcheck_*_output.txt
-      - uses: actions/upload-artifact@v2
-        if: always()
-        with:
-          name: misra_output
-          path: /tmp/misra/misra_*_output.txt
-      - run: docker rm panda
-        if: always()
+      - name: Build FW
+        run: ${{ env.RUN }} "scons -j$(nproc)"
+      - name: Run MISRA C:2012 analysis
+        timeout-minutes: 1
+        run: ${{ env.RUN }} "cd tests/misra && ./test_misra.sh"
+      - name: MISRA mutation tests
+        timeout-minutes: 3
+        run: ${{ env.RUN }} "cd tests/misra && ./test_mutation.py"
 
   python_linter:
     name: python linter
@@ -139,5 +134,3 @@ jobs:
       - name: Run static analysis
         timeout-minutes: 3
         run: ${{ env.RUN }} "pre-commit run --all"
-
-

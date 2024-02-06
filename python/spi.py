@@ -17,10 +17,8 @@ from .utils import crc8_pedal
 
 try:
   import spidev
-  import spidev2
 except ImportError:
   spidev = None
-  spidev2 = None
 
 # Constants
 SYNC = 0x5A
@@ -32,7 +30,7 @@ CHECKSUM_START = 0xAB
 MIN_ACK_TIMEOUT_MS = 100
 MAX_XFER_RETRY_COUNT = 5
 
-XFER_SIZE = 1000
+XFER_SIZE = 0x40*31
 
 DEV_PATH = "/dev/spidev0.0"
 
@@ -113,7 +111,7 @@ class PandaSpiHandle(BaseHandle):
   A class that mimics a libusb1 handle for panda SPI communications.
   """
 
-  PROTOCOL_VERSION = 1
+  PROTOCOL_VERSION = 2
 
   def __init__(self) -> None:
     self.dev = SpiDevice()
@@ -164,7 +162,6 @@ class PandaSpiHandle(BaseHandle):
     logging.debug("- waiting for header ACK")
     self._wait_for_ack(spi, HACK, MIN_ACK_TIMEOUT_MS, 0x11)
 
-    # send data
     logging.debug("- sending data")
     packet = bytes([*data, self._calc_checksum(data)])
     spi.xfer2(packet)
@@ -187,6 +184,7 @@ class PandaSpiHandle(BaseHandle):
       if remaining > 0:
         dat += bytes(spi.readbytes(remaining))
 
+
       dat = dat[:3 + response_len + 1]
       if self._calc_checksum(dat) != 0:
         raise PandaSpiBadChecksum
@@ -194,6 +192,7 @@ class PandaSpiHandle(BaseHandle):
       return dat[3:-1]
 
   def _transfer_kernel_driver(self, spi, endpoint: int, data, timeout: int, max_rx_len: int = 1000, expect_disconnect: bool = False) -> bytes:
+    import spidev2
     self.tx_buf[:len(data)] = data
     self.ioctl_data.endpoint = endpoint
     self.ioctl_data.tx_length = len(data)
@@ -216,7 +215,7 @@ class PandaSpiHandle(BaseHandle):
     n = 0
     start_time = time.monotonic()
     exc = PandaSpiException()
-    while (time.monotonic() - start_time) < timeout*1e-3:
+    while (timeout == 0) or (time.monotonic() - start_time) < timeout*1e-3:
       n += 1
       logging.debug("\ntry #%d", n)
       with self.dev.acquire() as spi:
@@ -274,20 +273,19 @@ class PandaSpiHandle(BaseHandle):
   def controlRead(self, request_type: int, request: int, value: int, index: int, length: int, timeout: int = TIMEOUT):
     return self._transfer(0, struct.pack("<BHHH", request, value, index, length), timeout, max_rx_len=length)
 
-  # TODO: implement these properly
-  def bulkWrite(self, endpoint: int, data: List[int], timeout: int = TIMEOUT) -> int:
+  def bulkWrite(self, endpoint: int, data: bytes, timeout: int = TIMEOUT) -> int:
     for x in range(math.ceil(len(data) / XFER_SIZE)):
       self._transfer(endpoint, data[XFER_SIZE*x:XFER_SIZE*(x+1)], timeout)
     return len(data)
 
   def bulkRead(self, endpoint: int, length: int, timeout: int = TIMEOUT) -> bytes:
-    ret: List[int] = []
+    ret = b""
     for _ in range(math.ceil(length / XFER_SIZE)):
       d = self._transfer(endpoint, [], timeout, max_rx_len=XFER_SIZE)
       ret += d
       if len(d) < XFER_SIZE:
         break
-    return bytes(ret)
+    return ret
 
 
 class STBootloaderSPIHandle(BaseSTBootloaderHandle):
@@ -315,7 +313,7 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
 
       self._mcu_type = MCU_TYPE_BY_IDCODE[self.get_chip_id()]
     except PandaSpiException:
-      raise PandaSpiException("failed to connect to panda")  # pylint: disable=W0707
+      raise PandaSpiException("failed to connect to panda") from None
 
   def _get_ack(self, spi, timeout=1.0):
     data = 0x00
@@ -404,12 +402,6 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
 
   # *** PandaDFU API ***
 
-  def erase_app(self):
-    self.erase_sector(1)
-
-  def erase_bootstub(self):
-    self.erase_sector(0)
-
   def get_mcu_type(self):
     return self._mcu_type
 
@@ -422,7 +414,7 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
   def program(self, address, dat):
     bs = 256  # max block size for writing to flash over SPI
     dat += b"\xFF" * ((bs - len(dat)) % bs)
-    for i in range(0, len(dat) // bs):
+    for i in range(len(dat) // bs):
       block = dat[i * bs:(i + 1) * bs]
       self._cmd(0x31, data=[
         struct.pack('>I', address + i*bs),
