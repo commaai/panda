@@ -598,7 +598,7 @@ class UdsClient():
       req += data
 
     # send request, wait for response
-    max_len = 8 if self.sub_addr is None else 7
+    max_tx_len = 8 if self.sub_addr is None else 7
     isotp_msg = IsoTpMessage(self._can_client, timeout=self.timeout, debug=self.debug, max_tx_len=max_tx_len)
     isotp_msg.send(req)
     response_pending = False
