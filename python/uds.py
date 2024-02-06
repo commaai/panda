@@ -488,18 +488,10 @@ class IsoTpMessage():
       return ISOTP_FRAME_TYPE.SINGLE
 
     elif rx_data[0] >> 4 == ISOTP_FRAME_TYPE.FIRST:
+      # should work with CAN FD. maybe a check for max 62 bytes from the spec?
       self.rx_len = ((rx_data[0] & 0x0F) << 8) + rx_data[1]
-      # Messages larger than 4,095 bytes shall use an escape sequence where the lower nibble of Byte #1 and all bits in Byte #2
-      # are set to 0 (invalid length).
-      # This signifies to the network layer that the value of FF_DL is determined based on the next
-      # 32 bits in the frame (Byte #3 is the MSB and Byte #6 the LSB).
-      offset = 2
-      if self.rx_len == 0 and len(rx_data) > 8:
-        self.rx_len = (rx_data[2] << 24) + (rx_data[3] << 16) + (rx_data[4] << 8) + rx_data[5]
-        offset = 6
-
       assert self.max_len <= self.rx_len, f"isotp - rx: invalid first frame length: {self.rx_len}"
-      self.rx_dat = rx_data[offset:]
+      self.rx_dat = rx_data[2:]
       self.rx_idx = 0
       self.rx_done = False
       if self.debug:
