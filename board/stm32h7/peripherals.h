@@ -70,14 +70,12 @@ void common_init_gpio(void) {
   set_gpio_pullup(GPIOB, 6, PULL_NONE);
   set_gpio_alternate(GPIOB, 6, GPIO_AF9_FDCAN2);
 
-  /*
   // G9,G10: FDCAN3
   set_gpio_pullup(GPIOG, 9, PULL_NONE);
   set_gpio_alternate(GPIOG, 9, GPIO_AF2_FDCAN3);
 
   set_gpio_pullup(GPIOG, 10, PULL_NONE);
   set_gpio_alternate(GPIOG, 10, GPIO_AF2_FDCAN3);
-  */
 }
 
 void flasher_peripherals_init(void) {

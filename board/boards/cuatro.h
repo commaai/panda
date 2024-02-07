@@ -18,7 +18,6 @@ void cuatro_set_led(uint8_t color, bool enabled) {
   }
 }
 
-
 void cuatro_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver) {
     case 1U:
@@ -54,14 +53,10 @@ void cuatro_init(void) {
   // CAN transceiver enables
   set_gpio_pullup(GPIOB, 7, PULL_NONE);
   set_gpio_mode(GPIOB, 7, MODE_OUTPUT);
-  set_gpio_pullup(GPIOB, 10, PULL_NONE);
-  set_gpio_mode(GPIOB, 10, MODE_OUTPUT);
   set_gpio_pullup(GPIOD, 8, PULL_NONE);
   set_gpio_mode(GPIOD, 8, MODE_OUTPUT);
-  set_gpio_pullup(GPIOB, 11, PULL_NONE);
-  set_gpio_mode(GPIOB, 11, MODE_OUTPUT);
 
-  // FDCAN3 - it's on different pins on this package than the rest of the reds
+  // FDCAN3, different pins on this package than the rest of the reds
   set_gpio_pullup(GPIOD, 12, PULL_NONE);
   set_gpio_alternate(GPIOD, 12, GPIO_AF5_FDCAN3);
   set_gpio_pullup(GPIOD, 13, PULL_NONE);
