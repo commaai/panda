@@ -32,6 +32,8 @@ void cuatro_enable_can_transceiver(uint8_t transceiver, bool enabled) {
     case 4U:
       set_gpio_output(GPIOB, 11, !enabled);
       break;
+    default:
+      break;
   }
 }
 
