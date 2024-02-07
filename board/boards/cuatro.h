@@ -63,9 +63,9 @@ void cuatro_init(void) {
 
   // FDCAN3 - it's on different pins on this package than the rest of the reds
   set_gpio_pullup(GPIOD, 12, PULL_NONE);
-  set_gpio_alternate(GPIOD, 12, GPIO_AF2_FDCAN3);
+  set_gpio_alternate(GPIOD, 12, GPIO_AF5_FDCAN3);
   set_gpio_pullup(GPIOD, 13, PULL_NONE);
-  set_gpio_alternate(GPIOD, 13, GPIO_AF2_FDCAN3);
+  set_gpio_alternate(GPIOD, 13, GPIO_AF5_FDCAN3);
 
   // C2: SOM GPIO used as input (fan control at boot)
   set_gpio_mode(GPIOC, 2, MODE_INPUT);
