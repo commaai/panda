@@ -28,7 +28,7 @@ int get_health_pkt(void *dat) {
   health->alternative_experience_pkt = alternative_experience;
   health->power_save_enabled_pkt = power_save_status == POWER_SAVE_STATUS_ENABLED;
   health->heartbeat_lost_pkt = heartbeat_lost;
-  health->safety_rx_chks_invalid = safety_rx_checks_invalid;
+  health->safety_rx_checks_invalid_pkt = safety_rx_checks_invalid;
 
   health->spi_checksum_error_count_pkt = spi_checksum_error_count;
 
