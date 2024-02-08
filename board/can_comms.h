@@ -68,7 +68,7 @@ void comms_can_write(const uint8_t *data, uint32_t len) {
       can_write_buffer.ptr += can_write_buffer.tail_size;
       pos += can_write_buffer.tail_size;
 
-      void *addr= &to_push;
+      void *addr = &to_push;
       // send out
       (void)memcpy(addr, can_write_buffer.data, can_write_buffer.ptr);
       can_send(&to_push, to_push.bus, false);
