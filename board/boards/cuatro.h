@@ -75,7 +75,11 @@ static void cuatro_set_siren(bool enabled){
   beeper_enable(enabled);
 }
 
-static void cuatro_init(void) {
+void cuatro_sound_enable(bool enabled) {
+  set_gpio_output(GPIOA, 5, enabled);
+}
+
+void cuatro_init(void) {
   red_chiplet_init();
 
   // init LEDs as open drain
@@ -128,6 +132,10 @@ static void cuatro_init(void) {
   // Beeper
   set_gpio_alternate(GPIOD, 14, GPIO_AF2_TIM4);
   beeper_init();
+
+  // Sound codec
+  sound_init();
+  set_gpio_output(GPIOA, 5, true);
 }
 
 board board_cuatro = {
