@@ -28,6 +28,9 @@ if [ -z "${SKIP_BUILD}" ]; then
   scons -j8
 fi
 
+# remove cache if it exists
+rm -rf "/tmp/cppcheck_build"
+
 cppcheck() {
   hashed_args=$(echo -n "$@$DIR" | md5sum | awk '{print $1}')
   build_dir=/tmp/cppcheck_build/$hashed_args
