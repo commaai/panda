@@ -40,7 +40,7 @@ uint8_t spi_state = SPI_STATE_HEADER;
 uint8_t spi_endpoint;
 uint16_t spi_data_len_mosi;
 uint16_t spi_data_len_miso;
-uint16_t spi_checksum_err_count = 0;
+uint16_t spi_checksum_error_count = 0;
 bool spi_can_tx_ready = false;
 
 const char version_text[] = "VERSION";
@@ -232,8 +232,8 @@ void spi_rx_done(void) {
   llspi_miso_dma(spi_buf_tx, response_len);
 
   spi_state = next_rx_state;
-  if (!checksum_valid && (spi_checksum_err_count < __UINT16_MAX__)) {
-    spi_checksum_err_count += 1U;
+  if (!checksum_valid && (spi_checksum_error_count < __UINT16_MAX__)) {
+    spi_checksum_error_count += 1U;
   }
 }
 

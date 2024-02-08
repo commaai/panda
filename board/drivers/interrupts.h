@@ -32,7 +32,7 @@ uint8_t interrupt_depth = 0U;
 uint32_t last_time = 0U;
 uint32_t idle_time = 0U;
 uint32_t busy_time = 0U;
-float intr_load = 0.0f;
+float interrupt_load = 0.0f;
 
 void handle_interrupt(IRQn_Type irq_type){
   ENTER_CRITICAL();
@@ -79,7 +79,7 @@ void interrupt_timer_handler(void) {
     // Calculate interrupt load
     // The bootstub does not have the FPU enabled, so can't do float operations.
 #if !defined(PEDAL) && !defined(BOOTSTUB)
-    intr_load = ((busy_time + idle_time) > 0U) ? ((float) busy_time) / (busy_time + idle_time) : 0.0f;
+    interrupt_load = ((busy_time + idle_time) > 0U) ? ((float) busy_time) / (busy_time + idle_time) : 0.0f;
 #endif
     idle_time = 0U;
     busy_time = 0U;

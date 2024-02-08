@@ -9,6 +9,7 @@ if [ ! -d "$CPPCHECK_DIR" ]; then
 fi
 
 cd $CPPCHECK_DIR
+# 2.13.0 plus some fixes
 VERS="f6b538e855f0bacea33c4074664628024ef39dc6"
 git fetch --all
 git checkout $VERS
