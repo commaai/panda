@@ -21,10 +21,10 @@ struct __attribute__((packed)) health_t {
   uint8_t power_save_enabled_pkt;
   uint8_t heartbeat_lost_pkt;
   uint16_t alternative_experience_pkt;
-  float interrupt_load;
+  float interrupt_load_pkt;
   uint8_t fan_power;
-  uint8_t safety_rx_checks_invalid;
-  uint16_t spi_checksum_error_count;
+  uint8_t safety_rx_checks_invalid_pkt;
+  uint16_t spi_checksum_error_count_pkt;
   uint8_t fan_stall_count;
   uint16_t sbu1_voltage_mV;
   uint16_t sbu2_voltage_mV;
