@@ -1,3 +1,6 @@
+// ///////////////////////// //
+// Jungle board v1 (STM32F4) //
+// ///////////////////////// //
 
 void board_v1_set_led(uint8_t color, bool enabled) {
   switch (color) {

@@ -1,6 +1,6 @@
-// ///////////// //
-// Uno + Harness //
-// ///////////// //
+// /////////////////////// //
+// Uno (STM32F4) + Harness //
+// /////////////////////// //
 
 void uno_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver){
@@ -161,7 +161,7 @@ void uno_init(void) {
   // Set normal CAN mode
   uno_set_can_mode(CAN_MODE_NORMAL);
 
-  // flip CAN0 and CAN2 if we are flipped
+  // change CAN mapping when flipped
   if (harness.status == HARNESS_STATUS_FLIPPED) {
     can_flip_buses(0, 2);
   }
