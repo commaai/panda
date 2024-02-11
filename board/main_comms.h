@@ -28,14 +28,14 @@ int get_health_pkt(void *dat) {
   health->alternative_experience_pkt = alternative_experience;
   health->power_save_enabled_pkt = power_save_status == POWER_SAVE_STATUS_ENABLED;
   health->heartbeat_lost_pkt = heartbeat_lost;
-  health->safety_rx_checks_invalid = safety_rx_checks_invalid;
+  health->safety_rx_checks_invalid_pkt = safety_rx_checks_invalid;
 
-  health->spi_checksum_error_count = spi_checksum_error_count;
+  health->spi_checksum_error_count_pkt = spi_checksum_error_count;
 
   health->fault_status_pkt = fault_status;
   health->faults_pkt = faults;
 
-  health->interrupt_load = interrupt_load;
+  health->interrupt_load_pkt = interrupt_load;
 
   health->fan_power = fan_state.power;
   health->fan_stall_count = fan_state.total_stall_count;

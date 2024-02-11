@@ -277,10 +277,10 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
   }
 }
 
-bool is_speed_valid(uint32_t speed, const uint32_t *speeds, uint8_t len) {
+bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len) {
   bool ret = false;
   for (uint8_t i = 0U; i < len; i++) {
-    if (speeds[i] == speed) {
+    if (all_speeds[i] == speed) {
       ret = true;
     }
   }
