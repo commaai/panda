@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 
-import os
-import sys
 import time
 
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-from panda import Panda  # noqa: E402
+from panda import Panda
 
 WHITE_GMLAN_BUS = 3
 OTHER_GMLAN_BUS = 1

@@ -9,34 +9,41 @@ int get_health_pkt(void *dat) {
   struct health_t * health = (struct health_t*)dat;
 
   health->uptime_pkt = uptime_cnt;
-  health->voltage_pkt = adc_get_voltage(current_board->adc_scale);
+  health->voltage_pkt = adc_get_mV(ADCCHAN_VIN) * VIN_READOUT_DIVIDER;
   health->current_pkt = current_board->read_current();
 
-  //Use the GPIO pin to determine ignition or use a CAN based logic
+  // Use the GPIO pin to determine ignition or use a CAN based logic
   health->ignition_line_pkt = (uint8_t)(current_board->check_ignition());
-  health->ignition_can_pkt = (uint8_t)(ignition_can);
+  health->ignition_can_pkt = ignition_can;
 
   health->controls_allowed_pkt = controls_allowed;
-  health->gas_interceptor_detected_pkt = gas_interceptor_detected;
   health->safety_tx_blocked_pkt = safety_tx_blocked;
   health->safety_rx_invalid_pkt = safety_rx_invalid;
   health->tx_buffer_overflow_pkt = tx_buffer_overflow;
   health->rx_buffer_overflow_pkt = rx_buffer_overflow;
   health->gmlan_send_errs_pkt = gmlan_send_errs;
-  health->car_harness_status_pkt = car_harness_status;
+  health->car_harness_status_pkt = harness.status;
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
   health->safety_param_pkt = current_safety_param;
   health->alternative_experience_pkt = alternative_experience;
-  health->power_save_enabled_pkt = (uint8_t)(power_save_status == POWER_SAVE_STATUS_ENABLED);
-  health->heartbeat_lost_pkt = (uint8_t)(heartbeat_lost);
-  health->safety_rx_checks_invalid = safety_rx_checks_invalid;
+  health->power_save_enabled_pkt = power_save_status == POWER_SAVE_STATUS_ENABLED;
+  health->heartbeat_lost_pkt = heartbeat_lost;
+  health->safety_rx_checks_invalid_pkt = safety_rx_checks_invalid;
+
+  health->spi_checksum_error_count_pkt = spi_checksum_error_count;
 
   health->fault_status_pkt = fault_status;
   health->faults_pkt = faults;
 
-  health->interrupt_load = interrupt_load;
+  health->interrupt_load_pkt = interrupt_load;
 
   health->fan_power = fan_state.power;
+  health->fan_stall_count = fan_state.total_stall_count;
+
+  health->sbu1_voltage_mV = harness.sbu1_voltage_mV;
+  health->sbu2_voltage_mV = harness.sbu2_voltage_mV;
+
+  health->som_reset_triggered = bootkick_reset_triggered;
 
   return sizeof(*health);
 }
@@ -48,12 +55,12 @@ int get_rtc_pkt(void *dat) {
 }
 
 // send on serial, first byte to select the ring
-void comms_endpoint2_write(uint8_t *data, uint32_t len) {
+void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   uart_ring *ur = get_ring_by_number(data[0]);
   if ((len != 0U) && (ur != NULL)) {
-    if ((data[0] < 2U) || (data[0] >= 4U) || safety_tx_lin_hook(data[0] - 2U, &data[1], len - 1U)) {
+    if ((data[0] < 2U) || (data[0] >= 4U)) {
       for (uint32_t i = 1; i < len; i++) {
-        while (!putc(ur, data[i])) {
+        while (!put_char(ur, data[i])) {
           // wait
         }
       }
@@ -144,10 +151,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       resp[1] = ((fan_state.rpm & 0xFF00U) >> 8U);
       resp_len = 2;
       break;
-    // **** 0xb3: set phone power
-    case 0xb3:
-      current_board->set_phone_power(req->param1 > 0U);
-      break;
     // **** 0xc0: reset communications
     case 0xc0:
       comms_can_reset();
@@ -161,6 +164,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xc2:
       COMPILE_TIME_ASSERT(sizeof(can_health_t) <= USBPACKET_MAX_SIZE);
       if (req->param1 < 3U) {
+        update_can_health_pkt(req->param1, 0U);
         can_health[req->param1].can_speed = (bus_config[req->param1].can_speed / 10U);
         can_health[req->param1].can_data_speed = (bus_config[req->param1].can_data_speed / 10U);
         can_health[req->param1].canfd_enabled = bus_config[req->param1].canfd_enabled;
@@ -174,6 +178,26 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xc3:
       (void)memcpy(resp, ((uint8_t *)UID_BASE), 12);
       resp_len = 12;
+      break;
+    // **** 0xc4: get interrupt call rate
+    case 0xc4:
+      if (req->param1 < NUM_INTERRUPTS) {
+        uint32_t load = interrupts[req->param1].call_rate;
+        resp[0] = (load & 0x000000FFU);
+        resp[1] = ((load & 0x0000FF00U) >> 8U);
+        resp[2] = ((load & 0x00FF0000U) >> 16U);
+        resp[3] = ((load & 0xFF000000U) >> 24U);
+        resp_len = 4U;
+      }
+      break;
+    // **** 0xc5: DEBUG: drive relay
+    case 0xc5:
+      set_intercept_relay((req->param1 & 0x1U), (req->param1 & 0x2U));
+      break;
+    // **** 0xc6: DEBUG: read SOM GPIO
+    case 0xc6:
+      resp[0] = current_board->read_som_gpio();
+      resp_len = 1;
       break;
     // **** 0xd0: fetch serial (aka the provisioned dongle ID)
     case 0xd0:
@@ -240,28 +264,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xd8:
       NVIC_SystemReset();
       break;
-    // **** 0xd9: set ESP power
-    case 0xd9:
-      if (req->param1 == 1U) {
-        current_board->set_gps_mode(GPS_ENABLED);
-      } else if (req->param1 == 2U) {
-        current_board->set_gps_mode(GPS_BOOTMODE);
-      } else {
-        current_board->set_gps_mode(GPS_DISABLED);
-      }
-      break;
-    // **** 0xda: reset ESP, with optional boot mode
-    case 0xda:
-      current_board->set_gps_mode(GPS_DISABLED);
-      delay(1000000);
-      if (req->param1 == 1U) {
-        current_board->set_gps_mode(GPS_BOOTMODE);
-      } else {
-        current_board->set_gps_mode(GPS_ENABLED);
-      }
-      delay(1000000);
-      current_board->set_gps_mode(GPS_ENABLED);
-      break;
     // **** 0xdb: set GMLAN (white/grey) or OBD CAN (black) multiplexing mode
     case 0xdb:
       if(current_board->has_obd){
@@ -271,19 +273,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         } else {
           // Disable OBD CAN
           current_board->set_can_mode(CAN_MODE_NORMAL);
-        }
-      } else {
-        if (req->param1 == 1U) {
-          // GMLAN ON
-          if (req->param2 == 1U) {
-            can_set_gmlan(1);
-          } else if (req->param2 == 2U) {
-            can_set_gmlan(2);
-          } else {
-            print("Invalid bus num for GMLAN CAN set\n");
-          }
-        } else {
-          can_set_gmlan(-1);
         }
       }
       break;
@@ -321,14 +310,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         break;
       }
 
-      // TODO: Remove this again and fix boardd code to hande the message bursts instead of single chars
-      if (ur == &uart_ring_gps) {
-        dma_pointer_handler(ur, DMA2_Stream5->NDTR);
-      }
-
       // read
-      while ((resp_len < MIN(req->length, USBPACKET_MAX_SIZE)) &&
-                         getc(ur, (char*)&resp[resp_len])) {
+      uint16_t req_length = MIN(req->length, USBPACKET_MAX_SIZE);
+      while ((resp_len < req_length) &&
+                         get_char(ur, (char*)&resp[resp_len])) {
         ++resp_len;
       }
       break;
@@ -378,19 +363,13 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       can_loopback = (req->param1 > 0U);
       can_init_all();
       break;
+    // **** 0xe6: set custom clock source period
+    case 0xe6:
+      clock_source_set_period(req->param1);
+      break;
     // **** 0xe7: set power save state
     case 0xe7:
       set_power_save_state(req->param1);
-      break;
-    // **** 0xf0: k-line/l-line wake-up pulse for KWP2000 fast initialization
-    case 0xf0:
-      if(current_board->has_lin) {
-        bool k = (req->param1 == 0U) || (req->param1 == 2U);
-        bool l = (req->param1 == 1U) || (req->param1 == 2U);
-        if (bitbang_wakeup(k, l)) {
-          resp_len = -1; // do not clear NAK yet (wait for bit banging to finish)
-        }
-      }
       break;
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:
@@ -423,17 +402,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         heartbeat_engaged = (req->param1 == 1U);
         break;
       }
-    // **** 0xf4: k-line/l-line 5 baud initialization
-    case 0xf4:
-      if(current_board->has_lin) {
-        bool k = (req->param1 == 0U) || (req->param1 == 2U);
-        bool l = (req->param1 == 1U) || (req->param1 == 2U);
-        uint8_t five_baud_addr = (req->param2 & 0xFFU);
-        if (bitbang_five_baud_addr(k, l, five_baud_addr)) {
-          resp_len = -1; // do not clear NAK yet (wait for bit banging to finish)
-        }
-      }
-      break;
     // **** 0xf6: set siren enabled
     case 0xf6:
       siren_enabled = (req->param1 != 0U);

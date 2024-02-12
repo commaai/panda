@@ -2,6 +2,22 @@
 import csv
 import sys
 
+CSV_KEYS = {
+  "logger": {
+    "time": "Time",
+    "message_id": "MessageID",
+    "data": "Message",
+    "bus": "Bus"
+  },
+  "cabana": {
+    "time": "time",
+    "message_id": "addr",
+    "data": "data",
+    "bus": "bus"
+  }
+}
+
+
 class Message():
   """Details about a specific message ID."""
 
@@ -29,27 +45,34 @@ class Info():
 
   def load(self, filename, start, end):
     """Given a CSV file, adds information about message IDs and their values."""
-    with open(filename, 'rb') as inp:
-      reader = csv.reader(inp)
-      next(reader, None)  # skip the CSV header
+    with open(filename, newline='') as inp:
+      reader = csv.DictReader(inp)
+      dtype = None
       for row in reader:
         if not len(row):
           continue
-        time = float(row[0])
-        bus = int(row[2])
+        if dtype is None:
+          dtype = "logger" if "Bus" in row else "cabana"
+
+        time = float(row[CSV_KEYS[dtype]["time"]])
+        bus = int(row[CSV_KEYS[dtype]["bus"]])
         if time < start or bus > 127:
           continue
         elif time > end:
           break
-        if row[1].startswith('0x'):
-          message_id = row[1][2:]  # remove leading '0x'
+
+        message_id = row[CSV_KEYS[dtype]["message_id"]]
+        if message_id.startswith('0x'):
+          message_id = message_id[2:]  # remove leading '0x'
         else:
-          message_id = hex(int(row[1]))[2:]  # old message IDs are in decimal
+          message_id = hex(int(message_id))[2:]  # old message IDs are in decimal
         message_id = '%s:%s' % (bus, message_id)
-        if row[3].startswith('0x'):
-          data = row[3][2:]  # remove leading '0x'
+
+        data = row[CSV_KEYS[dtype]["data"]]
+        if data.startswith('0x'):
+          data = data[2:]  # remove leading '0x'
         else:
-          data = row[3]
+          data = data
         new_message = False
         if message_id not in self.messages:
           self.messages[message_id] = Message(message_id)
@@ -74,7 +97,7 @@ def PrintUnique(log_file, low_range, high_range):
   high.load(log_file, start, end)
   # print messages that go from low to high
   found = False
-  for message_id in sorted(high.messages):
+  for message_id in sorted(high.messages, key=lambda x: int(x.split(':')[1], 16)):
     if message_id in low.messages:
       high.messages[message_id].printBitDiff(low.messages[message_id])
       found = True

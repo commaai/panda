@@ -33,6 +33,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     python \
     python-dev \
+    qt5-default \
     unzip \
     wget \
     zlib1g-dev \
@@ -50,12 +51,12 @@ RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-instal
 ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
 
 ENV PANDA_PATH=/tmp/openpilot/panda
-ENV OPENPILOT_REF="ee0dd36a3c775dbd82493c84f4e7272c1eb3fcbd"
-ENV OPENDBC_REF="f369228e047a8069ccfd7c713277a8809a21f83b"
+ENV OPENPILOT_REF="5690386d8d731c9bebda536a5c71c890f6dfe98c"
+ENV OPENDBC_REF="40d9c723d48496229fecc436046538a53af19c11"
 
 COPY requirements.txt /tmp/
-RUN pyenv install 3.8.10 && \
-    pyenv global 3.8.10 && \
+RUN pyenv install 3.11.4 && \
+    pyenv global 3.11.4 && \
     pyenv rehash && \
     pip install --no-cache-dir -r /tmp/requirements.txt
 
@@ -69,23 +70,17 @@ RUN cd /tmp && \
     cd /tmp/tmppilot && \
     git fetch origin $OPENPILOT_REF && \
     git checkout $OPENPILOT_REF && \
-    git submodule update --init cereal opendbc rednose_repo && \
+    git submodule update --init cereal opendbc rednose_repo body && \
     git -C opendbc remote add jyoung8607 https://github.com/jyoung8607/opendbc.git && \
     git -C opendbc fetch jyoung8607 && \
+    git -C opendbc fetch && \
     git -C opendbc checkout $OPENDBC_REF && \
     git -C opendbc reset --hard HEAD && \
     git -C opendbc clean -xfd && \
     mkdir /tmp/openpilot && \
-    cp -pR SConstruct site_scons/ tools/ selfdrive/ system/ common/ cereal/ opendbc/ rednose/ third_party/ /tmp/openpilot && \
+    cp -pR SConstruct site_scons/ tools/ selfdrive/ system/ common/ cereal/ opendbc/ rednose/ third_party/ body/ /tmp/openpilot && \
     rm -rf /tmp/openpilot/panda && \
     rm -rf /tmp/tmppilot
-
-RUN cd /tmp/openpilot && \
-    git clone https://github.com/commaai/panda_jungle.git && \
-    cd panda_jungle && \
-    git fetch && \
-    git checkout 7b7197c605915ac34f3d62f314edd84e2e78a759 && \
-    rm -rf .git/
 
 RUN cd /tmp/openpilot && \
     pip install --no-cache-dir -r opendbc/requirements.txt && \

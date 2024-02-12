@@ -1,4 +1,6 @@
-uint8_t crc_checksum(uint8_t *dat, int len, const uint8_t poly) {
+#pragma once
+
+uint8_t crc_checksum(const uint8_t *dat, int len, const uint8_t poly) {
   uint8_t crc = 0xFFU;
   int i;
   int j;

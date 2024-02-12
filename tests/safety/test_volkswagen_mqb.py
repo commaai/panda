@@ -22,10 +22,9 @@ MSG_ACC_02 = 0x30C      # TX by OP, ACC HUD data to the instrument cluster
 MSG_LDW_02 = 0x397      # TX by OP, Lane line recognition and text alerts
 
 
-class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestVolkswagenMqbSafety(common.PandaCarSafetyTest, common.DriverTorqueSteeringSafetyTest):
   STANDSTILL_THRESHOLD = 0
-  RELAY_MALFUNCTION_ADDR = MSG_HCA_01
-  RELAY_MALFUNCTION_BUS = 0
+  RELAY_MALFUNCTION_ADDRS = {0: (MSG_HCA_01,)}
 
   MAX_RATE_UP = 4
   MAX_RATE_DOWN = 10
@@ -85,7 +84,7 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
 
   # openpilot steering output torque
   def _torque_cmd_msg(self, torque, steer_req=1):
-    values = {"Assist_Torque": abs(torque), "Assist_VZ": torque < 0}
+    values = {"HCA_01_LM_Offset": abs(torque), "HCA_01_LM_OffSign": torque < 0, "HCA_01_Sendestatus": steer_req}
     return self.packer.make_can_msg_panda("HCA_01", 0, values)
 
   # Cruise control buttons
@@ -137,8 +136,8 @@ class TestVolkswagenMqbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
 
 
 class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety):
-  TX_MSGS = [[MSG_HCA_01, 0], [MSG_LDW_02, 0], [MSG_GRA_ACC_01, 0], [MSG_GRA_ACC_01, 2]]
-  FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_01, MSG_LDW_02]}
+  TX_MSGS = [[MSG_HCA_01, 0], [MSG_LDW_02, 0], [MSG_LH_EPS_03, 2], [MSG_GRA_ACC_01, 0], [MSG_GRA_ACC_01, 2]]
+  FWD_BLACKLISTED_ADDRS = {0: [MSG_LH_EPS_03], 2: [MSG_HCA_01, MSG_LDW_02]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
@@ -158,8 +157,8 @@ class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety):
 
 
 class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
-  TX_MSGS = [[MSG_HCA_01, 0], [MSG_LDW_02, 0], [MSG_ACC_02, 0], [MSG_ACC_06, 0], [MSG_ACC_07, 0]]
-  FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_01, MSG_LDW_02, MSG_ACC_02, MSG_ACC_06, MSG_ACC_07]}
+  TX_MSGS = [[MSG_HCA_01, 0], [MSG_LDW_02, 0], [MSG_LH_EPS_03, 2], [MSG_ACC_02, 0], [MSG_ACC_06, 0], [MSG_ACC_07, 0]]
+  FWD_BLACKLISTED_ADDRS = {0: [MSG_LH_EPS_03], 2: [MSG_HCA_01, MSG_LDW_02, MSG_ACC_02, MSG_ACC_06, MSG_ACC_07]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   INACTIVE_ACCEL = 3.01
 
@@ -208,16 +207,18 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
 
   def test_accel_safety_check(self):
     for controls_allowed in [True, False]:
-      for accel in np.arange(MIN_ACCEL - 2, MAX_ACCEL + 2, 0.03):
+      # enforce we don't skip over 0 or inactive accel
+      for accel in np.concatenate((np.arange(MIN_ACCEL - 2, MAX_ACCEL + 2, 0.03), [0, self.INACTIVE_ACCEL])):
         accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
-        send = MIN_ACCEL <= accel <= MAX_ACCEL if controls_allowed else accel == self.INACTIVE_ACCEL
+        is_inactive_accel = accel == self.INACTIVE_ACCEL
+        send = (controls_allowed and MIN_ACCEL <= accel <= MAX_ACCEL) or is_inactive_accel
         self.safety.set_controls_allowed(controls_allowed)
         # primary accel request used by ECU
         self.assertEqual(send, self._tx(self._acc_06_msg(accel)), (controls_allowed, accel))
         # additional accel request used by ABS/ESP
         self.assertEqual(send, self._tx(self._acc_07_msg(accel)), (controls_allowed, accel))
-        # ensure the optional secondary accel field remains disabled for now
-        self.assertFalse(self._tx(self._acc_07_msg(accel, secondary_accel=accel)), (controls_allowed, accel))
+        # ensure the optional secondary accel field remains inactive for now
+        self.assertEqual(is_inactive_accel, self._tx(self._acc_07_msg(accel, secondary_accel=accel)), (controls_allowed, accel))
 
 
 if __name__ == "__main__":
