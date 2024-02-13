@@ -141,6 +141,13 @@ class TestVolkswagenMlbStockSafety(TestVolkswagenMlbSafety):
     self.safety.set_controls_allowed(1)
     self.assertTrue(self._tx(self._ls_01_msg(resume=1)))
 
+  def test_cancel_button(self):
+    # Disable on rising edge of cancel button
+    self._rx(self._tsk_status_msg(False, main_switch=True))
+    self.safety.set_controls_allowed(1)
+    self._rx(self._ls_01_msg(cancel=True, bus=0))
+    self.assertFalse(self.safety.get_controls_allowed(), "controls allowed after cancel")
+
 
 if __name__ == "__main__":
   unittest.main()
