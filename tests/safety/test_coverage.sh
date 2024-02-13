@@ -12,7 +12,7 @@ scons -j$(nproc) -D --coverage
 if [ "$1" == "--report" ]; then
   geninfo ../libpanda/ -o coverage.info
   genhtml coverage.info -o coverage-out
-  browse coverage-out/index.html
+  sensible-browser coverage-out/index.html
 fi
 
 # test coverage
