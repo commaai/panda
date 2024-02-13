@@ -32,6 +32,8 @@ class TestVolkswagenMlbSafety(common.PandaSafetyTest, common.DriverTorqueSteerin
   DRIVER_TORQUE_ALLOWANCE = 60
   DRIVER_TORQUE_FACTOR = 3
 
+  NO_STEER_REQ_BIT = True  # FIXME: check to see if this is correct
+
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "TestVolkswagenMlbSafety":

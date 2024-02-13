@@ -12,44 +12,30 @@ const SteeringLimits VOLKSWAGEN_MLB_STEERING_LIMITS = {
   .type = TorqueDriverLimited,
 };
 
-// longitudinal limits
-// acceleration in m/s2 * 1000 to avoid floating point math
-const LongitudinalLimits VOLKSWAGEN_MLB_LONG_LIMITS = {
-  .max_accel = 2000,
-  .min_accel = -3500,
-  .inactive_accel = 3010,  // VW sends one increment above the max range when inactive
-};
-
 // Transmit of LS_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
 const CanMsg VOLKSWAGEN_MLB_STOCK_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_LS_01, 0, 4}, {MSG_LS_01, 2, 4}, {MSG_LDW_02, 0, 8}};
 
-AddrCheckStruct volkswagen_mlb_addr_checks[] = {
-  {.msg = {{MSG_ESP_03, 0, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_LH_EPS_03, 0, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_ESP_05, 0, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_TSK_02, 0, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 30000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_MOTOR_03, 0, 8, .check_checksum = false, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}},
+RxCheck volkswagen_mlb_rx_checks[] = {
+  {.msg = {{MSG_ESP_03, 0, 8, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_LH_EPS_03, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_ESP_05, 0, 8, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_TSK_02, 0, 8, .check_checksum = false, .max_counter = 15U, .frequency = 33U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_MOTOR_03, 0, 8, .check_checksum = false, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
 };
-#define VOLKSWAGEN_MLB_ADDR_CHECKS_LEN (sizeof(volkswagen_mlb_addr_checks) / sizeof(volkswagen_mlb_addr_checks[0]))
-addr_checks volkswagen_mlb_rx_checks = {volkswagen_mlb_addr_checks, VOLKSWAGEN_MLB_ADDR_CHECKS_LEN};
 
 
-static const addr_checks* volkswagen_mlb_init(uint16_t param) {
+static safety_config volkswagen_mlb_init(uint16_t param) {
   UNUSED(param);
 
   volkswagen_brake_pedal_switch = false;
   volkswagen_brake_pressure_detected = false;
 
   gen_crc_lookup_table_8(0x2F, volkswagen_crc8_lut_8h2f);
-  return &volkswagen_mlb_rx_checks;
+  return BUILD_SAFETY_CFG(volkswagen_mlb_rx_checks, VOLKSWAGEN_MLB_STOCK_TX_MSGS);
 }
 
-static int volkswagen_mlb_rx_hook(CANPacket_t *to_push) {
-
-  bool valid = addr_safety_check(to_push, &volkswagen_mlb_rx_checks, volkswagen_mlb_mqb_get_checksum,
-                                 volkswagen_mlb_mqb_compute_checksum, volkswagen_mlb_mqb_get_counter, NULL);
-
-  if (valid && (GET_BUS(to_push) == 0U)) {
+static void volkswagen_mlb_rx_hook(const CANPacket_t *to_push) {
+  if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
 
     // Check all wheel speeds for any movement
@@ -106,14 +92,11 @@ static int volkswagen_mlb_rx_hook(CANPacket_t *to_push) {
 
     generic_rx_checks((addr == MSG_HCA_01));
   }
-  return valid;
 }
 
-static int volkswagen_mlb_tx_hook(CANPacket_t *to_send) {
+static bool volkswagen_mlb_tx_hook(const CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
-  int tx = 1;
-
-  tx = msg_allowed(to_send, VOLKSWAGEN_MLB_STOCK_TX_MSGS, sizeof(VOLKSWAGEN_MLB_STOCK_TX_MSGS) / sizeof(VOLKSWAGEN_MLB_STOCK_TX_MSGS[0]));
+  bool tx = true;
 
   // Safety check for HCA_01 Heading Control Assist torque
   // Signal: HCA_01.Assist_Torque (absolute torque)
@@ -126,7 +109,7 @@ static int volkswagen_mlb_tx_hook(CANPacket_t *to_send) {
     }
 
     if (steer_torque_cmd_checks(desired_torque, -1, VOLKSWAGEN_MLB_STEERING_LIMITS)) {
-      tx = 0;
+      tx = false;
     }
   }
 
@@ -135,16 +118,14 @@ static int volkswagen_mlb_tx_hook(CANPacket_t *to_send) {
   if ((addr == MSG_LS_01) && !controls_allowed) {
     // disallow resume and set: bits 16 and 19
     if (GET_BIT(to_send, 16U) || GET_BIT(to_send, 19U)) {
-      tx = 0;
+      tx = false;
     }
   }
 
-  // 1 allows the message through
   return tx;
 }
 
-static int volkswagen_mlb_fwd_hook(int bus_num, CANPacket_t *to_fwd) {
-  int addr = GET_ADDR(to_fwd);
+static int volkswagen_mlb_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
   switch (bus_num) {
@@ -174,6 +155,8 @@ const safety_hooks volkswagen_mlb_hooks = {
   .init = volkswagen_mlb_init,
   .rx = volkswagen_mlb_rx_hook,
   .tx = volkswagen_mlb_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
   .fwd = volkswagen_mlb_fwd_hook,
+  .get_counter = volkswagen_mlb_mqb_get_counter,
+  .get_checksum = volkswagen_mlb_mqb_get_checksum,
+  .compute_checksum = volkswagen_mlb_mqb_compute_crc,
 };
