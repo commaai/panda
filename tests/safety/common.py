@@ -855,7 +855,7 @@ class PandaSafetyTest(PandaSafetyTestBase):
               continue
             if attr.startswith('TestHyundaiCanfd') and current_test.startswith('TestHyundaiCanfd'):
               continue
-            volkswagen_shared = ('TestVolkswagenMQB', 'TestVolkswagenMLB')
+            volkswagen_shared = ('TestVolkswagenMqb', 'TestVolkswagenMlb')
             if attr.startswith(volkswagen_shared) and current_test.startswith(volkswagen_shared):
               continue
 
