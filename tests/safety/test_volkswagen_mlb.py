@@ -18,10 +18,9 @@ MSG_HCA_01 = 0x126      # TX by OP, Heading Control Assist steering torque
 MSG_LDW_02 = 0x397      # TX by OP, Lane line recognition and text alerts
 
 
-class TestVolkswagenMlbSafety(common.PandaSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestVolkswagenMlbSafety(common.PandaCarSafetyTest, common.DriverTorqueSteeringSafetyTest):
   STANDSTILL_THRESHOLD = 0
-  RELAY_MALFUNCTION_ADDR = MSG_HCA_01
-  RELAY_MALFUNCTION_BUS = 0
+  RELAY_MALFUNCTION_ADDRS = {0: (MSG_HCA_01,)}
 
   MAX_RATE_UP = 10
   MAX_RATE_DOWN = 10
