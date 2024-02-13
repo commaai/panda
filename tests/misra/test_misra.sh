@@ -10,7 +10,7 @@ NC='\033[0m'
 : "${CPPCHECK_DIR:=$DIR/cppcheck/}"
 
 # install cppcheck if missing
-if [ ! -d $CPPCHECK_DIR ]; then
+if [ -z "${SKIP_BUILD}" ]; then
   $DIR/install.sh
 fi
 
@@ -37,7 +37,7 @@ cppcheck() {
           -I $gcc_inc "$(arm-none-eabi-gcc -print-file-name=include)" \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
           --suppress=*:*include/* --error-exitcode=2 --addon=misra \
-          --cppcheck-build-dir=$build_dir \
+          --check-level=exhaustive --cppcheck-build-dir=$build_dir \
           "$@"
 }
 

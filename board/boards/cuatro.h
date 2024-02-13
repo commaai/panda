@@ -1,3 +1,7 @@
+// ////////////////////////// //
+// Cuatro (STM32H7) + Harness //
+// ////////////////////////// //
+
 void cuatro_set_led(uint8_t color, bool enabled) {
   switch (color) {
     case LED_RED:
@@ -14,8 +18,51 @@ void cuatro_set_led(uint8_t color, bool enabled) {
   }
 }
 
+void cuatro_enable_can_transceiver(uint8_t transceiver, bool enabled) {
+  switch (transceiver) {
+    case 1U:
+      set_gpio_output(GPIOB, 7, !enabled);
+      break;
+    case 2U:
+      set_gpio_output(GPIOB, 10, !enabled);
+      break;
+    case 3U:
+      set_gpio_output(GPIOD, 8, !enabled);
+      break;
+    case 4U:
+      set_gpio_output(GPIOB, 11, !enabled);
+      break;
+    default:
+      break;
+  }
+}
+
+void cuatro_enable_can_transceivers(bool enabled) {
+  uint8_t main_bus = (harness.status == HARNESS_STATUS_FLIPPED) ? 3U : 1U;
+  for (uint8_t i=1U; i<=4U; i++) {
+    // Leave main CAN always on for CAN-based ignition detection
+    if (i == main_bus) {
+      cuatro_enable_can_transceiver(i, true);
+    } else {
+      cuatro_enable_can_transceiver(i, enabled);
+    }
+  }
+}
+
 void cuatro_init(void) {
   red_chiplet_init();
+
+  // CAN transceiver enables
+  set_gpio_pullup(GPIOB, 7, PULL_NONE);
+  set_gpio_mode(GPIOB, 7, MODE_OUTPUT);
+  set_gpio_pullup(GPIOD, 8, PULL_NONE);
+  set_gpio_mode(GPIOD, 8, MODE_OUTPUT);
+
+  // FDCAN3, different pins on this package than the rest of the reds
+  set_gpio_pullup(GPIOD, 12, PULL_NONE);
+  set_gpio_alternate(GPIOD, 12, GPIO_AF5_FDCAN3);
+  set_gpio_pullup(GPIOD, 13, PULL_NONE);
+  set_gpio_alternate(GPIOD, 13, GPIO_AF5_FDCAN3);
 
   // C2: SOM GPIO used as input (fan control at boot)
   set_gpio_mode(GPIOC, 2, MODE_INPUT);
@@ -46,7 +93,6 @@ void cuatro_init(void) {
 
 const board board_cuatro = {
   .harness_config = &red_chiplet_harness_config,
-  .has_hw_gmlan = false,
   .has_obd = true,
   .has_spi = true,
   .has_canfd = true,
@@ -57,8 +103,8 @@ const board board_cuatro = {
   .fan_enable_cooldown_time = 3U,
   .init = cuatro_init,
   .init_bootloader = unused_init_bootloader,
-  .enable_can_transceiver = red_chiplet_enable_can_transceiver,
-  .enable_can_transceivers = red_chiplet_enable_can_transceivers,
+  .enable_can_transceiver = cuatro_enable_can_transceiver,
+  .enable_can_transceivers = cuatro_enable_can_transceivers,
   .set_led = cuatro_set_led,
   .set_can_mode = red_chiplet_set_can_mode,
   .check_ignition = red_check_ignition,

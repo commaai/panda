@@ -1,6 +1,6 @@
-// ///////////////////// //
-// Red Panda + Harness //
-// ///////////////////// //
+// ///////////////////////////// //
+// Red Panda (STM32H7) + Harness //
+// ///////////////////////////// //
 
 void red_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver) {
@@ -150,7 +150,7 @@ void red_init(void) {
   // Set normal CAN mode
   red_set_can_mode(CAN_MODE_NORMAL);
 
-  // flip CAN0 and CAN2 if we are flipped
+  // change CAN mapping when flipped
   if (harness.status == HARNESS_STATUS_FLIPPED) {
     can_flip_buses(0, 2);
   }
@@ -173,7 +173,6 @@ const harness_configuration red_harness_config = {
 const board board_red = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &red_harness_config,
-  .has_hw_gmlan = false,
   .has_obd = true,
   .has_spi = false,
   .has_canfd = true,

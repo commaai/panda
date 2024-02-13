@@ -1,6 +1,6 @@
-// ///////////// //
-// Dos + Harness //
-// ///////////// //
+// /////////////////////// //
+// Dos (STM32F4) + Harness //
+// /////////////////////// //
 
 void dos_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver){
@@ -168,7 +168,7 @@ void dos_init(void) {
   // Set normal CAN mode
   dos_set_can_mode(CAN_MODE_NORMAL);
 
-  // flip CAN0 and CAN2 if we are flipped
+  // change CAN mapping when flipped
   if (harness.status == HARNESS_STATUS_FLIPPED) {
     can_flip_buses(0, 2);
   }
@@ -193,7 +193,6 @@ const harness_configuration dos_harness_config = {
 
 const board board_dos = {
   .harness_config = &dos_harness_config,
-  .has_hw_gmlan = false,
   .has_obd = true,
 #ifdef ENABLE_SPI
   .has_spi = true,
