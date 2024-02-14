@@ -37,10 +37,10 @@ cppcheck() {
   
   if grep "misra violation" /tmp/output.log > /dev/null
   then
-    rm -r /tmp/output.log
+    rm -f /tmp/output.log
     exit 1
   else
-    rm -r /tmp/output.log
+    rm -f /tmp/output.log
   fi
 }
 
