@@ -32,7 +32,7 @@ cppcheck() {
   $CPPCHECK_DIR/cppcheck --enable=all --force --inline-suppr -I $PANDA_DIR/board/ \
           -I $gcc_inc "$(arm-none-eabi-gcc -print-file-name=include)" \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
-          --suppress=*:*include/* --error-exitcode=2 --addon=misra.py \
+          --suppress=*:*include/* --error-exitcode=2 --addon=misra \
           --check-level=exhaustive "$@" |& tee /tmp/output.log
   
   if grep "misra violation" /tmp/output.log > /dev/null
