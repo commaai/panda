@@ -49,6 +49,15 @@ void cuatro_enable_can_transceivers(bool enabled) {
   }
 }
 
+void cuatro_set_siren(bool enabled) {
+  set_gpio_output(GPIOE, 0, enabled);
+  set_gpio_output(GPIOE, 1, false);
+  delay(100U);
+  set_gpio_output(GPIOE, 1, true);
+  delay(100U);
+  set_gpio_output(GPIOE, 1, false);
+}
+
 void cuatro_init(void) {
   red_chiplet_init();
 
@@ -111,7 +120,7 @@ const board board_cuatro = {
   .read_current = unused_read_current,
   .set_fan_enabled = tres_set_fan_enabled,
   .set_ir_power = tres_set_ir_power,
-  .set_siren = unused_set_siren,
+  .set_siren = cuatro_set_siren,
   .set_bootkick = tres_set_bootkick,
   .read_som_gpio = tres_read_som_gpio
 };
