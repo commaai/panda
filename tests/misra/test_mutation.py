@@ -82,4 +82,4 @@ def test_misra_mutation(fn, patch, should_fail):
     assert failed == should_fail
 
 if __name__ == "__main__":
-  pytest.main([__file__, "-n 4"])
+  pytest.main([__file__, "-n 8"])
