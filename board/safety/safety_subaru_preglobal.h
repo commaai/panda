@@ -31,9 +31,9 @@ const CanMsg SUBARU_PG_TX_MSGS[] = {
 
 // TODO: do checksum and counter checks after adding the signals to the outback dbc file
 RxCheck subaru_preglobal_rx_checks[] = {
-  {.msg = {{MSG_SUBARU_PG_Throttle,        SUBARU_PG_MAIN_BUS, 8, .expected_timestep = 10000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_PG_Steering_Torque, SUBARU_PG_MAIN_BUS, 8, .expected_timestep = 20000U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_SUBARU_PG_CruiseControl,   SUBARU_PG_MAIN_BUS, 8, .expected_timestep = 50000U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_PG_Throttle,        SUBARU_PG_MAIN_BUS, 8, .frequency = 100U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_PG_Steering_Torque, SUBARU_PG_MAIN_BUS, 8, .frequency = 50U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_SUBARU_PG_CruiseControl,   SUBARU_PG_MAIN_BUS, 8, .frequency = 20U}, { 0 }, { 0 }}},
 };
 
 
@@ -41,7 +41,7 @@ const int SUBARU_PG_PARAM_REVERSED_DRIVER_TORQUE = 1;
 bool subaru_pg_reversed_driver_torque = false;
 
 
-static void subaru_preglobal_rx_hook(CANPacket_t *to_push) {
+static void subaru_preglobal_rx_hook(const CANPacket_t *to_push) {
   const int bus = GET_BUS(to_push);
 
   if (bus == SUBARU_PG_MAIN_BUS) {
@@ -77,8 +77,8 @@ static void subaru_preglobal_rx_hook(CANPacket_t *to_push) {
   }
 }
 
-static bool subaru_preglobal_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
+static bool subaru_preglobal_tx_hook(const CANPacket_t *to_send) {
+  bool tx = true;
   int addr = GET_ADDR(to_send);
 
   // steer cmd checks
@@ -89,7 +89,7 @@ static bool subaru_preglobal_tx_hook(CANPacket_t *to_send) {
     bool steer_req = (GET_BIT(to_send, 24U) != 0U);
 
     if (steer_torque_cmd_checks(desired_torque, steer_req, SUBARU_PG_STEERING_LIMITS)) {
-      tx = 0;
+      tx = false;
     }
 
   }
@@ -122,6 +122,5 @@ const safety_hooks subaru_preglobal_hooks = {
   .init = subaru_preglobal_init,
   .rx = subaru_preglobal_rx_hook,
   .tx = subaru_preglobal_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
   .fwd = subaru_preglobal_fwd_hook,
 };

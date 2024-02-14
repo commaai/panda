@@ -41,11 +41,6 @@ void uart_send_break(uart_ring *u);
 
 // ******************************** UART buffers ********************************
 
-// lin1, K-LINE = UART5
-// lin2, L-LINE = USART3
-UART_BUFFER(lin1, FIFO_SIZE_INT, FIFO_SIZE_INT, UART5, NULL, false)
-UART_BUFFER(lin2, FIFO_SIZE_INT, FIFO_SIZE_INT, USART3, NULL, false)
-
 // debug = USART2
 UART_BUFFER(debug, FIFO_SIZE_INT, FIFO_SIZE_INT, USART2, debug_ring_callback, true)
 
@@ -63,12 +58,6 @@ uart_ring *get_ring_by_number(int a) {
     case 0:
       ring = &uart_ring_debug;
       break;
-    case 2:
-      ring = &uart_ring_lin1;
-      break;
-    case 3:
-      ring = &uart_ring_lin2;
-      break;
     case 4:
       ring = &uart_ring_som_debug;
       break;
@@ -80,7 +69,7 @@ uart_ring *get_ring_by_number(int a) {
 }
 
 // ************************* Low-level buffer functions *************************
-bool getc(uart_ring *q, char *elem) {
+bool get_char(uart_ring *q, char *elem) {
   bool ret = false;
 
   ENTER_CRITICAL();
@@ -116,7 +105,7 @@ bool injectc(uart_ring *q, char elem) {
   return ret;
 }
 
-bool putc(uart_ring *q, char elem) {
+bool put_char(uart_ring *q, char elem) {
   bool ret = false;
   uint16_t next_w_ptr;
 
@@ -142,7 +131,7 @@ bool putc(uart_ring *q, char elem) {
 
 // Seems dangerous to use (might lock CPU if called with interrupts disabled f.e.)
 // TODO: Remove? Not used anyways
-void uart_flush(uart_ring *q) {
+void uart_flush(const uart_ring *q) {
   while (q->w_ptr_tx != q->r_ptr_tx) {
     __WFI();
   }

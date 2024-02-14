@@ -11,7 +11,7 @@ from panda.tests.hitl.conftest import PandaGroup
 from panda.tests.hitl.helpers import time_many_sends, get_random_can_messages, clear_can_buffers
 
 @flaky(max_runs=3, min_passes=1)
-@pytest.mark.execution_timeout(35)
+@pytest.mark.timeout(35)
 def test_send_recv(p, panda_jungle):
   def test(p_send, p_recv):
     for bus in (0, 1, 2):
@@ -33,7 +33,7 @@ def test_send_recv(p, panda_jungle):
 
 
 @flaky(max_runs=6, min_passes=1)
-@pytest.mark.execution_timeout(30)
+@pytest.mark.timeout(30)
 def test_latency(p, panda_jungle):
   def test(p_send, p_recv):
     for bus in (0, 1, 2):

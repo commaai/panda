@@ -4,91 +4,50 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PANDA_DIR=$DIR/../../
 
-CPPCHECK_DIR=$DIR/cppcheck
-CPPCHECK=$CPPCHECK_DIR/cppcheck
+GREEN="\e[1;32m"
+NC='\033[0m'
 
-RULES="$DIR/MISRA_C_2012.txt"
-MISRA="python $CPPCHECK_DIR/addons/misra.py"
-if [ -f "$RULES" ]; then
-  MISRA="$MISRA --rule-texts $RULES"
-fi
-
-mkdir -p /tmp/misra
-ERROR_CODE=0
+: "${CPPCHECK_DIR:=$DIR/cppcheck/}"
 
 # install cppcheck if missing
-if [ ! -d cppcheck/ ]; then
+if [ -z "${SKIP_BUILD}" ]; then
   $DIR/install.sh
 fi
 
-# generate coverage matrix
-#python tests/misra/cppcheck/addons/misra.py -generate-table > tests/misra/coverage_table
-
-printf "\nPANDA F4 CODE\n"
-$CPPCHECK -DPANDA -DSTM32F4 -UPEDAL -DCAN3 -DUID_BASE \
-          --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
-          -I $PANDA_DIR/board/ --dump --enable=all --inline-suppr --force \
-          $PANDA_DIR/board/main.c 2>/tmp/misra/cppcheck_f4_output.txt
-
-$MISRA $PANDA_DIR/board/main.c.dump 2> /tmp/misra/misra_f4_output.txt || true
-
-# strip (information) lines
-cppcheck_f4_output=$( cat /tmp/misra/cppcheck_f4_output.txt | grep -v ": information: " ) || true
-misra_f4_output=$( cat /tmp/misra/misra_f4_output.txt | grep -v ": information: " ) || true
-
-
-printf "\nPANDA H7 CODE\n"
-$CPPCHECK -DPANDA -DSTM32H7 -UPEDAL -DUID_BASE \
-          --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
-          -I $PANDA_DIR/board/ --dump --enable=all --inline-suppr --force \
-          $PANDA_DIR/board/main.c 2>/tmp/misra/cppcheck_h7_output.txt
-
-$MISRA $PANDA_DIR/board/main.c.dump 2> /tmp/misra/misra_h7_output.txt || true
-
-# strip (information) lines
-cppcheck_h7_output=$( cat /tmp/misra/cppcheck_h7_output.txt | grep -v ": information: " ) || true
-misra_h7_output=$( cat /tmp/misra/misra_h7_output.txt | grep -v ": information: " ) || true
-
-
-printf "\nPEDAL CODE\n"
-$CPPCHECK -UPANDA -DSTM32F2 -DPEDAL -UCAN3 \
-          --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
-          -I $PANDA_DIR/board/ --dump --enable=all --inline-suppr --force \
-          $PANDA_DIR/board/pedal/main.c 2>/tmp/misra/cppcheck_pedal_output.txt
-
-$MISRA $PANDA_DIR/board/pedal/main.c.dump 2> /tmp/misra/misra_pedal_output.txt || true
-
-# strip (information) lines
-cppcheck_pedal_output=$( cat /tmp/misra/cppcheck_pedal_output.txt | grep -v ": information: " ) || true
-misra_pedal_output=$( cat /tmp/misra/misra_pedal_output.txt | grep -v ": information: " ) || true
-
-if [[ -n "$misra_f4_output" ]] || [[ -n "$cppcheck_f4_output" ]]
-then
-  echo "Failed! found Misra violations in panda F4 code:"
-  echo "$misra_f4_output"
-  echo "$cppcheck_f4_output"
-  ERROR_CODE=1
-fi
-
-if [[ -n "$misra_h7_output" ]] || [[ -n "$cppcheck_h7_output" ]]
-then
-  echo "Failed! found Misra violations in panda H7 code:"
-  echo "$misra_h7_output"
-  echo "$cppcheck_h7_output"
-  ERROR_CODE=1
-fi
-
-if [[ -n "$misra_pedal_output" ]] || [[ -n "$cppcheck_pedal_output" ]]
-then
-  echo "Failed! found Misra violations in pedal code:"
-  echo "$misra_pedal_output"
-  echo "$cppcheck_pedal_output"
-  ERROR_CODE=1
-fi
-
-if [[ $ERROR_CODE > 0 ]]
-then
+# ensure checked in coverage table is up to date
+cd $DIR
+python $CPPCHECK_DIR/addons/misra.py -generate-table > new_table
+if ! cmp -s new_table coverage_table; then
+  echo "MISRA coverage table doesn't match. Update and commit:"
+  echo "mv new_table coverage_table && git add . && git commit -m 'update table'"
   exit 1
 fi
 
-echo "Success"
+cd $PANDA_DIR
+if [ -z "${SKIP_BUILD}" ]; then
+  scons -j8
+fi
+
+cppcheck() {
+  hashed_args=$(echo -n "$@$DIR" | md5sum | awk '{print $1}')
+  build_dir=/tmp/cppcheck_build/$hashed_args
+  mkdir -p $build_dir
+
+  $CPPCHECK_DIR/cppcheck --enable=all --force --inline-suppr -I $PANDA_DIR/board/ \
+          -I $gcc_inc "$(arm-none-eabi-gcc -print-file-name=include)" \
+          --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
+          --suppress=*:*include/* --error-exitcode=2 --addon=misra \
+          --check-level=exhaustive --cppcheck-build-dir=$build_dir \
+          "$@"
+}
+
+printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
+cppcheck -DCAN3 -DPANDA -DSTM32F4 -UPEDAL -DUID_BASE $PANDA_DIR/board/main.c
+
+printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
+cppcheck -DCAN3 -DPANDA -DSTM32H7 -UPEDAL -DUID_BASE $PANDA_DIR/board/main.c
+
+printf "\n${GREEN}** PEDAL CODE **${NC}\n"
+cppcheck -UCAN3 -UPANDA -DSTM32F2 -DPEDAL -UUID_BASE $PANDA_DIR/board/pedal/main.c
+
+printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"

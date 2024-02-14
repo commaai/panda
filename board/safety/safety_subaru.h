@@ -74,11 +74,11 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
   {MSG_SUBARU_ES_STATIC_2,       SUBARU_MAIN_BUS, 8}, \
 
 #define SUBARU_COMMON_RX_CHECKS(alt_bus)                                                                                                            \
-  {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 10000U}, { 0 }, { 0 }}}, \
-  {.msg = {{MSG_SUBARU_Steering_Torque, SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
-  {.msg = {{MSG_SUBARU_Wheel_Speeds,    alt_bus,         8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
-  {.msg = {{MSG_SUBARU_Brake_Status,    alt_bus,         8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 20000U}, { 0 }, { 0 }}}, \
-  {.msg = {{MSG_SUBARU_CruiseControl,   alt_bus,         8, .check_checksum = true, .max_counter = 15U, .expected_timestep = 50000U}, { 0 }, { 0 }}}, \
+  {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}}, \
+  {.msg = {{MSG_SUBARU_Steering_Torque, SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}}, \
+  {.msg = {{MSG_SUBARU_Wheel_Speeds,    alt_bus,         8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}}, \
+  {.msg = {{MSG_SUBARU_Brake_Status,    alt_bus,         8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}}, \
+  {.msg = {{MSG_SUBARU_CruiseControl,   alt_bus,         8, .check_checksum = true, .max_counter = 15U, .frequency = 20U}, { 0 }, { 0 }}}, \
 
 const CanMsg SUBARU_TX_MSGS[] = {
   SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS, MSG_SUBARU_ES_LKAS)
@@ -115,15 +115,15 @@ bool subaru_gen2 = false;
 bool subaru_longitudinal = false;
 
 
-static uint32_t subaru_get_checksum(CANPacket_t *to_push) {
+static uint32_t subaru_get_checksum(const CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
 }
 
-static uint8_t subaru_get_counter(CANPacket_t *to_push) {
+static uint8_t subaru_get_counter(const CANPacket_t *to_push) {
   return (uint8_t)(GET_BYTE(to_push, 1) & 0xFU);
 }
 
-static uint32_t subaru_compute_checksum(CANPacket_t *to_push) {
+static uint32_t subaru_compute_checksum(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
   uint8_t checksum = (uint8_t)(addr) + (uint8_t)((unsigned int)(addr) >> 8U);
@@ -133,7 +133,7 @@ static uint32_t subaru_compute_checksum(CANPacket_t *to_push) {
   return checksum;
 }
 
-static void subaru_rx_hook(CANPacket_t *to_push) {
+static void subaru_rx_hook(const CANPacket_t *to_push) {
   const int bus = GET_BUS(to_push);
   const int alt_main_bus = subaru_gen2 ? SUBARU_ALT_BUS : SUBARU_MAIN_BUS;
 
@@ -165,8 +165,7 @@ static void subaru_rx_hook(CANPacket_t *to_push) {
 
     vehicle_moving = (fr > 0U) || (rr > 0U) || (rl > 0U) || (fl > 0U);
 
-    float speed = (fr + rr + rl + fl) / 4U * 0.057;
-    update_sample(&vehicle_speed, ROUND(speed * VEHICLE_SPEED_FACTOR));
+    UPDATE_VEHICLE_SPEED((fr + rr + rl + fl) / 4U * 0.057);
   }
 
   if ((addr == MSG_SUBARU_Brake_Status) && (bus == alt_main_bus)) {
@@ -180,8 +179,8 @@ static void subaru_rx_hook(CANPacket_t *to_push) {
   generic_rx_checks((addr == MSG_SUBARU_ES_LKAS) && (bus == SUBARU_MAIN_BUS));
 }
 
-static bool subaru_tx_hook(CANPacket_t *to_send) {
-  int tx = 1;
+static bool subaru_tx_hook(const CANPacket_t *to_send) {
+  bool tx = true;
   int addr = GET_ADDR(to_send);
   bool violation = false;
 
@@ -204,7 +203,7 @@ static bool subaru_tx_hook(CANPacket_t *to_send) {
 
   // check es_distance cruise_throttle limits
   if (addr == MSG_SUBARU_ES_Distance) {
-    int cruise_throttle = (GET_BYTES(to_send, 2, 2) & 0xFFFU);
+    int cruise_throttle = (GET_BYTES(to_send, 2, 2) & 0x1FFFU);
     bool cruise_cancel = GET_BIT(to_send, 56U) != 0U;
 
     if (subaru_longitudinal) {
@@ -219,7 +218,7 @@ static bool subaru_tx_hook(CANPacket_t *to_send) {
 
   // check es_status transmission_rpm limits
   if (addr == MSG_SUBARU_ES_Status) {
-    int transmission_rpm = (GET_BYTES(to_send, 2, 2) & 0xFFFU);
+    int transmission_rpm = (GET_BYTES(to_send, 2, 2) & 0x1FFFU);
     violation |= longitudinal_transmission_rpm_checks(transmission_rpm, SUBARU_LONG_LIMITS);
   }
 
@@ -234,7 +233,7 @@ static bool subaru_tx_hook(CANPacket_t *to_send) {
   }
 
   if (violation){
-    tx = 0;
+    tx = false;
   }
   return tx;
 }
@@ -288,7 +287,6 @@ const safety_hooks subaru_hooks = {
   .init = subaru_init,
   .rx = subaru_rx_hook,
   .tx = subaru_tx_hook,
-  .tx_lin = nooutput_tx_lin_hook,
   .fwd = subaru_fwd_hook,
   .get_counter = subaru_get_counter,
   .get_checksum = subaru_get_checksum,
