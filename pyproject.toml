@@ -8,4 +8,4 @@ flake8-implicit-str-concat.allow-multiline=false
 
 [tool.pytest.ini_options]
 # FIXME: pytest 8.0.0 now collects all files, stop pytest-cpp from running these
-addopts = "--ignore=test.sh --ignore=test_coverage.sh"
+addopts = "--ignore=test.sh --ignore=test_coverage.sh -n auto -k 'not Base'"
