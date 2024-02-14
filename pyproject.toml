@@ -5,3 +5,7 @@ ignore = ["W292", "E741", "E402", "C408", "ISC003"]
 line-length = 160
 target-version="py311"
 flake8-implicit-str-concat.allow-multiline=false
+
+[tool.pytest.ini_options]
+# FIXME: pytest 8.0.0 now collects all files, stop pytest-cpp from running these
+addopts = "--ignore=test.sh --ignore=test_coverage.sh"
