@@ -12,7 +12,7 @@ scons -j$(nproc) -D --coverage
 HW_TYPES=( 6 9 )
 for hw_type in "${HW_TYPES[@]}"; do
   echo "Testing HW_TYPE: $hw_type"
-  HW_TYPE=$hw_type pytest -n auto test_*.py -k 'not Base'
+  HW_TYPE=$hw_type pytest test_*.py
 done
 
 # generate and open report
