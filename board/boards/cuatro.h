@@ -136,6 +136,14 @@ void cuatro_init(void) {
   // Sound codec
   sound_init();
   set_gpio_output(GPIOA, 5, true);
+  set_gpio_alternate(GPIOA, 2, GPIO_AF8_SAI4);    // SAI4_SCK_B
+  set_gpio_alternate(GPIOC, 0, GPIO_AF8_SAI4);    // SAI4_FS_B
+  set_gpio_alternate(GPIOD, 11, GPIO_AF10_SAI4);  // SAI4_SD_A
+  set_gpio_alternate(GPIOE, 3, GPIO_AF8_SAI4);    // SAI4_SD_B
+  set_gpio_alternate(GPIOE, 4, GPIO_AF10_SAI4);   // SAI4_D2
+  set_gpio_alternate(GPIOE, 5, GPIO_AF10_SAI4);   // SAI4_CK2
+  set_gpio_alternate(GPIOE, 6, GPIO_AF10_SAI4);   // SAI4_MCLK_B
+
 }
 
 board board_cuatro = {
