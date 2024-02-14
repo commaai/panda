@@ -136,12 +136,6 @@ static bool toyota_get_quality_flag_valid(const CANPacket_t *to_push) {
 static void toyota_rx_hook(const CANPacket_t *to_push) {
   if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
-    int len = GET_LEN(to_push);
-
-    if (addr == 100 && len == 9) {
-      addr += 1;
-      print("yooo this is unreachable!\n");
-    }
 
     // get eps motor torque (0.66 factor in dbc)
     if (addr == 0x260) {
