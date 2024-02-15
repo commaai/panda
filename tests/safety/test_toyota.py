@@ -20,7 +20,7 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
 
   TX_MSGS = TOYOTA_COMMON_TX_MSGS
   STANDSTILL_THRESHOLD = 0  # kph
-  RELAY_MALFUNCTION_ADDRS = {0: (0x2E4,)}
+  RELAY_MALFUNCTION_ADDRS = {0: (0x2E4, 0x343)}
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x343]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   EPS_SCALE = 73
@@ -311,7 +311,8 @@ class TestToyotaAltBrakeSafetyGasInterceptor(TestToyotaSafetyGasInterceptorBase,
 
 class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
 
-  # Base fwd addresses minus ACC_CONTROL (0x343)
+  # Base addresses minus ACC_CONTROL (0x343)
+  RELAY_MALFUNCTION_ADDRS = {0: (0x2E4,)}
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191]}
 
   def test_accel_actuation_limits(self, stock_longitudinal=True):
