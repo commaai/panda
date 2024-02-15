@@ -134,7 +134,7 @@ void __initialize_hardware_early(void) {
   early_initialization();
 }
 
-void __attribute__ ((noinline)) enable_fpu(void) {
+static void __attribute__ ((noinline)) enable_fpu(void) {
   // enable the FPU
   SCB->CPACR |= ((3UL << (10U * 2U)) | (3UL << (11U * 2U)));
 }
@@ -145,7 +145,7 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 
 // called at 8Hz
 uint8_t loop_counter = 0U;
-void tick_handler(void) {
+static void tick_handler(void) {
   if (TICK_TIMER->SR != 0) {
     // siren
     current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
@@ -295,7 +295,7 @@ void EXTI_IRQ_Handler(void) {
 }
 
 uint8_t rtc_counter = 0;
-void RTC_WKUP_IRQ_Handler(void) {
+static void RTC_WKUP_IRQ_Handler(void) {
   exti_irq_clear();
   clock_init();
 

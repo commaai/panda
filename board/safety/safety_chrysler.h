@@ -1,33 +1,3 @@
-const SteeringLimits CHRYSLER_STEERING_LIMITS = {
-  .max_steer = 261,
-  .max_rt_delta = 112,
-  .max_rt_interval = 250000,
-  .max_rate_up = 3,
-  .max_rate_down = 3,
-  .max_torque_error = 80,
-  .type = TorqueMotorLimited,
-};
-
-const SteeringLimits CHRYSLER_RAM_DT_STEERING_LIMITS = {
-  .max_steer = 350,
-  .max_rt_delta = 112,
-  .max_rt_interval = 250000,
-  .max_rate_up = 6,
-  .max_rate_down = 6,
-  .max_torque_error = 80,
-  .type = TorqueMotorLimited,
-};
-
-const SteeringLimits CHRYSLER_RAM_HD_STEERING_LIMITS = {
-  .max_steer = 361,
-  .max_rt_delta = 182,
-  .max_rt_interval = 250000,
-  .max_rate_up = 14,
-  .max_rate_down = 14,
-  .max_torque_error = 80,
-  .type = TorqueMotorLimited,
-};
-
 typedef struct {
   const int EPS_2;
   const int ESP_1;
@@ -214,6 +184,36 @@ static void chrysler_rx_hook(const CANPacket_t *to_push) {
 }
 
 static bool chrysler_tx_hook(const CANPacket_t *to_send) {
+  const SteeringLimits CHRYSLER_STEERING_LIMITS = {
+    .max_steer = 261,
+    .max_rt_delta = 112,
+    .max_rt_interval = 250000,
+    .max_rate_up = 3,
+    .max_rate_down = 3,
+    .max_torque_error = 80,
+    .type = TorqueMotorLimited,
+  };
+
+  const SteeringLimits CHRYSLER_RAM_DT_STEERING_LIMITS = {
+    .max_steer = 350,
+    .max_rt_delta = 112,
+    .max_rt_interval = 250000,
+    .max_rate_up = 6,
+    .max_rate_down = 6,
+    .max_torque_error = 80,
+    .type = TorqueMotorLimited,
+  };
+
+  const SteeringLimits CHRYSLER_RAM_HD_STEERING_LIMITS = {
+    .max_steer = 361,
+    .max_rt_delta = 182,
+    .max_rt_interval = 250000,
+    .max_rate_up = 14,
+    .max_rate_down = 14,
+    .max_torque_error = 80,
+    .type = TorqueMotorLimited,
+  };
+
   bool tx = true;
   int addr = GET_ADDR(to_send);
 

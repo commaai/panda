@@ -12,17 +12,6 @@
 #define MAZDA_AUX  1
 #define MAZDA_CAM  2
 
-const SteeringLimits MAZDA_STEERING_LIMITS = {
-  .max_steer = 800,
-  .max_rate_up = 10,
-  .max_rate_down = 25,
-  .max_rt_delta = 300,
-  .max_rt_interval = 250000,
-  .driver_torque_factor = 1,
-  .driver_torque_allowance = 15,
-  .type = TorqueDriverLimited,
-};
-
 const CanMsg MAZDA_TX_MSGS[] = {{MAZDA_LKAS, 0, 8}, {MAZDA_CRZ_BTNS, 0, 8}, {MAZDA_LKAS_HUD, 0, 8}};
 
 RxCheck mazda_rx_checks[] = {
@@ -69,6 +58,17 @@ static void mazda_rx_hook(const CANPacket_t *to_push) {
 }
 
 static bool mazda_tx_hook(const CANPacket_t *to_send) {
+  static const SteeringLimits MAZDA_STEERING_LIMITS = {
+    .max_steer = 800,
+    .max_rate_up = 10,
+    .max_rate_down = 25,
+    .max_rt_delta = 300,
+    .max_rt_interval = 250000,
+    .driver_torque_factor = 1,
+    .driver_torque_allowance = 15,
+    .type = TorqueDriverLimited,
+  };
+
   bool tx = true;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);

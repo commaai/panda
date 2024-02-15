@@ -14,7 +14,7 @@ USB_OTG_GlobalTypeDef *USBx = USB_OTG_HS;
 
 void usb_irqhandler(void);
 
-void OTG_HS_IRQ_Handler(void) {
+static void OTG_HS_IRQ_Handler(void) {
   NVIC_DisableIRQ(OTG_HS_IRQn);
   usb_irqhandler();
   NVIC_EnableIRQ(OTG_HS_IRQn);

@@ -1,15 +1,3 @@
-const SteeringLimits TESLA_STEERING_LIMITS = {
-  .angle_deg_to_can = 10,
-  .angle_rate_up_lookup = {
-    {0., 5., 15.},
-    {10., 1.6, .3}
-  },
-  .angle_rate_down_lookup = {
-    {0., 5., 15.},
-    {10., 7.0, .8}
-  },
-};
-
 const LongitudinalLimits TESLA_LONG_LIMITS = {
   .max_accel = 425,       // 2. m/s^2
   .min_accel = 287,       // -3.52 m/s^2  // TODO: limit to -3.48
@@ -117,6 +105,18 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
 
 
 static bool tesla_tx_hook(const CANPacket_t *to_send) {
+  static const SteeringLimits TESLA_STEERING_LIMITS = {
+    .angle_deg_to_can = 10,
+    .angle_rate_up_lookup = {
+      {0., 5., 15.},
+      {10., 1.6, .3}
+    },
+    .angle_rate_down_lookup = {
+      {0., 5., 15.},
+      {10., 7.0, .8}
+    },
+  };
+  
   bool tx = true;
   int addr = GET_ADDR(to_send);
   bool violation = false;

@@ -18,8 +18,8 @@ typedef struct uart_ring {
 } uart_ring;
 
 #define UART_BUFFER(x, size_rx, size_tx, uart_ptr, callback_ptr, overwrite_mode) \
-  uint8_t elems_rx_##x[size_rx]; \
-  uint8_t elems_tx_##x[size_tx]; \
+  static uint8_t elems_rx_##x[size_rx]; \
+  static uint8_t elems_tx_##x[size_tx]; \
   uart_ring uart_ring_##x = {  \
     .w_ptr_tx = 0, \
     .r_ptr_tx = 0, \
@@ -83,7 +83,7 @@ bool get_char(uart_ring *q, char *elem) {
   return ret;
 }
 
-bool injectc(uart_ring *q, char elem) {
+static bool injectc(uart_ring *q, char elem) {
   int ret = false;
   uint16_t next_w_ptr;
 

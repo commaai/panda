@@ -16,11 +16,6 @@
     .has_steer_req_tolerance = true,                                                  \
   }
 
-
-const SteeringLimits SUBARU_STEERING_LIMITS      = SUBARU_STEERING_LIMITS_GENERATOR(2047, 50, 70);
-const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = SUBARU_STEERING_LIMITS_GENERATOR(1000, 40, 40);
-
-
 const LongitudinalLimits SUBARU_LONG_LIMITS = {
   .min_gas = 808,       // appears to be engine braking
   .max_gas = 3400,      // approx  2 m/s^2 when maxing cruise_rpm and cruise_throttle
@@ -180,6 +175,9 @@ static void subaru_rx_hook(const CANPacket_t *to_push) {
 }
 
 static bool subaru_tx_hook(const CANPacket_t *to_send) {
+  const SteeringLimits SUBARU_STEERING_LIMITS      = SUBARU_STEERING_LIMITS_GENERATOR(2047, 50, 70);
+  const SteeringLimits SUBARU_GEN2_STEERING_LIMITS = SUBARU_STEERING_LIMITS_GENERATOR(1000, 40, 40);
+
   bool tx = true;
   int addr = GET_ADDR(to_send);
   bool violation = false;

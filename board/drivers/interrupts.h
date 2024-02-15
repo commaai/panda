@@ -10,7 +10,7 @@ typedef struct interrupt {
 void interrupt_timer_init(void);
 uint32_t microsecond_timer_get(void);
 
-void unused_interrupt_handler(void) {
+static void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!
   print("Unused interrupt handler called!\n");
   fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
@@ -80,6 +80,8 @@ void interrupt_timer_handler(void) {
     // The bootstub does not have the FPU enabled, so can't do float operations.
 #if !defined(PEDAL) && !defined(BOOTSTUB)
     interrupt_load = ((busy_time + idle_time) > 0U) ? ((float) busy_time) / (busy_time + idle_time) : 0.0f;
+#else
+    interrupt_load = 0.0f;
 #endif
     idle_time = 0U;
     busy_time = 0U;

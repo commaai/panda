@@ -6,7 +6,7 @@
 extern void *g_pfnVectors;
 extern uint32_t enter_bootloader_mode;
 
-void jump_to_bootloader(void) {
+static void jump_to_bootloader(void) {
   // do enter bootloader
   enter_bootloader_mode = 0;
   void (*bootloader)(void) = (void (*)(void)) (*((uint32_t *)BOOTLOADER_ADDRESS));
