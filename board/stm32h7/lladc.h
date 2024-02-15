@@ -20,8 +20,7 @@ uint16_t adc_get_raw(uint8_t channel) {
   ADC1->SQR1 = ((uint32_t) channel << 6U);
 
   ADC1->SMPR1 = (0x2U << (channel * 3U));
-  // cppcheck-suppress misra-c2012-12.2; don't know how to fix this. if statement to check channel range does not work
-  ADC1->PCSEL_RES0 = (0x1U << channel);
+  ADC1->PCSEL_RES0 = (0x1UL << channel);
   ADC1->CFGR2 = (127U << ADC_CFGR2_OVSR_Pos) | (0x7U << ADC_CFGR2_OVSS_Pos) | ADC_CFGR2_ROVSE;
 
   ADC1->CR |= ADC_CR_ADSTART;
