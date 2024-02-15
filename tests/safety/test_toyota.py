@@ -13,8 +13,7 @@ from panda.tests.safety.common import CANPackerPanda
 TOYOTA_COMMON_TX_MSGS = [[0x2E4, 0], [0x191, 0], [0x412, 0], [0x343, 0], [0x1D2, 0]]  # LKAS + LTA + ACC & PCM cancel cmds
 TOYOTA_COMMON_LONG_TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0], [0x366, 0], [0x4CB, 0],  # DSU bus 0
                               [0x128, 1], [0x141, 1], [0x160, 1], [0x161, 1], [0x470, 1],  # DSU bus 1
-                              [0x411, 0],  # PCS_HUD
-                              [0x750, 0]]  # radar diagnostic address
+                              [0x411, 0]]  # PCS_HUD
 GAS_INTERCEPTOR_TX_MSGS = [[0x200, 0]]
 
 
