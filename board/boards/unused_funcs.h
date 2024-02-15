@@ -13,6 +13,10 @@ void unused_set_siren(bool enabled) {
   UNUSED(enabled);
 }
 
+uint32_t unused_read_voltage(void) {
+  return 0U;
+}
+
 uint32_t unused_read_current(void) {
   return 0U;
 }

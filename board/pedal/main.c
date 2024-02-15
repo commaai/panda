@@ -242,6 +242,9 @@ void TIM3_IRQ_Handler(void) {
 
 // ***************************** main code *****************************
 
+#define ADCCHAN_ACCEL0 10
+#define ADCCHAN_ACCEL1 11
+
 void pedal(void) {
   // read/write
   pdl0 = adc_get_raw(ADCCHAN_ACCEL0);
