@@ -1,6 +1,3 @@
-// 5VOUT_S = ADC12_INP5
-// VOLT_S = ADC1_INP2
-#define ADCCHAN_VIN 2
 
 void adc_init(void) {
   ADC1->CR &= ~(ADC_CR_DEEPPWD); //Reset deep-power-down mode
