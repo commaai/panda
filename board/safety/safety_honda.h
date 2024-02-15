@@ -383,7 +383,9 @@ static safety_config honda_nidec_init(uint16_t param) {
   enable_gas_interceptor = GET_FLAG(param, HONDA_PARAM_GAS_INTERCEPTOR);
 
   safety_config ret;
-  if (GET_FLAG(param, HONDA_PARAM_NIDEC_ALT)) {
+  
+  bool enable_nidec_alt = GET_FLAG(param, HONDA_PARAM_NIDEC_ALT);
+  if (enable_nidec_alt) {
     enable_gas_interceptor ? SET_RX_CHECKS(honda_nidec_alt_interceptor_rx_checks, ret) : \
                              SET_RX_CHECKS(honda_nidec_alt_rx_checks, ret);
   } else {

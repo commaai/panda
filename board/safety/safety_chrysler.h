@@ -264,7 +264,9 @@ static int chrysler_fwd_hook(int bus_num, int addr) {
 
 static safety_config chrysler_init(uint16_t param) {
   safety_config ret;
-  if (GET_FLAG(param, CHRYSLER_PARAM_RAM_DT)) {
+
+  bool enable_ram_dt = GET_FLAG(param, CHRYSLER_PARAM_RAM_DT);
+  if (enable_ram_dt) {
     chrysler_platform = CHRYSLER_RAM_DT;
     chrysler_addrs = &CHRYSLER_RAM_DT_ADDRS;
     ret = BUILD_SAFETY_CFG(chrysler_ram_dt_rx_checks, CHRYSLER_RAM_DT_TX_MSGS);

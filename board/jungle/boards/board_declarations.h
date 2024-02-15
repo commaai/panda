@@ -35,7 +35,6 @@ struct board {
 
   // TODO: shouldn't need these
   bool has_spi;
-  bool has_hw_gmlan;
 };
 
 // ******************* Definitions ********************

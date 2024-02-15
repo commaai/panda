@@ -1,6 +1,6 @@
-// /////////// //
-// White Panda //
-// /////////// //
+// ///////////////////// //
+// White Panda (STM32F4) //
+// ///////////////////// //
 
 void white_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver){
@@ -224,7 +224,6 @@ const harness_configuration white_harness_config = {
 const board board_white = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &white_harness_config,
-  .has_hw_gmlan = true,
   .has_obd = false,
   .has_spi = false,
   .has_canfd = false,
