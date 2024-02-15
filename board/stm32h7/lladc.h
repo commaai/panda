@@ -15,20 +15,23 @@ void adc_init(void) {
 }
 
 uint16_t adc_get_raw(uint8_t channel) {
-  ADC1->SQR1 &= ~(ADC_SQR1_L);
-  ADC1->SQR1 = ((uint32_t) channel << 6U);
+  uint16_t res = 0U;
+  if (channel < 10U) {
+    ADC1->SQR1 &= ~(ADC_SQR1_L);
+    ADC1->SQR1 = ((uint32_t) channel << 6U);
 
-  ADC1->SMPR1 = (0x2U << (channel * 3U));
-  ADC1->PCSEL_RES0 = (0x1U << channel);
-  ADC1->CFGR2 = (127U << ADC_CFGR2_OVSR_Pos) | (0x7U << ADC_CFGR2_OVSS_Pos) | ADC_CFGR2_ROVSE;
+    ADC1->SMPR1 = (0x2U << (channel * 3U));
+    ADC1->PCSEL_RES0 = (0x1U << channel);
+    ADC1->CFGR2 = (127U << ADC_CFGR2_OVSR_Pos) | (0x7U << ADC_CFGR2_OVSS_Pos) | ADC_CFGR2_ROVSE;
 
-  ADC1->CR |= ADC_CR_ADSTART;
-  while (!(ADC1->ISR & ADC_ISR_EOC));
+    ADC1->CR |= ADC_CR_ADSTART;
+    while (!(ADC1->ISR & ADC_ISR_EOC));
 
-  uint16_t res = ADC1->DR;
+    res = ADC1->DR;
 
-  while (!(ADC1->ISR & ADC_ISR_EOS));
-  ADC1->ISR |= ADC_ISR_EOS;
+    while (!(ADC1->ISR & ADC_ISR_EOS));
+    ADC1->ISR |= ADC_ISR_EOS;
+  }
 
   return res;
 }
