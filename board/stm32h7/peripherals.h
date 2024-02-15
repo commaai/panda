@@ -118,6 +118,10 @@ void peripherals_init(void) {
   RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN; // Enable ADC12 clocks
   RCC->APB1LENR |= RCC_APB1LENR_DAC12EN; // DAC
 
+  // Audio
+  RCC->APB2ENR |= RCC_APB2ENR_SAI1EN;  // SAI1
+  RCC->APB4ENR |= RCC_APB4ENR_SAI4EN;  // SAI4
+
   // Timers
   RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;  // clock source timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;  // main counter

@@ -156,6 +156,12 @@ void tick_handler(void) {
     harness_tick();
     simple_watchdog_kick();
 
+#ifdef STM32H7
+    print("SAI4 A DR: 0x"); puth(SAI4_Block_A->DR); print("\n");
+    print("SAI4 B DR: 0x"); puth(SAI4_Block_B->DR); print("\n");
+    print("SAI1 A DR: 0x"); puth(SAI1_Block_A->DR); print("\n\n");
+#endif
+
     // decimated to 1Hz
     if (loop_counter == 0U) {
       can_live = pending_can_live;
