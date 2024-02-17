@@ -4,10 +4,6 @@ bool unlocked = false;
 
 void spi_init(void);
 
-#ifdef uart_ring
-void debug_ring_callback(uart_ring *ring) {}
-#endif
-
 int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   int resp_len = 0;
 
@@ -119,29 +115,6 @@ void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   current_board->set_led(LED_RED, 1);
 }
 
-
-int spi_cb_rx(uint8_t *data, int len, uint8_t *data_out) {
-  UNUSED(len);
-  ControlPacket_t control_req;
-
-  int resp_len = 0;
-  switch (data[0]) {
-    case 0:
-      // control transfer
-      control_req.request = ((USB_Setup_TypeDef *)(data+4))->b.bRequest;
-      control_req.param1 = ((USB_Setup_TypeDef *)(data+4))->b.wValue.w;
-      control_req.param2 = ((USB_Setup_TypeDef *)(data+4))->b.wIndex.w;
-      control_req.length = ((USB_Setup_TypeDef *)(data+4))->b.wLength.w;
-
-      resp_len = comms_control_handler(&control_req, data_out);
-      break;
-    case 2:
-      // ep 2, flash!
-      comms_endpoint2_write(data+4, data[2]);
-      break;
-  }
-  return resp_len;
-}
 
 void soft_flasher_start(void) {
   print("\n\n\n************************ FLASHER START ************************\n");
