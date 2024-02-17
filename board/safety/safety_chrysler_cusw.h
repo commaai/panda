@@ -106,7 +106,7 @@ static void chrysler_cusw_rx_hook(const CANPacket_t *to_push) {
 
   // enter controls on rising edge of ACC, exit controls on ACC off
   if ((bus == 0) && (addr == chrysler_cusw_addrs->ACC_1)) {
-    int acc_state = (GET_BYTE(to_push, 0) & 0xE0U) >> 5;
+    uint8_t acc_state = (GET_BYTE(to_push, 0) & 0xE0U) >> 5;
     bool cruise_engaged = acc_state == 4U;
     pcm_cruise_check(cruise_engaged);
   }
@@ -114,7 +114,7 @@ static void chrysler_cusw_rx_hook(const CANPacket_t *to_push) {
   // TODO: use the same message for both
   // update vehicle moving
   if ((bus == 0) && (addr == chrysler_cusw_addrs->BRAKE_1)) {
-    vehicle_moving = (((GET_BYTE(to_push, 4) & 0x7) << 8) + GET_BYTE(to_push, 5)) != 0U;
+    vehicle_moving = (((GET_BYTE(to_push, 4) & 0x7U) << 8) + GET_BYTE(to_push, 5)) != 0U;
   }
 
   // exit controls on rising edge of gas press
@@ -141,7 +141,7 @@ static bool chrysler_cusw_tx_hook(const CANPacket_t *to_send) {
 
     const SteeringLimits limits = CHRYSLER_CUSW_STEERING_LIMITS;
 
-    bool steer_req = GET_BIT(to_send, 12);
+    bool steer_req = GET_BIT(to_send, 12) != 0U;
     if (steer_torque_cmd_checks(desired_torque, steer_req, limits)) {
       tx = false;
     }
@@ -149,8 +149,8 @@ static bool chrysler_cusw_tx_hook(const CANPacket_t *to_send) {
 
   // FORCE CANCEL: only the cancel button press is allowed
   if (addr == chrysler_cusw_addrs->CRUISE_BUTTONS) {
-    const bool is_cancel = GET_BIT(to_send, 0);
-    const bool is_resume = GET_BIT(to_send, 4);
+    const bool is_cancel = GET_BIT(to_send, 0) != 0U;
+    const bool is_resume = GET_BIT(to_send, 4) != 0U;
     const bool allowed = is_cancel || (is_resume && controls_allowed);
     if (!allowed) {
       tx = false;
