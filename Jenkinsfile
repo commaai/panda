@@ -132,13 +132,6 @@ pipeline {
             }
 
             /*
-            stage('pedal tests') {
-              steps {
-                script {
-                  docker_run("test pedal", 1, "PEDAL_JUNGLE=058010800f51363038363036 python ./tests/pedal/test_pedal.py")
-                }
-              }
-            }
             stage('HITL tests') {
               steps {
                 script {
