@@ -24,7 +24,7 @@ class McuConfig(NamedTuple):
     # assume bootstub is in sector 0
     return self.bootstub_address + sum(self.sector_sizes[:i])
 
-F4Config = (
+F4Config = McuConfig(
   "STM32F4",
   0x463,
   [0x4000 for _ in range(4)] + [0x10000] + [0x20000 for _ in range(11)],
