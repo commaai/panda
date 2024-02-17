@@ -124,7 +124,7 @@ static void chrysler_cusw_rx_hook(const CANPacket_t *to_push) {
 
   // exit controls on rising edge of brake press
   if ((bus == 0) && (addr == chrysler_cusw_addrs->BRAKE_2)) {
-    brake_pressed = GET_BIT(to_push, 9);
+    brake_pressed = GET_BIT(to_push, 9U);
   }
 
   generic_rx_checks((bus == 0) && (addr == chrysler_cusw_addrs->LKAS_COMMAND));
@@ -141,7 +141,7 @@ static bool chrysler_cusw_tx_hook(const CANPacket_t *to_send) {
 
     const SteeringLimits limits = CHRYSLER_CUSW_STEERING_LIMITS;
 
-    const bool steer_req = GET_BIT(to_send, 12);
+    const bool steer_req = GET_BIT(to_send, 12U) != 0U;
     if (steer_torque_cmd_checks(desired_torque, steer_req, limits)) {
       tx = false;
     }
@@ -149,8 +149,8 @@ static bool chrysler_cusw_tx_hook(const CANPacket_t *to_send) {
 
   // FORCE CANCEL: only the cancel button press is allowed
   if (addr == chrysler_cusw_addrs->CRUISE_BUTTONS) {
-    const bool is_cancel = GET_BIT(to_send, 0);
-    const bool is_resume = GET_BIT(to_send, 4);
+    const bool is_cancel = GET_BIT(to_send, 0U) != 0U;
+    const bool is_resume = GET_BIT(to_send, 4U) != 0U;
     const bool allowed = is_cancel || (is_resume && controls_allowed);
     if (!allowed) {
       tx = false;
