@@ -34,7 +34,7 @@ cppcheck() {
   $CPPCHECK_DIR/cppcheck --force --inline-suppr -I $PANDA_DIR/board/ \
           -I $gcc_inc "$(arm-none-eabi-gcc -print-file-name=include)" \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
-          --suppress=*:*include/* --error-exitcode=2 \
+          --suppress=*:*include/* --error-exitcode=2 --check-level=exhaustive \
           "$@" |& tee $OUTPUT
 
   # cppcheck bug: some MISRA errors won't result in the error exit code,
