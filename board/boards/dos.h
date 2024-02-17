@@ -90,10 +90,6 @@ bool dos_check_ignition(void){
   return harness_check_ignition();
 }
 
-void dos_set_usb_switch(bool phone){
-  set_gpio_output(GPIOB, 3, phone);
-}
-
 void dos_set_ir_power(uint8_t percentage){
   pwm_set(TIM4, 2, percentage);
 }

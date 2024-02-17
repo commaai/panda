@@ -196,10 +196,3 @@ void init_tests(void){
 
 void set_gmlan_digital_output(int to_set){
 }
-
-void reset_gmlan_switch_timeout(void){
-}
-
-void gmlan_switch_init(int timeout_enable){
-}
-
