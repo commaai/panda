@@ -12,7 +12,8 @@ typedef void (*board_enable_can_transceivers)(bool enabled);
 typedef void (*board_set_led)(uint8_t color, bool enabled);
 typedef void (*board_set_can_mode)(uint8_t mode);
 typedef bool (*board_check_ignition)(void);
-typedef uint32_t (*board_read_current)(void);
+typedef uint32_t (*board_read_voltage_mV)(void);
+typedef uint32_t (*board_read_current_mA)(void);
 typedef void (*board_set_ir_power)(uint8_t percentage);
 typedef void (*board_set_fan_enabled)(bool enabled);
 typedef void (*board_set_siren)(bool enabled);
@@ -20,9 +21,7 @@ typedef void (*board_set_bootkick)(BootState state);
 typedef bool (*board_read_som_gpio)(void);
 
 struct board {
-  const char *board_type;
   const harness_configuration *harness_config;
-  const bool has_hw_gmlan;
   const bool has_obd;
   const bool has_spi;
   const bool has_canfd;
@@ -38,7 +37,8 @@ struct board {
   board_set_led set_led;
   board_set_can_mode set_can_mode;
   board_check_ignition check_ignition;
-  board_read_current read_current;
+  board_read_voltage_mV read_voltage_mV;
+  board_read_current_mA read_current_mA;
   board_set_ir_power set_ir_power;
   board_set_fan_enabled set_fan_enabled;
   board_set_siren set_siren;
@@ -58,6 +58,7 @@ struct board {
 #define HW_TYPE_RED_PANDA 7U
 #define HW_TYPE_RED_PANDA_V2 8U
 #define HW_TYPE_TRES 9U
+#define HW_TYPE_CUATRO 10U
 
 // LED colors
 #define LED_RED 0U

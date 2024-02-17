@@ -113,7 +113,7 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_t data_
 
     // Set the nominal bit timing values
     uint16_t tq = CAN_QUANTA(speed, prescaler);
-    uint8_t sp = CAN_SP_NOMINAL;
+    uint16_t sp = CAN_SP_NOMINAL;
     uint8_t seg1 = CAN_SEG1(tq, sp);
     uint8_t seg2 = CAN_SEG2(tq, sp);
     uint8_t sjw = MIN(127U, seg2);
@@ -158,7 +158,7 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_t data_
   return ret;
 }
 
-void llcan_irq_disable(FDCAN_GlobalTypeDef *FDCANx) {
+void llcan_irq_disable(const FDCAN_GlobalTypeDef *FDCANx) {
   if (FDCANx == FDCAN1) {
     NVIC_DisableIRQ(FDCAN1_IT0_IRQn);
     NVIC_DisableIRQ(FDCAN1_IT1_IRQn);
@@ -172,7 +172,7 @@ void llcan_irq_disable(FDCAN_GlobalTypeDef *FDCANx) {
   }
 }
 
-void llcan_irq_enable(FDCAN_GlobalTypeDef *FDCANx) {
+void llcan_irq_enable(const FDCAN_GlobalTypeDef *FDCANx) {
   if (FDCANx == FDCAN1) {
     NVIC_EnableIRQ(FDCAN1_IT0_IRQn);
     NVIC_EnableIRQ(FDCAN1_IT1_IRQn);

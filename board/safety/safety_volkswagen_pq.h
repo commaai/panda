@@ -46,13 +46,13 @@ RxCheck volkswagen_pq_rx_checks[] = {
   {.msg = {{MSG_GRA_NEU, 0, 4, .check_checksum = true, .max_counter = 15U, .frequency = 30U}, { 0 }, { 0 }}},
 };
 
-static uint32_t volkswagen_pq_get_checksum(CANPacket_t *to_push) {
+static uint32_t volkswagen_pq_get_checksum(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   return (uint32_t)GET_BYTE(to_push, (addr == MSG_MOTOR_5) ? 7 : 0);
 }
 
-static uint8_t volkswagen_pq_get_counter(CANPacket_t *to_push) {
+static uint8_t volkswagen_pq_get_counter(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   uint8_t counter = 0U;
 
@@ -66,7 +66,7 @@ static uint8_t volkswagen_pq_get_counter(CANPacket_t *to_push) {
   return counter;
 }
 
-static uint32_t volkswagen_pq_compute_checksum(CANPacket_t *to_push) {
+static uint32_t volkswagen_pq_compute_checksum(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
   uint8_t checksum = 0U;
@@ -95,7 +95,7 @@ static safety_config volkswagen_pq_init(uint16_t param) {
                                    BUILD_SAFETY_CFG(volkswagen_pq_rx_checks, VOLKSWAGEN_PQ_STOCK_TX_MSGS);
 }
 
-static void volkswagen_pq_rx_hook(CANPacket_t *to_push) {
+static void volkswagen_pq_rx_hook(const CANPacket_t *to_push) {
   if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
 
@@ -169,7 +169,7 @@ static void volkswagen_pq_rx_hook(CANPacket_t *to_push) {
   }
 }
 
-static bool volkswagen_pq_tx_hook(CANPacket_t *to_send) {
+static bool volkswagen_pq_tx_hook(const CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
   bool tx = true;
 

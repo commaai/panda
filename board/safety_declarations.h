@@ -10,6 +10,7 @@
                                    (config).rx_checks_len = sizeof((rx)) / sizeof((rx)[0]))
 #define SET_TX_MSGS(tx, config) ((config).tx_msgs = (tx), \
                                  (config).tx_msgs_len = sizeof((tx)) / sizeof((tx)[0]))
+#define UPDATE_VEHICLE_SPEED(val_ms) (update_sample(&vehicle_speed, ROUND((val_ms) * VEHICLE_SPEED_FACTOR)))
 
 uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
   uint32_t ret = 0U;
@@ -118,12 +119,8 @@ typedef struct {
   const uint32_t frequency;      // expected frequency of the message [Hz]
 } CanMsgCheck;
 
-// params and flags about checksum, counter and frequency checks for each monitored address
 typedef struct {
-  // const params
-  const CanMsgCheck msg[MAX_ADDR_CHECK_MSGS];  // check either messages (e.g. honda steer)
-
-  // dynamic flags
+  // dynamic flags, reset on safety mode init
   bool msg_seen;
   int index;                         // if multiple messages are allowed to be checked, this stores the index of the first one seen. only msg[msg_index] will be used
   bool valid_checksum;               // true if and only if checksum check is passed
@@ -132,6 +129,12 @@ typedef struct {
   uint8_t last_counter;              // last counter value
   uint32_t last_timestamp;           // micro-s
   bool lagging;                      // true if and only if the time between updates is excessive
+} RxStatus;
+
+// params and flags about checksum, counter and frequency checks for each monitored address
+typedef struct {
+  const CanMsgCheck msg[MAX_ADDR_CHECK_MSGS];  // check either messages (e.g. honda steer)
+  RxStatus status;
 } RxCheck;
 
 typedef struct {
@@ -141,58 +144,14 @@ typedef struct {
   int tx_msgs_len;
 } safety_config;
 
-typedef uint32_t (*get_checksum_t)(CANPacket_t *to_push);
-typedef uint32_t (*compute_checksum_t)(CANPacket_t *to_push);
-typedef uint8_t (*get_counter_t)(CANPacket_t *to_push);
-typedef bool (*get_quality_flag_valid_t)(CANPacket_t *to_push);
-
-bool safety_rx_hook(CANPacket_t *to_push);
-bool safety_tx_hook(CANPacket_t *to_send);
-uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
-int to_signed(int d, int bits);
-void update_sample(struct sample_t *sample, int sample_new);
-void reset_sample(struct sample_t *sample);
-bool max_limit_check(int val, const int MAX, const int MIN);
-bool angle_dist_to_meas_check(int val, struct sample_t *val_meas,
-  const int MAX_ERROR, const int MAX_VAL);
-bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
-  const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR);
-bool driver_limit_check(int val, int val_last, struct sample_t *val_driver,
-  const int MAX, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
-  const int MAX_ALLOWANCE, const int DRIVER_FACTOR);
-bool get_longitudinal_allowed(void);
-bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
-float interpolate(struct lookup_t xy, float x);
-int ROUND(float val);
-void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]);
-void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]);
-bool msg_allowed(CANPacket_t *to_send, const CanMsg msg_list[], int len);
-int get_addr_check_index(CANPacket_t *to_push, RxCheck addr_list[], const int len);
-void update_counter(RxCheck addr_list[], int index, uint8_t counter);
-void update_addr_timestamp(RxCheck addr_list[], int index);
-bool is_msg_valid(RxCheck addr_list[], int index);
-bool rx_msg_safety_check(CANPacket_t *to_push,
-                         const safety_config *rx_checks,
-                         const get_checksum_t get_checksum,
-                         const compute_checksum_t compute_checksum,
-                         const get_counter_t get_counter,
-                         const get_quality_flag_valid_t get_quality_flag);
-void generic_rx_checks(bool stock_ecu_detected);
-void relay_malfunction_set(void);
-void relay_malfunction_reset(void);
-bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLimits limits);
-bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const SteeringLimits limits);
-bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits);
-bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limits);
-bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits);
-bool longitudinal_transmission_rpm_checks(int desired_transmission_rpm, const LongitudinalLimits limits);
-bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits);
-bool longitudinal_interceptor_checks(CANPacket_t *to_send);
-void pcm_cruise_check(bool cruise_engaged);
+typedef uint32_t (*get_checksum_t)(const CANPacket_t *to_push);
+typedef uint32_t (*compute_checksum_t)(const CANPacket_t *to_push);
+typedef uint8_t (*get_counter_t)(const CANPacket_t *to_push);
+typedef bool (*get_quality_flag_valid_t)(const CANPacket_t *to_push);
 
 typedef safety_config (*safety_hook_init)(uint16_t param);
-typedef void (*rx_hook)(CANPacket_t *to_push);
-typedef bool (*tx_hook)(CANPacket_t *to_send);
+typedef void (*rx_hook)(const CANPacket_t *to_push);
+typedef bool (*tx_hook)(const CANPacket_t *to_send);
 typedef int (*fwd_hook)(int bus_num, int addr);
 
 typedef struct {
@@ -206,12 +165,53 @@ typedef struct {
   get_quality_flag_valid_t get_quality_flag_valid;
 } safety_hooks;
 
+bool safety_rx_hook(const CANPacket_t *to_push);
+bool safety_tx_hook(CANPacket_t *to_send);
+uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
+int to_signed(int d, int bits);
+void update_sample(struct sample_t *sample, int sample_new);
+void reset_sample(struct sample_t *sample);
+bool max_limit_check(int val, const int MAX, const int MIN);
+bool angle_dist_to_meas_check(int val, struct sample_t *val_meas,
+  const int MAX_ERROR, const int MAX_VAL);
+bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
+  const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR);
+bool driver_limit_check(int val, int val_last, const struct sample_t *val_driver,
+  const int MAX, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
+  const int MAX_ALLOWANCE, const int DRIVER_FACTOR);
+bool get_longitudinal_allowed(void);
+bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
+float interpolate(struct lookup_t xy, float x);
+int ROUND(float val);
+void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]);
+void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]);
+bool msg_allowed(const CANPacket_t *to_send, const CanMsg msg_list[], int len);
+int get_addr_check_index(const CANPacket_t *to_push, RxCheck addr_list[], const int len);
+void update_counter(RxCheck addr_list[], int index, uint8_t counter);
+void update_addr_timestamp(RxCheck addr_list[], int index);
+bool is_msg_valid(RxCheck addr_list[], int index);
+bool rx_msg_safety_check(const CANPacket_t *to_push,
+                         const safety_config *cfg,
+                         const safety_hooks *safety_hooks);
+void generic_rx_checks(bool stock_ecu_detected);
+void relay_malfunction_set(void);
+void relay_malfunction_reset(void);
+bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLimits limits);
+bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const SteeringLimits limits);
+bool longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits);
+bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limits);
+bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits);
+bool longitudinal_transmission_rpm_checks(int desired_transmission_rpm, const LongitudinalLimits limits);
+bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits);
+bool longitudinal_interceptor_checks(const CANPacket_t *to_send);
+void pcm_cruise_check(bool cruise_engaged);
+
 void safety_tick(const safety_config *safety_config);
 
 // This can be set by the safety hooks
 bool controls_allowed = false;
 bool relay_malfunction = false;
-bool gas_interceptor_detected = false;
+bool enable_gas_interceptor = false;
 int gas_interceptor_prev = 0;
 bool gas_pressed = false;
 bool gas_pressed_prev = false;
@@ -259,6 +259,9 @@ struct sample_t angle_meas;         // last 6 steer angles/curvatures
 // Setting this flag is used for allowing the full -5.0 to +4.0 m/s^2 at lower speeds
 // See ISO 15622:2018 for more information.
 #define ALT_EXP_RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX 8
+
+// This flag allows AEB to be commanded from openpilot.
+#define ALT_EXP_ALLOW_AEB 16
 
 int alternative_experience = 0;
 
