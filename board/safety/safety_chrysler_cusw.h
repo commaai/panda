@@ -38,10 +38,11 @@ const CanMsg CHRYSLER_CUSW_TX_MSGS[] = {
 };
 
 RxCheck chrysler_cusw_rx_checks[] = {
-  {.msg = {{CHRYSLER_CUSW_ADDRS.BRAKE_1, 0, 8, .check_checksum = true, .max_counter = 0U, .frequency = 50U}, { 0 }, { 0 }}},
-  {.msg = {{CHRYSLER_CUSW_ADDRS.BRAKE_2, 0, 8, .check_checksum = true, .max_counter = 0U, .frequency = 50U}, { 0 }, { 0 }}},
+  // TODO: find out why counters don't work on EPS_STATUS
+  {.msg = {{CHRYSLER_CUSW_ADDRS.BRAKE_1, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_CUSW_ADDRS.BRAKE_2, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_CUSW_ADDRS.EPS_STATUS, 0, 8, .check_checksum = true, .max_counter = 0U, .frequency = 100U}, { 0 }, { 0 }}},
-  {.msg = {{CHRYSLER_CUSW_ADDRS.ACCEL_GAS, 0, 5, .check_checksum = true, .max_counter = 0U, .frequency = 50U}, { 0 }, { 0 }}},
+  {.msg = {{CHRYSLER_CUSW_ADDRS.ACCEL_GAS, 0, 5, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_CUSW_ADDRS.ACC_1, 0, 8, .check_checksum = false, .max_counter = 0U, .frequency = 17U}, { 0 }, { 0 }}},
 };
 
@@ -89,7 +90,8 @@ static uint32_t chrysler_cusw_compute_checksum(const CANPacket_t *to_push) {
 
 // TODO: include from main Chrysler safety
 static uint8_t chrysler_cusw_get_counter(const CANPacket_t *to_push) {
-  return (uint8_t)(GET_BYTE(to_push, 6) >> 4);
+  int counter_byte = GET_LEN(to_push) - 2U;
+  return (uint8_t)(GET_BYTE(to_push, counter_byte) >> 4);
 }
 
 static void chrysler_cusw_rx_hook(const CANPacket_t *to_push) {
