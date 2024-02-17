@@ -84,12 +84,10 @@ void llcan_irq_disable(const CAN_TypeDef *CANx) {
     NVIC_DisableIRQ(CAN2_TX_IRQn);
     NVIC_DisableIRQ(CAN2_RX0_IRQn);
     NVIC_DisableIRQ(CAN2_SCE_IRQn);
-  #ifdef CAN3
-    } else if (CANx == CAN3) {
-      NVIC_DisableIRQ(CAN3_TX_IRQn);
-      NVIC_DisableIRQ(CAN3_RX0_IRQn);
-      NVIC_DisableIRQ(CAN3_SCE_IRQn);
-  #endif
+  } else if (CANx == CAN3) {
+    NVIC_DisableIRQ(CAN3_TX_IRQn);
+    NVIC_DisableIRQ(CAN3_RX0_IRQn);
+    NVIC_DisableIRQ(CAN3_SCE_IRQn);
   } else {
   }
 }
@@ -103,12 +101,10 @@ void llcan_irq_enable(const CAN_TypeDef *CANx) {
     NVIC_EnableIRQ(CAN2_TX_IRQn);
     NVIC_EnableIRQ(CAN2_RX0_IRQn);
     NVIC_EnableIRQ(CAN2_SCE_IRQn);
-  #ifdef CAN3
-    } else if (CANx == CAN3) {
-      NVIC_EnableIRQ(CAN3_TX_IRQn);
-      NVIC_EnableIRQ(CAN3_RX0_IRQn);
-      NVIC_EnableIRQ(CAN3_SCE_IRQn);
-  #endif
+  } else if (CANx == CAN3) {
+    NVIC_EnableIRQ(CAN3_TX_IRQn);
+    NVIC_EnableIRQ(CAN3_RX0_IRQn);
+    NVIC_EnableIRQ(CAN3_SCE_IRQn);
   } else {
   }
 }

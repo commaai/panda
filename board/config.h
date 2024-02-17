@@ -36,7 +36,7 @@
 // platform includes
 #ifdef STM32H7
   #include "stm32h7/stm32h7_config.h"
-#elif defined(STM32F2) || defined(STM32F4)
+#elif defined(STM32F4)
   #include "stm32fx/stm32fx_config.h"
 #else
   // TODO: uncomment this, cppcheck complains

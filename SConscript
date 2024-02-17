@@ -180,9 +180,6 @@ with open("board/obj/cert.h", "w") as f:
 # panda fw
 SConscript('board/SConscript')
 
-# pedal fw
-SConscript('board/pedal/SConscript')
-
 # panda jungle fw
 SConscript('board/jungle/SConscript')
 
