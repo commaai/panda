@@ -4,10 +4,6 @@ bool unlocked = false;
 
 void spi_init(void);
 
-#ifdef uart_ring
-void debug_ring_callback(uart_ring *ring) {}
-#endif
-
 int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   int resp_len = 0;
 

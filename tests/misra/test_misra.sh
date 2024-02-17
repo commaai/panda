@@ -34,7 +34,7 @@ cppcheck() {
   $CPPCHECK_DIR/cppcheck --force --inline-suppr -I $PANDA_DIR/board/ \
           -I $gcc_inc "$(arm-none-eabi-gcc -print-file-name=include)" \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
-          --suppress=*:*include/* --error-exitcode=2 -rp=$PANDA_DIR \
+          --suppress=*:*include/* --error-exitcode=2 \
           "$@" |& tee $OUTPUT
 
   # cppcheck bug: some MISRA errors won't result in the error exit code,
@@ -44,14 +44,17 @@ cppcheck() {
   fi
 }
 
+PANDA_OPTS="--enable=all --disable=unusedFunction -DPANDA --addon=misra"
+
 printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
-cppcheck --disable=unusedFunction -DPANDA -DSTM32F4 -DUID_BASE $PANDA_DIR/board/main.c
+cppcheck $PANDA_OPTS -DSTM32F4 -DUID_BASE $PANDA_DIR/board/main.c
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-cppcheck --disable=unusedFunction -DPANDA -DSTM32H7 -DUID_BASE $PANDA_DIR/board/main.c
+cppcheck $PANDA_OPTS -DSTM32H7 -DUID_BASE $PANDA_DIR/board/main.c
 
 # unused needs to run globally
 printf "\n${GREEN}** UNUSED ALL CODE **${NC}\n"
-cppcheck --enable=unusedFunction --quiet $PANDA_DIR/board/
+cppcheck --enable=unusedFunction $PANDA_DIR/board/
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
+
