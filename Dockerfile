@@ -71,8 +71,12 @@ RUN cd /tmp && \
     git fetch origin $OPENPILOT_REF && \
     git checkout $OPENPILOT_REF && \
     git submodule update --init cereal opendbc rednose_repo body && \
-    git -C opendbc fetch && \
-    git -C opendbc checkout $OPENDBC_REF && \
+    # TODO revert to original when CUSW DBC is merged and opendbc ref is bumped
+    git -C opendbc remote add jyoung8607 https://github.com/jyoung8607/opendbc.git && \
+    git -C opendbc fetch jyoung8607 && \
+    git -C opendbc checkout cherokee_kl && \
+    #git -C opendbc fetch && \
+    #git -C opendbc checkout $OPENDBC_REF && \    git -C opendbc checkout $OPENDBC_REF && \
     git -C opendbc reset --hard HEAD && \
     git -C opendbc clean -xfd && \
     mkdir /tmp/openpilot && \
