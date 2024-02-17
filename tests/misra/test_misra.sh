@@ -39,7 +39,7 @@ cppcheck() {
 
   # cppcheck bug: some MISRA errors won't result in the error exit code,
   # so check the output (https://trac.cppcheck.net/ticket/12440#no1)
-  if grep "misra violation" $OUTPUT > /dev/null; then
+  if grep -e "misra violation" -e "error" $OUTPUT > /dev/null; then
     exit 1
   fi
 }
