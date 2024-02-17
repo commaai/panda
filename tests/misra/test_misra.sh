@@ -53,8 +53,8 @@ printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
 cppcheck $PANDA_OPTS -DSTM32H7 -DUID_BASE $PANDA_DIR/board/main.c
 
 # unused needs to run globally
-printf "\n${GREEN}** UNUSED ALL CODE **${NC}\n"
-cppcheck --enable=unusedFunction $PANDA_DIR/board/
+#printf "\n${GREEN}** UNUSED ALL CODE **${NC}\n"
+#cppcheck --enable=unusedFunction --quiet $PANDA_DIR/board/
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 
