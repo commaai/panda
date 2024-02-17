@@ -193,6 +193,3 @@ void init_tests(void){
   valid_steer_req_count = 0;
   invalid_steer_req_count = 0;
 }
-
-void set_gmlan_digital_output(int to_set){
-}
