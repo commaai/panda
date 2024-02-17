@@ -55,7 +55,6 @@ H7Config = McuConfig(
 
 @enum.unique
 class McuType(enum.Enum):
-  F2 = F2Config
   F4 = F4Config
   H7 = H7Config
 
