@@ -147,32 +147,6 @@ int inverted_bit_to_send = GMLAN_HIGH;
 int gmlan_switch_below_timeout = -1;
 int gmlan_switch_timeout_enable = 0;
 
-void gmlan_switch_init(int timeout_enable) {
-  gmlan_switch_timeout_enable = timeout_enable;
-  gmlan_alt_mode = GPIO_SWITCH;
-  gmlan_switch_below_timeout = 1;
-  set_gpio_mode(GPIOB, 13, MODE_OUTPUT);
-
-  setup_timer();
-
-  inverted_bit_to_send = GMLAN_LOW; //We got initialized, set the output low
-}
-
-void set_gmlan_digital_output(int to_set) {
-  inverted_bit_to_send = to_set;
-  /*
-  print("Writing ");
-  puth(inverted_bit_to_send);
-  print("\n");
-  */
-}
-
-void reset_gmlan_switch_timeout(void) {
-  can_timeout_counter = GMLAN_TICKS_PER_SECOND;
-  gmlan_switch_below_timeout = 1;
-  gmlan_alt_mode = GPIO_SWITCH;
-}
-
 void set_bitbanged_gmlan(int val) {
   if (val != 0) {
     register_set_bits(&(GPIOB->ODR), (1UL << 13));

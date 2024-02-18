@@ -90,10 +90,6 @@ bool dos_check_ignition(void){
   return harness_check_ignition();
 }
 
-void dos_set_usb_switch(bool phone){
-  set_gpio_output(GPIOB, 3, phone);
-}
-
 void dos_set_ir_power(uint8_t percentage){
   pwm_set(TIM4, 2, percentage);
 }
@@ -212,7 +208,8 @@ const board board_dos = {
   .set_led = dos_set_led,
   .set_can_mode = dos_set_can_mode,
   .check_ignition = dos_check_ignition,
-  .read_current = unused_read_current,
+  .read_voltage_mV = white_read_voltage_mV,
+  .read_current_mA = unused_read_current,
   .set_fan_enabled = dos_set_fan_enabled,
   .set_ir_power = dos_set_ir_power,
   .set_siren = dos_set_siren,
