@@ -114,11 +114,11 @@ static uint32_t honda_compute_checksum(const CANPacket_t *to_push) {
   uint8_t checksum = 0U;
   unsigned int addr = GET_ADDR(to_push);
   while (addr > 0U) {
-    checksum += (addr & 0xFU); addr >>= 4;
+    checksum += (uint8_t)(addr & 0xFU); addr >>= 4;
   }
   for (int j = 0; j < len; j++) {
     uint8_t byte = GET_BYTE(to_push, j);
-    checksum += (byte & 0xFU) + (byte >> 4U);
+    checksum += (uint8_t)(byte & 0xFU) + (byte >> 4U);
     if (j == (len - 1)) {
       checksum -= (byte & 0xFU);  // remove checksum in message
     }
@@ -465,8 +465,8 @@ static int honda_bosch_fwd_hook(int bus_num, int addr) {
     bus_fwd = 2;
   }
   if (bus_num == 2)  {
-    int is_lkas_msg = (addr == 0xE4) || (addr == 0xE5) || (addr == 0x33D) || (addr == 0x33DA) || (addr == 0x33DB);
-    int is_acc_msg = ((addr == 0x1C8) || (addr == 0x30C)) && honda_bosch_radarless && honda_bosch_long;
+    bool is_lkas_msg = (addr == 0xE4) || (addr == 0xE5) || (addr == 0x33D) || (addr == 0x33DA) || (addr == 0x33DB);
+    bool is_acc_msg = ((addr == 0x1C8) || (addr == 0x30C)) && honda_bosch_radarless && honda_bosch_long;
     bool block_msg = is_lkas_msg || is_acc_msg;
     if (!block_msg) {
       bus_fwd = 0;

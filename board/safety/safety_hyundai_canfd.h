@@ -170,7 +170,7 @@ static void hyundai_canfd_rx_hook(const CANPacket_t *to_push) {
     // cruise buttons
     const int button_addr = hyundai_canfd_alt_buttons ? 0x1aa : 0x1cf;
     if (addr == button_addr) {
-      int main_button = 0;
+      bool main_button = false;
       int cruise_button = 0;
       if (addr == 0x1cf) {
         cruise_button = GET_BYTE(to_push, 2) & 0x7U;

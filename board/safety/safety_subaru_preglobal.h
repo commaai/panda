@@ -104,7 +104,7 @@ static int subaru_preglobal_fwd_hook(int bus_num, int addr) {
   }
 
   if (bus_num == SUBARU_PG_CAM_BUS) {
-    int block_msg = ((addr == MSG_SUBARU_PG_ES_Distance) || (addr == MSG_SUBARU_PG_ES_LKAS));
+    bool block_msg = ((addr == MSG_SUBARU_PG_ES_Distance) || (addr == MSG_SUBARU_PG_ES_LKAS));
     if (!block_msg) {
       bus_fwd = SUBARU_PG_MAIN_BUS;  // Main CAN
     }

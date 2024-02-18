@@ -26,14 +26,14 @@ int do_bitstuff(char *out, const char *in, int in_len) {
       bit_cnt++;
       if (bit_cnt == 5) {
         // 5 in a row the same, do stuff
-        last_bit = !bit;
+        last_bit = !bit ? 1 : 0;
         out[j] = last_bit;
         j++;
         bit_cnt = 1;
       }
     } else {
       // this is a new bit
-      last_bit = bit;
+      last_bit = (int)bit;
       bit_cnt = 1;
     }
   }
