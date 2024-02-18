@@ -5,7 +5,6 @@ import pytest
 import shutil
 import subprocess
 import tempfile
-import hashlib
 import random
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -68,25 +67,18 @@ for p in patterns:
 
 @pytest.mark.parametrize("fn, patch, should_fail", mutations)
 def test_misra_mutation(fn, patch, should_fail):
-  key = hashlib.md5((str(fn) + str(patch)).encode()).hexdigest()
-  tmp = os.path.join(tempfile.gettempdir(), key)
+  with tempfile.TemporaryDirectory() as tmp:
+    shutil.copytree(ROOT, tmp, dirs_exist_ok=True)
 
-  if os.path.exists(tmp):
-    shutil.rmtree(tmp)
-  shutil.copytree(ROOT, tmp)
+    # apply patch
+    if fn is not None:
+      r = os.system(f"cd {tmp} && sed -i '{patch}' {fn}")
+      assert r == 0
 
-  # apply patch
-  if fn is not None:
-    r = os.system(f"cd {tmp} && sed -i '{patch}' {fn}")
-    assert r == 0
-
-  # run test
-  env = {'SKIP_BUILD': '1'} | os.environ.copy()
-  r = subprocess.run("tests/misra/test_misra.sh", cwd=tmp, shell=True, env=env)
-  failed = r.returncode != 0
-  assert failed == should_fail
-
-  shutil.rmtree(tmp)
+    # run test
+    r = subprocess.run("tests/misra/test_misra.sh", cwd=tmp, shell=True)
+    failed = r.returncode != 0
+    assert failed == should_fail
 
 if __name__ == "__main__":
   pytest.main([__file__, "-n 8"])
