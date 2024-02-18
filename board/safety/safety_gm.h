@@ -108,7 +108,7 @@ static void gm_rx_hook(const CANPacket_t *to_push) {
     }
 
     if ((addr == 0xC9) && (gm_hw == GM_CAM)) {
-      brake_pressed = GET_BIT(to_push, 40U) != 0U;
+      brake_pressed = GET_BIT(to_push, 40U);
     }
 
     if (addr == 0x1C4) {
@@ -153,7 +153,7 @@ static bool gm_tx_hook(const CANPacket_t *to_send) {
     int desired_torque = ((GET_BYTE(to_send, 0) & 0x7U) << 8) + GET_BYTE(to_send, 1);
     desired_torque = to_signed(desired_torque, 11);
 
-    bool steer_req = (GET_BIT(to_send, 3U) != 0U);
+    bool steer_req = GET_BIT(to_send, 3U);
 
     if (steer_torque_cmd_checks(desired_torque, steer_req, GM_STEERING_LIMITS)) {
       tx = false;
@@ -162,7 +162,7 @@ static bool gm_tx_hook(const CANPacket_t *to_send) {
 
   // GAS/REGEN: safety check
   if (addr == 0x2CB) {
-    bool apply = GET_BIT(to_send, 0U) != 0U;
+    bool apply = GET_BIT(to_send, 0U);
     int gas_regen = ((GET_BYTE(to_send, 2) & 0x7FU) << 5) + ((GET_BYTE(to_send, 3) & 0xF8U) >> 3);
 
     bool violation = false;

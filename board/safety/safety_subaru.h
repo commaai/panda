@@ -152,7 +152,7 @@ static void subaru_rx_hook(const CANPacket_t *to_push) {
 
   // enter controls on rising edge of ACC, exit controls on ACC off
   if ((addr == MSG_SUBARU_CruiseControl) && (bus == alt_main_bus)) {
-    bool cruise_engaged = GET_BIT(to_push, 41U) != 0U;
+    bool cruise_engaged = GET_BIT(to_push, 41U);
     pcm_cruise_check(cruise_engaged);
   }
 
@@ -169,7 +169,7 @@ static void subaru_rx_hook(const CANPacket_t *to_push) {
   }
 
   if ((addr == MSG_SUBARU_Brake_Status) && (bus == alt_main_bus)) {
-    brake_pressed = GET_BIT(to_push, 62U) != 0U;
+    brake_pressed = GET_BIT(to_push, 62U);
   }
 
   if ((addr == MSG_SUBARU_Throttle) && (bus == SUBARU_MAIN_BUS)) {
@@ -189,7 +189,7 @@ static bool subaru_tx_hook(const CANPacket_t *to_send) {
     int desired_torque = ((GET_BYTES(to_send, 0, 4) >> 16) & 0x1FFFU);
     desired_torque = -1 * to_signed(desired_torque, 13);
 
-    bool steer_req = GET_BIT(to_send, 29U) != 0U;
+    bool steer_req = GET_BIT(to_send, 29U);
 
     const SteeringLimits limits = subaru_gen2 ? SUBARU_GEN2_STEERING_LIMITS : SUBARU_STEERING_LIMITS;
     violation |= steer_torque_cmd_checks(desired_torque, steer_req, limits);
@@ -204,7 +204,7 @@ static bool subaru_tx_hook(const CANPacket_t *to_send) {
   // check es_distance cruise_throttle limits
   if (addr == MSG_SUBARU_ES_Distance) {
     int cruise_throttle = (GET_BYTES(to_send, 2, 2) & 0x1FFFU);
-    bool cruise_cancel = GET_BIT(to_send, 56U) != 0U;
+    bool cruise_cancel = GET_BIT(to_send, 56U);
 
     if (subaru_longitudinal) {
       violation |= longitudinal_gas_checks(cruise_throttle, SUBARU_LONG_LIMITS);
