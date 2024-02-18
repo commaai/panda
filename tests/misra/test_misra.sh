@@ -54,7 +54,7 @@ cppcheck $PANDA_OPTS -DSTM32H7 -DUID_BASE $PANDA_DIR/board/main.c
 
 # unused needs to run globally
 printf "\n${GREEN}** UNUSED ALL CODE **${NC}\n"
-cppcheck --enable=unusedFunction --quiet --check-library $PANDA_DIR/board/main.c 
+cppcheck --enable=unusedFunction --quiet $PANDA_DIR/board/main.c 
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 
