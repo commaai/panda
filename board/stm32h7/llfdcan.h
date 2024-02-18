@@ -187,7 +187,7 @@ void llcan_irq_enable(const FDCAN_GlobalTypeDef *FDCANx) {
 }
 
 bool llcan_init(FDCAN_GlobalTypeDef *FDCANx) {
-  uint64_t can_number = CAN_NUM_FROM_CANIF(FDCANx);
+  uint32_t can_number = CAN_NUM_FROM_CANIF(FDCANx);
   bool ret = fdcan_request_init(FDCANx);
 
   if (ret) {
@@ -216,7 +216,7 @@ bool llcan_init(FDCAN_GlobalTypeDef *FDCANx) {
     FDCANx->GFC &= ~(FDCAN_GFC_ANFE); // Accept extended frames to FIFO 0
     FDCANx->GFC &= ~(FDCAN_GFC_ANFS); // Accept standard frames to FIFO 0
 
-    uint32_t RxFIFO0SA = (uint32_t) (FDCAN_START_ADDRESS + (can_number * FDCAN_OFFSET));
+    uint32_t RxFIFO0SA = FDCAN_START_ADDRESS + (can_number * FDCAN_OFFSET);
     uint32_t TxFIFOSA = RxFIFO0SA + (FDCAN_RX_FIFO_0_EL_CNT * FDCAN_RX_FIFO_0_EL_SIZE);
 
     // RX FIFO 0

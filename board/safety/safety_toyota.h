@@ -97,10 +97,10 @@ RxCheck toyota_lta_interceptor_rx_checks[] = {
 // first byte is for EPS factor, second is for flags
 const uint32_t TOYOTA_PARAM_OFFSET = 8U;
 const uint32_t TOYOTA_EPS_FACTOR = (uint32_t)(1UL << TOYOTA_PARAM_OFFSET) - 1U;
-const uint64_t TOYOTA_PARAM_ALT_BRAKE = 1UL << TOYOTA_PARAM_OFFSET;
-const uint64_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2UL << TOYOTA_PARAM_OFFSET;
-const uint64_t TOYOTA_PARAM_LTA = 4UL << TOYOTA_PARAM_OFFSET;
-const uint64_t TOYOTA_PARAM_GAS_INTERCEPTOR = 8UL << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1UL << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2UL << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_LTA = 4UL << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_GAS_INTERCEPTOR = 8UL << TOYOTA_PARAM_OFFSET;
 
 bool toyota_alt_brake = false;
 bool toyota_stock_longitudinal = false;
