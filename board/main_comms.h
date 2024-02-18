@@ -9,8 +9,8 @@ int get_health_pkt(void *dat) {
   struct health_t * health = (struct health_t*)dat;
 
   health->uptime_pkt = uptime_cnt;
-  health->voltage_pkt = adc_get_mV(ADCCHAN_VIN) * VIN_READOUT_DIVIDER;
-  health->current_pkt = current_board->read_current();
+  health->voltage_pkt = current_board->read_voltage_mV();
+  health->current_pkt = current_board->read_current_mA();
 
   // Use the GPIO pin to determine ignition or use a CAN based logic
   health->ignition_line_pkt = (uint8_t)(current_board->check_ignition());

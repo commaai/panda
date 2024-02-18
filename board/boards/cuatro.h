@@ -49,8 +49,20 @@ void cuatro_enable_can_transceivers(bool enabled) {
   }
 }
 
+uint32_t cuatro_read_voltage_mV(void) {
+  return adc_get_mV(8) * 11U;
+}
+
+uint32_t cuatro_read_current_mA(void) {
+  return adc_get_mV(3) * 2U;
+}
+
 void cuatro_init(void) {
   red_chiplet_init();
+
+  // Power readout
+  set_gpio_mode(GPIOC, 5, MODE_ANALOG);
+  set_gpio_mode(GPIOA, 6, MODE_ANALOG);
 
   // CAN transceiver enables
   set_gpio_pullup(GPIOB, 7, PULL_NONE);
@@ -108,7 +120,8 @@ const board board_cuatro = {
   .set_led = cuatro_set_led,
   .set_can_mode = red_chiplet_set_can_mode,
   .check_ignition = red_check_ignition,
-  .read_current = unused_read_current,
+  .read_voltage_mV = cuatro_read_voltage_mV,
+  .read_current_mA = cuatro_read_current_mA,
   .set_fan_enabled = tres_set_fan_enabled,
   .set_ir_power = tres_set_ir_power,
   .set_siren = unused_set_siren,
