@@ -10,9 +10,12 @@ if __name__ == "__main__":
   while True:
     st = time.monotonic()
     while time.monotonic() - st < 1:
-      panda.health()
+      panda.can_recv()
       i += 1
-    print(i, panda.health(), "\n")
+    #print(i, panda.health(), "\n")
+    h = panda.health()
     print(f"Speed: {i - pi}Hz")
+    print(f"- spi {h['spi_checksum_error_count']:6d}")
+    print()
     pi = i
 

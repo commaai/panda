@@ -224,6 +224,8 @@ class PandaSpiHandle(BaseHandle):
         except PandaSpiException as e:
           exc = e
           logging.debug("SPI transfer failed, retrying", exc_info=True)
+          if "STRICT" in os.environ:
+            raise
 
     raise exc
 

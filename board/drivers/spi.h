@@ -4,13 +4,13 @@
 
 #define SPI_TIMEOUT_US 10000U
 
-// got max rate from hitting a non-existent endpoint
+// got by hitting a non-existent endpoint
 // in a tight loop, plus some buffer
 #define SPI_IRQ_RATE  16000U
 
 #ifdef STM32H7
 #define SPI_BUF_SIZE 2048U
-// H7 DMA2 located in D2 domain, so we need to use SRAM1/SRAM2
+// H7 DMA2 is located in D2 domain, so we need to use SRAM1/SRAM2
 __attribute__((section(".sram12"))) uint8_t spi_buf_rx[SPI_BUF_SIZE];
 __attribute__((section(".sram12"))) uint8_t spi_buf_tx[SPI_BUF_SIZE];
 #else
@@ -57,13 +57,14 @@ void can_tx_comms_resume_spi(void) {
 }
 
 uint16_t spi_version_packet(uint8_t *out) {
-  // this protocol version request is a stable portion of
-  // the panda's SPI protocol. its contents match that of the
-  // panda USB descriptors and are sufficent to list/enumerate
-  // a panda, determine panda type, and bootstub status.
+  /*
+    this protocol version request is a stable portion of
+    the panda's SPI protocol. its contents match that of the
+    panda USB descriptors and are sufficent to list/enumerate
+    a panda, determine panda type, and whether it's in the bootstub or app.
 
-  // the response is:
-  // VERSION + 2 byte data length + data + CRC8
+    VERSION + 2 byte data length + data + CRC8
+  */
 
   // echo "VERSION"
   (void)memcpy(out, version_text, 7);
@@ -190,12 +191,10 @@ void spi_rx_done(void) {
     } else {
       // Checksum was incorrect
       response_ack = false;
-      print("- incorrect data checksum ");
-      puth4(spi_data_len_mosi);
-      print("\n");
-      hexdump(spi_buf_rx, SPI_HEADER_SIZE);
-      hexdump(&(spi_buf_rx[SPI_HEADER_SIZE]), MIN(spi_data_len_mosi, 64));
-      print("\n");
+      print("incorrect data checksum. data len: 0x"); puth4(spi_data_len_mosi); print("\n");
+      print("header: "); hexdump(spi_buf_rx, SPI_HEADER_SIZE); print("\n");
+      print("data: "); hexdump(&(spi_buf_rx[SPI_HEADER_SIZE]), MIN(spi_data_len_mosi, 64)); print("\n");
+      print("l64: "); hexdump(&(spi_buf_rx[SPI_HEADER_SIZE]), 64); print("\n");
     }
 
     if (!response_ack) {
