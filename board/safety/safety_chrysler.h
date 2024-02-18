@@ -227,7 +227,6 @@ static bool chrysler_tx_hook(const CANPacket_t *to_send) {
                                   (chrysler_platform == CHRYSLER_RAM_DT) ? CHRYSLER_RAM_DT_STEERING_LIMITS : CHRYSLER_RAM_HD_STEERING_LIMITS;
 
     bool steer_req = (chrysler_platform == CHRYSLER_PACIFICA) ? GET_BIT(to_send, 4U) : (GET_BYTE(to_send, 3) & 0x7U) == 2U;
-
     if (steer_torque_cmd_checks(desired_torque, steer_req, limits)) {
       tx = false;
     }
