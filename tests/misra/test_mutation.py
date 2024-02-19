@@ -56,6 +56,8 @@ patterns = [
   r"$a #define auto 1\n",
   # misra-c2012-20.5
   r"$a #define TEST 1\n#undef TEST\n",
+  # unusedFunction
+  r"$a void test() {}",
 ]
 
 all_files = glob.glob('board/**', root_dir=ROOT, recursive=True)
