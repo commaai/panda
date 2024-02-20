@@ -42,9 +42,9 @@ RxCheck chrysler_cusw_rx_checks[] = {
   {.msg = {{CHRYSLER_CUSW_ADDRS.BRAKE_2, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_CUSW_ADDRS.EPS_STATUS, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_CUSW_ADDRS.ACCEL_GAS, 0, 5, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
-  // FIXME: size 7/8 needs to be conditional for Chrysler 200 vs Jeep Cherokee
-  // FIXME: there really has to be a better PCM message, this is low-frequency and has no checksum/counter protection
-  {.msg = {{CHRYSLER_CUSW_ADDRS.ACC_1, 0, 7, .check_checksum = false, .max_counter = 0U, .frequency = 16U}, { 0 }, { 0 }}},
+  // TODO: is there a better PCM message? this is low-frequency, has no checksum/counter protection, and variable length
+  {.msg = {{CHRYSLER_CUSW_ADDRS.ACC_1, 0, 7, .check_checksum = false, .max_counter = 0U, .frequency = 16U},
+           {CHRYSLER_CUSW_ADDRS.ACC_1, 0, 8, .check_checksum = false, .max_counter = 0U, .frequency = 16U}, { 0 }}},
 };
 
 const ChryslerCuswAddrs *chrysler_cusw_addrs = &CHRYSLER_CUSW_ADDRS;
