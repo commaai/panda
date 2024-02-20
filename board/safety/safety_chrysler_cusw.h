@@ -1,3 +1,5 @@
+#include "safety_chrysler_common.h"
+
 const SteeringLimits CHRYSLER_CUSW_STEERING_LIMITS = {
   .max_steer = 261,
   .max_rt_delta = 112,
@@ -50,47 +52,7 @@ RxCheck chrysler_cusw_rx_checks[] = {
 
 const ChryslerCuswAddrs *chrysler_cusw_addrs = &CHRYSLER_CUSW_ADDRS;
 
-// TODO: include from main Chrysler safety
-static uint32_t chrysler_cusw_get_checksum(const CANPacket_t *to_push) {
-  int checksum_byte = GET_LEN(to_push) - 1U;
-  return (uint8_t)(GET_BYTE(to_push, checksum_byte));
-}
 
-// TODO: include from main Chrysler safety
-static uint32_t chrysler_cusw_compute_checksum(const CANPacket_t *to_push) {
-  // TODO: clean this up
-  // http://illmatics.com/Remote%20Car%20Hacking.pdf
-  uint8_t checksum = 0xFFU;
-  int len = GET_LEN(to_push);
-  for (int j = 0; j < (len - 1); j++) {
-    uint8_t shift = 0x80U;
-    uint8_t curr = (uint8_t)GET_BYTE(to_push, j);
-    for (int i=0; i<8; i++) {
-      uint8_t bit_sum = curr & shift;
-      uint8_t temp_chk = checksum & 0x80U;
-      if (bit_sum != 0U) {
-        bit_sum = 0x1C;
-        if (temp_chk != 0U) {
-          bit_sum = 1;
-        }
-        checksum = checksum << 1;
-        temp_chk = checksum | 1U;
-        bit_sum ^= temp_chk;
-      } else {
-        if (temp_chk != 0U) {
-          bit_sum = 0x1D;
-        }
-        checksum = checksum << 1;
-        bit_sum ^= checksum;
-      }
-      checksum = bit_sum;
-      shift = shift >> 1;
-    }
-  }
-  return (uint8_t)(~checksum);
-}
-
-// TODO: include from main Chrysler safety
 static uint8_t chrysler_cusw_get_counter(const CANPacket_t *to_push) {
   int counter_byte = GET_LEN(to_push) - 2U;
   return (uint8_t)(GET_BYTE(to_push, counter_byte) & 0xFU);
@@ -191,6 +153,6 @@ const safety_hooks chrysler_cusw_hooks = {
   .tx = chrysler_cusw_tx_hook,
   .fwd = chrysler_cusw_fwd_hook,
   .get_counter = chrysler_cusw_get_counter,
-  .get_checksum = chrysler_cusw_get_checksum,
-  .compute_checksum = chrysler_cusw_compute_checksum,
+  .get_checksum = chrysler_get_checksum,
+  .compute_checksum = chrysler_compute_checksum,
 };

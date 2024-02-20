@@ -1,3 +1,5 @@
+#include "safety_chrysler_common.h"
+
 const SteeringLimits CHRYSLER_STEERING_LIMITS = {
   .max_steer = 261,
   .max_rt_delta = 112,
@@ -118,8 +120,6 @@ RxCheck chrysler_ram_hd_rx_checks[] = {
   {.msg = {{CHRYSLER_RAM_HD_ADDRS.DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
 };
 
-
-
 const uint32_t CHRYSLER_PARAM_RAM_DT = 1U;  // set for Ram DT platform
 const uint32_t CHRYSLER_PARAM_RAM_HD = 2U;  // set for Ram HD platform
 
@@ -130,43 +130,6 @@ enum {
 } chrysler_platform = CHRYSLER_PACIFICA;
 const ChryslerAddrs *chrysler_addrs = &CHRYSLER_ADDRS;
 
-static uint32_t chrysler_get_checksum(const CANPacket_t *to_push) {
-  int checksum_byte = GET_LEN(to_push) - 1U;
-  return (uint8_t)(GET_BYTE(to_push, checksum_byte));
-}
-
-static uint32_t chrysler_compute_checksum(const CANPacket_t *to_push) {
-  // TODO: clean this up
-  // http://illmatics.com/Remote%20Car%20Hacking.pdf
-  uint8_t checksum = 0xFFU;
-  int len = GET_LEN(to_push);
-  for (int j = 0; j < (len - 1); j++) {
-    uint8_t shift = 0x80U;
-    uint8_t curr = (uint8_t)GET_BYTE(to_push, j);
-    for (int i=0; i<8; i++) {
-      uint8_t bit_sum = curr & shift;
-      uint8_t temp_chk = checksum & 0x80U;
-      if (bit_sum != 0U) {
-        bit_sum = 0x1C;
-        if (temp_chk != 0U) {
-          bit_sum = 1;
-        }
-        checksum = checksum << 1;
-        temp_chk = checksum | 1U;
-        bit_sum ^= temp_chk;
-      } else {
-        if (temp_chk != 0U) {
-          bit_sum = 0x1D;
-        }
-        checksum = checksum << 1;
-        bit_sum ^= checksum;
-      }
-      checksum = bit_sum;
-      shift = shift >> 1;
-    }
-  }
-  return (uint8_t)(~checksum);
-}
 
 static uint8_t chrysler_get_counter(const CANPacket_t *to_push) {
   return (uint8_t)(GET_BYTE(to_push, 6) >> 4);
