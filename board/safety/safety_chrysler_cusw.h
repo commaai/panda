@@ -142,7 +142,7 @@ static bool chrysler_cusw_tx_hook(const CANPacket_t *to_send) {
 
     const SteeringLimits limits = CHRYSLER_CUSW_STEERING_LIMITS;
 
-    const bool steer_req = GET_BIT(to_send, 12U) != 0U;
+    const bool steer_req = GET_BIT(to_send, 12U);
     if (steer_torque_cmd_checks(desired_torque, steer_req, limits)) {
       tx = false;
     }
@@ -150,8 +150,8 @@ static bool chrysler_cusw_tx_hook(const CANPacket_t *to_send) {
 
   // FORCE CANCEL: only the cancel button press is allowed
   if (addr == chrysler_cusw_addrs->CRUISE_BUTTONS) {
-    const bool is_cancel = GET_BIT(to_send, 0U) != 0U;
-    const bool is_resume = GET_BIT(to_send, 4U) != 0U;
+    const bool is_cancel = GET_BIT(to_send, 0U);
+    const bool is_resume = GET_BIT(to_send, 4U);
     const bool allowed = is_cancel || (is_resume && controls_allowed);
     if (!allowed) {
       tx = false;
