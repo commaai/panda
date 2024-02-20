@@ -28,8 +28,8 @@ extern int can_live;
 extern int pending_can_live;
 
 // must reinit after changing these
-extern int can_loopback;
 extern int can_silent;
+extern bool can_loopback;
 
 // Ignition detected from CAN meessages
 bool ignition_can = false;
@@ -40,8 +40,8 @@ uint32_t ignition_can_cnt = 0U;
 
 int can_live = 0;
 int pending_can_live = 0;
-int can_loopback = 0;
 int can_silent = ALL_CAN_SILENT;
+bool can_loopback = false;
 
 // ******************* functions prototypes *********************
 bool can_init(uint8_t can_number);

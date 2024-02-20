@@ -114,11 +114,11 @@ static uint32_t honda_compute_checksum(const CANPacket_t *to_push) {
   uint8_t checksum = 0U;
   unsigned int addr = GET_ADDR(to_push);
   while (addr > 0U) {
-    checksum += (addr & 0xFU); addr >>= 4;
+    checksum += (uint8_t)(addr & 0xFU); addr >>= 4;
   }
   for (int j = 0; j < len; j++) {
     uint8_t byte = GET_BYTE(to_push, j);
-    checksum += (byte & 0xFU) + (byte >> 4U);
+    checksum += (uint8_t)(byte & 0xFU) + (byte >> 4U);
     if (j == (len - 1)) {
       checksum -= (byte & 0xFU);  // remove checksum in message
     }
@@ -166,7 +166,7 @@ static void honda_rx_hook(const CANPacket_t *to_push) {
 
   // enter controls when PCM enters cruise state
   if (pcm_cruise && (addr == 0x17C)) {
-    const bool cruise_engaged = GET_BIT(to_push, 38U) != 0U;
+    const bool cruise_engaged = GET_BIT(to_push, 38U);
     // engage on rising edge
     if (cruise_engaged && !cruise_engaged_prev) {
       controls_allowed = true;
@@ -207,13 +207,13 @@ static void honda_rx_hook(const CANPacket_t *to_push) {
   // accord, crv: 0x1BE
   if (honda_alt_brake_msg) {
     if (addr == 0x1BE) {
-      brake_pressed = GET_BIT(to_push, 4U) != 0U;
+      brake_pressed = GET_BIT(to_push, 4U);
     }
   } else {
     if (addr == 0x17C) {
       // also if brake switch is 1 for two CAN frames, as brake pressed is delayed
-      const bool brake_switch = GET_BIT(to_push, 32U) != 0U;
-      brake_pressed = (GET_BIT(to_push, 53U) != 0U) || (brake_switch && honda_brake_switch_prev);
+      const bool brake_switch = GET_BIT(to_push, 32U);
+      brake_pressed = (GET_BIT(to_push, 53U)) || (brake_switch && honda_brake_switch_prev);
       honda_brake_switch_prev = brake_switch;
     }
   }
@@ -234,7 +234,7 @@ static void honda_rx_hook(const CANPacket_t *to_push) {
   // disable stock Honda AEB in alternative experience
   if (!(alternative_experience & ALT_EXP_DISABLE_STOCK_AEB)) {
     if ((bus == 2) && (addr == 0x1FA)) {
-      bool honda_stock_aeb = GET_BIT(to_push, 29U) != 0U;
+      bool honda_stock_aeb = GET_BIT(to_push, 29U);
       int honda_stock_brake = (GET_BYTE(to_push, 0) << 2) | (GET_BYTE(to_push, 1) >> 6);
 
       // Forward AEB when stock braking is higher than openpilot braking
@@ -383,7 +383,7 @@ static safety_config honda_nidec_init(uint16_t param) {
   enable_gas_interceptor = GET_FLAG(param, HONDA_PARAM_GAS_INTERCEPTOR);
 
   safety_config ret;
-  
+
   bool enable_nidec_alt = GET_FLAG(param, HONDA_PARAM_NIDEC_ALT);
   if (enable_nidec_alt) {
     enable_gas_interceptor ? SET_RX_CHECKS(honda_nidec_alt_interceptor_rx_checks, ret) : \
@@ -465,8 +465,8 @@ static int honda_bosch_fwd_hook(int bus_num, int addr) {
     bus_fwd = 2;
   }
   if (bus_num == 2)  {
-    int is_lkas_msg = (addr == 0xE4) || (addr == 0xE5) || (addr == 0x33D) || (addr == 0x33DA) || (addr == 0x33DB);
-    int is_acc_msg = ((addr == 0x1C8) || (addr == 0x30C)) && honda_bosch_radarless && honda_bosch_long;
+    bool is_lkas_msg = (addr == 0xE4) || (addr == 0xE5) || (addr == 0x33D) || (addr == 0x33DA) || (addr == 0x33DB);
+    bool is_acc_msg = ((addr == 0x1C8) || (addr == 0x30C)) && honda_bosch_radarless && honda_bosch_long;
     bool block_msg = is_lkas_msg || is_acc_msg;
     if (!block_msg) {
       bus_fwd = 0;

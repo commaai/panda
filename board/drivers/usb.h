@@ -461,12 +461,12 @@ void usb_reset(void) {
   USBx_OUTEP(0)->DOEPTSIZ = USB_OTG_DOEPTSIZ_STUPCNT | (USB_OTG_DOEPTSIZ_PKTCNT & (1UL << 19)) | (3U << 3);
 }
 
-char to_hex_char(int a) {
+char to_hex_char(uint8_t a) {
   char ret;
-  if (a < 10) {
+  if (a < 10U) {
     ret = '0' + a;
   } else {
-    ret = 'a' + (a - 10);
+    ret = 'a' + (a - 10U);
   }
   return ret;
 }
