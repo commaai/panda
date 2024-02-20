@@ -1,6 +1,6 @@
 #pragma once
 
-#define GET_BIT(msg, b) (((msg)->data[((b) / 8U)] >> ((b) % 8U)) & 0x1U)
+#define GET_BIT(msg, b) ((bool)!!(((msg)->data[((b) / 8U)] >> ((b) % 8U)) & 0x1U))
 #define GET_BYTE(msg, b) ((msg)->data[(b)])
 #define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask))
 
@@ -15,7 +15,7 @@
 uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
   uint32_t ret = 0U;
   for (int i = 0; i < len; i++) {
-    const uint8_t shift = i * 8;
+    const uint32_t shift = i * 8;
     ret |= (((uint32_t)msg->data[start + i]) << shift);
   }
   return ret;

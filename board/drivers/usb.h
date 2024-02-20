@@ -198,13 +198,8 @@ uint16_t string_product_desc[] = {
 
 // default serial number when we're not a panda
 uint16_t string_serial_desc[] = {
-#ifdef PEDAL
-  STRING_DESCRIPTOR_HEADER(5),
-  'p', 'e', 'd', 'a', 'l'
-#else
   STRING_DESCRIPTOR_HEADER(4),
   'n', 'o', 'n', 'e'
-#endif
 };
 
 // a string containing the default configuration index
@@ -466,12 +461,12 @@ void usb_reset(void) {
   USBx_OUTEP(0)->DOEPTSIZ = USB_OTG_DOEPTSIZ_STUPCNT | (USB_OTG_DOEPTSIZ_PKTCNT & (1UL << 19)) | (3U << 3);
 }
 
-char to_hex_char(int a) {
+char to_hex_char(uint8_t a) {
   char ret;
-  if (a < 10) {
+  if (a < 10U) {
     ret = '0' + a;
   } else {
-    ret = 'a' + (a - 10);
+    ret = 'a' + (a - 10U);
   }
   return ret;
 }

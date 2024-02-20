@@ -129,21 +129,6 @@ bool put_char(uart_ring *q, char elem) {
   return ret;
 }
 
-// Seems dangerous to use (might lock CPU if called with interrupts disabled f.e.)
-// TODO: Remove? Not used anyways
-void uart_flush(const uart_ring *q) {
-  while (q->w_ptr_tx != q->r_ptr_tx) {
-    __WFI();
-  }
-}
-
-void uart_flush_sync(uart_ring *q) {
-  // empty the TX buffer
-  while (q->w_ptr_tx != q->r_ptr_tx) {
-    uart_tx_ring(q);
-  }
-}
-
 void clear_uart_buff(uart_ring *q) {
   ENTER_CRITICAL();
   q->w_ptr_tx = 0;

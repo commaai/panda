@@ -176,7 +176,6 @@ class Panda:
   HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBHBBBHfBBHBHHB")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
 
-  F2_DEVICES = [HW_TYPE_PEDAL, ]
   F4_DEVICES = [HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS]
   H7_DEVICES = [HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES, HW_TYPE_CUATRO]
 
@@ -411,7 +410,7 @@ class Panda:
           if device.getVendorID() == 0xbbaa and device.getProductID() in cls.USB_PIDS:
             try:
               serial = device.getSerialNumber()
-              if len(serial) == 24 or serial == "pedal":
+              if len(serial) == 24:
                 ret.append(serial)
               else:
                 logging.warning(f"found device with panda descriptors but invalid serial: {serial}", RuntimeWarning)
@@ -699,9 +698,7 @@ class Panda:
 
   def get_mcu_type(self) -> McuType:
     hw_type = self.get_type()
-    if hw_type in Panda.F2_DEVICES:
-      return McuType.F2
-    elif hw_type in Panda.F4_DEVICES:
+    if hw_type in Panda.F4_DEVICES:
       return McuType.F4
     elif hw_type in Panda.H7_DEVICES:
       return McuType.H7
