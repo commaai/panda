@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import sys
 import time
 import struct
@@ -159,7 +158,7 @@ class XcpClient():
             dat = rx_data[2:]
             raise CommandResponseError(f"{hex(err)} - {err_desc} {dat}", err)
 
-          return rx_data[1:]
+          return bytes(rx_data[1:])
       time.sleep(0.001)
 
     raise CommandTimeoutError("timeout waiting for response")
