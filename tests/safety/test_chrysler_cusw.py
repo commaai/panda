@@ -64,6 +64,15 @@ class TestChryslerCusw_Safety(common.PandaCarSafetyTest, common.MotorTorqueSteer
       # can always cancel
       self.assertTrue(self._tx(self._button_msg(cancel=True)))
 
+  def test_rx_hook(self):
+    for count in range(20):
+      self.assertTrue(self._rx(self._speed_msg(0)), f"{count=}")
+      self.assertTrue(self._rx(self._user_brake_msg(False)), f"{count=}")
+      self.assertTrue(self._rx(self._torque_meas_msg(0)), f"{count=}")
+      self.assertTrue(self._rx(self._user_gas_msg(0)), f"{count=}")
+      self.assertTrue(self._rx(self._button_msg(False)), f"{count=}")
+      self.assertTrue(self._rx(self._pcm_status_msg(False)), f"{count=}")
+
 
 if __name__ == "__main__":
   unittest.main()
