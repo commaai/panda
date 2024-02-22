@@ -18,7 +18,7 @@ typedef struct {
   const int LKAS_COMMAND;
   const int CRUISE_BUTTONS;
   const int DAS_6;
-  const int ACC_1;
+  const int ACC_CONTROL;
 } ChryslerCuswAddrs;
 
 // CAN messages for Chrysler Compact US Wide platforms
@@ -30,7 +30,7 @@ const ChryslerCuswAddrs CHRYSLER_CUSW_ADDRS = {
   .LKAS_COMMAND     = 0x1F6,
   .CRUISE_BUTTONS   = 0x2FA,
   .DAS_6            = 0x5DC,
-  .ACC_1            = 0x3EE,
+  .ACC_CONTROL      = 0x2EC,
 };
 
 const CanMsg CHRYSLER_CUSW_TX_MSGS[] = {
@@ -45,9 +45,7 @@ RxCheck chrysler_cusw_rx_checks[] = {
   {.msg = {{CHRYSLER_CUSW_ADDRS.EPS_STATUS, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_CUSW_ADDRS.ACCEL_GAS, 0, 5, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_CUSW_ADDRS.CRUISE_BUTTONS, 0, 3, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
-  // TODO: is there a better PCM message? this is low-frequency, has no checksum/counter protection, and variable length
-  {.msg = {{CHRYSLER_CUSW_ADDRS.ACC_1, 0, 7, .check_checksum = false, .max_counter = 0U, .frequency = 16U},
-           {CHRYSLER_CUSW_ADDRS.ACC_1, 0, 8, .check_checksum = false, .max_counter = 0U, .frequency = 16U}, { 0 }}},
+  {.msg = {{CHRYSLER_CUSW_ADDRS.ACC_CONTROL, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
 };
 
 const ChryslerCuswAddrs *chrysler_cusw_addrs = &CHRYSLER_CUSW_ADDRS;
@@ -78,9 +76,8 @@ static void chrysler_cusw_rx_hook(const CANPacket_t *to_push) {
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
-  if ((bus == 0) && (addr == chrysler_cusw_addrs->ACC_1)) {
-    uint8_t acc_state = (GET_BYTE(to_push, 0) & 0xE0U) >> 5;
-    bool cruise_engaged = acc_state == 4U;
+  if ((bus == 0) && (addr == chrysler_cusw_addrs->ACC_CONTROL)) {
+    bool cruise_engaged = GET_BIT(to_push, 7U);
     pcm_cruise_check(cruise_engaged);
   }
 

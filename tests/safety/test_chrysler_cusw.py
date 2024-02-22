@@ -31,8 +31,8 @@ class TestChryslerCusw_Safety(common.PandaCarSafetyTest, common.MotorTorqueSteer
     return self.packer.make_can_msg_panda("CRUISE_BUTTONS", 0, values)
 
   def _pcm_status_msg(self, enable):
-    values = {"ACC_STATE": 4 if enable else 3}
-    return self.packer.make_can_msg_panda("ACC_1", 0, values)
+    values = {"ACC_ACTIVE": 1 if enable else 0}
+    return self.packer.make_can_msg_panda("ACC_CONTROL", 0, values)
 
   def _speed_msg(self, speed):
     values = {"VEHICLE_SPEED": speed}
