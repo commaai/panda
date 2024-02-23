@@ -59,8 +59,10 @@ const CanMsg FORD_CANFD_LONG_TX_MSGS[] = {
 // this may be the cause of blocked messages
 RxCheck ford_rx_checks[] = {
   {.msg = {{FORD_BrakeSysFeatures, 0, 8, .check_checksum = true, .max_counter = 15U, .quality_flag=true, .frequency = 50U}, { 0 }, { 0 }}},
-  // TODO: FORD_EngVehicleSpThrottle2 has a counter that skips by 2, understand and enable counter check
-  {.msg = {{FORD_EngVehicleSpThrottle2, 0, 8, .check_checksum = true, .quality_flag=true, .frequency = 50U}, { 0 }, { 0 }}},
+  // TODO: FORD_EngVehicleSpThrottle2 has a counter that either randomly skips or by 2, understand and enable counter check
+  // Some hybrid models experience a bug where this checksum mismatches for one or two frames under heavy acceleration with ACC
+  // It has been confirmed that the Bronco Sport's camera only disallows ACC for bad quality flags, not counters or checksums, so match that
+  {.msg = {{FORD_EngVehicleSpThrottle2, 0, 8, .check_checksum = false, .quality_flag=true, .frequency = 50U}, { 0 }, { 0 }}},
   {.msg = {{FORD_Yaw_Data_FD1, 0, 8, .check_checksum = true, .max_counter = 255U, .quality_flag=true, .frequency = 100U}, { 0 }, { 0 }}},
   // These messages have no counter or checksum
   {.msg = {{FORD_EngBrakeData, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},
