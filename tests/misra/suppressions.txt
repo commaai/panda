@@ -15,8 +15,7 @@ unmatchedSuppression
 # All interrupt handlers are defined, including ones we don't use
 unusedFunction:*/interrupt_handlers*.h
 
-# REGISTER_INTERRUPT defined in interrupt_handlers.h
-unknownMacro:*/gmlan_alt.h
+unknownMacro
 
 # all of the below suppressions are from new checks introduced after updating
 # cppcheck from 2.5 -> 2.13. they are listed here to separate the update from

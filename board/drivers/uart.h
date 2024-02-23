@@ -151,20 +151,6 @@ void print(const char *a) {
   }
 }
 
-void putui(uint32_t i) {
-  uint32_t i_copy = i;
-  char str[11];
-  uint8_t idx = 10;
-  str[idx] = '\0';
-  idx--;
-  do {
-    str[idx] = (i_copy % 10U) + 0x30U;
-    idx--;
-    i_copy /= 10;
-  } while (i_copy != 0U);
-  print(&str[idx + 1U]);
-}
-
 void puthx(uint32_t i, uint8_t len) {
   const char c[] = "0123456789abcdef";
   for (int pos = ((int)len * 4) - 4; pos > -4; pos -= 4) {
