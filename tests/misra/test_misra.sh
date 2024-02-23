@@ -54,10 +54,10 @@ cppcheck $PANDA_OPTS -DSTM32H7 -DUID_BASE $PANDA_DIR/board/main.c
 
 # unused needs to run globally
 printf "\n${GREEN}** UNUSED H7 CODE **${NC}\n"
-cppcheck --enable=unusedFunction --quiet -DSTM32H7 $(find $PANDA_DIR/board/ -type f -name '*[ch]')
+cppcheck --enable=unusedFunction --quiet -DSTM32H7 $(find $PANDA_DIR/board/ -type f -name '*.[ch]')
 
 printf "\n${GREEN}** UNUSED F4 CODE **${NC}\n"
-cppcheck --enable=unusedFunction --quiets -DSTM32F4 $(find $PANDA_DIR/board/ -type f -name '*[ch]')
+cppcheck --enable=unusedFunction --quiets -DSTM32F4 $(find $PANDA_DIR/board/ -type f -name '*.[ch]')
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 
