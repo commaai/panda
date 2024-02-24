@@ -71,12 +71,6 @@ class PandaDFU:
     return None, handle
 
   @staticmethod
-  def list() -> list[str]:
-    ret = PandaDFU.usb_list()
-    ret += PandaDFU.spi_list()
-    return list(set(ret))
-
-  @staticmethod
   def usb_list() -> list[str]:
     dfu_serials = []
     try:
@@ -133,3 +127,9 @@ class PandaDFU:
       code = f.read()
     self.program_bootstub(code)
     self.reset()
+
+  @staticmethod
+  def list() -> list[str]:
+    ret = PandaDFU.usb_list()
+    ret += PandaDFU.spi_list()
+    return list(set(ret))
