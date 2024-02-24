@@ -129,7 +129,6 @@ bool is_car_safety_mode(uint16_t mode) {
 
 // ***************************** main code *****************************
 
-void test (void){}
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {
   early_initialization();

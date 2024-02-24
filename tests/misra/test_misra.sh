@@ -44,20 +44,22 @@ cppcheck() {
   fi
 }
 
-PANDA_OPTS="--enable=all --disable=unusedFunction -DPANDA --addon=misra"
+PANDA_OPTS="--enable=all --disable=unusedFunction -DPANDA -DUID_BASE --addon=misra"
 
 printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
-cppcheck $PANDA_OPTS -DSTM32F4 -DUID_BASE $PANDA_DIR/board/main.c
+cppcheck $PANDA_OPTS -DSTM32F4 $PANDA_DIR/board/main.c
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-cppcheck $PANDA_OPTS -DSTM32H7 -DUID_BASE $PANDA_DIR/board/main.c
+cppcheck $PANDA_OPTS -DSTM32H7 $PANDA_DIR/board/main.c
 
 # unused needs to run globally
+UNUSED_FUNCTION_OPTS="--enable=unusedFunction --quiet -DPANDA -DFINAL_PROVISIONING"
+
 printf "\n${GREEN}** UNUSED H7 CODE **${NC}\n"
-cppcheck --enable=unusedFunction --quiet -DSTM32H7 $(find $PANDA_DIR/board/ -type f -name '*.[ch]')
+cppcheck $UNUSED_FUNCTION_OPTS -DSTM32H7 $(find $PANDA_DIR/board/ -type f -name '*.[ch]')
 
 printf "\n${GREEN}** UNUSED F4 CODE **${NC}\n"
-cppcheck --enable=unusedFunction --quiets -DSTM32F4 $(find $PANDA_DIR/board/ -type f -name '*.[ch]')
+cppcheck $UNUSED_FUNCTION_OPTS -DSTM32F4 $(find $PANDA_DIR/board/ -type f -name '*.[ch]')
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 
