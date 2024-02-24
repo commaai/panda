@@ -26,7 +26,7 @@ if __name__ == "__main__":
       r.enable_power(i, 0)
     r.cycle_power(ports=[1, 2], dfu=True)
 
-    dfu_serials = PandaJungleDFU.list()
+    dfu_serials = PandaJungleDFU.list_all()
     print(len(dfu_serials), len(SERIALS))
     assert len(dfu_serials) == len(SERIALS)
 

@@ -27,7 +27,7 @@ def test_dfu_with_spam(p):
       spi.xfer(dat)
 
     # should still show up
-    assert dfu_serial in PandaDFU.list()
+    assert dfu_serial in PandaDFU.list_all()
 
 class TestSpi:
   def _ping(self, mocker, panda):

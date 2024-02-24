@@ -148,7 +148,7 @@ def func_fixture_panda(request, module_panda):
   # Teardown
 
   # reconnect
-  if p.get_dfu_serial() in PandaDFU.list():
+  if p.get_dfu_serial() in PandaDFU.list_all():
     PandaDFU(p.get_dfu_serial()).reset()
     p.reconnect()
   if not p.connected:
