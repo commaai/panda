@@ -278,7 +278,7 @@ _negative_response_codes = {
     0x93: 'voltage too low',
 }
 
-def get_dtc_num_as_str(dtc_num_bytes):
+def get_dtc_num_as_str(dtc_num: bytes) -> str:
   # ISO 15031-6
   designator = {
     0b00: "P",
@@ -286,11 +286,11 @@ def get_dtc_num_as_str(dtc_num_bytes):
     0b10: "B",
     0b11: "U",
   }
-  d = designator[dtc_num_bytes[0] >> 6]
-  n = bytes([dtc_num_bytes[0] & 0x3F]) + dtc_num_bytes[1:]
+  d = designator[dtc_num[0] >> 6]
+  n = bytes([dtc_num[0] & 0x3F]) + dtc_num[1:]
   return d + n.hex()
 
-def get_dtc_status_names(status):
+def get_dtc_status_names(status: int) -> list[str]:
   result = list()
   for m in DTC_STATUS_MASK_TYPE:
     if m == DTC_STATUS_MASK_TYPE.ALL:
@@ -553,7 +553,7 @@ class IsoTpMessage():
 FUNCTIONAL_ADDRS = [0x7DF, 0x18DB33F1]
 
 
-def get_rx_addr_for_tx_addr(tx_addr, rx_offset=0x8):
+def get_rx_addr_for_tx_addr(tx_addr: int, rx_offset=0x8) -> Optional[int]:
   if tx_addr in FUNCTIONAL_ADDRS:
     return None
 
