@@ -550,13 +550,13 @@ class Panda:
   @staticmethod
   def wait_for_dfu(dfu_serial: str | None, timeout: int | None = None) -> bool:
     t_start = time.monotonic()
-    dfu_list = PandaDFU.list_all()
+    dfu_list = PandaDFU.list()
     while (dfu_serial is None and len(dfu_list) == 0) or (dfu_serial is not None and dfu_serial not in dfu_list):
       logging.debug("waiting for DFU...")
       time.sleep(0.1)
       if timeout is not None and (time.monotonic() - t_start) > timeout:
         return False
-      dfu_list = PandaDFU.list_all()
+      dfu_list = PandaDFU.list()
     return True
 
   @staticmethod

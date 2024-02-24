@@ -19,7 +19,7 @@ if __name__ == "__main__":
   # wait for reset pandas to come back up
   time.sleep(1)
 
-  dfu_serials = PandaDFU.list_all()
+  dfu_serials = PandaDFU.list()
   print(f"found {len(dfu_serials)} panda(s) in DFU - {dfu_serials}")
   for s in dfu_serials:
     print("flashing", s)
