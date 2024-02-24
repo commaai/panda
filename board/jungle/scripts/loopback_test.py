@@ -121,7 +121,7 @@ if __name__ == "__main__":
   # Connect to <NUM_PANDAS_PER_TEST> new pandas before starting tests
   print_colored("Waiting for " + str(NUM_PANDAS_PER_TEST) + " pandas to be connected", "yellow")
   while True:
-    connected_serials = Panda.list()
+    connected_serials = Panda.list_all()
     if len(connected_serials) == NUM_PANDAS_PER_TEST:
       panda_serials = connected_serials
       break

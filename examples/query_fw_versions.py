@@ -46,7 +46,7 @@ if __name__ == "__main__":
     for uds_id in range(0xf1f0, 0xf200):
       uds_data_ids[uds_id] = "IDENTIFICATION_OPTION_SYSTEM_SUPPLIER_SPECIFIC"
 
-  panda_serials = Panda.list()
+  panda_serials = Panda.list_all()
   if args.serial is None and len(panda_serials) > 1:
     print("\nMultiple pandas found, choose one:")
     for serial in panda_serials:

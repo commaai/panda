@@ -19,7 +19,7 @@ class ELMCarSimulator():
     def __init__(self, sn, silent=False, can_kbaud=500,
                  can=True, can11b=True, can29b=True,
                  lin=True):
-        self.__p = Panda(sn if sn else Panda.list()[0])
+        self.__p = Panda(sn if sn else Panda.list_all()[0])
         self.__on = True
         self.__stop = False
         self.__silent = silent

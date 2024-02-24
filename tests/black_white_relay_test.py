@@ -22,7 +22,7 @@ content_errors = 0
 def run_test(sleep_duration):
   global counter, open_errors, closed_errors
 
-  pandas = Panda.list()
+  pandas = Panda.list_all()
   print(pandas)
 
   # make sure two pandas are connected

@@ -18,8 +18,8 @@ if __name__ == "__main__":
   with print_time("Panda()"):
     p = Panda()
 
-  with print_time("PandaDFU.list()"):
-    PandaDFU.list()
+  with print_time("PandaDFU.list_all()"):
+    PandaDFU.list_all()
 
   fxn = [
     'reset',

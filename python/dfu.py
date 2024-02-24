@@ -71,7 +71,7 @@ class PandaDFU:
     return None, handle
 
   @staticmethod
-  def list() -> list[str]:
+  def list_all() -> list[str]:
     ret = PandaDFU.usb_list()
     ret += PandaDFU.spi_list()
     return list(set(ret))

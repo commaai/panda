@@ -2,6 +2,6 @@
 from panda import Panda
 
 if __name__ == "__main__":
-  for p in Panda.list():
+  for p in Panda.list_all():
     pp = Panda(p)
     print(f"{pp.get_serial()[0]}: {pp.get_version()}")

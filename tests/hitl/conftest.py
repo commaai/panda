@@ -45,7 +45,7 @@ def init_all_pandas():
     _panda_jungle = PandaJungle(JUNGLE_SERIAL)
     _panda_jungle.set_panda_power(True)
 
-  for serial in Panda.list():
+  for serial in Panda.list_all():
     if serial not in PANDAS_EXCLUDE:
       with Panda(serial=serial, claim=False) as p:
         ptype = bytes(p.get_type())
@@ -148,7 +148,7 @@ def func_fixture_panda(request, module_panda):
   # Teardown
 
   # reconnect
-  if p.get_dfu_serial() in PandaDFU.list():
+  if p.get_dfu_serial() in PandaDFU.list_all():
     PandaDFU(p.get_dfu_serial()).reset()
     p.reconnect()
   if not p.connected:

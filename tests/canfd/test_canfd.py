@@ -23,7 +23,7 @@ def panda_reset():
   panda_jungle.set_panda_power(True)
   time.sleep(4)
 
-  for serial in Panda.list():
+  for serial in Panda.list_all():
     if serial not in H7_PANDAS_EXCLUDE:
       with Panda(serial=serial) as p:
         if p.get_type() in H7_HW_TYPES:
