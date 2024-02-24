@@ -575,6 +575,8 @@ class UdsClient():
     self.bus = bus
     self.tx_addr = tx_addr
     self.rx_addr = rx_addr if rx_addr is not None else get_rx_addr_for_tx_addr(tx_addr)
+    if self.rx_addr is None:
+      raise ValueError("unable to determine rx_addr for tx_addr: {}".format(tx_addr))
     self.sub_addr = sub_addr
     self.timeout = timeout
     self.debug = debug
