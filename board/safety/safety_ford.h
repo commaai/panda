@@ -92,9 +92,11 @@ static uint32_t ford_get_checksum(const CANPacket_t *to_push) {
   if (addr == FORD_BrakeSysFeatures) {
     // Signal: VehVActlBrk_No_Cs
     chksum = GET_BYTE(to_push, 3);
+  /*
   } else if (addr == FORD_EngVehicleSpThrottle2) {
     // Signal: VehVActlEng_No_Cs
     chksum = GET_BYTE(to_push, 1);
+  */
   } else if (addr == FORD_Yaw_Data_FD1) {
     // Signal: VehRollYawW_No_Cs
     chksum = GET_BYTE(to_push, 4);
@@ -112,11 +114,13 @@ static uint32_t ford_compute_checksum(const CANPacket_t *to_push) {
     chksum += GET_BYTE(to_push, 2) >> 6;                    // VehVActlBrk_D_Qf
     chksum += (GET_BYTE(to_push, 2) >> 2) & 0xFU;           // VehVActlBrk_No_Cnt
     chksum = 0xFFU - chksum;
+  /*
   } else if (addr == FORD_EngVehicleSpThrottle2) {
     chksum += (GET_BYTE(to_push, 2) >> 3) & 0xFU;           // VehVActlEng_No_Cnt
     chksum += (GET_BYTE(to_push, 4) >> 5) & 0x3U;           // VehVActlEng_D_Qf
     chksum += GET_BYTE(to_push, 6) + GET_BYTE(to_push, 7);  // Veh_V_ActlEng
     chksum = 0xFFU - chksum;
+  */
   } else if (addr == FORD_Yaw_Data_FD1) {
     chksum += GET_BYTE(to_push, 0) + GET_BYTE(to_push, 1);  // VehRol_W_Actl
     chksum += GET_BYTE(to_push, 2) + GET_BYTE(to_push, 3);  // VehYaw_W_Actl
