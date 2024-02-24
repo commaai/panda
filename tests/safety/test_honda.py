@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import unittest
 import numpy as np
-from typing import Optional
 
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
@@ -170,9 +169,9 @@ class HondaPcmEnableBase(common.PandaCarSafetyTest):
 
 class HondaBase(common.PandaCarSafetyTest):
   MAX_BRAKE = 255
-  PT_BUS: Optional[int] = None  # must be set when inherited
-  STEER_BUS: Optional[int] = None  # must be set when inherited
-  BUTTONS_BUS: Optional[int] = None  # must be set when inherited, tx on this bus, rx on PT_BUS
+  PT_BUS: int | None = None  # must be set when inherited
+  STEER_BUS: int | None = None  # must be set when inherited
+  BUTTONS_BUS: int | None = None  # must be set when inherited, tx on this bus, rx on PT_BUS
 
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDRS = {0: (0xE4, 0x194)}  # STEERING_CONTROL

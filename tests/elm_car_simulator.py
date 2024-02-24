@@ -190,7 +190,7 @@ class ELMCarSimulator():
             if pid == 0x02:   # Show VIN
                 return b"1D4GP00R55B123456"
             if pid == 0xFC:   # test long multi message. Ligned up for LIN responses
-                return b''.join((struct.pack(">BBH", 0xAA, 0xAA, num + 1) for num in range(80)))
+                return b''.join(struct.pack(">BBH", 0xAA, 0xAA, num + 1) for num in range(80))
             if pid == 0xFD:   # test long multi message
                 parts = (b'\xAA\xAA\xAA' + struct.pack(">I", num) for num in range(80))
                 return b'\xAA\xAA\xAA' + b''.join(parts)
@@ -199,7 +199,7 @@ class ELMCarSimulator():
                 return b'\xAA\xAA\xAA' + b''.join(parts) + b'\xAA'
             if pid == 0xFF:
                 return b'\xAA\x00\x00' + \
-                       b"".join(((b'\xAA' * 5) + struct.pack(">H", num + 1) for num in range(584)))
+                       b"".join((b'\xAA' * 5) + struct.pack(">H", num + 1) for num in range(584))
                 #return b"\xAA"*100#(0xFFF-3)
 
 

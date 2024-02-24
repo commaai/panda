@@ -1,4 +1,3 @@
-from typing import Tuple
 import unittest
 
 import panda.tests.safety.common as common
@@ -77,8 +76,8 @@ class HyundaiButtonBase:
 class HyundaiLongitudinalBase(common.LongitudinalAccelSafetyTest):
   # pylint: disable=no-member,abstract-method
 
-  DISABLED_ECU_UDS_MSG: Tuple[int, int]
-  DISABLED_ECU_ACTUATION_MSG: Tuple[int, int]
+  DISABLED_ECU_UDS_MSG: tuple[int, int]
+  DISABLED_ECU_ACTUATION_MSG: tuple[int, int]
 
   @classmethod
   def setUpClass(cls):

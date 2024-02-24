@@ -2,7 +2,6 @@
 import os
 import struct
 from functools import wraps
-from typing import Optional
 
 from panda import Panda, PandaDFU
 from panda.python.constants import McuType
@@ -57,7 +56,7 @@ class PandaJungle(Panda):
       fn = os.path.join(FW_PATH, self._mcu_type.config.app_fn.replace("panda", "panda_jungle"))
     super().flash(fn=fn, code=code, reconnect=reconnect)
 
-  def recover(self, timeout: Optional[int] = 60, reset: bool = True) -> bool:
+  def recover(self, timeout: int | None = 60, reset: bool = True) -> bool:
     dfu_serial = self.get_dfu_serial()
 
     if reset:

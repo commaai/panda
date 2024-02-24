@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import unittest
-from typing import Dict, List
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -147,8 +146,8 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
              [0xA1, 1], [0x306, 1], [0x308, 1], [0x310, 1],  # obs bus
              [0x315, 2],  # ch bus
              [0x104c006c, 3], [0x10400060, 3]]  # gmlan
-  FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}
-  FWD_BUS_LOOKUP: Dict[int, int] = {}
+  FWD_BLACKLISTED_ADDRS: dict[int, list[int]] = {}
+  FWD_BUS_LOOKUP: dict[int, int] = {}
   BRAKE_BUS = 2
 
   MAX_GAS = 3072
