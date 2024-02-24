@@ -553,7 +553,7 @@ class IsoTpMessage():
 FUNCTIONAL_ADDRS = [0x7DF, 0x18DB33F1]
 
 
-def get_rx_addr_for_tx_addr(tx_addr: int, rx_offset=0x8) -> Optional[int]:
+def get_rx_addr_for_tx_addr(tx_addr: int, rx_offset: int = 0x8) -> Optional[int]:
   if tx_addr in FUNCTIONAL_ADDRS:
     return None
 
