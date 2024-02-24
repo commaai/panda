@@ -33,7 +33,7 @@ def logger(event):
       for l in drain_serial(p)[::-1]:
         ns = l.decode('utf8').strip().split(' ')
         if len(ns) == 4:
-          target_rpm, rpm_fast, power, stall_count = [int(n, 16) for n in ns]
+          target_rpm, rpm_fast, power, stall_count = (int(n, 16) for n in ns)
           break
 
       dat = {
