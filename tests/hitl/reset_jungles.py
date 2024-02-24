@@ -26,7 +26,7 @@ if __name__ == "__main__":
       r.enable_power(i, 0)
     r.cycle_power(ports=[1, 2], dfu=True)
 
-    dfu_serials = PandaJungleDFU.list_all()
+    dfu_serials = PandaJungleDFU.list()
     print(len(dfu_serials), len(SERIALS))
     assert len(dfu_serials) == len(SERIALS)
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
       # power cycle for H7 bootloader bug
       r.cycle_power(ports=[1, 2])
 
-      serials = PandaJungle.list_all()
-      assert set(PandaJungle.list_all()) >= SERIALS
+      serials = PandaJungle.list()
+      assert set(PandaJungle.list()) >= SERIALS
       mcu_types = list(exc.map(flash, SERIALS, timeout=20))
       assert set(mcu_types) == {McuType.F4, McuType.H7}

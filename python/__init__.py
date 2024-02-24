@@ -394,7 +394,7 @@ class Panda:
     return context, usb_handle, usb_serial, bootstub, bcd
 
   @classmethod
-  def list_all(cls):
+  def list(cls):
     ret = cls.usb_list()
     ret += cls.spi_list()
     return list(set(ret))
@@ -550,25 +550,25 @@ class Panda:
   @staticmethod
   def wait_for_dfu(dfu_serial: str | None, timeout: int | None = None) -> bool:
     t_start = time.monotonic()
-    dfu_list = PandaDFU.list_all()
+    dfu_list = PandaDFU.list()
     while (dfu_serial is None and len(dfu_list) == 0) or (dfu_serial is not None and dfu_serial not in dfu_list):
       logging.debug("waiting for DFU...")
       time.sleep(0.1)
       if timeout is not None and (time.monotonic() - t_start) > timeout:
         return False
-      dfu_list = PandaDFU.list_all()
+      dfu_list = PandaDFU.list()
     return True
 
   @staticmethod
   def wait_for_panda(serial: str | None, timeout: int) -> bool:
     t_start = time.monotonic()
-    serials = Panda.list_all()
+    serials = Panda.list()
     while (serial is None and len(serials) == 0) or (serial is not None and serial not in serials):
       logging.debug("waiting for panda...")
       time.sleep(0.1)
       if timeout is not None and (time.monotonic() - t_start) > timeout:
         return False
-      serials = Panda.list_all()
+      serials = Panda.list()
     return True
 
   def up_to_date(self, fn=None) -> bool:

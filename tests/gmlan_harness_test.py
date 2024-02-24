@@ -26,7 +26,7 @@ def send(p, id_, msg):
     p.can_send(id_, msg, OTHER_GMLAN_BUS)
 
 if __name__ == "__main__":
-  pl = Panda.list_all()
+  pl = Panda.list()
   assert(len(pl) == 2)
   p0 = Panda(pl[1])
   p1 = Panda(pl[0])

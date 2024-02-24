@@ -13,7 +13,7 @@ if __name__ == "__main__":
     try:
       claim = os.getenv("CLAIM") is not None
 
-      serials = PandaJungle.list_all()
+      serials = PandaJungle.list()
       if os.getenv("SERIAL"):
         serials = [x for x in serials if x==os.getenv("SERIAL")]
 

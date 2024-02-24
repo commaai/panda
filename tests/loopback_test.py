@@ -12,7 +12,7 @@ def get_test_string():
   return b"test" + os.urandom(10)
 
 def run_test(sleep_duration):
-  pandas = Panda.list_all()
+  pandas = Panda.list()
   print(pandas)
 
   if len(pandas) < 2:

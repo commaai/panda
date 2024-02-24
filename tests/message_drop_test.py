@@ -34,7 +34,7 @@ def flood_tx(panda):
   print(f"Done sending {3*NUM_MESSAGES_PER_BUS} messages!")
 
 if __name__ == "__main__":
-  serials = Panda.list_all()
+  serials = Panda.list()
   receiver: Panda | PandaJungle
   if JUNGLE:
     sender = Panda()

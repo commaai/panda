@@ -10,7 +10,7 @@ board_path = os.path.dirname(os.path.realpath(__file__))
 if __name__ == "__main__":
   subprocess.check_call(f"scons -C {board_path}/.. -j$(nproc) {board_path}", shell=True)
 
-  for s in Panda.list_all():
+  for s in Panda.list():
     print("putting", s, "in DFU mode")
     with Panda(serial=s) as p:
       p.reset(enter_bootstub=True)
@@ -19,7 +19,7 @@ if __name__ == "__main__":
   # wait for reset pandas to come back up
   time.sleep(1)
 
-  dfu_serials = PandaDFU.list_all()
+  dfu_serials = PandaDFU.list()
   print(f"found {len(dfu_serials)} panda(s) in DFU - {dfu_serials}")
   for s in dfu_serials:
     print("flashing", s)

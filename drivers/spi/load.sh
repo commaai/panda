@@ -22,6 +22,6 @@ sudo lsmod
 echo "loaded"
 ls -la /dev/spi*
 sudo chmod 666 /dev/spi*
-ipython -c "from panda import Panda; print(Panda.list_all())"
-KERN=1 ipython -c "from panda import Panda; print(Panda.list_all())"
+ipython -c "from panda import Panda; print(Panda.list())"
+KERN=1 ipython -c "from panda import Panda; print(Panda.list())"
 dmesg

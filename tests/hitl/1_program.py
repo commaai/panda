@@ -21,7 +21,7 @@ def test_dfu(p):
   dfu = PandaDFU(dfu_serial)
   assert dfu.get_mcu_type() == app_mcu_type
 
-  assert dfu_serial in PandaDFU.list_all()
+  assert dfu_serial in PandaDFU.list()
 
   dfu._handle.clear_status()
   dfu.reset()
