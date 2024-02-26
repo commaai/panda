@@ -40,7 +40,7 @@ const int NISSAN_PARAM_ALT_EPS_BUS = 1;
 
 bool nissan_alt_eps = false;
 
-static void nissan_rx_hook(CANPacket_t *to_push) {
+static void nissan_rx_hook(const CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
@@ -93,7 +93,7 @@ static void nissan_rx_hook(CANPacket_t *to_push) {
 }
 
 
-static bool nissan_tx_hook(CANPacket_t *to_send) {
+static bool nissan_tx_hook(const CANPacket_t *to_send) {
   bool tx = true;
   int addr = GET_ADDR(to_send);
   bool violation = false;
@@ -104,7 +104,7 @@ static bool nissan_tx_hook(CANPacket_t *to_send) {
     bool lka_active = (GET_BYTE(to_send, 6) >> 4) & 1U;
 
     // Factor is -0.01, offset is 1310. Flip to correct sign, but keep units in CAN scale
-    desired_angle = -desired_angle + (1310 * NISSAN_STEERING_LIMITS.angle_deg_to_can);
+    desired_angle = -desired_angle + (1310.0f * NISSAN_STEERING_LIMITS.angle_deg_to_can);
 
     if (steer_angle_cmd_checks(desired_angle, lka_active, NISSAN_STEERING_LIMITS)) {
       violation = true;
@@ -129,7 +129,7 @@ static int nissan_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
   if (bus_num == 0) {
-    int block_msg = (addr == 0x280); // CANCEL_MSG
+    bool block_msg = (addr == 0x280); // CANCEL_MSG
     if (!block_msg) {
       bus_fwd = 2;  // ADAS
     }
@@ -137,7 +137,7 @@ static int nissan_fwd_hook(int bus_num, int addr) {
 
   if (bus_num == 2) {
     // 0x169 is LKAS, 0x2b1 LKAS_HUD, 0x4cc LKAS_HUD_INFO_MSG
-    int block_msg = ((addr == 0x169) || (addr == 0x2b1) || (addr == 0x4cc));
+    bool block_msg = ((addr == 0x169) || (addr == 0x2b1) || (addr == 0x4cc));
     if (!block_msg) {
       bus_fwd = 0;  // V-CAN
     }

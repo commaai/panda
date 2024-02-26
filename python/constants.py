@@ -1,6 +1,6 @@
 import os
 import enum
-from typing import List, NamedTuple
+from typing import NamedTuple
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 FW_PATH = os.path.join(BASEDIR, "board/obj/")
@@ -10,7 +10,7 @@ USBPACKET_MAX_SIZE = 0x40
 class McuConfig(NamedTuple):
   mcu: str
   mcu_idcode: int
-  sector_sizes: List[int]
+  sector_sizes: list[int]
   sector_count: int  # total sector count, used for MCU identification in DFU mode
   uid_address: int
   block_size: int
@@ -24,7 +24,11 @@ class McuConfig(NamedTuple):
     # assume bootstub is in sector 0
     return self.bootstub_address + sum(self.sector_sizes[:i])
 
-Fx = (
+F4Config = McuConfig(
+  "STM32F4",
+  0x463,
+  [0x4000 for _ in range(4)] + [0x10000] + [0x20000 for _ in range(11)],
+  16,
   0x1FFF7A10,
   0x800,
   0x1FFF79C0,
@@ -33,8 +37,6 @@ Fx = (
   0x8000000,
   "bootstub.panda.bin",
 )
-F2Config = McuConfig("STM32F2", 0x411, [0x4000 for _ in range(4)] + [0x10000] + [0x20000 for _ in range(7)], 12, *Fx)
-F4Config = McuConfig("STM32F4", 0x463, [0x4000 for _ in range(4)] + [0x10000] + [0x20000 for _ in range(11)], 16, *Fx)
 
 H7Config = McuConfig(
   "STM32H7",
@@ -53,7 +55,6 @@ H7Config = McuConfig(
 
 @enum.unique
 class McuType(enum.Enum):
-  F2 = F2Config
   F4 = F4Config
   H7 = H7Config
 

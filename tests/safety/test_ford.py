@@ -215,11 +215,11 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
           self.assertEqual(quality_flag, self._rx(to_push))
           self.assertEqual(quality_flag, self.safety.get_controls_allowed())
 
-        # Mess with checksum to make it fail
-        to_push[0].data[1] = 0  # Speed 2 checksum
+        # Mess with checksum to make it fail, checksum is not checked for 2nd speed
         to_push[0].data[3] = 0  # Speed checksum & half of yaw signal
-        self.assertFalse(self._rx(to_push))
-        self.assertFalse(self.safety.get_controls_allowed())
+        should_rx = msg == "speed_2" and quality_flag
+        self.assertEqual(should_rx, self._rx(to_push))
+        self.assertEqual(should_rx, self.safety.get_controls_allowed())
 
   def test_rx_hook_speed_mismatch(self):
     # Ford relies on speed for driver curvature limiting, so it checks two sources
@@ -409,6 +409,7 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
   def _acc_command_msg(self, gas: float, brake: float, cmbb_deny: bool = False):
     values = {
       "AccPrpl_A_Rq": gas,                       # [-5|5.23] m/s^2
+      "AccPrpl_A_Pred": gas,                     # [-5|5.23] m/s^2
       "AccBrkTot_A_Rq": brake,                   # [-20|11.9449] m/s^2
       "CmbbDeny_B_Actl": 1 if cmbb_deny else 0,  # [0|1] deny AEB actuation
     }

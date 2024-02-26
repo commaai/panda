@@ -69,7 +69,7 @@ uart_ring *get_ring_by_number(int a) {
 }
 
 // ************************* Low-level buffer functions *************************
-bool getc(uart_ring *q, char *elem) {
+bool get_char(uart_ring *q, char *elem) {
   bool ret = false;
 
   ENTER_CRITICAL();
@@ -105,7 +105,7 @@ bool injectc(uart_ring *q, char elem) {
   return ret;
 }
 
-bool putc(uart_ring *q, char elem) {
+bool put_char(uart_ring *q, char elem) {
   bool ret = false;
   uint16_t next_w_ptr;
 
@@ -127,21 +127,6 @@ bool putc(uart_ring *q, char elem) {
   uart_tx_ring(q);
 
   return ret;
-}
-
-// Seems dangerous to use (might lock CPU if called with interrupts disabled f.e.)
-// TODO: Remove? Not used anyways
-void uart_flush(uart_ring *q) {
-  while (q->w_ptr_tx != q->r_ptr_tx) {
-    __WFI();
-  }
-}
-
-void uart_flush_sync(uart_ring *q) {
-  // empty the TX buffer
-  while (q->w_ptr_tx != q->r_ptr_tx) {
-    uart_tx_ring(q);
-  }
 }
 
 void clear_uart_buff(uart_ring *q) {

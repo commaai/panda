@@ -9,7 +9,6 @@ import binascii
 import datetime
 import logging
 from functools import wraps, partial
-from typing import Optional
 from itertools import accumulate
 
 from .base import BaseHandle
@@ -28,6 +27,7 @@ logging.basicConfig(level=LOGLEVEL, format='%(message)s')
 CANPACKET_HEAD_SIZE = 0x6
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
 LEN_TO_DLC = {length: dlc for (dlc, length) in enumerate(DLC_TO_LEN)}
+PANDA_BUS_CNT = 4
 
 
 def calculate_checksum(data):
@@ -111,6 +111,7 @@ class ALTERNATIVE_EXPERIENCE:
   DISABLE_DISENGAGE_ON_GAS = 1
   DISABLE_STOCK_AEB = 2
   RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX = 8
+  ALLOW_AEB = 16
 
 class Panda:
 
@@ -165,6 +166,7 @@ class Panda:
   HW_TYPE_RED_PANDA = b'\x07'
   HW_TYPE_RED_PANDA_V2 = b'\x08'
   HW_TYPE_TRES = b'\x09'
+  HW_TYPE_CUATRO = b'\x0a'
 
   CAN_PACKET_VERSION = 4
   HEALTH_PACKET_VERSION = 15
@@ -172,17 +174,17 @@ class Panda:
   HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBHBBBHfBBHBHHB")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
 
-  F2_DEVICES = [HW_TYPE_PEDAL, ]
   F4_DEVICES = [HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS]
-  H7_DEVICES = [HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES]
+  H7_DEVICES = [HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES, HW_TYPE_CUATRO]
 
-  INTERNAL_DEVICES = (HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_TRES)
-  HAS_OBD = (HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES)
+  INTERNAL_DEVICES = (HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_TRES, HW_TYPE_CUATRO)
+  HAS_OBD = (HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES, HW_TYPE_CUATRO)
 
   MAX_FAN_RPMs = {
     HW_TYPE_UNO: 5100,
     HW_TYPE_DOS: 6500,
     HW_TYPE_TRES: 6600,
+    HW_TYPE_CUATRO: 6600,
   }
 
   HARNESS_STATUS_NC = 0
@@ -232,19 +234,17 @@ class Panda:
   FLAG_FORD_LONG_CONTROL = 1
   FLAG_FORD_CANFD = 2
 
-  def __init__(self, serial: Optional[str] = None, claim: bool = True, disable_checks: bool = True):
+  def __init__(self, serial: str | None = None, claim: bool = True, disable_checks: bool = True, can_speed_kbps: int = 500):
     self._connect_serial = serial
     self._disable_checks = disable_checks
 
     self._handle: BaseHandle
     self._handle_open = False
     self.can_rx_overflow_buffer = b''
+    self._can_speed_kbps = can_speed_kbps
 
     # connect and set mcu type
     self.connect(claim)
-
-    # reset comms
-    self.can_reset_communications()
 
   def __enter__(self):
     return self
@@ -302,6 +302,13 @@ class Panda:
     if self._disable_checks:
       self.set_heartbeat_disabled()
       self.set_power_save(0)
+
+    # reset comms
+    self.can_reset_communications()
+
+    # set CAN speed
+    for bus in range(PANDA_BUS_CNT):
+      self.set_can_speed_kbps(bus, self._can_speed_kbps)
 
   @classmethod
   def spi_connect(cls, serial, ignore_version=False):
@@ -388,7 +395,7 @@ class Panda:
     return context, usb_handle, usb_serial, bootstub, bcd
 
   @classmethod
-  def list(cls): # noqa: A003
+  def list(cls):
     ret = cls.usb_list()
     ret += cls.spi_list()
     return list(set(ret))
@@ -402,7 +409,7 @@ class Panda:
           if device.getVendorID() == 0xbbaa and device.getProductID() in cls.USB_PIDS:
             try:
               serial = device.getSerialNumber()
-              if len(serial) == 24 or serial == "pedal":
+              if len(serial) == 24:
                 ret.append(serial)
               else:
                 logging.warning(f"found device with panda descriptors but invalid serial: {serial}", RuntimeWarning)
@@ -523,7 +530,7 @@ class Panda:
     if reconnect:
       self.reconnect()
 
-  def recover(self, timeout: Optional[int] = 60, reset: bool = True) -> bool:
+  def recover(self, timeout: int | None = 60, reset: bool = True) -> bool:
     dfu_serial = self.get_dfu_serial()
 
     if reset:
@@ -542,7 +549,7 @@ class Panda:
     return True
 
   @staticmethod
-  def wait_for_dfu(dfu_serial: Optional[str], timeout: Optional[int] = None) -> bool:
+  def wait_for_dfu(dfu_serial: str | None, timeout: int | None = None) -> bool:
     t_start = time.monotonic()
     dfu_list = PandaDFU.list()
     while (dfu_serial is None and len(dfu_list) == 0) or (dfu_serial is not None and dfu_serial not in dfu_list):
@@ -554,7 +561,7 @@ class Panda:
     return True
 
   @staticmethod
-  def wait_for_panda(serial: Optional[str], timeout: int) -> bool:
+  def wait_for_panda(serial: str | None, timeout: int) -> bool:
     t_start = time.monotonic()
     serials = Panda.list()
     while (serial is None and len(serials) == 0) or (serial is not None and serial not in serials):
@@ -690,9 +697,7 @@ class Panda:
 
   def get_mcu_type(self) -> McuType:
     hw_type = self.get_type()
-    if hw_type in Panda.F2_DEVICES:
-      return McuType.F2
-    elif hw_type in Panda.F4_DEVICES:
+    if hw_type in Panda.F4_DEVICES:
       return McuType.F4
     elif hw_type in Panda.H7_DEVICES:
       return McuType.H7

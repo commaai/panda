@@ -3,7 +3,7 @@
 ![panda tests](https://github.com/commaai/panda/workflows/tests/badge.svg)
 ![panda drivers](https://github.com/commaai/panda/workflows/drivers/badge.svg)
 
-panda speaks CAN and CAN FD, and it runs on [STM32F205](https://www.st.com/resource/en/reference_manual/rm0033-stm32f205xx-stm32f207xx-stm32f215xx-and-stm32f217xx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf), [STM32F413](https://www.st.com/resource/en/reference_manual/rm0430-stm32f413423-advanced-armbased-32bit-mcus-stmicroelectronics.pdf), and [STM32H725](https://www.st.com/resource/en/reference_manual/rm0468-stm32h723733-stm32h725735-and-stm32h730-value-line-advanced-armbased-32bit-mcus-stmicroelectronics.pdf).
+panda speaks CAN and CAN FD, and it runs on [STM32F413](https://www.st.com/resource/en/reference_manual/rm0430-stm32f413423-advanced-armbased-32bit-mcus-stmicroelectronics.pdf) and [STM32H725](https://www.st.com/resource/en/reference_manual/rm0468-stm32h723733-stm32h725735-and-stm32h730-value-line-advanced-armbased-32bit-mcus-stmicroelectronics.pdf).
 
 ## Directory structure
 
@@ -33,7 +33,7 @@ These are the [CI regression tests](https://github.com/commaai/panda/actions) we
 * The [safety logic](https://github.com/commaai/panda/tree/master/board/safety) is tested and verified by [unit tests](https://github.com/commaai/panda/tree/master/tests/safety) for each supported car variant.
 to ensure that the behavior remains unchanged.
 * A hardware-in-the-loop test verifies panda's functionalities on all active panda variants, including:
-  * additional afety model checks
+  * additional safety model checks
   * compiling and flashing the bootstub and app code
   * receiving, sending, and forwarding CAN messages on all buses
   * CAN loopback and latency tests through USB and SPI
@@ -98,7 +98,6 @@ As a universal car interface, it should support every reasonable software interf
 - [Python library](https://github.com/commaai/panda/tree/master/python)
 - [C++ library](https://github.com/commaai/openpilot/tree/master/selfdrive/boardd)
 - [socketcan in kernel](https://github.com/commaai/panda/tree/master/drivers/linux) (alpha)
-- [Windows J2534](https://github.com/commaai/panda/tree/master/drivers/windows)
 
 ## Licensing
 
