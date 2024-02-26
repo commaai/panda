@@ -157,7 +157,7 @@ class ChryslerLongitudinalBase(TestChryslerSafety):
     # TODO: falsify the above tests
     raise Exception
 
-  def _send_torque_accel_msg(self, enable: bool, torque_active: bool, torque: float, accel_active: int, accel: float):
+  def _send_acc_control_msg(self, enable: bool, torque_active: bool, torque: float, accel_active: int, accel: float):
     values = {
       "ACC_AVAILABLE": 1,
       "ACC_ACTIVE": int(enable),
@@ -168,21 +168,21 @@ class ChryslerLongitudinalBase(TestChryslerSafety):
     }
     return self.packer.make_can_msg_panda("DAS_3", self.DAS_BUS, values)
 
-  def _send_accel_msg(self, accel):
-    return self._send_torque_accel_msg(True, False, self.INACTIVE_ENGINE_TORQUE, 1, accel)
+  def _send_acc_brake_req(self, accel):
+    return self._send_acc_control_msg(True, False, self.INACTIVE_ENGINE_TORQUE, 1, accel)
 
-  def _send_torque_msg(self, torque):
-    return self._send_torque_accel_msg(True, True, torque, 0, self.INACTIVE_ACCEL)
+  def _send_acc_gas_req(self, torque):
+    return self._send_acc_control_msg(True, True, torque, 0, self.INACTIVE_ACCEL)
 
-  def test_accel_torque_safety_check(self):
-    self._generic_limit_safety_check(self._send_accel_msg,
-                                     self.MIN_ACCEL, self.MAX_ACCEL,
-                                     self.MIN_POSSIBLE_ACCEL, self.MAX_POSSIBLE_ACCEL,
-                                     test_delta=0.1, inactive_value=self.INACTIVE_ACCEL)
-    self._generic_limit_safety_check(self._send_torque_msg,
+  def test_gas_brake_safety_check(self):
+    self._generic_limit_safety_check(self._send_acc_gas_req,
                                      self.MIN_ENGINE_TORQUE, self.MAX_ENGINE_TORQUE,
                                      self.MIN_POSSIBLE_ENGINE_TORQUE, self.MAX_POSSIBLE_ENGINE_TORQUE,
                                      test_delta=10, inactive_value=self.INACTIVE_ENGINE_TORQUE)
+    self._generic_limit_safety_check(self._send_acc_brake_req,
+                                     self.MIN_ACCEL, self.MAX_ACCEL,
+                                     self.MIN_POSSIBLE_ACCEL, self.MAX_POSSIBLE_ACCEL,
+                                     test_delta=0.1, inactive_value=self.INACTIVE_ACCEL)
 
   def test_buttons(self):
     enable_buttons = {1 << 2: "resume", 1 << 3: "accel", 1 << 4: "decel"}
