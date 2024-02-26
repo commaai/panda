@@ -68,7 +68,7 @@ class TestSubaruSafetyBase(common.PandaCarSafetyTest):
   ALT_MAIN_BUS = SUBARU_MAIN_BUS
   ALT_CAM_BUS = SUBARU_CAM_BUS
 
-  DEG_TO_CAN = 100
+  DEG_TO_CAN = 100.
 
   INACTIVE_GAS = 1818
 
