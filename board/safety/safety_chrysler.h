@@ -258,12 +258,10 @@ static void chrysler_rx_hook(const CANPacket_t *to_push) {
   const int addr = GET_ADDR(to_push);
 
   if ((bus == 0) && (addr == chrysler_addrs->CRUISE_BUTTONS) && chrysler_longitudinal) {
-    int cruise_button = GET_BIT(to_push, 0U);       // cancel button
+    int cruise_button = GET_BYTE(to_push, 0U) & CHRYSLER_BTN_CANCEL;
     // ensure cancel overrides any multi-button pressed state
     if (!cruise_button) {
-      cruise_button |= GET_BIT(to_push, 2U) << 2U;  // accel button
-      cruise_button |= GET_BIT(to_push, 3U) << 3U;  // decel button
-      cruise_button |= GET_BIT(to_push, 4U) << 4U;  // resume button
+      cruise_button = GET_BYTE(to_push, 0U) & (CHRYSLER_BTN_ACCEL | CHRYSLER_BTN_DECEL | CHRYSLER_BTN_RESUME);
     }
 
     // enter controls on falling edge of accel/decel/resume
