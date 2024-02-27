@@ -23,5 +23,4 @@ misra-c2012-1.2  # this is from the extensions (e.g. __typeof__) used in the MIN
 misra-c2012-2.5
 misra-c2012-8.7
 misra-c2012-8.4
-misra-c2012-10.6
 misra-c2012-21.15
