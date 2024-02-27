@@ -40,8 +40,8 @@ bool check_started(void) {
 
 void debug_ring_callback(uart_ring *ring) {
   char rcv;
-  while (getc(ring, &rcv)) {
-    (void)putc(ring, rcv);  // misra-c2012-17.7: cast to void is ok: debug function
+  while (get_char(ring, &rcv)) {
+    (void)put_char(ring, rcv);  // misra-c2012-17.7: cast to void is ok: debug function
 
     // only allow bootloader entry on debug builds
     #ifdef ALLOW_DEBUG
@@ -338,7 +338,7 @@ int main(void) {
   }
 
   print("Config:\n");
-  print("  Board type: "); print(current_board->board_type); print("\n");
+  print("  Board type: 0x"); puth(hw_type); print("\n");
 
   // init board
   current_board->init();
@@ -384,9 +384,7 @@ int main(void) {
   enable_interrupts();
 
   // LED should keep on blinking all the time
-  uint64_t cnt = 0;
-
-  for (cnt=0; cnt; cnt++) {
+  while (true) {
     if (power_save_status == POWER_SAVE_STATUS_DISABLED) {
       #ifdef DEBUG_FAULTS
       if (fault_status == FAULT_STATUS_NONE) {

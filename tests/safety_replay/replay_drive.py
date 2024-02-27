@@ -72,8 +72,7 @@ def replay_drive(lr, safety_mode, param, alternative_experience, segment=False):
   return tx_controls_blocked == 0 and rx_invalid == 0 and not safety_tick_rx_invalid
 
 if __name__ == "__main__":
-  from openpilot.tools.lib.route import Route, SegmentName
-  from openpilot.tools.lib.logreader import MultiLogIterator  # pylint: disable=import-error
+  from openpilot.tools.lib.logreader import LogReader
 
   parser = argparse.ArgumentParser(description="Replay CAN messages from a route or segment through a safety mode",
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -83,11 +82,7 @@ if __name__ == "__main__":
   parser.add_argument("--alternative-experience", type=int, help="Override the alternative experience from the log")
   args = parser.parse_args()
 
-  s = SegmentName(args.route_or_segment_name[0], allow_route_name=True)
-
-  r = Route(s.route_name.canonical_name)
-  logs = r.log_paths()[s.segment_num:s.segment_num+1] if s.segment_num >= 0 else r.log_paths()
-  lr = MultiLogIterator(logs, sort_by_time=True)
+  lr = LogReader(args.route_or_segment_name[0])
 
   if None in (args.mode, args.param, args.alternative_experience):
     for msg in lr:
@@ -105,4 +100,4 @@ if __name__ == "__main__":
     lr.reset()
 
   print(f"replaying {args.route_or_segment_name[0]} with safety mode {args.mode}, param {args.param}, alternative experience {args.alternative_experience}")
-  replay_drive(lr, args.mode, args.param, args.alternative_experience, segment=(s.segment_num >= 0))
+  replay_drive(lr, args.mode, args.param, args.alternative_experience, segment=len(lr.logreader_identifiers) == 1)

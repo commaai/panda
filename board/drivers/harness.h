@@ -95,6 +95,7 @@ uint8_t harness_detect_orientation(void) {
         ret = HARNESS_STATUS_FLIPPED;
       } else {
         // orientation normal (PANDA_SBU2->HARNESS_SBU1(relay), PANDA_SBU1->HARNESS_SBU2(ign))
+        // (SBU1->SBU2 is the normal orientation connection per USB-C cable spec)
         ret = HARNESS_STATUS_NORMAL;
       }
     } else {

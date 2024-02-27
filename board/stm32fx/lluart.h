@@ -90,32 +90,3 @@ void USART2_IRQ_Handler(void) { uart_interrupt_handler(&uart_ring_debug); }
 void uart_set_baud(USART_TypeDef *u, unsigned int baud) {
   u->BRR = USART_BRR_(APB1_FREQ*1000000U, baud);
 }
-
-void uart_init(uart_ring *q, int baud) {
-  if(q->uart != NULL){
-    // Register interrupts (max data rate: 115200 baud)
-    if (q->uart == USART2){
-      REGISTER_INTERRUPT(USART2_IRQn, USART2_IRQ_Handler, 150000U, FAULT_INTERRUPT_RATE_UART_2)
-    } else {
-      // UART not used. Skip registering interrupts
-    }
-
-    // Set baud and enable peripheral with TX and RX mode
-    uart_set_baud(q->uart, baud);
-    q->uart->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
-    if ((q->uart == USART2) || (q->uart == USART3) || (q->uart == UART5)) {
-      q->uart->CR1 |= USART_CR1_RXNEIE;
-    }
-
-    // Enable UART interrupts
-    if (q->uart == USART2){
-      NVIC_EnableIRQ(USART2_IRQn);
-    } else if (q->uart == USART3){
-      NVIC_EnableIRQ(USART3_IRQn);
-    } else if (q->uart == UART5){
-      NVIC_EnableIRQ(UART5_IRQn);
-    } else {
-      // UART not used. Skip enabling interrupts
-    }
-  }
-}

@@ -101,7 +101,8 @@ def build_project(project_name, project, extra_flags):
     ASCOM="$AS $ASFLAGS -o $TARGET -c $SOURCES",
     BUILDERS={
       'Objcopy': Builder(generator=objcopy, suffix='.bin', src_suffix='.elf')
-    }
+    },
+    tools=["default", "compilation_db"],
   )
 
   startup = env.Object(f"obj/startup_{project_name}", project["STARTUP_FILE"])
@@ -178,9 +179,6 @@ with open("board/obj/cert.h", "w") as f:
 
 # panda fw
 SConscript('board/SConscript')
-
-# pedal fw
-SConscript('board/pedal/SConscript')
 
 # panda jungle fw
 SConscript('board/jungle/SConscript')

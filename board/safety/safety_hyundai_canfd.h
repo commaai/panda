@@ -137,7 +137,7 @@ int hyundai_canfd_hda2_get_lkas_addr(void) {
   return hyundai_canfd_hda2_alt_steering ? 0x110 : 0x50;
 }
 
-static uint8_t hyundai_canfd_get_counter(CANPacket_t *to_push) {
+static uint8_t hyundai_canfd_get_counter(const CANPacket_t *to_push) {
   uint8_t ret = 0;
   if (GET_LEN(to_push) == 8U) {
     ret = GET_BYTE(to_push, 1) >> 4;
@@ -147,12 +147,12 @@ static uint8_t hyundai_canfd_get_counter(CANPacket_t *to_push) {
   return ret;
 }
 
-static uint32_t hyundai_canfd_get_checksum(CANPacket_t *to_push) {
+static uint32_t hyundai_canfd_get_checksum(const CANPacket_t *to_push) {
   uint32_t chksum = GET_BYTE(to_push, 0) | (GET_BYTE(to_push, 1) << 8);
   return chksum;
 }
 
-static void hyundai_canfd_rx_hook(CANPacket_t *to_push) {
+static void hyundai_canfd_rx_hook(const CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
@@ -170,7 +170,7 @@ static void hyundai_canfd_rx_hook(CANPacket_t *to_push) {
     // cruise buttons
     const int button_addr = hyundai_canfd_alt_buttons ? 0x1aa : 0x1cf;
     if (addr == button_addr) {
-      int main_button = 0;
+      bool main_button = false;
       int cruise_button = 0;
       if (addr == 0x1cf) {
         cruise_button = GET_BYTE(to_push, 2) & 0x7U;
@@ -186,15 +186,15 @@ static void hyundai_canfd_rx_hook(CANPacket_t *to_push) {
     if ((addr == 0x35) && hyundai_ev_gas_signal) {
       gas_pressed = GET_BYTE(to_push, 5) != 0U;
     } else if ((addr == 0x105) && hyundai_hybrid_gas_signal) {
-      gas_pressed = (GET_BIT(to_push, 103U) != 0U) || (GET_BYTE(to_push, 13) != 0U) || (GET_BIT(to_push, 112U) != 0U);
+      gas_pressed = GET_BIT(to_push, 103U) || (GET_BYTE(to_push, 13) != 0U) || GET_BIT(to_push, 112U);
     } else if ((addr == 0x100) && !hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
-      gas_pressed = GET_BIT(to_push, 176U) != 0U;
+      gas_pressed = GET_BIT(to_push, 176U);
     } else {
     }
 
     // brake press
     if (addr == 0x175) {
-      brake_pressed = GET_BIT(to_push, 81U) != 0U;
+      brake_pressed = GET_BIT(to_push, 81U);
     }
 
     // vehicle moving
@@ -227,7 +227,7 @@ static void hyundai_canfd_rx_hook(CANPacket_t *to_push) {
 
 }
 
-static bool hyundai_canfd_tx_hook(CANPacket_t *to_send) {
+static bool hyundai_canfd_tx_hook(const CANPacket_t *to_send) {
   bool tx = true;
   int addr = GET_ADDR(to_send);
 
@@ -235,7 +235,7 @@ static bool hyundai_canfd_tx_hook(CANPacket_t *to_send) {
   const int steer_addr = (hyundai_canfd_hda2 && !hyundai_longitudinal) ? hyundai_canfd_hda2_get_lkas_addr() : 0x12a;
   if (addr == steer_addr) {
     int desired_torque = (((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U)) - 1024U;
-    bool steer_req = GET_BIT(to_send, 52U) != 0U;
+    bool steer_req = GET_BIT(to_send, 52U);
 
     if (steer_torque_cmd_checks(desired_torque, steer_req, HYUNDAI_CANFD_STEERING_LIMITS)) {
       tx = false;

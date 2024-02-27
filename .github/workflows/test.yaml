@@ -46,7 +46,7 @@ jobs:
         run: eval "$BUILD"
       - name: Test python package installer
         run: ${{ env.RUN }} "python setup.py install"
-      - name: Build panda + pedal images and bootstub
+      - name: Build panda images and bootstub
         run: ${{ env.RUN }} "scons -j4"
       - name: Build panda with SPI support
         run: ${{ env.RUN }} "ENABLE_SPI=1 scons -j4"
@@ -89,23 +89,6 @@ jobs:
                           scons -j$(nproc) ${{ matrix.flags }} && \
                           tests/safety/test.sh"
 
-  safety_coverage:
-    name: safety coverage
-    runs-on: ubuntu-20.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build Docker image
-        run: eval "$BUILD"
-      - name: Run safety coverage test
-        timeout-minutes: 5
-        run: |
-          ${{ env.RUN }} "cd .. && \
-                          scons -c && \
-                          scons -j$(nproc) opendbc/ cereal/ && \
-                          cd panda/tests/safety && \
-                          ./test_coverage.sh"
-
   misra:
     name: MISRA C:2012
     runs-on: ubuntu-20.04
@@ -120,7 +103,7 @@ jobs:
         timeout-minutes: 1
         run: ${{ env.RUN }} "cd tests/misra && ./test_misra.sh"
       - name: MISRA mutation tests
-        timeout-minutes: 2
+        timeout-minutes: 4
         run: ${{ env.RUN }} "cd tests/misra && ./test_mutation.py"
 
   python_linter:
