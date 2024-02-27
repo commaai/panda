@@ -183,7 +183,14 @@ static void chrysler_rx_hook(const CANPacket_t *to_push) {
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
-  const int das_3_bus = (chrysler_platform == CHRYSLER_PACIFICA) ? 0 : 2;
+  int das_bus_init = -1;
+  if (chrysler_platform == CHRYSLER_PACIFICA) {
+    das_bus_init = 0;
+  } else {
+    das_bus_init = 2;
+  }
+
+  const int das_3_bus = das_bus_init;
   if ((bus == das_3_bus) && (addr == chrysler_addrs->DAS_3)) {
     bool cruise_engaged = GET_BIT(to_push, 21U);
     pcm_cruise_check(cruise_engaged);
@@ -219,7 +226,13 @@ static bool chrysler_tx_hook(const CANPacket_t *to_send) {
 
   // STEERING
   if (addr == chrysler_addrs->LKAS_COMMAND) {
-    int start_byte = (chrysler_platform == CHRYSLER_PACIFICA) ? 0 : 1;
+    int start_byte = -1;
+    if (chrysler_platform == CHRYSLER_PACIFICA) {
+      start_byte = 0;
+    } else {
+      start_byte = 1;
+    }
+
     int desired_torque = ((GET_BYTE(to_send, start_byte) & 0x7U) << 8) | GET_BYTE(to_send, start_byte + 1);
     desired_torque -= 1024;
 

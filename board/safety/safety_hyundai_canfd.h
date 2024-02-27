@@ -156,7 +156,14 @@ static void hyundai_canfd_rx_hook(const CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
-  const int pt_bus = hyundai_canfd_hda2 ? 1 : 0;
+  int pt_bus_init = -1;
+  if (hyundai_canfd_hda2) {
+    pt_bus_init = 1;
+  } else {
+    pt_bus_init = 0;
+  }
+
+  const int pt_bus = pt_bus_init;
   const int scc_bus = hyundai_camera_scc ? 2 : pt_bus;
 
   if (bus == pt_bus) {
@@ -168,7 +175,14 @@ static void hyundai_canfd_rx_hook(const CANPacket_t *to_push) {
     }
 
     // cruise buttons
-    const int button_addr = hyundai_canfd_alt_buttons ? 0x1aa : 0x1cf;
+    int button_addr_init = -1;
+    if (hyundai_canfd_alt_buttons) {
+      button_addr_init = 0x1aa;
+    } else {
+      button_addr_init = 0x1cf;
+    }
+
+    const int button_addr = button_addr_init;
     if (addr == button_addr) {
       bool main_button = false;
       int cruise_button = 0;
@@ -220,7 +234,14 @@ static void hyundai_canfd_rx_hook(const CANPacket_t *to_push) {
   if (hyundai_longitudinal) {
     // on HDA2, ensure ADRV ECU is still knocked out
     // on others, ensure accel msg is blocked from camera
-    const int stock_scc_bus = hyundai_canfd_hda2 ? 1 : 0;
+    int stock_scc_bus_init = -1;
+    if (hyundai_canfd_hda2) {
+      stock_scc_bus_init = 1;
+    } else {
+      stock_scc_bus_init = 0;
+    }
+
+    const int stock_scc_bus = stock_scc_bus_init;
     stock_ecu_detected = stock_ecu_detected || ((addr == 0x1a0) && (bus == stock_scc_bus));
   }
   generic_rx_checks(stock_ecu_detected);
@@ -294,7 +315,13 @@ static int hyundai_canfd_fwd_hook(int bus_num, int addr) {
   }
   if (bus_num == 2) {
     // LKAS for HDA2, LFA for HDA1
-    int hda2_lfa_block_addr = hyundai_canfd_hda2_alt_steering ? 0x362 : 0x2a4;
+    int hda2_lfa_block_addr = -1;
+    if (hyundai_canfd_hda2_alt_steering) {
+      hda2_lfa_block_addr = 0x362;
+    } else {
+      hda2_lfa_block_addr = 0x2a4;
+    }
+    
     bool is_lkas_msg = ((addr == hyundai_canfd_hda2_get_lkas_addr()) || (addr == hda2_lfa_block_addr)) && hyundai_canfd_hda2;
     bool is_lfa_msg = ((addr == 0x12a) && !hyundai_canfd_hda2);
 

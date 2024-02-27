@@ -248,8 +248,13 @@ static void honda_rx_hook(const CANPacket_t *to_push) {
       }
     }
   }
-
-  int bus_rdr_car = (honda_hw == HONDA_BOSCH) ? 0 : 2;  // radar bus, car side
+  int bus_rdr_car = -1;
+  if (honda_hw == HONDA_BOSCH) {
+    bus_rdr_car = 0;
+  } else {
+    bus_rdr_car = 2;
+  }
+  
   bool stock_ecu_detected = false;
 
   // If steering controls messages are received on the destination bus, it's an indication

@@ -135,7 +135,13 @@ static uint32_t subaru_compute_checksum(const CANPacket_t *to_push) {
 
 static void subaru_rx_hook(const CANPacket_t *to_push) {
   const int bus = GET_BUS(to_push);
-  const int alt_main_bus = subaru_gen2 ? SUBARU_ALT_BUS : SUBARU_MAIN_BUS;
+  int alt_main_bus_init = -1;
+  if (subaru_gen2) {
+    alt_main_bus_init = SUBARU_ALT_BUS;
+  } else {
+    alt_main_bus_init = SUBARU_MAIN_BUS;
+  }
+  const int alt_main_bus = alt_main_bus_init;
 
   int addr = GET_ADDR(to_push);
   if ((addr == MSG_SUBARU_Steering_Torque) && (bus == SUBARU_MAIN_BUS)) {
