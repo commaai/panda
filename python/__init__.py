@@ -9,7 +9,6 @@ import binascii
 import datetime
 import logging
 from functools import wraps, partial
-from typing import Optional
 from itertools import accumulate
 
 from .base import BaseHandle
@@ -235,7 +234,7 @@ class Panda:
   FLAG_FORD_LONG_CONTROL = 1
   FLAG_FORD_CANFD = 2
 
-  def __init__(self, serial: Optional[str] = None, claim: bool = True, disable_checks: bool = True, can_speed_kbps: int = 500):
+  def __init__(self, serial: str | None = None, claim: bool = True, disable_checks: bool = True, can_speed_kbps: int = 500):
     self._connect_serial = serial
     self._disable_checks = disable_checks
 
@@ -531,7 +530,7 @@ class Panda:
     if reconnect:
       self.reconnect()
 
-  def recover(self, timeout: Optional[int] = 60, reset: bool = True) -> bool:
+  def recover(self, timeout: int | None = 60, reset: bool = True) -> bool:
     dfu_serial = self.get_dfu_serial()
 
     if reset:
@@ -550,7 +549,7 @@ class Panda:
     return True
 
   @staticmethod
-  def wait_for_dfu(dfu_serial: Optional[str], timeout: Optional[int] = None) -> bool:
+  def wait_for_dfu(dfu_serial: str | None, timeout: int | None = None) -> bool:
     t_start = time.monotonic()
     dfu_list = PandaDFU.list()
     while (dfu_serial is None and len(dfu_list) == 0) or (dfu_serial is not None and dfu_serial not in dfu_list):
@@ -562,7 +561,7 @@ class Panda:
     return True
 
   @staticmethod
-  def wait_for_panda(serial: Optional[str], timeout: int) -> bool:
+  def wait_for_panda(serial: str | None, timeout: int) -> bool:
     t_start = time.monotonic()
     serials = Panda.list()
     while (serial is None and len(serials) == 0) or (serial is not None and serial not in serials):

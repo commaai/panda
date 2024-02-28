@@ -52,7 +52,7 @@ class Info():
 
   def load(self, filename):
     """Given a CSV file, adds information about message IDs and their values."""
-    with open(filename, 'r') as inp:
+    with open(filename) as inp:
       reader = csv.reader(inp)
       header = next(reader, None)
       if header[0] == 'time':
@@ -64,7 +64,7 @@ class Info():
     for row in reader:
       bus = row[2]
       message_id = hex(int(row[1]))[2:]
-      message_id = '%s:%s' % (bus, message_id)
+      message_id = f'{bus}:{message_id}'
       data = row[3]
       self.store(message_id, data)
 
@@ -75,7 +75,7 @@ class Info():
         message_id = row[1][2:]  # remove leading '0x'
       else:
         message_id = hex(int(row[1]))[2:]  # old message IDs are in decimal
-      message_id = '%s:%s' % (bus, message_id)
+      message_id = f'{bus}:{message_id}'
       if row[1].startswith('0x'):
         data = row[2][2:]  # remove leading '0x'
       else:

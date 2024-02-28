@@ -6,7 +6,7 @@ import select
 
 class Reader(threading.Thread):
     def __init__(self, s, *args, **kwargs):
-        super(Reader, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._s = s
         self.__stop = False
 
