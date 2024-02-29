@@ -7,6 +7,7 @@ const int HYUNDAI_PARAM_LONGITUDINAL = 4;
 const int HYUNDAI_PARAM_CAMERA_SCC = 8;
 const int HYUNDAI_PARAM_CANFD_HDA2 = 16;
 const int HYUNDAI_PARAM_ALT_LIMITS = 64; // TODO: shift this down with the rest of the common flags
+const int HYUNDAI_PARAM_FCEV_GAS = 256;
 
 const uint8_t HYUNDAI_PREV_BUTTON_SAMPLES = 8;  // roughly 160 ms
 const uint32_t HYUNDAI_STANDSTILL_THRSLD = 12;  // 0.375 kph
@@ -25,6 +26,7 @@ bool hyundai_longitudinal = false;
 bool hyundai_camera_scc = false;
 bool hyundai_canfd_hda2 = false;
 bool hyundai_alt_limits = false;
+bool hyundai_fcev_gas_signal = false;
 uint8_t hyundai_last_button_interaction;  // button messages since the user pressed an enable button
 
 uint16_t hyundai_canfd_crc_lut[256];
@@ -35,6 +37,7 @@ void hyundai_common_init(uint16_t param) {
   hyundai_camera_scc = GET_FLAG(param, HYUNDAI_PARAM_CAMERA_SCC);
   hyundai_canfd_hda2 = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2);
   hyundai_alt_limits = GET_FLAG(param, HYUNDAI_PARAM_ALT_LIMITS);
+  hyundai_fcev_gas_signal = GET_FLAG(param, HYUNDAI_PARAM_FCEV_GAS);
 
   hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
 
