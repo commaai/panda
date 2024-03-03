@@ -116,7 +116,7 @@ static void volkswagen_mqb_rx_hook(const CANPacket_t *to_push) {
       }
       // Always exit controls on rising edge of Cancel
       // Signal: GRA_ACC_01.GRA_Abbrechen
-      if (GET_BIT(to_push, 13U) == 1U) {
+      if (GET_BIT(to_push, 13U)) {
         controls_allowed = false;
       }
     }
@@ -156,7 +156,7 @@ static bool volkswagen_mqb_tx_hook(const CANPacket_t *to_send) {
       desired_torque *= -1;
     }
 
-    bool steer_req = GET_BIT(to_send, 30U) != 0U;
+    bool steer_req = GET_BIT(to_send, 30U);
 
     if (steer_torque_cmd_checks(desired_torque, steer_req, VOLKSWAGEN_MQB_STEERING_LIMITS)) {
       tx = false;

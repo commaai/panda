@@ -2,7 +2,7 @@
 import os
 import time
 import threading
-from typing import Any, List
+from typing import Any
 
 from panda import Panda
 
@@ -38,7 +38,7 @@ if __name__ == "__main__":
   threading.Thread(target=flood_tx, args=(sender,)).start()
 
   # Receive as much as we can in a few second time period
-  rx: List[Any] = []
+  rx: list[Any] = []
   old_len = 0
   start_time = time.time()
   while time.time() - start_time < 3 or len(rx) > old_len:

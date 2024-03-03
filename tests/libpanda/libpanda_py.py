@@ -1,6 +1,6 @@
 import os
 from cffi import FFI
-from typing import Any, List, Protocol
+from typing import Any, Protocol
 
 from panda import LEN_TO_DLC
 from panda.tests.libpanda.safety_helpers import PandaSafety, setup_safety_helpers
@@ -64,7 +64,7 @@ class CANPacket:
   returned: int
   extended: int
   addr: int
-  data: List[int]
+  data: list[int]
 
 class Panda(PandaSafety, Protocol):
   # CAN

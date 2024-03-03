@@ -59,8 +59,10 @@ const CanMsg FORD_CANFD_LONG_TX_MSGS[] = {
 // this may be the cause of blocked messages
 RxCheck ford_rx_checks[] = {
   {.msg = {{FORD_BrakeSysFeatures, 0, 8, .check_checksum = true, .max_counter = 15U, .quality_flag=true, .frequency = 50U}, { 0 }, { 0 }}},
-  // TODO: FORD_EngVehicleSpThrottle2 has a counter that skips by 2, understand and enable counter check
-  {.msg = {{FORD_EngVehicleSpThrottle2, 0, 8, .check_checksum = true, .quality_flag=true, .frequency = 50U}, { 0 }, { 0 }}},
+  // FORD_EngVehicleSpThrottle2 has a counter that either randomly skips or by 2, likely ECU bug
+  // Some hybrid models also experience a bug where this checksum mismatches for one or two frames under heavy acceleration with ACC
+  // It has been confirmed that the Bronco Sport's camera only disallows ACC for bad quality flags, not counters or checksums, so we match that
+  {.msg = {{FORD_EngVehicleSpThrottle2, 0, 8, .check_checksum = false, .quality_flag=true, .frequency = 50U}, { 0 }, { 0 }}},
   {.msg = {{FORD_Yaw_Data_FD1, 0, 8, .check_checksum = true, .max_counter = 255U, .quality_flag=true, .frequency = 100U}, { 0 }, { 0 }}},
   // These messages have no counter or checksum
   {.msg = {{FORD_EngBrakeData, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},
@@ -90,9 +92,6 @@ static uint32_t ford_get_checksum(const CANPacket_t *to_push) {
   if (addr == FORD_BrakeSysFeatures) {
     // Signal: VehVActlBrk_No_Cs
     chksum = GET_BYTE(to_push, 3);
-  } else if (addr == FORD_EngVehicleSpThrottle2) {
-    // Signal: VehVActlEng_No_Cs
-    chksum = GET_BYTE(to_push, 1);
   } else if (addr == FORD_Yaw_Data_FD1) {
     // Signal: VehRollYawW_No_Cs
     chksum = GET_BYTE(to_push, 4);
@@ -109,11 +108,6 @@ static uint32_t ford_compute_checksum(const CANPacket_t *to_push) {
     chksum += GET_BYTE(to_push, 0) + GET_BYTE(to_push, 1);  // Veh_V_ActlBrk
     chksum += GET_BYTE(to_push, 2) >> 6;                    // VehVActlBrk_D_Qf
     chksum += (GET_BYTE(to_push, 2) >> 2) & 0xFU;           // VehVActlBrk_No_Cnt
-    chksum = 0xFFU - chksum;
-  } else if (addr == FORD_EngVehicleSpThrottle2) {
-    chksum += (GET_BYTE(to_push, 2) >> 3) & 0xFU;           // VehVActlEng_No_Cnt
-    chksum += (GET_BYTE(to_push, 4) >> 5) & 0x3U;           // VehVActlEng_D_Qf
-    chksum += GET_BYTE(to_push, 6) + GET_BYTE(to_push, 7);  // Veh_V_ActlEng
     chksum = 0xFFU - chksum;
   } else if (addr == FORD_Yaw_Data_FD1) {
     chksum += GET_BYTE(to_push, 0) + GET_BYTE(to_push, 1);  // VehRol_W_Actl
@@ -280,7 +274,7 @@ static bool ford_tx_hook(const CANPacket_t *to_send) {
     // Signal: AccBrkTot_A_Rq
     int accel = ((GET_BYTE(to_send, 0) & 0x1FU) << 8) | GET_BYTE(to_send, 1);
     // Signal: CmbbDeny_B_Actl
-    int cmbb_deny = GET_BIT(to_send, 37U);
+    bool cmbb_deny = GET_BIT(to_send, 37U);
 
     bool violation = false;
     violation |= longitudinal_accel_checks(accel, FORD_LONG_LIMITS);
@@ -288,7 +282,7 @@ static bool ford_tx_hook(const CANPacket_t *to_send) {
     violation |= longitudinal_gas_checks(gas_pred, FORD_LONG_LIMITS);
 
     // Safety check for stock AEB
-    violation |= cmbb_deny != 0; // do not prevent stock AEB actuation
+    violation |= cmbb_deny; // do not prevent stock AEB actuation
 
     if (violation) {
       tx = false;
@@ -302,8 +296,8 @@ static bool ford_tx_hook(const CANPacket_t *to_send) {
     // Violation if resume button is pressed while controls not allowed, or
     // if cancel button is pressed when cruise isn't engaged.
     bool violation = false;
-    violation |= (GET_BIT(to_send, 8U) == 1U) && !cruise_engaged_prev;   // Signal: CcAslButtnCnclPress (cancel)
-    violation |= (GET_BIT(to_send, 25U) == 1U) && !controls_allowed;     // Signal: CcAsllButtnResPress (resume)
+    violation |= GET_BIT(to_send, 8U) && !cruise_engaged_prev;   // Signal: CcAslButtnCnclPress (cancel)
+    violation |= GET_BIT(to_send, 25U) && !controls_allowed;     // Signal: CcAsllButtnResPress (resume)
 
     if (violation) {
       tx = false;

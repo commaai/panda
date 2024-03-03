@@ -24,7 +24,7 @@ def test_send_recv(p, panda_jungle):
         saturation_pct = (comp_kbps / speed) * 100.0
         assert 80 < saturation_pct < 100
 
-        print("two pandas bus {}, 100 messages at speed {:4d}, comp speed is {:7.2f}, {:6.2f}%".format(bus, speed, comp_kbps, saturation_pct))
+        print(f"two pandas bus {bus}, 100 messages at speed {speed:4d}, comp speed is {comp_kbps:7.2f}, {saturation_pct:6.2f}%")
 
   # Run tests in both directions
   p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
@@ -59,7 +59,7 @@ def test_latency(p, panda_jungle):
             r_echo = p_send.can_recv()
 
           if len(r) == 0 or len(r_echo) == 0:
-            print("r: {}, r_echo: {}".format(r, r_echo))
+            print(f"r: {r}, r_echo: {r_echo}")
 
           assert len(r) == 1
           assert len(r_echo) == 1

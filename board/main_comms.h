@@ -360,7 +360,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xe5: set CAN loopback (for testing)
     case 0xe5:
-      can_loopback = (req->param1 > 0U);
+      can_loopback = req->param1 > 0U;
       can_init_all();
       break;
     // **** 0xe6: set custom clock source period
