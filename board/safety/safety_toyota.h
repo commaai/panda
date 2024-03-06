@@ -1,46 +1,6 @@
-const SteeringLimits TOYOTA_STEERING_LIMITS = {
-  .max_steer = 1500,
-  .max_rate_up = 15,          // ramp up slow
-  .max_rate_down = 25,        // ramp down fast
-  .max_torque_error = 350,    // max torque cmd in excess of motor torque
-  .max_rt_delta = 450,        // the real time limit is 1800/sec, a 20% buffer
-  .max_rt_interval = 250000,
-  .type = TorqueMotorLimited,
-
-  // the EPS faults when the steering angle rate is above a certain threshold for too long. to prevent this,
-  // we allow setting STEER_REQUEST bit to 0 while maintaining the requested torque value for a single frame
-  .min_valid_request_frames = 18,
-  .max_invalid_request_frames = 1,
-  .min_valid_request_rt_interval = 170000,  // 170ms; a ~10% buffer on cutting every 19 frames
-  .has_steer_req_tolerance = true,
-
-  // LTA angle limits
-  // factor for STEER_TORQUE_SENSOR->STEER_ANGLE and STEERING_LTA->STEER_ANGLE_CMD (1 / 0.0573)
-  .angle_deg_to_can = 17.452007,
-  .angle_rate_up_lookup = {
-    {5., 25., 25.},
-    {0.3, 0.15, 0.15}
-  },
-  .angle_rate_down_lookup = {
-    {5., 25., 25.},
-    {0.36, 0.26, 0.26}
-  },
-};
-
-const int TOYOTA_LTA_MAX_ANGLE = 1657;  // EPS only accepts up to 94.9461
-const int TOYOTA_LTA_MAX_MEAS_TORQUE = 1500;
-const int TOYOTA_LTA_MAX_DRIVER_TORQUE = 150;
-
-// longitudinal limits
-const LongitudinalLimits TOYOTA_LONG_LIMITS = {
-  .max_accel = 2000,   // 2.0 m/s2
-  .min_accel = -3500,  // -3.5 m/s2
-};
-
 // panda interceptor threshold needs to be equivalent to openpilot threshold to avoid controls mismatches
 // If thresholds are mismatched then it is possible for panda to see the gas fall and rise while openpilot is in the pre-enabled state
 // Threshold calculated from DBC gains: round((((15 + 75.555) / 0.159375) + ((15 + 151.111) / 0.159375)) / 2) = 805
-const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 805;
 #define TOYOTA_GET_INTERCEPTOR(msg) (((GET_BYTE((msg), 0) << 8) + GET_BYTE((msg), 1) + (GET_BYTE((msg), 2) << 8) + GET_BYTE((msg), 3)) / 2U) // avg between 2 tracks
 
 // Stock longitudinal
@@ -54,19 +14,6 @@ const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 805;
   {0x411, 0, 8},  /* PCS_HUD */                                                                                                             \
   {0x750, 0, 8},  /* radar diagnostic address */                                                                                            \
 
-const CanMsg TOYOTA_TX_MSGS[] = {
-  TOYOTA_COMMON_TX_MSGS
-};
-
-const CanMsg TOYOTA_LONG_TX_MSGS[] = {
-  TOYOTA_COMMON_LONG_TX_MSGS
-};
-
-const CanMsg TOYOTA_INTERCEPTOR_TX_MSGS[] = {
-  TOYOTA_COMMON_LONG_TX_MSGS
-  {0x200, 0, 6},  // gas interceptor
-};
-
 #define TOYOTA_COMMON_RX_CHECKS(lta)                                                                        \
   {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .frequency = 83U}, { 0 }, { 0 }}},                        \
   {.msg = {{0x260, 0, 8, .check_checksum = true, .quality_flag = (lta), .frequency = 50U}, { 0 }, { 0 }}},  \
@@ -74,38 +21,10 @@ const CanMsg TOYOTA_INTERCEPTOR_TX_MSGS[] = {
   {.msg = {{0x224, 0, 8, .check_checksum = false, .frequency = 40U},                                        \
            {0x226, 0, 8, .check_checksum = false, .frequency = 40U}, { 0 }}},                               \
 
-RxCheck toyota_lka_rx_checks[] = {
-  TOYOTA_COMMON_RX_CHECKS(false)
-};
-
-RxCheck toyota_lka_interceptor_rx_checks[] = {
-  TOYOTA_COMMON_RX_CHECKS(false)
-  {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
-};
-
-// Check the quality flag for angle measurement when using LTA, since it's not set on TSS-P cars
-RxCheck toyota_lta_rx_checks[] = {
-  TOYOTA_COMMON_RX_CHECKS(true)
-};
-
-RxCheck toyota_lta_interceptor_rx_checks[] = {
-  TOYOTA_COMMON_RX_CHECKS(true)
-  {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
-};
-
-// safety param flags
-// first byte is for EPS factor, second is for flags
-const uint32_t TOYOTA_PARAM_OFFSET = 8U;
-const uint32_t TOYOTA_EPS_FACTOR = (1UL << TOYOTA_PARAM_OFFSET) - 1U;
-const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1UL << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2UL << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_LTA = 4UL << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_GAS_INTERCEPTOR = 8UL << TOYOTA_PARAM_OFFSET;
-
-bool toyota_alt_brake = false;
-bool toyota_stock_longitudinal = false;
-bool toyota_lta = false;
-int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
+static bool toyota_alt_brake = false;
+static bool toyota_stock_longitudinal = false;
+static bool toyota_lta = false;
+static int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
 static uint32_t toyota_compute_checksum(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
@@ -144,6 +63,12 @@ static bool toyota_get_quality_flag_valid(const CANPacket_t *to_push) {
 }
 
 static void toyota_rx_hook(const CANPacket_t *to_push) {
+  const int TOYOTA_LTA_MAX_ANGLE = 1657;  // EPS only accepts up to 94.9461
+  // panda interceptor threshold needs to be equivalent to openpilot threshold to avoid controls mismatches
+  // If thresholds are mismatched then it is possible for panda to see the gas fall and rise while openpilot is in the pre-enabled state
+  // Threshold calculated from DBC gains: round((((15 + 75.555) / 0.159375) + ((15 + 151.111) / 0.159375)) / 2) = 805
+  const int TOYOTA_GAS_INTERCEPTOR_THRSLD = 805;
+
   if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
 
@@ -228,6 +153,41 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
 }
 
 static bool toyota_tx_hook(const CANPacket_t *to_send) {
+  const SteeringLimits TOYOTA_STEERING_LIMITS = {
+    .max_steer = 1500,
+    .max_rate_up = 15,          // ramp up slow
+    .max_rate_down = 25,        // ramp down fast
+    .max_torque_error = 350,    // max torque cmd in excess of motor torque
+    .max_rt_delta = 450,        // the real time limit is 1800/sec, a 20% buffer
+    .max_rt_interval = 250000,
+    .type = TorqueMotorLimited,
+
+    // the EPS faults when the steering angle rate is above a certain threshold for too long. to prevent this,
+    // we allow setting STEER_REQUEST bit to 0 while maintaining the requested torque value for a single frame
+    .min_valid_request_frames = 18,
+    .max_invalid_request_frames = 1,
+    .min_valid_request_rt_interval = 170000,  // 170ms; a ~10% buffer on cutting every 19 frames
+    .has_steer_req_tolerance = true,
+
+    // LTA angle limits
+    // factor for STEER_TORQUE_SENSOR->STEER_ANGLE and STEERING_LTA->STEER_ANGLE_CMD (1 / 0.0573)
+    .angle_deg_to_can = 17.452007,
+    .angle_rate_up_lookup = {
+      {5., 25., 25.},
+      {0.3, 0.15, 0.15}
+    },
+    .angle_rate_down_lookup = {
+      {5., 25., 25.},
+      {0.36, 0.26, 0.26}
+    },
+  };
+  const int TOYOTA_LTA_MAX_MEAS_TORQUE = 1500;
+  const int TOYOTA_LTA_MAX_DRIVER_TORQUE = 150;
+  // longitudinal limits
+  const LongitudinalLimits TOYOTA_LONG_LIMITS = {
+    .max_accel = 2000,   // 2.0 m/s2
+    .min_accel = -3500,  // -3.5 m/s2
+  };
   bool tx = true;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
@@ -354,6 +314,48 @@ static bool toyota_tx_hook(const CANPacket_t *to_send) {
 }
 
 static safety_config toyota_init(uint16_t param) {
+  const CanMsg TOYOTA_TX_MSGS[] = {
+    TOYOTA_COMMON_TX_MSGS
+  };
+
+  const CanMsg TOYOTA_LONG_TX_MSGS[] = {
+    TOYOTA_COMMON_LONG_TX_MSGS
+  };
+
+  const CanMsg TOYOTA_INTERCEPTOR_TX_MSGS[] = {
+    TOYOTA_COMMON_LONG_TX_MSGS
+    {0x200, 0, 6},  // gas interceptor
+  };
+  // if arrays were declared inside if...else code readability would be compromised
+  // cppcheck-suppress-begin variableScope
+  RxCheck toyota_lka_rx_checks[] = {
+    TOYOTA_COMMON_RX_CHECKS(false)
+  };
+
+  RxCheck toyota_lka_interceptor_rx_checks[] = {
+    TOYOTA_COMMON_RX_CHECKS(false)
+    {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
+  };
+  // Check the quality flag for angle measurement when using LTA, since it's not set on TSS-P cars
+  RxCheck toyota_lta_rx_checks[] = {
+    TOYOTA_COMMON_RX_CHECKS(true)
+  };
+
+  RxCheck toyota_lta_interceptor_rx_checks[] = {
+    TOYOTA_COMMON_RX_CHECKS(true)
+    {.msg = {{0x201, 0, 6, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
+  };
+  // cppcheck-suppress-end variableScope
+
+  // safety param flags
+  // first byte is for EPS factor, second is for flags
+  const uint32_t TOYOTA_PARAM_OFFSET = 8U;
+  const uint32_t TOYOTA_EPS_FACTOR = (1UL << TOYOTA_PARAM_OFFSET) - 1U;
+  const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1UL << TOYOTA_PARAM_OFFSET;
+  const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2UL << TOYOTA_PARAM_OFFSET;
+  const uint32_t TOYOTA_PARAM_LTA = 4UL << TOYOTA_PARAM_OFFSET;
+  const uint32_t TOYOTA_PARAM_GAS_INTERCEPTOR = 8UL << TOYOTA_PARAM_OFFSET;
+
   toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
   toyota_lta = GET_FLAG(param, TOYOTA_PARAM_LTA);
@@ -406,13 +408,4 @@ static int toyota_fwd_hook(int bus_num, int addr) {
   return bus_fwd;
 }
 
-const safety_hooks toyota_hooks = {
-  .init = toyota_init,
-  .rx = toyota_rx_hook,
-  .tx = toyota_tx_hook,
-  .fwd = toyota_fwd_hook,
-  .get_checksum = toyota_get_checksum,
-  .compute_checksum = toyota_compute_checksum,
-  .get_counter = toyota_get_counter,
-  .get_quality_flag_valid = toyota_get_quality_flag_valid,
-};
+extern const safety_hooks toyota_hooks;

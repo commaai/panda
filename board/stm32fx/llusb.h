@@ -1,3 +1,5 @@
+// Variable used in other files, unable to use extern whi9le initializing variable
+// cppcheck-suppress misra-c2012-8.4
 USB_OTG_GlobalTypeDef *USBx = USB_OTG_FS;
 
 #define USBx_HOST       ((USB_OTG_HostTypeDef *)((uint32_t)USBx + USB_OTG_HOST_BASE))

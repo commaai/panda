@@ -2,12 +2,8 @@
 //       CAN2_TX, CAN2_RX0, CAN2_SCE
 //       CAN3_TX, CAN3_RX0, CAN3_SCE
 
+// cppcheck-suppress misra-c2012-8.4
 CAN_TypeDef *cans[] = {CAN1, CAN2, CAN3};
-uint8_t can_irq_number[3][3] = {
-  { CAN1_TX_IRQn, CAN1_RX0_IRQn, CAN1_SCE_IRQn },
-  { CAN2_TX_IRQn, CAN2_RX0_IRQn, CAN2_SCE_IRQn },
-  { CAN3_TX_IRQn, CAN3_RX0_IRQn, CAN3_SCE_IRQn },
-};
 
 bool can_set_speed(uint8_t can_number) {
   bool ret = true;
@@ -24,6 +20,11 @@ bool can_set_speed(uint8_t can_number) {
 }
 
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
+  uint8_t can_irq_number[3][3] = {
+    { CAN1_TX_IRQn, CAN1_RX0_IRQn, CAN1_SCE_IRQn },
+    { CAN2_TX_IRQn, CAN2_RX0_IRQn, CAN2_SCE_IRQn },
+    { CAN3_TX_IRQn, CAN3_RX0_IRQn, CAN3_SCE_IRQn },
+  };
   CAN_TypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
   uint32_t esr_reg = CANx->ESR;
 

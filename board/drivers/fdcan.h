@@ -9,13 +9,9 @@ typedef struct {
   volatile uint32_t data_word[CANPACKET_DATA_SIZE_MAX/4U];
 } canfd_fifo;
 
+// Unable to use extern keyword along initialization
+// cppcheck-suppress misra-c2012-8.4
 FDCAN_GlobalTypeDef *cans[] = {FDCAN1, FDCAN2, FDCAN3};
-
-uint8_t can_irq_number[3][2] = {
-  { FDCAN1_IT0_IRQn, FDCAN1_IT1_IRQn },
-  { FDCAN2_IT0_IRQn, FDCAN2_IT1_IRQn },
-  { FDCAN3_IT0_IRQn, FDCAN3_IT1_IRQn },
-};
 
 #define CAN_ACK_ERROR 3U
 
@@ -36,6 +32,11 @@ bool can_set_speed(uint8_t can_number) {
 }
 
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
+  uint8_t can_irq_number[3][2] = {
+    { FDCAN1_IT0_IRQn, FDCAN1_IT1_IRQn },
+    { FDCAN2_IT0_IRQn, FDCAN2_IT1_IRQn },
+    { FDCAN3_IT0_IRQn, FDCAN3_IT1_IRQn },
+  };
   FDCAN_GlobalTypeDef *FDCANx = CANIF_FROM_CAN_NUM(can_number);
   uint32_t psr_reg = FDCANx->PSR;
   uint32_t ecr_reg = FDCANx->ECR;

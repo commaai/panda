@@ -1,6 +1,6 @@
-const int GM_CAMERA_DIAG_ADDR = 0x24B;
 
 static bool elm327_tx_hook(const CANPacket_t *to_send) {
+  const int GM_CAMERA_DIAG_ADDR = 0x24B;
   bool tx = true;
   int addr = GET_ADDR(to_send);
   int len = GET_LEN(to_send);
@@ -29,9 +29,4 @@ static bool elm327_tx_hook(const CANPacket_t *to_send) {
 }
 
 // If current_board->has_obd and safety_param == 0, bus 1 is multiplexed to the OBD-II port
-const safety_hooks elm327_hooks = {
-  .init = nooutput_init,
-  .rx = default_rx_hook,
-  .tx = elm327_tx_hook,
-  .fwd = default_fwd_hook,
-};
+extern const safety_hooks elm327_hooks;

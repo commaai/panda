@@ -1,4 +1,4 @@
-USB_OTG_GlobalTypeDef *USBx = USB_OTG_HS;
+static USB_OTG_GlobalTypeDef *USBx = USB_OTG_HS;
 
 #define USBx_HOST       ((USB_OTG_HostTypeDef *)((uint32_t)USBx + USB_OTG_HOST_BASE))
 #define USBx_DEVICE     ((USB_OTG_DeviceTypeDef *)((uint32_t)USBx + USB_OTG_DEVICE_BASE))

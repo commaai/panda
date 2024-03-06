@@ -1,5 +1,6 @@
 #pragma once
-
+// Unable to use extern keyword for variables that are initialized at definition
+// cppcheck-suppress-begin misra-c2012-8.4
 #define GET_BIT(msg, b) ((bool)!!(((msg)->data[((b) / 8U)] >> ((b) % 8U)) & 0x1U))
 #define GET_BYTE(msg, b) ((msg)->data[(b)])
 #define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask))
@@ -269,3 +270,4 @@ int alternative_experience = 0;
 uint32_t safety_mode_cnt = 0U;
 // allow 1s of transition timeout after relay changes state before assessing malfunctioning
 const uint32_t RELAY_TRNS_TIMEOUT = 1U;
+// cppcheck-suppress-end misra-c2012-8.4

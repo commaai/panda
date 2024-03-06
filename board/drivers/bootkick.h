@@ -1,13 +1,14 @@
-bool bootkick_ign_prev = false;
-BootState boot_state = BOOT_BOOTKICK;
-uint8_t bootkick_harness_status_prev = HARNESS_STATUS_NC;
-
-uint8_t boot_reset_countdown = 0;
-uint8_t waiting_to_boot_countdown = 0;
+// Unable to use extern keyword at initialization
+// cppcheck-suppress misra-c2012-8.4
 bool bootkick_reset_triggered = false;
-uint16_t bootkick_last_serial_ptr = 0;
 
 void bootkick_tick(bool ignition, bool recent_heartbeat) {
+  static bool bootkick_ign_prev = false;
+  static uint8_t bootkick_harness_status_prev = HARNESS_STATUS_NC;
+  static BootState boot_state = BOOT_BOOTKICK;
+  static uint8_t boot_reset_countdown = 0;
+  static uint8_t waiting_to_boot_countdown = 0;
+  uint16_t bootkick_last_serial_ptr = 0;
   BootState boot_state_prev = boot_state;
   const bool harness_inserted = (harness.status != bootkick_harness_status_prev) && (harness.status != HARNESS_STATUS_NC);
 
@@ -56,6 +57,9 @@ void bootkick_tick(bool ignition, bool recent_heartbeat) {
   // update state
   bootkick_ign_prev = ignition;
   bootkick_harness_status_prev = harness.status;
+
+  // misra-c2012-8.4 exposed this assignment
+  // cppcheck-suppress unreadVariable
   bootkick_last_serial_ptr = uart_ring_som_debug.w_ptr_tx;
   if (waiting_to_boot_countdown > 0U) {
     waiting_to_boot_countdown--;

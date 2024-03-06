@@ -138,7 +138,9 @@ void red_chiplet_init(void) {
     can_flip_buses(0, 2);
   }
 }
-
+// Extern should be used for declaration, but at the current moment there is no appropriate place for
+// the implementation
+// cppcheck-suppress misra-c2012-8.4
 const harness_configuration red_chiplet_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
