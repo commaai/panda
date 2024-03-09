@@ -27,6 +27,8 @@ HONDA_BOSCH = 1
 #    * alt SCM messages  (PCM-enable)
 #    * gas interceptor (button-enable)
 #    * gas interceptor with alt SCM messages (button-enable)
+#    * alt SCM and brake messages  (PCM-enable)
+#    * gas interceptor with alt SCM and brake messages (button-enable)
 #  * Bosch
 #    * Bosch with Longitudinal Support
 #  * Bosch Radarless
@@ -414,6 +416,36 @@ class TestHondaNidecAltGasInterceptorSafety(common.GasInterceptorSafetyTest, Hon
     values = {"CRUISE_BUTTONS": buttons, "MAIN_ON": main_on, "COUNTER": self.cnt_button % 4}
     self.__class__.cnt_button += 1
     return self.packer.make_can_msg_panda("SCM_BUTTONS", bus, values)
+
+
+class TestHondaNidecPcmAltBrakeSafety(TestHondaNidecPcmAltSafety):
+  """
+    Covers the Honda Nidec safety mode with alt SCM and brake messages
+  """
+  def setUp(self):
+    self.packer = CANPackerPanda("honda_fit_hybrid_2018_can_generated")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT | Panda.FLAG_HONDA_NIDEC_ALT_BRAKE)
+    self.safety.init_tests()
+
+  def _send_brake_msg(self, brake, aeb_req=0, bus=0):
+    values = {"COMPUTER_BRAKE_ALT": brake, "AEB_REQ_1": aeb_req}
+    return self.packer.make_can_msg_panda("BRAKE_COMMAND", bus, values)
+
+
+class TestHondaNidecAltBrakeGasInterceptorSafety(TestHondaNidecAltGasInterceptorSafety):
+  """
+    Covers the Honda Nidec safety mode with alt SCM and brake messages and gas interceptor, switches to a button-enable car
+  """
+  def setUp(self):
+    self.packer = CANPackerPanda("honda_fit_hybrid_2018_can_generated")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT | Panda.FLAG_HONDA_NIDEC_ALT_BRAKE | Panda.FLAG_HONDA_GAS_INTERCEPTOR)
+    self.safety.init_tests()
+
+  def _send_brake_msg(self, brake, aeb_req=0, bus=0):
+    values = {"COMPUTER_BRAKE_ALT": brake, "AEB_REQ_1": aeb_req}
+    return self.packer.make_can_msg_panda("BRAKE_COMMAND", bus, values)
 
 
 

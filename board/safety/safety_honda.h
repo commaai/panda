@@ -82,6 +82,7 @@ const uint16_t HONDA_PARAM_BOSCH_LONG = 2;
 const uint16_t HONDA_PARAM_NIDEC_ALT = 4;
 const uint16_t HONDA_PARAM_RADARLESS = 8;
 const uint16_t HONDA_PARAM_GAS_INTERCEPTOR = 16;
+const uint16_t HONDA_PARAM_NIDEC_ALT_BRAKE = 32;
 
 enum {
   HONDA_BTN_NONE = 0,
@@ -97,6 +98,7 @@ bool honda_alt_brake_msg = false;
 bool honda_fwd_brake = false;
 bool honda_bosch_long = false;
 bool honda_bosch_radarless = false;
+bool honda_nidec_alt_brake_msg = false;
 enum {HONDA_NIDEC, HONDA_BOSCH} honda_hw = HONDA_NIDEC;
 
 
@@ -236,6 +238,9 @@ static void honda_rx_hook(const CANPacket_t *to_push) {
     if ((bus == 2) && (addr == 0x1FA)) {
       bool honda_stock_aeb = GET_BIT(to_push, 29U) != 0U;
       int honda_stock_brake = (GET_BYTE(to_push, 0) << 2) | (GET_BYTE(to_push, 1) >> 6);
+      if (honda_nidec_alt_brake_msg) {
+        honda_stock_brake = (GET_BYTE(to_push, 6) << 2) | (GET_BYTE(to_push, 7) >> 6);
+      }
 
       // Forward AEB when stock braking is higher than openpilot braking
       // only stop forwarding when AEB event is over
@@ -293,6 +298,9 @@ static bool honda_tx_hook(const CANPacket_t *to_send) {
   // BRAKE: safety check (nidec)
   if ((addr == 0x1FA) && (bus == bus_pt)) {
     honda_brake = (GET_BYTE(to_send, 0) << 2) + ((GET_BYTE(to_send, 1) >> 6) & 0x3U);
+    if (honda_nidec_alt_brake_msg) {
+      honda_brake = (GET_BYTE(to_send, 6) << 2) + ((GET_BYTE(to_send, 7) >> 6) & 0x3U);
+    }
     if (longitudinal_brake_checks(honda_brake, HONDA_NIDEC_LONG_LIMITS)) {
       tx = false;
     }
@@ -381,6 +389,7 @@ static safety_config honda_nidec_init(uint16_t param) {
   honda_bosch_long = false;
   honda_bosch_radarless = false;
   enable_gas_interceptor = GET_FLAG(param, HONDA_PARAM_GAS_INTERCEPTOR);
+  honda_nidec_alt_brake_msg = GET_FLAG(param, HONDA_PARAM_NIDEC_ALT_BRAKE);
 
   safety_config ret;
   
