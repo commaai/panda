@@ -9,7 +9,13 @@ typedef struct harness_configuration harness_configuration;
 void can_flip_buses(uint8_t bus1, uint8_t bus2);
 void pwm_init(TIM_TypeDef *TIM, uint8_t channel);
 void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
-
+void RTC_WKUP_IRQ_Handler(void);
+void tick_handler(void);
+void __attribute__ ((noinline)) enable_fpu(void);
+void __initialize_hardware_early(void);
+bool check_started(void);
+// Intentionally created file and declared variables, defining them in main.c would be a step back
+// cppcheck-suppress-begin misra-c2012-8.4
 // ********************* Globals **********************
 uint8_t hw_type = 0;
 const board *current_board;
@@ -29,4 +35,4 @@ bool ignition_seen = false;
 bool siren_enabled = false;
 uint32_t siren_countdown = 0; // siren plays while countdown > 0
 uint32_t controls_allowed_countdown = 0;
-
+// cppcheck-suppress-end misra-c2012-8.4

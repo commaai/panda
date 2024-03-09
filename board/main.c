@@ -144,8 +144,8 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 #define HEARTBEAT_IGNITION_CNT_OFF 2U
 
 // called at 8Hz
-uint8_t loop_counter = 0U;
 void tick_handler(void) {
+  static uint8_t loop_counter = 0U;
   if (TICK_TIMER->SR != 0) {
     // siren
     current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
@@ -294,8 +294,8 @@ void EXTI_IRQ_Handler(void) {
   }
 }
 
-uint8_t rtc_counter = 0;
 void RTC_WKUP_IRQ_Handler(void) {
+  static uint8_t rtc_counter = 0;
   exti_irq_clear();
   clock_init();
 

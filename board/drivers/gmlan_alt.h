@@ -9,7 +9,7 @@
 
 #define MAX_BITS_CAN_PACKET (200)
 
-int gmlan_alt_mode = DISABLED;
+static int gmlan_alt_mode = DISABLED;
 
 // returns out_len
 int do_bitstuff(char *out, const char *in, int in_len) {
@@ -140,12 +140,6 @@ void setup_timer(void) {
   TIM12->SR = 0;
 }
 
-int gmlan_timeout_counter = GMLAN_TICKS_PER_TIMEOUT_TICKLE; //GMLAN transceiver times out every 17ms held high; tickle every 15ms
-int can_timeout_counter = GMLAN_TICKS_PER_SECOND; //1 second
-
-int inverted_bit_to_send = GMLAN_HIGH;
-int gmlan_switch_below_timeout = -1;
-int gmlan_switch_timeout_enable = 0;
 
 void set_bitbanged_gmlan(int val) {
   if (val != 0) {
@@ -155,17 +149,22 @@ void set_bitbanged_gmlan(int val) {
   }
 }
 
-char pkt_stuffed[MAX_BITS_CAN_PACKET];
-int gmlan_sending = -1;
-int gmlan_sendmax = -1;
-bool gmlan_send_ok = true;
+static char pkt_stuffed[MAX_BITS_CAN_PACKET];
+static int gmlan_sending = -1;
+static int gmlan_sendmax = -1;
+static bool gmlan_send_ok = true;
 
-int gmlan_silent_count = 0;
-int gmlan_fail_count = 0;
+static int gmlan_silent_count = 0;
+static int gmlan_fail_count = 0;
 #define REQUIRED_SILENT_TIME 10
 #define MAX_FAIL_COUNT 10
 
 void TIM12_IRQ_Handler(void) {
+  static int gmlan_timeout_counter = GMLAN_TICKS_PER_TIMEOUT_TICKLE; //GMLAN transceiver times out every 17ms held high; tickle every 15ms
+  static int gmlan_switch_below_timeout = -1;
+  static int gmlan_switch_timeout_enable = 0;
+  static int inverted_bit_to_send = GMLAN_HIGH;
+  static int can_timeout_counter = GMLAN_TICKS_PER_SECOND; //1 second
   if (gmlan_alt_mode == BITBANG) {
     if ((TIM12->SR & TIM_SR_UIF) && (gmlan_sendmax != -1)) {
       int read = get_gpio_input(GPIOB, 12);
@@ -216,7 +215,7 @@ void TIM12_IRQ_Handler(void) {
     }
   } else if (gmlan_alt_mode == GPIO_SWITCH) {
     if ((TIM12->SR & TIM_SR_UIF) && (gmlan_switch_below_timeout != -1)) {
-      if ((can_timeout_counter == 0) && gmlan_switch_timeout_enable) {
+      if ((can_timeout_counter == 0) && gmlan_switch_timeout_enable) { // cppcheck-suppress knownConditionTrueFalse
         //it has been more than 1 second since timeout was reset; disable timer and restore the GMLAN output
         set_gpio_output(GPIOB, 13, GMLAN_LOW);
         gmlan_switch_below_timeout = -1;

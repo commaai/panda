@@ -16,7 +16,7 @@ void unused_interrupt_handler(void) {
   fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
 }
 
-interrupt interrupts[NUM_INTERRUPTS];
+static interrupt interrupts[NUM_INTERRUPTS];
 
 #define REGISTER_INTERRUPT(irq_num, func_ptr, call_rate_max, rate_fault) \
   interrupts[irq_num].irq_type = (irq_num); \
@@ -26,15 +26,19 @@ interrupt interrupts[NUM_INTERRUPTS];
   interrupts[irq_num].max_call_rate = (call_rate_max); \
   interrupts[irq_num].call_rate_fault = (rate_fault);
 
-bool check_interrupt_rate = false;
 
-uint8_t interrupt_depth = 0U;
-uint32_t last_time = 0U;
-uint32_t idle_time = 0U;
-uint32_t busy_time = 0U;
+static bool check_interrupt_rate = false;
+
+static uint32_t idle_time = 0U;
+static uint32_t busy_time = 0U;
+
+// decalred and initialized, unable to use extern
+// cppcheck-suppress misra-c2012-8.4
 float interrupt_load = 0.0f;
 
 void handle_interrupt(IRQn_Type irq_type){
+  static uint32_t last_time = 0U;
+  static uint8_t interrupt_depth = 0U;
   ENTER_CRITICAL();
   if (interrupt_depth == 0U) {
     uint32_t time = microsecond_timer_get();

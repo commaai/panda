@@ -16,13 +16,17 @@ typedef struct {
   bool canfd_non_iso;
 } bus_config_t;
 
+// cppcheck-suppress-begin misra-c2012-8.4
 uint32_t safety_tx_blocked = 0;
 uint32_t safety_rx_invalid = 0;
 uint32_t tx_buffer_overflow = 0;
 uint32_t rx_buffer_overflow = 0;
 uint32_t gmlan_send_errs = 0;
-
 can_health_t can_health[] = {{0}, {0}, {0}};
+// Ignition detected from CAN meessages
+bool ignition_can = false;
+uint32_t ignition_can_cnt = 0U;
+// cppcheck-suppress-end misra-c2012-8.4
 
 extern int can_live;
 extern int pending_can_live;
@@ -30,10 +34,6 @@ extern int pending_can_live;
 // must reinit after changing these
 extern int can_silent;
 extern bool can_loopback;
-
-// Ignition detected from CAN meessages
-bool ignition_can = false;
-uint32_t ignition_can_cnt = 0U;
 
 #define ALL_CAN_SILENT 0xFF
 #define ALL_CAN_LIVE 0
@@ -56,6 +56,8 @@ void process_can(uint8_t can_number);
 #define CAN_TX_BUFFER_SIZE 416U
 #define GMLAN_TX_BUFFER_SIZE 416U
 
+// It is not practical to implement changes to comply with misra, because of initialization of buffers
+// cppcheck-suppress-begin misra-c2012-8.4
 #ifdef STM32H7
 // ITCM RAM and DTCM RAM are the fastest for Cortex-M7 core access
 __attribute__((section(".axisram"))) can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
@@ -68,8 +70,11 @@ can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
 #endif
 can_buffer(tx3_q, CAN_TX_BUFFER_SIZE)
 can_buffer(txgmlan_q, GMLAN_TX_BUFFER_SIZE)
+// cppcheck-suppress-end misra-c2012-8.4
+
 // FIXME:
 // cppcheck-suppress misra-c2012-9.3
+// cppcheck-suppress misra-c2012-8.4
 can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q, &can_txgmlan_q};
 
 // helpers
@@ -167,7 +172,7 @@ void can_clear(can_ring *q) {
 
 // Helpers
 // Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
-bus_config_t bus_config[] = {
+static bus_config_t bus_config[] = {
   { .bus_lookup = 0U, .can_num_lookup = 0U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
   { .bus_lookup = 1U, .can_num_lookup = 1U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
   { .bus_lookup = 2U, .can_num_lookup = 2U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },

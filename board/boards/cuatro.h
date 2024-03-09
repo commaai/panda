@@ -103,6 +103,9 @@ void cuatro_init(void) {
   clock_source_init();
 }
 
+// To be able to use extern and separate declaration
+// all of the functions should have separated declaration from implementation
+// cppcheck-suppress misra-c2012-8.4
 const board board_cuatro = {
   .harness_config = &red_chiplet_harness_config,
   .has_obd = true,

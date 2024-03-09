@@ -23,8 +23,9 @@ typedef union _USB_Setup {
 }
 USB_Setup_TypeDef;
 
+// Variable used in main.c, extern could not be used while initializing variable
+// cppcheck-suppress misra-c2012-8.4
 bool usb_enumerated = false;
-uint16_t usb_last_frame_num = 0U;
 
 void usb_init(void);
 void refresh_can_tx_slots_available(void);
@@ -79,7 +80,7 @@ void refresh_can_tx_slots_available(void);
 #define STS_SETUP_COMP                         4
 #define STS_SETUP_UPDT                         6
 
-uint8_t response[USBPACKET_MAX_SIZE];
+static uint8_t response[USBPACKET_MAX_SIZE];
 
 // for the repeating interfaces
 #define DSCR_INTERFACE_LEN 9
@@ -110,6 +111,8 @@ uint8_t response[USBPACKET_MAX_SIZE];
 #define STRING_DESCRIPTOR_HEADER(size)\
   (((((size) * 2) + 2) & 0xFF) | 0x0300)
 
+// Surppressing warnings, if those variables were declared at function scope, readability would be compromised
+// cppcheck-suppress-begin misra-c2012-8.4
 uint8_t device_desc[] = {
   DSCR_DEVICE_LEN, USB_DESC_TYPE_DEVICE, //Length, Type
   0x10, 0x02, // bcdUSB max version of USB supported (2.1)
@@ -349,16 +352,16 @@ uint8_t winusb_20_desc[WINUSB_PLATFORM_DESCRIPTOR_LENGTH] = {
     '-', 0x00, '2', 0x00, 'a', 0x00, 'e', 0x00, '5', 0x00, '7', 0x00, 'a', 0x00, '5', 0x00, // 64
     '1', 0x00, 'a', 0x00, 'd', 0x00, 'e', 0x00, '9', 0x00, '}', 0x00, 0x00, 0x00 // 78 bytes
 };
+// cppcheck-suppress-end misra-c2012-8.4
 
 // current packet
-USB_Setup_TypeDef setup;
-uint8_t usbdata[0x100] __attribute__((aligned(4)));
-uint8_t* ep0_txdata = NULL;
-uint16_t ep0_txlen = 0;
-bool outep3_processing = false;
+static USB_Setup_TypeDef setup;
+static uint8_t* ep0_txdata = NULL;
+static uint16_t ep0_txlen = 0;
+static bool outep3_processing = false;
 
 // Store the current interface alt setting.
-int current_int0_alt_setting = 0;
+static int current_int0_alt_setting = 0;
 
 // packet read and write
 
@@ -472,6 +475,7 @@ char to_hex_char(uint8_t a) {
 }
 
 void usb_tick(void) {
+  static uint16_t usb_last_frame_num = 0U;
   uint16_t current_frame_num = (USBx_DEVICE->DSTS & USB_OTG_DSTS_FNSOF_Msk) >> USB_OTG_DSTS_FNSOF_Pos;
   usb_enumerated = (current_frame_num != usb_last_frame_num);
   usb_last_frame_num = current_frame_num;
@@ -658,7 +662,7 @@ void usb_setup(void) {
 
 void usb_irqhandler(void) {
   //USBx->GINTMSK = 0;
-
+  static uint8_t usbdata[0x100] __attribute__((aligned(4)));
   unsigned int gintsts = USBx->GINTSTS;
   unsigned int gotgint = USBx->GOTGINT;
   unsigned int daint = USBx_DEVICE->DAINT;

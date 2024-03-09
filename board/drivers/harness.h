@@ -9,7 +9,7 @@ struct harness_t {
   bool relay_driven;
   bool sbu_adc_lock;
 };
-struct harness_t harness;
+static struct harness_t harness;
 
 struct harness_configuration {
   const bool has_harness;

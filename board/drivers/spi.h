@@ -8,16 +8,19 @@
 // in a tight loop, plus some buffer
 #define SPI_IRQ_RATE  16000U
 
+// spi_buf_tx should be declared at function scope, but the block can not be put in the scope bcs of spi_buf_rx
+// cppcheck-suppress-begin misra-c2012-8.9
 #ifdef STM32H7
 #define SPI_BUF_SIZE 2048U
 // H7 DMA2 located in D2 domain, so we need to use SRAM1/SRAM2
-__attribute__((section(".sram12"))) uint8_t spi_buf_rx[SPI_BUF_SIZE];
-__attribute__((section(".sram12"))) uint8_t spi_buf_tx[SPI_BUF_SIZE];
+static __attribute__((section(".sram12"))) uint8_t spi_buf_rx[SPI_BUF_SIZE];
+static __attribute__((section(".sram12"))) uint8_t spi_buf_tx[SPI_BUF_SIZE];
 #else
 #define SPI_BUF_SIZE 1024U
-uint8_t spi_buf_rx[SPI_BUF_SIZE];
-uint8_t spi_buf_tx[SPI_BUF_SIZE];
+static uint8_t spi_buf_rx[SPI_BUF_SIZE];
+static uint8_t spi_buf_tx[SPI_BUF_SIZE];
 #endif
+// cppcheck-suppress-end misra-c2012-8.9
 
 #define SPI_CHECKSUM_START 0xABU
 #define SPI_SYNC_BYTE 0x5AU
@@ -35,15 +38,17 @@ enum {
   SPI_STATE_DATA_TX
 };
 
+// Variables used in other files, unable to use extern with present initialization
+// cppcheck-suppress-begin misra-c2012-8.4
 bool spi_tx_dma_done = false;
-uint8_t spi_state = SPI_STATE_HEADER;
-uint8_t spi_endpoint;
-uint16_t spi_data_len_mosi;
-uint16_t spi_data_len_miso;
 uint16_t spi_checksum_error_count = 0;
-bool spi_can_tx_ready = false;
+// cppcheck-suppress-end misra-c2012-8.4
 
-const char version_text[] = "VERSION";
+static uint8_t spi_state = SPI_STATE_HEADER;
+static uint16_t spi_data_len_mosi;
+static bool spi_can_tx_ready = false;
+
+static const char version_text[] = "VERSION";
 
 #define SPI_HEADER_SIZE 7U
 
@@ -121,6 +126,8 @@ bool validate_checksum(const uint8_t *data, uint16_t len) {
 }
 
 void spi_rx_done(void) {
+  static uint8_t spi_endpoint;
+  static uint16_t spi_data_len_miso;
   uint16_t response_len = 0U;
   uint8_t next_rx_state = SPI_STATE_HEADER_NACK;
   bool checksum_valid = false;

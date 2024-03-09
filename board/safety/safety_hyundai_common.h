@@ -1,15 +1,8 @@
 #ifndef SAFETY_HYUNDAI_COMMON_H
 #define SAFETY_HYUNDAI_COMMON_H
 
-const int HYUNDAI_PARAM_EV_GAS = 1;
-const int HYUNDAI_PARAM_HYBRID_GAS = 2;
-const int HYUNDAI_PARAM_LONGITUDINAL = 4;
-const int HYUNDAI_PARAM_CAMERA_SCC = 8;
-const int HYUNDAI_PARAM_CANFD_HDA2 = 16;
-const int HYUNDAI_PARAM_ALT_LIMITS = 64; // TODO: shift this down with the rest of the common flags
 
-const uint8_t HYUNDAI_PREV_BUTTON_SAMPLES = 8;  // roughly 160 ms
-const uint32_t HYUNDAI_STANDSTILL_THRSLD = 12;  // 0.375 kph
+static const uint8_t HYUNDAI_PREV_BUTTON_SAMPLES = 8;  // roughly 160 ms
 
 enum {
   HYUNDAI_BTN_NONE = 0,
@@ -18,6 +11,10 @@ enum {
   HYUNDAI_BTN_CANCEL = 4,
 };
 
+// Unable to use extern keyword, variables are used in other files as well as in this file
+// cppcheck-suppress-begin misra-c2012-8.4
+const uint32_t HYUNDAI_STANDSTILL_THRSLD = 12;  // 0.375 kph
+
 // common state
 bool hyundai_ev_gas_signal = false;
 bool hyundai_hybrid_gas_signal = false;
@@ -25,11 +22,19 @@ bool hyundai_longitudinal = false;
 bool hyundai_camera_scc = false;
 bool hyundai_canfd_hda2 = false;
 bool hyundai_alt_limits = false;
-uint8_t hyundai_last_button_interaction;  // button messages since the user pressed an enable button
+// cppcheck-suppress-end misra-c2012-8.4
 
+static uint8_t hyundai_last_button_interaction;  // button messages since the user pressed an enable button
+
+// cppcheck-suppress misra-c2012-8.4
 uint16_t hyundai_canfd_crc_lut[256];
 
 void hyundai_common_init(uint16_t param) {
+  const int HYUNDAI_PARAM_EV_GAS = 1;
+  const int HYUNDAI_PARAM_HYBRID_GAS = 2;
+  const int HYUNDAI_PARAM_CAMERA_SCC = 8;
+  const int HYUNDAI_PARAM_CANFD_HDA2 = 16;
+  const int HYUNDAI_PARAM_ALT_LIMITS = 64; // TODO: shift this down with the rest of the common flags
   hyundai_ev_gas_signal = GET_FLAG(param, HYUNDAI_PARAM_EV_GAS);
   hyundai_hybrid_gas_signal = !hyundai_ev_gas_signal && GET_FLAG(param, HYUNDAI_PARAM_HYBRID_GAS);
   hyundai_camera_scc = GET_FLAG(param, HYUNDAI_PARAM_CAMERA_SCC);
@@ -39,6 +44,7 @@ void hyundai_common_init(uint16_t param) {
   hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
 
 #ifdef ALLOW_DEBUG
+  const int HYUNDAI_PARAM_LONGITUDINAL = 4;
   hyundai_longitudinal = GET_FLAG(param, HYUNDAI_PARAM_LONGITUDINAL);
 #else
   hyundai_longitudinal = false;

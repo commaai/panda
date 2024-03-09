@@ -1,5 +1,5 @@
 // ********************* Critical section helpers *********************
-volatile bool interrupts_enabled = false;
+static volatile bool interrupts_enabled = false;
 
 void enable_interrupts(void) {
   interrupts_enabled = true;
@@ -11,6 +11,8 @@ void disable_interrupts(void) {
   __disable_irq();
 }
 
+// Used across multiple files, unable to use extern
+// cppcheck-suppress misra-c2012-8.4
 uint8_t global_critical_depth = 0U;
 #define ENTER_CRITICAL()                                      \
   __disable_irq();                                            \
