@@ -19,12 +19,20 @@ const LongitudinalLimits TESLA_LONG_LIMITS = {
 
 const int TESLA_FLAG_POWERTRAIN = 1;
 const int TESLA_FLAG_LONGITUDINAL_CONTROL = 2;
+const int TESLA_FLAG_RAVEN = 4;
+const int TESLA_FLAG_MODEL3 = 8;
 
 const CanMsg TESLA_TX_MSGS[] = {
   {0x488, 0, 4},  // DAS_steeringControl
   {0x45, 0, 8},   // STW_ACTN_RQ
   {0x45, 2, 8},   // STW_ACTN_RQ
   {0x2b9, 0, 8},  // DAS_control
+};
+
+const CanMsg TESLA_M3_TX_MSGS[] = {
+  {0x488, 0, 4},  // DAS_steeringControl
+  {0x2b9, 0, 8},  // DAS_control
+  // # todo: add action request
 };
 
 const CanMsg TESLA_PT_TX_MSGS[] = {
@@ -41,6 +49,27 @@ RxCheck tesla_rx_checks[] = {
   {.msg = {{0x318, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},   // GTW_carState
 };
 
+RxCheck tesla_raven_rx_checks[] = {
+  {.msg = {{0x2b9, 2, 8, .frequency = 25U}, { 0 }, { 0 }}},   // DAS_control
+  {.msg = {{0x131, 2, 8, .frequency = 100U}, { 0 }, { 0 }}},  // EPAS3P_sysStatus
+  {.msg = {{0x108, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},  // DI_torque1
+  {.msg = {{0x118, 0, 6, .frequency = 100U}, { 0 }, { 0 }}},  // DI_torque2
+  {.msg = {{0x20a, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},   // BrakeMessage
+  {.msg = {{0x368, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},   // DI_state
+  {.msg = {{0x318, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},   // GTW_carState
+};
+
+RxCheck tesla_model3_rx_checks[] = {
+  {.msg = {{0x2b9, 2, 8, .frequency = 25U}, { 0 }, { 0 }}},   // DAS_control
+  {.msg = {{0x52, 2, 8, .frequency = 100U}, { 0 }, { 0 }}},  // EPAS3P_sysStatus
+  {.msg = {{0x108, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},  // DI_torque
+  {.msg = {{0x39d, 0, 5, .frequency = 25U}, { 0 }, { 0 }}},   // IBST_status (brakes)
+  {.msg = {{0x118, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},   // DI_systemStatus (pedal)
+  {.msg = {{0x368, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},   // DI_state todo (acc state)
+  {.msg = {{0x3f5, 0, 8, .frequency = 11U}, { 0 }, { 0 }}},   // ID3F5VCFRONT_lighting (indicator) todo frequency
+  {.msg = {{0x2e1, 0, 8, .frequency = 71U}, { 0 }, { 0 }}},   // VCFRONT_status (doors) todo frequency
+};
+
 RxCheck tesla_pt_rx_checks[] = {
   {.msg = {{0x106, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},  // DI_torque1
   {.msg = {{0x116, 0, 6, .frequency = 100U}, { 0 }, { 0 }}},  // DI_torque2
@@ -51,6 +80,8 @@ RxCheck tesla_pt_rx_checks[] = {
 
 bool tesla_longitudinal = false;
 bool tesla_powertrain = false;  // Are we the second panda intercepting the powertrain bus?
+bool tesla_raven = false;
+bool tesla_model3 = false;
 
 bool tesla_stock_aeb = false;
 
@@ -58,16 +89,16 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
-  if(bus == 0) {
-    if (!tesla_powertrain) {
-      if(addr == 0x370) {
-        // Steering angle: (0.1 * val) - 819.2 in deg.
-        // Store it 1/10 deg to match steering request
-        int angle_meas_new = (((GET_BYTE(to_push, 4) & 0x3FU) << 8) | GET_BYTE(to_push, 5)) - 8192U;
-        update_sample(&angle_meas, angle_meas_new);
-      }
+  if (!tesla_powertrain) {
+    if((!tesla_raven && (addr == 0x370) && (bus == 0)) || (tesla_raven && (addr == 0x131) && (bus == 2))) {
+      // Steering angle: (0.1 * val) - 819.2 in deg.
+      // Store it 1/10 deg to match steering request
+      int angle_meas_new = (((GET_BYTE(to_push, 4) & 0x3FU) << 8) | GET_BYTE(to_push, 5)) - 8192U;
+      update_sample(&angle_meas, angle_meas_new);
     }
+  }
 
+  if(bus == 0) {
     if(addr == (tesla_powertrain ? 0x116 : 0x118)) {
       // Vehicle speed: ((0.05 * val) - 25) * MPH_TO_MPS
       float speed = (((((GET_BYTE(to_push, 3) & 0x0FU) << 8) | (GET_BYTE(to_push, 2))) * 0.05) - 25) * 0.447;
@@ -206,12 +237,17 @@ static int tesla_fwd_hook(int bus_num, int addr) {
 static safety_config tesla_init(uint16_t param) {
   tesla_powertrain = GET_FLAG(param, TESLA_FLAG_POWERTRAIN);
   tesla_longitudinal = GET_FLAG(param, TESLA_FLAG_LONGITUDINAL_CONTROL);
+  tesla_raven = GET_FLAG(param, TESLA_FLAG_RAVEN);
 
   tesla_stock_aeb = false;
 
   safety_config ret;
   if (tesla_powertrain) {
     ret = BUILD_SAFETY_CFG(tesla_pt_rx_checks, TESLA_PT_TX_MSGS);
+  } else if (tesla_raven) {
+    ret = BUILD_SAFETY_CFG(tesla_raven_rx_checks, TESLA_TX_MSGS);
+  } else if (tesla_model3) {
+    ret = BUILD_SAFETY_CFG(tesla_model3_rx_checks, TESLA_M3_TX_MSGS);
   } else {
     ret = BUILD_SAFETY_CFG(tesla_rx_checks, TESLA_TX_MSGS);
   }
