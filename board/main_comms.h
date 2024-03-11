@@ -48,12 +48,6 @@ int get_health_pkt(void *dat) {
   return sizeof(*health);
 }
 
-int get_rtc_pkt(void *dat) {
-  timestamp_t t = rtc_get_time();
-  (void)memcpy(dat, &t, sizeof(t));
-  return sizeof(t);
-}
-
 // send on serial, first byte to select the ring
 void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   uart_ring *ur = get_ring_by_number(data[0]);
@@ -71,7 +65,6 @@ void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
 int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   unsigned int resp_len = 0;
   uart_ring *ur = NULL;
-  timestamp_t t;
   uint32_t time;
 
 #ifdef DEBUG_COMMS
@@ -82,52 +75,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
 #endif
 
   switch (req->request) {
-    // **** 0xa0: get rtc time
-    case 0xa0:
-      resp_len = get_rtc_pkt(resp);
-      break;
-    // **** 0xa1: set rtc year
-    case 0xa1:
-      t = rtc_get_time();
-      t.year = req->param1;
-      rtc_set_time(t);
-      break;
-    // **** 0xa2: set rtc month
-    case 0xa2:
-      t = rtc_get_time();
-      t.month = req->param1;
-      rtc_set_time(t);
-      break;
-    // **** 0xa3: set rtc day
-    case 0xa3:
-      t = rtc_get_time();
-      t.day = req->param1;
-      rtc_set_time(t);
-      break;
-    // **** 0xa4: set rtc weekday
-    case 0xa4:
-      t = rtc_get_time();
-      t.weekday = req->param1;
-      rtc_set_time(t);
-      break;
-    // **** 0xa5: set rtc hour
-    case 0xa5:
-      t = rtc_get_time();
-      t.hour = req->param1;
-      rtc_set_time(t);
-      break;
-    // **** 0xa6: set rtc minute
-    case 0xa6:
-      t = rtc_get_time();
-      t.minute = req->param1;
-      rtc_set_time(t);
-      break;
-    // **** 0xa7: set rtc second
-    case 0xa7:
-      t = rtc_get_time();
-      t.second = req->param1;
-      rtc_set_time(t);
-      break;
     // **** 0xa8: get microsecond timer
     case 0xa8:
       time = microsecond_timer_get();

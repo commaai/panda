@@ -140,8 +140,6 @@ void red_init(void) {
   // Initialize harness
   harness_init();
 
-  // Initialize RTC
-  rtc_init();
 
   // Enable CAN transceivers
   red_enable_can_transceivers(true);
@@ -180,7 +178,6 @@ const board board_red = {
   .has_obd = true,
   .has_spi = false,
   .has_canfd = true,
-  .has_rtc_battery = false,
   .fan_max_rpm = 0U,
   .avdd_mV = 3300U,
   .fan_stall_recovery = false,
