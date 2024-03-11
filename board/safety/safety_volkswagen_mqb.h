@@ -3,9 +3,9 @@
 // lateral limits
 const SteeringLimits VOLKSWAGEN_MQB_STEERING_LIMITS = {
   .max_steer = 300,              // 3.00 Nm (EPS side max of 3.00 Nm)
-  .max_rt_delta = 75,            // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
+  .max_rt_delta = 188,            // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
   .max_rt_interval = 250000,     // 250ms between real time checks
-  .max_rate_up = 4,              // 2.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
+  .max_rate_up = 10,              // 2.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
   .max_rate_down = 10,           // 5.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
   .driver_torque_allowance = 80,
   .driver_torque_factor = 3,
