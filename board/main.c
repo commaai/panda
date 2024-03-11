@@ -404,10 +404,6 @@ int main(void) {
         // Init IRQs for CAN transceiver and ignition line
         exti_irq_init();
 
-        // Init RTC Wakeup event on EXTI22
-        REGISTER_INTERRUPT(RTC_WKUP_IRQn, RTC_WKUP_IRQ_Handler, 10U, FAULT_INTERRUPT_RATE_EXTI)
-        rtc_wakeup_init();
-
         // STOP mode
         SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
       }
