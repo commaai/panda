@@ -1,26 +1,58 @@
-#define MIN(a, b) ({ \
-  __typeof__ (a) _a = (a); \
-  __typeof__ (b) _b = (b); \
-  (_a < _b) ? _a : _b; \
-})
+static inline unsigned int func_min(unsigned int a, unsigned int b) {
+  unsigned int result = 0;
+  if (a < b) {
+    result = a;
+  } else {
+    result = b;
+  }
 
-#define MAX(a, b) ({ \
-  __typeof__ (a) _a = (a); \
-  __typeof__ (b) _b = (b); \
-  (_a > _b) ? _a : _b; \
-})
+  return result;
+}
 
-#define CLAMP(x, low, high) ({ \
-  __typeof__(x) __x = (x); \
-  __typeof__(low) __low = (low);\
-  __typeof__(high) __high = (high);\
-  (__x > __high) ? __high : ((__x < __low) ? __low : __x); \
-})
+static inline unsigned int func_max(unsigned int a, unsigned int b) {
+  unsigned int result = 0;
+  if (a > b) {
+    result = a;
+  } else {
+    result = b;
+  }
+  return result;
+}
 
-#define ABS(a) ({ \
-  __typeof__ (a) _a = (a); \
-  (_a > 0) ? _a : (-_a); \
-})
+static inline unsigned int func_clamp(unsigned int a, unsigned int b, unsigned int c) {
+  unsigned int result = 0;
+  if (a > c) {
+    result = c;
+  } else if (a < b) {
+    result = b;
+  } else {
+    result = a;
+  }
+
+  return result;
+}
+
+static inline int func_abs(int a) {
+  int result = 0;
+  if (a > 0) {
+    result = a;
+  } else {
+    result = -a;
+  }
+  return result;
+}
+
+#define MIN(a, b) \
+  (func_min(a, b))
+
+#define MAX(a, b) \
+  (func_max(a, b))
+
+#define CLAMP(a, b, c) \
+  (func_clamp(a, b, c))
+
+#define ABS(a) \
+  (func_abs(a))
 
 #ifndef NULL
 // this just provides a standard implementation of NULL
