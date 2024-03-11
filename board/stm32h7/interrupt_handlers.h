@@ -4,7 +4,6 @@
 void WWDG_IRQHandler(void) {handle_interrupt(WWDG_IRQn);}
 void PVD_AVD_IRQHandler(void) {handle_interrupt(PVD_AVD_IRQn);}
 void TAMP_STAMP_IRQHandler(void) {handle_interrupt(TAMP_STAMP_IRQn);}
-void RTC_WKUP_IRQHandler(void) {handle_interrupt(RTC_WKUP_IRQn);}
 void FLASH_IRQHandler(void) {handle_interrupt(FLASH_IRQn);}
 void RCC_IRQHandler(void) {handle_interrupt(RCC_IRQn);}
 void EXTI0_IRQHandler(void) {handle_interrupt(EXTI0_IRQn);}
@@ -38,7 +37,6 @@ void USART1_IRQHandler(void) {handle_interrupt(USART1_IRQn);}
 void USART2_IRQHandler(void) {handle_interrupt(USART2_IRQn);}
 void USART3_IRQHandler(void) {handle_interrupt(USART3_IRQn);}
 void EXTI15_10_IRQHandler(void) {handle_interrupt(EXTI15_10_IRQn);}
-void RTC_Alarm_IRQHandler(void) {handle_interrupt(RTC_Alarm_IRQn);}
 void TIM8_BRK_TIM12_IRQHandler(void) {handle_interrupt(TIM8_BRK_TIM12_IRQn);}
 void TIM8_UP_TIM13_IRQHandler(void) {handle_interrupt(TIM8_UP_TIM13_IRQn);}
 void TIM8_TRG_COM_TIM14_IRQHandler(void) {handle_interrupt(TIM8_TRG_COM_TIM14_IRQn);}

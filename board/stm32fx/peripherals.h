@@ -58,7 +58,6 @@ void peripherals_init(void) {
 
   // Supplemental
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
-  RCC->APB1ENR |= RCC_APB1ENR_PWREN;   // for RTC config
   RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 
   // Connectivity
