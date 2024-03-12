@@ -6,7 +6,6 @@ import usb1
 import struct
 import hashlib
 import binascii
-import datetime
 import logging
 from functools import wraps, partial
 from itertools import accumulate
@@ -894,21 +893,6 @@ class Panda:
   # sending a heartbeat will reenable the checks
   def set_heartbeat_disabled(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf8, 0, 0, b'')
-
-  # ******************* RTC *******************
-  def set_datetime(self, dt):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa1, int(dt.year), 0, b'')
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa2, int(dt.month), 0, b'')
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa3, int(dt.day), 0, b'')
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa4, int(dt.isoweekday()), 0, b'')
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa5, int(dt.hour), 0, b'')
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa6, int(dt.minute), 0, b'')
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xa7, int(dt.second), 0, b'')
-
-  def get_datetime(self):
-    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xa0, 0, 0, 8)
-    a = struct.unpack("HBBBBBB", dat)
-    return datetime.datetime(a[0], a[1], a[2], a[4], a[5], a[6])
 
   # ****************** Timer *****************
   def get_microsecond_timer(self):
