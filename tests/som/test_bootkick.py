@@ -1,6 +1,5 @@
 import time
 import pytest
-import datetime
 
 from panda import Panda, PandaJungle
 
@@ -86,7 +85,7 @@ def check_som_boot_flag(panda):
   return h['safety_mode'] == Panda.SAFETY_ELM327 and h['safety_param'] == 30
 
 def set_som_shutdown_flag(panda):
-  panda.set_datetime(datetime.datetime(year=2040, month=8, day=23))
+  panda.set_can_speed_kbps(0, 100)
 
 def wait_for_boot(panda, jungle, reset_expected=False, bootkick=False, timeout=120):
   st = time.monotonic()
