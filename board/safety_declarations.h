@@ -258,10 +258,10 @@ struct sample_t angle_meas;         // last 6 steer angles/curvatures
 //   and that alone this flag doesn't make braking compliant because there's also a time element.
 // Setting this flag is used for allowing the full -5.0 to +4.0 m/s^2 at lower speeds
 // See ISO 15622:2018 for more information.
-#define ALT_EXP_RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX 8
+//#define ALT_EXP_RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX 8
 
 // This flag allows AEB to be commanded from openpilot.
-#define ALT_EXP_ALLOW_AEB 16
+//#define ALT_EXP_ALLOW_AEB 16
 
 int alternative_experience = 0;
 

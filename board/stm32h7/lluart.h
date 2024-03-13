@@ -1,3 +1,6 @@
+// cppcheck-suppress misra-c2012-2.5
+#define FAULT_INTERRUPT_RATE_UART_7 (1UL << 24)
+
 void uart_rx_ring(uart_ring *q){
   // Do not read out directly if DMA enabled
   ENTER_CRITICAL();
@@ -50,6 +53,7 @@ void uart_set_baud(USART_TypeDef *u, unsigned int baud) {
 }
 
 // This read after reading ISR clears all error interrupts. We don't want compiler warnings, nor optimizations
+// cppcheck-suppress misra-c2012-2.5
 #define UART_READ_RDR(uart) volatile uint8_t t = (uart)->RDR; UNUSED(t);
 
 void uart_interrupt_handler(uart_ring *q) {

@@ -2,6 +2,7 @@
 
 #include "crc.h"
 
+// cppcheck-suppress misra-c2012-2.5
 #define SPI_TIMEOUT_US 10000U
 
 // got max rate from hitting a non-existent endpoint

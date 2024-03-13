@@ -51,6 +51,7 @@ void uart_send_break(uart_ring *u) {
 }
 
 // This read after reading SR clears all error interrupts. We don't want compiler warnings, nor optimizations
+// cppcheck-suppress misra-c2012-2.5
 #define UART_READ_DR(uart) volatile uint8_t t = (uart)->DR; UNUSED(t);
 
 void uart_interrupt_handler(uart_ring *q) {
@@ -82,9 +83,13 @@ void USART2_IRQ_Handler(void) { uart_interrupt_handler(&uart_ring_debug); }
 
 // ***************************** Hardware setup *****************************
 
+// cppcheck-suppress misra-c2012-2.5
 #define DIV_(_PCLK_, _BAUD_)                    (((_PCLK_) * 25U) / (4U * (_BAUD_)))
+// cppcheck-suppress misra-c2012-2.5
 #define DIVMANT_(_PCLK_, _BAUD_)                (DIV_((_PCLK_), (_BAUD_)) / 100U)
+// cppcheck-suppress misra-c2012-2.5
 #define DIVFRAQ_(_PCLK_, _BAUD_)                ((((DIV_((_PCLK_), (_BAUD_)) - (DIVMANT_((_PCLK_), (_BAUD_)) * 100U)) * 16U) + 50U) / 100U)
+// cppcheck-suppress misra-c2012-2.5
 #define USART_BRR_(_PCLK_, _BAUD_)              ((DIVMANT_((_PCLK_), (_BAUD_)) << 4) | (DIVFRAQ_((_PCLK_), (_BAUD_)) & 0x0FU))
 
 void uart_set_baud(USART_TypeDef *u, unsigned int baud) {

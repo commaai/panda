@@ -48,16 +48,16 @@ struct board {
 // ******************* Definitions ********************
 // These should match the enums in cereal/log.capnp and __init__.py
 #define HW_TYPE_UNKNOWN 0U
+// cppcheck-suppress misra-c2012-2.5
 #define HW_TYPE_WHITE_PANDA 1U
+// cppcheck-suppress misra-c2012-2.5
 #define HW_TYPE_GREY_PANDA 2U
+// cppcheck-suppress misra-c2012-2.5
 #define HW_TYPE_BLACK_PANDA 3U
-#define HW_TYPE_PEDAL 4U
+//#define HW_TYPE_PEDAL 4U
+// cppcheck-suppress misra-c2012-2.5
 #define HW_TYPE_UNO 5U
 #define HW_TYPE_DOS 6U
-#define HW_TYPE_RED_PANDA 7U
-#define HW_TYPE_RED_PANDA_V2 8U
-#define HW_TYPE_TRES 9U
-#define HW_TYPE_CUATRO 10U
 
 // LED colors
 #define LED_RED 0U
@@ -65,13 +65,18 @@ struct board {
 #define LED_BLUE 2U
 
 // USB power modes (from cereal.log.health)
-#define USB_POWER_NONE 0U
+//#define USB_POWER_NONE 0U
+// cppcheck-suppress misra-c2012-2.5
 #define USB_POWER_CLIENT 1U
+// cppcheck-suppress misra-c2012-2.5
 #define USB_POWER_CDP 2U
+// cppcheck-suppress misra-c2012-2.5
 #define USB_POWER_DCP 3U
 
 // CAN modes
 #define CAN_MODE_NORMAL 0U
+// cppcheck-suppress misra-c2012-2.5
 #define CAN_MODE_GMLAN_CAN2 1U
+// cppcheck-suppress misra-c2012-2.5
 #define CAN_MODE_GMLAN_CAN3 2U
 #define CAN_MODE_OBD_CAN2 3U

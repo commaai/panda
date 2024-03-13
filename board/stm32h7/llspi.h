@@ -1,3 +1,6 @@
+// cppcheck-suppress misra-c2012-2.5
+#define FAULT_INTERRUPT_RATE_SPI (1UL << 23)
+
 // master -> panda DMA start
 void llspi_mosi_dma(uint8_t *addr, int len) {
   // disable DMA + SPI
