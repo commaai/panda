@@ -18,7 +18,7 @@ def pj():
 
   yield jungle
 
-  jungle.set_panda_power(False)
+  #jungle.set_panda_power(False)
   jungle.close()
 
 @pytest.fixture(scope="function")
