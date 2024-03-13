@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
         # shutdown when told
         ch = p.can_health(0)
-        if ch['can_speed'] == 100:
+        if ch['can_data_speed'] == 1000:
           os.system("sudo poweroff")
     except Exception as e:
       print(str(e))
