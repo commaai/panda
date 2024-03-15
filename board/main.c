@@ -294,24 +294,6 @@ void EXTI_IRQ_Handler(void) {
   }
 }
 
-uint8_t rtc_counter = 0;
-void RTC_WKUP_IRQ_Handler(void) {
-  exti_irq_clear();
-  clock_init();
-
-  rtc_counter++;
-  if ((rtc_counter % 2U) == 0U) {
-    current_board->set_led(LED_BLUE, false);
-  } else {
-    current_board->set_led(LED_BLUE, true);
-  }
-
-  if (rtc_counter == __UINT8_MAX__) {
-    rtc_counter = 1U;
-  }
-}
-
-
 int main(void) {
   // Init interrupt table
   init_interrupts(true);
@@ -421,10 +403,6 @@ int main(void) {
 
         // Init IRQs for CAN transceiver and ignition line
         exti_irq_init();
-
-        // Init RTC Wakeup event on EXTI22
-        REGISTER_INTERRUPT(RTC_WKUP_IRQn, RTC_WKUP_IRQ_Handler, 10U, FAULT_INTERRUPT_RATE_EXTI)
-        rtc_wakeup_init();
 
         // STOP mode
         SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;

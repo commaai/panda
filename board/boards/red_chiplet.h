@@ -119,8 +119,6 @@ void red_chiplet_init(void) {
   // Initialize harness
   harness_init();
 
-  // Initialize RTC
-  rtc_init();
 
   // Enable CAN transceivers
   red_chiplet_enable_can_transceivers(true);
