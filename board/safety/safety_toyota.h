@@ -156,6 +156,12 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
       gas_pressed = !GET_BIT(to_push, 4U);
     }
 
+    if (addr == 0x1A2) {
+      // 7th bit is CRUISE_ACTIVE
+      bool cruise_engaged = GET_BIT(to_push, 7U);
+      pcm_cruise_check(cruise_engaged);
+    }
+
     // sample speed
     if (addr == 0xaa) {
       int speed = 0;
