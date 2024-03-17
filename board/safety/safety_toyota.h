@@ -39,7 +39,7 @@ const LongitudinalLimits TOYOTA_LONG_LIMITS = {
 
 // Stock longitudinal
 #define TOYOTA_COMMON_TX_MSGS                                                                                     \
-  {0x2E4, 0, 5}, {0x191, 0, 8}, {0x412, 0, 8}, {0x343, 0, 8}, {0x1D2, 0, 8},  /* LKAS + LTA + ACC & PCM cancel cmds */  \
+  {0x2E4, 0, 5}, {0x2E4, 0, 8}, {0x131, 0, 8}, {0x191, 0, 8}, {0x412, 0, 8}, {0x343, 0, 8}, {0x1D2, 0, 8},  /* LKAS + LTA + ACC & PCM cancel cmds */  \
 
 #define TOYOTA_COMMON_LONG_TX_MSGS                                                                                                          \
   TOYOTA_COMMON_TX_MSGS                                                                                                                     \
@@ -60,8 +60,9 @@ const CanMsg TOYOTA_LONG_TX_MSGS[] = {
   {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .frequency = 83U}, { 0 }, { 0 }}},                        \
   {.msg = {{0x260, 0, 8, .check_checksum = true, .quality_flag = (lta), .frequency = 50U}, { 0 }, { 0 }}},  \
   {.msg = {{0x1D2, 0, 8, .check_checksum = true, .frequency = 33U}, { 0 }, { 0 }}},                         \
-  {.msg = {{0x224, 0, 8, .check_checksum = false, .frequency = 40U},                                        \
-           {0x226, 0, 8, .check_checksum = false, .frequency = 40U}, { 0 }}},                               \
+  {.msg = {{0x101, 0, 8, .check_checksum = false, .frequency = 50U},                                        \
+           {0x224, 0, 8, .check_checksum = false, .frequency = 40U},                                        \
+           {0x226, 0, 8, .check_checksum = false, .frequency = 40U}}},                                      \
 
 RxCheck toyota_lka_rx_checks[] = {
   TOYOTA_COMMON_RX_CHECKS(false)
@@ -175,6 +176,11 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
       brake_pressed = GET_BIT(to_push, bit);
     }
 
+    // brake pressed on 0x101 for rav4 prime
+    if (addr == 0x101) {
+      brake_pressed = GET_BIT(to_push, 3) != 0U;
+    }
+
     bool stock_ecu_detected = addr == 0x2E4;  // STEERING_LKA
     if (!toyota_stock_longitudinal && (addr == 0x343)) {
       stock_ecu_detected = true;  // ACC_CONTROL
@@ -219,6 +225,14 @@ static bool toyota_tx_hook(const CANPacket_t *to_send) {
       // only allow the checksum, which is the last byte
       bool block = (GET_BYTES(to_send, 0, 4) != 0U) || (GET_BYTE(to_send, 4) != 0U) || (GET_BYTE(to_send, 5) != 0U);
       if (block) {
+        tx = false;
+      }
+    }
+
+    // LTA angle steering check for SecOC cars
+    if (addr == 0x131) {
+      // Block any form of actuation for now
+      if (GET_BYTE(to_send, 0)) {
         tx = false;
       }
     }
