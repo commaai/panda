@@ -109,17 +109,8 @@ static uint32_t honda_compute_checksum(const CANPacket_t *to_push) {
 }
 
 static uint8_t honda_get_counter(const CANPacket_t *to_push) {
-  int addr = GET_ADDR(to_push);
-
-  uint8_t cnt = 0U;
-  if (addr == 0x201) {
-    // Signal: COUNTER_PEDAL
-    cnt = GET_BYTE(to_push, 4) & 0x0FU;
-  } else {
-    int counter_byte = GET_LEN(to_push) - 1U;
-    cnt = (GET_BYTE(to_push, counter_byte) >> 4U) & 0x3U;
-  }
-  return cnt;
+  int counter_byte = GET_LEN(to_push) - 1U;
+  return (GET_BYTE(to_push, counter_byte) >> 4U) & 0x3U;
 }
 
 static void honda_rx_hook(const CANPacket_t *to_push) {
