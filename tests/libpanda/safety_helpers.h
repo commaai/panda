@@ -43,10 +43,6 @@ bool get_relay_malfunction(void){
   return relay_malfunction;
 }
 
-int get_gas_interceptor_prev(void){
-  return gas_interceptor_prev;
-}
-
 bool get_gas_pressed_prev(void){
   return gas_pressed_prev;
 }
