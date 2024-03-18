@@ -127,7 +127,6 @@ static void honda_rx_hook(const CANPacket_t *to_push) {
   int pt_bus = honda_get_pt_bus();
 
   int addr = GET_ADDR(to_push);
-  int len = GET_LEN(to_push);
   int bus = GET_BUS(to_push);
 
   // sample speed
