@@ -10,16 +10,16 @@ const SteeringLimits GM_STEERING_LIMITS = {
 };
 
 const LongitudinalLimits GM_ASCM_LONG_LIMITS = {
-  .max_gas = 3072,
-  .min_gas = 1404,
-  .inactive_gas = 1404,
+  .max_gas = 1018,
+  .min_gas = -650,
+  .inactive_gas = -650,
   .max_brake = 400,
 };
 
 const LongitudinalLimits GM_CAM_LONG_LIMITS = {
-  .max_gas = 3400,
-  .min_gas = 1514,
-  .inactive_gas = 1554,
+  .max_gas = 1346,
+  .min_gas = -500,
+  .inactive_gas = -500,
   .max_brake = 400,
 };
 
