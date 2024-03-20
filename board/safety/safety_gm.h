@@ -163,7 +163,7 @@ static bool gm_tx_hook(const CANPacket_t *to_send) {
   // GAS/REGEN: safety check
   if (addr == 0x2CB) {
     bool apply = GET_BIT(to_send, 0U);
-    int raw_gas = ((GET_BYTE(to_send, 1) & 0x7U) << 16) + (GET_BYTE(to_send, 2) << 8) + GET_BYTE(to_send, 3);
+    uint32_t raw_gas = ((GET_BYTE(to_send, 1) & 0x7U) << 16) + (GET_BYTE(to_send, 2) << 8) + GET_BYTE(to_send, 3);
     int gas_regen = (raw_gas >> 3) - 22534;
 
     bool violation = false;
