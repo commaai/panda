@@ -2,7 +2,7 @@
 //       FDCAN2_IT0, FDCAN2_IT1
 //       FDCAN3_IT0, FDCAN3_IT1
 
-#define CANFD
+//#define CANFD
 
 typedef struct {
   volatile uint32_t header[2];
@@ -17,6 +17,7 @@ uint8_t can_irq_number[3][2] = {
   { FDCAN3_IT0_IRQn, FDCAN3_IT1_IRQn },
 };
 
+// cppcheck-suppress misra-c2012-2.5
 #define CAN_ACK_ERROR 3U
 
 bool can_set_speed(uint8_t can_number) {

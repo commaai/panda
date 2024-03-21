@@ -3,6 +3,7 @@
 #define MCU_IDCODE 0x463U
 
 // from the linker script
+// cppcheck-suppress misra-c2012-2.5
 #define APP_START_ADDRESS 0x8004000U
 
 #define CORE_FREQ 96U // in MHz
