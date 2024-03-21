@@ -37,18 +37,18 @@ def run_test_w_pandas(pandas, sleep_duration):
     print("health", ho[0], h[ho[0]].health())
 
     # **** test can line loopback ****
-    for bus, gmlan in [(0, False), (1, False), (2, False), (1, True), (2, True)]:
+    for bus, obd in [(0, False), (1, False), (2, False), (1, True), (2, True)]:
       print("\ntest can", bus)
       # flush
       cans_echo = panda0.can_recv()
       cans_loop = panda1.can_recv()
 
-      panda0.set_gmlan(None)
-      panda1.set_gmlan(None)
+      panda0.set_obd(None)
+      panda1.set_obd(None)
 
-      if gmlan is True:
-        panda0.set_gmlan(bus)
-        panda1.set_gmlan(bus)
+      if obd is True:
+        panda0.set_obd(bus)
+        panda1.set_obd(bus)
         bus = 3
 
       # send the characters
