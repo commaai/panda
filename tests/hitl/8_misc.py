@@ -1,3 +1,5 @@
+import time
+
 from panda import Panda
 
 def test_boot_time(p):
