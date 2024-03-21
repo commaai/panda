@@ -319,7 +319,7 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
       with self.dev.acquire() as spi:
         spi.xfer([self.SYNC, ])
         try:
-          self._get_ack(spi, 0.001)
+          self._get_ack(spi, 0.1)
         except (PandaSpiNackResponse, PandaSpiMissingAck):
           # NACK ok here, will only ACK the first time
           pass
