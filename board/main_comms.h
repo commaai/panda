@@ -21,7 +21,6 @@ int get_health_pkt(void *dat) {
   health->safety_rx_invalid_pkt = safety_rx_invalid;
   health->tx_buffer_overflow_pkt = tx_buffer_overflow;
   health->rx_buffer_overflow_pkt = rx_buffer_overflow;
-  health->gmlan_send_errs_pkt = gmlan_send_errs;
   health->car_harness_status_pkt = harness.status;
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
   health->safety_param_pkt = current_safety_param;
@@ -211,9 +210,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xd8:
       NVIC_SystemReset();
       break;
-    // **** 0xdb: set GMLAN (white/grey) or OBD CAN (black) multiplexing mode
+    // **** 0xdb: set OBD CAN multiplexing mode
     case 0xdb:
-      if(current_board->has_obd){
+      if (current_board->has_obd) {
         if (req->param1 == 1U) {
           // Enable OBD CAN
           current_board->set_can_mode(CAN_MODE_OBD_CAN2);

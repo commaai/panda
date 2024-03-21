@@ -148,9 +148,6 @@ class Panda:
   SERIAL_LIN2 = 3
   SERIAL_SOM_DEBUG = 4
 
-  GMLAN_CAN2 = 1
-  GMLAN_CAN3 = 2
-
   USB_PIDS = (0xddee, 0xddcc)
   REQUEST_IN = usb1.ENDPOINT_IN | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
   REQUEST_OUT = usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
@@ -168,9 +165,9 @@ class Panda:
   HW_TYPE_CUATRO = b'\x0a'
 
   CAN_PACKET_VERSION = 4
-  HEALTH_PACKET_VERSION = 15
+  HEALTH_PACKET_VERSION = 16
   CAN_HEALTH_PACKET_VERSION = 5
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIIBBBBBHBBBHfBBHBHHB")
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBHBBBHfBBHBHHB")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
 
   F4_DEVICES = [HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS]
@@ -593,26 +590,25 @@ class Panda:
       "safety_rx_invalid": a[4],
       "tx_buffer_overflow": a[5],
       "rx_buffer_overflow": a[6],
-      "gmlan_send_errs": a[7],
-      "faults": a[8],
-      "ignition_line": a[9],
-      "ignition_can": a[10],
-      "controls_allowed": a[11],
-      "car_harness_status": a[12],
-      "safety_mode": a[13],
-      "safety_param": a[14],
-      "fault_status": a[15],
-      "power_save_enabled": a[16],
-      "heartbeat_lost": a[17],
-      "alternative_experience": a[18],
-      "interrupt_load": a[19],
-      "fan_power": a[20],
-      "safety_rx_checks_invalid": a[21],
-      "spi_checksum_error_count": a[22],
-      "fan_stall_count": a[23],
-      "sbu1_voltage_mV": a[24],
-      "sbu2_voltage_mV": a[25],
-      "som_reset_triggered": a[26],
+      "faults": a[7],
+      "ignition_line": a[8],
+      "ignition_can": a[9],
+      "controls_allowed": a[10],
+      "car_harness_status": a[11],
+      "safety_mode": a[12],
+      "safety_param": a[13],
+      "fault_status": a[14],
+      "power_save_enabled": a[15],
+      "heartbeat_lost": a[16],
+      "alternative_experience": a[17],
+      "interrupt_load": a[18],
+      "fan_power": a[19],
+      "safety_rx_checks_invalid": a[20],
+      "spi_checksum_error_count": a[21],
+      "fan_stall_count": a[22],
+      "sbu1_voltage_mV": a[23],
+      "sbu2_voltage_mV": a[24],
+      "som_reset_triggered": a[25],
     }
 
   @ensure_can_health_packet_version
@@ -755,15 +751,7 @@ class Panda:
   def set_safety_mode(self, mode=SAFETY_SILENT, param=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
 
-  def set_gmlan(self, bus=2):
-    # TODO: check panda type
-    if bus is None:
-      self._handle.controlWrite(Panda.REQUEST_OUT, 0xdb, 0, 0, b'')
-    elif bus in (Panda.GMLAN_CAN2, Panda.GMLAN_CAN3):
-      self._handle.controlWrite(Panda.REQUEST_OUT, 0xdb, 1, bus, b'')
-
   def set_obd(self, obd):
-    # TODO: check panda type
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdb, int(obd), 0, b'')
 
   def set_can_loopback(self, enable):
