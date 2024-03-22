@@ -423,6 +423,7 @@ class Panda:
   def reset(self, enter_bootstub=False, enter_bootloader=False, reconnect=True):
     # no response is expected since it resets right away
     timeout = 5000 if isinstance(self._handle, PandaSpiHandle) else 15000
+    self.close()
     try:
       if enter_bootloader:
         self._handle.controlWrite(Panda.REQUEST_IN, 0xd1, 0, 0, b'', timeout=timeout, expect_disconnect=True)
