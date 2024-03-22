@@ -374,10 +374,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         UNUSED(ret);
       }
       break;
-    // **** 0xfb: allow highest power saving mode (stop) to be entered
-    case 0xfb:
-      deepsleep_allowed = true;
-      break;
     // **** 0xfc: set CAN FD non-ISO mode
     case 0xfc:
       if ((req->param1 < PANDA_CAN_CNT) && current_board->has_canfd) {
