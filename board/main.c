@@ -146,6 +146,8 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 uint8_t loop_counter = 0U;
 void tick_handler(void) {
   if (TICK_TIMER->SR != 0) {
+    uint8_t prev_harness_status = harness.status;
+
     // siren
     current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
 
@@ -154,6 +156,20 @@ void tick_handler(void) {
     usb_tick();
     harness_tick();
     simple_watchdog_kick();
+
+    // re-init everything that uses harness status
+    if (harness.status != prev_harness_status) {
+      if (harness.status == HARNESS_STATUS_NORMAL) {
+        can_flip_buses(0, 2);
+      } else if (harness.status == HARNESS_STATUS_FLIPPED) {
+        can_flip_buses(0, 2);
+      }
+
+      // re-init everything that uses harness status
+      can_init_all();
+      set_safety_mode(current_safety_mode, current_safety_param);
+      set_power_save_state(power_save_status);
+    }
 
     // decimated to 1Hz
     if (loop_counter == 0U) {
