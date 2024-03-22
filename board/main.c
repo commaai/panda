@@ -33,7 +33,6 @@
 
 bool check_started(void) {
   bool started = current_board->check_ignition() || ignition_can;
-  ignition_seen |= started;
   return started;
 }
 
@@ -292,20 +291,6 @@ void tick_handler(void) {
   TICK_TIMER->SR = 0;
 }
 
-void EXTI_IRQ_Handler(void) {
-  if (check_exti_irq()) {
-    exti_irq_clear();
-    clock_init();
-
-    set_power_save_state(POWER_SAVE_STATUS_DISABLED);
-    deepsleep_allowed = false;
-    heartbeat_counter = 0U;
-    usb_soft_disconnect(false);
-
-    NVIC_EnableIRQ(TICK_TIMER_IRQ);
-  }
-}
-
 int main(void) {
   // Init interrupt table
   init_interrupts(true);
@@ -407,18 +392,6 @@ int main(void) {
         }
       #endif
     } else {
-      if (deepsleep_allowed && !usb_enumerated && !check_started() && ignition_seen && (heartbeat_counter > 20U)) {
-        usb_soft_disconnect(true);
-        fan_set_power(0U);
-        NVIC_DisableIRQ(TICK_TIMER_IRQ);
-        delay(512000U);
-
-        // Init IRQs for CAN transceiver and ignition line
-        exti_irq_init();
-
-        // STOP mode
-        SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
-      }
       __WFI();
       SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
     }
