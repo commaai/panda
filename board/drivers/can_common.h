@@ -175,15 +175,13 @@ bus_config_t bus_config[] = {
 #define CAN_NUM_FROM_BUS_NUM(num) (bus_config[num].can_num_lookup)
 
 void can_init_all(void) {
-  bool ret = true;
   for (uint8_t i=0U; i < PANDA_CAN_CNT; i++) {
     if (!current_board->has_canfd) {
       bus_config[i].can_data_speed = 0U;
     }
     can_clear(can_queues[i]);
-    ret &= can_init(i);
+    (void)can_init(i);
   }
-  UNUSED(ret);
 }
 
 void can_set_orientation(bool flipped) {

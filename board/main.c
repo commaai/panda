@@ -144,9 +144,9 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 
 // called at 8Hz
 uint8_t loop_counter = 0U;
+uint8_t prev_harness_status = HARNESS_STATUS_NC;
 void tick_handler(void) {
   if (TICK_TIMER->SR != 0) {
-    uint8_t prev_harness_status = harness.status;
 
     // siren
     current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
@@ -159,6 +159,7 @@ void tick_handler(void) {
 
     // re-init everything that uses harness status
     if (harness.status != prev_harness_status) {
+      prev_harness_status = harness.status;
       can_set_orientation(harness.status == HARNESS_STATUS_FLIPPED);
 
       // re-init everything that uses harness status
