@@ -62,7 +62,7 @@ RxCheck tesla_raven_rx_checks[] = {
 RxCheck tesla_model3_rx_checks[] = {
   {.msg = {{0x2b9, 2, 8, .frequency = 25U}, { 0 }, { 0 }}},   // DAS_control
   {.msg = {{0x155, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},   // ESP_wheelRotation (speed in kph)
-  {.msg = {{0x129, 1, 8, .frequency = 100U}, { 0 }, { 0 }}},  // SCCM_steeringAngleSensor (steering angle)
+  {.msg = {{0x370, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},  // EPAS3S_internalSAS (steering angle)
   {.msg = {{0x118, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},  // DI_systemStatus (gas pedal)
   {.msg = {{0x39d, 0, 5, .frequency = 25U}, { 0 }, { 0 }}},   // IBST_status (brakes)
   {.msg = {{0x286, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},   // DI_state (acc state)
@@ -90,7 +90,7 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   if (!tesla_powertrain) {
-    if((!tesla_raven && (addr == 0x370) && (bus == 0)) || (tesla_raven && (addr == 0x131) && (bus == 2)) || (tesla_model3 && (addr == 0x129) && (bus == 1))) {
+    if((!tesla_raven && (addr == 0x370) && (bus == 0)) || (tesla_model3 && (addr == 0x370) && (bus == 0)) || (tesla_raven && (addr == 0x131) && (bus == 2))) {
       // Steering angle: (0.1 * val) - 819.2 in deg.
       // Store it 1/10 deg to match steering request
       int angle_meas_new = (((GET_BYTE(to_push, 4) & 0x3FU) << 8) | GET_BYTE(to_push, 5)) - 8192U;
