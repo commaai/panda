@@ -159,11 +159,7 @@ void tick_handler(void) {
 
     // re-init everything that uses harness status
     if (harness.status != prev_harness_status) {
-      if (harness.status == HARNESS_STATUS_NORMAL) {
-        can_flip_buses(0, 2);
-      } else if (harness.status == HARNESS_STATUS_FLIPPED) {
-        can_flip_buses(0, 2);
-      }
+      can_set_orientation(harness.status == HARNESS_STATUS_FLIPPED);
 
       // re-init everything that uses harness status
       can_init_all();
