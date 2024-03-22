@@ -2,7 +2,6 @@ import time
 import pytest
 
 from panda import Panda
-from panda import PandaJungle
 from panda.tests.hitl.conftest import PandaGroup
 
 
