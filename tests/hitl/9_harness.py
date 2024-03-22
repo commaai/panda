@@ -6,17 +6,6 @@ from panda import PandaJungle
 from panda.tests.hitl.conftest import PandaGroup
 
 
-def test_ignition(p, panda_jungle):
-  # Set harness orientation to #2, since the ignition line is on the wrong SBU bus :/
-  panda_jungle.set_harness_orientation(PandaJungle.HARNESS_ORIENTATION_2)
-  p.reset()
-
-  for ign in (True, False):
-    panda_jungle.set_ignition(ign)
-    time.sleep(0.1)
-    assert p.health()['ignition_line'] == ign
-
-
 @pytest.mark.parametrize("ignition", [True, False])
 @pytest.mark.parametrize("orientation", [Panda.HARNESS_STATUS_NC, Panda.HARNESS_STATUS_NORMAL, Panda.HARNESS_STATUS_FLIPPED])
 @pytest.mark.test_panda_types(PandaGroup.GEN2)
