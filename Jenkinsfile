@@ -82,7 +82,7 @@ pipeline {
               ["build", "scons -j4"],
               ["flash", "cd tests/ && ./reflash_internal_panda.py"],
               ["flash jungle", "cd board/jungle && ./flash.py"],
-              ["test", "cd tests/hitl && HW_TYPES=6 pytest -n0 --durations=0 [2-7]*.py -k 'not test_send_recv'"],
+              ["test", "cd tests/hitl && HW_TYPES=6 pytest -n0 --durations=0 [2-9]*.py -k 'not test_send_recv'"],
             ])
           }
         }

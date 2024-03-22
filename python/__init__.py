@@ -433,6 +433,8 @@ class Panda:
           self._handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'', timeout=timeout, expect_disconnect=True)
     except Exception:
       pass
+
+    self.close()
     if not enter_bootloader and reconnect:
       self.reconnect()
 
