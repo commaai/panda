@@ -108,6 +108,18 @@ class TestTeslaSteeringSafety(TestTeslaSafety, common.AngleSteeringSafetyTest):
         self.assertEqual(tx, should_tx)
 
 
+
+class TestTeslaModel3SteeringSafety(TestTeslaSteeringSafety):
+  def setUp(self):
+    self.packer = CANPackerPanda("tesla_model3_ch")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_RAVEN)
+    self.safety.init_tests()
+
+  def _angle_meas_msg(self, angle: float):
+    values = {"EPAS3P_internalSAS": angle}
+    return self.packer.make_can_msg_panda("EPAS3P_sysStatus", 2, values)
+
 class TestTeslaRavenSteeringSafety(TestTeslaSteeringSafety):
   def setUp(self):
     self.packer = CANPackerPanda("tesla_can")
