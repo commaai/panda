@@ -5,6 +5,7 @@ import itertools
 from panda import Panda
 from panda.tests.hitl.conftest import PandaGroup
 
+# TODO: test relay
 
 @pytest.mark.panda_expect_can_error
 @pytest.mark.test_panda_types(PandaGroup.GEN2)
@@ -43,7 +44,6 @@ def test_harness_status(p, panda_jungle):
     # Line ignition
     assert health['ignition_line'] == (False if orientation == Panda.HARNESS_STATUS_NC else ignition)
 
-    # TODO: also test relay
     # CAN traffic
     if orientation != Panda.HARNESS_STATUS_NC:
       for bus in range(3):
@@ -52,14 +52,12 @@ def test_harness_status(p, panda_jungle):
 
       msgs = p.can_recv()
       buses = {int(dat): bus for _, _, dat, bus in msgs if bus <= 3}
-
       print(msgs)
-      print(buses)
 
-      # FIXME: CAN orientation doesn't update live in panda
       # jungle doesn't actually switch buses when switching orientation
-      assert buses[0] == 0
-      assert buses[2] == 2
+      flipped = orientation == Panda.HARNESS_STATUS_FLIPPED
+      assert buses[0] == (2 if flipped else 0)
+      assert buses[2] == (0 if flipped else 2)
 
     # SBU voltages
     supply_voltage_mV = 1800 if p.get_type() in [Panda.HW_TYPE_TRES, ] else 3300

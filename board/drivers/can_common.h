@@ -153,7 +153,7 @@ void can_clear(can_ring *q) {
 }
 
 // assign CAN numbering
-// bus num: Can bus number on ODB connector. Sent to/from USB
+// bus num: CAN Bus numbers in panda, sent to/from USB
 //    Min: 0; Max: 127; Bit 7 marks message as receipt (bus 129 is receipt for but 1)
 // cans: Look up MCU can interface from bus number
 // can number: numeric lookup for MCU CAN interfaces (0 = CAN1, 1 = CAN2, etc);
@@ -175,22 +175,20 @@ bus_config_t bus_config[] = {
 #define CAN_NUM_FROM_BUS_NUM(num) (bus_config[num].can_num_lookup)
 
 void can_init_all(void) {
-  bool ret = true;
   for (uint8_t i=0U; i < PANDA_CAN_CNT; i++) {
     if (!current_board->has_canfd) {
       bus_config[i].can_data_speed = 0U;
     }
     can_clear(can_queues[i]);
-    ret &= can_init(i);
+    (void)can_init(i);
   }
-  UNUSED(ret);
 }
 
-void can_flip_buses(uint8_t bus1, uint8_t bus2){
-  bus_config[bus1].bus_lookup = bus2;
-  bus_config[bus2].bus_lookup = bus1;
-  bus_config[bus1].can_num_lookup = bus2;
-  bus_config[bus2].can_num_lookup = bus1;
+void can_set_orientation(bool flipped) {
+  bus_config[0].bus_lookup = flipped ? 2U : 0U;
+  bus_config[0].can_num_lookup = flipped ? 2U : 0U;
+  bus_config[2].bus_lookup = flipped ? 0U : 2U;
+  bus_config[2].can_num_lookup = flipped ? 0U : 2U;
 }
 
 void can_set_forwarding(uint8_t from, uint8_t to) {

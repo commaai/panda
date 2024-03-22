@@ -133,11 +133,6 @@ void black_init(void) {
 
   // Set normal CAN mode
   black_set_can_mode(CAN_MODE_NORMAL);
-
-  // change CAN mapping when flipped
-  if (harness.status == HARNESS_STATUS_FLIPPED) {
-    can_flip_buses(0, 2);
-  }
 }
 
 void black_init_bootloader(void) {
