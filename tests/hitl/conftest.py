@@ -133,7 +133,8 @@ def func_fixture_panda(request, module_panda):
     if _all_pandas[p.get_usb_serial()] in skip_types:
       pytest.skip(f"Not applicable to {skip_types}")
 
-  # TODO: reset is slow (2+ seconds)
+  # this is 2+ seconds on USB pandas due to slow
+  # enumeration on the host side
   p.reset()
 
   # ensure FW hasn't changed
