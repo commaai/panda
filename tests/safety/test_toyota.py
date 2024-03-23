@@ -14,7 +14,6 @@ TOYOTA_COMMON_LONG_TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0
                               [0x128, 1], [0x141, 1], [0x160, 1], [0x161, 1], [0x470, 1],  # DSU bus 1
                               [0x411, 0],  # PCS_HUD
                               [0x750, 0]]  # radar diagnostic address
-GAS_INTERCEPTOR_TX_MSGS = [[0x200, 0]]
 
 
 class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSafetyTest):
@@ -127,32 +126,6 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
       self.assertFalse(self.safety.get_controls_allowed())
 
 
-class TestToyotaSafetyGasInterceptorBase(common.GasInterceptorSafetyTest, TestToyotaSafetyBase):
-
-  TX_MSGS = TOYOTA_COMMON_TX_MSGS + TOYOTA_COMMON_LONG_TX_MSGS + GAS_INTERCEPTOR_TX_MSGS
-  INTERCEPTOR_THRESHOLD = 805
-
-  def setUp(self):
-    super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.safety.get_current_safety_param() |
-                                 Panda.FLAG_TOYOTA_GAS_INTERCEPTOR)
-    self.safety.init_tests()
-
-  def test_stock_longitudinal(self):
-    # If stock longitudinal is set, the gas interceptor safety param should not be respected
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.safety.get_current_safety_param() |
-                                 Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL)
-    self.safety.init_tests()
-
-    # Spot check a few gas interceptor tests: (1) reading interceptor,
-    # (2) behavior around interceptor, and (3) txing interceptor msgs
-    for test in (self.test_prev_gas_interceptor, self.test_disengage_on_gas_interceptor,
-                 self.test_gas_interceptor_safety_check):
-      with self.subTest(test=test.__name__):
-        with self.assertRaises(AssertionError):
-          test()
-
-
 class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSafetyTest, common.SteerRequestCutSafetyTest):
 
   MAX_RATE_UP = 15
@@ -173,10 +146,6 @@ class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSaf
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE)
     self.safety.init_tests()
-
-
-class TestToyotaSafetyTorqueGasInterceptor(TestToyotaSafetyGasInterceptorBase, TestToyotaSafetyTorque):
-  pass
 
 
 class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest):
@@ -292,10 +261,6 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
         self.assertEqual(self.safety.get_angle_meas_max(), 0)
 
 
-class TestToyotaSafetyAngleGasInterceptor(TestToyotaSafetyGasInterceptorBase, TestToyotaSafetyAngle):
-  pass
-
-
 class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
 
   def setUp(self):
@@ -311,10 +276,6 @@ class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
   # No LTA message in the DBC
   def test_lta_steer_cmd(self):
     pass
-
-
-class TestToyotaAltBrakeSafetyGasInterceptor(TestToyotaSafetyGasInterceptorBase, TestToyotaAltBrakeSafety):
-  pass
 
 
 class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):

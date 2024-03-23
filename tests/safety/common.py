@@ -3,7 +3,7 @@ import abc
 import unittest
 import importlib
 import numpy as np
-from typing import Callable, Dict, List, Optional, Tuple
+from collections.abc import Callable
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
 from panda import ALTERNATIVE_EXPERIENCE
@@ -77,7 +77,7 @@ class PandaSafetyTestBase(unittest.TestCase):
 
   def _generic_limit_safety_check(self, msg_function: MessageFunction, min_allowed_value: float, max_allowed_value: float,
                                   min_possible_value: float, max_possible_value: float, test_delta: float = 1, inactive_value: float = 0,
-                                  msg_allowed = True, additional_setup: Optional[Callable[[float], None]] = None):
+                                  msg_allowed = True, additional_setup: Callable[[float], None] | None = None):
     """
       Enforces that a signal within a message is only allowed to be sent within a specific range, min_allowed_value -> max_allowed_value.
       Tests the range of min_possible_value -> max_possible_value with a delta of test_delta.
@@ -116,91 +116,6 @@ class PandaSafetyTestBase(unittest.TestCase):
       self._reset_safety_hooks()
       self.assertEqual(meas_min_func(), 0)
       self.assertEqual(meas_max_func(), 0)
-
-
-class GasInterceptorSafetyTest(PandaSafetyTestBase):
-
-  INTERCEPTOR_THRESHOLD = 0
-
-  cnt_gas_cmd = 0
-  cnt_user_gas = 0
-
-  packer: CANPackerPanda
-
-  @classmethod
-  def setUpClass(cls):
-    if cls.__name__ == "GasInterceptorSafetyTest" or cls.__name__.endswith("Base"):
-      cls.safety = None
-      raise unittest.SkipTest
-
-  def _interceptor_gas_cmd(self, gas: int):
-    values: dict[str, float | int] = {"COUNTER_PEDAL": self.__class__.cnt_gas_cmd & 0xF}
-    if gas > 0:
-      values["GAS_COMMAND"] = gas * 255.
-      values["GAS_COMMAND2"] = gas * 255.
-    self.__class__.cnt_gas_cmd += 1
-    return self.packer.make_can_msg_panda("GAS_COMMAND", 0, values)
-
-  def _interceptor_user_gas(self, gas: int):
-    values = {"INTERCEPTOR_GAS": gas, "INTERCEPTOR_GAS2": gas,
-              "COUNTER_PEDAL": self.__class__.cnt_user_gas}
-    self.__class__.cnt_user_gas += 1
-    return self.packer.make_can_msg_panda("GAS_SENSOR", 0, values)
-
-  # Skip non-interceptor user gas tests
-  def test_prev_gas(self):
-    pass
-
-  def test_disengage_on_gas(self):
-    pass
-
-  def test_alternative_experience_no_disengage_on_gas(self):
-    pass
-
-  def test_prev_gas_interceptor(self):
-    self._rx(self._interceptor_user_gas(0x0))
-    self.assertFalse(self.safety.get_gas_interceptor_prev())
-    self._rx(self._interceptor_user_gas(0x1000))
-    self.assertTrue(self.safety.get_gas_interceptor_prev())
-    self._rx(self._interceptor_user_gas(0x0))
-
-  def test_disengage_on_gas_interceptor(self):
-    for g in range(0x1000):
-      self._rx(self._interceptor_user_gas(0))
-      self.safety.set_controls_allowed(True)
-      self._rx(self._interceptor_user_gas(g))
-      remain_enabled = g <= self.INTERCEPTOR_THRESHOLD
-      self.assertEqual(remain_enabled, self.safety.get_controls_allowed())
-      self._rx(self._interceptor_user_gas(0))
-
-  def test_alternative_experience_no_disengage_on_gas_interceptor(self):
-    self.safety.set_controls_allowed(True)
-    self.safety.set_alternative_experience(ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS)
-    for g in range(0x1000):
-      self._rx(self._interceptor_user_gas(g))
-      # Test we allow lateral, but not longitudinal
-      self.assertTrue(self.safety.get_controls_allowed())
-      self.assertEqual(g <= self.INTERCEPTOR_THRESHOLD, self.safety.get_longitudinal_allowed())
-      # Make sure we can re-gain longitudinal actuation
-      self._rx(self._interceptor_user_gas(0))
-      self.assertTrue(self.safety.get_longitudinal_allowed())
-
-  def test_allow_engage_with_gas_interceptor_pressed(self):
-    self._rx(self._interceptor_user_gas(0x1000))
-    self.safety.set_controls_allowed(1)
-    self._rx(self._interceptor_user_gas(0x1000))
-    self.assertTrue(self.safety.get_controls_allowed())
-    self._rx(self._interceptor_user_gas(0))
-
-  def test_gas_interceptor_safety_check(self):
-    for gas in np.arange(0, 4000, 100):
-      for controls_allowed in [True, False]:
-        self.safety.set_controls_allowed(controls_allowed)
-        if controls_allowed:
-          send = True
-        else:
-          send = gas == 0
-        self.assertEqual(send, self._tx(self._interceptor_gas_cmd(gas)))
 
 
 class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
@@ -245,13 +160,13 @@ class LongitudinalAccelSafetyTest(PandaSafetyTestBase, abc.ABC):
 class LongitudinalGasBrakeSafetyTest(PandaSafetyTestBase, abc.ABC):
 
   MIN_BRAKE: int = 0
-  MAX_BRAKE: Optional[int] = None
-  MAX_POSSIBLE_BRAKE: Optional[int] = None
+  MAX_BRAKE: int | None = None
+  MAX_POSSIBLE_BRAKE: int | None = None
 
   MIN_GAS: int = 0
-  MAX_GAS: Optional[int] = None
+  MAX_GAS: int | None = None
   INACTIVE_GAS = 0
-  MAX_POSSIBLE_GAS: Optional[int] = None
+  MAX_POSSIBLE_GAS: int | None = None
 
   def test_gas_brake_limits_correct(self):
     self.assertIsNotNone(self.MAX_POSSIBLE_BRAKE)
@@ -665,9 +580,9 @@ class MotorTorqueSteeringSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
 class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
   DEG_TO_CAN: float
-  ANGLE_RATE_BP: List[float]
-  ANGLE_RATE_UP: List[float]  # windup limit
-  ANGLE_RATE_DOWN: List[float]  # unwind limit
+  ANGLE_RATE_BP: list[float]
+  ANGLE_RATE_UP: list[float]  # windup limit
+  ANGLE_RATE_DOWN: list[float]  # unwind limit
 
   @classmethod
   def setUpClass(cls):
@@ -771,14 +686,13 @@ class AngleSteeringSafetyTest(PandaSafetyTestBase):
 
 
 class PandaSafetyTest(PandaSafetyTestBase):
-  TX_MSGS: Optional[List[List[int]]] = None
+  TX_MSGS: list[list[int]] | None = None
   SCANNED_ADDRS = [*range(0x800),                      # Entire 11-bit CAN address space
                    *range(0x18DA00F1, 0x18DB00F1, 0x100),   # 29-bit UDS physical addressing
                    *range(0x18DB00F1, 0x18DC00F1, 0x100),   # 29-bit UDS functional addressing
-                   *range(0x3300, 0x3400),                  # Honda
-                   0x10400060, 0x104c006c]                  # GMLAN (exceptions, range/format unclear)
-  FWD_BLACKLISTED_ADDRS: Dict[int, List[int]] = {}  # {bus: [addr]}
-  FWD_BUS_LOOKUP: Dict[int, int] = {}
+                   *range(0x3300, 0x3400)]                  # Honda
+  FWD_BLACKLISTED_ADDRS: dict[int, list[int]] = {}  # {bus: [addr]}
+  FWD_BUS_LOOKUP: dict[int, int] = {}
 
   @classmethod
   def setUpClass(cls):
@@ -895,9 +809,9 @@ class PandaSafetyTest(PandaSafetyTestBase):
 
 @add_regen_tests
 class PandaCarSafetyTest(PandaSafetyTest):
-  STANDSTILL_THRESHOLD: Optional[float] = None
+  STANDSTILL_THRESHOLD: float | None = None
   GAS_PRESSED_THRESHOLD = 0
-  RELAY_MALFUNCTION_ADDRS: Optional[Dict[int, Tuple[int, ...]]] = None
+  RELAY_MALFUNCTION_ADDRS: dict[int, tuple[int, ...]] | None = None
 
   @classmethod
   def setUpClass(cls):

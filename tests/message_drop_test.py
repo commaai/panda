@@ -5,7 +5,7 @@ import time
 import struct
 import itertools
 import threading
-from typing import Any, Union, List
+from typing import Any
 
 from panda import Panda
 
@@ -16,7 +16,7 @@ if JUNGLE:
 # Generate unique messages
 NUM_MESSAGES_PER_BUS = 10000
 messages = [bytes(struct.pack("Q", i)) for i in range(NUM_MESSAGES_PER_BUS)]
-tx_messages = list(itertools.chain.from_iterable(([[0xaa, None, msg, 0], [0xaa, None, msg, 1], [0xaa, None, msg, 2]] for msg in messages)))
+tx_messages = list(itertools.chain.from_iterable([[0xaa, None, msg, 0], [0xaa, None, msg, 1], [0xaa, None, msg, 2]] for msg in messages))
 
 def flood_tx(panda):
   print('Sending!')
@@ -35,7 +35,7 @@ def flood_tx(panda):
 
 if __name__ == "__main__":
   serials = Panda.list()
-  receiver: Union[Panda, PandaJungle]
+  receiver: Panda | PandaJungle
   if JUNGLE:
     sender = Panda()
     receiver = PandaJungle()
@@ -52,7 +52,7 @@ if __name__ == "__main__":
   threading.Thread(target=flood_tx, args=(sender,)).start()
 
   # Receive as much as we can, and stop when there hasn't been anything for a second
-  rx: List[Any] = []
+  rx: list[Any] = []
   old_len = 0
   last_change = time.monotonic()
   while time.monotonic() - last_change < 1:

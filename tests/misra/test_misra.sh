@@ -35,6 +35,7 @@ cppcheck() {
           -I $gcc_inc "$(arm-none-eabi-gcc -print-file-name=include)" \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
           --suppress=*:*include/* --error-exitcode=2 --check-level=exhaustive \
+          --platform=arm32-wchar_t2 \
           "$@" |& tee $OUTPUT
 
   # cppcheck bug: some MISRA errors won't result in the error exit code,

@@ -1,6 +1,6 @@
 #pragma once
 
-#define GET_BIT(msg, b) (((msg)->data[((b) / 8U)] >> ((b) % 8U)) & 0x1U)
+#define GET_BIT(msg, b) ((bool)!!(((msg)->data[((b) / 8U)] >> ((b) % 8U)) & 0x1U))
 #define GET_BYTE(msg, b) ((msg)->data[(b)])
 #define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask))
 
@@ -15,7 +15,7 @@
 uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
   uint32_t ret = 0U;
   for (int i = 0; i < len; i++) {
-    const uint8_t shift = i * 8;
+    const uint32_t shift = i * 8;
     ret |= (((uint32_t)msg->data[start + i]) << shift);
   }
   return ret;
@@ -203,7 +203,6 @@ bool longitudinal_speed_checks(int desired_speed, const LongitudinalLimits limit
 bool longitudinal_gas_checks(int desired_gas, const LongitudinalLimits limits);
 bool longitudinal_transmission_rpm_checks(int desired_transmission_rpm, const LongitudinalLimits limits);
 bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limits);
-bool longitudinal_interceptor_checks(const CANPacket_t *to_send);
 void pcm_cruise_check(bool cruise_engaged);
 
 void safety_tick(const safety_config *safety_config);
@@ -211,8 +210,6 @@ void safety_tick(const safety_config *safety_config);
 // This can be set by the safety hooks
 bool controls_allowed = false;
 bool relay_malfunction = false;
-bool enable_gas_interceptor = false;
-int gas_interceptor_prev = 0;
 bool gas_pressed = false;
 bool gas_pressed_prev = false;
 bool brake_pressed = false;

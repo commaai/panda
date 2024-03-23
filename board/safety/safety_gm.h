@@ -29,8 +29,7 @@ const int GM_STANDSTILL_THRSLD = 10;  // 0.311kph
 
 const CanMsg GM_ASCM_TX_MSGS[] = {{0x180, 0, 4}, {0x409, 0, 7}, {0x40A, 0, 7}, {0x2CB, 0, 8}, {0x370, 0, 6},  // pt bus
                                   {0xA1, 1, 7}, {0x306, 1, 8}, {0x308, 1, 7}, {0x310, 1, 2},   // obs bus
-                                  {0x315, 2, 5},  // ch bus
-                                  {0x104c006c, 3, 3}, {0x10400060, 3, 5}};  // gmlan
+                                  {0x315, 2, 5}};  // ch bus
 
 const CanMsg GM_CAM_TX_MSGS[] = {{0x180, 0, 4},  // pt bus
                                  {0x1E1, 2, 7}, {0x184, 2, 8}};  // camera bus
@@ -108,7 +107,7 @@ static void gm_rx_hook(const CANPacket_t *to_push) {
     }
 
     if ((addr == 0xC9) && (gm_hw == GM_CAM)) {
-      brake_pressed = GET_BIT(to_push, 40U) != 0U;
+      brake_pressed = GET_BIT(to_push, 40U);
     }
 
     if (addr == 0x1C4) {
@@ -153,7 +152,7 @@ static bool gm_tx_hook(const CANPacket_t *to_send) {
     int desired_torque = ((GET_BYTE(to_send, 0) & 0x7U) << 8) + GET_BYTE(to_send, 1);
     desired_torque = to_signed(desired_torque, 11);
 
-    bool steer_req = (GET_BIT(to_send, 3U) != 0U);
+    bool steer_req = GET_BIT(to_send, 3U);
 
     if (steer_torque_cmd_checks(desired_torque, steer_req, GM_STEERING_LIMITS)) {
       tx = false;
@@ -162,7 +161,7 @@ static bool gm_tx_hook(const CANPacket_t *to_send) {
 
   // GAS/REGEN: safety check
   if (addr == 0x2CB) {
-    bool apply = GET_BIT(to_send, 0U) != 0U;
+    bool apply = GET_BIT(to_send, 0U);
     int gas_regen = ((GET_BYTE(to_send, 2) & 0x7FU) << 5) + ((GET_BYTE(to_send, 3) & 0xF8U) >> 3);
 
     bool violation = false;
@@ -204,7 +203,7 @@ static int gm_fwd_hook(int bus_num, int addr) {
       // block lkas message and acc messages if gm_cam_long, forward all others
       bool is_lkas_msg = (addr == 0x180);
       bool is_acc_msg = (addr == 0x315) || (addr == 0x2CB) || (addr == 0x370);
-      int block_msg = is_lkas_msg || (is_acc_msg && gm_cam_long);
+      bool block_msg = is_lkas_msg || (is_acc_msg && gm_cam_long);
       if (!block_msg) {
         bus_fwd = 0;
       }

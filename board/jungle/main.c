@@ -2,7 +2,6 @@
 #include "../config.h"
 
 #include "../safety.h"
-#include "../drivers/gmlan_alt.h"
 
 #include "../drivers/pwm.h"
 #include "../drivers/usb.h"
