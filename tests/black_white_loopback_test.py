@@ -82,7 +82,7 @@ def test_buses(black_panda, other_panda, direction, test_array, sleep_duration):
     print("\ntest can: ", send_bus, " OBD: ", obd)
 
     # set OBD on black panda
-    black_panda.set_gmlan(True if obd else None)
+    black_panda.set_obd(True if obd else None)
 
     # clear and flush
     if direction:
