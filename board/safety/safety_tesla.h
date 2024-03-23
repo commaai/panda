@@ -188,12 +188,7 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
   }
 
   // No button other than cancel can be sent by us
-  if (tesla_model3 && (addr == 0x229)){
-    int control_lever_status = ((GET_BYTE(to_send, 1) & 0x70U) >> 4);
-    if (control_lever_status != 1) {
-      violation = true;
-    }
-  }else if (!tesla_powertrain && (addr == 0x45)) {
+  if ((!tesla_powertrain && (addr == 0x45)) || (tesla_model3 && (addr == 0x238))) {
     int control_lever_status = (GET_BYTE(to_send, 0) & 0x3FU);
     if (control_lever_status != 1) {
       violation = true;
