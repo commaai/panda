@@ -49,7 +49,7 @@ void TIM8_UP_TIM13_IRQHandler(void) {handle_interrupt(TIM8_UP_TIM13_IRQn);}
 void TIM8_TRG_COM_TIM14_IRQHandler(void) {handle_interrupt(TIM8_TRG_COM_TIM14_IRQn);}
 void TIM8_CC_IRQHandler(void) {handle_interrupt(TIM8_CC_IRQn);}
 void DMA1_Stream7_IRQHandler(void) {handle_interrupt(DMA1_Stream7_IRQn);}
-void FSMC_IRQHandler(void) {handle_interrupt(FSMC_IRQn);}
+//void FSMC_IRQHandler(void) {handle_interrupt(FSMC_IRQn);}
 void SDIO_IRQHandler(void) {handle_interrupt(SDIO_IRQn);}
 void TIM5_IRQHandler(void) {handle_interrupt(TIM5_IRQn);}
 void SPI3_IRQHandler(void) {handle_interrupt(SPI3_IRQn);}
