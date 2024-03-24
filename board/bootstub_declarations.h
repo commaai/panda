@@ -15,4 +15,4 @@ void uart_init(uart_ring *q, int baud) { UNUSED(q); UNUSED(baud); }
 
 // ********************* Globals **********************
 uint8_t hw_type = 0;
-const board *current_board;
+board *current_board;

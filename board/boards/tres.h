@@ -70,7 +70,7 @@ void tres_init(void) {
   clock_source_init();
 }
 
-const board board_tres = {
+board board_tres = {
   .harness_config = &red_chiplet_harness_config,
   .has_obd = true,
   .has_spi = true,
