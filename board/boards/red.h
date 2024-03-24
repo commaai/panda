@@ -151,11 +151,6 @@ void red_init(void) {
 
   // Set normal CAN mode
   red_set_can_mode(CAN_MODE_NORMAL);
-
-  // change CAN mapping when flipped
-  if (harness.status == HARNESS_STATUS_FLIPPED) {
-    can_flip_buses(0, 2);
-  }
 }
 
 const harness_configuration red_harness_config = {
