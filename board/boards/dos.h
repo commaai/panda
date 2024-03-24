@@ -166,7 +166,7 @@ void dos_init(void) {
   clock_source_init();
 }
 
-const harness_configuration dos_harness_config = {
+harness_configuration dos_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOC,
@@ -180,7 +180,7 @@ const harness_configuration dos_harness_config = {
   .adc_channel_SBU2 = 13
 };
 
-const board board_dos = {
+board board_dos = {
   .harness_config = &dos_harness_config,
   .has_obd = true,
 #ifdef ENABLE_SPI

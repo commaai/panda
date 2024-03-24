@@ -177,7 +177,7 @@ void uno_init_bootloader(void) {
   set_gpio_output(GPIOC, 12, 0);
 }
 
-const harness_configuration uno_harness_config = {
+harness_configuration uno_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOC,
@@ -191,7 +191,7 @@ const harness_configuration uno_harness_config = {
   .adc_channel_SBU2 = 13
 };
 
-const board board_uno = {
+board board_uno = {
   .harness_config = &uno_harness_config,
   .has_obd = true,
   .has_spi = false,

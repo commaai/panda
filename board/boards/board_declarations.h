@@ -21,7 +21,7 @@ typedef void (*board_set_bootkick)(BootState state);
 typedef bool (*board_read_som_gpio)(void);
 
 struct board {
-  const harness_configuration *harness_config;
+  harness_configuration *harness_config;
   const bool has_obd;
   const bool has_spi;
   const bool has_canfd;
