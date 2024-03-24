@@ -33,7 +33,7 @@ void tres_init(void) {
   // Enable USB 3.3V LDO for USB block
   register_set_bits(&(PWR->CR3), PWR_CR3_USBREGEN);
   register_set_bits(&(PWR->CR3), PWR_CR3_USB33DEN);
-  while ((PWR->CR3 & PWR_CR3_USB33RDY) == 0);
+  while ((PWR->CR3 & PWR_CR3_USB33RDY) == 0U);
 
   red_chiplet_init();
 
