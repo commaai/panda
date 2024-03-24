@@ -198,7 +198,7 @@ void tick_handler(void) {
       bootkick_tick(check_started(), recent_heartbeat);
 
       // increase heartbeat counter and cap it at the uint32 limit
-      if (heartbeat_counter < __UINT32_MAX__) {
+      if (heartbeat_counter < UINT32_MAX) {
         heartbeat_counter += 1U;
       }
 
