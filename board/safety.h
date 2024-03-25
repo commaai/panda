@@ -388,9 +388,10 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
 // convert a trimmed integer to signed 32 bit int
 int to_signed(int d, int bits) {
   int d_signed = d;
-  int max_value = (1 << MAX((bits - 1), 0));
+  int max_value = (1U << MAX((bits - 1), 0));
   if (d >= max_value) {
-    d_signed = d - (1 << MAX(bits, 0));
+    int d_tmp = (1U << MAX(bits, 0));
+    d_signed = d - d_tmp;
   }
   return d_signed;
 }
@@ -428,16 +429,20 @@ bool max_limit_check(int val, const int MAX_VAL, const int MIN_VAL) {
 }
 
 // check that commanded torque value isn't too far from measured
-bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
+bool dist_to_meas_check(int val, int val_last, const struct sample_t *val_meas,
                         const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR) {
 
   // *** val rate limit check ***
-  int highest_allowed_rl = MAX(val_last, 0) + MAX_RATE_UP;
-  int lowest_allowed_rl = MIN(val_last, 0) - MAX_RATE_UP;
+  int tmp_highest_allowed_rl = MAX(val_last, 0);
+  int highest_allowed_rl = tmp_highest_allowed_rl + MAX_RATE_UP;
+  int tmp_lowest_allowed_rl = MIN(val_last, 0);
+  int lowest_allowed_rl = tmp_lowest_allowed_rl - MAX_RATE_UP;
 
   // if we've exceeded the meas val, we must start moving toward 0
-  int highest_allowed = MIN(highest_allowed_rl, MAX(val_last - MAX_RATE_DOWN, MAX(val_meas->max, 0) + MAX_ERROR));
-  int lowest_allowed = MAX(lowest_allowed_rl, MIN(val_last + MAX_RATE_DOWN, MIN(val_meas->min, 0) - MAX_ERROR));
+  int tmp_highest_allowed = MAX(val_meas->max, 0);
+  int highest_allowed = MIN(highest_allowed_rl, MAX(val_last - MAX_RATE_DOWN, tmp_highest_allowed + MAX_ERROR));
+  int tmp_lowest_allowed = MIN(val_meas->min, 0);
+  int lowest_allowed = MAX(lowest_allowed_rl, MIN(val_last + MAX_RATE_DOWN, tmp_lowest_allowed - MAX_ERROR));
 
   // check for violation
   return max_limit_check(val, highest_allowed, lowest_allowed);
@@ -449,8 +454,10 @@ bool driver_limit_check(int val, int val_last, const struct sample_t *val_driver
                         const int MAX_ALLOWANCE, const int DRIVER_FACTOR) {
 
   // torque delta/rate limits
-  int highest_allowed_rl = MAX(val_last, 0) + MAX_RATE_UP;
-  int lowest_allowed_rl = MIN(val_last, 0) - MAX_RATE_UP;
+  int tmp_highest_allowed_rl = MAX(val_last, 0);
+  int highest_allowed_rl = tmp_highest_allowed_rl + MAX_RATE_UP;
+  int tmp_lowest_allowed_rl = MIN(val_last, 0);
+  int lowest_allowed_rl = tmp_lowest_allowed_rl - MAX_RATE_UP;
 
   // driver
   int driver_max_limit = MAX_VAL + (MAX_ALLOWANCE + val_driver->max) * DRIVER_FACTOR;
@@ -471,8 +478,10 @@ bool driver_limit_check(int val, int val_last, const struct sample_t *val_driver
 bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
 
   // *** torque real time rate limit check ***
-  int highest_val = MAX(val_last, 0) + MAX_RT_DELTA;
-  int lowest_val = MIN(val_last, 0) - MAX_RT_DELTA;
+  int tmp_highest_val = MAX(val_last, 0);
+  int highest_val = tmp_highest_val + MAX_RT_DELTA;
+  int tmp_lowest_val = MIN(val_last, 0);
+  int lowest_val = tmp_lowest_val - MAX_RT_DELTA;
 
   // check for violation
   return max_limit_check(val, highest_val, lowest_val);

@@ -226,7 +226,8 @@ static void ford_rx_hook(const CANPacket_t *to_push) {
     if (addr == FORD_Yaw_Data_FD1) {
       // Signal: VehYaw_W_Actl
       float ford_yaw_rate = (((GET_BYTE(to_push, 2) << 8U) | GET_BYTE(to_push, 3)) * 0.0002) - 6.5;
-      float current_curvature = ford_yaw_rate / MAX(vehicle_speed.values[0] / VEHICLE_SPEED_FACTOR, 0.1);
+      float tmp_value = (((vehicle_speed.values[0] / VEHICLE_SPEED_FACTOR) > 0.1) ? (vehicle_speed.values[0] / VEHICLE_SPEED_FACTOR) : 0.1);
+      float current_curvature = ford_yaw_rate / tmp_value;
       // convert current curvature into units on CAN for comparison with desired curvature
       update_sample(&angle_meas, ROUND(current_curvature * FORD_STEERING_LIMITS.angle_deg_to_can));
     }
