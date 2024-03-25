@@ -86,7 +86,7 @@ def test_buses(black_panda, other_panda, test_obj):
   other_panda.send_heartbeat()
 
   # Set OBD on send panda
-  other_panda.set_gmlan(True if obd else None)
+  other_panda.set_obd(True if obd else None)
 
   # clear and flush
   other_panda.can_clear(send_bus)
