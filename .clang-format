@@ -1,0 +1,13 @@
+---
+# run this for all config options: clang-format -dump-config
+
+IndentWidth: 2
+UseTab: Never
+BraceWrapping:
+  AfterFunction: true
+ColumnLimit: 240
+#PointerAlignment: Left
+# Determines whether to place function parameters on a new line if they don't fit on a single line.
+#BinPackParameters: false
+# Sets the style for formatting switch statements.
+#IndentCaseLabels: true
