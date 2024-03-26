@@ -47,7 +47,6 @@ ObjCBlockIndentWidth: 2
 ObjCBreakBeforeNestedBlockParam: false
 ObjCSpaceBeforeProtocolList: false
 PackConstructorInitializers: Never
-\#PointerAlignment: Left
 ReflowComments:  false
 ShortNamespaceLines: 0
 SortIncludes:    Never
