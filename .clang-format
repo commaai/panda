@@ -1,12 +1,71 @@
 ---
-# run this for all config options: clang-format -dump-config
-
+Language:        Cpp
 IndentWidth: 2
 UseTab: Never
 BraceWrapping:
   AfterFunction: true
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
 ColumnLimit: 240
-#PointerAlignment: Left
+AccessModifierOffset: 0
+AlignAfterOpenBracket: false
+AlignArrayOfStructures: None
+AlignConsecutiveAssignments:
+  PadOperators:    false
+AlignEscapedNewlines: DontAlign
+AlignOperands:   DontAlign
+AlignTrailingComments:
+  Kind:            Leave
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortCompoundRequirementOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortLambdasOnASingleLine: None
+AlwaysBreakTemplateDeclarations: Leave
+BinPackArguments: false
+BinPackParameters: false
+BitFieldColonSpacing: None
+BreakAdjacentStringLiterals: false
+BreakArrays:     false
+BreakBeforeConceptDeclarations: Never
+BreakBeforeInlineASMColon: Never
+BreakBeforeTernaryOperators: false
+BreakStringLiterals: false
+ConstructorInitializerIndentWidth: 0
+ContinuationIndentWidth: 0
+Cpp11BracedListStyle: false
+EmptyLineBeforeAccessModifier: Never
+FixNamespaceComments: false
+IncludeIsMainRegex: ''
+IndentExternBlock: NoIndent
+IndentGotoLabels: false
+IndentRequiresClause: false
+JavaScriptWrapImports: false
+KeepEmptyLinesAtTheStartOfBlocks: false
+ObjCBlockIndentWidth: 2
+ObjCBreakBeforeNestedBlockParam: false
+ObjCSpaceBeforeProtocolList: false
+PackConstructorInitializers: Never
+\#PointerAlignment: Left
+ReflowComments:  false
+ShortNamespaceLines: 0
+SortIncludes:    Never
+SortUsingDeclarations: Never
+SpaceAfterTemplateKeyword: false
+SpaceBeforeAssignmentOperators: false
+SpaceBeforeCtorInitializerColon: false
+SpaceBeforeInheritanceColon: false
+SpaceBeforeParens: Custom
+SpaceBeforeParensOptions:
+  AfterControlStatements: false
+  AfterForeachMacros: false
+  AfterIfMacros:   false
+  AfterPlacementOperator: false
+SpaceBeforeRangeBasedForLoopColon: false
+SpacesInContainerLiterals: false
+VerilogBreakBetweenInstancePorts: false
 # Determines whether to place function parameters on a new line if they don't fit on a single line.
 #BinPackParameters: false
 # Sets the style for formatting switch statements.
