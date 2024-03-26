@@ -23,7 +23,6 @@ AllowShortCompoundRequirementOnASingleLine: false
 AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
 AllowShortLambdasOnASingleLine: None
-AlwaysBreakTemplateDeclarations: Leave
 BinPackArguments: false
 BinPackParameters: false
 BitFieldColonSpacing: None
