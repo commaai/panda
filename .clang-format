@@ -43,7 +43,7 @@ IndentGotoLabels: false
 IndentRequiresClause: false
 JavaScriptWrapImports: false
 KeepEmptyLinesAtTheStartOfBlocks: false
-ObjCBlockIndentWidth: 2
+ObjCBlockIndentWidth: 0
 ObjCBreakBeforeNestedBlockParam: false
 ObjCSpaceBeforeProtocolList: false
 PackConstructorInitializers: Never
@@ -51,18 +51,6 @@ ReflowComments:  false
 ShortNamespaceLines: 0
 SortIncludes:    Never
 SortUsingDeclarations: Never
-SpaceAfterTemplateKeyword: false
-SpaceBeforeAssignmentOperators: false
-SpaceBeforeCtorInitializerColon: false
-SpaceBeforeInheritanceColon: false
-SpaceBeforeParens: Custom
-SpaceBeforeParensOptions:
-  AfterControlStatements: false
-  AfterForeachMacros: false
-  AfterIfMacros:   false
-  AfterPlacementOperator: false
-SpaceBeforeRangeBasedForLoopColon: false
-SpacesInContainerLiterals: false
 VerilogBreakBetweenInstancePorts: false
 # Determines whether to place function parameters on a new line if they don't fit on a single line.
 #BinPackParameters: false
