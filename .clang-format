@@ -34,7 +34,7 @@ BreakBeforeTernaryOperators: false
 BreakStringLiterals: false
 ConstructorInitializerIndentWidth: 0
 ContinuationIndentWidth: 0
-Cpp11BracedListStyle: true
+Cpp11BracedListStyle: false
 EmptyLineBeforeAccessModifier: Never
 FixNamespaceComments: false
 IncludeIsMainRegex: ''
