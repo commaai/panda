@@ -71,8 +71,11 @@ RUN cd /tmp && \
     git fetch origin $OPENPILOT_REF && \
     git checkout $OPENPILOT_REF && \
     git submodule update --init cereal opendbc rednose_repo body && \
-    git -C opendbc fetch && \
-    git -C opendbc checkout $OPENDBC_REF && \
+    # TODO: REVERTME \
+    git -C opendbc remote add my https://github.com/nworb-cire/opendbc.git && \
+    git -C opendbc fetch my gm-fix-acc-cmd && \
+    git -C opendbc checkout my/gm-fix-acc-cmd && \
+    # END REVERTME \
     git -C opendbc reset --hard HEAD && \
     git -C opendbc clean -xfd && \
     mkdir /tmp/openpilot && \
