@@ -166,7 +166,7 @@ static bool gm_tx_hook(const CANPacket_t *to_send) {
   // GAS/REGEN: safety check
   if (addr == 0x2CB) {
     bool apply = GET_BIT(to_send, 0U);
-    int gas_regen = (int)((((GET_BYTE(to_send, 1) & 0x7U) << 16) + (GET_BYTE(to_send, 2) << 8) + GET_BYTE(to_send, 3)) >> 8) - 22534;
+    int gas_regen = (int)((((GET_BYTE(to_send, 1) & 0x7U) << 16) + (GET_BYTE(to_send, 2) << 8) + GET_BYTE(to_send, 3)) >> 3) - 22534;
 
     bool violation = false;
     // Allow apply bit in pre-enabled and overriding states
