@@ -54,6 +54,9 @@ SortIncludes:    Never
 SortUsingDeclarations: Never
 VerilogBreakBetweenInstancePorts: false
 IndentCaseLabels: true
+SpaceBeforeParens: Custom
+SpaceBeforeParensOptions:
+  AfterControlStatements: true
 SpacesInParens: Custom
 SpacesInParensOptions:
   InConditionalStatements: true
