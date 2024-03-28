@@ -56,7 +56,7 @@ VerilogBreakBetweenInstancePorts: false
 IndentCaseLabels: true
 SpacesInParens: Custom
 SpacesInParensOptions:
-  Other: false
+  InConditionalStatements: true
 # Determines whether to place function parameters on a new line if they don't fit on a single line.
 #BinPackParameters: false
 # Sets the style for formatting switch statements.
