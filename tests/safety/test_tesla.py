@@ -111,7 +111,7 @@ class TestTeslaSteeringSafety(TestTeslaSafety, common.AngleSteeringSafetyTest):
 
 class TestTeslaModel3SteeringSafety(TestTeslaSteeringSafety):
   def setUp(self):
-    self.packer = CANPackerPanda("tesla_model3_ch")
+    self.packer = CANPackerPanda("tesla_model3_party")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_RAVEN)
     self.safety.init_tests()
