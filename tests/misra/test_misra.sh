@@ -29,13 +29,17 @@ if [ -z "${SKIP_BUILD}" ]; then
 fi
 
 cppcheck() {
+  # get all gcc defines: arm-none-eabi-gcc -dM -E - < /dev/null
+  COMMON_DEFINES="-D__GNUC__=9 -UCMSIS_NVIC_VIRTUAL -UCMSIS_VECTAB_VIRTUAL"
+
   # note that cppcheck build cache results in inconsistent results as of v2.13.0
   OUTPUT=$DIR/.output.log
-  $CPPCHECK_DIR/cppcheck --force --inline-suppr -I $PANDA_DIR/board/ \
-          -I $gcc_inc "$(arm-none-eabi-gcc -print-file-name=include)" \
+  $CPPCHECK_DIR/cppcheck --inline-suppr -I $PANDA_DIR/board/ \
+          -I "$(arm-none-eabi-gcc -print-file-name=include)" \
+          -I $PANDA_DIR/board/stm32f4/inc/ -I $PANDA_DIR/board/stm32h7/inc/ \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
           --suppress=*:*include/* --error-exitcode=2 --check-level=exhaustive \
-          --platform=arm32-wchar_t2 \
+          --platform=arm32-wchar_t4 $COMMON_DEFINES \
           "$@" |& tee $OUTPUT
 
   # cppcheck bug: some MISRA errors won't result in the error exit code,
@@ -48,10 +52,10 @@ cppcheck() {
 PANDA_OPTS="--enable=all --disable=unusedFunction -DPANDA --addon=misra"
 
 printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
-cppcheck $PANDA_OPTS -DSTM32F4 -DUID_BASE $PANDA_DIR/board/main.c
+cppcheck $PANDA_OPTS -DSTM32F4 -DSTM32F413xx $PANDA_DIR/board/main.c
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-cppcheck $PANDA_OPTS -DSTM32H7 -DUID_BASE $PANDA_DIR/board/main.c
+cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx $PANDA_DIR/board/main.c
 
 # unused needs to run globally
 #printf "\n${GREEN}** UNUSED ALL CODE **${NC}\n"

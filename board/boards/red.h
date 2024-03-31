@@ -153,7 +153,7 @@ void red_init(void) {
   red_set_can_mode(CAN_MODE_NORMAL);
 }
 
-const harness_configuration red_harness_config = {
+harness_configuration red_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
@@ -167,7 +167,7 @@ const harness_configuration red_harness_config = {
   .adc_channel_SBU2 = 17 //ADC1_INP17
 };
 
-const board board_red = {
+board board_red = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &red_harness_config,
   .has_obd = true,

@@ -180,11 +180,11 @@ void white_grey_init_bootloader(void) {
   set_gpio_output(GPIOC, 14, 0);
 }
 
-const harness_configuration white_harness_config = {
+harness_configuration white_harness_config = {
   .has_harness = false
 };
 
-const board board_white = {
+board board_white = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &white_harness_config,
   .has_obd = false,
