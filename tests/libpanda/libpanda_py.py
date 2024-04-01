@@ -40,7 +40,6 @@ typedef struct {
 } can_ring;
 
 extern can_ring *rx_q;
-extern can_ring *txgmlan_q;
 extern can_ring *tx1_q;
 extern can_ring *tx2_q;
 extern can_ring *tx3_q;
@@ -71,7 +70,6 @@ class Panda(PandaSafety, Protocol):
   tx1_q: Any
   tx2_q: Any
   tx3_q: Any
-  txgmlan_q: Any
   def can_set_checksum(self, p: CANPacket) -> None: ...
 
   # safety

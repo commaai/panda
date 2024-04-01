@@ -4,7 +4,7 @@
 
 // Most hardware functionality is similar to white panda
 
-const board board_grey = {
+board board_grey = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &white_harness_config,
   .has_obd = false,
