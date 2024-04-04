@@ -187,13 +187,15 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
     }
   }
 
-  // No button other than cancel can be sent by us
+
   if (tesla_model3 && (addr == 0x229)){
+    // Only the "Half up" and "Neutral" positions are permitted for sending stalk signals.
     int control_lever_status = ((GET_BYTE(to_send, 1) & 0x70U) >> 4);
-    if (control_lever_status != 1) {
+    if (control_lever_status != 0 && control_lever_status != 1) {
       violation = true;
     }
   }else if (!tesla_powertrain && (addr == 0x45)) {
+    // No button other than cancel can be sent by us
     int control_lever_status = (GET_BYTE(to_send, 0) & 0x3FU);
     if (control_lever_status != 1) {
       violation = true;
