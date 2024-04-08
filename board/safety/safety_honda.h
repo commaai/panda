@@ -25,6 +25,7 @@ const LongitudinalLimits HONDA_NIDEC_LONG_LIMITS = {
            {0x296, (pt_bus), 4, .check_checksum = true, .max_counter = 3U, .frequency = 25U}, { 0 }}},                                \
   {.msg = {{0x158, (pt_bus), 8, .check_checksum = true, .max_counter = 3U, .frequency = 100U}, { 0 }, { 0 }}},  /* ENGINE_DATA */      \
   {.msg = {{0x17C, (pt_bus), 8, .check_checksum = true, .max_counter = 3U, .frequency = 100U}, { 0 }, { 0 }}},  /* POWERTRAIN_DATA */  \
+  {.msg = {{0x309, (pt_bus), 8, .check_checksum = true, .max_counter = 3U, .frequency = 10U}, { 0 }, { 0 }}},  /* CAR_SPEED */  \
 
 #define HONDA_COMMON_RX_CHECKS(pt_bus)                                                                                                         \
   HONDA_COMMON_NO_SCM_FEEDBACK_RX_CHECKS(pt_bus)                                                                                               \
@@ -122,7 +123,8 @@ static void honda_rx_hook(const CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
 
   // sample speed
-  if (addr == 0x158) {
+  // 0x158 used for all suported Hondas except Integra (use 0x309 car_speed message)
+  if ((addr == 0x158) || (addr == 0x309)) {
     // first 2 bytes
     vehicle_moving = GET_BYTE(to_push, 0) | GET_BYTE(to_push, 1);
   }
