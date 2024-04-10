@@ -65,10 +65,6 @@
   #include "stm32f4/lluart.h"
 #endif
 
-#if defined(PANDA) && !defined(BOOTSTUB)
-  #include "stm32f4/llexti.h"
-#endif
-
 #ifdef BOOTSTUB
   #include "stm32f4/llflash.h"
 #else

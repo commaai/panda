@@ -151,14 +151,9 @@ void red_init(void) {
 
   // Set normal CAN mode
   red_set_can_mode(CAN_MODE_NORMAL);
-
-  // change CAN mapping when flipped
-  if (harness.status == HARNESS_STATUS_FLIPPED) {
-    can_flip_buses(0, 2);
-  }
 }
 
-const harness_configuration red_harness_config = {
+harness_configuration red_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
@@ -172,7 +167,7 @@ const harness_configuration red_harness_config = {
   .adc_channel_SBU2 = 17 //ADC1_INP17
 };
 
-const board board_red = {
+board board_red = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &red_harness_config,
   .has_obd = true,
