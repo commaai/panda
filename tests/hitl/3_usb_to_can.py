@@ -1,9 +1,7 @@
 import time
-import pytest
 from flaky import flaky
 
 from panda import Panda
-from panda.tests.hitl.conftest import SPEED_NORMAL, SPEED_GMLAN, PandaGroup
 from panda.tests.hitl.helpers import time_many_sends
 
 def test_can_loopback(p):
@@ -80,45 +78,6 @@ def test_throughput(p):
     assert saturation_pct < 100
 
     print("loopback 100 messages at speed %d, comp speed is %.2f, percent %.2f" % (speed, comp_kbps, saturation_pct))
-
-@pytest.mark.test_panda_types(PandaGroup.GMLAN)
-def test_gmlan(p):
-  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-  p.set_can_loopback(True)
-
-  # set gmlan on CAN2
-  for bus in [Panda.GMLAN_CAN2, Panda.GMLAN_CAN3, Panda.GMLAN_CAN2, Panda.GMLAN_CAN3]:
-    p.set_gmlan(bus)
-    comp_kbps_gmlan = time_many_sends(p, 3)
-    assert comp_kbps_gmlan > (0.8 * SPEED_GMLAN)
-    assert comp_kbps_gmlan < (1.0 * SPEED_GMLAN)
-
-    p.set_gmlan(None)
-    comp_kbps_normal = time_many_sends(p, bus)
-    assert comp_kbps_normal > (0.8 * SPEED_NORMAL)
-    assert comp_kbps_normal < (1.0 * SPEED_NORMAL)
-
-    print("%d: %.2f kbps vs %.2f kbps" % (bus, comp_kbps_gmlan, comp_kbps_normal))
-
-@pytest.mark.test_panda_types(PandaGroup.GMLAN)
-def test_gmlan_bad_toggle(p):
-  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-  p.set_can_loopback(True)
-
-  # GMLAN_CAN2
-  for bus in [Panda.GMLAN_CAN2, Panda.GMLAN_CAN3]:
-    p.set_gmlan(bus)
-    comp_kbps_gmlan = time_many_sends(p, 3)
-    assert comp_kbps_gmlan > (0.6 * SPEED_GMLAN)
-    assert comp_kbps_gmlan < (1.0 * SPEED_GMLAN)
-
-  # normal
-  for bus in [Panda.GMLAN_CAN2, Panda.GMLAN_CAN3]:
-    p.set_gmlan(None)
-    comp_kbps_normal = time_many_sends(p, bus)
-    assert comp_kbps_normal > (0.6 * SPEED_NORMAL)
-    assert comp_kbps_normal < (1.0 * SPEED_NORMAL)
-
 
 # this will fail if you have hardware serial connected
 def test_serial_debug(p):
