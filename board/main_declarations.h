@@ -8,8 +8,12 @@ typedef struct board board;
 typedef struct harness_configuration harness_configuration;
 void pwm_init(TIM_TypeDef *TIM, uint8_t channel);
 void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
+void __initialize_hardware_early(void);
+void __attribute__ ((noinline)) enable_fpu(void);
 
 // ********************* Globals **********************
+// Defining them in other files would be a step back
+// cppcheck-suppress-begin misra-c2012-8.4
 uint8_t hw_type = 0;
 board *current_board;
 uint32_t uptime_cnt = 0;
@@ -24,4 +28,5 @@ bool heartbeat_disabled = false;            // set over USB
 bool siren_enabled = false;
 uint32_t siren_countdown = 0; // siren plays while countdown > 0
 uint32_t controls_allowed_countdown = 0;
+// cppcheck-suppress-end misra-c2012-8.4
 

@@ -18,9 +18,12 @@
 
 void print(const char *a);
 
+// Unable to use extern, because of initialization
+// cppcheck-suppress-begin misra-c2012-8.4
 // kbps multiplied by 10
 const uint32_t speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};
 const uint32_t data_speeds[] = {0U}; // No separate data speed, dummy
+// cppcheck-suppress-end misra-c2012-8.4
 
 bool llcan_set_speed(CAN_TypeDef *CANx, uint32_t speed, bool loopback, bool silent) {
   bool ret = true;

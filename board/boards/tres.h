@@ -2,8 +2,8 @@
 // Tres (STM32H7) + Harness //
 // ///////////////////////////
 
-bool tres_ir_enabled;
-bool tres_fan_enabled;
+static bool tres_ir_enabled;
+static bool tres_fan_enabled;
 void tres_update_fan_ir_power(void) {
   red_chiplet_set_fan_or_usb_load_switch(tres_ir_enabled || tres_fan_enabled);
 }
@@ -70,6 +70,9 @@ void tres_init(void) {
   clock_source_init();
 }
 
+// To be able to use extern and separate declaration
+// all of the functions should have separated declaration from implementation
+// cppcheck-suppress misra-c2012-8.4
 board board_tres = {
   .harness_config = &red_chiplet_harness_config,
   .has_obd = true,

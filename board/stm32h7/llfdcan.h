@@ -41,9 +41,12 @@
 
 void print(const char *a);
 
+// Unable to use extern, declaration and definition
+// cppcheck-suppress-begin misra-c2012-8.4
 // kbps multiplied by 10
 const uint32_t speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};
 const uint32_t data_speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U, 20000U, 50000U};
+// cppcheck-suppress-end misra-c2012-8.4
 
 
 bool fdcan_request_init(FDCAN_GlobalTypeDef *FDCANx) {

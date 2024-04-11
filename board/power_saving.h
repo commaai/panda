@@ -4,6 +4,7 @@
 #define POWER_SAVE_STATUS_DISABLED 0
 #define POWER_SAVE_STATUS_ENABLED 1
 
+// cppcheck-suppress misra-c2012-8.4
 int power_save_status = POWER_SAVE_STATUS_DISABLED;
 
 void set_power_save_state(int state) {

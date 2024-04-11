@@ -180,10 +180,12 @@ void white_grey_init_bootloader(void) {
   set_gpio_output(GPIOC, 14, 0);
 }
 
-harness_configuration white_harness_config = {
+static harness_configuration white_harness_config = {
   .has_harness = false
 };
 
+// Unable to use extern because of composite struct white_harness_config
+// cppcheck-suppress misra-c2012-8.4
 board board_white = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &white_harness_config,

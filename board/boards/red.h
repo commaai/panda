@@ -153,7 +153,7 @@ void red_init(void) {
   red_set_can_mode(CAN_MODE_NORMAL);
 }
 
-harness_configuration red_harness_config = {
+static harness_configuration red_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
@@ -167,6 +167,9 @@ harness_configuration red_harness_config = {
   .adc_channel_SBU2 = 17 //ADC1_INP17
 };
 
+// To be able to use extern and separate declaration
+// all of the functions should have separated declaration from implementation
+// cppcheck-suppress misra-c2012-8.4
 board board_red = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &red_harness_config,

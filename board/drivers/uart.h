@@ -41,6 +41,8 @@ void uart_send_break(uart_ring *u);
 
 // ******************************** UART buffers ********************************
 
+// Initialization of buffers
+// cppcheck-suppress-begin misra-c2012-8.4
 // debug = USART2
 UART_BUFFER(debug, FIFO_SIZE_INT, FIFO_SIZE_INT, USART2, debug_ring_callback, true)
 
@@ -51,6 +53,7 @@ UART_BUFFER(debug, FIFO_SIZE_INT, FIFO_SIZE_INT, USART2, debug_ring_callback, tr
   // UART7 is not available on F4
   UART_BUFFER(som_debug, 1U, 1U, NULL, NULL, true)
 #endif
+// cppcheck-suppress-end misra-c2012-8.4
 
 uart_ring *get_ring_by_number(int a) {
   uart_ring *ring = NULL;

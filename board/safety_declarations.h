@@ -21,6 +21,8 @@ uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
   return ret;
 }
 
+// Unable to use extern keyword for variables that are initialized at definition
+// cppcheck-suppress-begin misra-c2012-8.4
 const int MAX_WRONG_COUNTERS = 5;
 const uint8_t MAX_MISSED_MSGS = 10U;
 #define MAX_ADDR_CHECK_MSGS 3U
@@ -266,3 +268,4 @@ int alternative_experience = 0;
 uint32_t safety_mode_cnt = 0U;
 // allow 1s of transition timeout after relay changes state before assessing malfunctioning
 const uint32_t RELAY_TRNS_TIMEOUT = 1U;
+// cppcheck-suppress-end misra-c2012-8.4
