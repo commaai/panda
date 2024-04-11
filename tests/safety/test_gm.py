@@ -144,8 +144,7 @@ class TestGmSafetyBase(common.PandaCarSafetyTest, common.DriverTorqueSteeringSaf
 class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
   TX_MSGS = [[0x180, 0], [0x409, 0], [0x40A, 0], [0x2CB, 0], [0x370, 0],  # pt bus
              [0xA1, 1], [0x306, 1], [0x308, 1], [0x310, 1],  # obs bus
-             [0x315, 2],  # ch bus
-             [0x104c006c, 3], [0x10400060, 3]]  # gmlan
+             [0x315, 2]]  # ch bus
   FWD_BLACKLISTED_ADDRS: dict[int, list[int]] = {}
   FWD_BUS_LOOKUP: dict[int, int] = {}
   BRAKE_BUS = 2
