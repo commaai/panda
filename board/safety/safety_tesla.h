@@ -29,7 +29,7 @@ const CanMsg TESLA_TX_MSGS[] = {
   {0x2b9, 0, 8},  // DAS_control
 };
 
-const CanMsg TESLA_M3_TX_MSGS[] = {
+const CanMsg TESLA_M3_Y_TX_MSGS[] = {
   {0x488, 0, 4},  // DAS_steeringControl
   {0x2b9, 0, 8},  // DAS_control
   {0x229, 1, 3},  // SCCM_rightStalk
@@ -277,7 +277,7 @@ static safety_config tesla_init(uint16_t param) {
   } else if (tesla_raven) {
     ret = BUILD_SAFETY_CFG(tesla_raven_rx_checks, TESLA_TX_MSGS);
   } else if (tesla_model3_y) {
-    ret = BUILD_SAFETY_CFG(tesla_model3_y_rx_checks, TESLA_M3_TX_MSGS);
+    ret = BUILD_SAFETY_CFG(tesla_model3_y_rx_checks, TESLA_M3_Y_TX_MSGS);
   } else {
     ret = BUILD_SAFETY_CFG(tesla_rx_checks, TESLA_TX_MSGS);
   }
