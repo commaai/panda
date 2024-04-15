@@ -104,27 +104,33 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
     if(tesla_model3_y && (addr == 0x155)){
       // Vehicle speed: (val * 0.5) * KPH_TO_MPS
       float speed = ((((GET_BYTE(to_push, 6) & 0x0FU) << 6) | (GET_BYTE(to_push, 5) >> 2)) * 0.5) * 0.277778;
-      vehicle_moving = GET_BIT(to_push, 41) == 0U;
-      UPDATE_VEHICLE_SPEED(speed);
-    } else if(addr == (tesla_powertrain ? 0x116 : 0x118) ) {
-      // Vehicle speed: ((0.05 * val) - 25) * MPH_TO_MPS
-      float speed = (((((GET_BYTE(to_push, 3) & 0x0FU) << 8) | (GET_BYTE(to_push, 2))) * 0.05) - 25) * 0.447;
       vehicle_moving = ABS(speed) > 0.1;
       UPDATE_VEHICLE_SPEED(speed);
+    } else {
+     if(addr == (tesla_powertrain ? 0x116 : 0x118) ) {
+        // Vehicle speed: ((0.05 * val) - 25) * MPH_TO_MPS
+        float speed = (((((GET_BYTE(to_push, 3) & 0x0FU) << 8) | (GET_BYTE(to_push, 2))) * 0.05) - 25) * 0.447;
+        vehicle_moving = ABS(speed) > 0.1;
+        UPDATE_VEHICLE_SPEED(speed);
+      }
     }
 
     // Gas pressed
     if(tesla_model3_y && (addr == 0x118)){
       gas_pressed = (GET_BYTE(to_push, 4) != 0U);
-    } else if( addr == (tesla_powertrain ? 0x106 : 0x108)) {
-      gas_pressed = (GET_BYTE(to_push, 6) != 0U);
+    } else {
+      if(addr == (tesla_powertrain ? 0x106 : 0x108)) {
+        gas_pressed = (GET_BYTE(to_push, 6) != 0U);
+      }
     }
 
     // Brake pressed
     if(tesla_model3_y && (addr == 0x39d)){
       brake_pressed = (GET_BYTE(to_push, 2) & 0x03U)  == 2U;
-    }else if(addr == (tesla_powertrain ? 0x1f8 : 0x20a)) {
-      brake_pressed = (((GET_BYTE(to_push, 0) & 0x0CU) >> 2) != 1U);
+    }else {
+      if(addr == (tesla_powertrain ? 0x1f8 : 0x20a)) {
+        brake_pressed = (((GET_BYTE(to_push, 0) & 0x0CU) >> 2) != 1U);
+      }
     }
 
     // Cruise state
@@ -136,14 +142,16 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
                             (cruise_state == 6) ||  // PRE_FAULT
                             (cruise_state == 7);    // PRE_CANCEL
       pcm_cruise_check(cruise_engaged);
-    }else if(addr == (tesla_powertrain ? 0x256 : 0x368)) {
-      int cruise_state = (GET_BYTE(to_push, 1) >> 4);
-      bool cruise_engaged = (cruise_state == 2) ||  // ENABLED
-                            (cruise_state == 3) ||  // STANDSTILL
-                            (cruise_state == 4) ||  // OVERRIDE
-                            (cruise_state == 6) ||  // PRE_FAULT
-                            (cruise_state == 7);    // PRE_CANCEL
-      pcm_cruise_check(cruise_engaged);
+    }else {
+      if(addr == (tesla_powertrain ? 0x256 : 0x368)) {
+        int cruise_state = (GET_BYTE(to_push, 1) >> 4);
+        bool cruise_engaged = (cruise_state == 2) ||  // ENABLED
+                              (cruise_state == 3) ||  // STANDSTILL
+                              (cruise_state == 4) ||  // OVERRIDE
+                              (cruise_state == 6) ||  // PRE_FAULT
+                              (cruise_state == 7);    // PRE_CANCEL
+        pcm_cruise_check(cruise_engaged);
+      }
     }
   }
 
@@ -192,14 +200,16 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
   if (tesla_model3_y && (addr == 0x229)){
     // Only the "Half up" and "Neutral" positions are permitted for sending stalk signals.
     int control_lever_status = ((GET_BYTE(to_send, 1) & 0x70U) >> 4);
-    if (control_lever_status != 0 && control_lever_status != 1) {
+    if ((control_lever_status != 0) && (control_lever_status != 1)) {
       violation = true;
     }
-  }else if (!tesla_powertrain && (addr == 0x45)) {
-    // No button other than cancel can be sent by us
-    int control_lever_status = (GET_BYTE(to_send, 0) & 0x3FU);
-    if (control_lever_status != 1) {
-      violation = true;
+  }else {
+    if (!tesla_powertrain && (addr == 0x45)) {
+      // No button other than cancel can be sent by us
+      int control_lever_status = (GET_BYTE(to_send, 0) & 0x3FU);
+      if (control_lever_status != 1) {
+        violation = true;
+      }
     }
   }
 
