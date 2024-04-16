@@ -78,7 +78,7 @@ class TestTeslaModel3YSafety(TestTeslaSafety):
 
   def _user_gas_msg(self, gas):
     values = {"DI_accelPedalPos": gas}
-    return self.packer.make_can_msg_panda("DI_systemStatus", 1, values)
+    return self.packer.make_can_msg_panda("DI_systemStatus", 0, values)
 
   def _control_lever_cmd(self, command):
     values = {"SCCM_rightStalkStatus": command}

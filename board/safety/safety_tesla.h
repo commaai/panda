@@ -120,6 +120,10 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
       gas_pressed = (GET_BYTE(to_push, 6) != 0U);
     }
 
+    // Gas pressed
+    if(tesla_model3_y && (addr == 0x118)){
+      gas_pressed = (GET_BYTE(to_push, 4) != 0U);
+    }
 
     // Brake pressed
     if(tesla_model3_y && (addr == 0x39d)){
@@ -157,13 +161,6 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
     if (tesla_longitudinal && (addr == das_control_addr)) {
       // "AEB_ACTIVE"
       tesla_stock_aeb = ((GET_BYTE(to_push, 2) & 0x03U) == 1U);
-    }
-  }
-
-  if (bus == 1) {
-    // Gas pressed
-    if(tesla_model3_y && (addr == 0x118)){
-      gas_pressed = (GET_BYTE(to_push, 4) != 0U);
     }
   }
 
