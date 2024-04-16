@@ -6,26 +6,26 @@ from enum import IntEnum, Enum
 from typing import TypedDict, Optional
 
 class ExchangeStationIdsReturn(TypedDict):
-    id_length: int
-    data_type: int
-    available: int  
-    protected: int  
+  id_length: int
+  data_type: int
+  available: int  
+  protected: int  
 
 class GetDaqListSizeReturn(TypedDict):
-    list_size: int
-    first_pid: int
+  list_size: int
+  first_pid: int
 
 class GetSessionStatusReturn(TypedDict):
-    status: int
-    info: Optional[int]   
+  status: int
+  info: Optional[int]   
 
 class DiagnosticServiceReturn(TypedDict):
-    length: int
-    type: int
+  length: int
+  type: int
 
 class ActionServiceReturn(TypedDict):
-    length: int
-    type: int
+  length: int
+  type: int
 
 class COMMAND_CODE(IntEnum):
   CONNECT = 0x01
