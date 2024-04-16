@@ -61,6 +61,28 @@ class TestTeslaSafety(common.PandaCarSafetyTest):
     }
     return self.packer.make_can_msg_panda("DAS_control", bus, values)
 
+class TestTeslaModel3YSafety(TestTeslaSafety, common.PandaCarSafetyTest):
+
+  def setUp(self):
+    self.packer = None
+    self.packer_vehicle = None
+    raise unittest.SkipTest
+
+  def _speed_msg(self, speed):
+    values = {"ESP_vehicleSpeed": speed / 0.277778}
+    return self.packer.make_can_msg_panda("ESP_B", 0, values)
+
+  def _user_brake_msg(self, brake):
+    values = {"IBST_driverBrakeApply": 2 if brake else 1}
+    return self.packer.make_can_msg_panda("IBST_status", 0, values)
+
+  def _user_gas_msg(self, gas):
+    values = {"DI_accelPedalPos": gas}
+    return self.packer.make_can_msg_panda("DI_systemStatus", 1, values)
+
+  def _control_lever_cmd(self, command):
+    values = {"SCCM_rightStalkStatus": command}
+    return self.packer_vehicle.make_can_msg_panda("SCCM_rightStalk", 1, values)
 
 class TestTeslaSteeringSafety(TestTeslaSafety, common.AngleSteeringSafetyTest):
   TX_MSGS = [[0x488, 0], [0x45, 0], [0x45, 2]]
@@ -107,18 +129,40 @@ class TestTeslaSteeringSafety(TestTeslaSafety, common.AngleSteeringSafetyTest):
         tx = self._tx(self._control_lever_cmd(btn))
         self.assertEqual(tx, should_tx)
 
+class TestTeslaModel3YSteeringSafety(TestTeslaModel3YSafety, TestTeslaSteeringSafety):
+  TX_MSGS = [[0x488, 0], [0x2b9, 0], [0x229, 1]]
+  RELAY_MALFUNCTION_ADDRS = {0: (0x488, 0x2b9)}
+  FWD_BLACKLISTED_ADDRS = {2: [0x488]}
 
-
-class TestTeslaModel3YSteeringSafety(TestTeslaSteeringSafety):
   def setUp(self):
     self.packer = CANPackerPanda("tesla_model3_party")
+    self.packer_vehicle = CANPackerPanda("tesla_model3_vehicle")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_MODEL3_Y)
     self.safety.init_tests()
 
+  def test_acc_buttons(self):
+    """
+      cancel & idle allowed.
+    """
+    btns = [
+      (0, True), # IDLE
+      (1, True), # HALF UP
+      (2, False), # FULL UP
+      (3, False), # HALF DOWN
+      (4, False), # FULL DOWN
+    ]
+    for btn, should_tx in btns:
+      for controls_allowed in (True, False):
+        self.safety.set_controls_allowed(controls_allowed)
+        tx = self._tx(self._control_lever_cmd(btn))
+        self.assertEqual(tx, should_tx)
+
+
   def _angle_meas_msg(self, angle: float):
-    values = {"EPAS3P_internalSAS": angle}
-    return self.packer.make_can_msg_panda("EPAS3P_sysStatus", 2, values)
+    values = {"EPAS3S_internalSAS": angle}
+    return self.packer.make_can_msg_panda("EPAS3S_sysStatus", 0, values)
+
 
 class TestTeslaRavenSteeringSafety(TestTeslaSteeringSafety):
   def setUp(self):
@@ -190,6 +234,19 @@ class TestTeslaPTLongitudinalSafety(TestTeslaLongitudinalSafety):
     self.packer = CANPackerPanda("tesla_powertrain")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL | Panda.FLAG_TESLA_POWERTRAIN)
+    self.safety.init_tests()
+
+
+class TestTeslaModel3YLongitudinalSafety(TestTeslaModel3YSteeringSafety, TestTeslaLongitudinalSafety):
+  TX_MSGS = [[0x488, 0], [0x2b9, 0], [0x229, 1]]
+  RELAY_MALFUNCTION_ADDRS = {0: (0x488, 0x2b9)}
+  FWD_BLACKLISTED_ADDRS = {2: [0x2b9, 0x488]}
+
+  def setUp(self):
+    self.packer = CANPackerPanda("tesla_model3_party")
+    self.packer_vehicle = CANPackerPanda("tesla_model3_vehicle")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL | Panda.FLAG_TESLA_MODEL3_Y)
     self.safety.init_tests()
 
 

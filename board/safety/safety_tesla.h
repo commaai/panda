@@ -116,13 +116,10 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
     }
 
     // Gas pressed
-    if(tesla_model3_y && (addr == 0x118)){
-      gas_pressed = (GET_BYTE(to_push, 4) != 0U);
-    } else {
-      if(addr == (tesla_powertrain ? 0x106 : 0x108)) {
-        gas_pressed = (GET_BYTE(to_push, 6) != 0U);
-      }
+    if(addr == (tesla_powertrain ? 0x106 : 0x108)) {
+      gas_pressed = (GET_BYTE(to_push, 6) != 0U);
     }
+
 
     // Brake pressed
     if(tesla_model3_y && (addr == 0x39d)){
@@ -163,6 +160,13 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
     }
   }
 
+  if (bus == 1) {
+    // Gas pressed
+    if(tesla_model3_y && (addr == 0x118)){
+      gas_pressed = (GET_BYTE(to_push, 4) != 0U);
+    }
+  }
+
   if (tesla_model3_y) {
     generic_rx_checks((addr == 0x488) && (bus == 0));
     generic_rx_checks((addr == 0x2b9) && (bus == 0));
@@ -200,7 +204,7 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
   if (tesla_model3_y && (addr == 0x229)){
     // Only the "Half up" and "Neutral" positions are permitted for sending stalk signals.
     int control_lever_status = ((GET_BYTE(to_send, 1) & 0x70U) >> 4);
-    if ((control_lever_status != 0) && (control_lever_status != 1)) {
+    if ((control_lever_status > 1)) {
       violation = true;
     }
   }else {
