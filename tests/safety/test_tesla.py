@@ -61,7 +61,7 @@ class TestTeslaSafety(common.PandaCarSafetyTest):
     }
     return self.packer.make_can_msg_panda("DAS_control", bus, values)
 
-class TestTeslaModel3YSafety(TestTeslaSafety, common.PandaCarSafetyTest):
+class TestTeslaModel3YSafety(TestTeslaSafety):
 
   def setUp(self):
     self.packer = None
