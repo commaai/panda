@@ -441,8 +441,6 @@ class IsoTpMessage():
       if self.debug and not setup_only:
         print(f"ISO-TP: TX - first frame - {hex(self._can_client.tx_addr)}")
       msg = (struct.pack("!H", 0x1000 | self.tx_len) + self.tx_dat[:self.max_len - 2]).ljust(self.max_len - 2, b"\x00")
-    print('sent msg', msg)
-    print(f'{self.tx_dat=}, {self.tx_len=}, {self.tx_idx=}, {self.tx_done=}, {self.rx_dat=}, {self.rx_len=}, {self.rx_idx=}, {self.rx_done=}')
     if not setup_only:
       self._can_client.send([msg])
 
@@ -480,31 +478,25 @@ class IsoTpMessage():
       assert self.rx_len < self.max_len, f"isotp - rx: invalid single frame length: {self.rx_len}"
       self.rx_dat = rx_data[1:1 + self.rx_len]
       self.rx_idx = 0
-      self.rx_done = True  # error_code != 0x78  # todo me
+      self.rx_done = True
       if self.debug:
         print(f"ISO-TP: RX - single frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
-      print(f'{self.tx_dat=}, {self.tx_len=}, {self.tx_idx=}, {self.tx_done=}, {self.rx_dat=}, {self.rx_len=}, {self.rx_idx=}, {self.rx_done=}')
       return ISOTP_FRAME_TYPE.SINGLE
 
     elif rx_data[0] >> 4 == ISOTP_FRAME_TYPE.FIRST:
-
-      # rx_dat != b"" and not self.rx_done
       assert self.rx_dat == b"" or self.rx_done, "isotp - rx: first frame with active frame"
-
       self.rx_len = ((rx_data[0] & 0x0F) << 8) + rx_data[1]
       assert self.rx_len >= self.max_len, f"isotp - rx: invalid first frame length: {self.rx_len}"
       assert len(rx_data) == self.max_len, f"isotp - rx: invalid CAN frame length: {len(rx_data)}"
       self.rx_dat = rx_data[2:]
       self.rx_idx = 0
       self.rx_done = False
-
       if self.debug:
         print(f"ISO-TP: RX - first frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
       if self.debug:
         print(f"ISO-TP: TX - flow control continue - {hex(self._can_client.tx_addr)}")
       # send flow control message
-      # self._can_client.send([self.flow_control_msg])
-      print(f'{self.tx_dat=}, {self.tx_len=}, {self.tx_idx=}, {self.tx_done=}, {self.rx_dat=}, {self.rx_len=}, {self.rx_idx=}, {self.rx_done=}')
+      self._can_client.send([self.flow_control_msg])
       return ISOTP_FRAME_TYPE.FIRST
 
     elif rx_data[0] >> 4 == ISOTP_FRAME_TYPE.CONSECUTIVE:
@@ -520,7 +512,6 @@ class IsoTpMessage():
         self._can_client.send([self.flow_control_msg])
       if self.debug:
         print(f"ISO-TP: RX - consecutive frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
-      print(f'{self.tx_dat=}, {self.tx_len=}, {self.tx_idx=}, {self.tx_done=}, {self.rx_dat=}, {self.rx_len=}, {self.rx_idx=}, {self.rx_done=}')
       return ISOTP_FRAME_TYPE.CONSECUTIVE
 
     elif rx_data[0] >> 4 == ISOTP_FRAME_TYPE.FLOW:
@@ -556,7 +547,6 @@ class IsoTpMessage():
         # wait (do nothing until next flow control message)
         if self.debug:
           print(f"ISO-TP: TX - flow control wait - {hex(self._can_client.tx_addr)}")
-      print(f'{self.tx_dat=}, {self.tx_len=}, {self.tx_idx=}, {self.tx_done=}, {self.rx_dat=}, {self.rx_len=}, {self.rx_idx=}, {self.rx_done=}')
       return ISOTP_FRAME_TYPE.FLOW
 
     # 4-15 - reserved
