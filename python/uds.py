@@ -455,7 +455,7 @@ class IsoTpMessage():
         for msg in self._can_client.recv():
           frame_type = self._isotp_rx_next(msg)
           start_time = time.monotonic()
-          rx_in_progress = frame_type == ISOTP_FRAME_TYPE.CONSECUTIVE
+          rx_in_progress = frame_type in (ISOTP_FRAME_TYPE.FIRST, ISOTP_FRAME_TYPE.CONSECUTIVE)
           if self.tx_done and self.rx_done:
             return self.rx_dat, False
         # no timeout indicates non-blocking
@@ -477,7 +477,7 @@ class IsoTpMessage():
       assert self.rx_len < self.max_len, f"isotp - rx: invalid single frame length: {self.rx_len}"
       self.rx_dat = rx_data[1:1 + self.rx_len]
       self.rx_idx = 0
-      self.rx_done = True
+      self.rx_done = error_code != 0x78  # todo me
       if self.debug:
         print(f"ISO-TP: RX - single frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
       return ISOTP_FRAME_TYPE.SINGLE
