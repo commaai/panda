@@ -475,6 +475,7 @@ class IsoTpMessage():
     # assert len(rx_data) == self.max_len, f"isotp - rx: invalid CAN frame length: {len(rx_data)}"
 
     if rx_data[0] >> 4 == ISOTP_FRAME_TYPE.SINGLE:
+      assert self.rx_dat == b"" or self.rx_done, "isotp - rx: single frame with active frame"
       self.rx_len = rx_data[0] & 0x0F
       assert self.rx_len < self.max_len, f"isotp - rx: invalid single frame length: {self.rx_len}"
       self.rx_dat = rx_data[1:1 + self.rx_len]
@@ -496,11 +497,6 @@ class IsoTpMessage():
       self.rx_dat = rx_data[2:]
       self.rx_idx = 0
       self.rx_done = False
-
-      # if self.rx_dat == b"" or self.rx_done:
-      #   pass
-      # else:
-      #   pass
 
       if self.debug:
         print(f"ISO-TP: RX - first frame - {hex(self._can_client.rx_addr)} idx={self.rx_idx} done={self.rx_done}")
