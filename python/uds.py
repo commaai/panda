@@ -455,6 +455,7 @@ class IsoTpMessage():
         for msg in self._can_client.recv():
           frame_type = self._isotp_rx_next(msg)
           start_time = time.monotonic()
+          # Anything that signifies we're building a response
           rx_in_progress = frame_type in (ISOTP_FRAME_TYPE.FIRST, ISOTP_FRAME_TYPE.CONSECUTIVE)
           if self.tx_done and self.rx_done:
             return self.rx_dat, False
@@ -484,6 +485,7 @@ class IsoTpMessage():
       return ISOTP_FRAME_TYPE.SINGLE
 
     elif rx_data[0] >> 4 == ISOTP_FRAME_TYPE.FIRST:
+      # Once a first frame is received, further frames must be consecutive
       assert self.rx_dat == b"" or self.rx_done, "isotp - rx: first frame with active frame"
       self.rx_len = ((rx_data[0] & 0x0F) << 8) + rx_data[1]
       assert self.rx_len >= self.max_len, f"isotp - rx: invalid first frame length: {self.rx_len}"
