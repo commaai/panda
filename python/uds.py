@@ -413,7 +413,7 @@ class IsoTpMessage():
 
   def send(self, dat: bytes, setup_only: bool = False) -> None:
     # throw away any stale data
-    # self._can_client.recv(drain=True)
+    self._can_client.recv(drain=True)
 
     self.tx_dat = dat
     self.tx_len = len(dat)
