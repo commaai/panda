@@ -21,7 +21,8 @@ IGNORED_PATHS = (
   'board/flasher.h',
   'board/bootstub.c',
   'board/bootstub_declarations.h',
-  'board/stm32f4/llflash.h'
+  'board/stm32h7/llflash.h',
+  'board/stm32f4/llflash.h',
 )
 
 mutations = [
