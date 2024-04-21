@@ -413,7 +413,11 @@ static int honda_bosch_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
   if (bus_num == 0) {
-    bus_fwd = 2;
+    bool is_button_msg = (addr == 0x296);
+    bool block_msg = is_button_msg && controls_allowed && honda_bosch_radarless && !honda_bosch_long;
+    if (!block_msg) {
+      bus_fwd = 2;
+    }
   }
   if (bus_num == 2)  {
     bool is_lkas_msg = (addr == 0xE4) || (addr == 0xE5) || (addr == 0x33D) || (addr == 0x33DA) || (addr == 0x33DB);
