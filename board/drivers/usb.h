@@ -304,13 +304,6 @@ uint8_t binary_object_store_desc[] = {
   MS_VENDOR_CODE, 0x00 // vendor code, no alternate enumeration
 };
 
-uint8_t webusb_url_descriptor[] = {
-  0x14,                  /* bLength */
-  WEBUSB_DESC_TYPE_URL, // bDescriptorType
-  WEBUSB_URL_SCHEME_HTTPS, // bScheme
-  'u', 's', 'b', 'p', 'a', 'n', 'd', 'a', '.', 'c', 'o', 'm', 'm', 'a', '.', 'a', 'i'
-};
-
 // WinUSB 2.0 descriptor. This is what modern systems use
 // https://github.com/sowbug/weblight/blob/192ad7a0e903542e2aa28c607d98254a12a6399d/firmware/webusb.c
 // http://janaxelson.com/files/ms_os_20_descriptors.c
@@ -603,17 +596,9 @@ void usb_setup(void) {
       USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
       break;
     case WEBUSB_VENDOR_CODE:
-      switch (setup.b.wIndex.w) {
-        case WEBUSB_REQ_GET_URL:
-          USB_WritePacket(webusb_url_descriptor, MIN(sizeof(webusb_url_descriptor), setup.b.wLength.w), 0);
-          USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
-          break;
-        default:
-          // probably asking for allowed origins, which was removed from the spec
-          USB_WritePacket(0, 0, 0);
-          USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
-          break;
-      }
+      // probably asking for allowed origins, which was removed from the spec
+      USB_WritePacket(0, 0, 0);
+      USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
       break;
     case MS_VENDOR_CODE:
       switch (setup.b.wIndex.w) {
