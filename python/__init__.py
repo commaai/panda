@@ -361,7 +361,7 @@ class Panda:
           try:
             this_serial = device.getSerialNumber()
           except Exception:
-            continue
+            logging.exception("failed to get serial number of panda")
 
           if serial is None or this_serial == serial:
             logging.debug("opening device %s %s", this_serial, hex(device.getProductID()))
@@ -412,7 +412,7 @@ class Panda:
               else:
                 logging.warning(f"found device with panda descriptors but invalid serial: {serial}", RuntimeWarning)
             except Exception:
-              continue
+              logging.exception("error connecting to panda")
     except Exception:
       logging.exception("exception while listing pandas")
     return ret
