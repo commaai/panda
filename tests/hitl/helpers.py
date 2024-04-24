@@ -1,6 +1,5 @@
 import time
 import random
-from typing import Optional
 
 
 def get_random_can_messages(n):
@@ -52,7 +51,7 @@ def time_many_sends(p, bus, p_recv=None, msg_count=100, two_pandas=False, msg_le
   return comp_kbps
 
 
-def clear_can_buffers(panda, speed: Optional[int] = None):
+def clear_can_buffers(panda, speed: int | None = None):
   if speed is not None:
     for bus in range(3):
       panda.set_can_speed_kbps(bus, speed)

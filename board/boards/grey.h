@@ -1,16 +1,15 @@
-// ////////// //
-// Grey Panda //
-// ////////// //
+// //////////////////// //
+// Grey Panda (STM32F4) //
+// //////////////////// //
 
 // Most hardware functionality is similar to white panda
 
-const board board_grey = {
+board board_grey = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &white_harness_config,
   .has_obd = false,
   .has_spi = false,
   .has_canfd = false,
-  .has_rtc_battery = false,
   .fan_max_rpm = 0U,
   .avdd_mV = 3300U,
   .fan_stall_recovery = false,
@@ -22,7 +21,8 @@ const board board_grey = {
   .set_led = white_set_led,
   .set_can_mode = white_set_can_mode,
   .check_ignition = white_check_ignition,
-  .read_current = white_read_current,
+  .read_voltage_mV = white_read_voltage_mV,
+  .read_current_mA = white_read_current_mA,
   .set_fan_enabled = unused_set_fan_enabled,
   .set_ir_power = unused_set_ir_power,
   .set_siren = unused_set_siren,

@@ -9,8 +9,11 @@ if [ ! -d "$CPPCHECK_DIR" ]; then
 fi
 
 cd $CPPCHECK_DIR
-VERS="2.13.0"
-git fetch --tags origin $VERS
+
+VERS="2.13.4"
+git fetch --all --tags
 git checkout $VERS
+git cherry-pick -n f6b538e855f0bacea33c4074664628024ef39dc6 b11b42087ff29569bc3740f5aa07eb6616ea4f63
+
 #make clean
 make MATCHCOMPILTER=yes CXXFLAGS="-O2" -j8

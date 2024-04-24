@@ -1,6 +1,6 @@
-// ///////////// //
-// Dos + Harness //
-// ///////////// //
+// /////////////////////// //
+// Dos (STM32F4) + Harness //
+// /////////////////////// //
 
 void dos_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver){
@@ -90,10 +90,6 @@ bool dos_check_ignition(void){
   return harness_check_ignition();
 }
 
-void dos_set_usb_switch(bool phone){
-  set_gpio_output(GPIOB, 3, phone);
-}
-
 void dos_set_ir_power(uint8_t percentage){
   pwm_set(TIM4, 2, percentage);
 }
@@ -151,8 +147,6 @@ void dos_init(void) {
   // Initialize harness
   harness_init();
 
-  // Initialize RTC
-  rtc_init();
 
   // Enable CAN transceivers
   dos_enable_can_transceivers(true);
@@ -168,16 +162,11 @@ void dos_init(void) {
   // Set normal CAN mode
   dos_set_can_mode(CAN_MODE_NORMAL);
 
-  // flip CAN0 and CAN2 if we are flipped
-  if (harness.status == HARNESS_STATUS_FLIPPED) {
-    can_flip_buses(0, 2);
-  }
-
   // Init clock source (camera strobe) using PWM
   clock_source_init();
 }
 
-const harness_configuration dos_harness_config = {
+harness_configuration dos_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOC,
@@ -191,7 +180,7 @@ const harness_configuration dos_harness_config = {
   .adc_channel_SBU2 = 13
 };
 
-const board board_dos = {
+board board_dos = {
   .harness_config = &dos_harness_config,
   .has_obd = true,
 #ifdef ENABLE_SPI
@@ -200,7 +189,6 @@ const board board_dos = {
   .has_spi = false,
 #endif
   .has_canfd = false,
-  .has_rtc_battery = true,
   .fan_max_rpm = 6500U,
   .avdd_mV = 3300U,
   .fan_stall_recovery = true,
@@ -212,7 +200,8 @@ const board board_dos = {
   .set_led = dos_set_led,
   .set_can_mode = dos_set_can_mode,
   .check_ignition = dos_check_ignition,
-  .read_current = unused_read_current,
+  .read_voltage_mV = white_read_voltage_mV,
+  .read_current_mA = unused_read_current,
   .set_fan_enabled = dos_set_fan_enabled,
   .set_ir_power = dos_set_ir_power,
   .set_siren = dos_set_siren,

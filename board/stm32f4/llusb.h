@@ -8,7 +8,7 @@ USB_OTG_GlobalTypeDef *USBx = USB_OTG_FS;
 #define USBx_PCGCCTL    *(__IO uint32_t *)((uint32_t)USBx + USB_OTG_PCGCCTL_BASE)
 
 #define USBD_FS_TRDT_VALUE 5UL
-#define USB_OTG_SPEED_FULL 3
+#define USB_OTG_SPEED_FULL 3UL
 
 
 void usb_irqhandler(void);
@@ -27,7 +27,7 @@ void usb_init(void) {
   // full speed PHY, do reset and remove power down
   /*puth(USBx->GRSTCTL);
   print(" resetting PHY\n");*/
-  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL) == 0);
+  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL) == 0U);
   //print("AHB idle\n");
 
   // reset PHY here
@@ -42,7 +42,6 @@ void usb_init(void) {
   USBx->GUSBCFG |= ((USBD_FS_TRDT_VALUE << 10) & USB_OTG_GUSBCFG_TRDT);
 
   // power up the PHY
-#ifdef STM32F4
   USBx->GCCFG = USB_OTG_GCCFG_PWRDWN;
 
   //USBx->GCCFG |= USB_OTG_GCCFG_VBDEN | USB_OTG_GCCFG_SDEN |USB_OTG_GCCFG_PDEN | USB_OTG_GCCFG_DCDEN;
@@ -50,9 +49,6 @@ void usb_init(void) {
   /* B-peripheral session valid override enable*/
   USBx->GOTGCTL |= USB_OTG_GOTGCTL_BVALOVAL;
   USBx->GOTGCTL |= USB_OTG_GOTGCTL_BVALOEN;
-#else
-  USBx->GCCFG = USB_OTG_GCCFG_PWRDWN | USB_OTG_GCCFG_NOVBUSSENS;
-#endif
 
   // be a device, slowest timings
   //USBx->GUSBCFG = USB_OTG_GUSBCFG_FDMOD | USB_OTG_GUSBCFG_PHYSEL | USB_OTG_GUSBCFG_TRDT | USB_OTG_GUSBCFG_TOCAL;

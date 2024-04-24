@@ -66,7 +66,7 @@ class Info():
           message_id = message_id[2:]  # remove leading '0x'
         else:
           message_id = hex(int(message_id))[2:]  # old message IDs are in decimal
-        message_id = '%s:%s' % (bus, message_id)
+        message_id = f'{bus}:{message_id}'
 
         data = row[CSV_KEYS[dtype]["data"]]
         if data.startswith('0x'):

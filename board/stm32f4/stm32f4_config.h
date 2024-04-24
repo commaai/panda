@@ -1,12 +1,7 @@
-#ifdef STM32F4
-  #include "stm32fx/inc/stm32f4xx.h"
-  #include "stm32fx/inc/stm32f4xx_hal_gpio_ex.h"
-  #define MCU_IDCODE 0x463U
-#else
-  #include "stm32fx/inc/stm32f2xx.h"
-  #include "stm32fx/inc/stm32f2xx_hal_gpio_ex.h"
-  #define MCU_IDCODE 0x411U
-#endif
+#include "stm32f4/inc/stm32f4xx.h"
+#include "stm32f4/inc/stm32f4xx_hal_gpio_ex.h"
+#define MCU_IDCODE 0x463U
+
 // from the linker script
 #define APP_START_ADDRESS 0x8004000U
 
@@ -42,11 +37,7 @@
 #include "comms_definitions.h"
 
 #ifndef BOOTSTUB
-  #ifdef PEDAL
-    #include "pedal/main_declarations.h"
-  #else
-    #include "main_declarations.h"
-  #endif
+  #include "main_declarations.h"
 #else
   #include "bootstub_declarations.h"
 #endif
@@ -59,40 +50,28 @@
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"
 #include "drivers/gpio.h"
-#include "stm32fx/peripherals.h"
-#include "stm32fx/interrupt_handlers.h"
+#include "stm32f4/peripherals.h"
+#include "stm32f4/interrupt_handlers.h"
 #include "drivers/timers.h"
-#include "stm32fx/board.h"
-#include "stm32fx/clock.h"
+#include "stm32f4/board.h"
+#include "stm32f4/clock.h"
 #include "drivers/watchdog.h"
 
-#if !defined(PEDAL) || defined(BOOTSTUB)
-  #include "drivers/spi.h"
-  #include "stm32fx/llspi.h"
-#endif
+#include "drivers/spi.h"
+#include "stm32f4/llspi.h"
 
-#if !defined(BOOTSTUB) && (!defined(PEDAL) || defined(PEDAL_USB))
+#if !defined(BOOTSTUB)
   #include "drivers/uart.h"
-  #include "stm32fx/lluart.h"
-#endif
-
-#if defined(PANDA) && !defined(BOOTSTUB)
-  #include "stm32fx/llexti.h"
+  #include "stm32f4/lluart.h"
 #endif
 
 #ifdef BOOTSTUB
-  #include "stm32fx/llflash.h"
+  #include "stm32f4/llflash.h"
 #else
-  #include "stm32fx/llbxcan.h"
+  #include "stm32f4/llbxcan.h"
 #endif
 
-#if !defined(PEDAL) || defined(PEDAL_USB) || defined(BOOTSTUB)
-  #include "stm32fx/llusb.h"
-#endif
-
-#ifdef PEDAL
-  #include "stm32fx/lldac.h"
-#endif
+#include "stm32f4/llusb.h"
 
 void early_gpio_float(void) {
   RCC->AHB1ENR = RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN;

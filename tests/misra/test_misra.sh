@@ -2,7 +2,7 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-PANDA_DIR=$DIR/../../
+PANDA_DIR=$(realpath $DIR/../../)
 
 GREEN="\e[1;32m"
 NC='\033[0m'
@@ -10,7 +10,7 @@ NC='\033[0m'
 : "${CPPCHECK_DIR:=$DIR/cppcheck/}"
 
 # install cppcheck if missing
-if [ -z "${SKIP_BUILD}" ]; then
+if [ -z "${SKIP_CPPCHECK_INSTALL}" ]; then
   $DIR/install.sh
 fi
 
@@ -29,25 +29,37 @@ if [ -z "${SKIP_BUILD}" ]; then
 fi
 
 cppcheck() {
-  hashed_args=$(echo -n "$@$DIR" | md5sum | awk '{print $1}')
-  build_dir=/tmp/cppcheck_build/$hashed_args
-  mkdir -p $build_dir
+  # get all gcc defines: arm-none-eabi-gcc -dM -E - < /dev/null
+  COMMON_DEFINES="-D__GNUC__=9 -UCMSIS_NVIC_VIRTUAL -UCMSIS_VECTAB_VIRTUAL"
 
-  $CPPCHECK_DIR/cppcheck --enable=all --force --inline-suppr -I $PANDA_DIR/board/ \
-          -I $gcc_inc "$(arm-none-eabi-gcc -print-file-name=include)" \
+  # note that cppcheck build cache results in inconsistent results as of v2.13.0
+  OUTPUT=$DIR/.output.log
+  $CPPCHECK_DIR/cppcheck --inline-suppr -I $PANDA_DIR/board/ \
+          -I "$(arm-none-eabi-gcc -print-file-name=include)" \
+          -I $PANDA_DIR/board/stm32f4/inc/ -I $PANDA_DIR/board/stm32h7/inc/ \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
-          --suppress=*:*include/* --error-exitcode=2 --addon=misra \
-          --check-level=exhaustive --cppcheck-build-dir=$build_dir \
-          "$@"
+          --suppress=*:*include/* --error-exitcode=2 --check-level=exhaustive \
+          --platform=arm32-wchar_t4 $COMMON_DEFINES \
+          "$@" |& tee $OUTPUT
+
+  # cppcheck bug: some MISRA errors won't result in the error exit code,
+  # so check the output (https://trac.cppcheck.net/ticket/12440#no1)
+  if grep -e "misra violation" -e "error" -e "style: " $OUTPUT > /dev/null; then
+    exit 1
+  fi
 }
 
+PANDA_OPTS="--enable=all --disable=unusedFunction -DPANDA --addon=misra"
+
 printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
-cppcheck -DCAN3 -DPANDA -DSTM32F4 -UPEDAL -DUID_BASE $PANDA_DIR/board/main.c
+cppcheck $PANDA_OPTS -DSTM32F4 -DSTM32F413xx $PANDA_DIR/board/main.c
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-cppcheck -DCAN3 -DPANDA -DSTM32H7 -UPEDAL -DUID_BASE $PANDA_DIR/board/main.c
+cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx $PANDA_DIR/board/main.c
 
-printf "\n${GREEN}** PEDAL CODE **${NC}\n"
-cppcheck -UCAN3 -UPANDA -DSTM32F2 -DPEDAL -UUID_BASE $PANDA_DIR/board/pedal/main.c
+# unused needs to run globally
+#printf "\n${GREEN}** UNUSED ALL CODE **${NC}\n"
+#cppcheck --enable=unusedFunction --quiet $PANDA_DIR/board/
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
+

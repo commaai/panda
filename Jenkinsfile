@@ -82,7 +82,7 @@ pipeline {
               ["build", "scons -j4"],
               ["flash", "cd tests/ && ./reflash_internal_panda.py"],
               ["flash jungle", "cd board/jungle && ./flash.py"],
-              ["test", "cd tests/hitl && HW_TYPES=6 pytest --durations=0 [2-7]*.py -k 'not test_send_recv'"],
+              ["test", "cd tests/hitl && HW_TYPES=6 pytest -n0 --durations=0 [2-9]*.py -k 'not test_send_recv'"],
             ])
           }
         }
@@ -94,7 +94,7 @@ pipeline {
               ["build", "scons -j4"],
               ["flash", "cd tests/ && ./reflash_internal_panda.py"],
               ["flash jungle", "cd board/jungle && ./flash.py"],
-              ["test", "cd tests/hitl && HW_TYPES=9 pytest --durations=0 2*.py [5-9]*.py"],
+              ["test", "cd tests/hitl && HW_TYPES=9 pytest -n0 --durations=0 2*.py [5-9]*.py"],
             ])
           }
         }
@@ -126,35 +126,10 @@ pipeline {
             stage('bootkick tests') {
               steps {
                 script {
-                  docker_run("test", 10, "pytest ./tests/som/test_bootkick.py")
+                  docker_run("test", 10, "pytest -n0 ./tests/som/test_bootkick.py")
                 }
               }
             }
-
-            /*
-            stage('pedal tests') {
-              steps {
-                script {
-                  docker_run("test pedal", 1, "PEDAL_JUNGLE=058010800f51363038363036 python ./tests/pedal/test_pedal.py")
-                }
-              }
-            }
-            stage('HITL tests') {
-              steps {
-                script {
-                  docker_run("parallel tests", 5, 'PANDAS_JUNGLE=23002d000851393038373731 PANDAS_EXCLUDE="1d0002000c51303136383232 2f002e000c51303136383232" ./tests/hitl/run_parallel_tests.sh')
-                  docker_run("serial tests", 9, 'PANDAS_JUNGLE=23002d000851393038373731 PANDAS_EXCLUDE="1d0002000c51303136383232 2f002e000c51303136383232" ./tests/hitl/run_serial_tests.sh')
-                }
-              }
-            }
-            stage('CANFD tests') {
-              steps {
-                script {
-                  docker_run("CANFD tets", 6, 'JUNGLE=058010800f51363038363036 H7_PANDAS_EXCLUDE="080021000c51303136383232 33000e001051393133353939" ./tests/canfd/test_canfd.py')
-                }
-              }
-            }
-            */
           }
         }
       }

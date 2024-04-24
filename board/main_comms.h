@@ -9,8 +9,8 @@ int get_health_pkt(void *dat) {
   struct health_t * health = (struct health_t*)dat;
 
   health->uptime_pkt = uptime_cnt;
-  health->voltage_pkt = adc_get_mV(ADCCHAN_VIN) * VIN_READOUT_DIVIDER;
-  health->current_pkt = current_board->read_current();
+  health->voltage_pkt = current_board->read_voltage_mV();
+  health->current_pkt = current_board->read_current_mA();
 
   // Use the GPIO pin to determine ignition or use a CAN based logic
   health->ignition_line_pkt = (uint8_t)(current_board->check_ignition());
@@ -21,21 +21,20 @@ int get_health_pkt(void *dat) {
   health->safety_rx_invalid_pkt = safety_rx_invalid;
   health->tx_buffer_overflow_pkt = tx_buffer_overflow;
   health->rx_buffer_overflow_pkt = rx_buffer_overflow;
-  health->gmlan_send_errs_pkt = gmlan_send_errs;
   health->car_harness_status_pkt = harness.status;
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
   health->safety_param_pkt = current_safety_param;
   health->alternative_experience_pkt = alternative_experience;
   health->power_save_enabled_pkt = power_save_status == POWER_SAVE_STATUS_ENABLED;
   health->heartbeat_lost_pkt = heartbeat_lost;
-  health->safety_rx_checks_invalid = safety_rx_checks_invalid;
+  health->safety_rx_checks_invalid_pkt = safety_rx_checks_invalid;
 
-  health->spi_checksum_error_count = spi_checksum_error_count;
+  health->spi_checksum_error_count_pkt = spi_checksum_error_count;
 
   health->fault_status_pkt = fault_status;
   health->faults_pkt = faults;
 
-  health->interrupt_load = interrupt_load;
+  health->interrupt_load_pkt = interrupt_load;
 
   health->fan_power = fan_state.power;
   health->fan_stall_count = fan_state.total_stall_count;
@@ -46,12 +45,6 @@ int get_health_pkt(void *dat) {
   health->som_reset_triggered = bootkick_reset_triggered;
 
   return sizeof(*health);
-}
-
-int get_rtc_pkt(void *dat) {
-  timestamp_t t = rtc_get_time();
-  (void)memcpy(dat, &t, sizeof(t));
-  return sizeof(t);
 }
 
 // send on serial, first byte to select the ring
@@ -71,7 +64,6 @@ void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
 int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   unsigned int resp_len = 0;
   uart_ring *ur = NULL;
-  timestamp_t t;
   uint32_t time;
 
 #ifdef DEBUG_COMMS
@@ -82,52 +74,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
 #endif
 
   switch (req->request) {
-    // **** 0xa0: get rtc time
-    case 0xa0:
-      resp_len = get_rtc_pkt(resp);
-      break;
-    // **** 0xa1: set rtc year
-    case 0xa1:
-      t = rtc_get_time();
-      t.year = req->param1;
-      rtc_set_time(t);
-      break;
-    // **** 0xa2: set rtc month
-    case 0xa2:
-      t = rtc_get_time();
-      t.month = req->param1;
-      rtc_set_time(t);
-      break;
-    // **** 0xa3: set rtc day
-    case 0xa3:
-      t = rtc_get_time();
-      t.day = req->param1;
-      rtc_set_time(t);
-      break;
-    // **** 0xa4: set rtc weekday
-    case 0xa4:
-      t = rtc_get_time();
-      t.weekday = req->param1;
-      rtc_set_time(t);
-      break;
-    // **** 0xa5: set rtc hour
-    case 0xa5:
-      t = rtc_get_time();
-      t.hour = req->param1;
-      rtc_set_time(t);
-      break;
-    // **** 0xa6: set rtc minute
-    case 0xa6:
-      t = rtc_get_time();
-      t.minute = req->param1;
-      rtc_set_time(t);
-      break;
-    // **** 0xa7: set rtc second
-    case 0xa7:
-      t = rtc_get_time();
-      t.second = req->param1;
-      rtc_set_time(t);
-      break;
     // **** 0xa8: get microsecond timer
     case 0xa8:
       time = microsecond_timer_get();
@@ -264,9 +210,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xd8:
       NVIC_SystemReset();
       break;
-    // **** 0xdb: set GMLAN (white/grey) or OBD CAN (black) multiplexing mode
+    // **** 0xdb: set OBD CAN multiplexing mode
     case 0xdb:
-      if(current_board->has_obd){
+      if (current_board->has_obd) {
         if (req->param1 == 1U) {
           // Enable OBD CAN
           current_board->set_can_mode(CAN_MODE_OBD_CAN2);
@@ -360,7 +306,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xe5: set CAN loopback (for testing)
     case 0xe5:
-      can_loopback = (req->param1 > 0U);
+      can_loopback = req->param1 > 0U;
       can_init_all();
       break;
     // **** 0xe6: set custom clock source period
@@ -427,10 +373,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         bool ret = can_init(CAN_NUM_FROM_BUS_NUM(req->param1));
         UNUSED(ret);
       }
-      break;
-    // **** 0xfb: allow highest power saving mode (stop) to be entered
-    case 0xfb:
-      deepsleep_allowed = true;
       break;
     // **** 0xfc: set CAN FD non-ISO mode
     case 0xfc:
