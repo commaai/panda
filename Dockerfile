@@ -63,6 +63,8 @@ RUN pyenv install 3.11.4 && \
 ENV CPPCHECK_DIR=/tmp/cppcheck
 COPY tests/misra/install.sh /tmp/
 RUN /tmp/install.sh
+# don't try to install again
+ENV SKIP_CPPCHECK_INSTALL=1
 
 RUN git config --global --add safe.directory /tmp/openpilot/panda
 RUN cd /tmp && \

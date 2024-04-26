@@ -21,7 +21,8 @@ IGNORED_PATHS = (
   'board/flasher.h',
   'board/bootstub.c',
   'board/bootstub_declarations.h',
-  'board/stm32f4/llflash.h'
+  'board/stm32h7/llflash.h',
+  'board/stm32f4/llflash.h',
 )
 
 mutations = [
@@ -79,6 +80,3 @@ def test_misra_mutation(fn, patch, should_fail):
     r = subprocess.run("tests/misra/test_misra.sh", cwd=tmp, shell=True)
     failed = r.returncode != 0
     assert failed == should_fail
-
-if __name__ == "__main__":
-  pytest.main([__file__, "-n 8"])
