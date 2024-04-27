@@ -19,6 +19,10 @@ bool safety_config_valid() {
   return true;
 }
 
+void set_cruise_speed_set(bool s) {
+  cruise_speed_set = s;
+}
+
 void set_controls_allowed(bool c){
   controls_allowed = c;
 }

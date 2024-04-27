@@ -168,6 +168,11 @@ static void hyundai_rx_hook(const CANPacket_t *to_push) {
     hyundai_common_cruise_state_check(cruise_engaged);
   }
 
+  //// SCC11 is on bus 2 for camera-based SCC cars, bus 0 on all others
+  if ((addr == 0x420) && (((bus == 0) && !hyundai_camera_scc) || ((bus == 2) && hyundai_camera_scc))) {
+    cruise_speed_set = (GET_BYTE(to_push, 1));
+  }
+
   if (bus == 0) {
     if (addr == 0x251) {
       int torque_driver_new = (GET_BYTES(to_push, 0, 2) & 0x7ffU) - 1024U;
@@ -271,7 +276,8 @@ static bool hyundai_tx_hook(const CANPacket_t *to_send) {
   if ((addr == 0x4F1) && !hyundai_longitudinal) {
     int button = GET_BYTE(to_send, 0) & 0x7U;
 
-    bool allowed_resume = (button == 1) && controls_allowed;
+    bool allowed_resume = ((button == 1) && controls_allowed && hyundai_pause_resune_btn) ||
+            ((button == 1) && controls_allowed && (!hyundai_pause_resune_btn && cruise_speed_set));
     bool allowed_cancel = (button == 4) && cruise_engaged_prev;
     if (!(allowed_resume || allowed_cancel)) {
       tx = false;

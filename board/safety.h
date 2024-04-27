@@ -334,6 +334,7 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   regen_braking = false;
   regen_braking_prev = false;
   cruise_engaged_prev = false;
+  cruise_speed_set = false;
   vehicle_moving = false;
   acc_main_on = false;
   cruise_button_prev = 0;

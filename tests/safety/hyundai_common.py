@@ -24,16 +24,31 @@ class HyundaiButtonBase:
   def test_button_sends(self):
     """
       Only RES and CANCEL buttons are allowed
-      - RES allowed while controls allowed
+      - RES allowed while controls allowed and cruise speed set for CAN cars without pause/resume button, allowed while controls allowed otherwise
       - CANCEL allowed while cruise is enabled
     """
-    self.safety.set_controls_allowed(0)
-    self.assertFalse(self._tx(self._button_msg(Buttons.RESUME, bus=self.BUTTONS_TX_BUS)))
-    self.assertFalse(self._tx(self._button_msg(Buttons.SET, bus=self.BUTTONS_TX_BUS)))
+    if "canfd" not in self.__class__.__name__.lower() and "pauseresume" not in self.__class__.__name__.lower():
+      self.safety.set_controls_allowed(0)
+      self.assertFalse(self._tx(self._button_msg(Buttons.RESUME, bus=self.BUTTONS_TX_BUS)))
+      self.assertFalse(self._tx(self._button_msg(Buttons.SET, bus=self.BUTTONS_TX_BUS)))
 
-    self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._button_msg(Buttons.RESUME, bus=self.BUTTONS_TX_BUS)))
-    self.assertFalse(self._tx(self._button_msg(Buttons.SET, bus=self.BUTTONS_TX_BUS)))
+      self.safety.set_controls_allowed(1)
+      self.safety.set_cruise_speed_set(0)
+      self.assertFalse(self._tx(self._button_msg(Buttons.RESUME, bus=self.BUTTONS_TX_BUS)))
+      self.assertFalse(self._tx(self._button_msg(Buttons.SET, bus=self.BUTTONS_TX_BUS)))
+
+      self.safety.set_controls_allowed(1)
+      self.safety.set_cruise_speed_set(1)
+      self.assertTrue(self._tx(self._button_msg(Buttons.RESUME, bus=self.BUTTONS_TX_BUS)))
+      self.assertFalse(self._tx(self._button_msg(Buttons.SET, bus=self.BUTTONS_TX_BUS)))
+    else:
+      self.safety.set_controls_allowed(0)
+      self.assertFalse(self._tx(self._button_msg(Buttons.RESUME, bus=self.BUTTONS_TX_BUS)))
+      self.assertFalse(self._tx(self._button_msg(Buttons.SET, bus=self.BUTTONS_TX_BUS)))
+
+      self.safety.set_controls_allowed(1)
+      self.assertTrue(self._tx(self._button_msg(Buttons.RESUME, bus=self.BUTTONS_TX_BUS)))
+      self.assertFalse(self._tx(self._button_msg(Buttons.SET, bus=self.BUTTONS_TX_BUS)))
 
     for enabled in (True, False):
       self._rx(self._pcm_status_msg(enabled))
@@ -131,6 +146,38 @@ class HyundaiLongitudinalBase(common.LongitudinalAccelSafetyTest):
     self.safety.set_controls_allowed(1)
     self._rx(self._button_msg(Buttons.CANCEL))
     self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_set_resume_buttons_pause_resume(self):
+    """
+      SET enters controls allowed on their falling edge.
+    """
+    for btn_prev in range(8):
+      for btn_cur in range(8):
+        if btn_cur == Buttons.CANCEL or btn_prev == Buttons.CANCEL:
+          continue
+        self._rx(self._button_msg(Buttons.NONE))
+        self.safety.set_controls_allowed(0)
+        for _ in range(10):
+          self._rx(self._button_msg(btn_prev))
+          self.assertFalse(self.safety.get_controls_allowed())
+
+        # should enter controls allowed on falling edge and not transitioning to cancel
+        should_enable = btn_cur != btn_prev and \
+                        btn_prev == Buttons.SET
+
+        self._rx(self._button_msg(btn_cur))
+        self.assertEqual(should_enable, self.safety.get_controls_allowed())
+
+  def test_cancel_button_pause_resume(self):
+    """
+    CANCEL is a pause/resume button
+    """
+    self.safety.set_controls_allowed(1)
+    self._rx(self._button_msg(Buttons.CANCEL))
+    self.assertFalse(self.safety.get_controls_allowed())
+    self.safety.set_controls_allowed(0)
+    self._rx(self._button_msg(Buttons.CANCEL))
+    self.assertTrue(self.safety.get_controls_allowed())
 
   def test_tester_present_allowed(self):
     """

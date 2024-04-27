@@ -3,6 +3,7 @@ from typing import Protocol
 
 def setup_safety_helpers(ffi):
   ffi.cdef("""
+  void set_cruise_speed_set(bool s);
   void set_controls_allowed(bool c);
   bool get_controls_allowed(void);
   bool get_longitudinal_allowed(void);
@@ -53,6 +54,7 @@ def setup_safety_helpers(ffi):
   """)
 
 class PandaSafety(Protocol):
+  def set_cruise_speed_set(self, s: bool) -> None: ...
   def set_controls_allowed(self, c: bool) -> None: ...
   def get_controls_allowed(self) -> bool: ...
   def get_longitudinal_allowed(self) -> bool: ...
