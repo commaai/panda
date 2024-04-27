@@ -224,49 +224,12 @@ class TestHyundaiLongitudinalSafety(HyundaiLongitudinalBase, TestHyundaiSafety):
   def test_cancel_button_pause_resume(self):
     pass
 
-class TestHyundaiLongitudinalSafetyPauseResumeBtn(HyundaiLongitudinalBase, TestHyundaiSafety):
-  TX_MSGS = [[0x340, 0], [0x4F1, 0], [0x485, 0], [0x420, 0], [0x421, 0], [0x50A, 0], [0x389, 0], [0x4A2, 0], [0x38D, 0], [0x483, 0], [0x7D0, 0]]
-
-  RELAY_MALFUNCTION_ADDRS = {0: (0x340, 0x421)}  # LKAS11, SCC12
-
-  DISABLED_ECU_UDS_MSG = (0x7D0, 0)
-  DISABLED_ECU_ACTUATION_MSG = (0x421, 0)
-
+class TestHyundaiLongitudinalSafetyPauseResumeBtn(TestHyundaiLongitudinalSafety):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_PAUSE_RESUME_BTN)
     self.safety.init_tests()
-
-  def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
-    values = {
-      "aReqRaw": accel,
-      "aReqValue": accel,
-      "AEB_CmdAct": int(aeb_req),
-      "CR_VSM_DecCmd": aeb_decel,
-    }
-    return self.packer.make_can_msg_panda("SCC12", self.SCC_BUS, values)
-
-  def _fca11_msg(self, idx=0, vsm_aeb_req=False, fca_aeb_req=False, aeb_decel=0):
-    values = {
-      "CR_FCA_Alive": idx % 0xF,
-      "FCA_Status": 2,
-      "CR_VSM_DecCmd": aeb_decel,
-      "CF_VSM_DecCmdAct": int(vsm_aeb_req),
-      "FCA_CmdAct": int(fca_aeb_req),
-    }
-    return self.packer.make_can_msg_panda("FCA11", 0, values)
-
-  def test_no_aeb_fca11(self):
-    self.assertTrue(self._tx(self._fca11_msg()))
-    self.assertFalse(self._tx(self._fca11_msg(vsm_aeb_req=True)))
-    self.assertFalse(self._tx(self._fca11_msg(fca_aeb_req=True)))
-    self.assertFalse(self._tx(self._fca11_msg(aeb_decel=1.0)))
-
-  def test_no_aeb_scc12(self):
-    self.assertTrue(self._tx(self._accel_msg(0)))
-    self.assertFalse(self._tx(self._accel_msg(0, aeb_req=True)))
-    self.assertFalse(self._tx(self._accel_msg(0, aeb_decel=1.0)))
 
   def test_set_resume_buttons(self):
     pass

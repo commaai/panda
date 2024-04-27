@@ -251,33 +251,13 @@ class TestHyundaiCanfdHDA2LongEV(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2EV
   def test_cancel_button_pause_resume(self):
     pass
 
-class TestHyundaiCanfdHDA2LongEVPauseResumeBtn(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2EV):
-
-  TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0], [0x51, 0], [0x730, 1], [0x12a, 1], [0x160, 1],
-             [0x1e0, 1], [0x1a0, 1], [0x1ea, 1], [0x200, 1], [0x345, 1], [0x1da, 1]]
-
-  RELAY_MALFUNCTION_ADDRS = {0: (0x50,), 1: (0x1a0,)}  # LKAS, SCC_CONTROL
-
-  DISABLED_ECU_UDS_MSG = (0x730, 1)
-  DISABLED_ECU_ACTUATION_MSG = (0x1a0, 1)
-
-  STEER_MSG = "LFA"
-  GAS_MSG = ("ACCELERATOR", "ACCELERATOR_PEDAL")
-  STEER_BUS = 1
-
+class TestHyundaiCanfdHDA2LongEVPauseResumeBtn(TestHyundaiCanfdHDA2LongEV):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2 | \
               Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_EV_GAS | Panda.FLAG_HYUNDAI_PAUSE_RESUME_BTN)
     self.safety.init_tests()
-
-  def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
-    values = {
-      "aReqRaw": accel,
-      "aReqValue": accel,
-    }
-    return self.packer.make_can_msg_panda("SCC_CONTROL", 1, values)
 
   def test_set_resume_buttons(self):
     pass
@@ -343,19 +323,7 @@ class TestHyundaiCanfdHDA1Long(HyundaiLongitudinalBase, TestHyundaiCanfdHDA1Base
   {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SAFETY_PARAM": Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_EV_GAS},
   {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SAFETY_PARAM": Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_HYBRID_GAS},
 ])
-class TestHyundaiCanfdHDA1LongPauseResumeBtn(HyundaiLongitudinalBase, TestHyundaiCanfdHDA1Base):
-
-  FWD_BLACKLISTED_ADDRS = {2: [0x12a, 0x1e0, 0x1a0]}
-
-  RELAY_MALFUNCTION_ADDRS = {0: (0x12A, 0x1a0)}  # LFA, SCC_CONTROL
-
-  DISABLED_ECU_UDS_MSG = (0x730, 1)
-  DISABLED_ECU_ACTUATION_MSG = (0x1a0, 0)
-
-  STEER_MSG = "LFA"
-  STEER_BUS = 0
-  SCC_BUS = 2
-
+class TestHyundaiCanfdHDA1LongPauseResumeBtn(TestHyundaiCanfdHDA1Long):
   @classmethod
   def setUpClass(cls):
     if cls.__name__ == "TestHyundaiCanfdHDA1LongPauseResumeBtn":
@@ -368,24 +336,11 @@ class TestHyundaiCanfdHDA1LongPauseResumeBtn(HyundaiLongitudinalBase, TestHyunda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CAMERA_SCC | Panda.FLAG_HYUNDAI_PAUSE_RESUME_BTN | self.SAFETY_PARAM)
     self.safety.init_tests()
 
-  def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
-    values = {
-      "aReqRaw": accel,
-      "aReqValue": accel,
-    }
-    return self.packer.make_can_msg_panda("SCC_CONTROL", 0, values)
-
-  # no knockout
-  def test_tester_present_allowed(self):
-    pass
-
   def test_set_resume_buttons(self):
     pass
 
   def test_cancel_button(self):
     pass
-
-
 
 
 if __name__ == "__main__":
