@@ -84,7 +84,7 @@ jobs:
         run: |
           ${{ env.RUN }} "cd .. && \
                           scons -c && \
-                          scons -j$(nproc) opendbc/ cereal/ && \
+                          scons -j$(nproc) --minimal opendbc/ cereal/ && \
                           cd panda && \
                           scons -j$(nproc) ${{ matrix.flags }} && \
                           tests/safety/test.sh"
