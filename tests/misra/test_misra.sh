@@ -10,7 +10,7 @@ NC='\033[0m'
 : "${CPPCHECK_DIR:=$DIR/cppcheck/}"
 
 # install cppcheck if missing
-if [ -z "${SKIP_BUILD}" ]; then
+if [ -z "${SKIP_CPPCHECK_INSTALL}" ]; then
   $DIR/install.sh
 fi
 

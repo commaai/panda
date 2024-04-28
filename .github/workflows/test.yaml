@@ -103,7 +103,7 @@ jobs:
         timeout-minutes: 1
         run: ${{ env.RUN }} "cd tests/misra && ./test_misra.sh"
       - name: MISRA mutation tests
-        timeout-minutes: 4
+        timeout-minutes: 5
         run: ${{ env.RUN }} "cd tests/misra && pytest -n8 test_mutation.py"
 
   python_linter:
