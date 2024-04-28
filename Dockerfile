@@ -65,7 +65,7 @@ ENV SKIP_CPPCHECK_INSTALL=1
 
 RUN git config --global --add safe.directory /tmp/openpilot/panda
 RUN cd /tmp && \
-    git clone https://github.com/commaai/openpilot.git tmppilot || true && \
+    git clone --depth 1 https://github.com/commaai/openpilot.git tmppilot || true && \
     cd /tmp/tmppilot && \
     git fetch origin $OPENPILOT_REF && \
     git checkout $OPENPILOT_REF && \
@@ -75,7 +75,7 @@ RUN cd /tmp && \
     git -C opendbc reset --hard HEAD && \
     git -C opendbc clean -xfd && \
     mkdir /tmp/openpilot && \
-    cp -pR SConstruct site_scons/ tools/ selfdrive/ system/ common/ cereal/ opendbc/ rednose/ rednose_repo/ third_party/ body/ /tmp/openpilot && \
+    cp -pR SConstruct site_scons/ tools/ selfdrive/ system/ common/ cereal/ opendbc/ rednose_repo/ rednose/ third_party/ body/ /tmp/openpilot && \
     rm -rf /tmp/openpilot/panda && \
     rm -rf /tmp/tmppilot
 
