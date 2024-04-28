@@ -73,8 +73,7 @@ RUN mkdir -p /tmp/openpilot/ && \
     echo "all done"
 
 RUN cd /tmp/openpilot && \
-    pip3 install --break-system-packages --no-cache-dir -r opendbc/requirements.txt && \
-    pip3 install --break-system-packages --no-cache-dir --upgrade aenum lru-dict pycurl tenacity atomicwrites serial smbus2
+    pip3 install --break-system-packages --no-cache-dir -r opendbc/requirements.txt
 
 # for Jenkins
 COPY README.md panda.tar.* /tmp/
