@@ -75,7 +75,7 @@ RUN cd /tmp && \
     git -C opendbc reset --hard HEAD && \
     git -C opendbc clean -xfd && \
     mkdir /tmp/openpilot && \
-    cp -pR SConstruct site_scons/ tools/ selfdrive/ system/ common/ cereal/ opendbc/ rednose_repo/ rednose/ third_party/ body/ /tmp/openpilot && \
+    cp -pR SConstruct release/ site_scons/ tools/ selfdrive/ system/ common/ cereal/ opendbc/ rednose_repo/ rednose/ third_party/ body/ /tmp/openpilot && \
     rm -rf /tmp/openpilot/panda && \
     rm -rf /tmp/tmppilot
 
