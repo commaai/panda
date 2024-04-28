@@ -70,7 +70,7 @@ RUN mkdir -p /tmp/openpilot/ && \
     cd cereal && git fetch origin $CEREAL_REF && git checkout FETCH_HEAD && rm -rf .git/ && cd .. && \
     cd opendbc && git fetch origin $OPENDBC_REF && git checkout FETCH_HEAD && rm -rf .git/ && cd .. && \
     cp -pR opendbc/SConstruct opendbc/site_scons/ . && \
-    echo "all done"
+    scons -j8 --minimal opendbc/ cereal/
 
 RUN cd /tmp/openpilot && \
     pip3 install --break-system-packages --no-cache-dir -r opendbc/requirements.txt

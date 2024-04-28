@@ -82,10 +82,7 @@ jobs:
       - name: Run safety tests
         timeout-minutes: 5
         run: |
-          ${{ env.RUN }} "cd .. && \
-                          scons -c && \
-                          scons -j$(nproc) --minimal opendbc/ cereal/ && \
-                          cd panda && \
+          ${{ env.RUN }} "scons -c -j$(nproc) && \
                           scons -j$(nproc) ${{ matrix.flags }} && \
                           tests/safety/test.sh"
 
