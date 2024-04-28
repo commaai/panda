@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc-arm-none-eabi libnewlib-arm-none-eabi \
     git \
     libarchive-dev \
-    libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev libswscale-dev libavresample-dev libavfilter-dev \
+    libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev libswscale-dev libavfilter-dev \
     libbz2-dev \
     libcapnp-dev \
     libcurl4-openssl-dev \
@@ -31,14 +31,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     make \
     patch \
     pkg-config \
-    python \
-    python-dev \
-    qt5-default \
+    python3 \
+    python3-dev \
+    python3-pip \
+    python-is-python3 \
+    qtbase5-dev \
     unzip \
     wget \
     zlib1g-dev \
  && rm -rf /var/lib/apt/lists/* && \
-    cd /usr/lib/gcc/arm-none-eabi/9.2.1 && \
+    cd /usr/lib/gcc/arm-none-eabi/* && \
     rm -rf arm/ && \
     rm -rf thumb/nofp thumb/v6* thumb/v8* thumb/v7+fp thumb/v7-r+fp.sp
 
@@ -55,10 +57,9 @@ ENV OPENPILOT_REF="bc4b75822a609e6897058bc83688c84004f29093"
 ENV OPENDBC_REF="1745ab51825055cd18748013c4a5e3377319e390"
 
 COPY requirements.txt /tmp/
-RUN pyenv install 3.11.4 && \
-    pyenv global 3.11.4 && \
-    pyenv rehash && \
-    pip install --no-cache-dir -r /tmp/requirements.txt
+RUN pip3 install --break-system-packages --no-cache-dir -r /tmp/requirements.txt
+
+ENV PATH="/tmp/venv/bin/:$PATH"
 
 ENV CPPCHECK_DIR=/tmp/cppcheck
 COPY tests/misra/install.sh /tmp/
@@ -83,8 +84,8 @@ RUN cd /tmp && \
     rm -rf /tmp/tmppilot
 
 RUN cd /tmp/openpilot && \
-    pip install --no-cache-dir -r opendbc/requirements.txt && \
-    pip install --no-cache-dir --upgrade aenum lru-dict pycurl tenacity atomicwrites serial smbus2
+    pip3 install --break-system-packages --no-cache-dir -r opendbc/requirements.txt && \
+    pip3 install --break-system-packages --no-cache-dir --upgrade aenum lru-dict pycurl tenacity atomicwrites serial smbus2
 
 
 # for Jenkins
