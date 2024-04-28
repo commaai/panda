@@ -44,7 +44,7 @@ RUN pip3 install --break-system-packages --no-cache-dir -r /tmp/requirements.txt
 
 ENV CPPCHECK_DIR=/tmp/cppcheck
 COPY tests/misra/install.sh /tmp/
-RUN /tmp/install.sh && rm -rf /tmp/cppcheck/
+RUN /tmp/install.sh && rm -rf $CPPCHECK_DIR/.git/
 ENV SKIP_CPPCHECK_INSTALL=1
 
 ENV CEREAL_REF="861144c136c91f70dcbc652c2ffe99f57440ad47"
