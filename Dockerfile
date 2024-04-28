@@ -49,9 +49,6 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
-RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
-ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
-
 ENV PANDA_PATH=/tmp/openpilot/panda
 ENV OPENPILOT_REF="3e1617deaacc3a03e5b79dc9b432dddb877edc61"
 ENV OPENDBC_REF="e0d4be4a6215d44809718dc84efe1b9f0299ad63"
