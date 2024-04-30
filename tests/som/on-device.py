@@ -16,8 +16,8 @@ if __name__ == "__main__":
           flag_set = True
 
         # shutdown when told
-        dt = p.get_datetime()
-        if dt.year == 2040 and dt.month == 8:
+        ch = p.can_health(0)
+        if ch['can_data_speed'] == 1000:
           os.system("sudo poweroff")
     except Exception as e:
       print(str(e))
