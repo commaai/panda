@@ -21,7 +21,7 @@ env:
 jobs:
   docker_push:
     name: docker push
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/panda'
     steps:
@@ -38,7 +38,7 @@ jobs:
 
   build:
     name: build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
@@ -57,7 +57,7 @@ jobs:
 
   unit_tests:
     name: unit tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
@@ -70,7 +70,7 @@ jobs:
 
   safety:
     name: safety
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         flags: ['', '--ubsan']
@@ -82,16 +82,13 @@ jobs:
       - name: Run safety tests
         timeout-minutes: 5
         run: |
-          ${{ env.RUN }} "cd .. && \
-                          scons -c && \
-                          scons -j$(nproc) opendbc/ cereal/ && \
-                          cd panda && \
+          ${{ env.RUN }} "scons -c -j$(nproc) && \
                           scons -j$(nproc) ${{ matrix.flags }} && \
                           tests/safety/test.sh"
 
   misra:
     name: MISRA C:2012
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
@@ -103,12 +100,12 @@ jobs:
         timeout-minutes: 1
         run: ${{ env.RUN }} "cd tests/misra && ./test_misra.sh"
       - name: MISRA mutation tests
-        timeout-minutes: 4
-        run: ${{ env.RUN }} "cd tests/misra && ./test_mutation.py"
+        timeout-minutes: 5
+        run: ${{ env.RUN }} "cd tests/misra && pytest -n8 test_mutation.py"
 
   python_linter:
     name: python linter
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2

@@ -129,7 +129,7 @@ class TestSubaruLongitudinalSafetyBase(TestSubaruSafetyBase, common.Longitudinal
   MAX_POSSIBLE_BRAKE = 2**16
 
   MIN_RPM = 0
-  MAX_RPM = 2400
+  MAX_RPM = 3600
   MAX_POSSIBLE_RPM = 2**13
 
   FWD_BLACKLISTED_ADDRS = {2: [SubaruMsg.ES_LKAS, SubaruMsg.ES_Brake, SubaruMsg.ES_Distance,
