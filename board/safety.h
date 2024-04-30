@@ -547,9 +547,11 @@ bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limit
 // Safety checks for torque-based steering commands
 bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLimits limits) {
   bool violation = false;
+  bool controls_disabled = false;
   uint32_t ts = microsecond_timer_get();
 
   if (controls_allowed) {
+    controls_disabled = false;
     // *** global torque limit check ***
     violation |= max_limit_check(desired_torque, limits.max_steer, -limits.max_steer);
 
@@ -573,11 +575,15 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
       rt_torque_last = desired_torque;
       ts_torque_check_last = ts;
     }
-  }
 
-  // no torque if controls is not allowed
-  if (!controls_allowed && (desired_torque != 0)) {
-    violation = true;
+  } else if (desired_torque != 0) {
+    // if controls are not allowed, torque must fall to zero at max permitted rate
+    int highest_allowed_disabling = MIN(MAX(desired_torque_last, 0) - limits.max_rate_down, 0);
+    int lowest_allowed_disabling = MAX(MIN(desired_torque_last, 0) + limits.max_rate_down, 0);
+    violation = max_limit_check(desired_torque, highest_allowed_disabling, lowest_allowed_disabling);
+
+  } else {
+    controls_disabled = true;
   }
 
   // certain safety modes set their steer request bit low for one or more frame at a
@@ -617,8 +623,8 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
     }
   }
 
-  // reset to 0 if either controls is not allowed or there's a violation
-  if (violation || !controls_allowed) {
+  // reset to 0 if controls are shut down or there's a violation
+  if (violation || !controls_disabled) {
     valid_steer_req_count = 0;
     invalid_steer_req_count = 0;
     desired_torque_last = 0;
