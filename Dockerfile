@@ -48,13 +48,13 @@ RUN /tmp/install.sh && rm -rf $CPPCHECK_DIR/.git/
 ENV SKIP_CPPCHECK_INSTALL=1
 
 ENV CEREAL_REF="861144c136c91f70dcbc652c2ffe99f57440ad47"
-ENV OPENDBC_REF="793a93e5f6670f1b95585fc6f1d29485bf2f7f7f"
+ENV OPENDBC_REF="d058bc9a9f156d55ee6e4b90ceb292d087267414"
 
 RUN git config --global --add safe.directory /tmp/openpilot/panda
 RUN mkdir -p /tmp/openpilot/ && \
     cd /tmp/openpilot/ && \
     git clone --depth 1 https://github.com/commaai/cereal && \
-    git clone --depth 1 https://github.com/jyoung8607/opendbc && \
+    git clone --depth 1 https://github.com/commaai/opendbc && \
     cd cereal && git fetch origin $CEREAL_REF && git checkout FETCH_HEAD && rm -rf .git/ && cd .. && \
     cd opendbc && git fetch origin $OPENDBC_REF && git checkout FETCH_HEAD && rm -rf .git/ && cd .. && \
     cp -pR opendbc/SConstruct opendbc/site_scons/ . && \
