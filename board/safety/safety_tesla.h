@@ -130,26 +130,28 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
     }
   }
 
-  // DAS_control: longitudinal control message
-  if (tesla_longitudinal && (addr == 0x2b9)) {
-    // No AEB events may be sent by openpilot
-    int aeb_event = GET_BYTE(to_send, 2) & 0x03U;
-    if (aeb_event != 0) {
+  if(addr == 0x2b9) {
+    // DAS_control: longitudinal control message
+    if (tesla_longitudinal) {
+      // No AEB events may be sent by openpilot
+      int aeb_event = GET_BYTE(to_send, 2) & 0x03U;
+      if (aeb_event != 0) {
+        violation = true;
+      }
+
+      // Don't send messages when the stock AEB system is active
+      if (tesla_stock_aeb) {
+        violation = true;
+      }
+
+      // Don't allow any acceleration limits above the safety limits
+      int raw_accel_max = ((GET_BYTE(to_send, 6) & 0x1FU) << 4) | (GET_BYTE(to_send, 5) >> 4);
+      int raw_accel_min = ((GET_BYTE(to_send, 5) & 0x0FU) << 5) | (GET_BYTE(to_send, 4) >> 3);
+      violation |= longitudinal_accel_checks(raw_accel_max, TESLA_LONG_LIMITS);
+      violation |= longitudinal_accel_checks(raw_accel_min, TESLA_LONG_LIMITS);
+    } else {
       violation = true;
     }
-
-    // Don't send messages when the stock AEB system is active
-    if (tesla_stock_aeb) {
-      violation = true;
-    }
-
-    // Don't allow any acceleration limits above the safety limits
-    int raw_accel_max = ((GET_BYTE(to_send, 6) & 0x1FU) << 4) | (GET_BYTE(to_send, 5) >> 4);
-    int raw_accel_min = ((GET_BYTE(to_send, 5) & 0x0FU) << 5) | (GET_BYTE(to_send, 4) >> 3);
-    violation |= longitudinal_accel_checks(raw_accel_max, TESLA_LONG_LIMITS);
-    violation |= longitudinal_accel_checks(raw_accel_min, TESLA_LONG_LIMITS);
-  } else {
-    violation = true;
   }
 
   if (violation) {
