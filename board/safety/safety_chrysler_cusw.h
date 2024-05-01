@@ -82,7 +82,6 @@ static void chrysler_cusw_rx_hook(const CANPacket_t *to_push) {
     pcm_cruise_check(cruise_engaged);
   }
 
-  // TODO: use the same message for both
   // update vehicle moving
   if ((bus == 0) && (addr == chrysler_cusw_addrs->BRAKE_1)) {
     vehicle_moving = (((GET_BYTE(to_push, 4) & 0x7U) << 8) + GET_BYTE(to_push, 5)) != 0U;
