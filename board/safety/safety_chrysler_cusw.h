@@ -109,10 +109,8 @@ static bool chrysler_cusw_tx_hook(const CANPacket_t *to_send) {
     int desired_torque = ((GET_BYTE(to_send, 0)) << 3) | ((GET_BYTE(to_send, 1) & 0xE0U) >> 5);
     desired_torque -= 1024;
 
-    const SteeringLimits limits = CHRYSLER_CUSW_STEERING_LIMITS;
-
     const bool steer_req = GET_BIT(to_send, 12U);
-    if (steer_torque_cmd_checks(desired_torque, steer_req, limits)) {
+    if (steer_torque_cmd_checks(desired_torque, steer_req, CHRYSLER_CUSW_STEERING_LIMITS)) {
       tx = false;
     }
   }
