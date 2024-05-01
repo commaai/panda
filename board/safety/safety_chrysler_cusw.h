@@ -44,8 +44,6 @@ RxCheck chrysler_cusw_rx_checks[] = {
   {.msg = {{CHRYSLER_CUSW_ADDRS.BRAKE_2, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_CUSW_ADDRS.EPS_STATUS, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_CUSW_ADDRS.ACCEL_GAS, 0, 5, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
-  // TODO: CRUISE_BUTTONS checksum validation
-  {.msg = {{CHRYSLER_CUSW_ADDRS.CRUISE_BUTTONS, 0, 3, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
   {.msg = {{CHRYSLER_CUSW_ADDRS.ACC_CONTROL, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
 };
 
@@ -53,17 +51,8 @@ const ChryslerCuswAddrs *chrysler_cusw_addrs = &CHRYSLER_CUSW_ADDRS;
 
 
 static uint8_t chrysler_cusw_get_counter(const CANPacket_t *to_push) {
-  const int addr = GET_ADDR(to_push);
   int counter_byte = GET_LEN(to_push) - 2U;
-
-  uint8_t counter = 0;
-  if (addr == CHRYSLER_CUSW_ADDRS.CRUISE_BUTTONS) {
-    counter = GET_BYTE(to_push, counter_byte) >> 4U;
-  } else {
-    counter = GET_BYTE(to_push, counter_byte) & 0xFU;
-  }
-
-  return counter;
+  return (uint8_t)(GET_BYTE(to_push, counter_byte) & 0xFU);
 }
 
 static void chrysler_cusw_rx_hook(const CANPacket_t *to_push) {
