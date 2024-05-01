@@ -70,26 +70,28 @@ static void chrysler_cusw_rx_hook(const CANPacket_t *to_push) {
   const int bus = GET_BUS(to_push);
   const int addr = GET_ADDR(to_push);
 
-  if ((bus == 0) && (addr == chrysler_cusw_addrs->EPS_STATUS)) {
-    int torque_meas_new = ((GET_BYTE(to_push, 3) & 0xFU) << 8) + GET_BYTE(to_push, 4) - 2048U;
-    update_sample(&torque_meas, torque_meas_new);
-  }
+  if (bus == 0) {
+    if (addr == chrysler_cusw_addrs->EPS_STATUS) {
+      int torque_meas_new = ((GET_BYTE(to_push, 3) & 0xFU) << 8) + GET_BYTE(to_push, 4) - 2048U;
+      update_sample(&torque_meas, torque_meas_new);
+    }
 
-  if ((bus == 0) && (addr == chrysler_cusw_addrs->ACC_CONTROL)) {
-    bool cruise_engaged = GET_BIT(to_push, 7U);
-    pcm_cruise_check(cruise_engaged);
-  }
+    if (addr == chrysler_cusw_addrs->ACC_CONTROL) {
+      bool cruise_engaged = GET_BIT(to_push, 7U);
+      pcm_cruise_check(cruise_engaged);
+    }
 
-  if ((bus == 0) && (addr == chrysler_cusw_addrs->BRAKE_1)) {
-    vehicle_moving = (((GET_BYTE(to_push, 4) & 0x7U) << 8) + GET_BYTE(to_push, 5)) != 0U;
-  }
+    if (addr == chrysler_cusw_addrs->BRAKE_1) {
+      vehicle_moving = (((GET_BYTE(to_push, 4) & 0x7U) << 8) + GET_BYTE(to_push, 5)) != 0U;
+    }
 
-  if ((bus == 0) && (addr == chrysler_cusw_addrs->ACCEL_GAS)) {
-    gas_pressed = GET_BYTE(to_push, 1U) != 0U;
-  }
+    if (addr == chrysler_cusw_addrs->ACCEL_GAS) {
+      gas_pressed = GET_BYTE(to_push, 1U) != 0U;
+    }
 
-  if ((bus == 0) && (addr == chrysler_cusw_addrs->BRAKE_2)) {
-    brake_pressed = GET_BIT(to_push, 9U);
+    if (addr == chrysler_cusw_addrs->BRAKE_2) {
+      brake_pressed = GET_BIT(to_push, 9U);
+    }
   }
 
   generic_rx_checks((bus == 0) && (addr == chrysler_cusw_addrs->LKAS_COMMAND));
