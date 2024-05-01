@@ -61,24 +61,29 @@ static void chrysler_cusw_rx_hook(const CANPacket_t *to_push) {
 
   if (bus == 0) {
     if (addr == chrysler_cusw_addrs->EPS_STATUS) {
+      // Signal: EPS_STATUS.TORQUE_MOTOR
       int torque_meas_new = ((GET_BYTE(to_push, 3) & 0xFU) << 8) + GET_BYTE(to_push, 4) - 2048U;
       update_sample(&torque_meas, torque_meas_new);
     }
 
     if (addr == chrysler_cusw_addrs->ACC_CONTROL) {
+      // Signal: ACC_CONTROL.ACC_ACTIVE
       bool cruise_engaged = GET_BIT(to_push, 7U);
       pcm_cruise_check(cruise_engaged);
     }
 
     if (addr == chrysler_cusw_addrs->BRAKE_1) {
+      // Signal: BRAKE_1.VEHICLE_SPEED
       vehicle_moving = (((GET_BYTE(to_push, 4) & 0x7U) << 8) + GET_BYTE(to_push, 5)) != 0U;
     }
 
     if (addr == chrysler_cusw_addrs->ACCEL_GAS) {
+      // Signal: ACCEL_GAS.GAS_HUMAN
       gas_pressed = GET_BYTE(to_push, 1U) != 0U;
     }
 
     if (addr == chrysler_cusw_addrs->BRAKE_2) {
+      // Signal: BRAKE_2.BRAKE_HUMAN
       brake_pressed = GET_BIT(to_push, 9U);
     }
   }
@@ -91,9 +96,11 @@ static bool chrysler_cusw_tx_hook(const CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
 
   if (addr == chrysler_cusw_addrs->LKAS_COMMAND) {
+    // Signal: LKAS_COMMAND.STEERING_TORQUE
     int desired_torque = ((GET_BYTE(to_send, 0)) << 3) | ((GET_BYTE(to_send, 1) & 0xE0U) >> 5);
     desired_torque -= 1024;
 
+    // Signal: LKAS_COMMAND.LKAS_CONTROL_BIT
     const bool steer_req = GET_BIT(to_send, 12U);
     if (steer_torque_cmd_checks(desired_torque, steer_req, CHRYSLER_CUSW_STEERING_LIMITS)) {
       tx = false;
@@ -101,6 +108,8 @@ static bool chrysler_cusw_tx_hook(const CANPacket_t *to_send) {
   }
 
   if (addr == chrysler_cusw_addrs->CRUISE_BUTTONS) {
+    // Signal: CRUISE_BUTTONS.ACC_Cancel
+    // Signal: CRUISE_BUTTONS.ACC_Resume
     const bool is_cancel = GET_BIT(to_send, 0U);
     const bool is_resume = GET_BIT(to_send, 4U);
     const bool allowed = is_cancel || (is_resume && controls_allowed);
