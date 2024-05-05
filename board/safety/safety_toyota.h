@@ -163,9 +163,9 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
 
     // sample gas pedal
     if (!toyota_alt_gas_pedal_116 && (addr == 0x1D2)) {
-      gas_pressed = !GET_BIT(to_push, 4U);
+      gas_pressed = !GET_BIT(to_push, 4U); // GAS_PEDAL.GAS_RELEASED
     } else if (toyota_alt_gas_pedal_116 && (addr == 0x116)) {
-      gas_pressed = GET_BYTE(to_push, 1) != 0U;
+      gas_pressed = GET_BYTE(to_push, 1) != 0U; // GAS_PEDAL.GAS_PEDAL_USER
     }
 
     // sample speed
