@@ -80,9 +80,7 @@ const uint32_t TOYOTA_EPS_FACTOR = (1UL << TOYOTA_PARAM_OFFSET) - 1U;
 const uint32_t TOYOTA_PARAM_ALT_BRAKE_224 = 1UL << TOYOTA_PARAM_OFFSET;
 const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2UL << TOYOTA_PARAM_OFFSET;
 const uint32_t TOYOTA_PARAM_LTA = 4UL << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_ALT_BRAKE_101 = 8UL << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_ALT_PCM_CRUISE_176 = 16UL << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_ALT_GAS_PEDAL_116 = 32UL << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_SECOC_CAR = 8UL << TOYOTA_PARAM_OFFSET;
 
 bool toyota_alt_brake_224 = false;
 bool toyota_alt_brake_101 = false;
@@ -329,10 +327,13 @@ static bool toyota_tx_hook(const CANPacket_t *to_send) {
 
 static safety_config toyota_init(uint16_t param) {
   toyota_alt_brake_224 = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE_224);
-  toyota_alt_brake_101 = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE_101);
-  toyota_alt_pcm_cruise_176 = GET_FLAG(param, TOYOTA_PARAM_ALT_PCM_CRUISE_176);
-  toyota_alt_gas_pedal_116 = GET_FLAG(param, TOYOTA_PARAM_ALT_GAS_PEDAL_116);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
+
+  bool secoc_car = GET_FLAG(param, TOYOTA_PARAM_SECOC_CAR);
+  toyota_alt_brake_101 = secoc_car;
+  toyota_alt_pcm_cruise_176 = secoc_car;
+  toyota_alt_gas_pedal_116 = secoc_car;
+
   toyota_lta = GET_FLAG(param, TOYOTA_PARAM_LTA);
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
 
