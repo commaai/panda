@@ -156,7 +156,8 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
     if (!toyota_alt_pcm_cruise_176 && (addr == 0x1D2)) {
       bool cruise_engaged = GET_BIT(to_push, 5U);
       pcm_cruise_check(cruise_engaged);
-    } else if (toyota_alt_pcm_cruise_176 && (addr == 0x176)) {
+    }
+    if (toyota_alt_pcm_cruise_176 && (addr == 0x176)) {
       bool cruise_engaged = GET_BIT(to_push, 5U);
       pcm_cruise_check(cruise_engaged);
     }
@@ -185,9 +186,11 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
     // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224, rav4 prime on 0x101
     if (toyota_alt_brake_224 && !toyota_alt_brake_101 && (addr == 0x224)) {
       brake_pressed = GET_BIT(to_push, 5U);
-    } else if (!toyota_alt_brake_224 && toyota_alt_brake_101 && (addr == 0x101)) {
+    }
+    if (!toyota_alt_brake_224 && toyota_alt_brake_101 && (addr == 0x101)) {
       brake_pressed = GET_BIT(to_push, 3U);
-    } else if (!toyota_alt_brake_224 && !toyota_alt_brake_101 && (addr == 0x226)) {
+    }
+    if (!toyota_alt_brake_224 && !toyota_alt_brake_101 && (addr == 0x226)) {
       brake_pressed = GET_BIT(to_push, 37U);
     }
 
