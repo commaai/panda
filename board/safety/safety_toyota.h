@@ -77,11 +77,17 @@ RxCheck toyota_lta_rx_checks[] = {
 // first byte is for EPS factor, second is for flags
 const uint32_t TOYOTA_PARAM_OFFSET = 8U;
 const uint32_t TOYOTA_EPS_FACTOR = (1UL << TOYOTA_PARAM_OFFSET) - 1U;
-const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1UL << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_ALT_BRAKE_224 = 1UL << TOYOTA_PARAM_OFFSET;
 const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2UL << TOYOTA_PARAM_OFFSET;
 const uint32_t TOYOTA_PARAM_LTA = 4UL << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_ALT_BRAKE_101 = 5UL << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_ALT_PCM_CRUISE_176 = 6UL << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_ALT_GAS_PEDAL_116 = 7UL << TOYOTA_PARAM_OFFSET;
 
-bool toyota_alt_brake = false;
+bool toyota_alt_brake_224 = false;
+bool toyota_alt_brake_101 = false;
+bool toyota_alt_pcm_cruise_176 = false;
+bool toyota_alt_gas_pedal_116 = false;
 bool toyota_stock_longitudinal = false;
 bool toyota_lta = false;
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
@@ -147,19 +153,19 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
 
     // enter controls on rising edge of ACC, exit controls on ACC off
     // exit controls on rising edge of gas press
-    if (addr == 0x1D2) {
-      // 5th bit is CRUISE_ACTIVE
+    if (!toyota_alt_pcm_cruise_176 && (addr == 0x1D2)) {
       bool cruise_engaged = GET_BIT(to_push, 5U);
       pcm_cruise_check(cruise_engaged);
-
-      // sample gas pedal
-      gas_pressed = !GET_BIT(to_push, 4U);
+    } else if (toyota_alt_pcm_cruise_176 && (addr == 0x176)) {
+      bool cruise_engaged = GET_BIT(to_push, 5U);
+      pcm_cruise_check(cruise_engaged);
     }
 
-    if (addr == 0x176) {
-      // 5th bit is CRUISE_ACTIVE
-      bool cruise_engaged = GET_BIT(to_push, 5U);
-      pcm_cruise_check(cruise_engaged);
+    // sample gas pedal
+    if (!toyota_alt_gas_pedal_116 && (addr == 0x1D2)) {
+      gas_pressed = !GET_BIT(to_push, 4U);
+    } else if (toyota_alt_gas_pedal_116 && (addr == 0x116)) {
+      gas_pressed = GET_BYTE(to_push, 1) != 0U;
     }
 
     // sample speed
@@ -176,15 +182,13 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
       UPDATE_VEHICLE_SPEED(speed / 4.0 * 0.01 / 3.6);
     }
 
-    // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224
-    if (((addr == 0x224) && toyota_alt_brake) || ((addr == 0x226) && !toyota_alt_brake)) {
-      uint8_t bit = (addr == 0x224) ? 5U : 37U;
-      brake_pressed = GET_BIT(to_push, bit);
-    }
-
-    // brake pressed on 0x101 for rav4 prime
-    if (addr == 0x101) {
+    // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224, rav4 prime on 0x101
+    if (toyota_alt_brake_224 && !toyota_alt_brake_101 && (addr == 0x224)) {
+      brake_pressed = GET_BIT(to_push, 5U);
+    } else if (!toyota_alt_brake_224 && toyota_alt_brake_101 && (addr == 0x101)) {
       brake_pressed = GET_BIT(to_push, 3U);
+    } else if (!toyota_alt_brake_224 && !toyota_alt_brake_101 && (addr == 0x226)) {
+      brake_pressed = GET_BIT(to_push, 37U);
     }
 
     bool stock_ecu_detected = addr == 0x2E4;  // STEERING_LKA
@@ -322,7 +326,10 @@ static bool toyota_tx_hook(const CANPacket_t *to_send) {
 }
 
 static safety_config toyota_init(uint16_t param) {
-  toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
+  toyota_alt_brake_224 = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE_224);
+  toyota_alt_brake_101 = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE_101);
+  toyota_alt_pcm_cruise_176 = GET_FLAG(param, TOYOTA_PARAM_ALT_PCM_CRUISE_176);
+  toyota_alt_gas_pedal_116 = GET_FLAG(param, TOYOTA_PARAM_ALT_GAS_PEDAL_116);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
   toyota_lta = GET_FLAG(param, TOYOTA_PARAM_LTA);
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
