@@ -80,9 +80,9 @@ const uint32_t TOYOTA_EPS_FACTOR = (1UL << TOYOTA_PARAM_OFFSET) - 1U;
 const uint32_t TOYOTA_PARAM_ALT_BRAKE_224 = 1UL << TOYOTA_PARAM_OFFSET;
 const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2UL << TOYOTA_PARAM_OFFSET;
 const uint32_t TOYOTA_PARAM_LTA = 4UL << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_ALT_BRAKE_101 = 5UL << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_ALT_PCM_CRUISE_176 = 6UL << TOYOTA_PARAM_OFFSET;
-const uint32_t TOYOTA_PARAM_ALT_GAS_PEDAL_116 = 7UL << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_ALT_BRAKE_101 = 8UL << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_ALT_PCM_CRUISE_176 = 16UL << TOYOTA_PARAM_OFFSET;
+const uint32_t TOYOTA_PARAM_ALT_GAS_PEDAL_116 = 32UL << TOYOTA_PARAM_OFFSET;
 
 bool toyota_alt_brake_224 = false;
 bool toyota_alt_brake_101 = false;
@@ -150,9 +150,7 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
         update_sample(&angle_meas, angle_meas_new);
       }
     }
-
     // enter controls on rising edge of ACC, exit controls on ACC off
-    // exit controls on rising edge of gas press
     if (!toyota_alt_pcm_cruise_176 && (addr == 0x1D2)) {
       bool cruise_engaged = GET_BIT(to_push, 5U);
       pcm_cruise_check(cruise_engaged);
@@ -162,10 +160,11 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
       pcm_cruise_check(cruise_engaged);
     }
 
-    // sample gas pedal
+    // exit controls on rising edge of gas press
     if (!toyota_alt_gas_pedal_116 && (addr == 0x1D2)) {
       gas_pressed = !GET_BIT(to_push, 4U); // GAS_PEDAL.GAS_RELEASED
-    } else if (toyota_alt_gas_pedal_116 && (addr == 0x116)) {
+    }
+    if (toyota_alt_gas_pedal_116 && (addr == 0x116)) {
       gas_pressed = GET_BYTE(to_push, 1) != 0U; // GAS_PEDAL.GAS_PEDAL_USER
     }
 
