@@ -184,7 +184,7 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
 
     // brake pressed on 0x101 for rav4 prime
     if (addr == 0x101) {
-      brake_pressed = GET_BIT(to_push, 3) != 0U;
+      brake_pressed = GET_BIT(to_push, 3U);
     }
 
     bool stock_ecu_detected = addr == 0x2E4;  // STEERING_LKA
@@ -238,7 +238,7 @@ static bool toyota_tx_hook(const CANPacket_t *to_send) {
     // LTA angle steering check for SecOC cars
     if (addr == 0x131) {
       // Block any form of actuation for now
-      if (GET_BYTE(to_send, 0)) {
+      if (GET_BYTE(to_send, 0) != 0U) {
         tx = false;
       }
     }
