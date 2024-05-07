@@ -184,5 +184,5 @@ SConscript('board/SConscript')
 SConscript('board/jungle/SConscript')
 
 # test files
-if GetOption('extras') and os.path.exists(Dir("tests/libpanda/").path):
+if GetOption('extras'):
   SConscript('tests/libpanda/SConscript')
