@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import unittest
+import pytest
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -61,12 +61,12 @@ class GmLongitudinalBase(common.PandaCarSafetyTest, common.LongitudinalGasBrakeS
           should_enable = btn_cur != Buttons.DECEL_SET and btn_prev == Buttons.DECEL_SET
           should_enable = should_enable or (btn_cur == Buttons.RES_ACCEL and btn_prev != Buttons.RES_ACCEL)
           should_enable = should_enable and btn_cur != Buttons.CANCEL
-          self.assertEqual(should_enable, self.safety.get_controls_allowed())
+          assert should_enable == self.safety.get_controls_allowed()
 
   def test_cancel_button(self):
     self.safety.set_controls_allowed(1)
     self._rx(self._button_msg(Buttons.CANCEL))
-    self.assertFalse(self.safety.get_controls_allowed())
+    assert not self.safety.get_controls_allowed()
 
 
 class TestGmSafetyBase(common.PandaCarSafetyTest, common.DriverTorqueSteeringSafetyTest):
@@ -87,13 +87,13 @@ class TestGmSafetyBase(common.PandaCarSafetyTest, common.DriverTorqueSteeringSaf
   PCM_CRUISE = True  # openpilot is tied to the PCM state if not longitudinal
 
   @classmethod
-  def setUpClass(cls):
+  def setup_class(cls):
     if cls.__name__ == "TestGmSafetyBase":
       cls.packer = None
       cls.safety = None
-      raise unittest.SkipTest
+      raise pytest.skip
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
     self.safety = libpanda_py.libpanda
@@ -153,7 +153,7 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
   MIN_GAS = 1404 # maximum regen
   INACTIVE_GAS = 1404
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
     self.safety = libpanda_py.libpanda
@@ -166,11 +166,11 @@ class TestGmCameraSafetyBase(TestGmSafetyBase):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   @classmethod
-  def setUpClass(cls):
+  def setup_class(cls):
     if cls.__name__ == "TestGmCameraSafetyBase":
       cls.packer = None
       cls.safety = None
-      raise unittest.SkipTest
+      raise pytest.skip
 
   def _user_brake_msg(self, brake):
     values = {"BrakePressed": brake}
@@ -183,7 +183,7 @@ class TestGmCameraSafety(TestGmCameraSafetyBase):
   FWD_BLACKLISTED_ADDRS = {2: [0x180], 0: [0x184]}  # block LKAS message and PSCMStatus
   BUTTONS_BUS = 2  # tx only
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
     self.safety = libpanda_py.libpanda
@@ -194,15 +194,15 @@ class TestGmCameraSafety(TestGmCameraSafetyBase):
     # Only CANCEL button is allowed while cruise is enabled
     self.safety.set_controls_allowed(0)
     for btn in range(8):
-      self.assertFalse(self._tx(self._button_msg(btn)))
+      assert not self._tx(self._button_msg(btn))
 
     self.safety.set_controls_allowed(1)
     for btn in range(8):
-      self.assertFalse(self._tx(self._button_msg(btn)))
+      assert not self._tx(self._button_msg(btn))
 
     for enabled in (True, False):
       self._rx(self._pcm_status_msg(enabled))
-      self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL)))
+      assert enabled == self._tx(self._button_msg(Buttons.CANCEL))
 
 
 class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase):
@@ -215,7 +215,7 @@ class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase)
   MIN_GAS = 1514 # maximum regen
   INACTIVE_GAS = 1554
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
     self.safety = libpanda_py.libpanda
@@ -224,4 +224,4 @@ class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase)
 
 
 if __name__ == "__main__":
-  unittest.main()
+  pytest.main()
