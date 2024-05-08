@@ -1,6 +1,10 @@
-Adaption to MQBA0 EPS 2Q1909144J 6030 used in a PQ26 no radar non ACC car (Volkswagen Polo 6C [Polo 6R Facelift]) PQ26 can be seen as nearly identical to MQB regarding can bus communication.
+THIS PROJECT IS STILL IN PROGRESS
 
-Panda can 0 is directly connected to engine can bus Panda can 1 is directly connected to comfort can bus
+Adaption to Seat Cupra Born (MEB)
+
+The EPS on engine can bus is not SECOC secured
+
+Panda can 0 is connected to R242 camera. (camera data filter) Panda can 2 is connected to sensors can bus. (camera data filter) Panda can 1 is connected to engine can bus. (steering command sender)
 
 # Welcome to panda
 
