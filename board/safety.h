@@ -16,6 +16,7 @@
 #include "safety/safety_nissan.h"
 #include "safety/safety_volkswagen_mqb.h"
 #include "safety/safety_volkswagen_pq.h"
+#include "safety/safety_volkswagen_meb.h"
 #include "safety/safety_elm327.h"
 #include "safety/safety_body.h"
 
