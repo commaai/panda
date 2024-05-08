@@ -51,6 +51,7 @@
 #define SAFETY_FAW 26U
 #define SAFETY_BODY 27U
 #define SAFETY_HYUNDAI_CANFD 28U
+#define SAFETY_VOLKSWAGEN_MEB 29U
 
 uint16_t current_safety_mode = SAFETY_SILENT;
 uint16_t current_safety_param = 0;
@@ -311,13 +312,14 @@ const safety_hook_config safety_hook_registry[] = {
   //{SAFETY_HYUNDAI, &hyundai_hooks},
   //{SAFETY_CHRYSLER, &chrysler_hooks},
   //{SAFETY_SUBARU, &subaru_hooks},
-  {SAFETY_VOLKSWAGEN_MQB, &volkswagen_mqb_hooks},
+  //{SAFETY_VOLKSWAGEN_MQB, &volkswagen_mqb_hooks},
   //{SAFETY_NISSAN, &nissan_hooks},
   {SAFETY_NOOUTPUT, &nooutput_hooks},
   //{SAFETY_HYUNDAI_LEGACY, &hyundai_legacy_hooks},
   //{SAFETY_MAZDA, &mazda_hooks},
   //{SAFETY_BODY, &body_hooks},
   //{SAFETY_FORD, &ford_hooks},
+  {SAFETY_VOLKSWAGEN_MEB, &volkswagen_meb_hooks},
 //#ifdef CANFD
 //  {SAFETY_HYUNDAI_CANFD, &hyundai_canfd_hooks},
 //#endif
