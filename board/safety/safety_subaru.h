@@ -38,7 +38,6 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
 #define MSG_SUBARU_Wheel_Speeds          0x13a
 
 #define MSG_SUBARU_ES_LKAS               0x122
-//#define MSG_SUBARU_ES_LKAS_ANGLE         0x124
 #define MSG_SUBARU_ES_Brake              0x220
 #define MSG_SUBARU_ES_Distance           0x221
 #define MSG_SUBARU_ES_Status             0x222

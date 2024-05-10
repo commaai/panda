@@ -8,7 +8,6 @@ USB_OTG_GlobalTypeDef *USBx = USB_OTG_HS;
 
 #define USBD_FS_TRDT_VALUE        6UL
 #define USB_OTG_SPEED_FULL        3U
-//#define DCFG_FRAME_INTERVAL_80    0U
 
 
 void usb_irqhandler(void);
@@ -52,7 +51,6 @@ void usb_init(void) {
   // Restart the Phy Clock
   USBx_PCGCCTL = 0U;
   // Device mode configuration
-  //USBx_DEVICE->DCFG |= DCFG_FRAME_INTERVAL_80;
   USBx_DEVICE->DCFG |= 0U;
   USBx_DEVICE->DCFG |= USB_OTG_SPEED_FULL | USB_OTG_DCFG_NZLSOHSK;
 

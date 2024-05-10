@@ -54,18 +54,11 @@ struct board {
 #define HW_TYPE_GREY_PANDA 2U
 // cppcheck-suppress misra-c2012-2.5
 #define HW_TYPE_BLACK_PANDA 3U
-//#define HW_TYPE_PEDAL 4U
 // cppcheck-suppress misra-c2012-2.5
 #define HW_TYPE_UNO 5U
 #define HW_TYPE_DOS 6U
 
-// LED colors
-#define LED_RED 0U
-#define LED_GREEN 1U
-#define LED_BLUE 2U
-
 // USB power modes (from cereal.log.health)
-//#define USB_POWER_NONE 0U
 // cppcheck-suppress misra-c2012-2.5
 #define USB_POWER_CLIENT 1U
 // cppcheck-suppress misra-c2012-2.5

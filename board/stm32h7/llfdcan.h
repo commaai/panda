@@ -17,14 +17,12 @@
 #define CAN_SEG2(tq, sp) ((tq) * (100U - (sp)) / 100U)
 
 // FDCAN core settings
-//#define FDCAN_MESSAGE_RAM_SIZE 0x2800UL
 // cppcheck-suppress misra-c2012-2.5
 #define FDCAN_START_ADDRESS 0x4000AC00UL
 // cppcheck-suppress misra-c2012-2.5
 #define FDCAN_OFFSET 3384UL // bytes for each FDCAN module, equally
 // cppcheck-suppress misra-c2012-2.5
 #define FDCAN_OFFSET_W 846UL // words for each FDCAN module, equally
-//#define FDCAN_END_ADDRESS 0x4000D3FCUL // Message RAM has a width of 4 bytes
 
 // FDCAN_RX_FIFO_0_EL_CNT + FDCAN_TX_FIFO_EL_CNT can't exceed 47 elements (47 * 72 bytes = 3,384 bytes) per FDCAN module
 
