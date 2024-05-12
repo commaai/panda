@@ -5,25 +5,25 @@ from enum import IntEnum, Enum
 
 from typing import TypedDict, Optional
 
-class ExchangeStationIdsReturn(TypedDict):
+class ExchangeStationIdsReturn:
   id_length: int
   data_type: int
   available: int  
   protected: int  
 
-class GetDaqListSizeReturn(TypedDict):
+class GetDaqListSizeReturn:
   list_size: int
   first_pid: int
 
-class GetSessionStatusReturn(TypedDict):
+class GetSessionStatusReturn:
   status: int
   info: Optional[int]   
 
-class DiagnosticServiceReturn(TypedDict):
+class DiagnosticServiceReturn:
   length: int
   type: int
 
-class ActionServiceReturn(TypedDict):
+class ActionServiceReturn:
   length: int
   type: int
 
@@ -167,12 +167,7 @@ class CcpClient():
   def exchange_station_ids(self, device_id_info: bytes = b"") -> ExchangeStationIdsReturn:
     self._send_cro(COMMAND_CODE.EXCHANGE_ID, device_id_info)
     resp = self._recv_dto(0.025)
-    return { 
-      "id_length": resp[0],
-      "data_type": resp[1],
-      "available": resp[2],
-      "protected": resp[3],
-    }
+    return ExchangeStationIdsReturn(id_length=resp[0], data_type=resp[1], available=resp[2], protected=resp[3])
 
   def get_seed(self, resource_mask: int) -> bytes:
     if resource_mask > 255:
@@ -240,10 +235,7 @@ class CcpClient():
       raise ValueError("list number must be less than 256")
     self._send_cro(COMMAND_CODE.GET_DAQ_SIZE, bytes([list_num, 0]) + struct.pack(f"{self.byte_order.value}I", can_id))
     resp = self._recv_dto(0.025)
-    return { 
-      "list_size": resp[0],
-      "first_pid": resp[1],
-    }
+    return GetDaqListSizeReturn(list_size=resp[0], first_pid=resp[1])
 
   def set_daq_list_pointer(self, list_num: int, odt_num: int, element_num: int) -> None:
     if list_num > 255:
@@ -293,10 +285,8 @@ class CcpClient():
   def get_session_status(self) -> GetSessionStatusReturn:
     self._send_cro(COMMAND_CODE.GET_S_STATUS)
     resp = self._recv_dto(0.025)
-    return { 
-      "status": resp[0],
-      "info": resp[2] if resp[1] else None,
-    }
+    info = resp[2] if resp[1] else None
+    return GetSessionStatusReturn(status=resp[0], info=info)
 
   def build_checksum(self, size: int) -> bytes:
     self._send_cro(COMMAND_CODE.BUILD_CHKSUM, struct.pack(f"{self.byte_order.value}I", size))
@@ -341,10 +331,7 @@ class CcpClient():
       raise ValueError("max data size is 4 bytes")
     self._send_cro(COMMAND_CODE.DIAG_SERVICE, struct.pack(f"{self.byte_order.value}H", service_num) + data)
     resp = self._recv_dto(0.025)
-    return { 
-      "length": resp[0],
-      "type": resp[1],
-    }
+    return DiagnosticServiceReturn(length=resp[0], type=resp[1])
 
   def action_service(self, service_num: int, data: bytes = b"") -> ActionServiceReturn:
     if service_num > 65535:
@@ -353,10 +340,7 @@ class CcpClient():
       raise ValueError("max data size is 4 bytes")
     self._send_cro(COMMAND_CODE.ACTION_SERVICE, struct.pack(f"{self.byte_order.value}H", service_num) + data)
     resp = self._recv_dto(0.025)
-    return { 
-      "length": resp[0],
-      "type": resp[1],
-    }
+    return ActionServiceReturn(length=resp[0], type=resp[1])
 
   def test_availability(self, station_addr: int) -> None:
     if station_addr > 65535:
