@@ -259,7 +259,8 @@ static bool toyota_tx_hook(const CANPacket_t *to_send) {
         }
 
         // check if we should wind down torque
-        int driver_torque = MIN(ABS(torque_driver.min), ABS(torque_driver.max));
+        // Use lowest of current sample and 3 msgs ago (60ms for STEER_TORQUE_SENSOR at 50Hz)
+        int driver_torque = MIN(ABS(driver_torque[0]), ABS(driver_torque[3]));
         if ((driver_torque > TOYOTA_LTA_MAX_DRIVER_TORQUE) && (torque_wind_down != 0)) {
           tx = false;
         }
