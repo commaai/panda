@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OPTIONS="-A8 -t8 --lineend=linux"
+OPTIONS="-A8 -t8 -s2 --lineend=linux"
 
 ASTYLE=$(which astyle)
 if [ $? -ne 0 ]; then

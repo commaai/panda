@@ -9,7 +9,7 @@ RxCheck body_rx_checks[] = {
 static void body_rx_hook(const CANPacket_t *to_push) {
   // body is never at standstill
   vehicle_moving = true;
-controls_allowed = false;
+        controls_allowed = false;
   if (GET_ADDR(to_push) == 0x201U) {
     controls_allowed = true;
   }
