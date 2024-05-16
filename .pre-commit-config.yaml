@@ -18,3 +18,9 @@ repos:
   rev: v0.3.3
   hooks:
   - id: ruff
+
+- repo: https://github.com/BBBmau/astyle-pre-commit
+  rev: v0.1.0
+  hooks:
+  - id: astyle
+    args: ["-s2"]
