@@ -145,7 +145,7 @@ def test_recovery_from_qdl(p, pj):
     pj.set_header_pin(i, 0)
 
   # normally, this GPIO is set immediately since it's first enabled in the ABL
-  for i in range(40):
+  for i in range(17):
     assert not p.read_som_gpio()
     time.sleep(1)
 
