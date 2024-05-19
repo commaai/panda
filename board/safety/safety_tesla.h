@@ -32,7 +32,7 @@ RxCheck tesla_model3_y_rx_checks[] = {
   {.msg = {{0x118, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},  // DI_systemStatus (gas pedal)
   {.msg = {{0x39d, 0, 5, .frequency = 25U}, { 0 }, { 0 }}},   // IBST_status (brakes)
   {.msg = {{0x286, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},   // DI_state (acc state)
-  {.msg = {{0x311, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},   // UI_warning (buckle switch & doors)
+  {.msg = {{0x311, 0, 7, .frequency = 10U}, { 0 }, { 0 }}},   // UI_warning (buckle switch & doors)
   {.msg = {{0x3f5, 1, 8, .frequency = 10U}, { 0 }, { 0 }}},   // ID3F5VCFRONT_lighting (blinkers)
 };
 
