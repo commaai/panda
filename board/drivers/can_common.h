@@ -208,13 +208,6 @@ void ignition_can_hook(CANPacket_t *to_push) {
       ignition_can_cnt = 0U;
     }
 
-    // Tesla Model S exception
-    if ((addr == 0x348) && (len == 8)) {
-      // GTW_status
-      ignition_can = (GET_BYTE(to_push, 0) & 0x1U) != 0U;
-      ignition_can_cnt = 0U;
-    }
-
     // Tesla Model 3 exception
     if ((addr == 0x118) && (len == 8)) {
       // DI_state
