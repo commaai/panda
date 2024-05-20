@@ -2,27 +2,32 @@ import sys
 import time
 import struct
 from enum import IntEnum, Enum
+from dataclasses import dataclass
+from typing import Optional
 
-from typing import TypedDict, Optional
-
+@dataclass
 class ExchangeStationIdsReturn:
   id_length: int
   data_type: int
   available: int  
   protected: int  
 
+@dataclass
 class GetDaqListSizeReturn:
   list_size: int
   first_pid: int
 
+@dataclass
 class GetSessionStatusReturn:
   status: int
   info: Optional[int]   
 
+@dataclass
 class DiagnosticServiceReturn:
   length: int
   type: int
 
+@dataclass
 class ActionServiceReturn:
   length: int
   type: int
