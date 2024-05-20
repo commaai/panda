@@ -9,8 +9,8 @@ from typing import Optional
 class ExchangeStationIdsReturn:
   id_length: int
   data_type: int
-  available: int  
-  protected: int  
+  available: int
+  protected: int
 
 @dataclass
 class GetDaqListSizeReturn:
@@ -20,7 +20,7 @@ class GetDaqListSizeReturn:
 @dataclass
 class GetSessionStatusReturn:
   status: int
-  info: Optional[int]   
+  info: Optional[int]
 
 @dataclass
 class DiagnosticServiceReturn:
