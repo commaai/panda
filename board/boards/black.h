@@ -141,7 +141,7 @@ void black_init_bootloader(void) {
   set_gpio_output(GPIOC, 12, 0);
 }
 
-const harness_configuration black_harness_config = {
+harness_configuration black_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOC,
@@ -155,7 +155,7 @@ const harness_configuration black_harness_config = {
   .adc_channel_SBU2 = 13
 };
 
-const board board_black = {
+board board_black = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &black_harness_config,
   .has_obd = true,

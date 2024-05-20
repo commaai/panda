@@ -145,7 +145,7 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 uint8_t loop_counter = 0U;
 uint8_t prev_harness_status = HARNESS_STATUS_NC;
 void tick_handler(void) {
-  if (TICK_TIMER->SR != 0) {
+  if (TICK_TIMER->SR != 0U) {
 
     // siren
     current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
@@ -198,7 +198,7 @@ void tick_handler(void) {
       bootkick_tick(check_started(), recent_heartbeat);
 
       // increase heartbeat counter and cap it at the uint32 limit
-      if (heartbeat_counter < __UINT32_MAX__) {
+      if (heartbeat_counter < UINT32_MAX) {
         heartbeat_counter += 1U;
       }
 
