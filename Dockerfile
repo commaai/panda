@@ -55,7 +55,7 @@ RUN mkdir -p /tmp/openpilot/ && \
     git clone --depth 1 https://github.com/commaai/cereal && \
     git clone --depth 1 https://github.com/jyoung8607/opendbc && \
     cd cereal && git fetch origin $CEREAL_REF && git checkout FETCH_HEAD && rm -rf .git/ && cd .. && \
-    cd opendbc && git fetch origin && git checkout vw_mlb && rm -rf .git/ && cd .. && \
+    cd opendbc && git fetch origin && git checkout vw-mlb && rm -rf .git/ && cd .. && \
     cp -pR opendbc/SConstruct opendbc/site_scons/ . && \
     pip3 install --break-system-packages --no-cache-dir -r opendbc/requirements.txt && \
     scons -j8 --minimal opendbc/ cereal/
