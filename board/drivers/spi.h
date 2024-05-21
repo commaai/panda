@@ -152,7 +152,7 @@ void spi_rx_done(void) {
     if (checksum_valid) {
       if (spi_endpoint == 0U) {
         if (spi_data_len_mosi >= sizeof(ControlPacket_t)) {
-          ControlPacket_t ctrl;
+          ControlPacket_t ctrl = {0};
           (void)memcpy(&ctrl, &spi_buf_rx[SPI_HEADER_SIZE], sizeof(ControlPacket_t));
           response_len = comms_control_handler(&ctrl, &spi_buf_tx[3]);
           response_ack = true;
