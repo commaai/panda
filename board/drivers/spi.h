@@ -43,7 +43,7 @@ uint16_t spi_data_len_miso;
 uint16_t spi_checksum_error_count = 0;
 bool spi_can_tx_ready = false;
 
-const char version_text[] = "VERSION";
+const unsigned char version_text[] = "VERSION";
 
 #define SPI_HEADER_SIZE 7U
 
