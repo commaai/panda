@@ -92,7 +92,7 @@ void llcan_irq_disable(const CAN_TypeDef *CANx) {
   }
 }
 
-void llcan_irq_enable(const CAN_TypeDef *CANx) {
+static void llcan_irq_enable(const CAN_TypeDef *CANx) {
   if (CANx == CAN1) {
     NVIC_EnableIRQ(CAN1_TX_IRQn);
     NVIC_EnableIRQ(CAN1_RX0_IRQn);

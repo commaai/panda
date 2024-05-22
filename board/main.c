@@ -132,7 +132,7 @@ void __initialize_hardware_early(void) {
   early_initialization();
 }
 
-void __attribute__ ((noinline)) enable_fpu(void) {
+static void __attribute__ ((noinline)) enable_fpu(void) {
   // enable the FPU
   SCB->CPACR |= ((3UL << (10U * 2U)) | (3UL << (11U * 2U)));
 }
@@ -144,7 +144,7 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 // called at 8Hz
 uint8_t loop_counter = 0U;
 uint8_t prev_harness_status = HARNESS_STATUS_NC;
-void tick_handler(void) {
+static void tick_handler(void) {
   if (TICK_TIMER->SR != 0U) {
 
     // siren

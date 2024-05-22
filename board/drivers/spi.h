@@ -56,7 +56,7 @@ void can_tx_comms_resume_spi(void) {
   spi_can_tx_ready = true;
 }
 
-uint16_t spi_version_packet(uint8_t *out) {
+static uint16_t spi_version_packet(uint8_t *out) {
   // this protocol version request is a stable portion of
   // the panda's SPI protocol. its contents match that of the
   // panda USB descriptors and are sufficent to list/enumerate

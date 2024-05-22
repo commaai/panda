@@ -10,7 +10,7 @@ typedef struct interrupt {
 void interrupt_timer_init(void);
 uint32_t microsecond_timer_get(void);
 
-void unused_interrupt_handler(void) {
+static void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!
   print("Unused interrupt handler called!\n");
   fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);

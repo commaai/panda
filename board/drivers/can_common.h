@@ -56,15 +56,15 @@ void process_can(uint8_t can_number);
 
 #ifdef STM32H7
 // ITCM RAM and DTCM RAM are the fastest for Cortex-M7 core access
-__attribute__((section(".axisram"))) can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
-__attribute__((section(".itcmram"))) can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
-__attribute__((section(".itcmram"))) can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
+__attribute__((section(".axisram"))) static can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
+__attribute__((section(".itcmram"))) static can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
+__attribute__((section(".itcmram"))) static can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
 #else
-can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
-can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
-can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
+static can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
+static can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
+static can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
 #endif
-can_buffer(tx3_q, CAN_TX_BUFFER_SIZE)
+static can_buffer(tx3_q, CAN_TX_BUFFER_SIZE)
 
 // FIXME:
 // cppcheck-suppress misra-c2012-9.3

@@ -83,7 +83,7 @@ bool get_char(uart_ring *q, char *elem) {
   return ret;
 }
 
-bool injectc(uart_ring *q, char elem) {
+static bool injectc(uart_ring *q, char elem) {
   int ret = false;
   uint16_t next_w_ptr;
 

@@ -2,7 +2,7 @@
 // White Panda (STM32F4) //
 // ///////////////////// //
 
-void white_enable_can_transceiver(uint8_t transceiver, bool enabled) {
+static void white_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver){
     case 1U:
       set_gpio_output(GPIOC, 1, !enabled);
@@ -19,7 +19,7 @@ void white_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-void white_enable_can_transceivers(bool enabled) {
+static void white_enable_can_transceivers(bool enabled) {
   uint8_t t1 = enabled ? 1U : 2U;  // leave transceiver 1 enabled to detect CAN ignition
   for(uint8_t i=t1; i<=3U; i++) {
     white_enable_can_transceiver(i, enabled);
@@ -65,7 +65,7 @@ void white_set_usb_power_mode(uint8_t mode){
   }
 }
 
-void white_set_can_mode(uint8_t mode){
+static void white_set_can_mode(uint8_t mode){
   if (mode == CAN_MODE_NORMAL) {
     // B12,B13: disable GMLAN mode
     set_gpio_mode(GPIOB, 12, MODE_INPUT);

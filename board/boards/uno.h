@@ -22,7 +22,7 @@ void uno_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-void uno_enable_can_transceivers(bool enabled) {
+static void uno_enable_can_transceivers(bool enabled) {
   for(uint8_t i=1U; i<=4U; i++){
     // Leave main CAN always on for CAN-based ignition detection
     if((harness.status == HARNESS_STATUS_FLIPPED) ? (i == 3U) : (i == 1U)){
@@ -49,7 +49,7 @@ void uno_set_led(uint8_t color, bool enabled) {
   }
 }
 
-void uno_set_bootkick(BootState state) {
+static void uno_set_bootkick(BootState state) {
   if (state == BOOT_BOOTKICK) {
     set_gpio_output(GPIOB, 14, false);
   } else {
@@ -58,7 +58,7 @@ void uno_set_bootkick(BootState state) {
   }
 }
 
-void uno_set_can_mode(uint8_t mode) {
+static void uno_set_can_mode(uint8_t mode) {
   uno_enable_can_transceiver(2U, false);
   uno_enable_can_transceiver(4U, false);
   switch (mode) {
@@ -99,7 +99,7 @@ void uno_set_usb_switch(bool phone){
   set_gpio_output(GPIOB, 3, phone);
 }
 
-void uno_set_ir_power(uint8_t percentage){
+static void uno_set_ir_power(uint8_t percentage){
   pwm_set(TIM4, 2, percentage);
 }
 

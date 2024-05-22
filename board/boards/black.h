@@ -22,7 +22,7 @@ void black_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-void black_enable_can_transceivers(bool enabled) {
+static void black_enable_can_transceivers(bool enabled) {
   for(uint8_t i=1U; i<=4U; i++){
     // Leave main CAN always on for CAN-based ignition detection
     if((harness.status == HARNESS_STATUS_FLIPPED) ? (i == 3U) : (i == 1U)){
@@ -49,11 +49,11 @@ void black_set_led(uint8_t color, bool enabled) {
   }
 }
 
-void black_set_usb_load_switch(bool enabled) {
+static void black_set_usb_load_switch(bool enabled) {
   set_gpio_output(GPIOB, 1, !enabled);
 }
 
-void black_set_can_mode(uint8_t mode) {
+static void black_set_can_mode(uint8_t mode) {
   black_enable_can_transceiver(2U, false);
   black_enable_can_transceiver(4U, false);
   switch (mode) {

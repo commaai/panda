@@ -411,7 +411,7 @@ void USB_WritePacket_EP0(uint8_t *src, uint16_t len) {
   }
 }
 
-void usb_reset(void) {
+static void usb_reset(void) {
   // unmask endpoint interrupts, so many sets
   USBx_DEVICE->DAINT = 0xFFFFFFFFU;
   USBx_DEVICE->DAINTMSK = 0xFFFFFFFFU;
@@ -470,7 +470,7 @@ void usb_tick(void) {
   usb_last_frame_num = current_frame_num;
 }
 
-void usb_setup(void) {
+static void usb_setup(void) {
   int resp_len;
   ControlPacket_t control_req;
 

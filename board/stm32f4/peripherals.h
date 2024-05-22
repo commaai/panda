@@ -1,4 +1,4 @@
-void gpio_usb_init(void) {
+static void gpio_usb_init(void) {
   // A11,A12: USB
   set_gpio_alternate(GPIOA, 11, GPIO_AF10_OTG_FS);
   set_gpio_alternate(GPIOA, 12, GPIO_AF10_OTG_FS);

@@ -121,7 +121,7 @@ void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]) {
   }
 }
 
-bool msg_allowed(const CANPacket_t *to_send, const CanMsg msg_list[], int len) {
+static bool msg_allowed(const CANPacket_t *to_send, const CanMsg msg_list[], int len) {
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
   int length = GET_LEN(to_send);
@@ -136,7 +136,7 @@ bool msg_allowed(const CANPacket_t *to_send, const CanMsg msg_list[], int len) {
   return allowed;
 }
 
-int get_addr_check_index(const CANPacket_t *to_push, RxCheck addr_list[], const int len) {
+static int get_addr_check_index(const CANPacket_t *to_push, RxCheck addr_list[], const int len) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
   int length = GET_LEN(to_push);
@@ -193,7 +193,7 @@ void safety_tick(const safety_config *cfg) {
   safety_rx_checks_invalid = rx_checks_invalid;
 }
 
-void update_counter(RxCheck addr_list[], int index, uint8_t counter) {
+static void update_counter(RxCheck addr_list[], int index, uint8_t counter) {
   if (index != -1) {
     uint8_t expected_counter = (addr_list[index].status.last_counter + 1U) % (addr_list[index].msg[addr_list[index].status.index].max_counter + 1U);
     addr_list[index].status.wrong_counters += (expected_counter == counter) ? -1 : 1;
@@ -213,14 +213,14 @@ bool is_msg_valid(RxCheck addr_list[], int index) {
   return valid;
 }
 
-void update_addr_timestamp(RxCheck addr_list[], int index) {
+static void update_addr_timestamp(RxCheck addr_list[], int index) {
   if (index != -1) {
     uint32_t ts = microsecond_timer_get();
     addr_list[index].status.last_timestamp = ts;
   }
 }
 
-bool rx_msg_safety_check(const CANPacket_t *to_push,
+static bool rx_msg_safety_check(const CANPacket_t *to_push,
                          const safety_config *cfg,
                          const safety_hooks *safety_hooks) {
 
@@ -280,12 +280,12 @@ void generic_rx_checks(bool stock_ecu_detected) {
   }
 }
 
-void relay_malfunction_set(void) {
+static void relay_malfunction_set(void) {
   relay_malfunction = true;
   fault_occurred(FAULT_RELAY_MALFUNCTION);
 }
 
-void relay_malfunction_reset(void) {
+static void relay_malfunction_reset(void) {
   relay_malfunction = false;
   fault_recovered(FAULT_RELAY_MALFUNCTION);
 }
@@ -428,7 +428,7 @@ bool max_limit_check(int val, const int MAX_VAL, const int MIN_VAL) {
 }
 
 // check that commanded torque value isn't too far from measured
-bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
+static bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
                         const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR) {
 
   // *** val rate limit check ***
@@ -444,7 +444,7 @@ bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
 }
 
 // check that commanded value isn't fighting against driver
-bool driver_limit_check(int val, int val_last, const struct sample_t *val_driver,
+static bool driver_limit_check(int val, int val_last, const struct sample_t *val_driver,
                         const int MAX_VAL, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
                         const int MAX_ALLOWANCE, const int DRIVER_FACTOR) {
 
@@ -468,7 +468,7 @@ bool driver_limit_check(int val, int val_last, const struct sample_t *val_driver
 
 
 // real time check, mainly used for steer torque rate limiter
-bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
+static bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA) {
 
   // *** torque real time rate limit check ***
   int highest_val = MAX(val_last, 0) + MAX_RT_DELTA;

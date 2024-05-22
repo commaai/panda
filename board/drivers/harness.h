@@ -26,7 +26,7 @@ struct harness_configuration {
 };
 
 // The ignition relay is only used for testing purposes
-void set_intercept_relay(bool intercept, bool ignition_relay) {
+static void set_intercept_relay(bool intercept, bool ignition_relay) {
   if (current_board->harness_config->has_harness) {
     bool drive_relay = intercept;
     if (harness.status == HARNESS_STATUS_NC) {

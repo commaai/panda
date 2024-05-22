@@ -22,7 +22,7 @@ void dos_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-void dos_enable_can_transceivers(bool enabled) {
+static void dos_enable_can_transceivers(bool enabled) {
   for(uint8_t i=1U; i<=4U; i++){
     // Leave main CAN always on for CAN-based ignition detection
     if((harness.status == HARNESS_STATUS_FLIPPED) ? (i == 3U) : (i == 1U)){
@@ -49,11 +49,11 @@ void dos_set_led(uint8_t color, bool enabled) {
   }
 }
 
-void dos_set_bootkick(BootState state) {
+static void dos_set_bootkick(BootState state) {
   set_gpio_output(GPIOC, 4, state != BOOT_BOOTKICK);
 }
 
-void dos_set_can_mode(uint8_t mode) {
+static void dos_set_can_mode(uint8_t mode) {
   dos_enable_can_transceiver(2U, false);
   dos_enable_can_transceiver(4U, false);
   switch (mode) {
@@ -90,7 +90,7 @@ bool dos_check_ignition(void){
   return harness_check_ignition();
 }
 
-void dos_set_ir_power(uint8_t percentage){
+static void dos_set_ir_power(uint8_t percentage){
   pwm_set(TIM4, 2, percentage);
 }
 
