@@ -34,7 +34,7 @@ struct sample_t {
   int values[MAX_SAMPLE_VALS];
   int min;
   int max;
-} sample_t_default = {.values = {0}, .min = 0, .max = 0};
+};
 
 // safety code requires floats
 struct lookup_t {
