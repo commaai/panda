@@ -90,12 +90,12 @@ static void uno_set_can_mode(uint8_t mode) {
   }
 }
 
-bool uno_check_ignition(void){
+static bool uno_check_ignition(void){
   // ignition is checked through harness
   return harness_check_ignition();
 }
 
-void uno_set_usb_switch(bool phone){
+static void uno_set_usb_switch(bool phone){
   set_gpio_output(GPIOB, 3, phone);
 }
 
@@ -103,11 +103,11 @@ static void uno_set_ir_power(uint8_t percentage){
   pwm_set(TIM4, 2, percentage);
 }
 
-void uno_set_fan_enabled(bool enabled){
+static void uno_set_fan_enabled(bool enabled){
   set_gpio_output(GPIOA, 1, enabled);
 }
 
-void uno_init(void) {
+static void uno_init(void) {
   common_init_gpio();
 
   // A8,A15: normal CAN3 mode
@@ -170,7 +170,7 @@ void uno_init(void) {
   uno_set_bootkick(BOOT_BOOTKICK);
 }
 
-void uno_init_bootloader(void) {
+static void uno_init_bootloader(void) {
   // GPS off
   set_gpio_output(GPIOB, 1, 0);
   set_gpio_output(GPIOC, 5, 0);

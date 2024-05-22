@@ -184,7 +184,9 @@ static bool rt_rate_limit_check(int val, int val_last, const int MAX_RT_DELTA);
 float interpolate(struct lookup_t xy, float x);
 int ROUND(float val);
 void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]);
-void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]);
+#ifdef CANFD
+static void gen_crc_lookup_table_16(uint16_t poly, uint16_t crc_lut[]);
+#endif
 static bool msg_allowed(const CANPacket_t *to_send, const CanMsg msg_list[], int len);
 static int get_addr_check_index(const CANPacket_t *to_push, RxCheck addr_list[], const int len);
 static void update_counter(RxCheck addr_list[], int index, uint8_t counter);

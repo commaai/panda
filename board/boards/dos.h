@@ -85,7 +85,7 @@ static void dos_set_can_mode(uint8_t mode) {
   }
 }
 
-bool dos_check_ignition(void){
+static bool dos_check_ignition(void){
   // ignition is checked through harness
   return harness_check_ignition();
 }
@@ -94,11 +94,11 @@ static void dos_set_ir_power(uint8_t percentage){
   pwm_set(TIM4, 2, percentage);
 }
 
-void dos_set_fan_enabled(bool enabled){
+static void dos_set_fan_enabled(bool enabled){
   set_gpio_output(GPIOA, 1, enabled);
 }
 
-void dos_set_siren(bool enabled){
+static void dos_set_siren(bool enabled){
   set_gpio_output(GPIOC, 12, enabled);
 }
 
@@ -106,7 +106,7 @@ bool dos_read_som_gpio (void){
   return (get_gpio_input(GPIOC, 2) != 0);
 }
 
-void dos_init(void) {
+static void dos_init(void) {
   common_init_gpio();
 
   // A8,A15: normal CAN3 mode

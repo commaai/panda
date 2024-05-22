@@ -29,7 +29,7 @@ bool tres_read_som_gpio (void) {
   return (get_gpio_input(GPIOC, 2) != 0);
 }
 
-void tres_init(void) {
+static void tres_init(void) {
   // Enable USB 3.3V LDO for USB block
   register_set_bits(&(PWR->CR3), PWR_CR3_USBREGEN);
   register_set_bits(&(PWR->CR3), PWR_CR3_USB33DEN);

@@ -86,12 +86,12 @@ static void black_set_can_mode(uint8_t mode) {
   }
 }
 
-bool black_check_ignition(void){
+static bool black_check_ignition(void){
   // ignition is checked through harness
   return harness_check_ignition();
 }
 
-void black_init(void) {
+static void black_init(void) {
   common_init_gpio();
 
   // A8,A15: normal CAN3 mode
@@ -135,7 +135,7 @@ void black_init(void) {
   black_set_can_mode(CAN_MODE_NORMAL);
 }
 
-void black_init_bootloader(void) {
+static void black_init_bootloader(void) {
   // GPS OFF
   set_gpio_output(GPIOC, 5, 0);
   set_gpio_output(GPIOC, 12, 0);

@@ -37,7 +37,6 @@ typedef struct uart_ring {
 // ***************************** Function prototypes *****************************
 void debug_ring_callback(uart_ring *ring);
 void uart_tx_ring(uart_ring *q);
-void uart_send_break(uart_ring *u);
 
 // ******************************** UART buffers ********************************
 

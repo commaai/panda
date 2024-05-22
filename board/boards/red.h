@@ -100,7 +100,7 @@ uint32_t red_read_voltage_mV(void){
   return adc_get_mV(2) * 11U; // TODO: is this correct?
 }
 
-void red_init(void) {
+static void red_init(void) {
   common_init_gpio();
 
   //C10,C11 : OBD_SBU1_RELAY, OBD_SBU2_RELAY
