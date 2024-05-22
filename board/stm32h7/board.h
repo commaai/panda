@@ -45,7 +45,7 @@ void detect_board_type(void) {
     print("Hardware type is UNKNOWN!\n");
   }
 
-  // TODO: detect this live
+  // TODO: detect this live - (when done remove cppcheck-suppress misra-c2012-8.7 in board_cuatro.h)
 #ifdef STM32H723
   hw_type = HW_TYPE_CUATRO;
   current_board = &board_cuatro;

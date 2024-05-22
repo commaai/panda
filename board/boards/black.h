@@ -141,7 +141,7 @@ void black_init_bootloader(void) {
   set_gpio_output(GPIOC, 12, 0);
 }
 
-harness_configuration black_harness_config = {
+static harness_configuration black_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOC,

@@ -153,7 +153,7 @@ void red_init(void) {
   red_set_can_mode(CAN_MODE_NORMAL);
 }
 
-harness_configuration red_harness_config = {
+static harness_configuration red_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,

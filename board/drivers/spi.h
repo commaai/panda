@@ -35,7 +35,6 @@ enum {
   SPI_STATE_DATA_TX
 };
 
-bool spi_tx_dma_done = false;
 uint8_t spi_state = SPI_STATE_HEADER;
 uint8_t spi_endpoint;
 uint16_t spi_data_len_mosi;

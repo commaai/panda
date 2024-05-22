@@ -57,6 +57,7 @@ static void DMA2_Stream2_IRQ_Handler(void) {
 }
 
 // panda -> master DMA finished
+static bool spi_tx_dma_done = false;
 static void DMA2_Stream3_IRQ_Handler(void) {
   ENTER_CRITICAL();
 

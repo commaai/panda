@@ -166,7 +166,7 @@ void dos_init(void) {
   clock_source_init();
 }
 
-harness_configuration dos_harness_config = {
+static harness_configuration dos_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOC,

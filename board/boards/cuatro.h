@@ -103,7 +103,7 @@ void cuatro_init(void) {
   clock_source_init();
 }
 
-board board_cuatro = {
+board board_cuatro = { // cppcheck-suppress misra-c2012-8.7 ; temporary until cuatro live detection implemented
   .harness_config = &red_chiplet_harness_config,
   .has_obd = true,
   .has_spi = true,
