@@ -1,23 +1,5 @@
 #include "safety_hyundai_common.h"
 
-const SteeringLimits HYUNDAI_CANFD_STEERING_LIMITS = {
-  .max_steer = 270,
-  .max_rt_delta = 112,
-  .max_rt_interval = 250000,
-  .max_rate_up = 2,
-  .max_rate_down = 3,
-  .driver_torque_allowance = 250,
-  .driver_torque_factor = 2,
-  .type = TorqueDriverLimited,
-
-  // the EPS faults when the steering angle is above a certain threshold for too long. to prevent this,
-  // we allow setting torque actuation bit to 0 while maintaining the requested torque value for two consecutive frames
-  .min_valid_request_frames = 89,
-  .max_invalid_request_frames = 2,
-  .min_valid_request_rt_interval = 810000,  // 810ms; a ~10% buffer on cutting every 90 frames
-  .has_steer_req_tolerance = true,
-};
-
 const CanMsg HYUNDAI_CANFD_HDA2_TX_MSGS[] = {
   {0x50, 0, 16},  // LKAS
   {0x1CF, 1, 8},  // CRUISE_BUTTON
@@ -228,6 +210,24 @@ static void hyundai_canfd_rx_hook(const CANPacket_t *to_push) {
 }
 
 static bool hyundai_canfd_tx_hook(const CANPacket_t *to_send) {
+  const SteeringLimits HYUNDAI_CANFD_STEERING_LIMITS = {
+    .max_steer = 270,
+    .max_rt_delta = 112,
+    .max_rt_interval = 250000,
+    .max_rate_up = 2,
+    .max_rate_down = 3,
+    .driver_torque_allowance = 250,
+    .driver_torque_factor = 2,
+    .type = TorqueDriverLimited,
+
+    // the EPS faults when the steering angle is above a certain threshold for too long. to prevent this,
+    // we allow setting torque actuation bit to 0 while maintaining the requested torque value for two consecutive frames
+    .min_valid_request_frames = 89,
+    .max_invalid_request_frames = 2,
+    .min_valid_request_rt_interval = 810000,  // 810ms; a ~10% buffer on cutting every 90 frames
+    .has_steer_req_tolerance = true,
+  };
+
   bool tx = true;
   int addr = GET_ADDR(to_send);
 

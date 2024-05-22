@@ -11,8 +11,6 @@ struct fan_state_t {
 } fan_state_t;
 struct fan_state_t fan_state;
 
-const float FAN_I = 0.001f;
-
 const uint8_t FAN_TICK_FREQ = 8U;
 const uint8_t FAN_STALL_THRESHOLD_MIN = 3U;
 const uint8_t FAN_STALL_THRESHOLD_MAX = 8U;
@@ -31,6 +29,8 @@ void fan_init(void) {
 
 // Call this at FAN_TICK_FREQ
 void fan_tick(void) {
+  const float FAN_I = 0.001f;
+
   if (current_board->fan_max_rpm > 0U) {
     // Measure fan RPM
     uint16_t fan_rpm_fast = fan_state.tach_counter * (60U * FAN_TICK_FREQ / 4U);   // 4 interrupts per rotation

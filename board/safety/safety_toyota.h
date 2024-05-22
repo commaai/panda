@@ -28,8 +28,6 @@ const SteeringLimits TOYOTA_STEERING_LIMITS = {
 };
 
 const int TOYOTA_LTA_MAX_ANGLE = 1657;  // EPS only accepts up to 94.9461
-const int TOYOTA_LTA_MAX_MEAS_TORQUE = 1500;
-const int TOYOTA_LTA_MAX_DRIVER_TORQUE = 150;
 
 // longitudinal limits
 const LongitudinalLimits TOYOTA_LONG_LIMITS = {
@@ -75,7 +73,6 @@ RxCheck toyota_lta_rx_checks[] = {
 // safety param flags
 // first byte is for EPS factor, second is for flags
 const uint32_t TOYOTA_PARAM_OFFSET = 8U;
-const uint32_t TOYOTA_EPS_FACTOR = (1UL << TOYOTA_PARAM_OFFSET) - 1U;
 const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1UL << TOYOTA_PARAM_OFFSET;
 const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2UL << TOYOTA_PARAM_OFFSET;
 const uint32_t TOYOTA_PARAM_LTA = 4UL << TOYOTA_PARAM_OFFSET;
@@ -184,6 +181,9 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
 }
 
 static bool toyota_tx_hook(const CANPacket_t *to_send) {
+  const int TOYOTA_LTA_MAX_DRIVER_TORQUE = 150;
+  const int TOYOTA_LTA_MAX_MEAS_TORQUE = 1500;
+
   bool tx = true;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
@@ -302,6 +302,8 @@ static bool toyota_tx_hook(const CANPacket_t *to_send) {
 }
 
 static safety_config toyota_init(uint16_t param) {
+  const uint32_t TOYOTA_EPS_FACTOR = (1UL << TOYOTA_PARAM_OFFSET) - 1U;
+
   toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
   toyota_lta = GET_FLAG(param, TOYOTA_PARAM_LTA);
