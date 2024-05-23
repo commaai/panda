@@ -9,12 +9,14 @@
 #define FAULT_INTERRUPT_RATE_CAN_2          (1UL << 3)
 #define FAULT_INTERRUPT_RATE_CAN_3          (1UL << 4)
 #define FAULT_INTERRUPT_RATE_TACH           (1UL << 5)
+// cppcheck-suppress misra-c2012-2.5
 #define FAULT_INTERRUPT_RATE_GMLAN          (1UL << 6)   // deprecated
 #define FAULT_INTERRUPT_RATE_INTERRUPTS     (1UL << 7)
 #define FAULT_INTERRUPT_RATE_SPI_DMA        (1UL << 8)
 #define FAULT_INTERRUPT_RATE_USB            (1UL << 15)
 #define FAULT_REGISTER_DIVERGENT            (1UL << 18)
 #define FAULT_INTERRUPT_RATE_TICK           (1UL << 21)
+// cppcheck-suppress misra-c2012-2.5
 #define FAULT_INTERRUPT_RATE_EXTI           (1UL << 22)
 #define FAULT_HEARTBEAT_LOOP_WATCHDOG       (1UL << 26)
 
