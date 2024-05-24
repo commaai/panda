@@ -52,13 +52,6 @@ void refresh_can_tx_slots_available(void);
 #define  STRING_OFFSET_ISERIAL                          0x03
 #define  STRING_OFFSET_ICONFIGURATION                   0x04
 
-// WebUSB requests
-#define  WEBUSB_REQ_GET_URL                             0x02
-
-// WebUSB types
-#define  WEBUSB_DESC_TYPE_URL                           0x03
-#define  WEBUSB_URL_SCHEME_HTTPS                        0x01
-
 // WinUSB requests
 #define  WINUSB_REQ_GET_COMPATID_DESCRIPTOR             0x04
 #define  WINUSB_REQ_GET_EXT_PROPS_OS                    0x05
