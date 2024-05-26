@@ -10,8 +10,8 @@ fi
 
 cd $CPPCHECK_DIR
 
-VERS="2.14.0"
-git fetch --all --tags
+VERS="2.14.1"
+git fetch --all --tags --force
 git checkout $VERS
 
 #make clean
