@@ -2,6 +2,16 @@
 // White Panda (STM32F4) //
 // ///////////////////// //
 
+// USB power modes (from cereal.log.health)
+#define USB_POWER_CLIENT 1U
+#define USB_POWER_CDP 2U
+
+// CAN modes
+// cppcheck-suppress misra-c2012-2.5
+#define CAN_MODE_GMLAN_CAN3 2U
+// cppcheck-suppress misra-c2012-2.5
+#define CAN_MODE_GMLAN_CAN2 1U
+
 void white_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver){
     case 1U:

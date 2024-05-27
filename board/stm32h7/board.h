@@ -1,6 +1,15 @@
 // ///////////////////////////////////////////////////////////// //
 // Hardware abstraction layer for all different supported boards //
 // ///////////////////////////////////////////////////////////// //
+
+// cppcheck-suppress misra-c2012-2.5
+#define HW_TYPE_RED_PANDA 7U
+//#define HW_TYPE_RED_PANDA_V2 8U
+// cppcheck-suppress misra-c2012-2.5
+#define HW_TYPE_TRES 9U
+// cppcheck-suppress misra-c2012-2.5
+#define HW_TYPE_CUATRO 10U
+
 #include "boards/board_declarations.h"
 #include "boards/unused_funcs.h"
 

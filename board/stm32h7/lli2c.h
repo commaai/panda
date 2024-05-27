@@ -2,6 +2,7 @@
 // TODO: this driver relies heavily on polling,
 // if we want it to be more async, we should use interrupts
 
+// cppcheck-suppress misra-c2012-2.5
 #define I2C_TIMEOUT_US 100000U
 
 // cppcheck-suppress misra-c2012-2.7; not sure why it triggers here?
