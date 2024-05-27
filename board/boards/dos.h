@@ -166,7 +166,7 @@ void dos_init(void) {
   clock_source_init();
 }
 
-harness_configuration dos_harness_config = {
+static harness_configuration dos_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOC,
@@ -180,6 +180,8 @@ harness_configuration dos_harness_config = {
   .adc_channel_SBU2 = 13
 };
 
+// Unable to use extern becaouse of a composite struct dos_harness_config
+// cppcheck-suppress misra-c2012-8.4
 board board_dos = {
   .harness_config = &dos_harness_config,
   .has_obd = true,

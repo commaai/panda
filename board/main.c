@@ -31,7 +31,7 @@
 
 // ********************* Serial debugging *********************
 
-bool check_started(void) {
+static bool check_started(void) {
   bool started = current_board->check_ignition() || ignition_can;
   return started;
 }
@@ -142,9 +142,10 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 #define HEARTBEAT_IGNITION_CNT_OFF 2U
 
 // called at 8Hz
-uint8_t loop_counter = 0U;
-uint8_t prev_harness_status = HARNESS_STATUS_NC;
-void tick_handler(void) {
+static void tick_handler(void) {
+  static uint8_t loop_counter = 0U;
+  static uint8_t prev_harness_status = HARNESS_STATUS_NC;
+
   if (TICK_TIMER->SR != 0U) {
 
     // siren

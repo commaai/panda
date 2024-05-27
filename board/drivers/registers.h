@@ -10,7 +10,7 @@ typedef struct reg {
 #define HASHING_PRIME 23U
 #define CHECK_COLLISION(hash, addr) (((uint32_t) register_map[hash].address != 0U) && (register_map[hash].address != (addr)))
 
-reg register_map[REGISTER_MAP_SIZE];
+static reg register_map[REGISTER_MAP_SIZE];
 
 // Hash spread in first and second iterations seems to be reasonable.
 // See: tests/development/register_hashmap_spread.py

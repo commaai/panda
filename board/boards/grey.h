@@ -4,6 +4,8 @@
 
 // Most hardware functionality is similar to white panda
 
+// If used extern and struct implemented in board.h purpose of this file vanishes
+// cppcheck-suppress misra-c2012-8.4
 board board_grey = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &white_harness_config,

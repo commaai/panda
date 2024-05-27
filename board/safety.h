@@ -52,9 +52,177 @@
 #define SAFETY_BODY 27U
 #define SAFETY_HYUNDAI_CANFD 28U
 
+const safety_hooks tesla_hooks = {
+  .init = tesla_init,
+  .rx = tesla_rx_hook,
+  .tx = tesla_tx_hook,
+  .fwd = tesla_fwd_hook,
+};
+
+const safety_hooks gm_hooks = {
+  .init = gm_init,
+  .rx = gm_rx_hook,
+  .tx = gm_tx_hook,
+  .fwd = gm_fwd_hook,
+};
+
+const safety_hooks nooutput_hooks = {
+  .init = nooutput_init,
+  .rx = default_rx_hook,
+  .tx = nooutput_tx_hook,
+  .fwd = default_fwd_hook,
+};
+
+const safety_hooks alloutput_hooks = {
+  .init = alloutput_init,
+  .rx = default_rx_hook,
+  .tx = alloutput_tx_hook,
+  .fwd = alloutput_fwd_hook,
+};
+
+const safety_hooks honda_nidec_hooks = {
+  .init = honda_nidec_init,
+  .rx = honda_rx_hook,
+  .tx = honda_tx_hook,
+  .fwd = honda_nidec_fwd_hook,
+  .get_counter = honda_get_counter,
+  .get_checksum = honda_get_checksum,
+  .compute_checksum = honda_compute_checksum,
+};
+
+const safety_hooks honda_bosch_hooks = {
+  .init = honda_bosch_init,
+  .rx = honda_rx_hook,
+  .tx = honda_tx_hook,
+  .fwd = honda_bosch_fwd_hook,
+  .get_counter = honda_get_counter,
+  .get_checksum = honda_get_checksum,
+  .compute_checksum = honda_compute_checksum,
+};
+
+const safety_hooks toyota_hooks = {
+  .init = toyota_init,
+  .rx = toyota_rx_hook,
+  .tx = toyota_tx_hook,
+  .fwd = toyota_fwd_hook,
+  .get_checksum = toyota_get_checksum,
+  .compute_checksum = toyota_compute_checksum,
+  .get_quality_flag_valid = toyota_get_quality_flag_valid,
+};
+
+const safety_hooks ford_hooks = {
+  .init = ford_init,
+  .rx = ford_rx_hook,
+  .tx = ford_tx_hook,
+  .fwd = ford_fwd_hook,
+  .get_counter = ford_get_counter,
+  .get_checksum = ford_get_checksum,
+  .compute_checksum = ford_compute_checksum,
+  .get_quality_flag_valid = ford_get_quality_flag_valid,
+};
+
+const safety_hooks hyundai_hooks = {
+  .init = hyundai_init,
+  .rx = hyundai_rx_hook,
+  .tx = hyundai_tx_hook,
+  .fwd = hyundai_fwd_hook,
+  .get_counter = hyundai_get_counter,
+  .get_checksum = hyundai_get_checksum,
+  .compute_checksum = hyundai_compute_checksum,
+};
+
+const safety_hooks hyundai_legacy_hooks = {
+  .init = hyundai_legacy_init,
+  .rx = hyundai_rx_hook,
+  .tx = hyundai_tx_hook,
+  .fwd = hyundai_fwd_hook,
+  .get_counter = hyundai_get_counter,
+  .get_checksum = hyundai_get_checksum,
+  .compute_checksum = hyundai_compute_checksum,
+};
+
+const safety_hooks chrysler_hooks = {
+  .init = chrysler_init,
+  .rx = chrysler_rx_hook,
+  .tx = chrysler_tx_hook,
+  .fwd = chrysler_fwd_hook,
+  .get_counter = chrysler_get_counter,
+  .get_checksum = chrysler_get_checksum,
+  .compute_checksum = chrysler_compute_checksum,
+};
+
+const safety_hooks subaru_hooks = {
+  .init = subaru_init,
+  .rx = subaru_rx_hook,
+  .tx = subaru_tx_hook,
+  .fwd = subaru_fwd_hook,
+  .get_counter = subaru_get_counter,
+  .get_checksum = subaru_get_checksum,
+  .compute_checksum = subaru_compute_checksum,
+};
+
+const safety_hooks subaru_preglobal_hooks = {
+  .init = subaru_preglobal_init,
+  .rx = subaru_preglobal_rx_hook,
+  .tx = subaru_preglobal_tx_hook,
+  .fwd = subaru_preglobal_fwd_hook,
+};
+
+const safety_hooks mazda_hooks = {
+  .init = mazda_init,
+  .rx = mazda_rx_hook,
+  .tx = mazda_tx_hook,
+  .fwd = mazda_fwd_hook,
+};
+
+const safety_hooks nissan_hooks = {
+  .init = nissan_init,
+  .rx = nissan_rx_hook,
+  .tx = nissan_tx_hook,
+  .fwd = nissan_fwd_hook,
+};
+
+const safety_hooks volkswagen_mqb_hooks = {
+  .init = volkswagen_mqb_init,
+  .rx = volkswagen_mqb_rx_hook,
+  .tx = volkswagen_mqb_tx_hook,
+  .fwd = volkswagen_mqb_fwd_hook,
+  .get_counter = volkswagen_mqb_get_counter,
+  .get_checksum = volkswagen_mqb_get_checksum,
+  .compute_checksum = volkswagen_mqb_compute_crc,
+};
+
+const safety_hooks volkswagen_pq_hooks = {
+  .init = volkswagen_pq_init,
+  .rx = volkswagen_pq_rx_hook,
+  .tx = volkswagen_pq_tx_hook,
+  .fwd = volkswagen_pq_fwd_hook,
+  .get_counter = volkswagen_pq_get_counter,
+  .get_checksum = volkswagen_pq_get_checksum,
+  .compute_checksum = volkswagen_pq_compute_checksum,
+};
+
+const safety_hooks elm327_hooks = {
+  .init = nooutput_init,
+  .rx = default_rx_hook,
+  .tx = elm327_tx_hook,
+  .fwd = default_fwd_hook,
+};
+
+const safety_hooks body_hooks = {
+  .init = body_init,
+  .rx = body_rx_hook,
+  .tx = body_tx_hook,
+  .fwd = default_fwd_hook,
+};
+
+// cppcheck-suppress-begin misra-c2012-8.4
 uint16_t current_safety_mode = SAFETY_SILENT;
 uint16_t current_safety_param = 0;
-const safety_hooks *current_hooks = &nooutput_hooks;
+// cppcheck-suppress-end misra-c2012-8.4
+static const safety_hooks *current_hooks = &nooutput_hooks;
+
+// cppcheck-suppress misra-c2012-8.4
 safety_config current_safety_config;
 
 bool safety_rx_hook(const CANPacket_t *to_push) {
@@ -295,35 +463,35 @@ typedef struct {
   const safety_hooks *hooks;
 } safety_hook_config;
 
-const safety_hook_config safety_hook_registry[] = {
-  {SAFETY_SILENT, &nooutput_hooks},
-  {SAFETY_HONDA_NIDEC, &honda_nidec_hooks},
-  {SAFETY_TOYOTA, &toyota_hooks},
-  {SAFETY_ELM327, &elm327_hooks},
-  {SAFETY_GM, &gm_hooks},
-  {SAFETY_HONDA_BOSCH, &honda_bosch_hooks},
-  {SAFETY_HYUNDAI, &hyundai_hooks},
-  {SAFETY_CHRYSLER, &chrysler_hooks},
-  {SAFETY_SUBARU, &subaru_hooks},
-  {SAFETY_VOLKSWAGEN_MQB, &volkswagen_mqb_hooks},
-  {SAFETY_NISSAN, &nissan_hooks},
-  {SAFETY_NOOUTPUT, &nooutput_hooks},
-  {SAFETY_HYUNDAI_LEGACY, &hyundai_legacy_hooks},
-  {SAFETY_MAZDA, &mazda_hooks},
-  {SAFETY_BODY, &body_hooks},
-  {SAFETY_FORD, &ford_hooks},
-#ifdef CANFD
-  {SAFETY_HYUNDAI_CANFD, &hyundai_canfd_hooks},
-#endif
-#ifdef ALLOW_DEBUG
-  {SAFETY_TESLA, &tesla_hooks},
-  {SAFETY_SUBARU_PREGLOBAL, &subaru_preglobal_hooks},
-  {SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},
-  {SAFETY_ALLOUTPUT, &alloutput_hooks},
-#endif
-};
-
 int set_safety_hooks(uint16_t mode, uint16_t param) {
+  const safety_hook_config safety_hook_registry[] = {
+    {SAFETY_SILENT, &nooutput_hooks},
+    {SAFETY_HONDA_NIDEC, &honda_nidec_hooks},
+    {SAFETY_TOYOTA, &toyota_hooks},
+    {SAFETY_ELM327, &elm327_hooks},
+    {SAFETY_GM, &gm_hooks},
+    {SAFETY_HONDA_BOSCH, &honda_bosch_hooks},
+    {SAFETY_HYUNDAI, &hyundai_hooks},
+    {SAFETY_CHRYSLER, &chrysler_hooks},
+    {SAFETY_SUBARU, &subaru_hooks},
+    {SAFETY_VOLKSWAGEN_MQB, &volkswagen_mqb_hooks},
+    {SAFETY_NISSAN, &nissan_hooks},
+    {SAFETY_NOOUTPUT, &nooutput_hooks},
+    {SAFETY_HYUNDAI_LEGACY, &hyundai_legacy_hooks},
+    {SAFETY_MAZDA, &mazda_hooks},
+    {SAFETY_BODY, &body_hooks},
+    {SAFETY_FORD, &ford_hooks},
+  #ifdef CANFD
+    {SAFETY_HYUNDAI_CANFD, &hyundai_canfd_hooks},
+  #endif
+  #ifdef ALLOW_DEBUG
+    {SAFETY_TESLA, &tesla_hooks},
+    {SAFETY_SUBARU_PREGLOBAL, &subaru_preglobal_hooks},
+    {SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},
+    {SAFETY_ALLOUTPUT, &alloutput_hooks},
+  #endif
+  };
+
   // reset state set by safety mode
   safety_mode_cnt = 0U;
   relay_malfunction = false;

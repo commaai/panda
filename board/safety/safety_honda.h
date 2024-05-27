@@ -1,24 +1,3 @@
-const CanMsg HONDA_N_TX_MSGS[] = {{0xE4, 0, 5}, {0x194, 0, 4}, {0x1FA, 0, 8}, {0x30C, 0, 8}, {0x33D, 0, 5}};
-const CanMsg HONDA_BOSCH_TX_MSGS[] = {{0xE4, 0, 5}, {0xE5, 0, 8}, {0x296, 1, 4}, {0x33D, 0, 5}, {0x33DA, 0, 5}, {0x33DB, 0, 8}};  // Bosch
-const CanMsg HONDA_BOSCH_LONG_TX_MSGS[] = {{0xE4, 1, 5}, {0x1DF, 1, 8}, {0x1EF, 1, 8}, {0x1FA, 1, 8}, {0x30C, 1, 8}, {0x33D, 1, 5}, {0x33DA, 1, 5}, {0x33DB, 1, 8}, {0x39F, 1, 8}, {0x18DAB0F1, 1, 8}};  // Bosch w/ gas and brakes
-const CanMsg HONDA_RADARLESS_TX_MSGS[] = {{0xE4, 0, 5}, {0x296, 2, 4}, {0x33D, 0, 8}};  // Bosch radarless
-const CanMsg HONDA_RADARLESS_LONG_TX_MSGS[] = {{0xE4, 0, 5}, {0x33D, 0, 8}, {0x1C8, 0, 8}, {0x30C, 0, 8}};  // Bosch radarless w/ gas and brakes
-
-const LongitudinalLimits HONDA_BOSCH_LONG_LIMITS = {
-  .max_accel = 200,   // accel is used for brakes
-  .min_accel = -350,
-
-  .max_gas = 2000,
-  .inactive_gas = -30000,
-};
-
-const LongitudinalLimits HONDA_NIDEC_LONG_LIMITS = {
-  .max_gas = 198,  // 0xc6
-  .max_brake = 255,
-
-  .inactive_speed = 0,
-};
-
 // All common address checks except SCM_BUTTONS which isn't on one Nidec safety configuration
 #define HONDA_COMMON_NO_SCM_FEEDBACK_RX_CHECKS(pt_bus)                                                                                           \
   {.msg = {{0x1A6, (pt_bus), 8, .check_checksum = true, .max_counter = 3U, .frequency = 25U},                  /* SCM_BUTTONS */      \
@@ -36,34 +15,9 @@ const LongitudinalLimits HONDA_NIDEC_LONG_LIMITS = {
 
 
 // Nidec and bosch radarless has the powertrain bus on bus 0
-RxCheck honda_common_rx_checks[] = {
+static RxCheck honda_common_rx_checks[] = {
   HONDA_COMMON_RX_CHECKS(0)
 };
-
-RxCheck honda_common_alt_brake_rx_checks[] = {
-  HONDA_COMMON_RX_CHECKS(0)
-  HONDA_ALT_BRAKE_ADDR_CHECK(0)
-};
-
-// For Nidecs with main on signal on an alternate msg (missing 0x326)
-RxCheck honda_nidec_alt_rx_checks[] = {
-  HONDA_COMMON_NO_SCM_FEEDBACK_RX_CHECKS(0)
-};
-
-// Bosch has pt on bus 1, verified 0x1A6 does not exist
-RxCheck honda_bosch_rx_checks[] = {
-  HONDA_COMMON_RX_CHECKS(1)
-};
-
-RxCheck honda_bosch_alt_brake_rx_checks[] = {
-  HONDA_COMMON_RX_CHECKS(1)
-  HONDA_ALT_BRAKE_ADDR_CHECK(1)
-};
-
-const uint16_t HONDA_PARAM_ALT_BRAKE = 1;
-const uint16_t HONDA_PARAM_BOSCH_LONG = 2;
-const uint16_t HONDA_PARAM_NIDEC_ALT = 4;
-const uint16_t HONDA_PARAM_RADARLESS = 8;
 
 enum {
   HONDA_BTN_NONE = 0,
@@ -73,15 +27,19 @@ enum {
   HONDA_BTN_RESUME = 4,
 };
 
-int honda_brake = 0;
+static int honda_brake = 0;
+
+// Unable to use extern, variables are initialized and used in other files
+// cppcheck-suppress-begin misra-c2012-8.4
 bool honda_brake_switch_prev = false;
 bool honda_alt_brake_msg = false;
 bool honda_fwd_brake = false;
 bool honda_bosch_long = false;
 bool honda_bosch_radarless = false;
-typedef enum {HONDA_NIDEC, HONDA_BOSCH} HondaHw;
-HondaHw honda_hw = HONDA_NIDEC;
+// cppcheck-suppress-end misra-c2012-8.4
 
+typedef enum {HONDA_NIDEC, HONDA_BOSCH} honda_platform;
+static honda_platform honda_hw = HONDA_NIDEC;
 
 int honda_get_pt_bus(void) {
   return ((honda_hw == HONDA_BOSCH) && !honda_bosch_radarless) ? 1 : 0;
@@ -233,6 +191,21 @@ static void honda_rx_hook(const CANPacket_t *to_push) {
 }
 
 static bool honda_tx_hook(const CANPacket_t *to_send) {
+  const LongitudinalLimits HONDA_BOSCH_LONG_LIMITS = {
+    .max_accel = 200,   // accel is used for brakes
+    .min_accel = -350,
+
+    .max_gas = 2000,
+    .inactive_gas = -30000,
+  };
+
+  const LongitudinalLimits HONDA_NIDEC_LONG_LIMITS = {
+  .max_gas = 198,  // 0xc6
+  .max_brake = 255,
+
+  .inactive_speed = 0,
+  };
+
   bool tx = true;
   int addr = GET_ADDR(to_send);
   int bus = GET_BUS(to_send);
@@ -329,6 +302,19 @@ static bool honda_tx_hook(const CANPacket_t *to_send) {
 }
 
 static safety_config honda_nidec_init(uint16_t param) {
+  const CanMsg HONDA_N_TX_MSGS[] = {{0xE4, 0, 5}, {0x194, 0, 4}, {0x1FA, 0, 8}, {0x30C, 0, 8}, {0x33D, 0, 5}};
+
+
+  // if arrays were declared inside if...else code readability would be compromised
+  // cppcheck-suppress-begin variableScope
+  // For Nidecs with main on signal on an alternate msg (missing 0x326)
+  RxCheck honda_nidec_alt_rx_checks[] = {
+    HONDA_COMMON_NO_SCM_FEEDBACK_RX_CHECKS(0)
+  };
+  // cppcheck-suppress-end variableScope
+
+  const uint16_t HONDA_PARAM_NIDEC_ALT = 4;
+
   honda_hw = HONDA_NIDEC;
   honda_brake = 0;
   honda_brake_switch_prev = false;
@@ -352,6 +338,32 @@ static safety_config honda_nidec_init(uint16_t param) {
 }
 
 static safety_config honda_bosch_init(uint16_t param) {
+  const CanMsg HONDA_BOSCH_TX_MSGS[] = {{0xE4, 0, 5}, {0xE5, 0, 8}, {0x296, 1, 4}, {0x33D, 0, 5}, {0x33DA, 0, 5}, {0x33DB, 0, 8}};  // Bosch
+  const CanMsg HONDA_BOSCH_LONG_TX_MSGS[] = {{0xE4, 1, 5}, {0x1DF, 1, 8}, {0x1EF, 1, 8}, {0x1FA, 1, 8}, {0x30C, 1, 8}, {0x33D, 1, 5}, {0x33DA, 1, 5}, {0x33DB, 1, 8}, {0x39F, 1, 8}, {0x18DAB0F1, 1, 8}};  // Bosch w/ gas and brakes
+  const CanMsg HONDA_RADARLESS_TX_MSGS[] = {{0xE4, 0, 5}, {0x296, 2, 4}, {0x33D, 0, 8}};  // Bosch radarless
+  const CanMsg HONDA_RADARLESS_LONG_TX_MSGS[] = {{0xE4, 0, 5}, {0x33D, 0, 8}, {0x1C8, 0, 8}, {0x30C, 0, 8}};  // Bosch radarless w/ gas and brakes
+
+  RxCheck honda_common_alt_brake_rx_checks[] = {
+    HONDA_COMMON_RX_CHECKS(0)
+    HONDA_ALT_BRAKE_ADDR_CHECK(0)
+  };
+
+  // Bosch has pt on bus 1, verified 0x1A6 does not exist
+  RxCheck honda_bosch_rx_checks[] = {
+    HONDA_COMMON_RX_CHECKS(1)
+  };
+
+  RxCheck honda_bosch_alt_brake_rx_checks[] = {
+    HONDA_COMMON_RX_CHECKS(1)
+    HONDA_ALT_BRAKE_ADDR_CHECK(1)
+  };
+
+  const uint16_t HONDA_PARAM_ALT_BRAKE = 1;
+  // Variable used inside ifdef
+  // cppcheck-suppress unreadVariable
+  const uint16_t HONDA_PARAM_BOSCH_LONG = 2;
+  const uint16_t HONDA_PARAM_RADARLESS = 8;
+
   honda_hw = HONDA_BOSCH;
   honda_brake_switch_prev = false;
   honda_bosch_radarless = GET_FLAG(param, HONDA_PARAM_RADARLESS);
@@ -426,22 +438,6 @@ static int honda_bosch_fwd_hook(int bus_num, int addr) {
   return bus_fwd;
 }
 
-const safety_hooks honda_nidec_hooks = {
-  .init = honda_nidec_init,
-  .rx = honda_rx_hook,
-  .tx = honda_tx_hook,
-  .fwd = honda_nidec_fwd_hook,
-  .get_counter = honda_get_counter,
-  .get_checksum = honda_get_checksum,
-  .compute_checksum = honda_compute_checksum,
-};
+extern const safety_hooks honda_nidec_hooks;
 
-const safety_hooks honda_bosch_hooks = {
-  .init = honda_bosch_init,
-  .rx = honda_rx_hook,
-  .tx = honda_tx_hook,
-  .fwd = honda_bosch_fwd_hook,
-  .get_counter = honda_get_counter,
-  .get_checksum = honda_get_checksum,
-  .compute_checksum = honda_compute_checksum,
-};
+extern const safety_hooks honda_bosch_hooks;

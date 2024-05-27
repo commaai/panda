@@ -177,7 +177,7 @@ void uno_init_bootloader(void) {
   set_gpio_output(GPIOC, 12, 0);
 }
 
-harness_configuration uno_harness_config = {
+static harness_configuration uno_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOC,
@@ -191,6 +191,8 @@ harness_configuration uno_harness_config = {
   .adc_channel_SBU2 = 13
 };
 
+// Unable to use extern becaouse of a composite struct uno_harness_config
+// cppcheck-suppress misra-c2012-8.4
 board board_uno = {
   .harness_config = &uno_harness_config,
   .has_obd = true,
