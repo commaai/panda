@@ -55,7 +55,7 @@ cppcheck() {
   # cppcheck bug: some MISRA errors won't result in the error exit code,
   # so check the output (https://trac.cppcheck.net/ticket/12440#no1)
   if grep -e "misra violation" -e "error" -e "style: " $OUTPUT > /dev/null; then
-    printf "${RED}** FAIL!!!${NC}\n"
+    printf "${RED}** FAILED: MISRA violations found!${NC}\n"
     exit 1
   fi
 }
