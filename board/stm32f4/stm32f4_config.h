@@ -55,7 +55,6 @@
 #include "drivers/timers.h"
 #include "stm32f4/board.h"
 #include "stm32f4/clock.h"
-#include "drivers/watchdog.h"
 
 #include "drivers/spi.h"
 #include "stm32f4/llspi.h"
