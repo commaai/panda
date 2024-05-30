@@ -78,7 +78,8 @@ For example, to receive CAN messages:
 ```
 And to send one on bus 0:
 ``` python
->>> panda.can_send(0x1aa, "message", 0)
+>>> panda.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+>>> panda.can_send(0x1aa, b'message', 0)
 ```
 Note that you may have to setup [udev rules](https://github.com/commaai/panda/tree/master/drivers/linux) for Linux, such as
 ``` bash
