@@ -18,7 +18,6 @@ unusedFunction:*/interrupt_handlers*.h
 # all of the below suppressions are from new checks introduced after updating
 # cppcheck from 2.5 -> 2.13. they are listed here to separate the update from
 # fixing the violations and all are intended to be removed soon after
-misra-c2012-1.2   # this is from the extensions (e.g. __typeof__) used in the MIN, MAX, ABS, and CLAMP macros
 misra-c2012-2.5   # unused macros. a few legit, rest aren't common between F4/H7 builds. should we do this in the unusedFunction pass?
 misra-c2012-8.7
 misra-c2012-8.4
