@@ -52,6 +52,23 @@ uint32_t loop_counter = 0U;
 uint16_t button_press_cnt = 0U;
 void tick_handler(void) {
   if (TICK_TIMER->SR != 0) {
+    if (generated_can_traffic) {
+      // queue up messages
+      for (uint16_t i = 0U; i < 100U; i++) {
+        CANPacket_t to_send;
+        to_send.returned = 0U;
+        to_send.rejected = 0U;
+        to_send.extended = 0U;
+        to_send.addr = 0x200U + i;
+        to_send.bus = i % 3U;
+        to_send.data_len_code = 8U;
+        (void)memcpy(to_send.data, "\xff\xff\xff\xff\xff\xff\xff\xff", dlc_to_len[to_send.data_len_code]);
+        can_set_checksum(&to_send);
+
+        can_send(&to_send, to_send.bus, true);
+      }
+    }
+
     // tick drivers at 8Hz
     usb_tick();
 
