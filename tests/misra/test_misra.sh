@@ -79,7 +79,7 @@ printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 
 # ensure list of checkers is up to date
 cd $DIR
-if [ -z "$SKIP_TABLES_DIFF" ] && ! git diff --quiet coverage_table; then
+if [ -z "$SKIP_TABLES_DIFF" ] && ! git diff --quiet $CHECKLIST; then
   echo -e "\n${YELLOW}WARNING: Cppcheck checkers.txt report has changed. Review and commit...${NC}"
   exit 3
 fi
