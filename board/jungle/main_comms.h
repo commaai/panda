@@ -66,7 +66,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xa4: Enable generated CAN traffic.
     case 0xa4:
-      generated_can_traffic = (req->param2 > 0U);
+      generated_can_traffic = (req->param1 > 0U);
       break;
     // **** 0xa8: get microsecond timer
     case 0xa8:

@@ -67,6 +67,12 @@ void tick_handler(void) {
 
         can_send(&to_send, to_send.bus, true);
       }
+
+      for (int i = 0; i < 3; i++) {
+        if (can_health[i].transmit_error_cnt >= 128) {
+          (void)llcan_init(CANIF_FROM_CAN_NUM(i));
+        }
+      }
     }
 
     // tick drivers at 8Hz
