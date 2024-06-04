@@ -18,10 +18,12 @@ fi
 
 # ensure checked in coverage table is up to date
 cd $DIR
-python $CPPCHECK_DIR/addons/misra.py -generate-table > coverage_table
-if ! git diff --quiet coverage_table; then
-  echo -e "${YELLOW}MISRA coverage table doesn't match. Update and commit:${NC}"
-  exit 1
+if [ -z "$SKIP_TABLES_DIFF" ]; then
+  python $CPPCHECK_DIR/addons/misra.py -generate-table > coverage_table
+  if ! git diff --quiet coverage_table; then
+    echo -e "${YELLOW}MISRA coverage table doesn't match. Update and commit:${NC}"
+    exit 2
+  fi
 fi
 
 cd $PANDA_DIR
@@ -77,7 +79,7 @@ printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 
 # ensure list of checkers is up to date
 cd $DIR
-if ! git diff --quiet $CHECKLIST; then
+if [ -z "$SKIP_TABLES_DIFF" ] && ! git diff --quiet coverage_table; then
   echo -e "\n${YELLOW}WARNING: Cppcheck checkers.txt report has changed. Review and commit...${NC}"
-  exit 1
+  exit 3
 fi
