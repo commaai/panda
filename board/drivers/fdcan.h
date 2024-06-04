@@ -123,7 +123,8 @@ void process_can(uint8_t can_number) {
           CANPacket_t to_push;
 
           // TODO: do we want to just drop this message?
-          if ((FDCANx->PSR & FDCAN_PSR_LEC) >> FDCAN_PSR_LEC_Pos) {
+          const uint8_t last_error = (((FDCANx->PSR) & FDCAN_PSR_LEC) >> FDCAN_PSR_LEC_Pos);
+          if ((last_error != 0U) && (last_error != 7U)) {
             can_health[can_number].total_tx_lost_cnt += 1U;
 //            FDCANx->PSR &= ~FDCAN_PSR_LEC;  // TODO: clear?
             to_push.rejected = 1U;
