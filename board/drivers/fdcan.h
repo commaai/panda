@@ -45,7 +45,7 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   can_health[can_number].error_warning = ((psr_reg & FDCAN_PSR_EW) >> FDCAN_PSR_EW_Pos);
   can_health[can_number].error_passive = ((psr_reg & FDCAN_PSR_EP) >> FDCAN_PSR_EP_Pos);
 
-  can_health[can_number].last_error = ((psr_reg & FDCAN_PSR_LEC) >> FDCAN_PSR_LEC_Pos);
+  can_health[can_number].last_error = psr_reg & FDCAN_PSR_LEC;
   if ((can_health[can_number].last_error != 0U) && (can_health[can_number].last_error != 7U)) {
     can_health[can_number].last_stored_error = can_health[can_number].last_error;
   }
@@ -122,8 +122,15 @@ void process_can(uint8_t can_number) {
           // Send back to USB
           CANPacket_t to_push;
 
-          to_push.returned = 1U;
-          to_push.rejected = 0U;
+          // TODO: do we want to just drop this message?
+          if (FDCANx->PSR & FDCAN_PSR_LEC) {
+            can_health[can_number].total_tx_lost_cnt += 1U;
+//            FDCANx->PSR &= ~FDCAN_PSR_LEC;  // TODO: clear?
+            to_push.rejected = 1U;
+          } else {
+            to_push.returned = 1U;
+          }
+
           to_push.extended = to_send.extended;
           to_push.addr = to_send.addr;
           to_push.bus = bus_number;
