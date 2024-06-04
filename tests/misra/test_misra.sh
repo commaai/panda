@@ -22,7 +22,7 @@ if [ -z "$SKIP_TABLES_DIFF" ]; then
   python $CPPCHECK_DIR/addons/misra.py -generate-table > coverage_table
   if ! git diff --quiet coverage_table; then
     echo -e "${YELLOW}MISRA coverage table doesn't match. Update and commit:${NC}"
-    exit 2
+    exit 3
   fi
 fi
 
@@ -81,5 +81,5 @@ printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 cd $DIR
 if [ -z "$SKIP_TABLES_DIFF" ] && ! git diff --quiet $CHECKLIST; then
   echo -e "\n${YELLOW}WARNING: Cppcheck checkers.txt report has changed. Review and commit...${NC}"
-  exit 3
+  exit 4
 fi
