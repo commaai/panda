@@ -5,7 +5,7 @@ Cppcheck checkers list from test_misra.sh:
 
 
 TEST variant options:
-/board/main.c -I/board/ -DPANDA -DALLOW_DEBUG -UPANDA_JUNGLE -UFINAL_PROVISIONING -UBOOTSTUB -UDEBUG -UDEBUG_COMMS -UDEBUG_FAULTS -UDEBUG_FAN -UDEBUG_SPI -UDEBUG_UART -UDEBUG_USB --config-exclude=/board/stm32f4/inc --config-exclude=/board/stm32h7/inc --include=/tests/misra/panda_macro_config.h -i/tests/misra --enable=all --addon=misra --disable=unusedFunction --force --suppress=unknownMacro
+/board/main.c -I/board/ -DPANDA -DALLOW_DEBUG -UPANDA_JUNGLE -UFINAL_PROVISIONING -UBOOTSTUB -UDEBUG -UDEBUG_COMMS -UDEBUG_FAULTS -UDEBUG_FAN -UDEBUG_SPI -UDEBUG_UART -UDEBUG_USB --config-exclude=/board/stm32f4/inc --config-exclude=/board/stm32h7/inc --include=/tests/misra/panda_macro_config.h -i/tests/misra --enable=all --addon=misra --force --suppress=unknownMacro
 
 
 Critical errors
@@ -193,7 +193,7 @@ Yes  CheckType::checkSignConversion
 Yes  CheckType::checkTooBigBitwiseShift
 Yes  CheckUninitVar::check
 Yes  CheckUninitVar::valueFlowUninit
-No   CheckUnusedFunctions::check                               require:unusedFunction
+Yes  CheckUnusedFunctions::check
 Yes  CheckUnusedVar::checkFunctionVariableUsage
 Yes  CheckUnusedVar::checkStructMemberUsage
 Yes  CheckVaarg::va_list_usage

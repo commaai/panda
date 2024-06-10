@@ -70,7 +70,7 @@ cppcheck  $PANDA_DIR/board/main.c -I$PANDA_DIR/board/ \
           -UPANDA_JUNGLE -UFINAL_PROVISIONING -UBOOTSTUB $UNDEBUG \
           --config-exclude=$PANDA_DIR/board/stm32f4/inc --config-exclude=$PANDA_DIR/board/stm32h7/inc \
           --include=$DIR/panda_macro_config.h -i$DIR \
-          --enable=all --addon=misra --disable=unusedFunction \
+          --enable=all --addon=misra \
           --force --suppress=unknownMacro
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 
