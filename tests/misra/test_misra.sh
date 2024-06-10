@@ -46,7 +46,6 @@ cppcheck() {
 
   $CPPCHECK_DIR/cppcheck --inline-suppr -I $PANDA_DIR/board/ \
           --library=gnu.cfg --suppress=missingIncludeSystem \
-          -I $PANDA_DIR/board/stm32f4/inc/ -I $PANDA_DIR/board/stm32h7/inc/ \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
           --error-exitcode=2 --check-level=exhaustive \
           --platform=arm32-wchar_t4 $COMMON_DEFINES --checkers-report=$CHECKLIST.tmp \

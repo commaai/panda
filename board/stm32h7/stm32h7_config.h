@@ -1,5 +1,5 @@
-#include "stm32h7/inc/stm32h7xx.h"
-#include "stm32h7/inc/stm32h7xx_hal_gpio_ex.h"
+#include "inc/stm32h7xx.h"
+#include "inc/stm32h7xx_hal_gpio_ex.h"
 #define MCU_IDCODE 0x483U
 
 // from the linker script
