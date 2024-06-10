@@ -36,7 +36,7 @@ RxCheck nissan_rx_checks[] = {
 };
 
 // EPS Location. false = V-CAN, true = C-CAN
-const int NISSAN_PARAM_ALT_EPS_BUS = 1;
+const uint8_t NISSAN_PARAM_ALT_EPS_BUS = 1;
 
 bool nissan_alt_eps = false;
 

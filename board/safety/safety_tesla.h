@@ -17,9 +17,9 @@ const LongitudinalLimits TESLA_LONG_LIMITS = {
 };
 
 
-const int TESLA_FLAG_POWERTRAIN = 1;
-const int TESLA_FLAG_LONGITUDINAL_CONTROL = 2;
-const int TESLA_FLAG_RAVEN = 4;
+const uint8_t TESLA_FLAG_POWERTRAIN = 1;
+const uint8_t TESLA_FLAG_LONGITUDINAL_CONTROL = 2;
+const uint8_t TESLA_FLAG_RAVEN = 4;
 
 const CanMsg TESLA_TX_MSGS[] = {
   {0x488, 0, 4},  // DAS_steeringControl

@@ -127,8 +127,8 @@ RxCheck hyundai_canfd_hda2_long_rx_checks[] = {
 
 
 
-const int HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 32;
-const int HYUNDAI_PARAM_CANFD_HDA2_ALT_STEERING = 128;
+const uint16_t HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 32;
+const uint16_t HYUNDAI_PARAM_CANFD_HDA2_ALT_STEERING = 128;
 bool hyundai_canfd_alt_buttons = false;
 bool hyundai_canfd_hda2_alt_steering = false;
 

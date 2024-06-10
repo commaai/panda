@@ -37,7 +37,7 @@ RxCheck subaru_preglobal_rx_checks[] = {
 };
 
 
-const int SUBARU_PG_PARAM_REVERSED_DRIVER_TORQUE = 1;
+const uint8_t SUBARU_PG_PARAM_REVERSED_DRIVER_TORQUE = 1;
 bool subaru_pg_reversed_driver_torque = false;
 
 

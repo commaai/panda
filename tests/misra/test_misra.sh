@@ -36,7 +36,7 @@ echo "Cppcheck checkers list from test_misra.sh:" > $CHECKLIST
 
 cppcheck() {
   # get all gcc defines: arm-none-eabi-gcc -dM -E - < /dev/null
-  COMMON_DEFINES="-D__GNUC__=9 -UCMSIS_NVIC_VIRTUAL -UCMSIS_VECTAB_VIRTUAL"
+  COMMON_DEFINES="-D__GNUC__=9"
 
   # note that cppcheck build cache results in inconsistent results as of v2.13.0
   OUTPUT=$DIR/.output.log
@@ -45,10 +45,10 @@ cppcheck() {
   echo -e ""${@//$PANDA_DIR/}"\n\n" >> $CHECKLIST # (absolute path removed)
 
   $CPPCHECK_DIR/cppcheck --inline-suppr -I $PANDA_DIR/board/ \
-          -I "$(arm-none-eabi-gcc -print-file-name=include)" \
+          --library=gnu.cfg --suppress=missingIncludeSystem \
           -I $PANDA_DIR/board/stm32f4/inc/ -I $PANDA_DIR/board/stm32h7/inc/ \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
-          --suppress=*:*include/* --error-exitcode=2 --check-level=exhaustive \
+          --error-exitcode=2 --check-level=exhaustive \
           --platform=arm32-wchar_t4 $COMMON_DEFINES --checkers-report=$CHECKLIST.tmp \
           --std=c11 "$@" |& tee $OUTPUT
   
