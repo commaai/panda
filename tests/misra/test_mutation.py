@@ -17,6 +17,10 @@ IGNORED_PATHS = (
   'board/stm32f4/inc',
   'board/fake_stm.h',
 
+  # suppresed
+  'board/stm32f4/interrupt_handlers.h',
+  'board/stm32h7/interrupt_handlers.h',
+
   # bootstub only files
   'board/flasher.h',
   'board/bootstub.c',
