@@ -28,7 +28,7 @@ The panda firmware is written for its use in conjuction with [openpilot](https:/
 
 These are the [CI regression tests](https://github.com/commaai/panda/actions) we have in place:
 * A generic static code analysis is performed by [cppcheck](https://github.com/danmar/cppcheck/).
-* In addition, [cppcheck](https://github.com/danmar/cppcheck/) has a specific addon to check for [MISRA C:2012](https://www.misra.org.uk/MISRAHome/MISRAC2012/tabid/196/Default.aspx) violations. See [current coverage](https://github.com/commaai/panda/blob/master/tests/misra/coverage_table).
+* In addition, [cppcheck](https://github.com/danmar/cppcheck/) has a specific addon to check for [MISRA C:2012](https://misra.org.uk/) violations. See [current coverage](https://github.com/commaai/panda/blob/master/tests/misra/coverage_table).
 * Compiler options are relatively strict: the flags `-Wall -Wextra -Wstrict-prototypes -Werror` are enforced.
 * The [safety logic](https://github.com/commaai/panda/tree/master/board/safety) is tested and verified by [unit tests](https://github.com/commaai/panda/tree/master/tests/safety) for each supported car variant.
 to ensure that the behavior remains unchanged.
@@ -78,7 +78,8 @@ For example, to receive CAN messages:
 ```
 And to send one on bus 0:
 ``` python
->>> panda.can_send(0x1aa, "message", 0)
+>>> panda.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+>>> panda.can_send(0x1aa, b'message', 0)
 ```
 Note that you may have to setup [udev rules](https://github.com/commaai/panda/tree/master/drivers/linux) for Linux, such as
 ``` bash
