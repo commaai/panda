@@ -4,7 +4,6 @@ import glob
 import pytest
 import shutil
 import subprocess
-import tempfile
 import random
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -73,16 +72,15 @@ for p in patterns:
   mutations.append((random.choice(files), p, True))
 
 @pytest.mark.parametrize("fn, patch, should_fail", mutations)
-def test_misra_mutation(fn, patch, should_fail):
-  with tempfile.TemporaryDirectory() as tmp:
-    shutil.copytree(ROOT, tmp, dirs_exist_ok=True)
+def test_misra_mutation(fn, patch, should_fail, tmp_path):
+  shutil.copytree(ROOT, tmp_path, dirs_exist_ok=True)
 
-    # apply patch
-    if fn is not None:
-      r = os.system(f"cd {tmp} && sed -i '{patch}' {fn}")
-      assert r == 0
+  # apply patch
+  if fn is not None:
+    r = os.system(f"cd {tmp_path} && sed -i '{patch}' {fn}")
+    assert r == 0
 
-    # run test
-    r = subprocess.run("SKIP_TABLES_DIFF=1 tests/misra/test_misra.sh", cwd=tmp, shell=True)
-    failed = r.returncode != 0
-    assert failed == should_fail
+  # run test
+  r = subprocess.run("SKIP_TABLES_DIFF=1 tests/misra/test_misra.sh", cwd=tmp_path, shell=True)
+  failed = r.returncode != 0
+  assert failed == should_fail
