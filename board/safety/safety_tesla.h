@@ -36,7 +36,7 @@ RxCheck tesla_rx_checks[] = {
   {.msg = {{0x2b9, 2, 8, .frequency = 25U}, { 0 }, { 0 }}},   // DAS_control
   {.msg = {{0x370, 0, 8, .frequency = 25U}, { 0 }, { 0 }}},   // EPAS_sysStatus
   {.msg = {{0x108, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},  // DI_torque1
-  {.msg = {{0x118, 0, 6, .frequency = 100U}, { 0 }, { 0 }}},  // DI_torque2
+  {.msg = {{0x155, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},   // ESP_B
   {.msg = {{0x20a, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},   // BrakeMessage
   {.msg = {{0x368, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},   // DI_state
   {.msg = {{0x318, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},   // GTW_carState
@@ -46,7 +46,7 @@ RxCheck tesla_raven_rx_checks[] = {
   {.msg = {{0x2b9, 2, 8, .frequency = 25U}, { 0 }, { 0 }}},   // DAS_control
   {.msg = {{0x131, 2, 8, .frequency = 100U}, { 0 }, { 0 }}},  // EPAS3P_sysStatus
   {.msg = {{0x108, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},  // DI_torque1
-  {.msg = {{0x118, 0, 6, .frequency = 100U}, { 0 }, { 0 }}},  // DI_torque2
+  {.msg = {{0x155, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},   // ESP_B
   {.msg = {{0x20a, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},   // BrakeMessage
   {.msg = {{0x368, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},   // DI_state
   {.msg = {{0x318, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},   // GTW_carState
@@ -54,7 +54,6 @@ RxCheck tesla_raven_rx_checks[] = {
 
 RxCheck tesla_pt_rx_checks[] = {
   {.msg = {{0x106, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},  // DI_torque1
-  {.msg = {{0x116, 0, 6, .frequency = 100U}, { 0 }, { 0 }}},  // DI_torque2
   {.msg = {{0x1f8, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},   // BrakeMessage
   {.msg = {{0x2bf, 2, 8, .frequency = 25U}, { 0 }, { 0 }}},   // DAS_control
   {.msg = {{0x256, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},   // DI_state
@@ -77,16 +76,16 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
       int angle_meas_new = (((GET_BYTE(to_push, 4) & 0x3FU) << 8) | GET_BYTE(to_push, 5)) - 8192U;
       update_sample(&angle_meas, angle_meas_new);
     }
-  }
 
-  if(bus == 0) {
-    if(addr == (tesla_powertrain ? 0x116 : 0x118)) {
-      // Vehicle speed: ((0.05 * val) - 25) * MPH_TO_MPS
-      float speed = (((((GET_BYTE(to_push, 3) & 0x0FU) << 8) | (GET_BYTE(to_push, 2))) * 0.05) - 25) * 0.447;
+    if((addr == 0x155) && (bus == 0)) {
+      // Vehicle speed: (val * 0.5) * KPH_TO_MPS
+      float speed = ((((GET_BYTE(to_push, 6) & 0x0FU) << 6) | (GET_BYTE(to_push, 5) >> 2)) * 0.5) * 0.277778;
       vehicle_moving = ABS(speed) > 0.1;
       UPDATE_VEHICLE_SPEED(speed);
     }
+  }
 
+  if(bus == 0) {
     if(addr == (tesla_powertrain ? 0x106 : 0x108)) {
       // Gas pressed
       gas_pressed = (GET_BYTE(to_push, 6) != 0U);
