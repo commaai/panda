@@ -9,7 +9,7 @@ from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
-TOYOTA_COMMON_TX_MSGS = [[0x2E4, 0], [0x191, 0], [0x412, 0], [0x343, 0], [0x1D2, 0]]  # LKAS + LTA + ACC & PCM cancel cmds
+TOYOTA_COMMON_TX_MSGS = [[0x2E4, 0], [0x131, 0], [0x191, 0], [0x412, 0], [0x343, 0], [0x1D2, 0]]  # LKAS + LTA + ACC & PCM cancel cmds
 TOYOTA_COMMON_LONG_TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0], [0x366, 0], [0x4CB, 0],  # DSU bus 0
                               [0x128, 1], [0x141, 1], [0x160, 1], [0x161, 1], [0x470, 1],  # DSU bus 1
                               [0x411, 0],  # PCS_HUD
@@ -21,7 +21,7 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
   TX_MSGS = TOYOTA_COMMON_TX_MSGS + TOYOTA_COMMON_LONG_TX_MSGS
   STANDSTILL_THRESHOLD = 0  # kph
   RELAY_MALFUNCTION_ADDRS = {0: (0x2E4, 0x343)}
-  FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x343]}
+  FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x131, 0x191, 0x343]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   EPS_SCALE = 73
 
@@ -266,7 +266,7 @@ class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
   def setUp(self):
     self.packer = CANPackerPanda("toyota_new_mc_pt_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_ALT_BRAKE)
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_ALT_BRAKE_224)
     self.safety.init_tests()
 
   def _user_brake_msg(self, brake):
@@ -283,7 +283,7 @@ class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
   TX_MSGS = TOYOTA_COMMON_TX_MSGS
   # Base addresses minus ACC_CONTROL (0x343)
   RELAY_MALFUNCTION_ADDRS = {0: (0x2E4,)}
-  FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191]}
+  FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x131]}
 
   def test_diagnostics(self, stock_longitudinal: bool = True):
     super().test_diagnostics(stock_longitudinal=stock_longitudinal)
