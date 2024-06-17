@@ -1,12 +1,12 @@
 #include "safety_hyundai_common.h"
 
-#define HYUNDAI_LIMITS(steer, rate_up, rate_down) { \
+#define HYUNDAI_LIMITS(steer, rate_up, rate_down, drv_trq_allowance) { \
   .max_steer = (steer), \
   .max_rate_up = (rate_up), \
   .max_rate_down = (rate_down), \
   .max_rt_delta = 112, \
   .max_rt_interval = 250000, \
-  .driver_torque_allowance = 50, \
+  .driver_torque_allowance = (drv_trq_allowance), \
   .driver_torque_factor = 2, \
   .type = TorqueDriverLimited, \
    /* the EPS faults when the steering angle is above a certain threshold for too long. to prevent this, */ \
@@ -17,8 +17,9 @@
   .has_steer_req_tolerance = true, \
 }
 
-const SteeringLimits HYUNDAI_STEERING_LIMITS = HYUNDAI_LIMITS(384, 3, 7);
-const SteeringLimits HYUNDAI_STEERING_LIMITS_ALT = HYUNDAI_LIMITS(270, 2, 3);
+const SteeringLimits HYUNDAI_STEERING_LIMITS = HYUNDAI_LIMITS(384, 3, 7, 50);
+const SteeringLimits HYUNDAI_STEERING_LIMITS_ALT = HYUNDAI_LIMITS(270, 2, 3, 50);
+const SteeringLimits HYUNDAI_STEERING_LIMITS_CAN_CANFD_HYBRID = HYUNDAI_LIMITS(384, 3, 7, 250);
 
 const LongitudinalLimits HYUNDAI_LONG_LIMITS = {
   .max_accel = 200,   // 1/100 m/s2
@@ -29,6 +30,12 @@ const CanMsg HYUNDAI_TX_MSGS[] = {
   {0x340, 0, 8}, // LKAS11 Bus 0
   {0x4F1, 0, 4}, // CLU11 Bus 0
   {0x485, 0, 4}, // LFAHDA_MFC Bus 0
+};
+
+const CanMsg HYUNDAI_CAN_CANFD_HYBRID_TX_MSGS[] = {
+  {0x340, 0, 8},
+  {0x4F1, 0, 4},
+  {0x485, 0, 8},
 };
 
 const CanMsg HYUNDAI_LONG_TX_MSGS[] = {
@@ -57,17 +64,22 @@ const CanMsg HYUNDAI_CAMERA_SCC_TX_MSGS[] = {
   {.msg = {{0x386, 0, 8, .check_checksum = !(legacy), .max_counter = (legacy) ? 0U : 15U, .frequency = 100U}, { 0 }, { 0 }}}, \
   {.msg = {{0x394, 0, 8, .check_checksum = !(legacy), .max_counter = (legacy) ? 0U : 7U, .frequency = 100U}, { 0 }, { 0 }}},  \
 
-#define HYUNDAI_SCC12_ADDR_CHECK(scc_bus)                                                                                  \
-  {.msg = {{0x421, (scc_bus), 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}}, \
+#define HYUNDAI_SCC12_ADDR_CHECK(scc_bus, can_canfd_hybrid)                                                     \
+  {.msg = {{0x421, (scc_bus), 8, .check_checksum = !(can_canfd_hybrid), .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}}, \
 
 RxCheck hyundai_rx_checks[] = {
    HYUNDAI_COMMON_RX_CHECKS(false)
-   HYUNDAI_SCC12_ADDR_CHECK(0)
+   HYUNDAI_SCC12_ADDR_CHECK(0, false)
+};
+
+RxCheck hyundai_can_canfd_hybrid_rx_checks[] = {
+  HYUNDAI_COMMON_RX_CHECKS(false)
+  HYUNDAI_SCC12_ADDR_CHECK(0, true)
 };
 
 RxCheck hyundai_cam_scc_rx_checks[] = {
   HYUNDAI_COMMON_RX_CHECKS(false)
-  HYUNDAI_SCC12_ADDR_CHECK(2)
+  HYUNDAI_SCC12_ADDR_CHECK(2, false)
 };
 
 RxCheck hyundai_long_rx_checks[] = {
@@ -79,10 +91,14 @@ RxCheck hyundai_long_rx_checks[] = {
 // older hyundai models have less checks due to missing counters and checksums
 RxCheck hyundai_legacy_rx_checks[] = {
   HYUNDAI_COMMON_RX_CHECKS(true)
-  HYUNDAI_SCC12_ADDR_CHECK(0)
+  HYUNDAI_SCC12_ADDR_CHECK(0, false)
 };
 
+
+const int HYUNDAI_PARAM_CAN_CANFD = 256;
 bool hyundai_legacy = false;
+bool hyundai_can_canfd_hybrid = false;
+
 
 
 static uint8_t hyundai_get_counter(const CANPacket_t *to_push) {
@@ -96,7 +112,11 @@ static uint8_t hyundai_get_counter(const CANPacket_t *to_push) {
   } else if (addr == 0x394) {
     cnt = (GET_BYTE(to_push, 1) >> 5) & 0x7U;
   } else if (addr == 0x421) {
-    cnt = GET_BYTE(to_push, 7) & 0xFU;
+    if (hyundai_can_canfd_hybrid) {
+      cnt = (GET_BYTE(to_push, 1) >> 4) & 0xFU;
+    } else {
+      cnt = GET_BYTE(to_push, 7) & 0xFU;
+    }
   } else if (addr == 0x4F1) {
     cnt = (GET_BYTE(to_push, 3) >> 4) & 0xFU;
   } else {
@@ -115,7 +135,7 @@ static uint32_t hyundai_get_checksum(const CANPacket_t *to_push) {
   } else if (addr == 0x394) {
     chksum = GET_BYTE(to_push, 6) & 0xFU;
   } else if (addr == 0x421) {
-    chksum = GET_BYTE(to_push, 7) >> 4;
+    chksum = hyundai_can_canfd_hybrid ? GET_BYTE(to_push, 0) : GET_BYTE(to_push, 7) >> 4;
   } else {
   }
   return chksum;
@@ -124,7 +144,7 @@ static uint32_t hyundai_get_checksum(const CANPacket_t *to_push) {
 static uint32_t hyundai_compute_checksum(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
-  uint8_t chksum = 0;
+  uint16_t chksum = 0;
   if (addr == 0x386) {
     // count the bits
     for (int i = 0; i < 8; i++) {
@@ -140,18 +160,22 @@ static uint32_t hyundai_compute_checksum(const CANPacket_t *to_push) {
     }
     chksum = (chksum ^ 9U) & 15U;
   } else {
-    // sum of nibbles
-    for (int i = 0; i < 8; i++) {
-      if ((addr == 0x394) && (i == 7)) {
-        continue; // exclude
+    if (hyundai_can_canfd_hybrid && (addr == 0x421)) {
+      chksum = hyundai_common_canfd_compute_checksum(to_push);
+    } else {
+      // sum of nibbles
+      for (int i = 0; i < 8; i++) {
+        if ((addr == 0x394) && (i == 7)) {
+          continue; // exclude
+        }
+        uint8_t b = GET_BYTE(to_push, i);
+        if (((addr == 0x260) && (i == 7)) || ((addr == 0x394) && (i == 6)) || ((addr == 0x421) && (i == 7))) {
+          b &= (addr == 0x421) ? 0x0FU : 0xF0U; // remove checksum
+        }
+        chksum += (b % 16U) + (b / 16U);
       }
-      uint8_t b = GET_BYTE(to_push, i);
-      if (((addr == 0x260) && (i == 7)) || ((addr == 0x394) && (i == 6)) || ((addr == 0x421) && (i == 7))) {
-        b &= (addr == 0x421) ? 0x0FU : 0xF0U; // remove checksum
-      }
-      chksum += (b % 16U) + (b / 16U);
+      chksum = (16U - (chksum %  16U)) % 16U;
     }
-    chksum = (16U - (chksum %  16U)) % 16U;
   }
 
   return chksum;
@@ -163,8 +187,13 @@ static void hyundai_rx_hook(const CANPacket_t *to_push) {
 
   // SCC12 is on bus 2 for camera-based SCC cars, bus 0 on all others
   if ((addr == 0x421) && (((bus == 0) && !hyundai_camera_scc) || ((bus == 2) && hyundai_camera_scc))) {
-    // 2 bits: 13-14
-    int cruise_engaged = (GET_BYTES(to_push, 0, 4) >> 13) & 0x3U;
+    int cruise_engaged = 0;
+    if (hyundai_can_canfd_hybrid) {
+      cruise_engaged = (GET_BYTE(to_push, 3) >> 4) & 0x3U;
+    } else {
+      // 2 bits: 13-14
+      cruise_engaged = (GET_BYTES(to_push, 0, 4) >> 13) & 0x3U;
+    }
     hyundai_common_cruise_state_check(cruise_engaged);
   }
 
@@ -254,7 +283,7 @@ static bool hyundai_tx_hook(const CANPacket_t *to_send) {
     int desired_torque = ((GET_BYTES(to_send, 0, 4) >> 16) & 0x7ffU) - 1024U;
     bool steer_req = GET_BIT(to_send, 27U);
 
-    const SteeringLimits limits = hyundai_alt_limits ? HYUNDAI_STEERING_LIMITS_ALT : HYUNDAI_STEERING_LIMITS;
+    const SteeringLimits limits = hyundai_can_canfd_hybrid ? HYUNDAI_STEERING_LIMITS_CAN_CANFD_HYBRID : (hyundai_alt_limits ? HYUNDAI_STEERING_LIMITS_ALT : HYUNDAI_STEERING_LIMITS);
     if (steer_torque_cmd_checks(desired_torque, steer_req, limits)) {
       tx = false;
     }
@@ -299,8 +328,13 @@ static int hyundai_fwd_hook(int bus_num, int addr) {
 static safety_config hyundai_init(uint16_t param) {
   hyundai_common_init(param);
   hyundai_legacy = false;
+  hyundai_can_canfd_hybrid = GET_FLAG(param, HYUNDAI_PARAM_CAN_CANFD);
 
-  if (hyundai_camera_scc) {
+  if (hyundai_can_canfd_hybrid) {
+    gen_crc_lookup_table_16(0x1021, hyundai_canfd_crc_lut);
+  }
+
+  if (hyundai_camera_scc || hyundai_can_canfd_hybrid) {
     hyundai_longitudinal = false;
   }
 
@@ -309,6 +343,8 @@ static safety_config hyundai_init(uint16_t param) {
     ret = BUILD_SAFETY_CFG(hyundai_long_rx_checks, HYUNDAI_LONG_TX_MSGS);
   } else if (hyundai_camera_scc) {
     ret = BUILD_SAFETY_CFG(hyundai_cam_scc_rx_checks, HYUNDAI_CAMERA_SCC_TX_MSGS);
+  } else if (hyundai_can_canfd_hybrid) {
+    ret = BUILD_SAFETY_CFG(hyundai_can_canfd_hybrid_rx_checks, HYUNDAI_CAN_CANFD_HYBRID_TX_MSGS);
   } else {
     ret = BUILD_SAFETY_CFG(hyundai_rx_checks, HYUNDAI_TX_MSGS);
   }
