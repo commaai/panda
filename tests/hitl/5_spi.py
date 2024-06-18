@@ -1,8 +1,7 @@
 import binascii
 import pytest
 import random
-from unittest.mock import patch
-
+import mocker
 from panda import Panda, PandaDFU
 from panda.python.spi import SpiDevice, PandaProtocolMismatch, PandaSpiNackResponse
 
@@ -40,7 +39,7 @@ class TestSpi:
   def test_protocol_version_check(self, p):
     for bootstub in (False, True):
       p.reset(enter_bootstub=bootstub)
-      with patch('panda.python.spi.PandaSpiHandle.PROTOCOL_VERSION', return_value="abc"):
+      with mocker.Patcher('panda.python.spi.PandaSpiHandle.PROTOCOL_VERSION', return_value="abc"):
         # list should still work with wrong version
         assert p._serial in Panda.list()
 
