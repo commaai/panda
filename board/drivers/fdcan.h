@@ -35,6 +35,12 @@ bool can_set_speed(uint8_t can_number) {
   return ret;
 }
 
+void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number) {
+  can_health[can_number].can_core_reset_cnt += 1U;
+  can_health[can_number].total_tx_lost_cnt += (FDCAN_TX_FIFO_EL_CNT - (FDCANx->TXFQS & FDCAN_TXFQS_TFFL)); // TX FIFO msgs will be lost after reset
+  llcan_clear_send(FDCANx);
+}
+
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   FDCAN_GlobalTypeDef *FDCANx = CANIF_FROM_CAN_NUM(can_number);
   uint32_t psr_reg = FDCANx->PSR;
@@ -75,9 +81,7 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
     // 2. H7 gets stuck in bus off recovery state indefinitely
     if ((((can_health[can_number].last_error == CAN_ACK_ERROR) || (can_health[can_number].last_data_error == CAN_ACK_ERROR)) && (can_health[can_number].transmit_error_cnt > 127U)) ||
      ((ir_reg & FDCAN_IR_BO) != 0U)) {
-      can_health[can_number].can_core_reset_cnt += 1U;
-      can_health[can_number].total_tx_lost_cnt += (FDCAN_TX_FIFO_EL_CNT - (FDCANx->TXFQS & FDCAN_TXFQS_TFFL)); // TX FIFO msgs will be lost after reset
-      llcan_clear_send(FDCANx);
+      can_clear_send(FDCANx, can_number);
     }
   }
 }
