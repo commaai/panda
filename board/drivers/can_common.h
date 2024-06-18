@@ -221,11 +221,13 @@ void ignition_can_hook(CANPacket_t *to_push) {
       ignition_can_cnt = 0U;
     }
 
+    // Volkswagen MEB exception
+    if ((addr == 0x3C0) && (len == 8)) {
+      ignition_can = GET_BIT(to_push, 17U) == true;
+      ignition_can_cnt = 0U;
+    }
+
   }
-  
-  ignition_can = true;
-  ignition_can_cnt = 0U;
-  
 }
 
 bool can_tx_check_min_slots_free(uint32_t min) {
