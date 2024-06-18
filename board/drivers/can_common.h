@@ -79,7 +79,7 @@ bool can_pop(can_ring *q, CANPacket_t *elem) {
   bool ret = 0;
 
   ENTER_CRITICAL();
-  if (q->w_ptr != q->r_ptr) {
+  if (q->w_ptr != q->r_ptr || q == &can_rx_q) {
     *elem = q->elems[q->r_ptr];
     if ((q->r_ptr + 1U) == q->fifo_size) {
       q->r_ptr = 0;

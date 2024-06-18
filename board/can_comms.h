@@ -21,6 +21,22 @@ typedef struct {
 asm_buffer can_read_buffer = {.ptr = 0U, .tail_size = 0U};
 
 int comms_can_read(uint8_t *data, uint32_t max_len) {
+  if (can_rx_q.w_ptr == 0) {
+    for (uint16_t i = 0U; i < can_slots_empty(&can_rx_q); i++) {
+      CANPacket_t to_send;
+      to_send.returned = 0U;
+      to_send.rejected = 0U;
+      to_send.extended = 0U;
+      to_send.addr = 0x200U + i;
+      to_send.bus = i % 3U;
+      to_send.data_len_code = i % 8U;
+      (void)memcpy(to_send.data, "\xff\xff\xff\xff\xff\xff\xff\xff", dlc_to_len[to_send.data_len_code]);
+      can_set_checksum(&to_send);
+
+      can_push(&can_rx_q, &to_send);
+    }
+  }
+
   uint32_t pos = 0U;
 
   // Send tail of previous message if it is in buffer
