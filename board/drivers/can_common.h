@@ -205,6 +205,12 @@ void ignition_can_hook(CANPacket_t *to_push) {
     ignition_can = GET_BIT(to_push, 17U);
     ignition_can_cnt = 0U;
   }
+
+  if ((addr == 0x65A) && (len == 8)) {
+    ignition_can = GET_BIT(to_push, 17U) || GET_BIT(to_push, 18U);
+    ignition_can_cnt = 0U;
+  }
+  
   
   if (bus == 0) {
     // GM exception
