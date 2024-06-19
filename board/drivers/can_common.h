@@ -197,22 +197,11 @@ void can_set_forwarding(uint8_t from, uint8_t to) {
 
 void ignition_can_hook(CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
-  int addr = GET_ADDR(to_push);
-  int len = GET_LEN(to_push);
-
-  // Volkswagen MEB exception
-  if ((addr == 0x3C0) && (len == 8)) {
-    ignition_can = GET_BIT(to_push, 17U);
-    ignition_can_cnt = 0U;
-  }
-
-  if ((addr == 0x65A) && (len == 8)) {
-    ignition_can = GET_BIT(to_push, 17U) || GET_BIT(to_push, 18U);
-    ignition_can_cnt = 0U;
-  }
-  
   
   if (bus == 0) {
+    int addr = GET_ADDR(to_push);
+    int len = GET_LEN(to_push);
+    
     // GM exception
     if ((addr == 0x1F1) && (len == 8)) {
       // SystemPowerMode (2=Run, 3=Crank Request)
@@ -230,6 +219,12 @@ void ignition_can_hook(CANPacket_t *to_push) {
     // Mazda exception
     if ((addr == 0x9E) && (len == 8)) {
       ignition_can = (GET_BYTE(to_push, 0) >> 5) == 0x6U;
+      ignition_can_cnt = 0U;
+    }
+
+    // Volkswagen MEB exception
+    if ((addr == 0x3C0) && (len == 8)) {
+      ignition_can = GET_BIT(to_push, 16U) || GET_BIT(to_push, 17U) || GET_BIT(to_push, 18U);
       ignition_can_cnt = 0U;
     }
   }
