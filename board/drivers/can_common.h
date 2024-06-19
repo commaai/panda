@@ -224,7 +224,7 @@ void ignition_can_hook(CANPacket_t *to_push) {
 
     // Volkswagen MEB exception
     if ((addr == 0x3C0) && (len == 4)) {
-      ignition_can = (GET_BYTE(to_push, 2) >> 6) == 0x7U;
+      ignition_can = GET_BIT(to_push, 16) || GET_BIT(to_push, 17) || GET_BIT(to_push, 18);
       ignition_can_cnt = 0U;
     }
   }
