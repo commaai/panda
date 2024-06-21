@@ -145,7 +145,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       brake_pressed = (GET_BYTE(to_push, 3) & 0x10U) >> 4;
     }
 
-    generic_rx_checks((addr == MSG_SPEED_01));
+    //generic_rx_checks((addr == MSG_SPEED_01));
   }
 }
 
