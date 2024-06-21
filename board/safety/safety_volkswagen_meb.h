@@ -185,8 +185,8 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
 static int volkswagen_meb_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
   UNUSED(bus_num);
-  UNUSED(int addr);
-  UNUSED(int bus_fwd);
+  UNUSED(addr);
+  UNUSED(bus_fwd);
 
   return bus_fwd;
 }
