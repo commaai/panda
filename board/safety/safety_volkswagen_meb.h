@@ -184,31 +184,9 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
 
 static int volkswagen_meb_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
-
-  switch (bus_num) {
-    case 0:
-      if (addr == MSG_LH_EPS_03) {
-        // openpilot needs to replace apparent driver steering input torque to pacify VW Emergency Assist
-        bus_fwd = -1;
-      } else {
-        // Forward all remaining traffic from Extended CAN onward
-        bus_fwd = 2;
-      }
-      break;
-    case 2:
-      if ((addr == MSG_SPEED_01) || (addr == MSG_LDW_02)) {
-        // openpilot takes over LKAS steering control and related HUD messages from the camera
-        bus_fwd = -1;
-      } else {
-        // Forward all remaining traffic from Extended CAN devices to J533 gateway
-        bus_fwd = 0;
-      }
-      break;
-    default:
-      // No other buses should be in use; fallback to do-not-forward
-      bus_fwd = -1;
-      break;
-  }
+  UNUSED(bus_num);
+  UNUSED(int addr);
+  UNUSED(int bus_fwd);
 
   return bus_fwd;
 }
