@@ -16,13 +16,13 @@
 #include "safety/safety_nissan.h"
 #include "safety/safety_volkswagen_mqb.h"
 #include "safety/safety_volkswagen_pq.h"
+#include "safety/safety_volkswagen_meb.h"
 #include "safety/safety_elm327.h"
 #include "safety/safety_body.h"
 
 // CAN-FD only safety modes
 #ifdef CANFD
 #include "safety/safety_hyundai_canfd.h"
-#include "safety/safety_volkswagen_meb.h"
 #endif
 
 // from cereal.car.CarParams.SafetyModel
