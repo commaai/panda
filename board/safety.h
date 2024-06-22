@@ -52,10 +52,7 @@
 #define SAFETY_FAW 26U
 #define SAFETY_BODY 27U
 #define SAFETY_HYUNDAI_CANFD 28U
-#define SAFETY_VOLKSWAGEN_MQBEVO 29U
-#define SAFETY_CHRYSLER_CUSW 30U
-#define SAFETY_PSA 31U
-#define SAFETY_VOLKSWAGEN_MEB 32U
+#define SAFETY_VOLKSWAGEN_MEB 29U
 
 uint16_t current_safety_mode = SAFETY_SILENT;
 uint16_t current_safety_param = 0;
