@@ -97,6 +97,9 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
       heartbeat_counter = 0U;
       heartbeat_lost = false;
       if (current_board->has_obd) {
+        // Clear any pending messages in the can core (i.e. sending while comma power is unplugged)
+        // TODO: rewrite using hardware queues rather than fifo to cancel specific messages
+        llcan_clear_send(CANIF_FROM_CAN_NUM(1));
         if (param == 0U) {
           current_board->set_can_mode(CAN_MODE_OBD_CAN2);
         } else {
