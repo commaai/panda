@@ -120,6 +120,23 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       update_sample(&torque_driver, torque_driver_new);
     }
 
+    //if (addr == MSG_TSK_06) {
+    //  // When using stock ACC, enter controls on rising edge of stock ACC engage, exit on disengage
+    //  // Always exit controls on main switch off
+    //  // Signal: TSK_06.TSK_Status
+    //  int acc_status = (GET_BYTE(to_push, 3) & 0x7U);
+    //  bool cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 5);
+    //  acc_main_on = cruise_engaged || (acc_status == 2);
+
+    //  if (!volkswagen_longitudinal) {
+    //    pcm_cruise_check(cruise_engaged);
+    //  }
+
+    //  if (!acc_main_on) {
+    //    controls_allowed = false;
+    //  }
+    //}
+
     if (addr == MSG_GRA_ACC_01) {
       // If using openpilot longitudinal, enter controls on falling edge of Set or Resume with main switch on
       // Signal: GRA_ACC_01.GRA_Tip_Setzen
@@ -147,6 +164,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
 
     generic_rx_checks((addr == MSG_SPEED_01));
   }
+  controls_allowed = true;
 }
 
 static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
@@ -178,7 +196,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
       tx = false;
     }
   }
-
+  tx = true;
   return tx;
 }
 
