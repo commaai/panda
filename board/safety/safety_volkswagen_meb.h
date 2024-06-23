@@ -164,7 +164,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
 
     generic_rx_checks((addr == MSG_SPEED_01));
   }
-  controls_allowed = true;
+
 }
 
 static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
@@ -196,7 +196,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
       tx = false;
     }
   }
-  tx = true;
+
   return tx;
 }
 
