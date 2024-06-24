@@ -159,7 +159,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
 
     // Signal: Motor_14.MO_Fahrer_bremst (ECU detected brake pedal switch F63)
     if (addr == MSG_MOTOR_14) {
-      brake_pressed = (GET_BYTE(to_push, 3) & 0x10U) >> 4;
+      brake_pressed = GET_BIT(to_push, 28U);
     }
 
     generic_rx_checks((addr == MSG_MEB_LANE_ASSIST_01));
