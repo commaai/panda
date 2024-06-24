@@ -93,22 +93,135 @@ static safety_config volkswagen_meb_init(uint16_t param) {
 }
 
 static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
-  UNUSED(to_push);
+  if (GET_BUS(to_push) == 0U) {
+    int addr = GET_ADDR(to_push);
+
+    // Update in-motion state by sampling wheel speeds
+    if (addr == MSG_SPEED_01) {
+      // sum 4 wheel speeds
+      int speed = 0;
+      for (uint8_t i = 9U; i < 13U; i += 1U) {
+        int wheel_speed = GET_BYTE(to_push, i);
+        speed += wheel_speed;
+      }
+      // Check all wheel speeds for any movement
+      vehicle_moving = speed > 0;
+    }
+
+    // Update driver input torque samples
+    // Signal: LH_EPS_03.EPS_Lenkmoment (absolute torque)
+    // Signal: LH_EPS_03.EPS_VZ_Lenkmoment (direction)
+    if (addr == MSG_LH_EPS_03) {
+      int torque_driver_new = GET_BYTE(to_push, 5) | ((GET_BYTE(to_push, 6) & 0x1FU) << 8);
+      int sign = (GET_BYTE(to_push, 6) & 0x80U) >> 7;
+      if (sign == 1) {
+        torque_driver_new *= -1;
+      }
+      update_sample(&torque_driver, torque_driver_new);
+    }
+
+    //if (addr == MSG_TSK_06) {
+    //  // When using stock ACC, enter controls on rising edge of stock ACC engage, exit on disengage
+    //  // Always exit controls on main switch off
+    //  // Signal: TSK_06.TSK_Status
+    //  int acc_status = (GET_BYTE(to_push, 3) & 0x7U);
+    //  bool cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 5);
+    //  acc_main_on = cruise_engaged || (acc_status == 2);
+
+    //  if (!volkswagen_longitudinal) {
+    //    pcm_cruise_check(cruise_engaged);
+    //  }
+
+    //  if (!acc_main_on) {
+    //    controls_allowed = false;
+    //  }
+    //}
+
+    if (addr == MSG_GRA_ACC_01) {
+      // If using openpilot longitudinal, enter controls on falling edge of Set or Resume with main switch on
+      // Signal: GRA_ACC_01.GRA_Tip_Setzen
+      // Signal: GRA_ACC_01.GRA_Tip_Wiederaufnahme
+      if (volkswagen_longitudinal) {
+        bool set_button = GET_BIT(to_push, 16U);
+        bool resume_button = GET_BIT(to_push, 19U);
+        if ((volkswagen_set_button_prev && !set_button) || (volkswagen_resume_button_prev && !resume_button)) {
+          controls_allowed = acc_main_on;
+        }
+        volkswagen_set_button_prev = set_button;
+        volkswagen_resume_button_prev = resume_button;
+      }
+      // Always exit controls on rising edge of Cancel
+      // Signal: GRA_ACC_01.GRA_Abbrechen
+      if (GET_BIT(to_push, 13U)) {
+        controls_allowed = false;
+      }
+    }
+
+    // Signal: Motor_14.MO_Fahrer_bremst (ECU detected brake pedal switch F63)
+    if (addr == MSG_MOTOR_14) {
+      brake_pressed = (GET_BYTE(to_push, 3) & 0x10U) >> 4;
+    }
+
+    generic_rx_checks((addr == MSG_SPEED_01));
+  }
+
 }
 
 static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
-  UNUSED(to_send);
+  int addr = GET_ADDR(to_send);
   bool tx = true;
-  UNUSED(tx);
+
+  // Safety check for HCA_01 Heading Control Assist torque
+  // Signal: HCA_01.HCA_01_LM_Offset (absolute torque)
+  // Signal: HCA_01.HCA_01_LM_OffSign (direction)
+  if (addr == MSG_LANE_ASSIST_01) {
+    int desired_torque = GET_BYTE(to_send, 3);
+    bool sign = GET_BIT(to_send, 39U);
+    if (sign) {
+      desired_torque *= -1;
+    }
+
+    bool steer_req = GET_BIT(to_send, 14U);
+
+    if (steer_torque_cmd_checks(desired_torque, steer_req, VOLKSWAGEN_MEB_STEERING_LIMITS)) {
+      tx = false;
+    }
+  }
+
+  // FORCE CANCEL: ensuring that only the cancel button press is sent when controls are off.
+  // This avoids unintended engagements while still allowing resume spam
+  if ((addr == MSG_GRA_ACC_01) && !controls_allowed) {
+    // disallow resume and set: bits 16 and 19
+    if ((GET_BYTE(to_send, 2) & 0x9U) != 0U) {
+      tx = false;
+    }
+  }
 
   return tx;
 }
 
 static int volkswagen_meb_fwd_hook(int bus_num, int addr) {
-  UNUSED(bus_num);
-  UNUSED(addr);
   int bus_fwd = -1;
-  UNUSED(bus_fwd);
+
+  switch (bus_num) {
+    case 0:
+      bus_fwd = 2;
+      break;
+    case 2:
+      if ((addr == MSG_SPEED_01) || (addr == MSG_LDW_02)) {
+        // openpilot takes over LKAS steering control and related HUD messages from the camera
+        bus_fwd = -1;
+      } else {
+        // Forward all remaining traffic from Extended CAN devices to J533 gateway
+        bus_fwd = 0;
+      }
+      break;
+    default:
+      // No other buses should be in use; fallback to do-not-forward
+      bus_fwd = -1;
+      break;
+  }
+
   return bus_fwd;
 }
 
