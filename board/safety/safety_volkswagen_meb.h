@@ -20,20 +20,18 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
   .inactive_accel = 3010,  // VW sends one increment above the max range when inactive
 };
 
-#define MSG_SPEED_01       0xFC    // RX, for wheel speeds
-#define MSG_LANE_ASSIST_01 0x303   // TX by OP, Heading Control Assist steering torque
-#define MSG_LH_EPS_03      0x09F   // RX from EPS, for driver steering torque
-#define MSG_TSK_06         0x120   // RX from ECU, for ACC status from drivetrain coordinator
-//#define MSG_MOTOR_20    0x121   // RX from ECU, for driver throttle input
-//#define MSG_HCA_01      0x126   // TX by OP, Heading Control Assist steering torque
-#define MSG_GRA_ACC_01     0x12B   // TX by OP, ACC control buttons for cancel/resume
-#define MSG_MOTOR_14       0x3BE   // RX from ECU, for brake switch status
-#define MSG_LDW_02         0x397   // TX by OP, Lane line recognition and text alerts
+#define MSG_MEB_ESP_01         0xFC    // RX, for wheel speeds
+#define MSG_MEB_LANE_ASSIST_01 0x303   // TX by OP, Heading Control Assist steering torque
+#define MSG_LH_EPS_03          0x09F   // RX from EPS, for driver steering torque
+#define MSG_MEB_ACC_01         0x300   // RX from ECU, for ACC status
+#define MSG_GRA_ACC_01         0x12B   // TX by OP, ACC control buttons for cancel/resume
+#define MSG_MOTOR_14           0x3BE   // RX from ECU, for brake switch status
+#define MSG_LDW_02             0x397   // TX by OP, Lane line recognition and text alerts
 
 // Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
-const CanMsg VOLKSWAGEN_MEB_STOCK_TX_MSGS[] = {{MSG_LANE_ASSIST_01, 0, 8}, {MSG_GRA_ACC_01, 0, 8},
+const CanMsg VOLKSWAGEN_MEB_STOCK_TX_MSGS[] = {{MSG_MEB_LANE_ASSIST_01, 0, 8}, {MSG_GRA_ACC_01, 0, 8},
                                                {MSG_GRA_ACC_01, 2, 8}, {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
-const CanMsg VOLKSWAGEN_MEB_LONG_TX_MSGS[] = {{MSG_LANE_ASSIST_01, 0, 8}, {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
+const CanMsg VOLKSWAGEN_MEB_LONG_TX_MSGS[] = {{MSG_MEB_LANE_ASSIST_01, 0, 8}, {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
 
 RxCheck volkswagen_meb_rx_checks[] = {
   {.msg = {{MSG_LH_EPS_03, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
@@ -97,7 +95,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
     int addr = GET_ADDR(to_push);
 
     // Update in-motion state by sampling wheel speeds
-    if (addr == MSG_SPEED_01) {
+    if (addr == MSG_MEB_ESP_01 ) {
       // sum 4 wheel speeds
       int speed = 0;
       for (uint8_t i = 9U; i < 13U; i += 1U) {
@@ -120,22 +118,20 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       update_sample(&torque_driver, torque_driver_new);
     }
 
-    //if (addr == MSG_TSK_06) {
-    //  // When using stock ACC, enter controls on rising edge of stock ACC engage, exit on disengage
-    //  // Always exit controls on main switch off
-    //  // Signal: TSK_06.TSK_Status
-    //  int acc_status = (GET_BYTE(to_push, 3) & 0x7U);
-    //  bool cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 5);
-    //  acc_main_on = cruise_engaged || (acc_status == 2);
+    if (addr == MSG_MEB_ACC_01) {
+      // When using stock ACC, enter controls on rising edge of stock ACC engage, exit on disengage
+      // Always exit controls on main switch off
+      bool cruise_engaged = GET_BIT(to_push, 113U);
+      acc_main_on = GET_BIT(to_push, 97U);
 
-    //  if (!volkswagen_longitudinal) {
-    //    pcm_cruise_check(cruise_engaged);
-    //  }
+      if (!volkswagen_longitudinal) {
+        pcm_cruise_check(cruise_engaged);
+      }
 
-    //  if (!acc_main_on) {
-    //    controls_allowed = false;
-    //  }
-    //}
+      if (!acc_main_on) {
+        controls_allowed = false;
+      }
+    }
 
     if (addr == MSG_GRA_ACC_01) {
       // If using openpilot longitudinal, enter controls on falling edge of Set or Resume with main switch on
@@ -157,6 +153,10 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       }
     }
 
+    if (addr == MSG_MEB_ESP_01) {
+      gas_pressed = GET_BIT(to_push, 40U);
+    }
+
     // Signal: Motor_14.MO_Fahrer_bremst (ECU detected brake pedal switch F63)
     if (addr == MSG_MOTOR_14) {
       brake_pressed = (GET_BYTE(to_push, 3) & 0x10U) >> 4;
@@ -174,7 +174,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
   // Safety check for HCA_01 Heading Control Assist torque
   // Signal: HCA_01.HCA_01_LM_Offset (absolute torque)
   // Signal: HCA_01.HCA_01_LM_OffSign (direction)
-  if (addr == MSG_LANE_ASSIST_01) {
+  if (addr == MSG_MEB_LANE_ASSIST_01) {
     int desired_torque = GET_BYTE(to_send, 3);
     bool sign = GET_BIT(to_send, 39U);
     if (sign) {
