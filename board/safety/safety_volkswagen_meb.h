@@ -40,8 +40,6 @@ RxCheck volkswagen_meb_rx_checks[] = {
 };
 
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
-bool volkswagen_meb_brake_pedal_switch = false;
-bool volkswagen_meb_brake_pressure_detected = false;
 
 static uint32_t volkswagen_meb_get_checksum(const CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
