@@ -95,7 +95,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
     int addr = GET_ADDR(to_push);
 
     // Update in-motion state by sampling wheel speeds
-    if (addr == MSG_MEB_ESP_01 ) {
+    if (addr == MSG_MEB_ESP_01) {
       // sum 4 wheel speeds
       int speed = 0;
       for (uint8_t i = 9U; i < 13U; i += 1U) {
@@ -162,7 +162,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       brake_pressed = (GET_BYTE(to_push, 3) & 0x10U) >> 4;
     }
 
-    generic_rx_checks((addr == MSG_SPEED_01));
+    generic_rx_checks((addr == MSG_MEB_LANE_ASSIST_01));
   }
 
 }
