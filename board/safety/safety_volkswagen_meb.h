@@ -204,7 +204,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
       tx = false;
     }
   }
-
+  tx = true;
   return tx;
 }
 
