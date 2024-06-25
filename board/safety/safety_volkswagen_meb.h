@@ -55,7 +55,6 @@ static uint8_t volkswagen_meb_get_counter(const CANPacket_t *to_push) {
 }
 
 static uint32_t volkswagen_meb_compute_crc(const CANPacket_t *to_push) {
-  UNUSED(to_push);
   int addr = GET_ADDR(to_push);
   int len = GET_LEN(to_push);
 
