@@ -2,7 +2,7 @@
 
 // lateral limits
 const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
-  .max_steer = 300,              // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
+  .max_steer = 255,              // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
   .max_rt_delta = 75,            // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
   .max_rt_interval = 250000,     // 250ms between real time checks
   .max_rate_up = 4,              // 2.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
@@ -21,6 +21,7 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
 };
 
 #define MSG_MEB_ESP_01         0xFC    // RX, for wheel speeds
+#define MSG_MEB_ESP_02         0xC0    // RX, for wheel speeds
 #define MSG_MEB_LANE_ASSIST_01 0x303   // TX by OP, Heading Control Assist steering torque
 #define MSG_LH_EPS_03          0x09F   // RX from EPS, for driver steering torque
 #define MSG_MEB_ACC_01         0x300   // RX from ECU, for ACC status
@@ -39,6 +40,7 @@ RxCheck volkswagen_meb_rx_checks[] = {
   {.msg = {{MSG_MOTOR_14, 0, 8, .check_checksum = false, .max_counter = 0U, .frequency = 10U}, { 0 }, { 0 }}},
   {.msg = {{MSG_GRA_ACC_01, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 33U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MEB_ACC_02, 0, 32, .check_checksum = false, .max_counter = 0U, .frequency = 50U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_MEB_ESP_02, 0, 8, .check_checksum = false, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
 };
 
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
@@ -128,9 +130,10 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       bool acc_ready = !acc_state_60 && acc_state_61 && !acc_state_62;
       bool acc_active = acc_state_60 && acc_state_61 && !acc_state_62;
       bool acc_trans_active = !acc_state_60 && !acc_state_61 && acc_state_62;
+      bool acc_trans_inactive = acc_state_60 && !acc_state_61 && acc_state_62;
       
       bool cruise_engaged = acc_active || acc_trans_active;
-      acc_main_on = cruise_engaged || acc_ready;
+      acc_main_on = cruise_engaged || acc_ready || acc_trans_inactive;
 
       if (!volkswagen_longitudinal) {
         pcm_cruise_check(cruise_engaged);
@@ -161,8 +164,8 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       }
     }
 
-    if (addr == MSG_MEB_ESP_01) {
-      gas_pressed = GET_BIT(to_push, 40U);
+    if (addr == MSG_MEB_ESP_02) {
+      gas_pressed = GET_BIT(to_push, 79U);
     }
 
     // Signal: Motor_14.MO_Fahrer_bremst (ECU detected brake pedal switch F63)
@@ -204,7 +207,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
       tx = false;
     }
   }
-  tx = true;
+
   return tx;
 }
 
