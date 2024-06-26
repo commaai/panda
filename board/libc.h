@@ -5,7 +5,7 @@ void delay(uint32_t a) {
   for (i = 0; i < a; i++);
 }
 
-void assert(bool condition, const char *msg) {
+void check_fatal(bool condition, const char *msg) {
   if (!condition) {
     print("ASSERT FAILED\n");
     print(msg);
