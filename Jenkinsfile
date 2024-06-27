@@ -98,35 +98,37 @@ pipeline {
           }
         }
 
-        parallel {
-          stage('test tres') {
-            agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
-            steps {
-              phone_steps("panda-tres", [
-                ["build", "scons -j4"],
-                ["flash", "cd tests/ && ./reflash_internal_panda.py"],
-                ["flash jungle", "cd board/jungle && ./flash.py"],
-                ["test", "cd tests/hitl && HW_TYPES=9 pytest -n0 --durations=0 2*.py [5-9]*.py"],
-              ])
+        stage('parallel tests') {
+          parallel {
+            stage('test tres') {
+              agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
+              steps {
+                phone_steps("panda-tres", [
+                  ["build", "scons -j4"],
+                  ["flash", "cd tests/ && ./reflash_internal_panda.py"],
+                  ["flash jungle", "cd board/jungle && ./flash.py"],
+                  ["test", "cd tests/hitl && HW_TYPES=9 pytest -n0 --durations=0 2*.py [5-9]*.py"],
+                ])
+              }
             }
-          }
 
-          stage('test dos') {
-            agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
-            steps {
-              phone_steps("panda-dos", [
-                ["build", "scons -j4"],
-                ["flash", "cd tests/ && ./reflash_internal_panda.py"],
-                ["flash jungle", "cd board/jungle && ./flash.py"],
-                ["test", "cd tests/hitl && HW_TYPES=6 pytest -n0 --durations=0 [2-9]*.py -k 'not test_send_recv'"],
-              ])
+            stage('test dos') {
+              agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
+              steps {
+                phone_steps("panda-dos", [
+                  ["build", "scons -j4"],
+                  ["flash", "cd tests/ && ./reflash_internal_panda.py"],
+                  ["flash jungle", "cd board/jungle && ./flash.py"],
+                  ["test", "cd tests/hitl && HW_TYPES=6 pytest -n0 --durations=0 [2-9]*.py -k 'not test_send_recv'"],
+                ])
+              }
             }
-          }
 
-          stage('bootkick tests') {
-            steps {
-              script {
-                docker_run("test", 10, "pytest -n0 ./tests/som/test_bootkick.py")
+            stage('bootkick tests') {
+              steps {
+                script {
+                  docker_run("test", 10, "pytest -n0 ./tests/som/test_bootkick.py")
+                }
               }
             }
           }
