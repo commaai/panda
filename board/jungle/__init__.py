@@ -148,6 +148,9 @@ class PandaJungle(Panda):
   def set_can_silent(self, silent):
     self._handle.controlWrite(PandaJungle.REQUEST_OUT, 0xf5, int(silent), 0, b'')
 
+  def set_generated_can(self, enabled):
+    self._handle.controlWrite(PandaJungle.REQUEST_OUT, 0xa4, int(enabled), 0, b'')
+
   # ******************* serial *******************
 
   def debug_read(self):

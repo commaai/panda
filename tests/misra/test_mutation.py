@@ -77,6 +77,6 @@ def test_misra_mutation(fn, patch, should_fail):
       assert r == 0
 
     # run test
-    r = subprocess.run("tests/misra/test_misra.sh", cwd=tmp, shell=True)
+    r = subprocess.run("SKIP_TABLES_DIFF=1 tests/misra/test_misra.sh", cwd=tmp, shell=True)
     failed = r.returncode != 0
     assert failed == should_fail
