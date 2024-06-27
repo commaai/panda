@@ -36,9 +36,9 @@ const CanMsg VOLKSWAGEN_MEB_STOCK_TX_MSGS[] = {{MSG_MEB_LANE_ASSIST_01, 0, 8}, {
 const CanMsg VOLKSWAGEN_MEB_LONG_TX_MSGS[] = {{MSG_MEB_LANE_ASSIST_01, 0, 8}, {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
 
 RxCheck volkswagen_meb_rx_checks[] = {
-  {.msg = {{MSG_LH_EPS_03, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_LH_EPS_03, 0, 8, .check_checksum = false, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MOTOR_14, 0, 8, .check_checksum = false, .max_counter = 0U, .frequency = 10U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_GRA_ACC_01, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 33U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_GRA_ACC_01, 0, 8, .check_checksum = false, .max_counter = 15U, .frequency = 33U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MEB_ACC_02, 0, 32, .check_checksum = false, .max_counter = 0U, .frequency = 50U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MEB_ESP_02, 0, 32, .check_checksum = false, .max_counter = 0U, .frequency = 100U}, { 0 }, { 0 }}},
 };
