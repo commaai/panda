@@ -128,6 +128,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       bool acc_active = false;
       bool acc_trans_active = false;
       bool acc_trans_inactive = false;
+      bool cruise_engaged = false;
 
       if (acc_state_60 == false && acc_state_61 == true && !acc_state_62 == false) {
         acc_ready = true;
