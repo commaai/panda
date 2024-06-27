@@ -1,12 +1,12 @@
 #ifndef SAFETY_HYUNDAI_COMMON_H
 #define SAFETY_HYUNDAI_COMMON_H
 
-const int HYUNDAI_PARAM_EV_GAS = 1;
-const int HYUNDAI_PARAM_HYBRID_GAS = 2;
-const int HYUNDAI_PARAM_LONGITUDINAL = 4;
-const int HYUNDAI_PARAM_CAMERA_SCC = 8;
-const int HYUNDAI_PARAM_CANFD_HDA2 = 16;
-const int HYUNDAI_PARAM_ALT_LIMITS = 64; // TODO: shift this down with the rest of the common flags
+const uint8_t HYUNDAI_PARAM_EV_GAS = 1;
+const uint8_t HYUNDAI_PARAM_HYBRID_GAS = 2;
+const uint8_t HYUNDAI_PARAM_LONGITUDINAL = 4;
+const uint8_t HYUNDAI_PARAM_CAMERA_SCC = 8;
+const uint8_t HYUNDAI_PARAM_CANFD_HDA2 = 16;
+const uint8_t HYUNDAI_PARAM_ALT_LIMITS = 64; // TODO: shift this down with the rest of the common flags
 
 const uint8_t HYUNDAI_PREV_BUTTON_SAMPLES = 8;  // roughly 160 ms
 const uint32_t HYUNDAI_STANDSTILL_THRSLD = 12;  // 0.375 kph
@@ -84,31 +84,6 @@ void hyundai_common_cruise_buttons_check(const int cruise_button, const bool mai
 
     cruise_button_prev = cruise_button;
   }
-}
-
-uint32_t hyundai_common_canfd_compute_checksum(const CANPacket_t *to_push) {
-  int len = GET_LEN(to_push);
-  uint32_t address = GET_ADDR(to_push);
-
-  uint16_t crc = 0;
-
-  for (int i = 2; i < len; i++) {
-    crc = (crc << 8U) ^ hyundai_canfd_crc_lut[(crc >> 8U) ^ GET_BYTE(to_push, i)];
-  }
-
-  // Add address to crc
-  crc = (crc << 8U) ^ hyundai_canfd_crc_lut[(crc >> 8U) ^ ((address >> 0U) & 0xFFU)];
-  crc = (crc << 8U) ^ hyundai_canfd_crc_lut[(crc >> 8U) ^ ((address >> 8U) & 0xFFU)];
-
-  if (len == 24) {
-    crc ^= 0x819dU;
-  } else if (len == 32) {
-    crc ^= 0x9f5bU;
-  } else {
-
-  }
-
-  return crc;
 }
 
 #endif

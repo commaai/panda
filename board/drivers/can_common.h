@@ -191,9 +191,11 @@ void can_set_orientation(bool flipped) {
   bus_config[2].can_num_lookup = flipped ? 0U : 2U;
 }
 
+#ifdef FINAL_PROVISIONING // only used in jungle final provisioning
 void can_set_forwarding(uint8_t from, uint8_t to) {
   bus_config[from].forwarding_bus = to;
 }
+#endif
 
 void ignition_can_hook(CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
