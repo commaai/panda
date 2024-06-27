@@ -124,10 +124,23 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       bool acc_state_61 = GET_BIT(to_push, 61U);
       bool acc_state_62 = GET_BIT(to_push, 62U);
 
-      bool acc_ready = !acc_state_60 && acc_state_61 && !acc_state_62;
-      bool acc_active = acc_state_60 && acc_state_61 && !acc_state_62;
-      bool acc_trans_active = !acc_state_60 && !acc_state_61 && acc_state_62;
-      bool acc_trans_inactive = acc_state_60 && !acc_state_61 && acc_state_62;
+      bool acc_ready = false;
+      bool acc_active = false;
+      bool acc_trans_active = false;
+      bool acc_trans_inactive = false;
+
+      if (acc_state_60 == false && acc_state_61 == true && !acc_state_62 == false) {
+        acc_ready = true;
+      }
+      if (acc_state_60 == true && acc_state_61 == true && !acc_state_62 == false) {
+        acc_active = true;
+      }
+      if (acc_state_60 == false && acc_state_61 == false && !acc_state_62 == true) {
+        acc_trans_active = true;
+      }
+      if (acc_state_60 == true && acc_state_61 == false && !acc_state_62 == true) {
+        acc_trans_inactive = true;
+      }
       
       bool cruise_engaged = acc_active || acc_trans_active;
       acc_main_on = cruise_engaged || acc_ready || acc_trans_inactive;
