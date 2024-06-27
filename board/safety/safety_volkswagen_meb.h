@@ -131,19 +131,21 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
 
       if (acc_state_60 == false && acc_state_61 == true && !acc_state_62 == false) {
         acc_ready = true;
-      }
-      if (acc_state_60 == true && acc_state_61 == true && !acc_state_62 == false) {
+      } else if (acc_state_60 == true && acc_state_61 == true && !acc_state_62 == false) {
         acc_active = true;
-      }
-      if (acc_state_60 == false && acc_state_61 == false && !acc_state_62 == true) {
+      } else if (acc_state_60 == false && acc_state_61 == false && !acc_state_62 == true) {
         acc_trans_active = true;
-      }
-      if (acc_state_60 == true && acc_state_61 == false && !acc_state_62 == true) {
+      } else if (acc_state_60 == true && acc_state_61 == false && !acc_state_62 == true) {
         acc_trans_inactive = true;
       }
-      
-      bool cruise_engaged = acc_active || acc_trans_active;
-      acc_main_on = cruise_engaged || acc_ready || acc_trans_inactive;
+
+      if (acc_active == true || acc_trans_active == true) {
+        cruise_engaged = true;
+      }
+
+      if (cruise_engaged == true || acc_ready == true || acc_trans_inactive == true) {
+        acc_main_on = true;
+      }
 
       if (!volkswagen_longitudinal) {
         pcm_cruise_check(cruise_engaged);
