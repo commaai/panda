@@ -19,7 +19,11 @@ PCLK1: 60MHz (for USART2,3,4,5,7,8)
 
 void clock_init(void) {
   // Set power mode to direct SMPS power supply (depends on the board layout)
+#ifndef PANDA_JUNGLE
   if ((PWR->CR3 & PWR_CR3_SMPSEXTRDY) != 0U) {
+#else
+  if (true) {
+#endif
     register_set(&(PWR->CR3), PWR_CR3_SMPSEN, 0xFU); // powered only by SMPS
   } else {
     register_set(&(PWR->CR3), PWR_CR3_LDOEN, 0xFU);
