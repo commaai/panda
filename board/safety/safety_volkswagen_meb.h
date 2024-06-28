@@ -39,8 +39,6 @@ RxCheck volkswagen_meb_rx_checks[] = {
   {.msg = {{MSG_LH_EPS_03, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MOTOR_14, 0, 8, .check_checksum = false, .max_counter = 0U, .frequency = 10U}, { 0 }, { 0 }}},
   {.msg = {{MSG_GRA_ACC_01, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 33U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_MEB_ACC_02, 0, 32, .check_checksum = false, .max_counter = 0U, .frequency = 50U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_MEB_ESP_02, 0, 32, .check_checksum = false, .max_counter = 0U, .frequency = 100U}, { 0 }, { 0 }}},
 };
 
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
@@ -126,13 +124,29 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       bool acc_state_61 = GET_BIT(to_push, 61U);
       bool acc_state_62 = GET_BIT(to_push, 62U);
 
-      bool acc_ready = !acc_state_60 && acc_state_61 && !acc_state_62;
-      bool acc_active = acc_state_60 && acc_state_61 && !acc_state_62;
-      bool acc_trans_active = !acc_state_60 && !acc_state_61 && acc_state_62;
-      bool acc_trans_inactive = acc_state_60 && !acc_state_61 && acc_state_62;
-      
-      bool cruise_engaged = acc_active || acc_trans_active;
-      acc_main_on = cruise_engaged || acc_ready || acc_trans_inactive;
+      bool acc_ready = false;
+      bool acc_active = false;
+      bool acc_trans_active = false;
+      bool acc_trans_inactive = false;
+      bool cruise_engaged = false;
+
+      if (acc_state_60 == false && acc_state_61 == true && !acc_state_62 == false) {
+        acc_ready = true;
+      } else if (acc_state_60 == true && acc_state_61 == true && !acc_state_62 == false) {
+        acc_active = true;
+      } else if (acc_state_60 == false && acc_state_61 == false && !acc_state_62 == true) {
+        acc_trans_active = true;
+      } else if (acc_state_60 == true && acc_state_61 == false && !acc_state_62 == true) {
+        acc_trans_inactive = true;
+      }
+
+      if (acc_active == true || acc_trans_active == true) {
+        cruise_engaged = true;
+      }
+
+      if (cruise_engaged == true || acc_ready == true || acc_trans_inactive == true) {
+        acc_main_on = true;
+      }
 
       if (!volkswagen_longitudinal) {
         pcm_cruise_check(cruise_engaged);
