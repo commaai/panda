@@ -190,7 +190,6 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       brake_pressed = GET_BIT(to_push, 28U);
     }
   }
-  controls_allowed = true;
 }
 
 static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
