@@ -90,33 +90,9 @@ static safety_config volkswagen_meb_init(uint16_t param) {
 }
 
 static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
+  int addr = GET_ADDR(to_push);
+  
   if (GET_BUS(to_push) == 0U) {
-    int addr = GET_ADDR(to_push);
-
-    // Update in-motion state by sampling wheel speeds
-    if (addr == MSG_MEB_ESP_01) {
-      // sum 4 wheel speeds
-      int speed = 0;
-      for (uint8_t i = 9U; i < 13U; i += 1U) {
-        int wheel_speed = GET_BYTE(to_push, i);
-        speed += wheel_speed;
-      }
-      // Check all wheel speeds for any movement
-      vehicle_moving = speed > 0;
-    }
-
-    // Update driver input torque samples
-    // Signal: LH_EPS_03.EPS_Lenkmoment (absolute torque)
-    // Signal: LH_EPS_03.EPS_VZ_Lenkmoment (direction)
-    if (addr == MSG_LH_EPS_03) {
-      int torque_driver_new = GET_BYTE(to_push, 5) | ((GET_BYTE(to_push, 6) & 0x1FU) << 8);
-      int sign = (GET_BYTE(to_push, 6) & 0x80U) >> 7;
-      if (sign == 1) {
-        torque_driver_new *= -1;
-      }
-      update_sample(&torque_driver, torque_driver_new);
-    }
-
     if (addr == MSG_MEB_ACC_02) {
       // When using stock ACC, enter controls on rising edge of stock ACC engage, exit on disengage
       // Always exit controls on main switch off
@@ -157,6 +133,34 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       }
     }
 
+    generic_rx_checks((addr == MSG_MEB_LANE_ASSIST_01));
+  }
+
+  if (GET_BUS(to_push) == 2U) {
+    // Update in-motion state by sampling wheel speeds
+    if (addr == MSG_MEB_ESP_01) {
+      // sum 4 wheel speeds
+      int speed = 0;
+      for (uint8_t i = 9U; i < 13U; i += 1U) {
+        int wheel_speed = GET_BYTE(to_push, i);
+        speed += wheel_speed;
+      }
+      // Check all wheel speeds for any movement
+      vehicle_moving = speed > 0;
+    }
+
+    // Update driver input torque samples
+    // Signal: LH_EPS_03.EPS_Lenkmoment (absolute torque)
+    // Signal: LH_EPS_03.EPS_VZ_Lenkmoment (direction)
+    if (addr == MSG_LH_EPS_03) {
+      int torque_driver_new = GET_BYTE(to_push, 5) | ((GET_BYTE(to_push, 6) & 0x1FU) << 8);
+      int sign = (GET_BYTE(to_push, 6) & 0x80U) >> 7;
+      if (sign == 1) {
+        torque_driver_new *= -1;
+      }
+      update_sample(&torque_driver, torque_driver_new);
+    }
+
     if (addr == MSG_GRA_ACC_01) {
       // If using openpilot longitudinal, enter controls on falling edge of Set or Resume with main switch on
       // Signal: GRA_ACC_01.GRA_Tip_Setzen
@@ -185,8 +189,6 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
     if (addr == MSG_MOTOR_14) {
       brake_pressed = GET_BIT(to_push, 28U);
     }
-
-    generic_rx_checks((addr == MSG_MEB_LANE_ASSIST_01));
   }
 }
 
