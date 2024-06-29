@@ -165,13 +165,13 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       bool acc_trans_inactive = false;
       bool cruise_engaged = false;
 
-      if (acc_state_60 == false && acc_state_61 == true && !acc_state_62 == false) {
+      if (acc_state_60 == false && acc_state_61 == true && acc_state_62 == false) {
         acc_ready = true;
-      } else if (acc_state_60 == true && acc_state_61 == true && !acc_state_62 == false) {
+      } else if (acc_state_60 == true && acc_state_61 == true && acc_state_62 == false) {
         acc_active = true;
-      } else if (acc_state_60 == false && acc_state_61 == false && !acc_state_62 == true) {
+      } else if (acc_state_60 == false && acc_state_61 == false && acc_state_62 == true) {
         acc_trans_active = true;
-      } else if (acc_state_60 == true && acc_state_61 == false && !acc_state_62 == true) {
+      } else if (acc_state_60 == true && acc_state_61 == false && acc_state_62 == true) {
         acc_trans_inactive = true;
       }
 
