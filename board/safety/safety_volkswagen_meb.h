@@ -2,7 +2,7 @@
 
 // lateral limits
 const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
-  .max_steer = 255,              // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
+  .max_steer = 200,              // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
   .max_rt_delta = 75,            // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
   .max_rt_interval = 250000,     // 250ms between real time checks
   .max_rate_up = 4,              // 2.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
@@ -202,7 +202,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
   // Signal: HCA_01.HCA_01_LM_Offset (absolute torque)
   // Signal: HCA_01.HCA_01_LM_OffSign (direction)
   if (addr == MSG_MEB_LANE_ASSIST_01) {
-    int desired_torque = GET_BYTE(to_send, 3);
+    int desired_torque = GET_BYTE(to_send, 3) | ((GET_BYTE(to_push, 6) & 0x1FU) << 8);
     bool sign = GET_BIT(to_send, 39U);
     if (sign) {
       desired_torque *= -1;
