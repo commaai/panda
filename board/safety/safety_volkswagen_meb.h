@@ -90,6 +90,8 @@ static safety_config volkswagen_meb_init(uint16_t param) {
 }
 
 static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
+  int addr = GET_ADDR(to_push);
+  
   if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
 
@@ -117,6 +119,39 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       update_sample(&torque_driver, torque_driver_new);
     }
 
+    if (addr == MSG_GRA_ACC_01) {
+      // If using openpilot longitudinal, enter controls on falling edge of Set or Resume with main switch on
+      // Signal: GRA_ACC_01.GRA_Tip_Setzen
+      // Signal: GRA_ACC_01.GRA_Tip_Wiederaufnahme
+      if (volkswagen_longitudinal) {
+        bool set_button = GET_BIT(to_push, 16U);
+        bool resume_button = GET_BIT(to_push, 19U);
+        if ((volkswagen_set_button_prev && !set_button) || (volkswagen_resume_button_prev && !resume_button)) {
+          controls_allowed = acc_main_on;
+        }
+        volkswagen_set_button_prev = set_button;
+        volkswagen_resume_button_prev = resume_button;
+      }
+      // Always exit controls on rising edge of Cancel
+      // Signal: GRA_ACC_01.GRA_Abbrechen
+      if (GET_BIT(to_push, 13U)) {
+        controls_allowed = false;
+      }
+    }
+
+    if (addr == MSG_MEB_ESP_02) {
+      gas_pressed = GET_BIT(to_push, 79U);
+    }
+
+    // Signal: Motor_14.MO_Fahrer_bremst (ECU detected brake pedal switch F63)
+    if (addr == MSG_MOTOR_14) {
+      brake_pressed = GET_BIT(to_push, 28U);
+    }
+
+    generic_rx_checks((addr == MSG_MEB_LANE_ASSIST_01));
+  }
+
+  if (GET_BUS(to_push) == 2U) {
     if (addr == MSG_MEB_ACC_02) {
       // When using stock ACC, enter controls on rising edge of stock ACC engage, exit on disengage
       // Always exit controls on main switch off
@@ -156,37 +191,6 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
         controls_allowed = false;
       }
     }
-
-    if (addr == MSG_GRA_ACC_01) {
-      // If using openpilot longitudinal, enter controls on falling edge of Set or Resume with main switch on
-      // Signal: GRA_ACC_01.GRA_Tip_Setzen
-      // Signal: GRA_ACC_01.GRA_Tip_Wiederaufnahme
-      if (volkswagen_longitudinal) {
-        bool set_button = GET_BIT(to_push, 16U);
-        bool resume_button = GET_BIT(to_push, 19U);
-        if ((volkswagen_set_button_prev && !set_button) || (volkswagen_resume_button_prev && !resume_button)) {
-          controls_allowed = acc_main_on;
-        }
-        volkswagen_set_button_prev = set_button;
-        volkswagen_resume_button_prev = resume_button;
-      }
-      // Always exit controls on rising edge of Cancel
-      // Signal: GRA_ACC_01.GRA_Abbrechen
-      if (GET_BIT(to_push, 13U)) {
-        controls_allowed = false;
-      }
-    }
-
-    if (addr == MSG_MEB_ESP_02) {
-      gas_pressed = GET_BIT(to_push, 79U);
-    }
-
-    // Signal: Motor_14.MO_Fahrer_bremst (ECU detected brake pedal switch F63)
-    if (addr == MSG_MOTOR_14) {
-      brake_pressed = GET_BIT(to_push, 28U);
-    }
-
-    generic_rx_checks((addr == MSG_MEB_LANE_ASSIST_01));
   }
 }
 
