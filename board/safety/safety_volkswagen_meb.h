@@ -202,7 +202,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
   // Signal: HCA_01.HCA_01_LM_Offset (absolute torque)
   // Signal: HCA_01.HCA_01_LM_OffSign (direction)
   if (addr == MSG_MEB_LANE_ASSIST_01) {
-    int desired_torque = GET_BYTE(to_send, 3) | ((GET_BYTE(to_push, 6) & 0x1FU) << 8);
+    int desired_torque = GET_BYTE(to_send, 3) | ((GET_BYTE(to_send, 4) & 0x1FU) << 8);
     bool sign = GET_BIT(to_send, 39U);
     if (sign) {
       desired_torque *= -1;
