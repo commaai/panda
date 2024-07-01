@@ -156,33 +156,11 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
     if (addr == MSG_MEB_ACC_02) {
       // When using stock ACC, enter controls on rising edge of stock ACC engage, exit on disengage
       // Always exit controls on main switch off
-      bool acc_state_60 = GET_BIT(to_push, 60U);
-      bool acc_state_61 = GET_BIT(to_push, 61U);
-      bool acc_state_62 = GET_BIT(to_push, 62U);
 
-      bool acc_ready = false;
-      bool acc_active = false;
-      bool acc_trans_active = false;
-      bool acc_trans_inactive = false;
-      bool cruise_engaged = false;
+      int acc_status = (GET_BYTE(to_send, 7) & 0xF0U);
 
-      if (acc_state_60 == false && acc_state_61 == true && acc_state_62 == false) {
-        acc_ready = true;
-      } else if (acc_state_60 == true && acc_state_61 == true && acc_state_62 == false) {
-        acc_active = true;
-      } else if (acc_state_60 == false && acc_state_61 == false && acc_state_62 == true) {
-        acc_trans_active = true;
-      } else if (acc_state_60 == true && acc_state_61 == false && acc_state_62 == true) {
-        acc_trans_inactive = true;
-      }
-
-      if (acc_active == true || acc_trans_active == true) {
-        cruise_engaged = true;
-      }
-
-      if (cruise_engaged == true || acc_ready == true || acc_trans_inactive == true) {
-        acc_main_on = true;
-      }
+      bool cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 11) || (acc_status == 12);
+      acc_main_on = cruise_engaged || (acc_status == 2) || (acc_status == 5);
 
       if (!volkswagen_longitudinal) {
         pcm_cruise_check(cruise_engaged);
@@ -201,7 +179,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
 
   // Safety check for HCA_03 Heading Control Assist angle
   if (addr == MSG_HCA_03) {
-    int desired_angle_rad = GET_BYTE(to_send, 3) | ((GET_BYTE(to_send, 4) & 0x7FU) << 8);
+    int desired_angle_rad = GET_BYTE(to_send, 3) << 7 | ((GET_BYTE(to_send, 4) & 0x7FU);
     int desired_angle = desired_angle_rad * 180.0 / 3.1415926535;
     bool sign = GET_BIT(to_send, 39U);
     if (sign) {
