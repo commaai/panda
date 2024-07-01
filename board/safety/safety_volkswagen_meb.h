@@ -200,10 +200,8 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
   bool tx = true;
 
-  // Safety check for HCA_01 Heading Control Assist torque
-  // Signal: HCA_01.HCA_01_LM_Offset (absolute torque)
-  // Signal: HCA_01.HCA_01_LM_OffSign (direction)
-  //if (addr == MSG_MEB_LANE_ASSIST_01) {
+  // Safety check for HCA_03 Heading Control Assist angle
+  //if (addr == MSG_HCA_03) {
   //  int desired_torque = GET_BYTE(to_send, 3) | ((GET_BYTE(to_send, 4) & 0x07U) << 8);
   //  bool sign = GET_BIT(to_send, 39U);
   //  if (sign) {
