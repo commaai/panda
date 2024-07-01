@@ -110,16 +110,15 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       vehicle_moving = speed > 0;
     }
 
-    // Update driver input torque samples
-    // Signal: LH_EPS_03.EPS_Lenkmoment (absolute torque)
-    // Signal: LH_EPS_03.EPS_VZ_Lenkmoment (direction)
-    if (addr == MSG_LH_EPS_03) {
-      int torque_driver_new = GET_BYTE(to_push, 5) | ((GET_BYTE(to_push, 6) & 0x1FU) << 8);
-      int sign = (GET_BYTE(to_push, 6) & 0x80U) >> 7;
+    // Update steering input angle samples
+    if (addr == MSG_LH_EPS_03) {      
+      int angle_meas_new_rad = GET_BYTE(to_push, 2) | ((GET_BYTE(to_push, 3) & 0x07U) << 8);
+      int angle_meas_new = angle_meas_new_rad * 180.0 / 3.1415926535;
+      int sign = (GET_BYTE(to_push, 3) & 0x80U) >> 7;
       if (sign == 1) {
-        torque_driver_new *= -1;
+        angle_meas_new *= -1;
       }
-      update_sample(&torque_driver, torque_driver_new);
+      update_sample(&angle_meas, angle_meas_new);
     }
 
     if (addr == MSG_GRA_ACC_01) {
