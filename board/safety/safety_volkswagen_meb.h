@@ -30,6 +30,8 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
 #define MSG_MOTOR_14           0x3BE   // RX from ECU, for brake switch status
 #define MSG_LDW_02             0x397   // TX by OP, Lane line recognition and text alerts
 
+#define MSG_DRIVE             0x24C
+
 // Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
 const CanMsg VOLKSWAGEN_MEB_STOCK_TX_MSGS[] = {{MSG_MEB_LANE_ASSIST_01, 0, 24}, {MSG_GRA_ACC_01, 0, 8},
                                                {MSG_GRA_ACC_01, 2, 8}, {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
@@ -235,8 +237,8 @@ static int volkswagen_meb_fwd_hook(int bus_num, int addr) {
       bus_fwd = 2;
       break;
     case 2:
-      if (addr == MSG_MEB_ACC_01) {
-      //if ((addr == MSG_MEB_LANE_ASSIST_01) || (addr == MSG_LDW_02) || (addr == MSG_MEB_ACC_01)) {
+      if (addr == MSG_DRIVE) {
+      //if ((addr == MSG_MEB_LANE_ASSIST_01) || (addr == MSG_LDW_02)) {
         // openpilot takes over LKAS steering control and related HUD messages from the camera
         bus_fwd = -1;
       } else {
