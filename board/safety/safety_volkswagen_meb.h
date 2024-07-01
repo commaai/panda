@@ -157,7 +157,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       // When using stock ACC, enter controls on rising edge of stock ACC engage, exit on disengage
       // Always exit controls on main switch off
 
-      int acc_status = (GET_BYTE(to_push, 7) & 0xF0U >> 4);
+      int acc_status = (GET_BYTE(to_push, 7) & 0xFU);
 
       bool cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 11) || (acc_status == 12);
       acc_main_on = cruise_engaged || (acc_status == 2) || (acc_status == 5);
