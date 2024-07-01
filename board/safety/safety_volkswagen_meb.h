@@ -1,15 +1,16 @@
 #include "safety_volkswagen_common.h"
 
 // lateral limits
-const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
-  .max_steer = 200,              // 3.0 Nm (EPS side max of 3.0Nm with fault if violated)
-  .max_rt_delta = 75,            // 4 max rate up * 50Hz send rate * 250000 RT interval / 1000000 = 50 ; 50 * 1.5 for safety pad = 75
-  .max_rt_interval = 250000,     // 250ms between real time checks
-  .max_rate_up = 4,              // 2.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
-  .max_rate_down = 10,           // 5.0 Nm/s RoC limit (EPS rack has own soft-limit of 5.0 Nm/s)
-  .driver_torque_allowance = 80,
-  .driver_torque_factor = 3,
-  .type = TorqueDriverLimited,
+const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = { // using TESLA limits
+  .angle_deg_to_can = 10,
+  .angle_rate_up_lookup = {
+    {0., 5., 15.},
+    {10., 1.6, .3}
+  },
+  .angle_rate_down_lookup = {
+    {0., 5., 15.},
+    {10., 7.0, .8}
+  },
 };
 
 // longitudinal limits
