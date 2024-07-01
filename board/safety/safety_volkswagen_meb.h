@@ -150,7 +150,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       brake_pressed = GET_BIT(to_push, 28U);
     }
 
-    generic_rx_checks((addr == MSG_MEB_LANE_ASSIST_01));
+    generic_rx_checks((addr == MSG_HCA_03));
   }
 
   if (GET_BUS(to_push) == 2U) {
@@ -235,7 +235,7 @@ static int volkswagen_meb_fwd_hook(int bus_num, int addr) {
       bus_fwd = 2;
       break;
     case 2:
-      if ((addr == MSG_MEB_LANE_ASSIST_01) || (addr == MSG_LDW_02)) {
+      if ((addr == MSG_HCA_03) || (addr == MSG_LDW_02)) {
         // openpilot takes over LKAS steering control and related HUD messages from the camera
         bus_fwd = -1;
       } else {
