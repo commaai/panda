@@ -3,6 +3,7 @@
 // lateral limits
 const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = { // using TESLA limits
   .angle_deg_to_can = 10,
+  .max_steer = 360
   .angle_rate_up_lookup = {
     {0., 5., 15.},
     {10., 1.6, .3}
@@ -201,19 +202,20 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
   bool tx = true;
 
   // Safety check for HCA_03 Heading Control Assist angle
-  //if (addr == MSG_HCA_03) {
-  //  int desired_torque = GET_BYTE(to_send, 3) | ((GET_BYTE(to_send, 4) & 0x07U) << 8);
-  //  bool sign = GET_BIT(to_send, 39U);
-  //  if (sign) {
-  //    desired_torque *= -1;
-  //  }
+  if (addr == MSG_HCA_03) {
+    int desired_angle_rad = GET_BYTE(to_send, 3) | ((GET_BYTE(to_send, 4) & 0x7FU) << 8);
+    int desired_angle = desired_angle_rad * 180.0 / 3.1415926535;
+    bool sign = GET_BIT(to_send, 39U);
+    if (sign) {
+      desired_angle *= -1;
+    }
 
-  //  bool steer_req = GET_BIT(to_send, 14U);
+    bool steer_req = GET_BIT(to_send, 14U);
 
-  //  if (steer_torque_cmd_checks(desired_torque, steer_req, VOLKSWAGEN_MEB_STEERING_LIMITS)) {
-  //    tx = false;
-  //  }
-  //}
+    if (steer_angle_cmd_checks(desired_angle, steer_req, VOLKSWAGEN_MEB_STEERING_LIMITS)) {
+      tx = false;
+    }
+  }
 
   // FORCE CANCEL: ensuring that only the cancel button press is sent when controls are off.
   // This avoids unintended engagements while still allowing resume spam
