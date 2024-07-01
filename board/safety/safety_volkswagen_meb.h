@@ -179,7 +179,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
 
   // Safety check for HCA_03 Heading Control Assist angle
   if (addr == MSG_HCA_03) {
-    int desired_angle_rad = GET_BYTE(to_send, 3) << 7 | ((GET_BYTE(to_send, 4) & 0x7FU);
+    int desired_angle_rad = (GET_BYTE(to_send, 3) << 7 | (GET_BYTE(to_send, 4) & 0x7FU));
     int desired_angle = desired_angle_rad * 180.0 / 3.1415926535;
     bool sign = GET_BIT(to_send, 39U);
     if (sign) {
