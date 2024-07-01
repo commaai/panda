@@ -1,7 +1,7 @@
 #include "safety_volkswagen_common.h"
 
 // lateral limits
-const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = { // using TESLA limits
+const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
   .angle_deg_to_can = 10,
   .max_steer = 360
   .angle_rate_up_lookup = {
