@@ -235,7 +235,7 @@ static int volkswagen_meb_fwd_hook(int bus_num, int addr) {
       bus_fwd = 2;
       break;
     case 2:
-      if ((addr == MSG_MEB_LANE_ASSIST_01) || (addr == MSG_LDW_02)) {
+      if ((addr == MSG_MEB_LANE_ASSIST_01) || (addr == MSG_LDW_02) || (addr == MSG_MEB_ESP_01)) {
         // openpilot takes over LKAS steering control and related HUD messages from the camera
         bus_fwd = -1;
       } else {
