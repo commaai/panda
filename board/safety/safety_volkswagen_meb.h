@@ -157,7 +157,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       // When using stock ACC, enter controls on rising edge of stock ACC engage, exit on disengage
       // Always exit controls on main switch off
 
-      int acc_status = (GET_BYTE(to_push, 7) & 0xF0U);
+      int acc_status = (GET_BYTE(to_push, 7) & 0xF0U >> 4);
 
       bool cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 11) || (acc_status == 12);
       acc_main_on = cruise_engaged || (acc_status == 2) || (acc_status == 5);
@@ -179,7 +179,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
 
   // Safety check for HCA_03 Heading Control Assist angle
   if (addr == MSG_HCA_03) {
-    int desired_angle_rad = (GET_BYTE(to_send, 3) << 7 | (GET_BYTE(to_send, 4) & 0x7FU));
+    int desired_angle_rad = (GET_BYTE(to_send, 3) | (GET_BYTE(to_send, 4) & 0x7FU << 8));
     int desired_angle = desired_angle_rad * 0.0174;
     bool sign = GET_BIT(to_send, 39U);
     if (sign) {
