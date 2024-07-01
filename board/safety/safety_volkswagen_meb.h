@@ -111,7 +111,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
 
     // Update steering input angle samples
     if (addr == MSG_LH_EPS_03) {      
-      int angle_meas_new_rad = GET_BYTE(to_push, 2) << 4| (GET_BYTE(to_push, 3) & 0x07U);
+      int angle_meas_new_rad = ((GET_BYTE(to_push, 3) & 0xFU) << 8 | GET_BYTE(to_push, 2));
       int angle_meas_new = angle_meas_new_rad * 0.15;
       int sign = (GET_BYTE(to_push, 3) & 0x80U) >> 7;
       if (sign == 1) {
@@ -157,7 +157,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       // When using stock ACC, enter controls on rising edge of stock ACC engage, exit on disengage
       // Always exit controls on main switch off
 
-      int acc_status = (GET_BYTE(to_push, 7) & 0xFU);
+      int acc_status = (GET_BYTE(to_push, 7) & 0xF0U >> 4);
 
       bool cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 11) || (acc_status == 12);
       acc_main_on = cruise_engaged || (acc_status == 2) || (acc_status == 5);
