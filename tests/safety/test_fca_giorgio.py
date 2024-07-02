@@ -6,7 +6,7 @@ import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
 
-class TestFcaGiorgio_Safety(common.PandaCarSafetyTest, common.MotorTorqueSteeringSafetyTest):
+class TestFcaGiorgio_Safety(common.PandaCarSafetyTest, common.DriverTorqueSteeringSafetyTest):
   TX_MSGS = [[0x1F6, 0], [0x4AE, 0], [0x547, 0]]
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDRS = {0: (0x1F6,)}
@@ -18,7 +18,9 @@ class TestFcaGiorgio_Safety(common.PandaCarSafetyTest, common.MotorTorqueSteerin
   MAX_TORQUE = 200
   MAX_RT_DELTA = 150
   RT_INTERVAL = 250000
-  MAX_TORQUE_ERROR = 80
+
+  DRIVER_TORQUE_ALLOWANCE = 80
+  DRIVER_TORQUE_FACTOR = 3
 
   def setUp(self):
     self.packer = CANPackerPanda("fca_giorgio")
