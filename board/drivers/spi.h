@@ -43,7 +43,7 @@ uint16_t spi_data_len_miso;
 uint16_t spi_checksum_error_count = 0;
 bool spi_can_tx_ready = false;
 
-const char version_text[] = "VERSION";
+const unsigned char version_text[] = "VERSION";
 
 #define SPI_HEADER_SIZE 7U
 
@@ -152,7 +152,7 @@ void spi_rx_done(void) {
     if (checksum_valid) {
       if (spi_endpoint == 0U) {
         if (spi_data_len_mosi >= sizeof(ControlPacket_t)) {
-          ControlPacket_t ctrl;
+          ControlPacket_t ctrl = {0};
           (void)memcpy(&ctrl, &spi_buf_rx[SPI_HEADER_SIZE], sizeof(ControlPacket_t));
           response_len = comms_control_handler(&ctrl, &spi_buf_tx[3]);
           response_ack = true;
@@ -182,6 +182,10 @@ void spi_rx_done(void) {
         } else {
           print("SPI: did expect data for can_write\n");
         }
+      } else if (spi_endpoint == 0xABU) {
+        // test endpoint, send max response length
+        response_len = spi_data_len_miso;
+        response_ack = true;
       } else {
         print("SPI: unexpected endpoint"); puth(spi_endpoint); print("\n");
       }
