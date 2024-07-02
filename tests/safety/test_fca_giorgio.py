@@ -6,7 +6,7 @@ import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
 
-class TestFcaGiorgio_Safety(common.PandaCarSafetyTest, common.DriverTorqueSteeringSafetyTest):
+class TestFcaGiorgio_Safety(common.PandaCarSafetyTest, common.MotorTorqueSteeringSafetyTest):
   TX_MSGS = [[0x1F6, 0], [0x4AE, 0], [0x547, 0]]
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDRS = {0: (0x1F6,)}
@@ -51,7 +51,7 @@ class TestFcaGiorgio_Safety(common.PandaCarSafetyTest, common.DriverTorqueSteeri
     return self.packer.make_can_msg_panda("EPS_3", 0, values)
 
   def _torque_cmd_msg(self, torque, steer_req=1):
-    values = {"LKA_TORQUE": torque, "LKA_STATUS": steer_req}
+    values = {"LKA_TORQUE": torque, "LKA_ACTIVE": steer_req}
     return self.packer.make_can_msg_panda("LKA_COMMAND", 0, values)
 
   def test_rx_hook(self):
