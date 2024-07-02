@@ -27,6 +27,7 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
 #define MSG_MEB_ESP_02      0xC0    // RX, for wheel speeds
 #define MSG_HCA_03          0x303   // TX by OP, Heading Control Assist steering torque
 #define MSG_LH_EPS_03       0x09F   // RX from EPS, for driver steering torque
+#define MSG_LWI_01          0x86    // RX, for steering angle
 #define MSG_MEB_ACC_01      0x300   // RX from ECU, for ACC status
 #define MSG_MEB_ACC_02      0x14D   // RX from ECU, for ACC status
 #define MSG_GRA_ACC_01      0x12B   // TX by OP, ACC control buttons for cancel/resume
