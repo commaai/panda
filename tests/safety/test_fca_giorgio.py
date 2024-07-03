@@ -15,7 +15,7 @@ class TestFcaGiorgio_Safety(common.PandaCarSafetyTest, common.MotorTorqueSteerin
 
   MAX_RATE_UP = 4
   MAX_RATE_DOWN = 4
-  MAX_TORQUE = 200
+  MAX_TORQUE = 300
   MAX_RT_DELTA = 150
   RT_INTERVAL = 250000
 
