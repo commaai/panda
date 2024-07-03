@@ -25,8 +25,8 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
 
 #define MSG_MEB_ESP_01      0xFC    // RX, for wheel speeds
 #define MSG_MEB_ESP_02      0xC0    // RX, for wheel speeds
+#define MSG_MEB_ESP_03      0x14C   // RX, for accel pedal
 #define MSG_HCA_03          0x303   // TX by OP, Heading Control Assist steering torque
-#define MSG_LH_EPS_03       0x09F   // RX from EPS, for driver steering torque
 #define MSG_LWI_01          0x86    // RX, for steering angle
 #define MSG_MEB_ACC_01      0x300   // RX from ECU, for ACC status
 #define MSG_MEB_ACC_02      0x14D   // RX from ECU, for ACC status
@@ -113,10 +113,11 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
     }
 
     // Update steering input angle samples
-    if (addr == MSG_LH_EPS_03) {      
-      int angle_meas_new_rad = ((GET_BYTE(to_push, 3) & 0xFU) << 8 | GET_BYTE(to_push, 2));
-      int angle_meas_new = angle_meas_new_rad * 0.15;
-      int sign = (GET_BYTE(to_push, 3) & 0x80U) >> 7;
+    if (addr == MSG_LWI_01) {      
+      int angle_meas_new_tmp = (GET_BYTE(to_push, 2) << 5) | ((GET_BYTE(to_push, 3) >> 3 ) & 0x1F);
+      int angle_meas_new = angle_meas_new_tmp * 0.0843;
+      
+      int sign = GET_BIT(to_push, 29U);
       if (sign == 1) {
         angle_meas_new *= -1;
       }
@@ -143,8 +144,11 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       }
     }
 
-    if (addr == MSG_MEB_ESP_02) {
-      gas_pressed = GET_BIT(to_push, 79U);
+    if (addr == MSG_MEB_ESP_03) {
+      int accel_pedal_value = GET_BYTE(to_push, 21U);
+      if (accel_pedal_value > 0) {
+        gas_pressed = true;
+      }
     }
 
     // Signal: Motor_14.MO_Fahrer_bremst (ECU detected brake pedal switch F63)
@@ -160,7 +164,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       // When using stock ACC, enter controls on rising edge of stock ACC engage, exit on disengage
       // Always exit controls on main switch off
 
-      int acc_status = (GET_BYTE(to_push, 7) >> 4) & 0x0FU;
+      int acc_status = (GET_BYTE(to_push, 7U) >> 4) & 0x0FU;
 
       bool cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 11) || (acc_status == 12);
       acc_main_on = cruise_engaged || (acc_status == 2) || (acc_status == 5);
