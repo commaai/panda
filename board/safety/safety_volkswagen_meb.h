@@ -105,7 +105,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       // sum 4 wheel speeds
       int speed = 0;
       for (uint8_t i = 9U; i <= 15U; i += 2U) {
-        int wheel_speed = GET_BYTE(to_push, i);
+        int wheel_speed = GET_BYTE(to_push, i) | GET_BYTE(to_push, i + 1U) << 8;
         speed += wheel_speed;
       }
       // Check all wheel speeds for any movement
