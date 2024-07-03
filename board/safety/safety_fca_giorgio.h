@@ -97,7 +97,7 @@ static void fca_giorgio_rx_hook(const CANPacket_t *to_push) {
       // When using stock ACC, enter controls on rising edge of stock ACC engage, exit on disengage
       // Always exit controls on main switch off
       // Signal: ACC_1.CRUISE_STATUS
-      int acc_status = (GET_BYTE(to_push, 2) & 0x9FU) >> 5;
+      int acc_status = (GET_BYTE(to_push, 2) & 0x60U) >> 5;
       bool cruise_engaged = (acc_status == 2) || (acc_status == 3);
       acc_main_on = cruise_engaged || (acc_status == 1);
 
