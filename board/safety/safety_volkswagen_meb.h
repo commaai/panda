@@ -113,7 +113,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
 
     // Update steering input angle samples
     if (addr == MSG_LWI_01) {      
-      int angle_meas_new_tmp = (GET_BYTE(to_push, 2) << 5) | ((GET_BYTE(to_push, 3) >> 3 ) & 0x1F);
+      int angle_meas_new_tmp = (GET_BYTE(to_push, 2U) << 5) | ((GET_BYTE(to_push, 3U) >> 3 ) & 0x1F);
       int angle_meas_new = angle_meas_new_tmp * 0.0843;
       
       int sign = GET_BIT(to_push, 29U);
