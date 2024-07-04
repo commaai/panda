@@ -2,7 +2,7 @@
 
 // lateral limits
 const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
-  .angle_deg_to_can = 10,
+  .angle_deg_to_can = 90,
   .angle_rate_up_lookup = {
     {0., 5., 15.},
     {10., 1.6, .3}
