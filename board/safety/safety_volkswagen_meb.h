@@ -5,11 +5,11 @@ const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
   .angle_deg_to_can = 10,
   .angle_rate_up_lookup = {
     {0., 5., 15.},
-    {20., 7.0, .8}
+    {10., 1.6, .3}
   },
   .angle_rate_down_lookup = {
     {0., 5., 15.},
-    {20., 7.0, .8}
+    {10., 7.0, .8}
   },
   .inactive_angle_is_zero = true,
 };
