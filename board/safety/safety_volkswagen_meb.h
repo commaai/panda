@@ -26,7 +26,7 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
 #define MSG_MEB_ESP_02      0xC0    // RX, for wheel speeds
 #define MSG_MEB_ESP_03      0x14C   // RX, for accel pedal
 #define MSG_HCA_03          0x303   // TX by OP, Heading Control Assist steering torque
-#define MSG_LWI_01          0x86    // RX, for steering angle
+#define MSG_MEB_EPS_01      0x13D   // RX, for steering angle
 #define MSG_MEB_ACC_01      0x300   // RX from ECU, for ACC status
 #define MSG_MEB_ACC_02      0x14D   // RX from ECU, for ACC status
 #define MSG_GRA_ACC_01      0x12B   // TX by OP, ACC control buttons for cancel/resume
@@ -112,11 +112,9 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
     }
 
     // Update steering input angle samples
-    if (addr == MSG_LWI_01) {      
-      int angle_meas_new_tmp = (GET_BYTE(to_push, 2U) << 5) | ((GET_BYTE(to_push, 3U) >> 3 ) & 0x1F);
-      int angle_meas_new = angle_meas_new_tmp * 0.0843;
-      
-      int sign = GET_BIT(to_push, 29U);
+    if (addr == MSG_MEB_EPS_01) {
+      int angle_meas_new_tmp = (((GET_BYTE(to_push, 9U) & 0xF0) >> 4) | (GET_BYTE(to_push, 10U) << 4) | ((GET_BYTE(to_push, 11U) & 0x0F) << 12)) * 0.00906;
+      int sign = GET_BIT(to_push, 55U);
       if (sign == 1) {
         angle_meas_new *= -1;
       }
