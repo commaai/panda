@@ -37,12 +37,13 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
 // Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
 const CanMsg VOLKSWAGEN_MEB_STOCK_TX_MSGS[] = {{MSG_HCA_03, 0, 24}, {MSG_GRA_ACC_01, 0, 8},
                                                {MSG_GRA_ACC_01, 2, 8}, {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
-const CanMsg VOLKSWAGEN_MEB_LONG_TX_MSGS[] = {{MSG_HCA_03, 0, 24}, {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
+const CanMsg VOLKSWAGEN_MEB_LONG_TX_MSGS[] = {{MSG_MEB_ACC_03, 0, 32}, {MSG_HCA_03, 0, 24}, {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
 
 RxCheck volkswagen_meb_rx_checks[] = {
   {.msg = {{MSG_LH_EPS_03, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MOTOR_14, 0, 8, .check_checksum = false, .max_counter = 0U, .frequency = 10U}, { 0 }, { 0 }}},
   {.msg = {{MSG_GRA_ACC_01, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 33U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_MEB_ACC_02, 0, 32, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
 };
 
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
@@ -74,7 +75,9 @@ static uint32_t volkswagen_meb_compute_crc(const CANPacket_t *to_push) {
     crc ^= (uint8_t[]){0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5}[counter];
   } else if (addr == MSG_GRA_ACC_01) {
     crc ^= (uint8_t[]){0x6A,0x38,0xB4,0x27,0x22,0xEF,0xE1,0xBB,0xF8,0x80,0x84,0x49,0xC7,0x9E,0x1E,0x2B}[counter];
-  } else {
+  } else if (addr == MSG_MEB_ACC_02) {
+    crc ^= (uint8_t[]){0xE5,0x36,0xFC,0x14,0xE1,0x01,0xE1,0x9D,0x4A,0x07,0x8E,0x22,0x98,0xDC,0x03,0xCE}[counter];
+  }else {
     // Undefined CAN message, CRC check expected to fail
   }
   crc = volkswagen_crc8_lut_8h2f[crc];
