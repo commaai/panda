@@ -99,8 +99,6 @@ static safety_config volkswagen_meb_init(uint16_t param) {
 }
 
 static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
-  int addr = GET_ADDR(to_push);
-  
   if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
 
