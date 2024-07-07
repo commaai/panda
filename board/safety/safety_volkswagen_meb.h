@@ -32,6 +32,7 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
 #define MSG_GRA_ACC_01      0x12B   // TX by OP, ACC control buttons for cancel/resume
 #define MSG_MOTOR_14        0x3BE   // RX from ECU, for brake switch status
 #define MSG_LDW_02          0x397   // TX by OP, Lane line recognition and text alerts
+#define MSG_MEB_TSK_01      0x3EC   // RX 
 
 
 // Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
@@ -124,6 +125,23 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       update_sample(&angle_meas, angle_meas_new);
     }
 
+    if (addr == MSG_MEB_TSK_01) {
+      // When using stock ACC, enter controls on rising edge of stock ACC engage, exit on disengage
+      // Always exit controls on main switch off
+      // Signal: TSK_06.TSK_Status
+      int acc_status = ((GET_BYTE(to_push, 6U) >> 5)& 0x07);
+      bool cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 5);
+      acc_main_on = cruise_engaged || (acc_status == 2);
+
+      if (!volkswagen_longitudinal) {
+        pcm_cruise_check(cruise_engaged);
+      }
+
+      if (!acc_main_on) {
+        controls_allowed = false;
+      }
+    }
+
     if (addr == MSG_GRA_ACC_01) {
       // If using openpilot longitudinal, enter controls on falling edge of Set or Resume with main switch on
       // Signal: GRA_ACC_01.GRA_Tip_Setzen
@@ -157,26 +175,6 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
     }
 
     generic_rx_checks((addr == MSG_HCA_03));
-  }
-
-  if (GET_BUS(to_push) == 2U) {
-    if (addr == MSG_MEB_ACC_02) {
-      // When using stock ACC, enter controls on rising edge of stock ACC engage, exit on disengage
-      // Always exit controls on main switch off
-
-      int acc_status = (GET_BYTE(to_push, 7U) >> 4) & 0x0FU;
-
-      bool cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 11) || (acc_status == 12);
-      acc_main_on = cruise_engaged || (acc_status == 2) || (acc_status == 5);
-
-      if (!volkswagen_longitudinal) {
-        pcm_cruise_check(cruise_engaged);
-      }
-
-      if (!acc_main_on) {
-        controls_allowed = false;
-      }
-    }
   }
 }
 
