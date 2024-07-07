@@ -45,7 +45,6 @@ RxCheck volkswagen_meb_rx_checks[] = {
   {.msg = {{MSG_MOTOR_14, 0, 8, .check_checksum = false, .max_counter = 0U, .frequency = 10U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MEB_TSK_01, 0, 8, .check_checksum = false, .max_counter = 0U, .frequency = 5U}, { 0 }, { 0 }}},
   {.msg = {{MSG_GRA_ACC_01, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 33U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_MEB_ACC_02, 0, 32, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
 };
 
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
@@ -77,9 +76,7 @@ static uint32_t volkswagen_meb_compute_crc(const CANPacket_t *to_push) {
     crc ^= (uint8_t[]){0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5}[counter];
   } else if (addr == MSG_GRA_ACC_01) {
     crc ^= (uint8_t[]){0x6A,0x38,0xB4,0x27,0x22,0xEF,0xE1,0xBB,0xF8,0x80,0x84,0x49,0xC7,0x9E,0x1E,0x2B}[counter];
-  } else if (addr == MSG_MEB_ACC_02) {
-    crc ^= (uint8_t[]){0x1A,0x65,0x81,0x96,0xC0,0xDF,0x11,0x92,0xD3,0x61,0xC6,0x95,0x8C,0x29,0x21,0xB5}[counter];
-  }else {
+  } else {
     // Undefined CAN message, CRC check expected to fail
   }
   crc = volkswagen_crc8_lut_8h2f[crc];
