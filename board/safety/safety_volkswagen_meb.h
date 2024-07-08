@@ -196,27 +196,27 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
 
   // Safety check for both ACC_06 and ACC_07 acceleration requests
   // To avoid floating point math, scale upward and compare to pre-scaled safety m/s2 boundaries
-  //if (addr == MSG_MEB_ACC_02) {
-  //  bool violation = false;
-  //  int desired_accel = 0;
+  if (addr == MSG_MEB_ACC_02) {
+    bool violation = false;
+    int desired_accel = 0;
 
-  //  if (addr == MSG_ACC_06) {
-  //    // Signal: ACC_06.ACC_Sollbeschleunigung_02 (acceleration in m/s2, scale 0.005, offset -7.22)
-  //    desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
-  //  } else {
+    if (addr == MSG_ACC_06) {
+      // Signal: ACC_06.ACC_Sollbeschleunigung_02 (acceleration in m/s2, scale 0.005, offset -7.22)
+      desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
+    } else {
       // Signal: ACC_07.ACC_Folgebeschl (acceleration in m/s2, scale 0.03, offset -4.6)
-  //    int secondary_accel = (GET_BYTE(to_send, 4) * 30U) - 4600U;
-  //    violation |= (secondary_accel != 3020);  // enforce always inactive (one increment above max range) at this time
+      int secondary_accel = (GET_BYTE(to_send, 4) * 30U) - 4600U;
+      violation |= (secondary_accel != 3020);  // enforce always inactive (one increment above max range) at this time
       // Signal: ACC_07.ACC_Sollbeschleunigung_02 (acceleration in m/s2, scale 0.005, offset -7.22)
-  //    desired_accel = (((GET_BYTE(to_send, 7) << 3) | ((GET_BYTE(to_send, 6) & 0xE0U) >> 5)) * 5U) - 7220U;
-  //  }
+      desired_accel = (((GET_BYTE(to_send, 7) << 3) | ((GET_BYTE(to_send, 6) & 0xE0U) >> 5)) * 5U) - 7220U;
+    }
 
-  //  violation |= longitudinal_accel_checks(desired_accel, VOLKSWAGEN_MQB_LONG_LIMITS);
+    violation |= longitudinal_accel_checks(desired_accel, VOLKSWAGEN_MQB_LONG_LIMITS);
 
-  //  if (violation) {
-  //    tx = false;
-  //  }
-  //}
+    if (violation) {
+      tx = false;
+    }
+  }
 
   // FORCE CANCEL: ensuring that only the cancel button press is sent when controls are off.
   // This avoids unintended engagements while still allowing resume spam
@@ -238,7 +238,8 @@ static int volkswagen_meb_fwd_hook(int bus_num, int addr) {
       bus_fwd = 2;
       break;
     case 2:
-      if ((addr == MSG_HCA_03) || (addr == MSG_LDW_02)) { // || (addr == MSG_MEB_ACC_02)) {
+      if ((addr == MSG_HCA_03) || (addr == MSG_LDW_02) || (addr == MSG_MEB_ACC_02)) {
+      //if ((addr == MSG_HCA_03) || (addr == MSG_LDW_02)) {
         // openpilot takes over LKAS steering control and related HUD messages from the camera
         bus_fwd = -1;
       } else {
