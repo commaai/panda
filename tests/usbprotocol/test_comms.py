@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import random
-import unittest
 
+import pytest
 from panda import Panda, DLC_TO_LEN, USBPACKET_MAX_SIZE, pack_can_buffer, unpack_can_buffer
 from panda.tests.libpanda import libpanda_py
 
@@ -28,8 +28,8 @@ def random_can_messages(n, bus=None):
   return msgs
 
 
-class TestPandaComms(unittest.TestCase):
-  def setUp(self):
+class TestPandaComms:
+  def setup_method(self):
     lpp.comms_can_reset()
 
   def test_tx_queues(self):
@@ -100,29 +100,27 @@ class TestPandaComms(unittest.TestCase):
       assert m == test_msg, "message buffer should contain valid test messages"
 
 
-  def test_can_send_usb(self):
+  @pytest.mark.parametrize("bus", range(3))
+  def test_can_send_usb(self, bus):
     lpp.set_safety_hooks(Panda.SAFETY_ALLOUTPUT, 0)
+    for _ in range(100):
+      msgs = random_can_messages(200, bus=bus)
+      packed = pack_can_buffer(msgs)
 
-    for bus in range(3):
-      with self.subTest(bus=bus):
-        for _ in range(100):
-          msgs = random_can_messages(200, bus=bus)
-          packed = pack_can_buffer(msgs)
+      # Simulate USB bulk chunks
+      for buf in packed:
+        for i in range(0, len(buf), CHUNK_SIZE):
+          chunk_len = min(CHUNK_SIZE, len(buf) - i)
+          lpp.comms_can_write(buf[i:i+chunk_len], chunk_len)
 
-          # Simulate USB bulk chunks
-          for buf in packed:
-            for i in range(0, len(buf), CHUNK_SIZE):
-              chunk_len = min(CHUNK_SIZE, len(buf) - i)
-              lpp.comms_can_write(buf[i:i+chunk_len], chunk_len)
+      # Check that they ended up in the right buffers
+      queue_msgs = []
+      pkt = libpanda_py.ffi.new('CANPacket_t *')
+      while lpp.can_pop(TX_QUEUES[bus], pkt):
+        queue_msgs.append(unpackage_can_msg(pkt))
 
-          # Check that they ended up in the right buffers
-          queue_msgs = []
-          pkt = libpanda_py.ffi.new('CANPacket_t *')
-          while lpp.can_pop(TX_QUEUES[bus], pkt):
-            queue_msgs.append(unpackage_can_msg(pkt))
-
-          self.assertEqual(len(queue_msgs), len(msgs))
-          self.assertEqual(queue_msgs, msgs)
+      assert len(queue_msgs) == len(msgs)
+      assert queue_msgs == msgs
 
   def test_can_receive_usb(self):
     msgs = random_can_messages(50000)
@@ -152,9 +150,5 @@ class TestPandaComms(unittest.TestCase):
         unpacked_msgs, overflow_buf = unpack_can_buffer(overflow_buf + buf)
         rx_msgs.extend(unpacked_msgs)
 
-    self.assertEqual(len(rx_msgs), len(msgs))
-    self.assertEqual(rx_msgs, msgs)
-
-
-if __name__ == "__main__":
-  unittest.main()
+    assert len(rx_msgs) == len(msgs)
+    assert rx_msgs == msgs
