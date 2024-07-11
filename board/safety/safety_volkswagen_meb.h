@@ -38,7 +38,7 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
 // Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
 const CanMsg VOLKSWAGEN_MEB_STOCK_TX_MSGS[] = {{MSG_HCA_03, 0, 24}, {MSG_GRA_ACC_01, 0, 8},
                                                {MSG_GRA_ACC_01, 2, 8}, {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
-const CanMsg VOLKSWAGEN_MEB_LONG_TX_MSGS[] = {{MSG_MEB_ACC_02, 0, 32}, {MSG_HCA_03, 0, 24}, {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
+const CanMsg VOLKSWAGEN_MEB_LONG_TX_MSGS[] = {{MSG_MEB_ACC_01, 0, 48}, {MSG_MEB_ACC_02, 0, 32}, {MSG_HCA_03, 0, 24}, {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
 
 RxCheck volkswagen_meb_rx_checks[] = {
   {.msg = {{MSG_LH_EPS_03, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
@@ -242,7 +242,7 @@ static int volkswagen_meb_fwd_hook(int bus_num, int addr) {
       //if ((addr == MSG_HCA_03) || (addr == MSG_LDW_02)) {
         // openpilot takes over LKAS steering control and related HUD messages from the camera
         bus_fwd = -1;
-      } else if (volkswagen_longitudinal && (addr == MSG_MEB_ACC_02)) {
+      } else if (volkswagen_longitudinal && ((addr == MSG_MEB_ACC_01) || (addr == MSG_MEB_ACC_02))) {
         // openpilot takes over acceleration/braking control and related HUD messages from the stock ACC radar
         bus_fwd = -1;
       } else {
