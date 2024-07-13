@@ -51,18 +51,17 @@ ENV CEREAL_REF="861144c136c91f70dcbc652c2ffe99f57440ad47"
 ENV OPENDBC_REF="e0d4be4a6215d44809718dc84efe1b9f0299ad63"
 
 RUN git config --global --add safe.directory /tmp/openpilot/panda
-
 RUN mkdir -p /tmp/openpilot/ && \
     cd /tmp/openpilot/ && \
     git clone --depth 1 https://github.com/commaai/cereal && \
     git clone --depth 1 https://github.com/commaai/opendbc && \
+    cd cereal && git fetch origin $CEREAL_REF && git checkout FETCH_HEAD && rm -rf .git/ && cd .. && \
     # TODO: REVERTME \
+    # cd opendbc && git fetch origin $OPENDBC_REF && git checkout FETCH_HEAD && rm -rf .git/ && cd .. && \
     git -C opendbc remote add my https://github.com/nworb-cire/opendbc.git && \
     git -C opendbc fetch my gm-fix-acc-cmd && \
     git -C opendbc checkout my/gm-fix-acc-cmd && \
     # END REVERTME \
-    cd cereal && git fetch origin $CEREAL_REF && git checkout FETCH_HEAD && rm -rf .git/ && cd .. && \
-    cd opendbc && git fetch origin $OPENDBC_REF && git checkout FETCH_HEAD && rm -rf .git/ && cd .. && \
     cp -pR opendbc/SConstruct opendbc/site_scons/ . && \
     pip3 install --break-system-packages --no-cache-dir -r opendbc/requirements.txt && \
     scons -j8 --minimal opendbc/ cereal/
