@@ -49,7 +49,7 @@ In addition, we run the [ruff linter](https://github.com/astral-sh/ruff) and [my
 Setup dependencies:
 ```bash
 # Ubuntu
-sudo apt-get install dfu-util gcc-arm-none-eabi python3-pip libffi-dev git
+./install_ubuntu_dependencies.sh
 
 # macOS
 brew install --cask gcc-arm-embedded
@@ -61,8 +61,11 @@ Clone panda repository and install:
 git clone https://github.com/commaai/panda.git
 cd panda
 
-# install dependencies
+# install dependencies - you'll need python version > 3.11; use venv or pyenv
 pip install -r requirements.txt
+
+# update directory ownership to be your user/group id
+sudo chown -R <user-id>:<group-id> .
 
 # install panda
 python setup.py install
