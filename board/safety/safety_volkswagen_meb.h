@@ -242,9 +242,9 @@ static int volkswagen_meb_fwd_hook(int bus_num, int addr) {
       if ((addr == MSG_HCA_03) || (addr == MSG_LDW_02)) {
         // openpilot takes over LKAS steering control and related HUD messages from the camera
         bus_fwd = -1;
-      //} else if (volkswagen_longitudinal && ((addr == MSG_MEB_ACC_01) || (addr == MSG_MEB_ACC_02))) {
+      } else if (volkswagen_longitudinal && ((addr == MSG_MEB_ACC_01) || (addr == MSG_MEB_ACC_02))) {
         // openpilot takes over acceleration/braking control and related HUD messages from the stock ACC radar
-      //  bus_fwd = -1;
+        bus_fwd = -1;
       } else {
         // Forward all remaining traffic from Extended CAN devices to J533 gateway
         bus_fwd = 0;
