@@ -114,7 +114,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
 
     // Update steering input angle samples
     if (addr == MSG_MEB_EPS_01) {
-      int angle_meas_new = (((GET_BYTE(to_push, 9U) & 0xF0) >> 4) | (GET_BYTE(to_push, 10U) << 4) | ((GET_BYTE(to_push, 11U) & 0x1F) << 12)) * 0.00906;
+      int angle_meas_new = (((GET_BYTE(to_push, 9U) & 0xF0U) >> 4) | (GET_BYTE(to_push, 10U) << 4) | ((GET_BYTE(to_push, 11U) & 0x1FU) << 12)) * 0.00906;
       int sign = GET_BIT(to_push, 55U);
       if (sign == 1) {
         angle_meas_new *= -1;
@@ -126,7 +126,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       // When using stock ACC, enter controls on rising edge of stock ACC engage, exit on disengage
       // Always exit controls on main switch off
       // Signal: TSK_06.TSK_Status
-      int acc_status = ((GET_BYTE(to_push, 11U) >> 0) & 0x07);
+      int acc_status = ((GET_BYTE(to_push, 11U) >> 0) & 0x07U);
       bool cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 5);
       acc_main_on = cruise_engaged || (acc_status == 2);
 
@@ -194,7 +194,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
       tx = false;
     }
 
-    int change_torque = (((GET_BYTE(to_send, 2) >> 6) & 0x03) | (GET_BYTE(to_send, 3) << 2));
+    int change_torque = (((GET_BYTE(to_send, 2) >> 6) & 0x03U) | (GET_BYTE(to_send, 3) << 2));
     if (change_torque > 127) {
       tx = false;
     }
@@ -206,7 +206,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
     bool violation = false;
     int desired_accel = 0;
 
-    desired_accel = ((((GET_BYTE(to_send, 3) & 0x7F8U) << 8) | GET_BYTE(to_send, 4) & 0x07) * 5U) - 7220U;
+    desired_accel = ((((GET_BYTE(to_send, 3) & 0x7F8U) << 8) | GET_BYTE(to_send, 4) & 0x07U) * 5U) - 7220U;
     violation |= longitudinal_accel_checks(desired_accel, VOLKSWAGEN_MQB_LONG_LIMITS);
 
     if (violation) {
