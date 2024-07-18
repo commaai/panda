@@ -208,8 +208,8 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
   if (addr == MSG_MEB_ACC_02) {
     bool violation = false;
     int desired_accel = 0;
-    
-    desired_accel = (((GET_BYTE(to_send, 4) << 3) | ((GET_BYTE(to_send, 3) & 0xE0U) >> 5)) * 5U) - 7220U;
+
+    desired_accel = (((GET_BYTE(to_send, 3) << 3) & 0x7F8) | ((GET_BYTE(to_send, 4) >> 5) & 0x07) * 5U) - 7220U;
     violation |= longitudinal_accel_checks(desired_accel, VOLKSWAGEN_MQB_LONG_LIMITS);
 
     if (violation) {
