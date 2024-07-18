@@ -220,9 +220,9 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
       violation = true;
     }
 
-    if (controls_allowed && gas_pressed_prev && accel_active) {
-      violation = true;
-    }
+    //if (controls_allowed && gas_pressed_prev && accel_active) {
+    //  violation = true;
+    //}
     
     if (violation) {
       tx = false;
