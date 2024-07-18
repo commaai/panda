@@ -209,8 +209,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
     bool violation = false;
     int desired_accel = 0;
 
-    desired_accel = (((GET_BYTE(to_send, 3) >> 0) | ((GET_BYTE(to_send, 4) & 0x07) << 8)) * 5U) - 7220U;
-    //violation |= longitudinal_accel_checks(desired_accel, VOLKSWAGEN_MQB_LONG_LIMITS);
+    desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
 
     if (max_limit_check(desired_accel, VOLKSWAGEN_MEB_LONG_LIMITS.max_accel, VOLKSWAGEN_MEB_LONG_LIMITS.min_accel)) {
       violation = true;
