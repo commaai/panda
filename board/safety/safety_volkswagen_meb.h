@@ -197,7 +197,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
       tx = false;
     }
 
-    int change_torque = (((GET_BYTE(to_send, 2) >> 6) & 0x03U) | (GET_BYTE(to_send, 3) << 2));
+    int change_torque = (GET_BYTE(to_send, 2) >> 1) & 0x7F;
     if (change_torque > 127) {
       tx = false;
     }
