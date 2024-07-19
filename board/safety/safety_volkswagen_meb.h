@@ -221,21 +221,10 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
   if (addr == MSG_MEB_ACC_02) {
     bool violation = false;
     int desired_accel = 0;
-    bool accel_active = false;
 
     desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
 
-    if (desired_accel != VOLKSWAGEN_MEB_LONG_LIMITS.inactive_accel) {
-      accel_active = true;
-    }
-
-    if (max_limit_check(desired_accel, VOLKSWAGEN_MEB_LONG_LIMITS.max_accel, VOLKSWAGEN_MEB_LONG_LIMITS.min_accel) && accel_active) {
-      violation = true;
-    }
-
-    //if (controls_allowed && gas_pressed_prev && accel_active) {
-    //  violation = true;
-    //}
+    violation |= longitudinal_accel_checks(desired_accel, VOLKSWAGEN_MEB_LONG_LIMITS);
     
     if (violation) {
       tx = false;
