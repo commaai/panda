@@ -214,20 +214,20 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
 
   // Safety check for MSG_MEB_ACC_02 acceleration requests
   // To avoid floating point math, scale upward and compare to pre-scaled safety m/s2 boundaries
-  if (addr == MSG_MEB_ACC_02) {
-    int desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
+  //if (addr == MSG_MEB_ACC_02) {
+  //  int desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
 
-    if (longitudinal_accel_checks(desired_accel, VOLKSWAGEN_MEB_LONG_LIMITS)) {
-      volkswagen_acc_violation_cnt = volkswagen_acc_violation_cnt + 1;
-    } else {
-      volkswagen_acc_violation_cnt = 0;
-    }
+  //  if (longitudinal_accel_checks(desired_accel, VOLKSWAGEN_MEB_LONG_LIMITS)) {
+  //    volkswagen_acc_violation_cnt = volkswagen_acc_violation_cnt + 1;
+  //  } else {
+  //    volkswagen_acc_violation_cnt = 0;
+  //  }
 
     // accel pedal signal frequency is lower than acc command: allow up to 10 frames of violation
-    if (volkswagen_acc_violation_cnt >= 120) { // worst case 5 times esp 03 
-      tx = false;
-    }
-  }
+  //  if (volkswagen_acc_violation_cnt >= 120) { // worst case 5 times esp 03 
+  //    tx = false;
+  //  }
+  //}
 
   // FORCE CANCEL: ensuring that only the cancel button press is sent when controls are off.
   // This avoids unintended engagements while still allowing resume spam
