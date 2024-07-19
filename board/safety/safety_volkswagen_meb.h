@@ -198,9 +198,22 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
     }
 
     int change_torque = (GET_BYTE(to_send, 2) >> 1) & 0x7F;
-    if (change_torque > 127) {
+    if (change_torque > 127) { // maximum angle change torque
       tx = false;
     }
+
+    if (!steer_req && change_torque >= volkswagen_change_torque_prev && change_torque != 0) {
+      if (volkswagen_steer_frame_cnt >= 2) { // allow 2 frames of same value
+        tx = false; // angle change torque has not been decreased monotonously after disabling
+      } else {
+        volkswagen_steer_frame_cnt = volkswagen_steer_frame_cnt + 1;
+      }
+    } else { // value is 0 or steering is enabled
+      volkswagen_steer_frame_cnt = 0;
+    }
+
+    volkswagen_change_torque_prev = change_torque
+    
   }
 
   // Safety check for MSG_MEB_ACC_02 acceleration requests
