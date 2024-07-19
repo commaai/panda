@@ -22,6 +22,10 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
   .inactive_accel = 3010,  // VW sends one increment above the max range when inactive
 };
 
+int volkswagen_change_torque_prev = 0;
+int volkswagen_steer_frame_cnt = 0; // allow lag for steering safety by counter
+int volkswagen_accel_prev = VOLKSWAGEN_MEB_LONG_LIMITS.inactive_accel; // allow lag for accel safety by 1 panda frame
+
 #define MSG_MEB_ESP_01      0xFC    // RX, for wheel speeds
 #define MSG_MEB_ESP_02      0xC0    // RX, for wheel speeds
 #define MSG_MEB_ESP_03      0x14C   // RX, for accel pedal
@@ -224,11 +228,13 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
 
     desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
 
-    violation |= longitudinal_accel_checks(desired_accel, VOLKSWAGEN_MEB_LONG_LIMITS);
+    violation |= longitudinal_accel_checks(volkswagen_accel_prev, VOLKSWAGEN_MEB_LONG_LIMITS);
     
     if (violation) {
       tx = false;
     }
+    
+    volkswagen_accel_prev = desired_accel;
   }
 
   // FORCE CANCEL: ensuring that only the cancel button press is sent when controls are off.
