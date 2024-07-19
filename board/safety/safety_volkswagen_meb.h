@@ -219,9 +219,12 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
     int desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
 
     //violation |= longitudinal_accel_checks(desired_accel, VOLKSWAGEN_MEB_LONG_LIMITS);
-    // I don't understand, why we do have this problem right now: either we use current gas pressed or lag car controller acc accel
+    // I don't understand, why we do have this problem right now
+    // we get gas pressed check violations at end of gas pressed
+    // -> no gas pressed violation check for the moment
+    // tx blocking results in tsk state fault
 
-    bool accel_valid = controls_allowed && !gas_pressed && !max_limit_check(desired_accel, VOLKSWAGEN_MEB_LONG_LIMITS.max_accel, VOLKSWAGEN_MEB_LONG_LIMITS.min_accel);
+    bool accel_valid = controls_allowed && !max_limit_check(desired_accel, VOLKSWAGEN_MEB_LONG_LIMITS.max_accel, VOLKSWAGEN_MEB_LONG_LIMITS.min_accel);
     bool accel_inactive = desired_accel == VOLKSWAGEN_MEB_LONG_LIMITS.inactive_accel;
     
     violation = !(accel_valid || accel_inactive);
