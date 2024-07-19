@@ -224,7 +224,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
     }
 
     // accel pedal signal frequency is lower than acc command: allow up to 10 frames of violation
-    if (volkswagen_acc_violation_cnt >= 100) {
+    if (volkswagen_acc_violation_cnt >= 120) { // worst case 5 times esp 03 
       tx = false;
     }
   }
