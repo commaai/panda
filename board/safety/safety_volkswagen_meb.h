@@ -212,7 +212,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
       volkswagen_steer_frame_cnt = 0;
     }
 
-    volkswagen_change_torque_prev = change_torque
+    volkswagen_change_torque_prev = change_torque;
     
   }
 
