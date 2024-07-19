@@ -215,9 +215,8 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
   // To avoid floating point math, scale upward and compare to pre-scaled safety m/s2 boundaries
   if (addr == MSG_MEB_ACC_02) {
     bool violation = false;
-    int desired_accel = 0;
 
-    desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
+    int desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
 
     violation |= longitudinal_accel_checks(desired_accel, VOLKSWAGEN_MEB_LONG_LIMITS);
     
