@@ -23,7 +23,6 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
 };
 
 int volkswagen_change_torque_prev = 0;
-int volkswagen_steer_frame_cnt = 0; // allow lag for steering safety by counter
 
 #define MSG_MEB_ESP_01      0xFC    // RX, for wheel speeds
 #define MSG_MEB_ESP_02      0xC0    // RX, for wheel speeds
@@ -206,17 +205,10 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
     }
 
     if (!steer_req && change_torque >= volkswagen_change_torque_prev && change_torque != 0) {
-      if (volkswagen_steer_frame_cnt >= 2) { // allow 2 frames of same value
-        tx = false; // angle change torque has not been decreased monotonously after disabling
-      } else {
-        volkswagen_steer_frame_cnt = volkswagen_steer_frame_cnt + 1;
-      }
-    } else { // value is 0 or steering is enabled
-      volkswagen_steer_frame_cnt = 0;
+      tx = false; // angle change torque has not been decreased monotonously after disabling or is not 0 when disabled
     }
 
     volkswagen_change_torque_prev = change_torque;
-    
   }
 
   // Safety check for MSG_MEB_ACC_02 acceleration requests
