@@ -23,6 +23,7 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
 };
 
 int volkswagen_change_torque_prev = 0;
+int volkswagen_acc_violation_cnt = 0; // gas pressed signal has lower frequency than accel command -> violation check is failing
 
 #define MSG_MEB_ESP_01      0xFC    // RX, for wheel speeds
 #define MSG_MEB_ESP_02      0xC0    // RX, for wheel speeds
@@ -214,22 +215,16 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
   // Safety check for MSG_MEB_ACC_02 acceleration requests
   // To avoid floating point math, scale upward and compare to pre-scaled safety m/s2 boundaries
   if (addr == MSG_MEB_ACC_02) {
-    bool violation = false;
-
     int desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
 
-    //violation |= longitudinal_accel_checks(desired_accel, VOLKSWAGEN_MEB_LONG_LIMITS);
-    // I don't understand, why we do have this problem right now
-    // we get gas pressed check violations at end of gas pressed
-    // -> no gas pressed violation check for the moment
-    // tx blocking results in tsk state fault
+    if (longitudinal_accel_checks(desired_accel, VOLKSWAGEN_MEB_LONG_LIMITS)) {
+      volkswagen_acc_violation_cnt = volkswagen_acc_violation_cnt + 1;
+    } else {
+      volkswagen_acc_violation_cnt = 0;
+    }
 
-    bool accel_valid = controls_allowed && !max_limit_check(desired_accel, VOLKSWAGEN_MEB_LONG_LIMITS.max_accel, VOLKSWAGEN_MEB_LONG_LIMITS.min_accel);
-    bool accel_inactive = desired_accel == VOLKSWAGEN_MEB_LONG_LIMITS.inactive_accel;
-    
-    violation = !(accel_valid || accel_inactive);
-    
-    if (violation) {
+    // accel pedal signal frequency is lower than acc command: allow up to 5 frames of violation
+    if (volkswagen_acc_violation_cnt >= 5) {
       tx = false;
     }
   }
