@@ -209,10 +209,12 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
     if (steer_angle_cmd_checks(desired_angle, steer_req, VOLKSWAGEN_MEB_STEERING_LIMITS)) {
       tx = false;
 
-      // angle change torque is still allowed to decrease monotonously to zero with desired_angle == angle_measured
+      // angle change torque is still allowed to decrease to zero monotonously with close desired and measured angle
       // while controls are not allowed anymore
       if (steer_req && change_torque != 0) {
-        if (change_torque < volkswagen_change_torque_prev && int(round(volkswagen_steer_angle_measured)) == int(round(desired_angle))) {
+        int steer_angle_diff = abs(desired_angle - volkswagen_steer_angle_measured);
+        
+        if (change_torque < volkswagen_change_torque_prev && steer_angle_diff < 15) {
           tx = true;
         }
       }
