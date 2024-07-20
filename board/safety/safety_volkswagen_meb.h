@@ -24,6 +24,7 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
 
 int volkswagen_change_torque_prev = 0;
 int volkswagen_acc_violation_cnt = 0; // gas pressed signal has lower frequency than accel command -> violation check is failing
+int volkswagen_steer_angle_measured = 0;
 
 #define MSG_MEB_ESP_01      0xFC    // RX, for wheel speeds
 #define MSG_MEB_ESP_02      0xC0    // RX, for wheel speeds
@@ -126,6 +127,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
         angle_meas_new *= -1;
       }
       update_sample(&angle_meas, angle_meas_new);
+      volkswagen_steer_angle_measured = angle_meas_new;
     }
 
     if (addr == MSG_MEB_MOTOR_01) {
@@ -199,9 +201,13 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
 
     if (steer_angle_cmd_checks(desired_angle, steer_req, VOLKSWAGEN_MEB_STEERING_LIMITS)) {
       tx = false;
-      
-      if (steer_req && !controls_allowed && change_torque < volkswagen_change_torque_prev && change_torque != 0) {
-        tx = true; // angle change torque is still decreasing monotonously to 0, we could also check, if desired_angle = angle_measured
+
+      // angle change torque is still allowed to decrease monotonously to zero with desired_angle == angle_measured
+      // while controls are not allowed anymore
+      if (steer_req && change_torque != 0) {
+        if (change_torque < volkswagen_change_torque_prev && int(round(volkswagen_steer_angle_measured)) == int(round(desired_angle))) {
+          tx = true;
+        }
       }
     }
 
