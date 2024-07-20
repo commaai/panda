@@ -121,7 +121,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
 
     // for testing
     if (addr == MSG_MEB_ESP_01) {
-      volkswagen_speed = GET_BYTE(to_push, 9U) | GET_BYTE(to_push, 10U) << 8;
+      volkswagen_speed = (GET_BYTE(to_push, 9U) | GET_BYTE(to_push, 10U) << 8) * 0.0075;
     }
 
     // Update steering input angle samples
