@@ -195,18 +195,22 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
     }
 
     bool steer_req = GET_BIT(to_send, 14U);
+    int change_torque = (GET_BYTE(to_send, 2) >> 1) & 0x7F;
 
     if (steer_angle_cmd_checks(desired_angle, steer_req, VOLKSWAGEN_MEB_STEERING_LIMITS)) {
       tx = false;
+      
+      if (steer_req && !controls_allowed && change_torque < volkswagen_change_torque_prev && change_torque != 0) {
+        tx = true; // angle change torque is still decreasing monotonously to 0
+      }
     }
 
-    int change_torque = (GET_BYTE(to_send, 2) >> 1) & 0x7F;
     if (change_torque > 127) { // maximum angle change torque
       tx = false;
     }
 
-    if (!steer_req && change_torque >= volkswagen_change_torque_prev && change_torque != 0) {
-      tx = false; // angle change torque has not been decreased monotonously after disabling or is not 0 when disabled
+    if (!steer_req && change_torque != 0) {
+      tx = false; // angle change torque is not 0 when disabled
     }
 
     volkswagen_change_torque_prev = change_torque;
