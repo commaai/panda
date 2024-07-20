@@ -24,6 +24,7 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
 
 int volkswagen_change_torque_prev = 0;
 int volkswagen_acc_violation_cnt = 0; // gas pressed signal has lower frequency than accel command -> violation check is failing
+int volkswagen_speed = 0; // for testing 
 
 #define MSG_MEB_ESP_01      0xFC    // RX, for wheel speeds
 #define MSG_MEB_ESP_02      0xC0    // RX, for wheel speeds
@@ -116,6 +117,11 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       }
       // Check all wheel speeds for any movement
       vehicle_moving = speed > 0;
+    }
+
+    // for testing
+    if (addr == MSG_MEB_ESP_01) {
+      volkswagen_speed = GET_BYTE(to_push, 9U) | GET_BYTE(to_push, 10U) << 8;
     }
 
     // Update steering input angle samples
@@ -236,6 +242,10 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
     if ((GET_BYTE(to_send, 2) & 0x9U) != 0U) {
       tx = false;
     }
+  }
+
+  if (volkswagen_speed >= 5) { // for testing
+    tx = false;
   }
 
   return tx;
