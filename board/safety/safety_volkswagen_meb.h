@@ -244,7 +244,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
     }
   }
 
-  if (volkswagen_speed >= 5) { // for testing
+  if (volkswagen_speed >= 3) { // for testing
     tx = false;
   }
 
