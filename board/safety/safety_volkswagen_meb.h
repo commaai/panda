@@ -202,7 +202,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
     }
 
     bool steer_req = GET_BIT(to_send, 14U);
-    int change_torque = (GET_BYTE(to_send, 2) >> 1) & 0x7F;
+    int change_torque = (GET_BYTE(to_send, 2) >> 0) & 0x7F;
 
     if (steer_angle_cmd_checks(desired_angle, steer_req, VOLKSWAGEN_MEB_STEERING_LIMITS)) {
       tx = false;
