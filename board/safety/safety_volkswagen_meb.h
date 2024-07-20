@@ -118,6 +118,11 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       }
       // Check all wheel speeds for any movement
       vehicle_moving = speed > 0;
+
+      int brake_pressure = (GET_BYTE(to_push, 5U) >> 2) | ((GET_BYTE(to_push, 6U) & 0x03) << 6);
+      if (brake_pressure > 0) {
+        brake_pressed = true;
+      }
     }
 
     // Update steering input angle samples
@@ -171,14 +176,6 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       // Signal: GRA_ACC_01.GRA_Abbrechen
       if (GET_BIT(to_push, 13U)) {
         controls_allowed = false;
-      }
-    }
-
-    // Signal: Motor_14.MO_Fahrer_bremst (ECU detected brake pedal switch F63)
-    if (addr == MSG_MOTOR_14) {
-      int brake_pressure = (GET_BYTE(to_push, 5U) >> 2) | ((GET_BYTE(to_push, 6U) & 0x03) << 6);
-      if (brake_pressure > 0) {
-        brake_pressed = true;
       }
     }
 
