@@ -22,8 +22,6 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
   .inactive_accel = 3010,  // VW sends one increment above the max range when inactive
 };
 
-int volkswagen_change_torque_prev = 0;
-
 #define MSG_MEB_ESP_01      0xFC    // RX, for wheel speeds
 #define MSG_MEB_ESP_02      0xC0    // RX, for wheel speeds
 #define MSG_MEB_ESP_03      0x14C   // RX, for accel pedal
@@ -52,6 +50,7 @@ RxCheck volkswagen_meb_rx_checks[] = {
 };
 
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
+int volkswagen_change_torque_prev = 0;
 
 static uint32_t volkswagen_meb_get_checksum(const CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
@@ -92,6 +91,10 @@ static uint32_t volkswagen_meb_compute_crc(const CANPacket_t *to_push) {
 
 static safety_config volkswagen_meb_init(uint16_t param) {
   UNUSED(param);
+
+  volkswagen_set_button_prev = false;
+  volkswagen_resume_button_prev = false;
+  volkswagen_change_torque_prev = 0;
 
 #ifdef ALLOW_DEBUG
   volkswagen_longitudinal = GET_FLAG(param, FLAG_VOLKSWAGEN_LONG_CONTROL);
@@ -171,17 +174,12 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       }
     }
 
-    // use MEB_MOTOR_01 for now because this signal has a low frequency
-    //if (addr == MSG_MEB_ESP_03) {
-    //  int accel_pedal_value = GET_BYTE(to_push, 21U) - 37;
-    //  if (accel_pedal_value > 0) {
-    //    gas_pressed = true;
-    //  }
-    //}
-
     // Signal: Motor_14.MO_Fahrer_bremst (ECU detected brake pedal switch F63)
     if (addr == MSG_MOTOR_14) {
-      brake_pressed = GET_BIT(to_push, 28U);
+      int brake_pressure = (GET_BYTE(to_push, 5U) >> 2) | ((GET_BYTE(to_push, 6U) & 0x03) << 6);
+      if (brake_pressure > 0) {
+        brake_pressed = true;
+      }
     }
 
     generic_rx_checks((addr == MSG_HCA_03));
