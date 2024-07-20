@@ -111,7 +111,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
     if (addr == MSG_MEB_ESP_01) {
       // sum 4 wheel speeds
       int speed = 0;
-      for (uint8_t i = 9U; i <= 15U; i += 2U) {
+      for (uint8_t i = 8U; i <= 14U; i += 2U) {
         int wheel_speed = GET_BYTE(to_push, i) | GET_BYTE(to_push, i + 1U) << 8;
         speed += wheel_speed;
       }
@@ -121,7 +121,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
 
     // for testing
     if (addr == MSG_MEB_ESP_01) {
-      volkswagen_speed = (GET_BYTE(to_push, 9U) | GET_BYTE(to_push, 10U) << 8) * 0.0075;
+      volkswagen_speed = (GET_BYTE(to_push, 8U) | GET_BYTE(to_push, 9U) << 8) * 0.0075;
     }
 
     // Update steering input angle samples
