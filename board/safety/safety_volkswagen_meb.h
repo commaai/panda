@@ -24,7 +24,6 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
 
 int volkswagen_change_torque_prev = 0;
 int volkswagen_acc_violation_cnt = 0; // gas pressed signal has lower frequency than accel command -> violation check is failing
-int volkswagen_speed = 0; // for testing 
 
 #define MSG_MEB_ESP_01      0xFC    // RX, for wheel speeds
 #define MSG_MEB_ESP_02      0xC0    // RX, for wheel speeds
@@ -117,11 +116,6 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       }
       // Check all wheel speeds for any movement
       vehicle_moving = speed > 0;
-    }
-
-    // for testing
-    if (addr == MSG_MEB_ESP_01) {
-      volkswagen_speed = (GET_BYTE(to_push, 8U) | GET_BYTE(to_push, 9U) << 8) * 0.0075;
     }
 
     // Update steering input angle samples
@@ -221,7 +215,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
   // Safety check for MSG_MEB_ACC_02 acceleration requests
   // To avoid floating point math, scale upward and compare to pre-scaled safety m/s2 boundaries
   if (addr == MSG_MEB_ACC_02) {
-    // WARNING: IF WE TAKE THE SIGNAL FROM THE CAR WHILE ACC ACTIVE AND ACCEL NOT PRESSED AND BELOW 5km/h, THE CAR ERRORS AND PUTS ITSELF IN PARKING MODE WITH EPB!
+    // WARNING: IF WE TAKE THE SIGNAL FROM THE CAR WHILE ACC ACTIVE AND ACCEL NOT PRESSED AND BELOW about 3km/h, THE CAR ERRORS AND PUTS ITSELF IN PARKING MODE WITH EPB!
     int desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
 
     if (longitudinal_accel_checks(desired_accel, VOLKSWAGEN_MEB_LONG_LIMITS)) {
@@ -243,10 +237,6 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
     if ((GET_BYTE(to_send, 2) & 0x9U) != 0U) {
       tx = false;
     }
-  }
-
-  if (volkswagen_speed >= 3) { // for testing
-    tx = false;
   }
 
   return tx;
