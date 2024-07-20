@@ -23,7 +23,6 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
 };
 
 int volkswagen_change_torque_prev = 0;
-int volkswagen_steer_angle_measured = 0;
 
 #define MSG_MEB_ESP_01      0xFC    // RX, for wheel speeds
 #define MSG_MEB_ESP_02      0xC0    // RX, for wheel speeds
@@ -126,7 +125,6 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
         angle_meas_new *= -1;
       }
       update_sample(&angle_meas, angle_meas_new);
-      volkswagen_steer_angle_measured = angle_meas_new;
     }
 
     if (addr == MSG_MEB_MOTOR_01) {
@@ -209,12 +207,10 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
     if (steer_angle_cmd_checks(desired_angle, steer_req, VOLKSWAGEN_MEB_STEERING_LIMITS)) {
       tx = false;
 
-      // angle change torque is still allowed to decrease to zero monotonously with close desired and measured angle
+      // angle change torque is still allowed to decrease to zero monotonously
       // while controls are not allowed anymore
-      if (steer_req && change_torque != 0) {
-        int steer_angle_diff = abs(desired_angle - volkswagen_steer_angle_measured);
-        
-        if (change_torque < volkswagen_change_torque_prev && steer_angle_diff < 15) {
+      if (steer_req && change_torque != 0) {        
+        if (change_torque < volkswagen_change_torque_prev) {
           tx = true;
         }
       }
