@@ -201,7 +201,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
       tx = false;
       
       if (steer_req && !controls_allowed && change_torque < volkswagen_change_torque_prev && change_torque != 0) {
-        tx = true; // angle change torque is still decreasing monotonously to 0
+        tx = true; // angle change torque is still decreasing monotonously to 0, we could also check, if desired_angle = angle_measured
       }
     }
 
