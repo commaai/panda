@@ -47,6 +47,7 @@ RxCheck volkswagen_meb_rx_checks[] = {
   {.msg = {{MSG_MEB_MOTOR_01, 0, 32, .check_checksum = false, .max_counter = 0U, .frequency = 50U}, { 0 }, { 0 }}},
   {.msg = {{MSG_GRA_ACC_01, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 33U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MEB_EPS_01, 0, 32, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_MEB_ESP_01, 0, 48, .check_checksum = false, .max_counter = 0U, .frequency = 100U}, { 0 }, { 0 }}},
 };
 
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
@@ -119,10 +120,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       // Check all wheel speeds for any movement
       vehicle_moving = speed > 0;
 
-      int brake_pressure = (GET_BYTE(to_push, 5U) >> 2) | ((GET_BYTE(to_push, 6U) & 0x03) << 6);
-      if (brake_pressure > 0) {
-        brake_pressed = true;
-      }
+      brake_pressed = (GET_BYTE(to_push, 5U) >> 2) | ((GET_BYTE(to_push, 6U) & 0x03) << 6) != 0U;
     }
 
     // Update steering input angle samples
@@ -151,12 +149,7 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
         controls_allowed = false;
       }
 
-      int accel_pedal_value = (GET_BYTE(to_push, 2U) << 4) | ((GET_BYTE(to_push, 1U) >> 4) & 0x0F);
-      
-      if (accel_pedal_value > 0) {
-         gas_pressed = true;
-      }
-      
+      gas_pressed = (GET_BYTE(to_push, 2U) << 4) | ((GET_BYTE(to_push, 1U) >> 4) & 0x0F) != 0U;      
     }
 
     if (addr == MSG_GRA_ACC_01) {
