@@ -23,7 +23,6 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
 };
 
 int volkswagen_change_torque_prev = 0;
-int volkswagen_acc_violation_cnt = 0; // gas pressed signal has lower frequency than accel command -> violation check is failing
 int volkswagen_steer_angle_measured = 0;
 
 #define MSG_MEB_ESP_01      0xFC    // RX, for wheel speeds
@@ -145,6 +144,13 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       if (!acc_main_on) {
         controls_allowed = false;
       }
+
+      int accel_pedal_value = (GET_BYTE(to_push, 2U) << 4) | ((GET_BYTE(to_push, 1U) >> 4) & 0x0F);
+      
+      if (accel_pedal_value > 0) {
+         gas_pressed = true;
+      }
+      
     }
 
     if (addr == MSG_GRA_ACC_01) {
@@ -167,12 +173,13 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       }
     }
 
-    if (addr == MSG_MEB_ESP_03) {
-      int accel_pedal_value = GET_BYTE(to_push, 21U) - 37;
-      if (accel_pedal_value > 0) {
-        gas_pressed = true;
-      }
-    }
+    // use MEB_MOTOR_01 for now because this signal has a low frequency
+    //if (addr == MSG_MEB_ESP_03) {
+    //  int accel_pedal_value = GET_BYTE(to_push, 21U) - 37;
+    //  if (accel_pedal_value > 0) {
+    //    gas_pressed = true;
+    //  }
+    //}
 
     // Signal: Motor_14.MO_Fahrer_bremst (ECU detected brake pedal switch F63)
     if (addr == MSG_MOTOR_14) {
@@ -229,13 +236,6 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
     int desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
 
     if (longitudinal_accel_checks(desired_accel, VOLKSWAGEN_MEB_LONG_LIMITS)) {
-      volkswagen_acc_violation_cnt = volkswagen_acc_violation_cnt + 1;
-    } else {
-      volkswagen_acc_violation_cnt = 0;
-    }
-
-    // accel pedal signal frequency is lower than acc command: allow worst case 5 times esp 03 of violation for now or find a better signal
-    if (volkswagen_acc_violation_cnt >= 120) {
       tx = false;
     }
   }
