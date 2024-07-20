@@ -168,8 +168,8 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
     }
 
     if (addr == MSG_MEB_ESP_03) {
-      int accel_pedal_value = GET_BYTE(to_push, 21U);
-      if (accel_pedal_value - 37 > 0) {
+      int accel_pedal_value = GET_BYTE(to_push, 21U) - 37;
+      if (accel_pedal_value > 0) {
         gas_pressed = true;
       }
     }
