@@ -146,8 +146,6 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       if (!acc_main_on) {
         controls_allowed = false;
       }
-
-      gas_pressed = (((GET_BYTE(to_push, 2U) & 0x1F) << 4) | ((GET_BYTE(to_push, 1U) >> 4) & 0x0F)) != 0U;
     }
 
     if (addr == MSG_GRA_ACC_01) {
@@ -172,6 +170,11 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
 
     if (addr == MSG_MOTOR_14) {
       brake_pressed = GET_BIT(to_push, 28U);
+    }
+
+    if (addr == MSG_MEB_ESP_03) {
+      int accel_pedal_value = GET_BYTE(to_push, 21U) - 37;
+      gas_pressed = accel_pedal_value != 0;
     }
 
     generic_rx_checks((addr == MSG_HCA_03));
