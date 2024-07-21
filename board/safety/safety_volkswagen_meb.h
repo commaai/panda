@@ -119,8 +119,6 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       }
       // Check all wheel speeds for any movement
       vehicle_moving = speed > 0;
-
-      brake_pressed = ((GET_BYTE(to_push, 5U) >> 2) | ((GET_BYTE(to_push, 6U) & 0x03) << 6)) != 0U;
     }
 
     // Update steering input angle samples
@@ -170,6 +168,10 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       if (GET_BIT(to_push, 13U)) {
         controls_allowed = false;
       }
+    }
+
+    if (addr == MSG_MOTOR_14) {
+      brake_pressed = GET_BIT(to_push, 28U);
     }
 
     generic_rx_checks((addr == MSG_HCA_03));
