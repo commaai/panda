@@ -22,23 +22,24 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
   .inactive_accel = 3010,  // VW sends one increment above the max range when inactive
 };
 
-#define MSG_MEB_ESP_01      0xFC    // RX, for wheel speeds
-#define MSG_MEB_ESP_03      0x14C   // RX, for accel pedal
-#define MSG_HCA_03          0x303   // TX by OP, Heading Control Assist steering torque
-#define MSG_MEB_EPS_01      0x13D   // RX, for steering angle
-#define MSG_MEB_ACC_01      0x300   // RX from ECU, for ACC status
-#define MSG_MEB_ACC_02      0x14D   // RX from ECU, for ACC status
-#define MSG_GRA_ACC_01      0x12B   // TX by OP, ACC control buttons for cancel/resume
-#define MSG_MOTOR_14        0x3BE   // RX from ECU, for brake switch status
-#define MSG_LDW_02          0x397   // TX by OP, Lane line recognition and text alerts
-#define MSG_MEB_MOTOR_01    0x10B   // RX for TSK state
+#define MSG_MEB_ESP_01           0xFC    // RX, for wheel speeds
+#define MSG_MEB_ESP_03           0x14C   // RX, for accel pedal
+#define MSG_HCA_03               0x303   // TX by OP, Heading Control Assist steering torque
+#define MSG_MEB_EPS_01           0x13D   // RX, for steering angle
+#define MSG_MEB_ACC_01           0x300   // RX from ECU, for ACC status
+#define MSG_MEB_ACC_02           0x14D   // RX from ECU, for ACC status
+#define MSG_GRA_ACC_01           0x12B   // TX by OP, ACC control buttons for cancel/resume
+#define MSG_MOTOR_14             0x3BE   // RX from ECU, for brake switch status
+#define MSG_LDW_02               0x397   // TX by OP, Lane line recognition and text alerts
+#define MSG_MEB_MOTOR_01         0x10B   // RX for TSK state
+#define MSG_MEB_TRAVEL_ASSIST_01 0x26B   // TX for Travel Assist status
 
 
 // Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
 const CanMsg VOLKSWAGEN_MEB_STOCK_TX_MSGS[] = {{MSG_HCA_03, 0, 24}, {MSG_GRA_ACC_01, 0, 8},
                                                {MSG_GRA_ACC_01, 2, 8}, {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
 const CanMsg VOLKSWAGEN_MEB_LONG_TX_MSGS[] = {{MSG_MEB_ACC_01, 0, 48}, {MSG_MEB_ACC_02, 0, 32}, {MSG_HCA_03, 0, 24},
-                                              {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
+                                              {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}, {MSG_MEB_TRAVEL_ASSIST_01, 0, 8}};
 
 RxCheck volkswagen_meb_rx_checks[] = {
   {.msg = {{MSG_LH_EPS_03, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
@@ -262,7 +263,7 @@ static int volkswagen_meb_fwd_hook(int bus_num, int addr) {
       if ((addr == MSG_HCA_03) || (addr == MSG_LDW_02)) {
         // openpilot takes over LKAS steering control and related HUD messages from the camera
         bus_fwd = -1;
-      } else if (volkswagen_longitudinal && ((addr == MSG_MEB_ACC_01) || (addr == MSG_MEB_ACC_02))) {
+      } else if (volkswagen_longitudinal && ((addr == MSG_MEB_ACC_01) || (addr == MSG_MEB_ACC_02) || (addr == MSG_MEB_TRAVEL_ASSIST_01))) {
         // openpilot takes over acceleration/braking control and related HUD messages from the stock ACC radar
         bus_fwd = -1;
       } else {
