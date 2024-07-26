@@ -52,7 +52,7 @@ RxCheck volkswagen_meb_rx_checks[] = {
 };
 
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
-int volkswagen_change_torque_prev = 0;
+int volkswagen_steer_power_prev = 0;
 
 static uint32_t volkswagen_meb_get_checksum(const CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
@@ -104,7 +104,7 @@ static safety_config volkswagen_meb_init(uint16_t param) {
 
   volkswagen_set_button_prev = false;
   volkswagen_resume_button_prev = false;
-  volkswagen_change_torque_prev = 0;
+  volkswagen_steer_power_prev = 0;
 
 #ifdef ALLOW_DEBUG
   volkswagen_longitudinal = GET_FLAG(param, FLAG_VOLKSWAGEN_LONG_CONTROL);
@@ -204,29 +204,29 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
     }
 
     bool steer_req = GET_BIT(to_send, 14U);
-    int change_torque = (GET_BYTE(to_send, 2) >> 0) & 0x7F;
+    int steer_power = (GET_BYTE(to_send, 2) >> 0) & 0x7F;
 
     if (steer_angle_cmd_checks(desired_angle, steer_req, VOLKSWAGEN_MEB_STEERING_LIMITS)) {
       tx = false;
 
-      // angle change torque is still allowed to decrease to zero monotonously
+      // steer power is still allowed to decrease to zero monotonously
       // while controls are not allowed anymore
-      if (steer_req && change_torque != 0) {        
-        if (change_torque < volkswagen_change_torque_prev) {
+      if (steer_req && steer_power != 0) {        
+        if (steer_power < volkswagen_steer_power_prev) {
           tx = true;
         }
       }
     }
 
-    if (change_torque > 127) { // maximum angle change torque
+    if (steer_power > 127) { // maximum steer power
       tx = false;
     }
 
-    if (!steer_req && change_torque != 0) {
-      tx = false; // angle change torque is not 0 when disabled
+    if (!steer_req && steer_power != 0) {
+      tx = false; // steer power is not 0 when disabled
     }
 
-    volkswagen_change_torque_prev = change_torque;
+    volkswagen_steer_power_prev = steer_power;
   }
 
   // Safety check for MSG_MEB_ACC_02 acceleration requests
