@@ -1,16 +1,20 @@
 #include "safety_volkswagen_common.h"
 
 // lateral limits
-const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
-  .angle_deg_to_can = 90,
+const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = { // using ford limits for now
+  .max_steer = 1000,
+  .angle_deg_to_can = 50000,        // 1 / (2e-5) rad to can
+  .max_angle_error = 100,           // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
   .angle_rate_up_lookup = {
-    {0., 5., 15.},
-    {10., 1.6, .3}
+    {5., 25., 25.},
+    {0.0002, 0.0001, 0.0001}
   },
   .angle_rate_down_lookup = {
-    {0., 5., 15.},
-    {10., 7.0, .8}
+    {5., 25., 25.},
+    {0.000225, 0.00015, 0.00015}
   },
+
+  .enforce_angle_error = true,
   .inactive_angle_is_zero = true,
 };
 
@@ -120,14 +124,14 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
 
     // Update in-motion state by sampling wheel speeds
     if (addr == MSG_MEB_ESP_01) {
-      // sum 4 wheel speeds
-      int speed = 0;
-      for (uint8_t i = 8U; i <= 14U; i += 2U) {
-        int wheel_speed = GET_BYTE(to_push, i) | GET_BYTE(to_push, i + 1U) << 8;
-        speed += wheel_speed;
-      }
-      // Check all wheel speeds for any movement
-      vehicle_moving = speed > 0;
+      uint32_t fr = GET_BYTE(to_push, 10U) | GET_BYTE(to_push, 11U) << 8;
+      uint32_t rr = GET_BYTE(to_push, 14U) | GET_BYTE(to_push, 15U) << 8;
+      uint32_t rl = GET_BYTE(to_push, 12U) | GET_BYTE(to_push, 13U) << 8;
+      uint32_t fl = GET_BYTE(to_push, 8U) | GET_BYTE(to_push, 9U) << 8;
+
+      vehicle_moving = (fr > 0U) || (rr > 0U) || (rl > 0U) || (fl > 0U);
+
+      UPDATE_VEHICLE_SPEED((fr + rr + rl + fl) * 0.0075 / 4 / 3.6);
     }
 
     // Update steering input angle samples
