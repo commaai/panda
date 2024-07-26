@@ -2,9 +2,9 @@
 
 // lateral limits
 const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = { // using ford limits for now
-  .max_steer = 1000,
-  .angle_deg_to_can = 100,        // 1 / (1e-2) rad to can
-  .max_angle_error = 0.2,           // 0.002 * VOLKSWAGEN_MEB_STEERING_LIMITS.angle_deg_to_can
+  .max_steer = 32765,               // maximum curvature of 0.5m^-1
+  .angle_deg_to_can = 65530,        // 1 / 0.00001526 rad to can
+  .max_angle_error = 131,           // 0.002 * VOLKSWAGEN_MEB_STEERING_LIMITS.angle_deg_to_can
   .angle_rate_up_lookup = {
     {5., 25.},
     {0.0002, 0.0001}
@@ -14,7 +14,7 @@ const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = { // using ford limits for
     {0.000225, 0.00015}
   },
 
-  .enforce_angle_error = true,
+  //.enforce_angle_error = true,
   .inactive_angle_is_zero = true,
 };
 
