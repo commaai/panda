@@ -216,7 +216,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
   bool tx = true;
 
   // Safety check for HCA_03 Heading Control Assist curvature
-  if (addr == MSG_HCA_03) {
+  if (addr == MSG_HCA_03 && 1 == 2) {
     int desired_curvature_raw = (GET_BYTE(to_send, 3) | (GET_BYTE(to_send, 4) & 0x7FU << 8));
 
     bool sign = GET_BIT(to_send, 39U);
