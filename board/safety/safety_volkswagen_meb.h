@@ -3,15 +3,15 @@
 // lateral limits
 const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = { // using ford limits for now
   .max_steer = 1000,
-  .angle_deg_to_can = 50000,        // 1 / (2e-5) rad to can
-  .max_angle_error = 100,           // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
+  .angle_deg_to_can = 100,        // 1 / (1e-2) rad to can
+  .max_angle_error = 0.2,           // 0.002 * VOLKSWAGEN_MEB_STEERING_LIMITS.angle_deg_to_can
   .angle_rate_up_lookup = {
-    {5., 25., 25.},
-    {0.0002, 0.0001, 0.0001}
+    {5., 25.},
+    {0.0002, 0.0001}
   },
   .angle_rate_down_lookup = {
-    {5., 25., 25.},
-    {0.000225, 0.00015, 0.00015}
+    {5., 25.},
+    {0.000225, 0.00015}
   },
 
   .enforce_angle_error = true,
@@ -138,15 +138,16 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       UPDATE_VEHICLE_SPEED((fr + rr + rl + fl) * 0.0075 / 4 / 3.6);
     }
 
+    // USING YAW RATE BELOW
     // Update steering input angle samples
-    if (addr == MSG_MEB_EPS_01) {
-      int angle_meas_new = (((GET_BYTE(to_push, 9U) & 0xF0U) >> 4) | (GET_BYTE(to_push, 10U) << 4) | ((GET_BYTE(to_push, 11U) & 0x1FU) << 12)) * 0.00906;
-      int sign = GET_BIT(to_push, 55U);
-      if (sign == 1) {
-        angle_meas_new *= -1;
-      }
-      update_sample(&angle_meas, angle_meas_new);
-    }
+    //if (addr == MSG_MEB_EPS_01) {
+    //  int angle_meas_new = (((GET_BYTE(to_push, 9U) & 0xF0U) >> 4) | (GET_BYTE(to_push, 10U) << 4) | ((GET_BYTE(to_push, 11U) & 0x1FU) << 12)) * 0.00906;
+    //  int sign = GET_BIT(to_push, 55U);
+    //  if (sign == 1) {
+    //    angle_meas_new *= -1;
+    //  }
+    //  update_sample(&angle_meas, angle_meas_new);
+    //}
 
     // Update vehicle yaw rate
     if (addr == MSG_MEB_ABS_01) {
@@ -216,17 +217,17 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
 
   // Safety check for HCA_03 Heading Control Assist curvature
   if (addr == MSG_HCA_03) {
-    int desired_curvature = (GET_BYTE(to_send, 3) | (GET_BYTE(to_send, 4) & 0x7FU << 8)) * 0.00001526;
+    int desired_curvature_raw = (GET_BYTE(to_send, 3) | (GET_BYTE(to_send, 4) & 0x7FU << 8));
 
     bool sign = GET_BIT(to_send, 39U);
     if (sign) {
-      desired_curvature *= -1;
+      desired_curvature_raw *= -1;
     }
 
     bool steer_req = GET_BIT(to_send, 14U);
     int steer_power = (GET_BYTE(to_send, 2) >> 0) & 0x7F;
 
-    if (steer_angle_cmd_checks(desired_curvature, steer_req, VOLKSWAGEN_MEB_STEERING_LIMITS)) {
+    if (steer_angle_cmd_checks(desired_curvature_raw, steer_req, VOLKSWAGEN_MEB_STEERING_LIMITS)) {
       tx = false;
 
       // steer power is still allowed to decrease to zero monotonously
