@@ -29,9 +29,10 @@ def random_can_messages(n, bus=None):
 
 
 class TestPandaComms:
-  def setup_method(self):
+  def setup_method(self, method):
     lpp.comms_can_reset()
 
+  @pytest.mark.order(5)
   def test_tx_queues(self):
     for bus in range(len(TX_QUEUES)):
       message = (0x100, 0, b"test", bus)
@@ -44,6 +45,7 @@ class TestPandaComms:
 
       assert unpackage_can_msg(can_pkt_rx) == message
 
+  @pytest.mark.order(3)
   def test_comms_reset_rx(self):
     # store some test messages in the queue
     test_msg = (0x100, 0, b"test", 0)
@@ -74,6 +76,7 @@ class TestPandaComms:
     for m in msgs:
       assert m == test_msg, "message buffer should contain valid test messages"
 
+  @pytest.mark.order(4)
   def test_comms_reset_tx(self):
     # store some test messages in the queue
     test_msg = (0x100, 0, b"test", 0)
@@ -99,8 +102,8 @@ class TestPandaComms:
     for m in queue_msgs:
       assert m == test_msg, "message buffer should contain valid test messages"
 
-
   @pytest.mark.parametrize("bus", range(3))
+  @pytest.mark.order(2)
   def test_can_send_usb(self, bus):
     lpp.set_safety_hooks(Panda.SAFETY_ALLOUTPUT, 0)
     for _ in range(100):
@@ -122,6 +125,7 @@ class TestPandaComms:
       assert len(queue_msgs) == len(msgs)
       assert queue_msgs == msgs
 
+  @pytest.mark.order(1)
   def test_can_receive_usb(self):
     msgs = random_can_messages(50000)
     packets = [libpanda_py.make_CANPacket(m[0], m[3], m[2]) for m in msgs]
