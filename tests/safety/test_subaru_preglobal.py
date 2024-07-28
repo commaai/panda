@@ -25,7 +25,7 @@ class TestSubaruPreglobalSafety(common.PandaCarSafetyTest, common.DriverTorqueSt
   DRIVER_TORQUE_ALLOWANCE = 75
   DRIVER_TORQUE_FACTOR = 10
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda(self.DBC)
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_SUBARU_PREGLOBAL, self.FLAGS)
