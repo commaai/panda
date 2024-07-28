@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import unittest
 import numpy as np
+import pytest
 
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
@@ -186,7 +186,7 @@ class HondaBase(common.PandaCarSafetyTest):
     if cls.__name__.endswith("Base"):
       cls.packer = None
       cls.safety = None
-      raise unittest.SkipTest
+      pytest.skip()
 
   def _powertrain_data_msg(self, cruise_on=None, brake_pressed=None, gas_pressed=None):
     # preserve the state
@@ -571,4 +571,4 @@ class TestHondaBoschRadarlessLongSafety(common.LongitudinalAccelSafetyTest, Hond
 
 
 if __name__ == "__main__":
-  unittest.main()
+  pytest.main()

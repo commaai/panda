@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import unittest
+import pytest
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -37,7 +37,7 @@ class TestVolkswagenPqSafety(common.PandaCarSafetyTest, common.DriverTorqueSteer
     if cls.__name__ == "TestVolkswagenPqSafety":
       cls.packer = None
       cls.safety = None
-      raise unittest.SkipTest
+      pytest.skip()
 
   def _set_prev_torque(self, t):
     self.safety.set_desired_torque_last(t)
@@ -195,4 +195,4 @@ class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety, common.LongitudinalAcce
       assert self._tx(self._torque_cmd_msg(self.MAX_RATE_UP, steer_req=1, hca_status=enabled_status)), f"torque cmd rejected with {enabled_status=}"
 
 if __name__ == "__main__":
-  unittest.main()
+  pytest.main()

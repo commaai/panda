@@ -1,6 +1,5 @@
-import unittest
-
 import panda.tests.safety.common as common
+import pytest
 from panda.tests.libpanda import libpanda_py
 from panda.tests.safety.common import make_msg
 
@@ -83,7 +82,7 @@ class HyundaiLongitudinalBase(common.LongitudinalAccelSafetyTest):
   def setup_class(cls):
     if cls.__name__ == "HyundaiLongitudinalBase":
       cls.safety = None
-      raise unittest.SkipTest
+      pytest.skip()
 
   # override these tests from PandaCarSafetyTest, hyundai longitudinal uses button enable
   def test_disable_control_allowed_from_cruise(self):

@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 import numpy as np
 import random
-import unittest
-
 
 
 import panda.tests.safety.common as common
+import pytest
 
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
@@ -23,7 +22,6 @@ MSG_Lane_Assist_Data1 = 0x3CA      # TX by OP, Lane Keep Assist
 MSG_LateralMotionControl = 0x3D3   # TX by OP, Lateral Control message
 MSG_LateralMotionControl2 = 0x3D6  # TX by OP, alternate Lateral Control message
 MSG_IPMA_Data = 0x3D8              # TX by OP, IPMA and LKAS user interface
-
 
 
 def checksum(msg):
@@ -102,7 +100,7 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
   @classmethod
   def setup_class(cls):
     if cls.__name__ == "TestFordSafetyBase":
-      raise unittest.SkipTest
+      pytest.skip()
 
   def _set_prev_desired_angle(self, t):
     t = round(t * self.DEG_TO_CAN)
@@ -406,7 +404,7 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
   @classmethod
   def setup_class(cls):
     if cls.__name__ == "TestFordLongitudinalSafetyBase":
-      raise unittest.SkipTest
+      pytest.skip()
 
   # ACC command
   def _acc_command_msg(self, gas: float, brake: float, cmbb_deny: bool = False):
@@ -476,4 +474,4 @@ class TestFordCANFDLongitudinalSafety(TestFordLongitudinalSafetyBase):
 
 
 if __name__ == "__main__":
-  unittest.main()
+  pytest.main()

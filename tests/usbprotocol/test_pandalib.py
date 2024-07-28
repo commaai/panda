@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import random
-import unittest
 
+import pytest
 from panda import pack_can_buffer, unpack_can_buffer, DLC_TO_LEN
 
 class TestPandaPackUnpack:
@@ -23,4 +23,4 @@ class TestPandaPackUnpack:
     assert unpacked == to_pack
 
 if __name__ == "__main__":
-  unittest.main()
+  pytest.main()

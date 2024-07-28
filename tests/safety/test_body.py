@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import unittest
+import pytest
 
 import panda.tests.safety.common as common
 
@@ -67,4 +67,4 @@ class TestBody(common.PandaSafetyTest):
 
 
 if __name__ == "__main__":
-  unittest.main()
+  pytest.main()

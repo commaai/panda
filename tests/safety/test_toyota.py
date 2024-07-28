@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 import random
-import unittest
+import pytest
 import itertools
 
 from panda import Panda
@@ -33,7 +33,7 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
     if cls.__name__.endswith("Base"):
       cls.packer = None
       cls.safety = None
-      raise unittest.SkipTest
+      pytest.skip()
 
   def _torque_meas_msg(self, torque: int, driver_torque: int | None = None):
     values = {"STEER_TORQUE_EPS": (torque / self.EPS_SCALE) * 100.}
@@ -325,4 +325,4 @@ class TestToyotaStockLongitudinalAngle(TestToyotaStockLongitudinalBase, TestToyo
 
 
 if __name__ == "__main__":
-  unittest.main()
+  pytest.main()

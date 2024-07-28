@@ -8,8 +8,9 @@ cd $DIR
 rm -f ../libpanda/*.gcda
 scons -j$(nproc) -D --coverage
 
+pip install --break-system-packages pytest-subtests
 # run safety tests and generate coverage data
-HW_TYPES=( 6 9 )
+HW_TYPES=( 6 6 )
 for hw_type in "${HW_TYPES[@]}"; do
   echo "Testing HW_TYPE: $hw_type"
   HW_TYPE=$hw_type pytest

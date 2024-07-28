@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-import unittest
 
 import panda.tests.safety.common as common
+import pytest
 
 from panda import DLC_TO_LEN, Panda
 from panda.tests.libpanda import libpanda_py
@@ -45,4 +45,4 @@ class TestElm327(TestDefaultRxHookBase):
 
 
 if __name__ == "__main__":
-  unittest.main()
+  pytest.main()

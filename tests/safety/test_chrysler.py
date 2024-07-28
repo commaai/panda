@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import unittest
+import pytest
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -122,4 +122,4 @@ class TestChryslerRamHDSafety(TestChryslerSafety):
 
 
 if __name__ == "__main__":
-  unittest.main()
+  pytest.main()
