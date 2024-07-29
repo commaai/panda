@@ -2,16 +2,16 @@
 
 // lateral limits
 const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = { // using ford limits for now
-  .max_steer = 32765,               // maximum curvature of 0.5m^-1
-  .angle_deg_to_can = 65530,        // 1 / 0.00001526 rad to can
-  .max_angle_error = 131,           // 0.002 * VOLKSWAGEN_MEB_STEERING_LIMITS.angle_deg_to_can
+  .max_steer = 32000,            // maximum curvature of ~0.195 1/m
+  .angle_deg_to_can = 163935,    // 1 / 6.1e-06 rad to can
+  .max_angle_error = 3279,       // 0.02 * VOLKSWAGEN_MEB_STEERING_LIMITS.angle_deg_to_can
   .angle_rate_up_lookup = {
-    {5., 25.},
-    {0.0002, 0.0001}
+    {5., 12., 25.},
+    {0.004, 0.002, 0.001}
   },
   .angle_rate_down_lookup = {
-    {5., 25.},
-    {0.000225, 0.00015}
+    {5., 12., 25.},
+    {0.005, 0.0025, 0.0015}
   },
 
   //.enforce_angle_error = true,
@@ -216,8 +216,8 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
   bool tx = true;
 
   // Safety check for HCA_03 Heading Control Assist curvature
-  if (addr == MSG_HCA_03 && 1 == 2) {
-    int desired_curvature_raw = (GET_BYTE(to_send, 3) | (GET_BYTE(to_send, 4) & 0x7FU << 8));
+  if (addr == MSG_HCA_03) {
+    int desired_curvature_raw = (GET_BYTE(to_send, 3U) | (GET_BYTE(to_send, 4U) & 0x7FU << 8));
 
     bool sign = GET_BIT(to_send, 39U);
     if (sign) {
@@ -225,7 +225,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
     }
 
     bool steer_req = GET_BIT(to_send, 14U);
-    int steer_power = (GET_BYTE(to_send, 2) >> 0) & 0x7F;
+    int steer_power = (GET_BYTE(to_send, 2U) >> 0) & 0x7FU;
 
     if (steer_angle_cmd_checks(desired_curvature_raw, steer_req, VOLKSWAGEN_MEB_STEERING_LIMITS)) {
       tx = false;
