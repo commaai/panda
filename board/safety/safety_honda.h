@@ -23,8 +23,8 @@ const LongitudinalLimits HONDA_NIDEC_LONG_LIMITS = {
 #define HONDA_COMMON_NO_SCM_FEEDBACK_RX_CHECKS(pt_bus)                                                                                           \
   {.msg = {{0x1A6, (pt_bus), 8, .check_checksum = true, .max_counter = 3U, .frequency = 25U},                  /* SCM_BUTTONS */      \
            {0x296, (pt_bus), 4, .check_checksum = true, .max_counter = 3U, .frequency = 25U}, { 0 }}},                                \
-  {.msg = {{0x158, (pt_bus), 8, .check_checksum = true, .max_counter = 3U, .frequency = 100U}, { 0 }, { 0 }}},  /* ENGINE_DATA */      \
   {.msg = {{0x17C, (pt_bus), 8, .check_checksum = true, .max_counter = 3U, .frequency = 100U}, { 0 }, { 0 }}},  /* POWERTRAIN_DATA */  \
+  {.msg = {{0x309, (pt_bus), 8, .check_checksum = true, .max_counter = 3U, .frequency = 10U}, { 0 }, { 0 }}},  /* CAR_SPEED */  \
 
 #define HONDA_COMMON_RX_CHECKS(pt_bus)                                                                                                         \
   HONDA_COMMON_NO_SCM_FEEDBACK_RX_CHECKS(pt_bus)                                                                                               \
@@ -122,7 +122,8 @@ static void honda_rx_hook(const CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
 
   // sample speed
-  if (addr == 0x158) {
+  // 0x158 used for all suported Hondas except Integra (use 0x309 car_speed message)
+  if ((addr == 0x158) || (addr == 0x309)) {
     // first 2 bytes
     vehicle_moving = GET_BYTE(to_push, 0) | GET_BYTE(to_push, 1);
   }
@@ -412,7 +413,11 @@ static int honda_bosch_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
   if (bus_num == 0) {
-    bus_fwd = 2;
+    bool is_button_msg = (addr == 0x296);
+    bool block_msg = is_button_msg && controls_allowed && honda_bosch_radarless && !honda_bosch_long;
+    if (!block_msg) {
+      bus_fwd = 2;
+    }
   }
   if (bus_num == 2)  {
     bool is_lkas_msg = (addr == 0xE4) || (addr == 0xE5) || (addr == 0x33D) || (addr == 0x33DA) || (addr == 0x33DB);
