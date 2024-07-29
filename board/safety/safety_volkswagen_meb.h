@@ -237,7 +237,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
 
     bool sign = GET_BIT(to_send, 39U);
     if (sign) {
-      desired_curvature_raw *= -1;
+      desired_angle_raw *= -1;
     }
 
     bool steer_req = GET_BIT(to_send, 14U);
