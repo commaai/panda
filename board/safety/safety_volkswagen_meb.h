@@ -21,7 +21,7 @@
 const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
   // SG_ Steering_Angle : 24|15@1+ (0.0174,0) [0|360] "Unit_DegreOfArc" XXX
   .max_steer = 2068966, // 360 deg
-  .angle_deg_to_can = 5747, // 1 / 0.0174 * 100 deg to can
+  .angle_deg_to_can = 5747, // (1 / 0.0174) * 100 deg to can
   .angle_rate_up_lookup = {
     {0., 5., 15.},
     {1000., 160., 30.}
