@@ -1,21 +1,18 @@
 #include "safety_volkswagen_common.h"
 
 // lateral limits
-const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = { // using ford limits for now
-  .max_steer = 32000,            // maximum curvature of ~0.195 1/m
-  .angle_deg_to_can = 163934,    // 1 / 6.1e-06 rad to can
-  //.max_angle_error = 1640,       // 0.01 * VOLKSWAGEN_MEB_STEERING_LIMITS.angle_deg_to_can
+const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
+  // we do not enforce curvature error at the moment
+  .max_steer = 31200,         // maximum curvature of 195 1/mm
+  .angle_deg_to_can = 160,    // 1 / 0.00625 rad to can
   .angle_rate_up_lookup = {
     {5., 12., 25.},
-    {0.004, 0.002, 0.001}
+    {4, 2, 1}
   },
   .angle_rate_down_lookup = {
     {5., 12., 25.},
-    {0.005, 0.0025, 0.0015}
+    {5, 2.5, 1.5}
   },
-
-  //.angle_error_min_speed = 10,    // m/s
-  //.enforce_angle_error = true,
   .inactive_angle_is_zero = true,
 };
 
