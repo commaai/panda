@@ -14,7 +14,7 @@ const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = { // using ford limits for
     {0.005, 0.0025, 0.0015}
   },
 
-  //.enforce_angle_error = true,
+  .enforce_angle_error = true,
   .inactive_angle_is_zero = true,
 };
 
