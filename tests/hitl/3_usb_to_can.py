@@ -35,7 +35,7 @@ def test_reliability(p):
   p.set_can_speed_kbps(0, 1000)
 
   addrs = list(range(100, 100 + MSG_COUNT))
-  ts = [(j, 0, b"\xaa" * 8, 0) for j in addrs]
+  ts = [(j, b"\xaa" * 8, 0) for j in addrs]
 
   for _ in range(100):
     st = time.monotonic()

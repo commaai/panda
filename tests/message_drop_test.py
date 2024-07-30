@@ -16,7 +16,7 @@ if JUNGLE:
 # Generate unique messages
 NUM_MESSAGES_PER_BUS = 10000
 messages = [bytes(struct.pack("Q", i)) for i in range(NUM_MESSAGES_PER_BUS)]
-tx_messages = list(itertools.chain.from_iterable([[0xaa, None, msg, 0], [0xaa, None, msg, 1], [0xaa, None, msg, 2]] for msg in messages))
+tx_messages = list(itertools.chain.from_iterable([[0xaa, msg, 0], [0xaa, msg, 1], [0xaa, msg, 2]] for msg in messages))
 
 def flood_tx(panda):
   print('Sending!')

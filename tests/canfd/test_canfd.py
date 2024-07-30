@@ -86,7 +86,7 @@ def canfd_test(p_send, p_recv):
         data = bytearray(random.getrandbits(8) for _ in range(DLC_TO_LEN[dlc]))
         if len(data) >= 2:
           data[0] = calculate_checksum(data[1:] + bytes(str(address), encoding="utf-8"))
-        to_send.append([address, 0, data, bus])
+        to_send.append([address, data, bus])
         sent_msgs[bus].add((address, bytes(data)))
 
     p_send.can_send_many(to_send, timeout=0)

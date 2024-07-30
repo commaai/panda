@@ -46,9 +46,9 @@ class TestPandaComms(unittest.TestCase):
 
   def test_comms_reset_rx(self):
     # store some test messages in the queue
-    test_msg = (0x100, 0, b"test", 0)
+    test_msg = (0x100, b"test", 0)
     for _ in range(100):
-      can_pkt_tx = libpanda_py.make_CANPacket(test_msg[0], test_msg[3], test_msg[2])
+      can_pkt_tx = libpanda_py.make_CANPacket(test_msg[0], test_msg[2], test_msg[1])
       lpp.can_push(lpp.rx_q, can_pkt_tx)
 
     # read a small chunk such that we have some overflow
@@ -76,7 +76,7 @@ class TestPandaComms(unittest.TestCase):
 
   def test_comms_reset_tx(self):
     # store some test messages in the queue
-    test_msg = (0x100, 0, b"test", 0)
+    test_msg = (0x100, b"test", 0)
     packed = pack_can_buffer([test_msg for _ in range(100)])
 
     # write a small chunk such that we have some overflow

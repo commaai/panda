@@ -8,7 +8,7 @@ def get_random_can_messages(n):
     bus = random.randrange(3)
     addr = random.randrange(1 << 29)
     dat = bytes([random.getrandbits(8) for _ in range(random.randrange(1, 9))])
-    m.append([addr, None, dat, bus])
+    m.append([addr, dat, bus])
   return m
 
 
@@ -19,7 +19,7 @@ def time_many_sends(p, bus, p_recv=None, msg_count=100, two_pandas=False, msg_le
     raise ValueError("Cannot have two pandas that are the same panda")
 
   msg_id = random.randint(0x100, 0x200)
-  to_send = [(msg_id, 0, b"\xaa" * msg_len, bus)] * msg_count
+  to_send = [(msg_id, b"\xaa" * msg_len, bus)] * msg_count
 
   start_time = time.monotonic()
   p.can_send_many(to_send)

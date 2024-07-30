@@ -96,7 +96,7 @@ def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None, rate=None):
       panda.can_send(addr, sends[-1], 0)
     else:
       if rate is None:
-        panda.can_send_many([(addr, None, s, bus) for s in sends])
+        panda.can_send_many([(addr, s, bus) for s in sends])
       else:
         for dat in sends:
           panda.can_send(addr, dat, bus)
