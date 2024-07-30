@@ -17,6 +17,13 @@ APB4 per: 60MHz
 PCLK1: 60MHz (for USART2,3,4,5,7,8)
 */
 
+// TODO: find a better way to distinguish between H723 and H725
+// The package will do for now, since we have only used TFBGA100 for H723
+bool is_h723(void) {
+  uint8_t package = SYSCFG->PKGR & 0xFU;
+  return package == 0b0001U || package == 0b0011U; // TFBGA100 Legacy || TFBGA100
+}
+
 void clock_init(void) {
   /*
     WARNING: PWR->CR3's lower byte can only be written once
@@ -29,11 +36,12 @@ void clock_init(void) {
   */
 
   // Set power mode to direct SMPS power supply(depends on the board layout)
-#ifndef STM32H723
-  register_set(&(PWR->CR3), PWR_CR3_SMPSEN, 0xFU); // powered only by SMPS
-#else
-  register_set(&(PWR->CR3), PWR_CR3_LDOEN, 0xFU);
-#endif
+  if (is_h723()) {
+    register_set(&(PWR->CR3), PWR_CR3_SMPSEN, 0xFU); // powered only by SMPS
+  } else {
+    register_set(&(PWR->CR3), PWR_CR3_LDOEN, 0xFU); // no SMPS, so powered by LDO
+  }
+
   // Set VOS level (VOS3 to 170Mhz, VOS2 to 300Mhz, VOS1 to 400Mhz, VOS0 to 550Mhz)
   register_set(&(PWR->D3CR), PWR_D3CR_VOS_1 | PWR_D3CR_VOS_0, 0xC000U); //VOS1, needed for 80Mhz CAN FD
   while ((PWR->CSR1 & PWR_CSR1_ACTVOSRDY) == 0U);
