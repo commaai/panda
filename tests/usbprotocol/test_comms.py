@@ -14,7 +14,7 @@ TX_QUEUES = (lpp.tx1_q, lpp.tx2_q, lpp.tx3_q)
 def unpackage_can_msg(pkt):
   dat_len = DLC_TO_LEN[pkt[0].data_len_code]
   dat = bytes(pkt[0].data[0:dat_len])
-  return pkt[0].addr, 0, dat, pkt[0].bus
+  return pkt[0].addr, dat, pkt[0].bus
 
 
 def random_can_messages(n, bus=None):
@@ -24,7 +24,7 @@ def random_can_messages(n, bus=None):
       bus = random.randint(0, 3)
     address = random.randint(1, (1 << 29) - 1)
     data = bytes([random.getrandbits(8) for _ in range(DLC_TO_LEN[random.randrange(0, len(DLC_TO_LEN))])])
-    msgs.append((address, 0, data, bus))
+    msgs.append((address, data, bus))
   return msgs
 
 
@@ -34,9 +34,9 @@ class TestPandaComms(unittest.TestCase):
 
   def test_tx_queues(self):
     for bus in range(len(TX_QUEUES)):
-      message = (0x100, 0, b"test", bus)
+      message = (0x100, b"test", bus)
 
-      can_pkt_tx = libpanda_py.make_CANPacket(message[0], message[3], message[2])
+      can_pkt_tx = libpanda_py.make_CANPacket(message[0], message[2], message[1])
       can_pkt_rx = libpanda_py.ffi.new('CANPacket_t *')
 
       assert lpp.can_push(TX_QUEUES[bus], can_pkt_tx), "CAN push failed"
@@ -126,7 +126,7 @@ class TestPandaComms(unittest.TestCase):
 
   def test_can_receive_usb(self):
     msgs = random_can_messages(50000)
-    packets = [libpanda_py.make_CANPacket(m[0], m[3], m[2]) for m in msgs]
+    packets = [libpanda_py.make_CANPacket(m[0], m[2], m[1]) for m in msgs]
 
     rx_msgs = []
     overflow_buf = b""
