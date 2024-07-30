@@ -258,7 +258,6 @@ bool rx_msg_safety_check(const CANPacket_t *to_push,
 }
 
 void generic_rx_checks(bool stock_ecu_detected) {
-  UNUSED(stock_ecu_detected);
   // exit controls on rising edge of gas press
   if (gas_pressed && !gas_pressed_prev && !(alternative_experience & ALT_EXP_DISABLE_DISENGAGE_ON_GAS)) {
     controls_allowed = false;
@@ -267,13 +266,7 @@ void generic_rx_checks(bool stock_ecu_detected) {
 
   // exit controls on rising edge of brake press
   if (brake_pressed && (!brake_pressed_prev || vehicle_moving)) {
-    if (alternative_experience & ALT_EXP_ALLOW_LATERAL_ON_BRAKE) {
-      lateral_only = true;
-    } else {
-      controls_allowed = false;
-    }
-  } else {
-    lateral_only = false;
+    controls_allowed = false;
   }
   brake_pressed_prev = brake_pressed;
 
