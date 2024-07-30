@@ -21,7 +21,7 @@ PCLK1: 60MHz (for USART2,3,4,5,7,8)
 // The package will do for now, since we have only used TFBGA100 for H723
 bool is_h723(void) {
   uint8_t package = SYSCFG->PKGR & 0xFU;
-  return package == 0b0001U || package == 0b0011U; // TFBGA100 Legacy || TFBGA100
+  return (package == 0b0001U) || (package == 0b0011U); // TFBGA100 Legacy || TFBGA100
 }
 
 void clock_init(void) {
