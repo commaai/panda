@@ -20,6 +20,7 @@ PCLK1: 60MHz (for USART2,3,4,5,7,8)
 // TODO: find a better way to distinguish between H723 and H725
 // The package will do for now, since we have only used TFBGA100 for H723
 bool is_h723(void) {
+  RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN; // make sure SYSCFG clock is enabled. does seem to read fine without too though
   uint8_t package = SYSCFG->PKGR & 0xFU;
   return (package == 0b0001U) || (package == 0b0011U); // TFBGA100 Legacy || TFBGA100
 }
