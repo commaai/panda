@@ -118,10 +118,10 @@ def test_gen2_loopback(p, panda_jungle):
       assert len(content) == 1
 
       # Check content
-      assert content[0][0] == addr and content[0][2] == string
+      assert content[0][0] == addr and content[0][1] == string
 
       # Check bus
-      assert content[0][3] == bus
+      assert content[0][2] == bus
 
       print("Bus:", bus, "address:", addr, "OBD:", obd, "OK")
 
