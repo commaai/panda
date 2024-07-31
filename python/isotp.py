@@ -18,12 +18,12 @@ def recv(panda, cnt, addr, nbus):
   while len(ret) < cnt:
     kmsgs += panda.can_recv()
     nmsgs = []
-    for ids, ts, dat, bus in kmsgs:
+    for ids, dat, bus in kmsgs:
       if ids == addr and bus == nbus and len(ret) < cnt:
         ret.append(dat)
       else:
         # leave around
-        nmsgs.append((ids, ts, dat, bus))
+        nmsgs.append((ids, dat, bus))
     kmsgs = nmsgs[-256:]
   return ret
 

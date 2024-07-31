@@ -35,11 +35,11 @@ def time_many_sends(p, bus, p_recv=None, msg_count=100, two_pandas=False, msg_le
     while len(r_echo) < r_echo_len_exected and (time.monotonic() - start_time) < 10:
       r_echo.extend(p.can_recv())
 
-  sent_echo = [x for x in r if x[3] == 0x80 | bus and x[0] == msg_id]
-  sent_echo.extend([x for x in r_echo if x[3] == 0x80 | bus and x[0] == msg_id])
-  resp = [x for x in r if x[3] == bus and x[0] == msg_id]
+  sent_echo = [x for x in r if x[2] == 0x80 | bus and x[0] == msg_id]
+  sent_echo.extend([x for x in r_echo if x[2] == 0x80 | bus and x[0] == msg_id])
+  resp = [x for x in r if x[2] == bus and x[0] == msg_id]
 
-  leftovers = [x for x in r if (x[3] != 0x80 | bus and x[3] != bus) or x[0] != msg_id]
+  leftovers = [x for x in r if (x[2] != 0x80 | bus and x[2] != bus) or x[0] != msg_id]
   assert len(leftovers) == 0
 
   assert len(resp) == msg_count

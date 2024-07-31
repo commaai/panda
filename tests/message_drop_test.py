@@ -65,6 +65,6 @@ if __name__ == "__main__":
 
   # Check if we received everything
   for bus in range(3):
-    received_msgs = {bytes(m[2]) for m in filter(lambda m, b=bus: m[3] == b, rx)} # type: ignore
+    received_msgs = {bytes(m[1]) for m in filter(lambda m, b=bus: m[2] == b, rx)} # type: ignore
     dropped_msgs = set(messages).difference(received_msgs)
     print(f"Bus {bus} dropped msgs: {len(list(dropped_msgs))} / {len(messages)}")
