@@ -182,7 +182,7 @@ def test_message_integrity(p):
     for _ in range(random.randrange(10)):
       to_send = get_random_can_messages(random.randrange(100))
       for m in to_send:
-        sent_msgs[m[3]].add((m[0], m[1]))
+        sent_msgs[m[2]].add((m[0], m[1]))
       p.can_send_many(to_send, timeout=0)
 
     start_time = time.monotonic()
