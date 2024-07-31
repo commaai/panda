@@ -23,6 +23,11 @@ bool can_set_speed(uint8_t can_number) {
   return ret;
 }
 
+void can_clear_send(CAN_TypeDef *CANx, uint8_t can_number) {
+  can_health[can_number].can_core_reset_cnt += 1U;
+  llcan_clear_send(CANx);
+}
+
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   CAN_TypeDef *CANx = CANIF_FROM_CAN_NUM(can_number);
   uint32_t esr_reg = CANx->ESR;
@@ -52,8 +57,7 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
       can_health[can_number].total_rx_lost_cnt += 1U;
       CANx->RF0R &= ~(CAN_RF0R_FOVR0);
     }
-    can_health[can_number].can_core_reset_cnt += 1U;
-    llcan_clear_send(CANx);
+    can_clear_send(CANx, can_number);
   }
 }
 
