@@ -18,16 +18,22 @@ PCLK1: 60MHz (for USART2,3,4,5,7,8)
 */
 
 void clock_init(void) {
-  // Set power mode to direct SMPS power supply (depends on the board layout)
-#ifndef PANDA_JUNGLE
-  if ((PWR->CR3 & PWR_CR3_SMPSEXTRDY) != 0U) {
+  /*
+    WARNING: PWR->CR3's lower byte can only be written once
+    * subsequent writes will silently fail
+    * only cleared with a full power-on-reset, not soft reset or reset pin
+    * some H7 have a bootrom with a DFU routine that writes (and locks) CR3
+    * if the CR3 config doesn't match the HW, the core will deadlock and require immediately going into DFU from a cold boot
+
+    In a normal bootup, the bootstub will be the first to write this. The app section calls clock_init again, but the CR3 write will silently fail. This is fine for most cases, but caution should be taken that the bootstub and app always write the same config.
+  */
+
+  // Set power mode to direct SMPS power supply(depends on the board layout)
+#ifndef STM32H723
+  register_set(&(PWR->CR3), PWR_CR3_SMPSEN, 0xFU); // powered only by SMPS
 #else
-  if (true) {
+  register_set(&(PWR->CR3), PWR_CR3_LDOEN, 0xFU);
 #endif
-    register_set(&(PWR->CR3), PWR_CR3_SMPSEN, 0xFU); // powered only by SMPS
-  } else {
-    register_set(&(PWR->CR3), PWR_CR3_LDOEN, 0xFU);
-  }
   // Set VOS level (VOS3 to 170Mhz, VOS2 to 300Mhz, VOS1 to 400Mhz, VOS0 to 550Mhz)
   register_set(&(PWR->D3CR), PWR_D3CR_VOS_1 | PWR_D3CR_VOS_0, 0xC000U); //VOS1, needed for 80Mhz CAN FD
   while ((PWR->CSR1 & PWR_CSR1_ACTVOSRDY) == 0U);

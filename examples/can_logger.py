@@ -22,7 +22,7 @@ def can_logger():
     while True:
       can_recv = p.can_recv()
 
-      for address, _, dat, src in can_recv:
+      for address, dat, src in can_recv:
         csvwriter.writerow(
           [str(src), str(hex(address)), f"0x{dat.hex()}", len(dat), str(time.time() - start_time)])
 

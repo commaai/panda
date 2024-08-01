@@ -48,7 +48,7 @@ RUN /tmp/install.sh && rm -rf $CPPCHECK_DIR/.git/
 ENV SKIP_CPPCHECK_INSTALL=1
 
 ENV CEREAL_REF="861144c136c91f70dcbc652c2ffe99f57440ad47"
-ENV OPENDBC_REF="e0d4be4a6215d44809718dc84efe1b9f0299ad63"
+ENV OPENDBC_REF="8e9d3688412405154a8189c421cfdc9d5feea715"
 
 RUN git config --global --add safe.directory /tmp/openpilot/panda
 RUN mkdir -p /tmp/openpilot/ && \
