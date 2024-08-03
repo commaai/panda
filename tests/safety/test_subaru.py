@@ -68,7 +68,7 @@ class TestSubaruSafetyBase(common.PandaCarSafetyTest):
   ALT_MAIN_BUS = SUBARU_MAIN_BUS
   ALT_CAM_BUS = SUBARU_CAM_BUS
 
-  DEG_TO_CAN = 100
+  DEG_TO_CAN = 100.
 
   INACTIVE_GAS = 1818
 
@@ -165,6 +165,26 @@ class TestSubaruTorqueSafetyBase(TestSubaruSafetyBase, common.DriverTorqueSteeri
   def _torque_cmd_msg(self, torque, steer_req=1):
     values = {"LKAS_Output": torque, "LKAS_Request": steer_req}
     return self.packer.make_can_msg_panda("ES_LKAS", SUBARU_MAIN_BUS, values)
+
+
+class TestSubaruAngleSafetyBase(TestSubaruSafetyBase, common.AngleSteeringSafetyTest):
+  TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS, SubaruMsg.ES_LKAS_ANGLE)
+  RELAY_MALFUNCTION_ADDRS = {0: (SubaruMsg.ES_LKAS_ANGLE,)}
+  FWD_BLACKLISTED_ADDRS = fwd_blacklisted_addr(SubaruMsg.ES_LKAS_ANGLE)
+
+  FLAGS = Panda.FLAG_SUBARU_LKAS_ANGLE
+
+  ANGLE_RATE_BP = [0, 15]
+  ANGLE_RATE_UP = [5, 0.15]
+  ANGLE_RATE_DOWN = [5, 0.4]
+
+  def _angle_cmd_msg(self, angle, enabled=1):
+    values = {"LKAS_Output": angle, "LKAS_Request": enabled}
+    return self.packer.make_can_msg_panda("ES_LKAS_ANGLE", 0, values)
+
+  def _angle_meas_msg(self, angle):
+    values = {"Steering_Angle": angle}
+    return self.packer.make_can_msg_panda("Steering_Torque", 0, values)
 
 
 class TestSubaruGen1TorqueStockLongitudinalSafety(TestSubaruStockLongitudinalSafetyBase, TestSubaruTorqueSafetyBase):
