@@ -267,3 +267,6 @@ int alternative_experience = 0;
 uint32_t safety_mode_cnt = 0U;
 // allow 1s of transition timeout after relay changes state before assessing malfunctioning
 const uint32_t RELAY_TRNS_TIMEOUT = 1U;
+// PFEIFER - AOL {{
+#define ALT_EXP_ENABLE_ALWAYS_ON_LATERAL 32
+// }} PFEIFER - AOL
