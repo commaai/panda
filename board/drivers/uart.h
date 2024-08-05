@@ -37,7 +37,6 @@ typedef struct uart_ring {
 // ***************************** Function prototypes *****************************
 void debug_ring_callback(uart_ring *ring);
 void uart_tx_ring(uart_ring *q);
-void uart_send_break(uart_ring *u);
 
 // ******************************** UART buffers ********************************
 
@@ -149,20 +148,6 @@ void print(const char *a) {
     if (*in == '\n') putch('\r');
     putch(*in);
   }
-}
-
-void putui(uint32_t i) {
-  uint32_t i_copy = i;
-  char str[11];
-  uint8_t idx = 10;
-  str[idx] = '\0';
-  idx--;
-  do {
-    str[idx] = (i_copy % 10U) + 0x30U;
-    idx--;
-    i_copy /= 10;
-  } while (i_copy != 0U);
-  print(&str[idx + 1U]);
 }
 
 void puthx(uint32_t i, uint8_t len) {

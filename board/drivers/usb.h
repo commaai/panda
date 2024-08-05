@@ -914,11 +914,3 @@ void can_tx_comms_resume_usb(void) {
   }
   EXIT_CRITICAL();
 }
-
-void usb_soft_disconnect(bool enable) {
-  if (enable) {
-    USBx_DEVICE->DCTL |= USB_OTG_DCTL_SDIS;
-  } else {
-    USBx_DEVICE->DCTL &= ~USB_OTG_DCTL_SDIS;
-  }
-}

@@ -127,8 +127,8 @@ RxCheck hyundai_canfd_hda2_long_rx_checks[] = {
 
 
 
-const int HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 32;
-const int HYUNDAI_PARAM_CANFD_HDA2_ALT_STEERING = 128;
+const uint16_t HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 32;
+const uint16_t HYUNDAI_PARAM_CANFD_HDA2_ALT_STEERING = 128;
 bool hyundai_canfd_alt_buttons = false;
 bool hyundai_canfd_hda2_alt_steering = false;
 
@@ -150,6 +150,31 @@ static uint8_t hyundai_canfd_get_counter(const CANPacket_t *to_push) {
 static uint32_t hyundai_canfd_get_checksum(const CANPacket_t *to_push) {
   uint32_t chksum = GET_BYTE(to_push, 0) | (GET_BYTE(to_push, 1) << 8);
   return chksum;
+}
+
+uint32_t hyundai_common_canfd_compute_checksum(const CANPacket_t *to_push) {
+  int len = GET_LEN(to_push);
+  uint32_t address = GET_ADDR(to_push);
+
+  uint16_t crc = 0;
+
+  for (int i = 2; i < len; i++) {
+    crc = (crc << 8U) ^ hyundai_canfd_crc_lut[(crc >> 8U) ^ GET_BYTE(to_push, i)];
+  }
+
+  // Add address to crc
+  crc = (crc << 8U) ^ hyundai_canfd_crc_lut[(crc >> 8U) ^ ((address >> 0U) & 0xFFU)];
+  crc = (crc << 8U) ^ hyundai_canfd_crc_lut[(crc >> 8U) ^ ((address >> 8U) & 0xFFU)];
+
+  if (len == 24) {
+    crc ^= 0x819dU;
+  } else if (len == 32) {
+    crc ^= 0x9f5bU;
+  } else {
+
+  }
+
+  return crc;
 }
 
 static void hyundai_canfd_rx_hook(const CANPacket_t *to_push) {

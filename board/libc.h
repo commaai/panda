@@ -16,6 +16,7 @@ void assert_fatal(bool condition, const char *msg) {
 }
 
 // cppcheck-suppress misra-c2012-21.2
+// cppcheck-suppress unusedFunction ; gcc uses memset to initialize structures
 void *memset(void *str, int c, unsigned int n) {
   uint8_t *s = str;
   for (unsigned int i = 0; i < n; i++) {

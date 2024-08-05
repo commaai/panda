@@ -4,7 +4,6 @@ import glob
 import pytest
 import shutil
 import subprocess
-import tempfile
 import random
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -16,6 +15,10 @@ IGNORED_PATHS = (
   'board/stm32h7/inc',
   'board/stm32f4/inc',
   'board/fake_stm.h',
+
+  # suppresed
+  'board/stm32f4/interrupt_handlers.h',
+  'board/stm32h7/interrupt_handlers.h',
 
   # bootstub only files
   'board/flasher.h',
@@ -57,6 +60,8 @@ patterns = [
   r"$a #define auto 1\n",
   # misra-c2012-20.5
   r"$a #define TEST 1\n#undef TEST\n",
+  # unusedFunction
+  r"$a void test(void) {}",
 ]
 
 all_files = glob.glob('board/**', root_dir=ROOT, recursive=True)
@@ -67,16 +72,15 @@ for p in patterns:
   mutations.append((random.choice(files), p, True))
 
 @pytest.mark.parametrize("fn, patch, should_fail", mutations)
-def test_misra_mutation(fn, patch, should_fail):
-  with tempfile.TemporaryDirectory() as tmp:
-    shutil.copytree(ROOT, tmp, dirs_exist_ok=True)
+def test_misra_mutation(fn, patch, should_fail, tmp_path):
+  shutil.copytree(ROOT, tmp_path, dirs_exist_ok=True)
 
-    # apply patch
-    if fn is not None:
-      r = os.system(f"cd {tmp} && sed -i '{patch}' {fn}")
-      assert r == 0
+  # apply patch
+  if fn is not None:
+    r = os.system(f"cd {tmp_path} && sed -i '{patch}' {fn}")
+    assert r == 0
 
-    # run test
-    r = subprocess.run("SKIP_TABLES_DIFF=1 tests/misra/test_misra.sh", cwd=tmp, shell=True)
-    failed = r.returncode != 0
-    assert failed == should_fail
+  # run test
+  r = subprocess.run("SKIP_TABLES_DIFF=1 tests/misra/cppcheck_misra_test.sh", cwd=tmp_path, shell=True)
+  failed = r.returncode != 0
+  assert failed == should_fail

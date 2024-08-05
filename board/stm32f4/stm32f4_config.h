@@ -1,5 +1,5 @@
-#include "stm32f4/inc/stm32f4xx.h"
-#include "stm32f4/inc/stm32f4xx_hal_gpio_ex.h"
+#include "inc/stm32f4xx.h"
+#include "inc/stm32f4xx_hal_gpio_ex.h"
 #define MCU_IDCODE 0x463U
 
 // from the linker script
@@ -55,7 +55,6 @@
 #include "drivers/timers.h"
 #include "stm32f4/board.h"
 #include "stm32f4/clock.h"
-#include "drivers/watchdog.h"
 
 #include "drivers/spi.h"
 #include "stm32f4/llspi.h"
