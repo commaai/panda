@@ -771,6 +771,11 @@ class PandaSafetyTest(PandaSafetyTestBase):
               continue
             if {attr, current_test}.issubset({'TestVolkswagenMqbSafety', 'TestVolkswagenMqbStockSafety', 'TestVolkswagenMqbLongSafety'}):
               continue
+            if attr.startswith('TestChryslerRamDT') and current_test.startswith('TestChryslerRamDT'):
+              continue
+            if {attr, current_test}.issubset({'TestChryslerSafety', 'TestChryslerLongitudinalSafety',
+                                              'TestChryslerRamHDSafety', 'TestChryslerRamHDLongitudinalSafety'}):
+              continue
 
             # overlapping TX addrs, but they're not actuating messages for either car
             if attr == 'TestHyundaiCanfdHDA2LongEV' and current_test.startswith('TestToyota'):
