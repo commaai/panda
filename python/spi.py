@@ -10,9 +10,9 @@ from contextlib import contextmanager
 from functools import reduce
 from collections.abc import Callable
 
-from . import logger
 from .base import BaseHandle, BaseSTBootloaderHandle, TIMEOUT
 from .constants import McuType, MCU_TYPE_BY_IDCODE, USBPACKET_MAX_SIZE
+from .utils import logger
 
 try:
   import spidev

@@ -6,7 +6,6 @@ import usb1
 import struct
 import hashlib
 import binascii
-import logging
 from functools import wraps, partial
 from itertools import accumulate
 
@@ -16,17 +15,9 @@ from .dfu import PandaDFU
 from .isotp import isotp_send, isotp_recv
 from .spi import PandaSpiHandle, PandaSpiException, PandaProtocolMismatch
 from .usb import PandaUsbHandle
+from .utils import logger
 
 __version__ = '0.0.10'
-
-# set up logging
-LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
-logger = logging.getLogger('panda')
-logger.setLevel(LOGLEVEL)
-
-handler = logging.StreamHandler()
-handler.setFormatter(logging.Formatter('%(message)s'))
-logger.addHandler(handler)
 
 CANPACKET_HEAD_SIZE = 0x6
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
