@@ -6,7 +6,6 @@ import usb1
 import struct
 import hashlib
 import binascii
-import logging
 from functools import wraps, partial
 from itertools import accumulate
 
@@ -16,12 +15,9 @@ from .dfu import PandaDFU
 from .isotp import isotp_send, isotp_recv
 from .spi import PandaSpiHandle, PandaSpiException, PandaProtocolMismatch
 from .usb import PandaUsbHandle
+from .utils import logger
 
 __version__ = '0.0.10'
-
-# setup logging
-LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
-logging.basicConfig(level=LOGLEVEL, format='%(message)s')
 
 CANPACKET_HEAD_SIZE = 0x6
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
@@ -39,7 +35,7 @@ def pack_can_buffer(arr):
   snds = [b'']
   for address, dat, bus in arr:
     assert len(dat) in LEN_TO_DLC
-    #logging.debug("  W 0x%x: 0x%s", address, dat.hex())
+    #logger.debug("  W 0x%x: 0x%s", address, dat.hex())
 
     extended = 1 if address >= 0x800 else 0
     data_len_code = LEN_TO_DLC[len(dat)]
@@ -294,7 +290,7 @@ class Panda:
     self._handle_open = True
     self._mcu_type = self.get_mcu_type()
     self.health_version, self.can_version, self.can_health_version = self.get_packets_versions()
-    logging.debug("connected")
+    logger.debug("connected")
 
     # disable openpilot's heartbeat checks
     if self._disable_checks:
@@ -365,11 +361,11 @@ class Panda:
           try:
             this_serial = device.getSerialNumber()
           except Exception:
-            logging.exception("failed to get serial number of panda")
+            logger.exception("failed to get serial number of panda")
             continue
 
           if serial is None or this_serial == serial:
-            logging.debug("opening device %s %s", this_serial, hex(device.getProductID()))
+            logger.debug("opening device %s %s", this_serial, hex(device.getProductID()))
 
             usb_serial = this_serial
             bootstub = (device.getProductID() & 0xF0) == 0xe0
@@ -387,7 +383,7 @@ class Panda:
 
             break
     except Exception:
-      logging.exception("USB connect error")
+      logger.exception("USB connect error")
 
     usb_handle = None
     if handle is not None:
@@ -415,11 +411,11 @@ class Panda:
               if len(serial) == 24:
                 ret.append(serial)
               else:
-                logging.warning(f"found device with panda descriptors but invalid serial: {serial}", RuntimeWarning)
+                logger.warning(f"found device with panda descriptors but invalid serial: {serial}", RuntimeWarning)
             except Exception:
-              logging.exception("error connecting to panda")
+              logger.exception("error connecting to panda")
     except Exception:
-      logging.exception("exception while listing pandas")
+      logger.exception("exception while listing pandas")
     return ret
 
   @classmethod
@@ -487,22 +483,22 @@ class Panda:
     assert last_sector < 7, "Binary too large! Risk of overwriting provisioning chunk."
 
     # unlock flash
-    logging.warning("flash: unlocking")
+    logger.warning("flash: unlocking")
     handle.controlWrite(Panda.REQUEST_IN, 0xb1, 0, 0, b'')
 
     # erase sectors
-    logging.warning(f"flash: erasing sectors 1 - {last_sector}")
+    logger.warning(f"flash: erasing sectors 1 - {last_sector}")
     for i in range(1, last_sector + 1):
       handle.controlWrite(Panda.REQUEST_IN, 0xb2, i, 0, b'')
 
     # flash over EP2
     STEP = 0x10
-    logging.warning("flash: flashing")
+    logger.warning("flash: flashing")
     for i in range(0, len(code), STEP):
       handle.bulkWrite(2, code[i:i + STEP])
 
     # reset
-    logging.warning("flash: resetting")
+    logger.warning("flash: resetting")
     try:
       handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'', expect_disconnect=True)
     except Exception:
@@ -510,13 +506,13 @@ class Panda:
 
   def flash(self, fn=None, code=None, reconnect=True):
     if self.up_to_date(fn=fn):
-      logging.debug("flash: already up to date")
+      logger.debug("flash: already up to date")
       return
 
     if not fn:
       fn = os.path.join(FW_PATH, self._mcu_type.config.app_fn)
     assert os.path.isfile(fn)
-    logging.debug("flash: main version is %s", self.get_version())
+    logger.debug("flash: main version is %s", self.get_version())
     if not self.bootstub:
       self.reset(enter_bootstub=True)
     assert(self.bootstub)
@@ -526,7 +522,7 @@ class Panda:
         code = f.read()
 
     # get version
-    logging.debug("flash: bootstub version is %s", self.get_version())
+    logger.debug("flash: bootstub version is %s", self.get_version())
 
     # do flash
     Panda.flash_static(self._handle, code, mcu_type=self._mcu_type)
@@ -558,7 +554,7 @@ class Panda:
     t_start = time.monotonic()
     dfu_list = PandaDFU.list()
     while (dfu_serial is None and len(dfu_list) == 0) or (dfu_serial is not None and dfu_serial not in dfu_list):
-      logging.debug("waiting for DFU...")
+      logger.debug("waiting for DFU...")
       time.sleep(0.1)
       if timeout is not None and (time.monotonic() - t_start) > timeout:
         return False
@@ -570,7 +566,7 @@ class Panda:
     t_start = time.monotonic()
     serials = Panda.list()
     while (serial is None and len(serials) == 0) or (serial is not None and serial not in serials):
-      logging.debug("waiting for panda...")
+      logger.debug("waiting for panda...")
       time.sleep(0.1)
       if timeout is not None and (time.monotonic() - t_start) > timeout:
         return False
@@ -810,10 +806,10 @@ class Panda:
             tx = tx[bs:]
             if len(tx) == 0:
               break
-            logging.error("CAN: PARTIAL SEND MANY, RETRYING")
+            logger.error("CAN: PARTIAL SEND MANY, RETRYING")
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
-        logging.error("CAN: BAD SEND MANY, RETRYING")
+        logger.error("CAN: BAD SEND MANY, RETRYING")
 
   def can_send(self, addr, dat, bus, timeout=CAN_SEND_TIMEOUT_MS):
     self.can_send_many([[addr, dat, bus]], timeout=timeout)
@@ -826,7 +822,7 @@ class Panda:
         dat = self._handle.bulkRead(1, 16384) # Max receive batch size + 2 extra reserve frames
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
-        logging.error("CAN: BAD RECV, RETRYING")
+        logger.error("CAN: BAD RECV, RETRYING")
         time.sleep(0.1)
     msgs, self.can_rx_overflow_buffer = unpack_can_buffer(self.can_rx_overflow_buffer + dat)
     return msgs
