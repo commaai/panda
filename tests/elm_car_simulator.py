@@ -77,11 +77,11 @@ class ELMCarSimulator():
         self.panda.can_recv()  # Toss whatever was already there
 
         while not self.__stop:
-            for address, ts, data, src in self.panda.can_recv():
+            for address, data, src in self.panda.can_recv():
                 if self.__on and src == 0 and len(data) == 8 and data[0] >= 2:
                     if not self.__silent:
                         print("Processing CAN message", src, hex(address), binascii.hexlify(data))
-                    self.__can_process_msg(data[1], data[2], address, ts, data, src)
+                    self.__can_process_msg(data[1], data[2], address, data, src)
                 elif not self.__silent:
                     print("Rejecting CAN message", src, hex(address), binascii.hexlify(data))
 
@@ -120,7 +120,7 @@ class ELMCarSimulator():
             return True
         return False
 
-    def __can_process_msg(self, mode, pid, address, ts, data, src):
+    def __can_process_msg(self, mode, pid, address, data, src):
         if not self.__silent:
             print("CAN MSG", binascii.hexlify(data[1:1 + data[0]]),
                   "Addr:", hex(address), "Mode:", hex(mode)[2:].zfill(2),
@@ -190,7 +190,7 @@ class ELMCarSimulator():
             if pid == 0x02:   # Show VIN
                 return b"1D4GP00R55B123456"
             if pid == 0xFC:   # test long multi message. Ligned up for LIN responses
-                return b''.join((struct.pack(">BBH", 0xAA, 0xAA, num + 1) for num in range(80)))
+                return b''.join(struct.pack(">BBH", 0xAA, 0xAA, num + 1) for num in range(80))
             if pid == 0xFD:   # test long multi message
                 parts = (b'\xAA\xAA\xAA' + struct.pack(">I", num) for num in range(80))
                 return b'\xAA\xAA\xAA' + b''.join(parts)
@@ -199,7 +199,7 @@ class ELMCarSimulator():
                 return b'\xAA\xAA\xAA' + b''.join(parts) + b'\xAA'
             if pid == 0xFF:
                 return b'\xAA\x00\x00' + \
-                       b"".join(((b'\xAA' * 5) + struct.pack(">H", num + 1) for num in range(584)))
+                       b"".join((b'\xAA' * 5) + struct.pack(">H", num + 1) for num in range(584))
                 #return b"\xAA"*100#(0xFFF-3)
 
 

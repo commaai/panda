@@ -1,6 +1,6 @@
 import os
 from cffi import FFI
-from typing import Any, List, Protocol
+from typing import Any, Protocol
 
 from panda import LEN_TO_DLC
 from panda.tests.libpanda.safety_helpers import PandaSafety, setup_safety_helpers
@@ -40,7 +40,6 @@ typedef struct {
 } can_ring;
 
 extern can_ring *rx_q;
-extern can_ring *txgmlan_q;
 extern can_ring *tx1_q;
 extern can_ring *tx2_q;
 extern can_ring *tx3_q;
@@ -64,14 +63,13 @@ class CANPacket:
   returned: int
   extended: int
   addr: int
-  data: List[int]
+  data: list[int]
 
 class Panda(PandaSafety, Protocol):
   # CAN
   tx1_q: Any
   tx2_q: Any
   tx3_q: Any
-  txgmlan_q: Any
   def can_set_checksum(self, p: CANPacket) -> None: ...
 
   # safety

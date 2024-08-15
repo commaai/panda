@@ -94,8 +94,8 @@ bool get_longitudinal_allowed(void) {
 // Given a CRC-8 poly, generate a static lookup table to use with a fast CRC-8
 // algorithm. Called at init time for safety modes using CRC-8.
 void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]) {
-  for (int i = 0; i < 256; i++) {
-    uint8_t crc = i;
+  for (uint16_t i = 0U; i <= 0xFFU; i++) {
+    uint8_t crc = (uint8_t)i;
     for (int j = 0; j < 8; j++) {
       if ((crc & 0x80U) != 0U) {
         crc = (uint8_t)((crc << 1) ^ poly);
@@ -327,8 +327,6 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   // reset state set by safety mode
   safety_mode_cnt = 0U;
   relay_malfunction = false;
-  enable_gas_interceptor = false;
-  gas_interceptor_prev = 0;
   gas_pressed = false;
   gas_pressed_prev = false;
   brake_pressed = false;
@@ -541,10 +539,6 @@ bool longitudinal_brake_checks(int desired_brake, const LongitudinalLimits limit
   violation |= !get_longitudinal_allowed() && (desired_brake != 0);
   violation |= desired_brake > limits.max_brake;
   return violation;
-}
-
-bool longitudinal_interceptor_checks(const CANPacket_t *to_send) {
-  return !get_longitudinal_allowed() && (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1));
 }
 
 // Safety checks for torque-based steering commands

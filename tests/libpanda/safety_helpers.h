@@ -43,12 +43,12 @@ bool get_relay_malfunction(void){
   return relay_malfunction;
 }
 
-int get_gas_interceptor_prev(void){
-  return gas_interceptor_prev;
-}
-
 bool get_gas_pressed_prev(void){
   return gas_pressed_prev;
+}
+
+void set_gas_pressed_prev(bool c){
+  gas_pressed_prev = c;
 }
 
 bool get_brake_pressed_prev(void){
@@ -193,13 +193,3 @@ void init_tests(void){
   valid_steer_req_count = 0;
   invalid_steer_req_count = 0;
 }
-
-void set_gmlan_digital_output(int to_set){
-}
-
-void reset_gmlan_switch_timeout(void){
-}
-
-void gmlan_switch_init(int timeout_enable){
-}
-

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import argparse
-from typing import List, Optional
 from tqdm import tqdm
 from panda import Panda
 from panda.python.uds import UdsClient, MessageTimeoutError, NegativeResponseError, InvalidSubAddressError, \
@@ -11,6 +10,7 @@ if __name__ == "__main__":
   parser.add_argument("--rxoffset", default="")
   parser.add_argument("--nonstandard", action="store_true")
   parser.add_argument("--no-obd", action="store_true", help="Bus 1 will not be multiplexed to the OBD-II port")
+  parser.add_argument("--no-29bit", action="store_true", help="29 bit addresses will not be queried")
   parser.add_argument("--debug", action="store_true")
   parser.add_argument("--addr")
   parser.add_argument("--sub_addr", "--subaddr", help="A hex sub-address or `scan` to scan the full sub-address range")
@@ -22,10 +22,11 @@ if __name__ == "__main__":
     addrs = [int(args.addr, base=16)]
   else:
     addrs = [0x700 + i for i in range(256)]
-    addrs += [0x18da0000 + (i << 8) + 0xf1 for i in range(256)]
+    if not args.no_29bit:
+      addrs += [0x18da0000 + (i << 8) + 0xf1 for i in range(256)]
   results = {}
 
-  sub_addrs: List[Optional[int]] = [None]
+  sub_addrs: list[int | None] = [None]
   if args.sub_addr:
     if args.sub_addr == "scan":
       sub_addrs = list(range(0xff + 1))

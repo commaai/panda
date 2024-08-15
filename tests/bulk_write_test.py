@@ -2,7 +2,7 @@
 import os
 import time
 import threading
-from typing import Any, List
+from typing import Any
 
 from panda import Panda
 
@@ -16,7 +16,7 @@ NUM_MESSAGES_PER_BUS = 10000
 def flood_tx(panda):
   print('Sending!')
   msg = b"\xaa" * 4
-  packet = [[0xaa, None, msg, 0], [0xaa, None, msg, 1], [0xaa, None, msg, 2]] * NUM_MESSAGES_PER_BUS
+  packet = [[0xaa, msg, 0], [0xaa, msg, 1], [0xaa, msg, 2]] * NUM_MESSAGES_PER_BUS
   panda.can_send_many(packet, timeout=10000)
   print(f"Done sending {3*NUM_MESSAGES_PER_BUS} messages!")
 
@@ -38,7 +38,7 @@ if __name__ == "__main__":
   threading.Thread(target=flood_tx, args=(sender,)).start()
 
   # Receive as much as we can in a few second time period
-  rx: List[Any] = []
+  rx: list[Any] = []
   old_len = 0
   start_time = time.time()
   while time.time() - start_time < 3 or len(rx) > old_len:

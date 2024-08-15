@@ -141,7 +141,7 @@ static void volkswagen_pq_rx_hook(const CANPacket_t *to_push) {
         volkswagen_resume_button_prev = resume_button;
         // Exit controls on rising edge of Cancel, override Set/Resume if present simultaneously
         // Signal: GRA_ACC_01.GRA_Abbrechen
-        if (GET_BIT(to_push, 9U) == 1U) {
+        if (GET_BIT(to_push, 9U)) {
           controls_allowed = false;
         }
       }
@@ -185,7 +185,7 @@ static bool volkswagen_pq_tx_hook(const CANPacket_t *to_send) {
     }
 
     uint32_t hca_status = ((GET_BYTE(to_send, 1) >> 4) & 0xFU);
-    bool steer_req = (hca_status == 5U);
+    bool steer_req = ((hca_status == 5U) || (hca_status == 7U));
 
     if (steer_torque_cmd_checks(desired_torque, steer_req, VOLKSWAGEN_PQ_STEERING_LIMITS)) {
       tx = false;
