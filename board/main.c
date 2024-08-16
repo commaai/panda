@@ -171,8 +171,12 @@ static void tick_handler(void) {
     }
 
     #ifdef STM32H7
-      while((SAI4_Block_A->SR & SAI_xSR_FLVL) != 0U) {
-        puth4(SAI4_Block_A->DR); print("\n");
+      // while((SAI4_Block_B->SR & SAI_xSR_FLVL) != 0U) {
+      //   puth4(SAI4_Block_B->DR); print("\n");
+      // }
+
+      if(rx_buf[0].buf[0] != 0U) {
+        print("RX BUFS[0]: "); puth4(rx_buf[0].buf[0]); print(" "); puth4(rx_buf[1].buf[0]); print("\n");
       }
     #endif
 

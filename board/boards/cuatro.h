@@ -139,8 +139,8 @@ void cuatro_init(void) {
   set_gpio_alternate(GPIOC, 0, GPIO_AF8_SAI4);    // SAI4_FS_B
   set_gpio_alternate(GPIOD, 11, GPIO_AF10_SAI4);  // SAI4_SD_A
   set_gpio_alternate(GPIOE, 3, GPIO_AF8_SAI4);    // SAI4_SD_B
-  set_gpio_alternate(GPIOE, 4, GPIO_AF10_SAI4);    // SAI4_D2
-  set_gpio_alternate(GPIOE, 5, GPIO_AF10_SAI4);    // SAI4_CK2
+  set_gpio_alternate(GPIOE, 4, GPIO_AF10_SAI4);   // SAI4_D2
+  set_gpio_alternate(GPIOE, 5, GPIO_AF10_SAI4);   // SAI4_CK2
   set_gpio_alternate(GPIOE, 6, GPIO_AF10_SAI4);   // SAI4_MCLK_B
   sound_init();
 }
