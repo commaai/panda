@@ -176,7 +176,10 @@ static void tick_handler(void) {
       // }
 
       if(rx_buf[0].buf[0] != 0U) {
+        print("----\n");
         print("RX BUFS[0]: "); puth4(rx_buf[0].buf[0]); print(" "); puth4(rx_buf[1].buf[0]); print("\n");
+        print("TX BUFS[0]: "); puth4(tx_buf[0].buf[0]); print(" "); puth4(tx_buf[1].buf[0]); print("\n");
+        print("----\n");
       }
     #endif
 

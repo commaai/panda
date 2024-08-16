@@ -5,15 +5,27 @@ const uint8_t sine[360] = { 127U, 129U, 131U, 133U, 135U, 138U, 140U, 142U, 144U
 #define RX_BUF_SIZE 2000U
 struct sound_buf_t {
   uint16_t buf[RX_BUF_SIZE];
+  bool processed;
 } sound_buf_t;
 
 __attribute__((section(".sram4"))) struct sound_buf_t rx_buf[2];
+__attribute__((section(".sram12"))) struct sound_buf_t tx_buf[2];
 
 void BDMA_Channel0_IRQ_Handler(void) {
-  // clear flag
-  BDMA->IFCR |= BDMA_IFCR_CGIF0;
+  BDMA->IFCR |= BDMA_IFCR_CGIF0; // clear flag
+  // print("sound dma interrupt\n");
 
-  print("sound dma interrupt\n");
+  // process samples (shift to 12b and bias to be unsigned)
+  uint8_t buf_idx = ((BDMA_Channel0->CCR & BDMA_CCR_CT) >> BDMA_CCR_CT_Pos) == 1U ? 0U : 1U;
+  for (uint16_t i=0U; i < RX_BUF_SIZE; i++) {
+    tx_buf[buf_idx].buf[i] = (rx_buf[buf_idx].buf[i] >> 4) + (1U << 11);
+  }
+
+  rx_buf[buf_idx].processed = true;
+  register_clear_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
+  register_set(&DMA1_Stream1->M0AR, (uint32_t) tx_buf[buf_idx].buf, 0xFFFFFFFFU);
+  DMA1_Stream1->NDTR = RX_BUF_SIZE;
+  register_set_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
 }
 
 void sai4_init(void) {
@@ -41,14 +53,6 @@ void sai4_init(void) {
   register_set(&DMAMUX2_Channel0->CCR, 16U, DMAMUX_CxCR_DMAREQ_ID_Msk); // SAI4_B_DMA
   register_set_bits(&BDMA_Channel0->CCR, BDMA_CCR_EN);
 
-  // register_set(&BDMA_Channel0->CPAR, (uint32_t) &(SAI4_Block_B->DR), 0xFFFFFFFFU);
-  // register_set(&BDMA_Channel0->CM0AR, (uint32_t) rx_buf[0].buf, 0xFFFFFFFFU);
-  // BDMA_Channel0->CNDTR = RX_BUF_SIZE;
-  // //register_set(&BDMA_Channel0->CCR, BDMA_CCR_DBM | (0b01 << BDMA_CCR_MSIZE_Pos) | (0b01 << BDMA_CCR_PSIZE_Pos) | BDMA_CCR_MINC | BDMA_CCR_CIRC | BDMA_CCR_TCIE, 0xFFFFU);
-  // register_set(&BDMA_Channel0->CCR, (0b01 << BDMA_CCR_MSIZE_Pos) | (0b01 << BDMA_CCR_PSIZE_Pos) | BDMA_CCR_MINC | BDMA_CCR_TCIE, 0xFFFFU);
-  // register_set(&DMAMUX2_Channel0->CCR, 16U, DMAMUX_CxCR_DMAREQ_ID_Msk); // SAI4_B_DMA
-  // register_set_bits(&BDMA_Channel0->CCR, BDMA_CCR_EN);
-
   // enable all initted blocks
   register_set_bits(&SAI4_Block_A->CR1, SAI_xCR1_SAIEN);
   register_set_bits(&SAI4_Block_B->CR1, SAI_xCR1_SAIEN);
@@ -56,29 +60,27 @@ void sai4_init(void) {
 
 void sound_init(void) {
   // Init DAC
-  // register_set(&DAC1->MCR, 0U, 0xFFFFFFFFU);
-  // register_set(&DAC1->CR, DAC_CR_TEN1 | (6U << DAC_CR_TSEL1_Pos) | DAC_CR_DMAEN1, 0xFFFFFFFFU);
-  // register_set_bits(&DAC1->CR, DAC_CR_EN1);
+  register_set(&DAC1->MCR, 0U, 0xFFFFFFFFU);
+  register_set(&DAC1->CR, DAC_CR_TEN1 | (6U << DAC_CR_TSEL1_Pos) | DAC_CR_DMAEN1, 0xFFFFFFFFU);
+  register_set_bits(&DAC1->CR, DAC_CR_EN1);
 
   // Setup DMAMUX (DAC_CH1_DMA as input)
-  // register_set(&DMAMUX1_Channel1->CCR, 67U, DMAMUX_CxCR_DMAREQ_ID_Msk);
+  register_set(&DMAMUX1_Channel1->CCR, 67U, DMAMUX_CxCR_DMAREQ_ID_Msk);
 
   // Setup DMA
-  // register_set(&DMA1_Stream1->M0AR, (uint32_t) sine, 0xFFFFFFFFU);
-  // register_set(&DMA1_Stream1->PAR, (uint32_t) &(DAC1->DHR8R1), 0xFFFFFFFFU);
-  // DMA1_Stream1->NDTR = sizeof(sine);
-  // register_set(&DMA1_Stream1->FCR, 0U, 0x00000083U);
-  // DMA1_Stream1->CR = (0b11 << DMA_SxCR_PL_Pos);
-  // DMA1_Stream1->CR |= DMA_SxCR_MINC | DMA_SxCR_CIRC | (1 << DMA_SxCR_DIR_Pos);
+  register_set(&DMA1_Stream1->PAR, (uint32_t) &(DAC1->DHR12R1), 0xFFFFFFFFU);
+  register_set(&DMA1_Stream1->FCR, 0U, 0x00000083U);
+  DMA1_Stream1->CR = (0b11 << DMA_SxCR_PL_Pos) | (0b01 << DMA_SxCR_MSIZE_Pos) | (0b01 << DMA_SxCR_PSIZE_Pos) | DMA_SxCR_MINC | (1 << DMA_SxCR_DIR_Pos);
+  //DMA1_Stream1->CR |= DMA_SxCR_MINC | DMA_SxCR_CIRC | (1 << DMA_SxCR_DIR_Pos);
   // register_set_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
 
   // Init trigger timer
-  // register_set(&TIM7->PSC, 0U, 0xFFFFU);
-  // register_set(&TIM7->ARR, 200U, 0xFFFFU);
-  // register_set(&TIM7->CR2, (0b10 << TIM_CR2_MMS_Pos), TIM_CR2_MMS_Msk);
-  // register_set(&TIM7->CR1, TIM_CR1_ARPE | TIM_CR1_URS, 0x088EU);
-  // TIM7->SR = 0U;
-  // TIM7->CR1 |= TIM_CR1_CEN;
+  register_set(&TIM7->PSC, 0U, 0xFFFFU);
+  register_set(&TIM7->ARR, 200U, 0xFFFFU);
+  register_set(&TIM7->CR2, (0b10 << TIM_CR2_MMS_Pos), TIM_CR2_MMS_Msk);
+  register_set(&TIM7->CR1, TIM_CR1_ARPE | TIM_CR1_URS, 0x088EU);
+  TIM7->SR = 0U;
+  TIM7->CR1 |= TIM_CR1_CEN;
 
   REGISTER_INTERRUPT(BDMA_Channel0_IRQn, BDMA_Channel0_IRQ_Handler, 20U, FAULT_INTERRUPT_RATE_SOUND_DMA)
   sai4_init();
