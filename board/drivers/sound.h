@@ -9,7 +9,7 @@ struct sound_buf_t {
 } sound_buf_t;
 
 __attribute__((section(".sram4"))) struct sound_buf_t rx_buf[2];
-__attribute__((section(".sram12"))) struct sound_buf_t tx_buf[2];
+__attribute__((section(".sram4"))) uint16_t buf[RX_BUF_SIZE];
 
 void BDMA_Channel0_IRQ_Handler(void) {
   BDMA->IFCR |= BDMA_IFCR_CGIF0; // clear flag
@@ -18,12 +18,21 @@ void BDMA_Channel0_IRQ_Handler(void) {
   // process samples (shift to 12b and bias to be unsigned)
   uint8_t buf_idx = ((BDMA_Channel0->CCR & BDMA_CCR_CT) >> BDMA_CCR_CT_Pos) == 1U ? 0U : 1U;
   for (uint16_t i=0U; i < RX_BUF_SIZE; i++) {
-    tx_buf[buf_idx].buf[i] = (rx_buf[buf_idx].buf[i] >> 4) + (1U << 11);
+    //buf[i] = (((int16_t *) rx_buf[buf_idx].buf)[i] >> 4) + 0x800;
+    // rx_buf[buf_idx].buf[i] = ((rx_buf[buf_idx].buf[i] & 0xFF) << 8) | ((rx_buf[buf_idx].buf[i] & 0xFF00) >> 8);
+
+    // buf[i] = (rx_buf[buf_idx].buf[i] >> 4) & 0xFFF;
+
+    int32_t biased = ((int32_t) ((int16_t *) rx_buf[buf_idx].buf)[i]) + (1U << 14);
+    biased &= 0xFFFF;
+
+    buf[i] = (((uint32_t) biased) >> 3);
   }
 
   rx_buf[buf_idx].processed = true;
+  DMA1->LIFCR |= 0xFFFFFFFF;
   register_clear_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
-  register_set(&DMA1_Stream1->M0AR, (uint32_t) tx_buf[buf_idx].buf, 0xFFFFFFFFU);
+  register_set(&DMA1_Stream1->M0AR, (uint32_t) buf, 0xFFFFFFFFU);
   DMA1_Stream1->NDTR = RX_BUF_SIZE;
   register_set_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
 }
@@ -74,9 +83,19 @@ void sound_init(void) {
   //DMA1_Stream1->CR |= DMA_SxCR_MINC | DMA_SxCR_CIRC | (1 << DMA_SxCR_DIR_Pos);
   // register_set_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
 
-  // Init trigger timer
+  // Setup DMA
+  // register_set(&DMA1_Stream1->M0AR, (uint32_t) sine, 0xFFFFFFFFU);
+  // register_set(&DMA1_Stream1->PAR, (uint32_t) &(DAC1->DHR8R1), 0xFFFFFFFFU);
+  // DMA1_Stream1->NDTR = sizeof(sine);
+  // register_set(&DMA1_Stream1->FCR, 0U, 0x00000083U);
+  // DMA1_Stream1->CR = (0b11UL << DMA_SxCR_PL_Pos);
+  // DMA1_Stream1->CR |= DMA_SxCR_MINC | DMA_SxCR_CIRC | (1U << DMA_SxCR_DIR_Pos);
+  // register_set_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
+
+  // Init trigger timer (48kHz)
   register_set(&TIM7->PSC, 0U, 0xFFFFU);
-  register_set(&TIM7->ARR, 200U, 0xFFFFU);
+  //register_set(&TIM7->ARR, 2494U, 0xFFFFU);
+  register_set(&TIM7->ARR, 1247U, 0xFFFFU);
   register_set(&TIM7->CR2, (0b10 << TIM_CR2_MMS_Pos), TIM_CR2_MMS_Msk);
   register_set(&TIM7->CR1, TIM_CR1_ARPE | TIM_CR1_URS, 0x088EU);
   TIM7->SR = 0U;
