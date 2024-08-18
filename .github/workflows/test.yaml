@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  RUN: docker run -v ${{ github.workspace }}:/tmp/openpilot/panda -w /tmp/openpilot/panda --rm panda /bin/bash -c
+  RUN: docker run -v ${{ github.workspace }}:/tmp/pythonpath/panda -w /tmp/pythonpath/panda --rm panda /bin/bash -c
   BUILD: |
       export DOCKER_BUILDKIT=1
       docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ghcr.io/commaai/panda:latest -t panda -f Dockerfile .
@@ -45,7 +45,7 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Test python package installer
-        run: ${{ env.RUN }} "python setup.py install"
+        run: ${{ env.RUN }} "python3 setup.py install"
       - name: Build panda images and bootstub
         run: ${{ env.RUN }} "scons -j4"
       - name: Build panda with SPI support
@@ -103,8 +103,8 @@ jobs:
         timeout-minutes: 5
         run: ${{ env.RUN }} "cd tests/misra && pytest -n8 test_mutation.py"
 
-  python_linter:
-    name: python linter
+  static_analysis:
+    name: static analysis
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
