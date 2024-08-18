@@ -41,5 +41,5 @@ RUN cd /tmp/ && \
 
 # for Jenkins
 COPY README.md panda.tar.* /tmp/
-RUN mkdir /tmp/pythonpath/panda && \
+RUN mkdir -p /tmp/pythonpath/panda && \
     tar -xvf /tmp/panda.tar.gz -C /tmp/pythonpath/panda/ || true
