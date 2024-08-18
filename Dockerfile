@@ -47,19 +47,15 @@ COPY tests/misra/install.sh /tmp/
 RUN /tmp/install.sh && rm -rf $CPPCHECK_DIR/.git/
 ENV SKIP_CPPCHECK_INSTALL=1
 
-ENV CEREAL_REF="861144c136c91f70dcbc652c2ffe99f57440ad47"
-ENV OPENDBC_REF="8e9d3688412405154a8189c421cfdc9d5feea715"
-
+# TODO: this should be a "pip install" or not even in this repo at all
+ENV OPENDBC_REF="74e042d4e76651d21b48db2c87c092d8855e9bdc"
 RUN git config --global --add safe.directory /tmp/openpilot/panda
 RUN mkdir -p /tmp/openpilot/ && \
     cd /tmp/openpilot/ && \
-    git clone --depth 1 https://github.com/commaai/cereal && \
     git clone --depth 1 https://github.com/commaai/opendbc && \
-    cd cereal && git fetch origin $CEREAL_REF && git checkout FETCH_HEAD && rm -rf .git/ && cd .. && \
-    cd opendbc && git fetch origin $OPENDBC_REF && git checkout FETCH_HEAD && rm -rf .git/ && cd .. && \
-    cp -pR opendbc/SConstruct opendbc/site_scons/ . && \
-    pip3 install --break-system-packages --no-cache-dir -r opendbc/requirements.txt && \
-    scons -j8 --minimal opendbc/ cereal/
+    cd opendbc && git fetch origin $OPENDBC_REF && git checkout FETCH_HEAD && rm -rf .git/ && \
+    pip3 install --break-system-packages --no-cache-dir . && \
+    scons -j8 --minimal opendbc/
 
 # for Jenkins
 COPY README.md panda.tar.* /tmp/
