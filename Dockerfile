@@ -1,7 +1,7 @@
 FROM ubuntu:24.04
 
 ENV PYTHONUNBUFFERED 1
-ENV PYTHONPATH /tmp/pythonpath:$PYTHONPATH
+ENV PYTHONPATH /tmp/pythonpath
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -37,7 +37,7 @@ RUN mkdir -p /tmp/pythonpath/ && \
     cd opendbc && git fetch origin $OPENDBC_REF && git checkout FETCH_HEAD && rm -rf .git/ && \
     pip3 install --break-system-packages --no-cache-dir Cython numpy  && \
     scons -j8 --minimal opendbc/ && \
-    mv opendbc/ $PYTHONPATH && rm -rf /tmp/opendbc/
+    mv opendbc $PYTHONPATH && rm -rf /tmp/opendbc/
 
 # for Jenkins
 COPY README.md panda.tar.* /tmp/
