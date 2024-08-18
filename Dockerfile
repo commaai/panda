@@ -1,7 +1,7 @@
 FROM ubuntu:24.04
 
 ENV PYTHONUNBUFFERED 1
-ENV PYTHONPATH /tmp/openpilot:$PYTHONPATH
+ENV PYTHONPATH /tmp/pythonpath:$PYTHONPATH
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update
@@ -21,11 +21,6 @@ RUN apt-get install -y --no-install-recommends \
     rm -rf arm/ && \
     rm -rf thumb/nofp thumb/v6* thumb/v8* thumb/v7+fp thumb/v7-r+fp.sp
 
-RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
-
 COPY requirements.txt /tmp/
 RUN pip3 install --break-system-packages --no-cache-dir -r /tmp/requirements.txt
 
@@ -36,15 +31,15 @@ ENV SKIP_CPPCHECK_INSTALL=1
 
 # TODO: this should be a "pip install" or not even in this repo at all
 ENV OPENDBC_REF="74e042d4e76651d21b48db2c87c092d8855e9bdc"
-RUN git config --global --add safe.directory /tmp/openpilot/panda
-RUN mkdir -p /tmp/openpilot/ && \
-    cd /tmp/openpilot/ && \
+RUN git config --global --add safe.directory /tmp/pythonpath/panda
+RUN mkdir -p /tmp/pythonpath/ && \
+    cd /tmp/pythonpath/ && \
     git clone --depth 1 https://github.com/commaai/opendbc && \
     cd opendbc && git fetch origin $OPENDBC_REF && git checkout FETCH_HEAD && rm -rf .git/ && \
-    pip3 install --break-system-packages --no-cache-dir -e . && \
+    pip3 install --break-system-packages --no-cache-dir Cython numpy  && \
     scons -j8 --minimal opendbc/
 
 # for Jenkins
 COPY README.md panda.tar.* /tmp/
-RUN mkdir /tmp/openpilot/panda && \
-    tar -xvf /tmp/panda.tar.gz -C /tmp/openpilot/panda/ || true
+RUN mkdir /tmp/pythonpath/panda && \
+    tar -xvf /tmp/panda.tar.gz -C /tmp/pythonpath/panda/ || true
