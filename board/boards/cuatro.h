@@ -97,6 +97,7 @@ void cuatro_init(void) {
 
   // fan setup
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
+  register_set_bits(&(GPIOC->OTYPER), GPIO_OTYPER_OT8); // open drain
 
   // Initialize IR PWM and set to 0%
   set_gpio_alternate(GPIOC, 9, GPIO_AF2_TIM3);
@@ -112,7 +113,8 @@ board board_cuatro = {
   .has_obd = true,
   .has_spi = true,
   .has_canfd = true,
-  .fan_max_rpm = 6600U,
+  .fan_max_rpm = 12500U,
+  .fan_max_pwm = 99U, // it can go up to 14k RPM, but 99% -> 100% is very non-linear
   .avdd_mV = 1800U,
   .fan_stall_recovery = false,
   .fan_enable_cooldown_time = 3U,
