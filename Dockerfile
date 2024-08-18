@@ -5,29 +5,18 @@ ENV PYTHONPATH /tmp/openpilot:$PYTHONPATH
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    make \
-    bzip2 \
     ca-certificates \
-    capnproto \
     clang \
     g++ \
     gcc-arm-none-eabi libnewlib-arm-none-eabi \
     git \
-    libarchive-dev \
-    libbz2-dev \
-    libcapnp-dev \
     libffi-dev \
     libtool \
     libusb-1.0-0 \
-    libzmq3-dev \
     locales \
-    opencl-headers \
-    ocl-icd-opencl-dev \
     python3 \
     python3-dev \
     python3-pip \
-    python-is-python3 \
-    zlib1g-dev \
  && rm -rf /var/lib/apt/lists/* && \
     apt clean && \
     cd /usr/lib/gcc/arm-none-eabi/* && \
@@ -54,7 +43,7 @@ RUN mkdir -p /tmp/openpilot/ && \
     cd /tmp/openpilot/ && \
     git clone --depth 1 https://github.com/commaai/opendbc && \
     cd opendbc && git fetch origin $OPENDBC_REF && git checkout FETCH_HEAD && rm -rf .git/ && \
-    pip3 install --break-system-packages --no-cache-dir . && \
+    pip3 install --break-system-packages --no-cache-dir -e . && \
     scons -j8 --minimal opendbc/
 
 # for Jenkins
