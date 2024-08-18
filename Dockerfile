@@ -20,8 +20,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf arm/ && \
     rm -rf thumb/nofp thumb/v6* thumb/v8* thumb/v7+fp thumb/v7-r+fp.sp
 
-COPY requirements.txt /tmp/
-RUN pip3 install --break-system-packages --no-cache-dir -r /tmp/requirements.txt
+COPY setup.py __init__.py /tmp/
+COPY python/__init__.py /tmp/python/
+RUN pip3 install --break-system-packages --no-cache-dir /tmp/[dev]
 
 ENV CPPCHECK_DIR=/tmp/cppcheck
 COPY tests/misra/install.sh /tmp/
