@@ -7,15 +7,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends \
     make \
-    ca-certificates \
-    clang \
     g++ \
     gcc-arm-none-eabi libnewlib-arm-none-eabi \
     git \
     libffi-dev \
-    libtool \
     libusb-1.0-0 \
-    locales \
     python3 \
     python3-dev \
     python3-pip \
