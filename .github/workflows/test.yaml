@@ -103,8 +103,8 @@ jobs:
         timeout-minutes: 5
         run: ${{ env.RUN }} "cd tests/misra && pytest -n8 test_mutation.py"
 
-  python_linter:
-    name: python linter
+  static_analysis:
+    name: static analysis
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
