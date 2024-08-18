@@ -62,7 +62,7 @@ git clone https://github.com/commaai/panda.git
 cd panda
 
 # install dependencies
-pip install -r requirements.txt
+pip install -e .[dev]
 
 # install panda
 python setup.py install
