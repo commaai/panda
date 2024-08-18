@@ -57,6 +57,10 @@ uint32_t cuatro_read_current_mA(void) {
   return adc_get_mV(3) * 2U;
 }
 
+void cuatro_set_fan_enabled(bool enabled) {
+  set_gpio_output(GPIOD, 3, !enabled);
+}
+
 void cuatro_init(void) {
   red_chiplet_init();
 
@@ -121,7 +125,7 @@ board board_cuatro = {
   .check_ignition = red_check_ignition,
   .read_voltage_mV = cuatro_read_voltage_mV,
   .read_current_mA = cuatro_read_current_mA,
-  .set_fan_enabled = tres_set_fan_enabled,
+  .set_fan_enabled = cuatro_set_fan_enabled,
   .set_ir_power = tres_set_ir_power,
   .set_siren = unused_set_siren,
   .set_bootkick = tres_set_bootkick,
