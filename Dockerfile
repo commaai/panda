@@ -1,7 +1,7 @@
 FROM ubuntu:24.04
 
-ENV PYTHONUNBUFFERED 1
-ENV PYTHONPATH /tmp/pythonpath
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/tmp/pythonpath
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -29,15 +29,15 @@ RUN /tmp/install.sh && rm -rf $CPPCHECK_DIR/.git/
 ENV SKIP_CPPCHECK_INSTALL=1
 
 # TODO: this should be a "pip install" or not even in this repo at all
-ENV OPENDBC_REF="d377af6c2d01b30d3de892cee91f1ed8fb50d6e8"
-RUN git config --global --add safe.directory /tmp/pythonpath/panda
-RUN mkdir -p /tmp/pythonpath/ && \
+RUN git config --global --add safe.directory $PYTHONPATH/panda
+ENV OPENDBC_REF="5ed7a834a4e0e24c3968dd1e98ceb4b9d5f9791a"
+RUN mkdir -p $PYTHONPATH && \
     cd /tmp/ && \
-    git clone --depth 1 https://github.com/commaai/opendbc && \
-    cd opendbc && git fetch origin $OPENDBC_REF && git checkout FETCH_HEAD && rm -rf .git/ && \
+    git clone --depth 1 https://github.com/commaai/opendbc opendbc_repo && \
+    cd opendbc_repo && git fetch origin $OPENDBC_REF && git checkout FETCH_HEAD && rm -rf .git/ && \
     pip3 install --break-system-packages --no-cache-dir Cython numpy  && \
     scons -j8 --minimal opendbc/ && \
-    mv opendbc $PYTHONPATH && rm -rf /tmp/opendbc/
+    ln -s $PWD/opendbc $PYTHONPATH/opendbc
 
 # for Jenkins
 COPY README.md panda.tar.* /tmp/
