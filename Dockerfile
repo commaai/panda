@@ -4,8 +4,7 @@ ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH /tmp/pythonpath:$PYTHONPATH
 
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update
-RUN apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     make \
     g++ \
     gcc-arm-none-eabi libnewlib-arm-none-eabi \
