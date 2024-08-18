@@ -30,14 +30,15 @@ RUN /tmp/install.sh && rm -rf $CPPCHECK_DIR/.git/
 ENV SKIP_CPPCHECK_INSTALL=1
 
 # TODO: this should be a "pip install" or not even in this repo at all
-ENV OPENDBC_REF="74e042d4e76651d21b48db2c87c092d8855e9bdc"
+ENV OPENDBC_REF="d377af6c2d01b30d3de892cee91f1ed8fb50d6e8"
 RUN git config --global --add safe.directory /tmp/pythonpath/panda
 RUN mkdir -p /tmp/pythonpath/ && \
-    cd /tmp/pythonpath/ && \
+    cd /tmp/ && \
     git clone --depth 1 https://github.com/commaai/opendbc && \
     cd opendbc && git fetch origin $OPENDBC_REF && git checkout FETCH_HEAD && rm -rf .git/ && \
     pip3 install --break-system-packages --no-cache-dir Cython numpy  && \
-    scons -j8 --minimal opendbc/
+    scons -j8 --minimal opendbc/ && \
+    mv opendbc/ $PYTHONPATH && rm -rf /tmp/opendbc/
 
 # for Jenkins
 COPY README.md panda.tar.* /tmp/
