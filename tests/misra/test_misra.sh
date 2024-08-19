@@ -19,7 +19,7 @@ fi
 # ensure checked in coverage table is up to date
 cd $DIR
 if [ -z "$SKIP_TABLES_DIFF" ]; then
-  python $CPPCHECK_DIR/addons/misra.py -generate-table > coverage_table
+  python3 $CPPCHECK_DIR/addons/misra.py -generate-table > coverage_table
   if ! git diff --quiet coverage_table; then
     echo -e "${YELLOW}MISRA coverage table doesn't match. Update and commit:${NC}"
     exit 3

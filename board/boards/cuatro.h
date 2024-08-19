@@ -57,6 +57,10 @@ uint32_t cuatro_read_current_mA(void) {
   return adc_get_mV(3) * 2U;
 }
 
+void cuatro_set_fan_enabled(bool enabled) {
+  set_gpio_output(GPIOD, 3, !enabled);
+}
+
 void cuatro_init(void) {
   red_chiplet_init();
 
@@ -93,6 +97,7 @@ void cuatro_init(void) {
 
   // fan setup
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
+  register_set_bits(&(GPIOC->OTYPER), GPIO_OTYPER_OT8); // open drain
 
   // Initialize IR PWM and set to 0%
   set_gpio_alternate(GPIOC, 9, GPIO_AF2_TIM3);
@@ -108,7 +113,8 @@ board board_cuatro = {
   .has_obd = true,
   .has_spi = true,
   .has_canfd = true,
-  .fan_max_rpm = 6600U,
+  .fan_max_rpm = 12500U,
+  .fan_max_pwm = 99U, // it can go up to 14k RPM, but 99% -> 100% is very non-linear
   .avdd_mV = 1800U,
   .fan_stall_recovery = false,
   .fan_enable_cooldown_time = 3U,
@@ -121,7 +127,7 @@ board board_cuatro = {
   .check_ignition = red_check_ignition,
   .read_voltage_mV = cuatro_read_voltage_mV,
   .read_current_mA = cuatro_read_current_mA,
-  .set_fan_enabled = tres_set_fan_enabled,
+  .set_fan_enabled = cuatro_set_fan_enabled,
   .set_ir_power = tres_set_ir_power,
   .set_siren = unused_set_siren,
   .set_bootkick = tres_set_bootkick,
