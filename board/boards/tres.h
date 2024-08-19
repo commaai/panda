@@ -76,6 +76,7 @@ board board_tres = {
   .has_spi = true,
   .has_canfd = true,
   .fan_max_rpm = 6600U,
+  .fan_max_pwm = 100U,
   .avdd_mV = 1800U,
   .fan_stall_recovery = false,
   .fan_enable_cooldown_time = 3U,

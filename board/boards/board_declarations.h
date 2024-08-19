@@ -29,6 +29,7 @@ struct board {
   const uint16_t avdd_mV;
   const bool fan_stall_recovery;
   const uint8_t fan_enable_cooldown_time;
+  const uint8_t fan_max_pwm;
   board_init init;
   board_init_bootloader init_bootloader;
   board_enable_can_transceiver enable_can_transceiver;

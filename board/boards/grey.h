@@ -11,6 +11,7 @@ board board_grey = {
   .has_spi = false,
   .has_canfd = false,
   .fan_max_rpm = 0U,
+  .fan_max_pwm = 100U,
   .avdd_mV = 3300U,
   .fan_stall_recovery = false,
   .fan_enable_cooldown_time = 0U,
