@@ -6,10 +6,15 @@
 extern void *g_pfnVectors;
 extern uint32_t enter_bootloader_mode;
 
+typedef void (*bootloader_fcn)(void);
+typedef bootloader_fcn *bootloader_fcn_ptr;
+
 void jump_to_bootloader(void) {
   // do enter bootloader
   enter_bootloader_mode = 0;
-  void (*bootloader)(void) = (void (*)(void)) (*((uint32_t *)BOOTLOADER_ADDRESS));
+
+  bootloader_fcn_ptr bootloader_ptr = (bootloader_fcn_ptr)BOOTLOADER_ADDRESS;
+  bootloader_fcn bootloader = *bootloader_ptr;
 
   // jump to bootloader
   enable_interrupts();
@@ -51,9 +56,9 @@ void early_initialization(void) {
   detect_board_type();
 
   if (enter_bootloader_mode == ENTER_BOOTLOADER_MAGIC) {
-  #ifdef PANDA
-    current_board->set_gps_mode(GPS_DISABLED);
-  #endif
+    #ifdef PANDA
+    current_board->init_bootloader();
+    #endif
     current_board->set_led(LED_GREEN, 1);
     jump_to_bootloader();
   }

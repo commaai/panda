@@ -1,6 +1,10 @@
 #define CLOCK_SOURCE_PERIOD_MS           50U
 #define CLOCK_SOURCE_PULSE_LEN_MS        2U
 
+void clock_source_set_period(uint8_t period) {
+  register_set(&(TIM1->ARR), ((period*10U) - 1U), 0xFFFFU);
+}
+
 void clock_source_init(void) {
   // Setup timer
   register_set(&(TIM1->PSC), ((APB2_TIMER_FREQ*100U)-1U), 0xFFFFU);           // Tick on 0.1 ms
@@ -22,8 +26,8 @@ void clock_source_init(void) {
   set_gpio_alternate(GPIOB, 15, GPIO_AF1_TIM1);
 
   // Set PWM mode
-  register_set(&(TIM1->CCMR1), (0b110 << TIM_CCMR1_OC2M_Pos), 0xFFFFU);
-  register_set(&(TIM1->CCMR2), (0b110 << TIM_CCMR2_OC3M_Pos), 0xFFFFU);
+  register_set(&(TIM1->CCMR1), (0b110UL << TIM_CCMR1_OC2M_Pos), 0xFFFFU);
+  register_set(&(TIM1->CCMR2), (0b110UL << TIM_CCMR2_OC3M_Pos), 0xFFFFU);
 
   // Enable output
   register_set(&(TIM1->BDTR), TIM_BDTR_MOE, 0xFFFFU);

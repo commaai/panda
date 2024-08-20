@@ -4,8 +4,8 @@ on: [push, pull_request]
 jobs:
   build_socketcan:
     name: socketcan build
-    runs-on: ubuntu-20.04
-    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies

@@ -1,6 +1,6 @@
-// /////////// //
-// White Panda //
-// /////////// //
+// ///////////////////// //
+// White Panda (STM32F4) //
+// ///////////////////// //
 
 void white_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver){
@@ -65,84 +65,33 @@ void white_set_usb_power_mode(uint8_t mode){
   }
 }
 
-void white_set_gps_mode(uint8_t mode) {
-  switch (mode) {
-    case GPS_DISABLED:
-      // ESP OFF
-      set_gpio_output(GPIOC, 14, 0);
-      set_gpio_output(GPIOC, 5, 0);
-      break;
-    case GPS_BOOTMODE:
-      set_gpio_output(GPIOC, 14, 1);
-      set_gpio_output(GPIOC, 5, 0);
-      break;
-    default:
-      print("Invalid ESP/GPS mode\n");
-      break;
-  }
-}
-
 void white_set_can_mode(uint8_t mode){
-  switch (mode) {
-    case CAN_MODE_NORMAL:
-      // B12,B13: disable GMLAN mode
-      set_gpio_mode(GPIOB, 12, MODE_INPUT);
-      set_gpio_mode(GPIOB, 13, MODE_INPUT);
+  if (mode == CAN_MODE_NORMAL) {
+    // B12,B13: disable GMLAN mode
+    set_gpio_mode(GPIOB, 12, MODE_INPUT);
+    set_gpio_mode(GPIOB, 13, MODE_INPUT);
 
-      // B3,B4: disable GMLAN mode
-      set_gpio_mode(GPIOB, 3, MODE_INPUT);
-      set_gpio_mode(GPIOB, 4, MODE_INPUT);
+    // B3,B4: disable GMLAN mode
+    set_gpio_mode(GPIOB, 3, MODE_INPUT);
+    set_gpio_mode(GPIOB, 4, MODE_INPUT);
 
-      // B5,B6: normal CAN2 mode
-      set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
-      set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
+    // B5,B6: normal CAN2 mode
+    set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
+    set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
 
-      // A8,A15: normal CAN3 mode
-      set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
-      set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
-      break;
-    case CAN_MODE_GMLAN_CAN2:
-      // B5,B6: disable CAN2 mode
-      set_gpio_mode(GPIOB, 5, MODE_INPUT);
-      set_gpio_mode(GPIOB, 6, MODE_INPUT);
-
-      // B3,B4: disable GMLAN mode
-      set_gpio_mode(GPIOB, 3, MODE_INPUT);
-      set_gpio_mode(GPIOB, 4, MODE_INPUT);
-
-      // B12,B13: GMLAN mode
-      set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
-      set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
-
-      // A8,A15: normal CAN3 mode
-      set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
-      set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
-      break;
-    case CAN_MODE_GMLAN_CAN3:
-      // A8,A15: disable CAN3 mode
-      set_gpio_mode(GPIOA, 8, MODE_INPUT);
-      set_gpio_mode(GPIOA, 15, MODE_INPUT);
-
-      // B12,B13: disable GMLAN mode
-      set_gpio_mode(GPIOB, 12, MODE_INPUT);
-      set_gpio_mode(GPIOB, 13, MODE_INPUT);
-
-      // B3,B4: GMLAN mode
-      set_gpio_alternate(GPIOB, 3, GPIO_AF11_CAN3);
-      set_gpio_alternate(GPIOB, 4, GPIO_AF11_CAN3);
-
-      // B5,B6: normal CAN2 mode
-      set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
-      set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
-      break;
-    default:
-      print("Tried to set unsupported CAN mode: "); puth(mode); print("\n");
-      break;
+    // A8,A15: normal CAN3 mode
+    set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
+    set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
   }
 }
 
-uint32_t white_read_current(void){
-  return adc_get(ADCCHAN_CURRENT);
+uint32_t white_read_voltage_mV(void){
+  return adc_get_mV(12) * 11U;
+}
+
+uint32_t white_read_current_mA(void){
+  // This isn't in mA, but we're keeping it for backwards compatibility
+  return adc_get_raw(13);
 }
 
 bool white_check_ignition(void){
@@ -150,7 +99,7 @@ bool white_check_ignition(void){
   return !get_gpio_input(GPIOA, 1);
 }
 
-void white_grey_common_init(void) {
+void white_grey_init(void) {
   common_init_gpio();
 
   // C3: current sense
@@ -180,8 +129,8 @@ void white_grey_common_init(void) {
       0        1        high voltage wakeup
       1        1        33kbit (normal)
   */
-  set_gpio_output(GPIOB, 14, 1);
-  set_gpio_output(GPIOB, 15, 1);
+  set_gpio_output(GPIOB, 14, 0);
+  set_gpio_output(GPIOB, 15, 0);
 
   // B7: K-line enable
   set_gpio_output(GPIOB, 7, 1);
@@ -199,8 +148,6 @@ void white_grey_common_init(void) {
   set_gpio_alternate(GPIOC, 11, GPIO_AF7_USART3);
   set_gpio_pullup(GPIOC, 11, PULL_UP);
 
-  // Initialize RTC
-  rtc_init();
 
   // Enable CAN transceivers
   white_enable_can_transceivers(true);
@@ -214,50 +161,51 @@ void white_grey_common_init(void) {
   white_set_can_mode(CAN_MODE_NORMAL);
 
   // Init usb power mode
-  uint32_t voltage = adc_get_voltage();
   // Init in CDP mode only if panda is powered by 12V.
   // Otherwise a PC would not be able to flash a standalone panda
-  if (voltage > 8000U) {  // 8V threshold
+  if (white_read_voltage_mV() > 8000U) {  // 8V threshold
     white_set_usb_power_mode(USB_POWER_CDP);
   } else {
     white_set_usb_power_mode(USB_POWER_CLIENT);
   }
+
+  // ESP/GPS off
+  set_gpio_output(GPIOC, 5, 0);
+  set_gpio_output(GPIOC, 14, 0);
 }
 
-void white_init(void) {
-  white_grey_common_init();
-
-  // Set ESP off by default
-  current_board->set_gps_mode(GPS_DISABLED);
+void white_grey_init_bootloader(void) {
+  // ESP/GPS off
+  set_gpio_output(GPIOC, 5, 0);
+  set_gpio_output(GPIOC, 14, 0);
 }
 
-const harness_configuration white_harness_config = {
+harness_configuration white_harness_config = {
   .has_harness = false
 };
 
-const board board_white = {
-  .board_type = "White",
-  .board_tick = unused_board_tick,
+board board_white = {
+  .set_bootkick = unused_set_bootkick,
   .harness_config = &white_harness_config,
-  .has_gps = false,
-  .has_hw_gmlan = true,
   .has_obd = false,
-  .has_lin = true,
   .has_spi = false,
   .has_canfd = false,
-  .has_rtc_battery = false,
   .fan_max_rpm = 0U,
-  .init = white_init,
+  .fan_max_pwm = 100U,
+  .avdd_mV = 3300U,
+  .fan_stall_recovery = false,
+  .fan_enable_cooldown_time = 0U,
+  .init = white_grey_init,
+  .init_bootloader = white_grey_init_bootloader,
   .enable_can_transceiver = white_enable_can_transceiver,
   .enable_can_transceivers = white_enable_can_transceivers,
   .set_led = white_set_led,
-  .set_gps_mode = white_set_gps_mode,
   .set_can_mode = white_set_can_mode,
   .check_ignition = white_check_ignition,
-  .read_current = white_read_current,
+  .read_voltage_mV = white_read_voltage_mV,
+  .read_current_mA = white_read_current_mA,
   .set_fan_enabled = unused_set_fan_enabled,
   .set_ir_power = unused_set_ir_power,
-  .set_phone_power = unused_set_phone_power,
   .set_siren = unused_set_siren,
   .read_som_gpio = unused_read_som_gpio
 };

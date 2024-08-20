@@ -2,93 +2,84 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-PANDA_DIR=$DIR/../../
+PANDA_DIR=$(realpath $DIR/../../)
 
-CPPCHECK_DIR=$DIR/cppcheck
-CPPCHECK=$CPPCHECK_DIR/cppcheck
+GREEN="\e[1;32m"
+YELLOW="\e[1;33m"
+RED="\e[1;31m"
+NC='\033[0m'
 
-RULES="$DIR/MISRA_C_2012.txt"
-MISRA="python $CPPCHECK_DIR/addons/misra.py"
-if [ -f "$RULES" ]; then
-  MISRA="$MISRA --rule-texts $RULES"
-fi
-
-mkdir -p /tmp/misra
-ERROR_CODE=0
+: "${CPPCHECK_DIR:=$DIR/cppcheck/}"
 
 # install cppcheck if missing
-if [ ! -d cppcheck/ ]; then
+if [ -z "${SKIP_CPPCHECK_INSTALL}" ]; then
   $DIR/install.sh
 fi
 
-# generate coverage matrix
-#python tests/misra/cppcheck/addons/misra.py -generate-table > tests/misra/coverage_table
+# ensure checked in coverage table is up to date
+cd $DIR
+if [ -z "$SKIP_TABLES_DIFF" ]; then
+  python3 $CPPCHECK_DIR/addons/misra.py -generate-table > coverage_table
+  if ! git diff --quiet coverage_table; then
+    echo -e "${YELLOW}MISRA coverage table doesn't match. Update and commit:${NC}"
+    exit 3
+  fi
+fi
 
-printf "\nPANDA F4 CODE\n"
-$CPPCHECK -DPANDA -DSTM32F4 -UPEDAL -DCAN3 -DUID_BASE \
+cd $PANDA_DIR
+if [ -z "${SKIP_BUILD}" ]; then
+  scons -j8
+fi
+
+CHECKLIST=$DIR/checkers.txt
+echo "Cppcheck checkers list from test_misra.sh:" > $CHECKLIST
+
+cppcheck() {
+  # get all gcc defines: arm-none-eabi-gcc -dM -E - < /dev/null
+  COMMON_DEFINES="-D__GNUC__=9 -UCMSIS_NVIC_VIRTUAL -UCMSIS_VECTAB_VIRTUAL"
+
+  # note that cppcheck build cache results in inconsistent results as of v2.13.0
+  OUTPUT=$DIR/.output.log
+
+  echo -e "\n\n\n\n\nTEST variant options:" >> $CHECKLIST
+  echo -e ""${@//$PANDA_DIR/}"\n\n" >> $CHECKLIST # (absolute path removed)
+
+  $CPPCHECK_DIR/cppcheck --inline-suppr -I $PANDA_DIR/board/ \
+          -I "$(arm-none-eabi-gcc -print-file-name=include)" \
+          -I $PANDA_DIR/board/stm32f4/inc/ -I $PANDA_DIR/board/stm32h7/inc/ \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
-          -I $PANDA_DIR/board/ --dump --enable=all --inline-suppr --force \
-          $PANDA_DIR/board/main.c 2>/tmp/misra/cppcheck_f4_output.txt
+          --suppress=*:*include/* --error-exitcode=2 --check-level=exhaustive \
+          --platform=arm32-wchar_t4 $COMMON_DEFINES --checkers-report=$CHECKLIST.tmp \
+          --std=c11 "$@" |& tee $OUTPUT
+  
+  cat $CHECKLIST.tmp >> $CHECKLIST
+  rm $CHECKLIST.tmp
+  # cppcheck bug: some MISRA errors won't result in the error exit code,
+  # so check the output (https://trac.cppcheck.net/ticket/12440#no1)
+  if grep -e "misra violation" -e "error" -e "style: " $OUTPUT > /dev/null; then
+    printf "${RED}** FAILED: MISRA violations found!${NC}\n"
+    exit 1
+  fi
+}
 
-$MISRA $PANDA_DIR/board/main.c.dump 2> /tmp/misra/misra_f4_output.txt || true
+PANDA_OPTS="--enable=all --disable=unusedFunction -DPANDA --addon=misra"
 
-# strip (information) lines
-cppcheck_f4_output=$( cat /tmp/misra/cppcheck_f4_output.txt | grep -v ": information: " ) || true
-misra_f4_output=$( cat /tmp/misra/misra_f4_output.txt | grep -v ": information: " ) || true
+printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
+cppcheck $PANDA_OPTS -DSTM32F4 -DSTM32F413xx $PANDA_DIR/board/main.c
 
+printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
+cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx $PANDA_DIR/board/main.c
 
-printf "\nPANDA H7 CODE\n"
-$CPPCHECK -DPANDA -DSTM32H7 -UPEDAL -DUID_BASE \
-          --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
-          -I $PANDA_DIR/board/ --dump --enable=all --inline-suppr --force \
-          $PANDA_DIR/board/main.c 2>/tmp/misra/cppcheck_h7_output.txt
+# unused needs to run globally
+#printf "\n${GREEN}** UNUSED ALL CODE **${NC}\n"
+#cppcheck --enable=unusedFunction --quiet $PANDA_DIR/board/
 
-$MISRA $PANDA_DIR/board/main.c.dump 2> /tmp/misra/misra_h7_output.txt || true
-
-# strip (information) lines
-cppcheck_h7_output=$( cat /tmp/misra/cppcheck_h7_output.txt | grep -v ": information: " ) || true
-misra_h7_output=$( cat /tmp/misra/misra_h7_output.txt | grep -v ": information: " ) || true
+printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 
 
-printf "\nPEDAL CODE\n"
-$CPPCHECK -UPANDA -DSTM32F2 -DPEDAL -UCAN3 \
-          --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
-          -I $PANDA_DIR/board/ --dump --enable=all --inline-suppr --force \
-          $PANDA_DIR/board/pedal/main.c 2>/tmp/misra/cppcheck_pedal_output.txt
-
-$MISRA $PANDA_DIR/board/pedal/main.c.dump 2> /tmp/misra/misra_pedal_output.txt || true
-
-# strip (information) lines
-cppcheck_pedal_output=$( cat /tmp/misra/cppcheck_pedal_output.txt | grep -v ": information: " ) || true
-misra_pedal_output=$( cat /tmp/misra/misra_pedal_output.txt | grep -v ": information: " ) || true
-
-if [[ -n "$misra_f4_output" ]] || [[ -n "$cppcheck_f4_output" ]]
-then
-  echo "Failed! found Misra violations in panda F4 code:"
-  echo "$misra_f4_output"
-  echo "$cppcheck_f4_output"
-  ERROR_CODE=1
+# ensure list of checkers is up to date
+cd $DIR
+if [ -z "$SKIP_TABLES_DIFF" ] && ! git diff --quiet $CHECKLIST; then
+  echo -e "\n${YELLOW}WARNING: Cppcheck checkers.txt report has changed. Review and commit...${NC}"
+  exit 4
 fi
-
-if [[ -n "$misra_h7_output" ]] || [[ -n "$cppcheck_h7_output" ]]
-then
-  echo "Failed! found Misra violations in panda H7 code:"
-  echo "$misra_h7_output"
-  echo "$cppcheck_h7_output"
-  ERROR_CODE=1
-fi
-
-if [[ -n "$misra_pedal_output" ]] || [[ -n "$cppcheck_pedal_output" ]]
-then
-  echo "Failed! found Misra violations in pedal code:"
-  echo "$misra_pedal_output"
-  echo "$cppcheck_pedal_output"
-  ERROR_CODE=1
-fi
-
-if [[ $ERROR_CODE > 0 ]]
-then
-  exit 1
-fi
-
-echo "Success"

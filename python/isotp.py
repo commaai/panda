@@ -6,10 +6,8 @@ DEBUG = False
 def msg(x):
   if DEBUG:
     print("S:", binascii.hexlify(x))
-  if len(x) <= 7:
-    ret = bytes([len(x)]) + x
-  else:
-    assert False
+  assert len(x) <= 7
+  ret = bytes([len(x)]) + x
   return ret.ljust(8, b"\x00")
 
 kmsgs = []
@@ -20,12 +18,12 @@ def recv(panda, cnt, addr, nbus):
   while len(ret) < cnt:
     kmsgs += panda.can_recv()
     nmsgs = []
-    for ids, ts, dat, bus in kmsgs:
+    for ids, dat, bus in kmsgs:
       if ids == addr and bus == nbus and len(ret) < cnt:
         ret.append(dat)
       else:
         # leave around
-        nmsgs.append((ids, ts, dat, bus))
+        nmsgs.append((ids, dat, bus))
     kmsgs = nmsgs[-256:]
   return ret
 
@@ -56,7 +54,7 @@ def isotp_recv_subaddr(panda, addr, bus, sendaddr, subaddr):
     dat = msg[2:]
   else:
     print(binascii.hexlify(msg))
-    assert False
+    raise AssertionError
 
   return dat[0:tlen]
 
@@ -81,10 +79,10 @@ def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None, rate=None):
     sends = []
     while len(x) > 0:
       if subaddr:
-        sends.append(((bytes([subaddr, 0x20 + (idx & 0xF)]) + x[0:6]).ljust(8, b"\x00")))
+        sends.append((bytes([subaddr, 0x20 + (idx & 0xF)]) + x[0:6]).ljust(8, b"\x00"))
         x = x[6:]
       else:
-        sends.append(((bytes([0x20 + (idx & 0xF)]) + x[0:7]).ljust(8, b"\x00")))
+        sends.append((bytes([0x20 + (idx & 0xF)]) + x[0:7]).ljust(8, b"\x00"))
         x = x[7:]
       idx += 1
 
@@ -98,7 +96,7 @@ def isotp_send(panda, x, addr, bus=0, recvaddr=None, subaddr=None, rate=None):
       panda.can_send(addr, sends[-1], 0)
     else:
       if rate is None:
-        panda.can_send_many([(addr, None, s, bus) for s in sends])
+        panda.can_send_many([(addr, s, bus) for s in sends])
       else:
         for dat in sends:
           panda.can_send(addr, dat, bus)
@@ -133,7 +131,7 @@ def isotp_recv(panda, addr, bus=0, sendaddr=None, subaddr=None):
       tlen = msg[0] & 0xf
       dat = msg[1:]
     else:
-      assert False
+      raise AssertionError
     dat = dat[0:tlen]
 
   if DEBUG:
