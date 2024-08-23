@@ -85,8 +85,8 @@ void cuatro_init(void) {
   set_gpio_pullup(GPIOC, 2, PULL_DOWN);
 
   // SOM bootkick + reset lines
-  set_gpio_mode(GPIOC, 12, MODE_OUTPUT);
   tres_set_bootkick(BOOT_BOOTKICK);
+  set_gpio_mode(GPIOC, 12, MODE_OUTPUT);
 
   // SOM debugging UART
   gpio_uart7_init();
