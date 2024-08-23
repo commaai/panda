@@ -4,7 +4,7 @@ def docker_run(String step_label, int timeout_mins, String cmd) {
           --env PYTHONWARNINGS=error \
           --volume /dev/bus/usb:/dev/bus/usb \
           --volume /var/run/dbus:/var/run/dbus \
-          --workdir /tmp/openpilot/panda \
+          --workdir /tmp/pythonpath/panda \
           --net host \
           ${env.DOCKER_IMAGE_TAG} \
           bash -c 'scons -j8 && ${cmd}'", \
@@ -92,7 +92,7 @@ pipeline {
           steps {
             script {
               retry (3) {
-                docker_run("reset hardware", 3, "python ./tests/hitl/reset_jungles.py")
+                docker_run("reset hardware", 3, "python3 ./tests/hitl/reset_jungles.py")
               }
             }
           }
