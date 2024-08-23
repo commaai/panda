@@ -61,6 +61,12 @@ void cuatro_set_fan_enabled(bool enabled) {
   set_gpio_output(GPIOD, 3, !enabled);
 }
 
+void cuatro_set_bootkick(BootState state) {
+  set_gpio_output(GPIOA, 0, state != BOOT_BOOTKICK);
+  // only use if we have to
+  //set_gpio_output(GPIOC, 12, state != BOOT_RESET);
+}
+
 void cuatro_init(void) {
   red_chiplet_init();
 
@@ -85,8 +91,7 @@ void cuatro_init(void) {
   set_gpio_pullup(GPIOC, 2, PULL_DOWN);
 
   // SOM bootkick + reset lines
-  tres_set_bootkick(BOOT_BOOTKICK);
-  set_gpio_mode(GPIOC, 12, MODE_OUTPUT);
+  cuatro_set_bootkick(BOOT_BOOTKICK);
 
   // SOM debugging UART
   gpio_uart7_init();
@@ -130,6 +135,6 @@ board board_cuatro = {
   .set_fan_enabled = cuatro_set_fan_enabled,
   .set_ir_power = tres_set_ir_power,
   .set_siren = unused_set_siren,
-  .set_bootkick = tres_set_bootkick,
+  .set_bootkick = cuatro_set_bootkick,
   .read_som_gpio = tres_read_som_gpio
 };
