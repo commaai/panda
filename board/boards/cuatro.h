@@ -7,7 +7,7 @@ void cuatro_set_led(uint8_t color, bool enabled) {
     case LED_RED:
       set_gpio_output(GPIOD, 15, !enabled);
       break;
-     case LED_GREEN:
+    case LED_GREEN:
       set_gpio_output(GPIOD, 14, !enabled);
       break;
     case LED_BLUE:
@@ -69,6 +69,10 @@ void cuatro_set_bootkick(BootState state) {
 
 void cuatro_init(void) {
   red_chiplet_init();
+
+  // init LEDs as open drain
+  register_set_bits(&(GPIOD->OTYPER), GPIO_OTYPER_OT14 | GPIO_OTYPER_OT15);
+  register_set_bits(&(GPIOE->OTYPER), GPIO_OTYPER_OT2);
 
   // Power readout
   set_gpio_mode(GPIOC, 5, MODE_ANALOG);
