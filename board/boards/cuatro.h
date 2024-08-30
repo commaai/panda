@@ -3,17 +3,15 @@
 // ////////////////////////// //
 
 void cuatro_set_led(uint8_t color, bool enabled) {
-  // try no LED
-  UNUSED(enabled);
   switch (color) {
     case LED_RED:
-      set_gpio_output(GPIOD, 15, 1);
+      set_gpio_output(GPIOD, 15, !enabled);
       break;
-     case LED_GREEN:
-      set_gpio_output(GPIOD, 14, 1);
+    case LED_GREEN:
+      set_gpio_output(GPIOD, 14, !enabled);
       break;
     case LED_BLUE:
-      set_gpio_output(GPIOE, 2, 1);
+      set_gpio_output(GPIOE, 2, !enabled);
       break;
     default:
       break;
@@ -72,18 +70,10 @@ void cuatro_set_bootkick(BootState state) {
 void cuatro_init(void) {
   red_chiplet_init();
 
-  // LED init
-  set_gpio_pullup(GPIOD, 14, PULL_NONE);
-  set_gpio_mode(GPIOD, 14, MODE_OUTPUT);
-  set_gpio_output_type(GPIOD, 14, OUTPUT_TYPE_OPEN_DRAIN);
-
-  set_gpio_pullup(GPIOD, 15, PULL_NONE);
-  set_gpio_mode(GPIOD, 15, MODE_OUTPUT);
-  set_gpio_output_type(GPIOD, 15, OUTPUT_TYPE_OPEN_DRAIN);
-
-  set_gpio_pullup(GPIOE, 2, PULL_NONE);
-  set_gpio_mode(GPIOE, 2, MODE_OUTPUT);
+  // init LEDs as open drain
   set_gpio_output_type(GPIOE, 2, OUTPUT_TYPE_OPEN_DRAIN);
+  set_gpio_output_type(GPIOD, 14, OUTPUT_TYPE_OPEN_DRAIN);
+  set_gpio_output_type(GPIOD, 15, OUTPUT_TYPE_OPEN_DRAIN);
 
   // Power readout
   set_gpio_mode(GPIOC, 5, MODE_ANALOG);
