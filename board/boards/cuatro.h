@@ -71,8 +71,9 @@ void cuatro_init(void) {
   red_chiplet_init();
 
   // init LEDs as open drain
-  register_set_bits(&(GPIOD->OTYPER), GPIO_OTYPER_OT14 | GPIO_OTYPER_OT15);
-  register_set_bits(&(GPIOE->OTYPER), GPIO_OTYPER_OT2);
+  set_gpio_output_type(GPIOE, 2, OUTPUT_TYPE_OPEN_DRAIN);
+  set_gpio_output_type(GPIOD, 14, OUTPUT_TYPE_OPEN_DRAIN);
+  set_gpio_output_type(GPIOD, 15, OUTPUT_TYPE_OPEN_DRAIN);
 
   // Power readout
   set_gpio_mode(GPIOC, 5, MODE_ANALOG);
