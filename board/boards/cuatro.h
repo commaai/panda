@@ -7,7 +7,7 @@ void cuatro_set_led(uint8_t color, bool enabled) {
     case LED_RED:
       set_gpio_output(GPIOD, 15, !enabled);
       break;
-     case LED_GREEN:
+    case LED_GREEN:
       set_gpio_output(GPIOD, 14, !enabled);
       break;
     case LED_BLUE:
@@ -61,8 +61,19 @@ void cuatro_set_fan_enabled(bool enabled) {
   set_gpio_output(GPIOD, 3, !enabled);
 }
 
+void cuatro_set_bootkick(BootState state) {
+  set_gpio_output(GPIOA, 0, state != BOOT_BOOTKICK);
+  // only use if we have to
+  //set_gpio_output(GPIOC, 12, state != BOOT_RESET);
+}
+
 void cuatro_init(void) {
   red_chiplet_init();
+
+  // init LEDs as open drain
+  set_gpio_output_type(GPIOE, 2, OUTPUT_TYPE_OPEN_DRAIN);
+  set_gpio_output_type(GPIOD, 14, OUTPUT_TYPE_OPEN_DRAIN);
+  set_gpio_output_type(GPIOD, 15, OUTPUT_TYPE_OPEN_DRAIN);
 
   // Power readout
   set_gpio_mode(GPIOC, 5, MODE_ANALOG);
@@ -85,8 +96,7 @@ void cuatro_init(void) {
   set_gpio_pullup(GPIOC, 2, PULL_DOWN);
 
   // SOM bootkick + reset lines
-  set_gpio_mode(GPIOC, 12, MODE_OUTPUT);
-  tres_set_bootkick(BOOT_BOOTKICK);
+  cuatro_set_bootkick(BOOT_BOOTKICK);
 
   // SOM debugging UART
   gpio_uart7_init();
@@ -130,6 +140,6 @@ board board_cuatro = {
   .set_fan_enabled = cuatro_set_fan_enabled,
   .set_ir_power = tres_set_ir_power,
   .set_siren = unused_set_siren,
-  .set_bootkick = tres_set_bootkick,
+  .set_bootkick = cuatro_set_bootkick,
   .read_som_gpio = tres_read_som_gpio
 };

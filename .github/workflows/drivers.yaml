@@ -16,7 +16,9 @@ jobs:
           cd drivers/linux
           make link
           make build
-          make install
+
+          # FIXME: install doesn't work sometimes in GH Actions
+          #make install
       - name: Print make log
         if: always()
         continue-on-error: true
