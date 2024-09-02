@@ -6,8 +6,8 @@ from panda import Panda
 from panda.tests.libpanda import libpanda_py
 from panda.tests.safety.common import CANPackerPanda
 
-MAX_ACCEL = 2.0
-MIN_ACCEL = -3.5
+MAX_ACCEL = 2.2
+MIN_ACCEL = -5.12
 
 
 class TestTeslaModel3YSafety(common.PandaCarSafetyTest):
