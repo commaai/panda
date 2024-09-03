@@ -3,22 +3,24 @@ const uint8_t sine[360] = { 127U, 129U, 131U, 133U, 135U, 138U, 140U, 142U, 144U
 
 // TODO: also double-buffer TX
 #define RX_BUF_SIZE 2000U
+#define TX_BUF_SIZE (RX_BUF_SIZE/2U)
 __attribute__((section(".sram4"))) uint16_t rx_buf[2][RX_BUF_SIZE];
-__attribute__((section(".sram4"))) uint16_t tx_buf[RX_BUF_SIZE];
+__attribute__((section(".sram4"))) uint16_t tx_buf[TX_BUF_SIZE];
 
 void BDMA_Channel0_IRQ_Handler(void) {
   BDMA->IFCR |= BDMA_IFCR_CGIF0; // clear flag
 
   // process samples (shift to 12b and bias to be unsigned)
+  // since we are playing mono and receiving stereo, we take every other sample
   uint8_t buf_idx = ((BDMA_Channel0->CCR & BDMA_CCR_CT) >> BDMA_CCR_CT_Pos) == 1U ? 0U : 1U;
-  for (uint16_t i=0U; i < RX_BUF_SIZE; i++) {
-    tx_buf[i] = ((((int32_t) rx_buf[buf_idx][i]) + (1U << 14)) >> 3);
+  for (uint16_t i=0U; i < RX_BUF_SIZE; i += 2) {
+    tx_buf[i/2U] = ((((int32_t) rx_buf[buf_idx][i]) + (1U << 14)) >> 3);
   }
 
   DMA1->LIFCR |= 0xFFFFFFFF;
   DMA1_Stream1->CR &= ~DMA_SxCR_EN;
   register_set(&DMA1_Stream1->M0AR, (uint32_t) tx_buf, 0xFFFFFFFFU);
-  DMA1_Stream1->NDTR = RX_BUF_SIZE;
+  DMA1_Stream1->NDTR = TX_BUF_SIZE;
   DMA1_Stream1->CR |= DMA_SxCR_EN;
 }
 
@@ -40,7 +42,7 @@ void sound_init(void) {
 
   // Init trigger timer (48kHz)
   register_set(&TIM7->PSC, 0U, 0xFFFFU);
-  register_set(&TIM7->ARR, 1247U, 0xFFFFU);
+  register_set(&TIM7->ARR, 2494U, 0xFFFFU);
   register_set(&TIM7->CR2, (0b10 << TIM_CR2_MMS_Pos), TIM_CR2_MMS_Msk);
   register_set(&TIM7->CR1, TIM_CR1_ARPE | TIM_CR1_URS, 0x088EU);
   TIM7->SR = 0U;
@@ -48,7 +50,7 @@ void sound_init(void) {
 
   register_set(&SAI4->GCR, 0U, SAI_GCR_SYNCIN_Msk | SAI_GCR_SYNCOUT_Msk);
 
-  // stereo audio in (needs to be combined in fw, or set to mono on the host side)
+  // stereo audio in
   register_set(&SAI4_Block_B->CR1, SAI_xCR1_DMAEN | (0b00 << SAI_xCR1_SYNCEN_Pos) | (0b100 << SAI_xCR1_DS_Pos) | (0b11 << SAI_xCR1_MODE_Pos), 0x0FFB3FEFU);
   register_set(&SAI4_Block_B->CR2, (0b001 << SAI_xCR2_FTH_Pos), 0xFFFBU); // TODO: mute detection
   register_set(&SAI4_Block_B->FRCR, (31U << SAI_xFRCR_FRL_Pos), 0x7FFFFU);
