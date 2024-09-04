@@ -24,8 +24,15 @@ void BDMA_Channel0_IRQ_Handler(void) {
   DMA1_Stream1->CR |= DMA_SxCR_EN;
 }
 
+void BDMA_Channel1_IRQ_Handler(void) {
+  BDMA->IFCR |= BDMA_IFCR_CGIF1; // clear flag
+
+  print("mic DMA\n");
+}
+
 void sound_init(void) {
   REGISTER_INTERRUPT(BDMA_Channel0_IRQn, BDMA_Channel0_IRQ_Handler, 64U, FAULT_INTERRUPT_RATE_SOUND_DMA)
+  REGISTER_INTERRUPT(BDMA_Channel1_IRQn, BDMA_Channel1_IRQ_Handler, 64U, FAULT_INTERRUPT_RATE_SOUND_DMA)
 
   // Init DAC
   register_set(&DAC1->MCR, 0U, 0xFFFFFFFFU);
@@ -48,7 +55,9 @@ void sound_init(void) {
   TIM7->SR = 0U;
   TIM7->CR1 |= TIM_CR1_CEN;
 
-  register_set(&SAI4->GCR, 0U, SAI_GCR_SYNCIN_Msk | SAI_GCR_SYNCOUT_Msk);
+  // sync both SAIs
+  register_set(&SAI4->GCR, (0b10 << SAI_GCR_SYNCOUT_Pos), SAI_GCR_SYNCIN_Msk | SAI_GCR_SYNCOUT_Msk);
+  register_set(&SAI1->GCR, (3U << SAI_GCR_SYNCIN_Pos), SAI_GCR_SYNCIN_Msk | SAI_GCR_SYNCOUT_Msk);
 
   // stereo audio in
   register_set(&SAI4_Block_B->CR1, SAI_xCR1_DMAEN | (0b00 << SAI_xCR1_SYNCEN_Pos) | (0b100 << SAI_xCR1_DS_Pos) | (0b11 << SAI_xCR1_MODE_Pos), 0x0FFB3FEFU);
@@ -56,14 +65,20 @@ void sound_init(void) {
   register_set(&SAI4_Block_B->FRCR, (31U << SAI_xFRCR_FRL_Pos), 0x7FFFFU);
   register_set(&SAI4_Block_B->SLOTR, (0b11 << SAI_xSLOTR_SLOTEN_Pos) | (1U << SAI_xSLOTR_NBSLOT_Pos) | (0b01 << SAI_xSLOTR_SLOTSZ_Pos), 0xFFFF0FDFU); // NBSLOT definition is vague
 
-  // mono mic out
-  register_set(&SAI4->PDMCR, (0b1 << SAI_PDMCR_CKEN2_Pos) | (0b01 << SAI_PDMCR_MICNBR_Pos) | (0b1 << SAI_PDMCR_PDMEN_Pos), 0x331);
-  register_set(&SAI4_Block_A->CR1, (26U << SAI_xCR1_MCKDIV_Pos) | SAI_xCR1_NODIV | (0b00 << SAI_xCR1_SYNCEN_Pos) | (0b100 << SAI_xCR1_DS_Pos) | (0b01 << SAI_xCR1_MODE_Pos), 0x0FFB3FEFU);
+  // mono mic in
+  register_set(&SAI1->PDMCR, (0b1 << SAI_PDMCR_CKEN2_Pos) | (0b01 << SAI_PDMCR_MICNBR_Pos) | (0b1 << SAI_PDMCR_PDMEN_Pos), 0x331);
+  register_set(&SAI1_Block_A->CR1, SAI_xCR1_DMAEN | (26U << SAI_xCR1_MCKDIV_Pos) | SAI_xCR1_NODIV | (0b00 << SAI_xCR1_SYNCEN_Pos) | (0b100 << SAI_xCR1_DS_Pos) | (0b01 << SAI_xCR1_MODE_Pos), 0x0FFB3FEFU);
+  register_set(&SAI1_Block_A->CR2, 0U, 0xFFFBU);
+  register_set(&SAI1_Block_A->FRCR, (31U << SAI_xFRCR_FRL_Pos), 0x7FFFFU);
+  register_set(&SAI1_Block_A->SLOTR, (0b11 << SAI_xSLOTR_SLOTEN_Pos) | (1U << SAI_xSLOTR_NBSLOT_Pos) | (0b01 << SAI_xSLOTR_SLOTSZ_Pos), 0xFFFF0FDFU); // NBSLOT definition is vague
+
+  // mono mic out (slave transmitter)
+  register_set(&SAI4_Block_A->CR1, SAI_xCR1_DMAEN | (0b01 << SAI_xCR1_SYNCEN_Pos) | (0b100 << SAI_xCR1_DS_Pos) | (0b10 << SAI_xCR1_MODE_Pos), 0x0FFB3FEFU);
   register_set(&SAI4_Block_A->CR2, 0U, 0xFFFBU);
   register_set(&SAI4_Block_A->FRCR, (31U << SAI_xFRCR_FRL_Pos), 0x7FFFFU);
   register_set(&SAI4_Block_A->SLOTR, (0b11 << SAI_xSLOTR_SLOTEN_Pos) | (1U << SAI_xSLOTR_NBSLOT_Pos) | (0b01 << SAI_xSLOTR_SLOTSZ_Pos), 0xFFFF0FDFU); // NBSLOT definition is vague
 
-  // init DMA (SAI4_B -> memory, double buffers)
+  // init sound DMA (SAI4_B -> memory, double buffers)
   register_set(&BDMA_Channel0->CPAR, (uint32_t) &(SAI4_Block_B->DR), 0xFFFFFFFFU);
   register_set(&BDMA_Channel0->CM0AR, (uint32_t) rx_buf[0], 0xFFFFFFFFU);
   register_set(&BDMA_Channel0->CM1AR, (uint32_t) rx_buf[1], 0xFFFFFFFFU);
@@ -72,8 +87,18 @@ void sound_init(void) {
   register_set(&DMAMUX2_Channel0->CCR, 16U, DMAMUX_CxCR_DMAREQ_ID_Msk); // SAI4_B_DMA
   register_set_bits(&BDMA_Channel0->CCR, BDMA_CCR_EN);
 
+  // init mic DMA (SAI1_A -> SAI4_A)
+  register_set(&BDMA_Channel1->CPAR, (uint32_t) &(SAI1_Block_A->DR), 0xFFFFFFFFU);
+  register_set(&BDMA_Channel1->CM0AR, (uint32_t) &(SAI4_Block_A->DR), 0xFFFFFFFFU);
+  BDMA_Channel1->CNDTR = 8U;
+  register_set(&BDMA_Channel1->CCR, (0b10 << BDMA_CCR_MSIZE_Pos) | (0b10 << BDMA_CCR_PSIZE_Pos), 0xFFFFU);
+  register_set(&DMAMUX2_Channel1->CCR, 16U, DMAMUX_CxCR_DMAREQ_ID_Msk); // SAI4_A_DMA
+  register_set_bits(&BDMA_Channel1->CCR, BDMA_CCR_EN);
+
   // enable all initted blocks
+  register_set_bits(&SAI1_Block_A->CR1, SAI_xCR1_SAIEN);
   register_set_bits(&SAI4_Block_A->CR1, SAI_xCR1_SAIEN);
   register_set_bits(&SAI4_Block_B->CR1, SAI_xCR1_SAIEN);
   NVIC_EnableIRQ(BDMA_Channel0_IRQn);
+  NVIC_EnableIRQ(BDMA_Channel1_IRQn);
 }

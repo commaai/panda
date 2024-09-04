@@ -172,7 +172,10 @@ static void tick_handler(void) {
 
     #ifdef STM32H7
       //while((SAI4_Block_A->SR & SAI_xSR_FLVL) != 0U) {
-        puth4(SAI4_Block_A->DR); print("\n");
+        // uint32_t dat = SAI1_Block_A->DR;
+        // SAI4_Block_A->DR = 0x1234U;
+        //puth4(dat); print("\n");
+        puth(BDMA->ISR); print("\n");
       //}
 
       // if(rx_buf[0].buf[0] != 0U) {
