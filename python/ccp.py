@@ -177,7 +177,7 @@ class CcpClient():
   def get_seed(self, resource_mask: int) -> bytes:
     if resource_mask > 255:
       raise ValueError("resource mask must be less than 256")
-    self._send_cro(COMMAND_CODE.GET_SEED)
+    self._send_cro(COMMAND_CODE.GET_SEED, bytes([resource_mask]))
     resp = self._recv_dto(0.025)
     # protected = resp[0] == 0
     seed = resp[1:]
@@ -221,7 +221,7 @@ class CcpClient():
     if size > 5:
       raise ValueError("size must be less than 6")
     self._send_cro(COMMAND_CODE.UPLOAD, bytes([size]))
-    return self._recv_dto(0.025)
+    return self._recv_dto(0.025)[:size]
 
   def short_upload(self, size: int, addr_ext: int, addr: int) -> bytes:
     if size > 5:
@@ -229,7 +229,7 @@ class CcpClient():
     if addr_ext > 255:
       raise ValueError("address extension must be less than 256")
     self._send_cro(COMMAND_CODE.SHORT_UP, bytes([size, addr_ext]) + struct.pack(f"{self.byte_order.value}I", addr))
-    return self._recv_dto(0.025)
+    return self._recv_dto(0.025)[:size]
 
   def select_calibration_page(self) -> None:
     self._send_cro(COMMAND_CODE.SELECT_CAL_PAGE)
