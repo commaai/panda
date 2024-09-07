@@ -53,7 +53,7 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
     if(addr == 0x155){
       // Vehicle speed: (val * 0.5) * KPH_TO_MPS
       float speed = ((((GET_BYTE(to_push, 6) & 0x0FU) << 6) | (GET_BYTE(to_push, 5) >> 2)) * 0.5) * 0.277778;
-      vehicle_moving = ABS(speed) > 0.1;
+      vehicle_moving = !GET_BIT(to_push, 41U);
       UPDATE_VEHICLE_SPEED(speed);
     }
 
