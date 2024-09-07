@@ -17,10 +17,15 @@ def can_printer():
   start = sec_since_boot()
   lp = sec_since_boot()
   msgs = defaultdict(list)
+
   canbus = int(os.getenv("CAN", "0"))
+  if canbus == 3:
+    canbus = 1
+    p.set_obd(True)
+
   while True:
     can_recv = p.can_recv()
-    for address, _, dat, src in can_recv:
+    for address, dat, src in can_recv:
       if src == canbus:
         msgs[address].append(dat)
 
