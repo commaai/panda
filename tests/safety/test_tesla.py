@@ -69,7 +69,7 @@ class TestTeslaModel3YSteeringSafety(TestTeslaModel3YSafety):
         self.packer = CANPackerPanda("tesla_model3_party")
         self.packer_vehicle = CANPackerPanda("tesla_model3_vehicle")
         self.safety = libpanda_py.libpanda
-        self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_MODEL3_Y)
+        self.safety.set_safety_hooks(Panda.SAFETY_TESLA, 0)
         self.safety.init_tests()
 
     def _angle_cmd_msg(self, angle: float, enabled: bool):
@@ -107,7 +107,7 @@ class TestTeslaModel3YLongitudinalSafety(TestTeslaModel3YSteeringSafety):
         self.packer = CANPackerPanda("tesla_model3_party")
         self.packer_vehicle = CANPackerPanda("tesla_model3_vehicle")
         self.safety = libpanda_py.libpanda
-        self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL | Panda.FLAG_TESLA_MODEL3_Y)
+        self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL)
         self.safety.init_tests()
 
     def test_no_aeb(self):
