@@ -88,8 +88,10 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
   }
 
   generic_rx_checks((addr == 0x488) && (bus == 0));
-  generic_rx_checks((addr == 0x2b9) && (bus == 0));
 
+  if (tesla_longitudinal && !tesla_stock_aeb) {
+      generic_rx_checks((addr == 0x2b9) && (bus == 0));
+  }
 }
 
 
