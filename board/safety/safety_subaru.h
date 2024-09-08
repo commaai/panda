@@ -35,6 +35,7 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
 #define MSG_SUBARU_CruiseControl         0x240
 #define MSG_SUBARU_Throttle              0x40
 #define MSG_SUBARU_Steering_Torque_2     0x118
+#define MSG_SUBARU_Steering_Torque       0x119
 #define MSG_SUBARU_Wheel_Speeds          0x13a
 
 #define MSG_SUBARU_ES_LKAS               0x122
@@ -76,6 +77,7 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
 #define SUBARU_COMMON_RX_CHECKS(alt_bus)                                                                                                            \
   {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}}, \
   {.msg = {{MSG_SUBARU_Steering_Torque_2, SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}}, \
+  {.msg = {{MSG_SUBARU_Steering_Torque, SUBARU_MAIN_BUS, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}}, \
   {.msg = {{MSG_SUBARU_Wheel_Speeds,    alt_bus,         8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}}, \
   {.msg = {{MSG_SUBARU_Brake_Status,    alt_bus,         8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}}, \
   {.msg = {{MSG_SUBARU_CruiseControl,   alt_bus,         8, .check_checksum = true, .max_counter = 15U, .frequency = 20U}, { 0 }, { 0 }}}, \
@@ -143,9 +145,11 @@ static void subaru_rx_hook(const CANPacket_t *to_push) {
     torque_driver_new = ((GET_BYTES(to_push, 0, 4) >> 45) & 0x7FFU);
     torque_driver_new = -1 * to_signed(torque_driver_new, 11);
     update_sample(&torque_driver, torque_driver_new);
+  }
 
+  if ((addr == MSG_SUBARU_Steering_Torque) && (bus == SUBARU_MAIN_BUS)) {
     int angle_meas_new = (GET_BYTES(to_push, 4, 2) & 0xFFFFU);
-    // convert Steering_Torque_2 -> Steering_Angle to centidegrees, to match the ES_LKAS_ANGLE angle request units
+    // convert Steering_Torque -> Steering_Angle to centidegrees, to match the ES_LKAS_ANGLE angle request units
     angle_meas_new = ROUND(to_signed(angle_meas_new, 16) * -2.17);
     update_sample(&angle_meas, angle_meas_new);
   }
