@@ -16,8 +16,7 @@ const LongitudinalLimits TESLA_LONG_LIMITS = {
   .inactive_accel = 375,  // 0. m/s^2
 };
 
-const int TESLA_FLAG_MODEL3_Y = 1;
-const int TESLA_FLAG_LONGITUDINAL_CONTROL = 2;
+const int TESLA_FLAG_LONGITUDINAL_CONTROL = 1;
 
 const CanMsg TESLA_M3_Y_TX_MSGS[] = {
   {0x488, 0, 4},  // DAS_steeringControl
