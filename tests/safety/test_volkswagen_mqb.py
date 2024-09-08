@@ -8,6 +8,7 @@ from panda.tests.safety.common import CANPackerPanda
 
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
+AEB_MIN_ACCEL = -8.0
 
 MSG_ESP_19 = 0xB2       # RX from ABS, for wheel speeds
 MSG_LH_EPS_03 = 0x9F    # RX from EPS, for driver steering torque
@@ -101,6 +102,16 @@ class TestVolkswagenMqbSafety(common.PandaCarSafetyTest, common.DriverTorqueStee
   def _acc_07_msg(self, accel, secondary_accel=3.02):
     values = {"ACC_Sollbeschleunigung_02": accel, "ACC_Folgebeschl": secondary_accel}
     return self.packer.make_can_msg_panda("ACC_07", 0, values)
+
+  # FCW/AEB control message
+  def _acc_10_msg(self, accel=0.0, partial_braking=False, target_braking=False, city_braking=False):
+    values = {
+      "ANB_Teilbremsung_Freigabe": partial_braking,
+      "ANB_Zielbremsung_Freigabe": target_braking,
+      "ANB_CM_Anforderung": city_braking,
+      "ANB_Zielbrems_Teilbrems_Verz_Anf": accel,
+    }
+    return self.packer.make_can_msg_panda("ACC_10", 0, values)
 
   # Verify brake_pressed is true if either the switch or pressure threshold signals are true
   def test_redundant_brake_signals(self):
@@ -219,6 +230,18 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
         self.assertEqual(send, self._tx(self._acc_07_msg(accel)), (controls_allowed, accel))
         # ensure the optional secondary accel field remains inactive for now
         self.assertEqual(is_inactive_accel, self._tx(self._acc_07_msg(accel, secondary_accel=accel)), (controls_allowed, accel))
+
+  def test_aeb_actuation(self):
+    for partial_braking, target_braking, city_braking in [[False, False, False], [True, False, False], [False, True, False], [False, False, True]]:
+      for accel in np.concatenate((np.arange(AEB_MIN_ACCEL - 2, 0.0, 0.1), [0.0])):
+        accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
+        aeb_valid_inactive = accel == 0.0 and not any([partial_braking, target_braking, city_braking])
+        # TODO: When real AEB is implemented
+        # aeb_valid_active = AEB_MIN_ACCEL <= accel <= 0.0 and any([partial_braking, target_braking, city_braking])
+        # send = aeb_valid_inactive or aeb_valid_active
+        send = aeb_valid_inactive
+        self.assertEqual(send, self._tx(self._acc_10_msg(accel, partial_braking, target_braking, city_braking)),
+                         f"allowed invalid AEB actuation {accel=} {partial_braking=} {target_braking=} {city_braking=}")
 
 
 if __name__ == "__main__":
