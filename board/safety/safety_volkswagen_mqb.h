@@ -23,12 +23,14 @@ const LongitudinalLimits VOLKSWAGEN_MQB_LONG_LIMITS = {
 #define MSG_ESP_19      0x0B2   // RX from ABS, for wheel speeds
 #define MSG_LH_EPS_03   0x09F   // RX from EPS, for driver steering torque
 #define MSG_ESP_05      0x106   // RX from ABS, for brake switch state
+#define MSG_ACC_10      0x117   // TX by OP, FCW/AEB control to the stopping coordinator
 #define MSG_TSK_06      0x120   // RX from ECU, for ACC status from drivetrain coordinator
 #define MSG_MOTOR_20    0x121   // RX from ECU, for driver throttle input
 #define MSG_ACC_06      0x122   // TX by OP, ACC control instructions to the drivetrain coordinator
 #define MSG_HCA_01      0x126   // TX by OP, Heading Control Assist steering torque
 #define MSG_GRA_ACC_01  0x12B   // TX by OP, ACC control buttons for cancel/resume
 #define MSG_ACC_07      0x12E   // TX by OP, ACC control instructions to the drivetrain coordinator
+#define MSG_ACC_15      0x2A9   // TX by OP, FCW/AEB HUD to the instrument cluster
 #define MSG_ACC_02      0x30C   // TX by OP, ACC HUD data to the instrument cluster
 #define MSG_MOTOR_14    0x3BE   // RX from ECU, for brake switch status
 #define MSG_LDW_02      0x397   // TX by OP, Lane line recognition and text alerts
@@ -37,7 +39,8 @@ const LongitudinalLimits VOLKSWAGEN_MQB_LONG_LIMITS = {
 const CanMsg VOLKSWAGEN_MQB_STOCK_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_GRA_ACC_01, 0, 8}, {MSG_GRA_ACC_01, 2, 8},
                                                {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
 const CanMsg VOLKSWAGEN_MQB_LONG_TX_MSGS[] = {{MSG_HCA_01, 0, 8}, {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8},
-                                              {MSG_ACC_02, 0, 8}, {MSG_ACC_06, 0, 8}, {MSG_ACC_07, 0, 8}};
+                                              {MSG_ACC_02, 0, 8}, {MSG_ACC_06, 0, 8}, {MSG_ACC_07, 0, 8},
+                                              {MSG_ACC_10, 0, 8}, {MSG_ACC_15, 0, 8}};
 
 RxCheck volkswagen_mqb_rx_checks[] = {
   {.msg = {{MSG_ESP_19, 0, 8, .check_checksum = false, .max_counter = 0U, .frequency = 100U}, { 0 }, { 0 }}},
@@ -241,6 +244,25 @@ static bool volkswagen_mqb_tx_hook(const CANPacket_t *to_send) {
     }
   }
 
+  // Safety check for FCW/AEB control
+  if (addr == MSG_ACC_10) {
+    bool violation = false;
+
+    bool partial_braking = GET_BIT(to_send, 28);  // Signal: ACC_10.ANB_Teilbremsung_Freigabe
+    bool target_braking = GET_BIT(to_send, 39);  // Signal: ACC_10.ANB_Zielbremsung_Freigabe
+    // Signal: ACC_10.ANB_Zielbrems_Teilbrems_Verz_Anf (acceleration in m/s2, scale 0.024, offset -20.016)
+    int aeb_accel = ((GET_BYTE(to_send, 3) & 0xE0U) >> 5) | ((GET_BYTE(to_send, 4) & 0x7FU) << 3);
+
+    // TODO: Until openpilot AEB is supported, enforcing no actuation
+    violation |= partial_braking;
+    violation |= target_braking;
+    violation |= aeb_accel != 834;  // Inactive accel value
+
+    if (violation) {
+      tx = false;
+    }
+  }
+
   // FORCE CANCEL: ensuring that only the cancel button press is sent when controls are off.
   // This avoids unintended engagements while still allowing resume spam
   if ((addr == MSG_GRA_ACC_01) && !controls_allowed) {
@@ -270,7 +292,8 @@ static int volkswagen_mqb_fwd_hook(int bus_num, int addr) {
       if ((addr == MSG_HCA_01) || (addr == MSG_LDW_02)) {
         // openpilot takes over LKAS steering control and related HUD messages from the camera
         bus_fwd = -1;
-      } else if (volkswagen_longitudinal && ((addr == MSG_ACC_02) || (addr == MSG_ACC_06) || (addr == MSG_ACC_07))) {
+      } else if (volkswagen_longitudinal && ((addr == MSG_ACC_02) || (addr == MSG_ACC_06) || (addr == MSG_ACC_07) || \
+                                             (addr == MSG_ACC_10) || (addr == MSG_ACC_15))) {
         // openpilot takes over acceleration/braking control and related HUD messages from the stock ACC radar
         bus_fwd = -1;
       } else {
