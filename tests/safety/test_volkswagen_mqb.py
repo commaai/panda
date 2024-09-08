@@ -239,7 +239,7 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
     for partial_braking, target_braking in [[False, False], [True, False], [False, True]]:
       for accel in np.concatenate((np.arange(AEB_MIN_ACCEL - 2, 0.0, 0.1), [INACTIVE_AEB_ACCEL])):
         accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
-        aeb_valid_inactive = accel == 0.0 and not any([partial_braking, target_braking])
+        aeb_valid_inactive = accel == INACTIVE_AEB_ACCEL and not any([partial_braking, target_braking])
         # TODO: When real AEB is implemented
         # aeb_valid_active = AEB_MIN_ACCEL <= accel <= 0.0 and any([partial_braking, target_braking])
         # send = aeb_valid_inactive or aeb_valid_active
