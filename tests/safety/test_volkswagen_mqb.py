@@ -245,7 +245,7 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
         # send = aeb_valid_inactive or aeb_valid_active
         send = aeb_valid_inactive
         self.assertEqual(send, self._tx(self._acc_10_msg(accel, partial_braking, target_braking)),
-                         f"allowed invalid AEB actuation {accel=} {partial_braking=} {target_braking=}")
+                         f"{send=} {accel=} {partial_braking=} {target_braking=}")
 
 
 if __name__ == "__main__":
