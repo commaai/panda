@@ -251,12 +251,13 @@ static bool volkswagen_mqb_tx_hook(const CANPacket_t *to_send) {
     bool partial_braking = GET_BIT(to_send, 28);  // Signal: ACC_10.ANB_Teilbremsung_Freigabe
     bool target_braking = GET_BIT(to_send, 39);  // Signal: ACC_10.ANB_Zielbremsung_Freigabe
     // Signal: ACC_10.ANB_Zielbrems_Teilbrems_Verz_Anf (acceleration in m/s2, scale 0.024, offset -20.016)
-    int aeb_accel = ((GET_BYTE(to_send, 3) & 0xE0U) >> 5) | ((GET_BYTE(to_send, 4) & 0x7FU) << 3);
+    // aeb_accel = true aeb_accel * 1000 to avoid floating point math
+    int aeb_accel = ((((GET_BYTE(to_send, 3) & 0xE0U) >> 5) | ((GET_BYTE(to_send, 4) & 0x7FU) << 3)) * 24U) - 20016U;
 
     // TODO: Until openpilot AEB is supported, enforcing no actuation
     violation |= partial_braking;
     violation |= target_braking;
-    violation |= aeb_accel != 834;  // Inactive accel value
+    violation |= aeb_accel != 0;  // Inactive accel value
 
     if (violation) {
       tx = false;
