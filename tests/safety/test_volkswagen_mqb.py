@@ -9,6 +9,7 @@ from panda.tests.safety.common import CANPackerPanda
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
 AEB_MIN_ACCEL = -8.0
+INACTIVE_AEB_ACCEL = 0.0
 
 MSG_ESP_19 = 0xB2       # RX from ABS, for wheel speeds
 MSG_LH_EPS_03 = 0x9F    # RX from EPS, for driver steering torque
@@ -169,8 +170,10 @@ class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety):
 
 
 class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
-  TX_MSGS = [[MSG_HCA_01, 0], [MSG_LDW_02, 0], [MSG_LH_EPS_03, 2], [MSG_ACC_02, 0], [MSG_ACC_06, 0], [MSG_ACC_07, 0], [MSG_ACC_10, 0], [MSG_ACC_15, 0]]
-  FWD_BLACKLISTED_ADDRS = {0: [MSG_LH_EPS_03], 2: [MSG_HCA_01, MSG_LDW_02, MSG_ACC_02, MSG_ACC_06, MSG_ACC_07, MSG_ACC_10, MSG_ACC_15]}
+  TX_MSGS = [[MSG_HCA_01, 0], [MSG_LDW_02, 0], [MSG_LH_EPS_03, 2], [MSG_ACC_02, 0],
+             [MSG_ACC_06, 0], [MSG_ACC_07, 0], [MSG_ACC_10, 0], [MSG_ACC_15, 0]]
+  FWD_BLACKLISTED_ADDRS = {0: [MSG_LH_EPS_03], 2: [MSG_HCA_01, MSG_LDW_02, MSG_ACC_02, MSG_ACC_06,
+                                                   MSG_ACC_07, MSG_ACC_10, MSG_ACC_15]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   INACTIVE_ACCEL = 3.01
 
@@ -234,7 +237,7 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
 
   def test_aeb_actuation(self):
     for partial_braking, target_braking in [[False, False], [True, False], [False, True]]:
-      for accel in np.concatenate((np.arange(AEB_MIN_ACCEL - 2, 0.0, 0.1), [0.0])):
+      for accel in np.concatenate((np.arange(AEB_MIN_ACCEL - 2, 0.0, 0.1), [INACTIVE_AEB_ACCEL])):
         accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
         aeb_valid_inactive = accel == 0.0 and not any([partial_braking, target_braking])
         # TODO: When real AEB is implemented
