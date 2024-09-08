@@ -106,11 +106,10 @@ class TestVolkswagenMqbSafety(common.PandaCarSafetyTest, common.DriverTorqueStee
     return self.packer.make_can_msg_panda("ACC_07", 0, values)
 
   # FCW/AEB control message
-  def _acc_10_msg(self, accel=0.0, partial_braking=False, target_braking=False, city_braking=False):
+  def _acc_10_msg(self, accel=0.0, partial_braking=False, target_braking=False):
     values = {
       "ANB_Teilbremsung_Freigabe": partial_braking,
       "ANB_Zielbremsung_Freigabe": target_braking,
-      "ANB_CM_Anforderung": city_braking,
       "ANB_Zielbrems_Teilbrems_Verz_Anf": accel,
     }
     return self.packer.make_can_msg_panda("ACC_10", 0, values)
