@@ -11,8 +11,8 @@ const SteeringLimits TESLA_STEERING_LIMITS = {
 };
 
 const LongitudinalLimits TESLA_LONG_LIMITS = {
-  .max_accel = 430,       // 2.2 m/s^2
-  .min_accel = 247,       // -5.12 m/s^2
+  .max_accel = 425,       // 2 m/s^2
+  .min_accel = 288,       // -3.48 m/s^2
   .inactive_accel = 375,  // 0. m/s^2
 };
 

@@ -106,8 +106,8 @@ class TestTeslaLongitudinalSafetyBase(TestTeslaSafetyBase):
   RELAY_MALFUNCTION_ADDRS = {0: (MSG_DAS_steeringControl, MSG_DAS_Control)}
   FWD_BLACKLISTED_ADDRS = {2: [MSG_DAS_steeringControl, MSG_DAS_Control]}
 
-  MAX_ACCEL = 2.2
-  MIN_ACCEL = -5.12
+  MAX_ACCEL = 2.0
+  MIN_ACCEL = -3.48
   INACTIVE_ACCEL = 0.0
 
   def setUp(self):
