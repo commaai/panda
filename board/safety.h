@@ -633,18 +633,8 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const SteeringLi
 // Safety checks for angle-based steering commands
 bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const SteeringLimits limits) {
   bool violation = false;
-  // PFEIFER - AOL {{
-  bool aol_allowed = acc_main_on && (alternative_experience & ALT_EXP_ENABLE_ALWAYS_ON_LATERAL);
-  if(controls_allowed) {
-    // acc main must be on if controls are allowed
-    acc_main_on = controls_allowed;
-  }
-  // }} PFEIFER - AOL
 
-  //if (controls_allowed && steer_control_enabled) {
-  // PFEIFER - AOL {{
-  if ((controls_allowed || aol_allowed) && steer_control_enabled) {
-  // }} PFEIFER - AOL
+  if (controls_allowed && steer_control_enabled) {
     // convert floating point angle rate limits to integers in the scale of the desired angle on CAN,
     // add 1 to not false trigger the violation. also fudge the speed by 1 m/s so rate limits are
     // always slightly above openpilot's in case we read an updated speed in between angle commands
@@ -687,10 +677,7 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
   }
 
   // No angle control allowed when controls are not allowed
-  //violation |= !controls_allowed && steer_control_enabled;
-  // PFEIFER - AOL {{
-  violation |= !(controls_allowed || aol_allowed) && steer_control_enabled;
-  // }} PFEIFER - AOL
+  violation |= !controls_allowed && steer_control_enabled;
 
   return violation;
 }
