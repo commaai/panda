@@ -47,6 +47,7 @@ const LongitudinalLimits TOYOTA_LONG_LIMITS = {
   {0x128, 1, 6}, {0x141, 1, 4}, {0x160, 1, 8}, {0x161, 1, 7}, {0x470, 1, 4},  /* DSU bus 1 */                                               \
   {0x411, 0, 8},  /* PCS_HUD */                                                                                                             \
   {0x750, 0, 8},  /* radar diagnostic address */                                                                                            \
+  {0x283, 0, 7}, {0x344, 0, 8},  /* pre-collision (AEB) */                                                                                            \
 
 const CanMsg TOYOTA_TX_MSGS[] = {
   TOYOTA_COMMON_TX_MSGS
@@ -214,6 +215,7 @@ static bool toyota_tx_hook(const CANPacket_t *to_send) {
       }
     }
 
+    /*
     // AEB: block all actuation. only used when DSU is unplugged
     if (addr == 0x283) {
       // only allow the checksum, which is the last byte
@@ -222,6 +224,7 @@ static bool toyota_tx_hook(const CANPacket_t *to_send) {
         tx = false;
       }
     }
+    */
 
     // LTA angle steering check
     if (addr == 0x191) {
@@ -326,13 +329,12 @@ static int toyota_fwd_hook(int bus_num, int addr) {
   if (bus_num == 0) {
     bus_fwd = 2;
   }
-
   if (bus_num == 2) {
     // block stock lkas messages and stock acc messages (if OP is doing ACC)
     // in TSS2, 0x191 is LTA which we need to block to avoid controls collision
     bool is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412) || (addr == 0x191));
     // in TSS2 the camera does ACC as well, so filter 0x343
-    bool is_acc_msg = (addr == 0x343);
+    bool is_acc_msg = (addr == 0x343) || (addr == 0x283) || (addr == 0x344);
     bool block_msg = is_lkas_msg || (is_acc_msg && !toyota_stock_longitudinal);
     if (!block_msg) {
       bus_fwd = 0;
