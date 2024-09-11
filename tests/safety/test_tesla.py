@@ -136,6 +136,28 @@ class TestTeslaLongitudinalSafetyBase(TestTeslaSafetyBase):
     self.assertEqual(0, self.safety.safety_fwd_hook(2, aeb_msg_cam.addr))
     self.assertFalse(self._tx(no_aeb_msg))
 
+  def test_prevent_reverse(self):
+    # Note: Tesla can reverse while at a standstill if both accel_min and accel_max are negative.
+    self.safety.set_controls_allowed(True)
+
+    # accel_min and accel_max are positive
+    self.assertTrue(self._tx(self._long_control_msg(set_speed=10, accel_limits=(1.1, 0.8))))
+    self.assertTrue(self._tx(self._long_control_msg(set_speed=0, accel_limits=(1.1, 0.8))))
+
+    # accel_min and accel_max are both zero
+    self.assertTrue(self._tx(self._long_control_msg(set_speed=10, accel_limits=(0, 0))))
+    self.assertTrue(self._tx(self._long_control_msg(set_speed=0, accel_limits=(0, 0))))
+
+    # accel_min and accel_max have opposing signs
+    self.assertTrue(self._tx(self._long_control_msg(set_speed=10, accel_limits=(-0.8, 1.3))))
+    self.assertTrue(self._tx(self._long_control_msg(set_speed=0, accel_limits=(0.8, -1.3))))
+    self.assertTrue(self._tx(self._long_control_msg(set_speed=0, accel_limits=(0, -1.3))))
+
+    # accel_min and accel_max are negative
+    self.assertFalse(self._tx(self._long_control_msg(set_speed=10, accel_limits=(-1.1, -0.6))))
+    self.assertFalse(self._tx(self._long_control_msg(set_speed=0, accel_limits=(-0.6, -1.1))))
+    self.assertFalse(self._tx(self._long_control_msg(set_speed=0, accel_limits=(-0.1, -0.1))))
+
 
 if __name__ == "__main__":
   unittest.main()

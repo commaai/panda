@@ -139,6 +139,12 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
       // Don't allow any acceleration limits above the safety limits
       int raw_accel_max = ((GET_BYTE(to_send, 6) & 0x1FU) << 4) | (GET_BYTE(to_send, 5) >> 4);
       int raw_accel_min = ((GET_BYTE(to_send, 5) & 0x0FU) << 5) | (GET_BYTE(to_send, 4) >> 3);
+
+      // Prevent both acceleration from being negative, as this could cause the car to reverse after coming to standstill
+      if (raw_accel_max < TESLA_LONG_LIMITS.inactive_accel && raw_accel_min < TESLA_LONG_LIMITS.inactive_accel){
+        violation = true;
+      }
+
       violation |= longitudinal_accel_checks(raw_accel_max, TESLA_LONG_LIMITS);
       violation |= longitudinal_accel_checks(raw_accel_min, TESLA_LONG_LIMITS);
     } else {
