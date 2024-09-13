@@ -43,6 +43,7 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
 
 #define MSG_MEB_ESP_01           0xFC    // RX, for wheel speeds
 #define MSG_MEB_ESP_03           0x14C   // RX, for accel pedal
+#define MSG_MEB_ESP_05           0x139   // RX, for ESP hold management
 #define MSG_MEB_ABS_01           0x20A   // RX, for yaw rate
 #define MSG_HCA_03               0x303   // TX by OP, Heading Control Assist steering torque
 #define MSG_MEB_EPS_01           0x13D   // RX, for steering angle
@@ -69,11 +70,13 @@ RxCheck volkswagen_meb_rx_checks[] = {
   {.msg = {{MSG_MEB_EPS_01, 0, 32, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MEB_ESP_01, 0, 48, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MEB_ESP_03, 0, 32, .check_checksum = true, .max_counter = 15U, .frequency = 10U}, { 0 }, { 0 }}},
+  {.msg = {{MSG_MEB_ESP_05, 0, 32, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
   {.msg = {{MSG_MEB_ABS_01, 0, 64, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
 };
 
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
 int volkswagen_steer_power_prev = 0;
+bool volkswagen_esp_hold_confirmation = false;
 
 static uint32_t volkswagen_meb_get_checksum(const CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
@@ -108,6 +111,8 @@ static uint32_t volkswagen_meb_compute_crc(const CANPacket_t *to_push) {
     crc ^= (uint8_t[]){0x77,0x5C,0xA0,0x89,0x4B,0x7C,0xBB,0xD6,0x1F,0x6C,0x4F,0xF6,0x20,0x2B,0x43,0xDD}[counter];
   } else if (addr == MSG_MEB_ESP_03) {
     crc ^= (uint8_t[]){0x16,0x35,0x59,0x15,0x9A,0x2A,0x97,0xB8,0x0E,0x4E,0x30,0xCC,0xB3,0x07,0x01,0xAD}[counter];
+  } else if (addr == MSG_MEB_ESP_05) {
+    crc ^= (uint8_t[]){0xED,0x03,0x1C,0x13,0xC6,0x23,0x78,0x7A,0x8B,0x40,0x14,0x51,0xBF,0x68,0x32,0xBA}[counter];
   } else if (addr == MSG_MEB_MOTOR_01) {
     crc ^= (uint8_t[]){0x77,0x5C,0xA0,0x89,0x4B,0x7C,0xBB,0xD6,0x1F,0x6C,0x4F,0xF6,0x20,0x2B,0x43,0xDD}[counter];
   } else if (addr == MSG_MOTOR_14) {
@@ -151,6 +156,11 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
       vehicle_moving = (fr > 0U) || (rr > 0U) || (rl > 0U) || (fl > 0U);
 
       UPDATE_VEHICLE_SPEED(((fr + rr + rl + fl) / 4 ) * 0.0075 / 3.6);
+    }
+
+    // get ESP hold confirmation
+    if (addr == MSG_MEB_ESP_05) {
+      volkswagen_esp_hold_confirmation = GET_BIT(to_push, 35U);
     }
 
     // Update steering input angle samples
@@ -274,6 +284,10 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
 
     if (longitudinal_accel_checks(desired_accel, VOLKSWAGEN_MEB_LONG_LIMITS)) {
       tx = false;
+      
+      if (volkswagen_esp_hold_confirmation && gas_pressed) {
+        tx = true; // car expects accel while overriding at startup
+      }
     }
   }
 
