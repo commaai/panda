@@ -276,7 +276,7 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
   // Safety check for MSG_MEB_ACC_02 acceleration requests
   // To avoid floating point math, scale upward and compare to pre-scaled safety m/s2 boundaries
   if (addr == MSG_MEB_ACC_02) {
-    // WARNING: IF WE TAKE THE SIGNAL FROM THE CAR WHILE ACC ACTIVE AND ACCEL NOT PRESSED AND BELOW about 3km/h, THE CAR ERRORS AND PUTS ITSELF IN PARKING MODE WITH EPB!
+    // WARNING: IF WE TAKE THE SIGNAL FROM THE CAR WHILE ACC ACTIVE OR USE ACC OR HMS STATES WRONG AND BELOW about 3km/h, THE CAR ERRORS AND PUTS ITSELF IN PARKING MODE WITH EPB!
     int desired_accel = ((((GET_BYTE(to_send, 4) & 0x7U) << 8) | GET_BYTE(to_send, 3)) * 5U) - 7220U;
 
     if (longitudinal_accel_checks(desired_accel, VOLKSWAGEN_MEB_LONG_LIMITS)) {
