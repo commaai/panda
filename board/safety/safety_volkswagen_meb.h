@@ -77,7 +77,7 @@ RxCheck volkswagen_meb_rx_checks[] = {
 uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
 int volkswagen_steer_power_prev = 0;
 bool volkswagen_esp_hold_confirmation = false;
-const int volkswagen_inactive_accel_overwrite = 0;
+const int volkswagen_accel_overwrite = 0;
 
 static uint32_t volkswagen_meb_get_checksum(const CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
@@ -264,10 +264,6 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
           tx = true;
         }
       }
-    }
-
-    if (steer_power > 127) { // maximum steer power
-      tx = false;
     }
 
     if (!steer_req && steer_power != 0) {
