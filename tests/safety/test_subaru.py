@@ -206,7 +206,7 @@ class TestSubaruGen2TorqueSafetyBase(TestSubaruTorqueSafetyBase):
   MAX_TORQUE = 1000
 
 
-class TestSubaruAngleSafety(TestSubaruAngleSafetyBase):
+class TestSubaruAngleSafety(TestSubaruStockLongitudinalSafetyBase, TestSubaruAngleSafetyBase):
   FLAGS = Panda.FLAG_SUBARU_LKAS_ANGLE
 
 
