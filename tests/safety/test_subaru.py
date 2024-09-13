@@ -169,7 +169,7 @@ class TestSubaruTorqueSafetyBase(TestSubaruSafetyBase, common.DriverTorqueSteeri
 
 class TestSubaruAngleSafetyBase(TestSubaruSafetyBase, common.AngleSteeringSafetyTest):
   TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS, SubaruMsg.ES_LKAS_ANGLE)
-  RELAY_MALFUNCTION_ADDRS = {0: (SubaruMsg.ES_LKAS_ANGLE,)}
+  RELAY_MALFUNCTION_ADDRS = {SUBARU_MAIN_BUS: (SubaruMsg.ES_LKAS_ANGLE, SubaruMsg.ES_LKAS,)}
   FWD_BLACKLISTED_ADDRS = fwd_blacklisted_addr(SubaruMsg.ES_LKAS_ANGLE)
 
   FLAGS = Panda.FLAG_SUBARU_LKAS_ANGLE
@@ -199,6 +199,10 @@ class TestSubaruGen2TorqueSafetyBase(TestSubaruTorqueSafetyBase):
   MAX_RATE_UP = 40
   MAX_RATE_DOWN = 40
   MAX_TORQUE = 1000
+
+
+class TestSubaruAngleSafety(TestSubaruAngleSafetyBase):
+  FLAGS = Panda.FLAG_SUBARU_LKAS_ANGLE
 
 
 class TestSubaruGen2TorqueStockLongitudinalSafety(TestSubaruStockLongitudinalSafetyBase, TestSubaruGen2TorqueSafetyBase):
