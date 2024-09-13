@@ -176,6 +176,11 @@ static void subaru_rx_hook(const CANPacket_t *to_push) {
   if ((addr == MSG_SUBARU_CruiseControl) && (bus == alt_main_bus)) {
     bool cruise_engaged = GET_BIT(to_push, 41U);
     pcm_cruise_check(cruise_engaged);
+
+  // LKAS Angle cars use different message
+  } else if (subaru_lkas_angle && (addr == MSG_SUBARU_ES_DashStatus) && (bus == alt_main_bus)) {
+    bool cruise_engaged = GET_BIT(to_push, 36U);
+    pcm_cruise_check(cruise_engaged);
   }
 
   // update vehicle moving with any non-zero wheel speed
