@@ -1,26 +1,14 @@
-void unused_init_bootloader(void) {
-}
+#pragma once
 
-void unused_set_ir_power(uint8_t percentage) {
-  UNUSED(percentage);
-}
+#include <stdint.h>
+#include <stdbool.h>
 
-void unused_set_fan_enabled(bool enabled) {
-  UNUSED(enabled);
-}
+#include "board_declarations.h"
 
-void unused_set_siren(bool enabled) {
-  UNUSED(enabled);
-}
-
-uint32_t unused_read_current(void) {
-  return 0U;
-}
-
-void unused_set_bootkick(BootState state) {
-  UNUSED(state);
-}
-
-bool unused_read_som_gpio(void) {
-  return false;
-}
+void unused_init_bootloader(void);
+void unused_set_ir_power(uint8_t percentage);
+void unused_set_fan_enabled(bool enabled);
+void unused_set_siren(bool enabled);
+uint32_t unused_read_current(void);
+void unused_set_bootkick(BootState state);
+bool unused_read_som_gpio(void);

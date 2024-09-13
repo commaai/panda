@@ -1,3 +1,10 @@
+#pragma once
+
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "drivers/harness.h"
+
 // ******************** Prototypes ********************
 typedef enum {
   BOOT_STANDBY,
@@ -20,7 +27,7 @@ typedef void (*board_set_siren)(bool enabled);
 typedef void (*board_set_bootkick)(BootState state);
 typedef bool (*board_read_som_gpio)(void);
 
-struct board {
+typedef struct {
   harness_configuration *harness_config;
   const bool has_obd;
   const bool has_spi;
@@ -44,7 +51,7 @@ struct board {
   board_set_siren set_siren;
   board_set_bootkick set_bootkick;
   board_read_som_gpio read_som_gpio;
-};
+} board;
 
 // ******************* Definitions ********************
 // These should match the enums in cereal/log.capnp and __init__.py

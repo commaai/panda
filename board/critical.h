@@ -1,17 +1,17 @@
+#pragma once
+
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "config.h"
+
 // ********************* Critical section helpers *********************
-volatile bool interrupts_enabled = false;
+extern volatile bool interrupts_enabled;
 
-void enable_interrupts(void) {
-  interrupts_enabled = true;
-  __enable_irq();
-}
+void enable_interrupts(void);
+void disable_interrupts(void);
 
-void disable_interrupts(void) {
-  interrupts_enabled = false;
-  __disable_irq();
-}
-
-uint8_t global_critical_depth = 0U;
+extern uint8_t global_critical_depth;
 #define ENTER_CRITICAL()                                      \
   __disable_irq();                                            \
   global_critical_depth += 1U;
