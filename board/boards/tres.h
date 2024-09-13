@@ -75,22 +75,8 @@ static void tres_init(void) {
   clock_source_init();
 }
 
-static harness_configuration tres_harness_config = {
-  .has_harness = true,
-  .GPIO_SBU1 = GPIOC,
-  .GPIO_SBU2 = GPIOA,
-  .GPIO_relay_SBU1 = GPIOA,
-  .GPIO_relay_SBU2 = GPIOA,
-  .pin_SBU1 = 4,
-  .pin_SBU2 = 1,
-  .pin_relay_SBU1 = 8,
-  .pin_relay_SBU2 = 3,
-  .adc_channel_SBU1 = 4, // ADC12_INP4
-  .adc_channel_SBU2 = 17 // ADC1_INP17
-};
-
 board board_tres = {
-  .harness_config = &tres_harness_config,
+  .harness_config = &red_chiplet_harness_config,
   .has_obd = true,
   .has_spi = true,
   .has_canfd = true,
