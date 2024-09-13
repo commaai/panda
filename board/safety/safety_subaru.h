@@ -110,7 +110,8 @@ const CanMsg SUBARU_GEN2_TX_MSGS[] = {
 };
 
 const CanMsg SUBARU_LKAS_ANGLE_TX_MSGS[] = {
-  SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS, MSG_SUBARU_ES_LKAS_ANGLE)
+  SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS, MSG_SUBARU_ES_LKAS_ANGLE)
+  SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS, MSG_SUBARU_ES_LKAS)
 };
 
 const CanMsg SUBARU_GEN2_LONG_TX_MSGS[] = {
@@ -156,7 +157,7 @@ static uint32_t subaru_compute_checksum(const CANPacket_t *to_push) {
 
 static void subaru_rx_hook(const CANPacket_t *to_push) {
   const int bus = GET_BUS(to_push);
-  const int alt_main_bus = subaru_gen2 ? SUBARU_ALT_BUS : SUBARU_MAIN_BUS;
+  const int alt_main_bus = (subaru_gen2 || subaru_lkas_angle) ? SUBARU_ALT_BUS : SUBARU_MAIN_BUS;
   const int stock_lkas_msg = subaru_lkas_angle ? MSG_SUBARU_ES_LKAS_ANGLE : MSG_SUBARU_ES_LKAS;
 
   int addr = GET_ADDR(to_push);
@@ -173,15 +174,18 @@ static void subaru_rx_hook(const CANPacket_t *to_push) {
   }
 
   // enter controls on rising edge of ACC, exit controls on ACC off
-  if ((addr == MSG_SUBARU_CruiseControl) && (bus == alt_main_bus)) {
-    bool cruise_engaged = GET_BIT(to_push, 41U);
-    pcm_cruise_check(cruise_engaged);
-
-  }
-  else if (subaru_lkas_angle && (addr == MSG_SUBARU_ES_DashStatus) && (bus == SUBARU_CAM_BUS)) {
+  if (subaru_lkas_angle) {
     // LKAS Angle cars use different message
-    bool cruise_engaged = GET_BIT(to_push, 36U);
-    pcm_cruise_check(cruise_engaged);
+    if ((addr == MSG_SUBARU_ES_DashStatus) && (bus == SUBARU_CAM_BUS)) {
+      bool cruise_engaged = GET_BIT(to_push, 36U);
+      pcm_cruise_check(cruise_engaged);
+    }
+  } else {
+    if ((addr == MSG_SUBARU_CruiseControl) && (bus == alt_main_bus)) {
+      bool cruise_engaged = GET_BIT(to_push, 41U);
+      pcm_cruise_check(cruise_engaged);
+
+    }
   }
 
   // update vehicle moving with any non-zero wheel speed
@@ -357,7 +361,7 @@ static safety_config subaru_init(uint16_t param) {
 
   safety_config ret;
   if (subaru_lkas_angle) {
-    ret = BUILD_SAFETY_CFG(subaru_rx_checks, SUBARU_LKAS_ANGLE_TX_MSGS);
+    ret = BUILD_SAFETY_CFG(subaru_gen2_rx_checks, SUBARU_LKAS_ANGLE_TX_MSGS);
   }
   else if (subaru_gen2) {
     ret = subaru_longitudinal ? BUILD_SAFETY_CFG(subaru_gen2_rx_checks, SUBARU_GEN2_LONG_TX_MSGS) : \
