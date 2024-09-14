@@ -1,3 +1,9 @@
+#pragma once
+
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "safety_declarations.h"
 #include "safety_hyundai_common.h"
 
 const SteeringLimits HYUNDAI_CANFD_STEERING_LIMITS = {
@@ -133,7 +139,7 @@ bool hyundai_canfd_alt_buttons = false;
 bool hyundai_canfd_hda2_alt_steering = false;
 
 
-int hyundai_canfd_hda2_get_lkas_addr(void) {
+static int hyundai_canfd_hda2_get_lkas_addr(void) {
   return hyundai_canfd_hda2_alt_steering ? 0x110 : 0x50;
 }
 

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "safety_declarations.h"
 #include "can_definitions.h"
 
@@ -51,6 +53,66 @@
 #define SAFETY_FAW 26U
 #define SAFETY_BODY 27U
 #define SAFETY_HYUNDAI_CANFD 28U
+
+/* NEW */
+
+uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
+  uint32_t ret = 0U;
+  for (int i = 0; i < len; i++) {
+    const uint32_t shift = i * 8;
+    ret |= (((uint32_t)msg->data[start + i]) << shift);
+  }
+  return ret;
+}
+
+const int MAX_WRONG_COUNTERS = 5;
+const uint8_t MAX_MISSED_MSGS = 10U;
+
+// This can be set by the safety hooks
+bool controls_allowed = false;
+bool relay_malfunction = false;
+bool gas_pressed = false;
+bool gas_pressed_prev = false;
+bool brake_pressed = false;
+bool brake_pressed_prev = false;
+bool regen_braking = false;
+bool regen_braking_prev = false;
+bool cruise_engaged_prev = false;
+struct sample_t vehicle_speed;
+bool vehicle_moving = false;
+bool acc_main_on = false;  // referred to as "ACC off" in ISO 15622:2018
+int cruise_button_prev = 0;
+bool safety_rx_checks_invalid = false;
+
+// for safety modes with torque steering control
+int desired_torque_last = 0;       // last desired steer torque
+int rt_torque_last = 0;            // last desired torque for real time check
+int valid_steer_req_count = 0;     // counter for steer request bit matching non-zero torque
+int invalid_steer_req_count = 0;   // counter to allow multiple frames of mismatching torque request bit
+struct sample_t torque_meas;       // last 6 motor torques produced by the eps
+struct sample_t torque_driver;     // last 6 driver torques measured
+uint32_t ts_torque_check_last = 0;
+uint32_t ts_steer_req_mismatch_last = 0;  // last timestamp steer req was mismatched with torque
+
+// state for controls_allowed timeout logic
+bool heartbeat_engaged = false;             // openpilot enabled, passed in heartbeat USB command
+uint32_t heartbeat_engaged_mismatches = 0;  // count of mismatches between heartbeat_engaged and controls_allowed
+
+// for safety modes with angle steering control
+uint32_t ts_angle_last = 0;
+int desired_angle_last = 0;
+struct sample_t angle_meas;         // last 6 steer angles/curvatures
+
+
+int alternative_experience = 0;
+
+// time since safety mode has been changed
+uint32_t safety_mode_cnt = 0U;
+// allow 1s of transition timeout after relay changes state before assessing malfunctioning
+const uint32_t RELAY_TRNS_TIMEOUT = 1U;
+
+
+/* END NEW */
 
 uint16_t current_safety_mode = SAFETY_SILENT;
 uint16_t current_safety_param = 0;
@@ -290,40 +352,35 @@ void relay_malfunction_reset(void) {
   fault_recovered(FAULT_RELAY_MALFUNCTION);
 }
 
-typedef struct {
-  uint16_t id;
-  const safety_hooks *hooks;
-} safety_hook_config;
-
-const safety_hook_config safety_hook_registry[] = {
-  {SAFETY_SILENT, &nooutput_hooks},
-  {SAFETY_HONDA_NIDEC, &honda_nidec_hooks},
-  {SAFETY_TOYOTA, &toyota_hooks},
-  {SAFETY_ELM327, &elm327_hooks},
-  {SAFETY_GM, &gm_hooks},
-  {SAFETY_HONDA_BOSCH, &honda_bosch_hooks},
-  {SAFETY_HYUNDAI, &hyundai_hooks},
-  {SAFETY_CHRYSLER, &chrysler_hooks},
-  {SAFETY_SUBARU, &subaru_hooks},
-  {SAFETY_VOLKSWAGEN_MQB, &volkswagen_mqb_hooks},
-  {SAFETY_NISSAN, &nissan_hooks},
-  {SAFETY_NOOUTPUT, &nooutput_hooks},
-  {SAFETY_HYUNDAI_LEGACY, &hyundai_legacy_hooks},
-  {SAFETY_MAZDA, &mazda_hooks},
-  {SAFETY_BODY, &body_hooks},
-  {SAFETY_FORD, &ford_hooks},
+int set_safety_hooks(uint16_t mode, uint16_t param) {
+  const safety_hook_config safety_hook_registry[] = {
+    {SAFETY_SILENT, &nooutput_hooks},
+    {SAFETY_HONDA_NIDEC, &honda_nidec_hooks},
+    {SAFETY_TOYOTA, &toyota_hooks},
+    {SAFETY_ELM327, &elm327_hooks},
+    {SAFETY_GM, &gm_hooks},
+    {SAFETY_HONDA_BOSCH, &honda_bosch_hooks},
+    {SAFETY_HYUNDAI, &hyundai_hooks},
+    {SAFETY_CHRYSLER, &chrysler_hooks},
+    {SAFETY_SUBARU, &subaru_hooks},
+    {SAFETY_VOLKSWAGEN_MQB, &volkswagen_mqb_hooks},
+    {SAFETY_NISSAN, &nissan_hooks},
+    {SAFETY_NOOUTPUT, &nooutput_hooks},
+    {SAFETY_HYUNDAI_LEGACY, &hyundai_legacy_hooks},
+    {SAFETY_MAZDA, &mazda_hooks},
+    {SAFETY_BODY, &body_hooks},
+    {SAFETY_FORD, &ford_hooks},
 #ifdef CANFD
-  {SAFETY_HYUNDAI_CANFD, &hyundai_canfd_hooks},
+    {SAFETY_HYUNDAI_CANFD, &hyundai_canfd_hooks},
 #endif
 #ifdef ALLOW_DEBUG
-  {SAFETY_TESLA, &tesla_hooks},
-  {SAFETY_SUBARU_PREGLOBAL, &subaru_preglobal_hooks},
-  {SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},
-  {SAFETY_ALLOUTPUT, &alloutput_hooks},
+    {SAFETY_TESLA, &tesla_hooks},
+    {SAFETY_SUBARU_PREGLOBAL, &subaru_preglobal_hooks},
+    {SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},
+    {SAFETY_ALLOUTPUT, &alloutput_hooks},
 #endif
-};
+  };
 
-int set_safety_hooks(uint16_t mode, uint16_t param) {
   // reset state set by safety mode
   safety_mode_cnt = 0U;
   relay_malfunction = false;

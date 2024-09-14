@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdint.h>
+#include <stdbool.h>
+
 #define GET_BIT(msg, b) ((bool)!!(((msg)->data[((b) / 8U)] >> ((b) % 8U)) & 0x1U))
 #define GET_BYTE(msg, b) ((msg)->data[(b)])
 #define GET_FLAG(value, mask) (((__typeof__(mask))(value) & (mask)) == (mask)) // cppcheck-suppress misra-c2012-1.2; allow __typeof__
@@ -12,17 +15,10 @@
                                  (config).tx_msgs_len = sizeof((tx)) / sizeof((tx)[0]))
 #define UPDATE_VEHICLE_SPEED(val_ms) (update_sample(&vehicle_speed, ROUND((val_ms) * VEHICLE_SPEED_FACTOR)))
 
-uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
-  uint32_t ret = 0U;
-  for (int i = 0; i < len; i++) {
-    const uint32_t shift = i * 8;
-    ret |= (((uint32_t)msg->data[start + i]) << shift);
-  }
-  return ret;
-}
+uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len);
 
-const int MAX_WRONG_COUNTERS = 5;
-const uint8_t MAX_MISSED_MSGS = 10U;
+extern const int MAX_WRONG_COUNTERS;
+extern const uint8_t MAX_MISSED_MSGS;
 #define MAX_ADDR_CHECK_MSGS 3U
 #define MAX_SAMPLE_VALS 6
 // used to represent floating point vehicle speed in a sample_t
@@ -34,7 +30,7 @@ struct sample_t {
   int values[MAX_SAMPLE_VALS];
   int min;
   int max;
-} sample_t_default = {.values = {0}, .min = 0, .max = 0};
+};
 
 // safety code requires floats
 struct lookup_t {
@@ -208,39 +204,39 @@ void pcm_cruise_check(bool cruise_engaged);
 void safety_tick(const safety_config *safety_config);
 
 // This can be set by the safety hooks
-bool controls_allowed = false;
-bool relay_malfunction = false;
-bool gas_pressed = false;
-bool gas_pressed_prev = false;
-bool brake_pressed = false;
-bool brake_pressed_prev = false;
-bool regen_braking = false;
-bool regen_braking_prev = false;
-bool cruise_engaged_prev = false;
-struct sample_t vehicle_speed;
-bool vehicle_moving = false;
-bool acc_main_on = false;  // referred to as "ACC off" in ISO 15622:2018
-int cruise_button_prev = 0;
-bool safety_rx_checks_invalid = false;
+extern bool controls_allowed;
+extern bool relay_malfunction;
+extern bool gas_pressed;
+extern bool gas_pressed_prev;
+extern bool brake_pressed;
+extern bool brake_pressed_prev;
+extern bool regen_braking;
+extern bool regen_braking_prev;
+extern bool cruise_engaged_prev;
+extern struct sample_t vehicle_speed;
+extern bool vehicle_moving;
+extern bool acc_main_on; // referred to as "ACC off" in ISO 15622:2018
+extern int cruise_button_prev;
+extern bool safety_rx_checks_invalid;
 
 // for safety modes with torque steering control
-int desired_torque_last = 0;       // last desired steer torque
-int rt_torque_last = 0;            // last desired torque for real time check
-int valid_steer_req_count = 0;     // counter for steer request bit matching non-zero torque
-int invalid_steer_req_count = 0;   // counter to allow multiple frames of mismatching torque request bit
-struct sample_t torque_meas;       // last 6 motor torques produced by the eps
-struct sample_t torque_driver;     // last 6 driver torques measured
-uint32_t ts_torque_check_last = 0;
-uint32_t ts_steer_req_mismatch_last = 0;  // last timestamp steer req was mismatched with torque
+extern int desired_torque_last;       // last desired steer torque
+extern int rt_torque_last;            // last desired torque for real time check
+extern int valid_steer_req_count;     // counter for steer request bit matching non-zero torque
+extern int invalid_steer_req_count;   // counter to allow multiple frames of mismatching torque request bit
+extern struct sample_t torque_meas;       // last 6 motor torques produced by the eps
+extern struct sample_t torque_driver;     // last 6 driver torques measured
+extern uint32_t ts_torque_check_last;
+extern uint32_t ts_steer_req_mismatch_last;  // last timestamp steer req was mismatched with torque
 
 // state for controls_allowed timeout logic
-bool heartbeat_engaged = false;             // openpilot enabled, passed in heartbeat USB command
-uint32_t heartbeat_engaged_mismatches = 0;  // count of mismatches between heartbeat_engaged and controls_allowed
+extern bool heartbeat_engaged;             // openpilot enabled, passed in heartbeat USB command
+extern uint32_t heartbeat_engaged_mismatches;  // count of mismatches between heartbeat_engaged and controls_allowed
 
 // for safety modes with angle steering control
-uint32_t ts_angle_last = 0;
-int desired_angle_last = 0;
-struct sample_t angle_meas;         // last 6 steer angles/curvatures
+extern uint32_t ts_angle_last;
+extern int desired_angle_last;
+extern struct sample_t angle_meas;         // last 6 steer angles/curvatures
 
 // This can be set with a USB command
 // It enables features that allow alternative experiences, like not disengaging on gas press
@@ -260,9 +256,49 @@ struct sample_t angle_meas;         // last 6 steer angles/curvatures
 // This flag allows AEB to be commanded from openpilot.
 #define ALT_EXP_ALLOW_AEB 16
 
-int alternative_experience = 0;
+extern int alternative_experience;
 
 // time since safety mode has been changed
-uint32_t safety_mode_cnt = 0U;
+extern uint32_t safety_mode_cnt;
 // allow 1s of transition timeout after relay changes state before assessing malfunctioning
-const uint32_t RELAY_TRNS_TIMEOUT = 1U;
+extern const uint32_t RELAY_TRNS_TIMEOUT;
+
+
+/* NEW */
+
+typedef struct {
+  uint16_t id;
+  const safety_hooks *hooks;
+} safety_hook_config;
+
+extern uint16_t current_safety_mode;
+extern uint16_t current_safety_param;
+extern const safety_hooks *current_hooks;
+extern safety_config current_safety_config;
+
+int safety_fwd_hook(int bus_num, int addr);
+int set_safety_hooks(uint16_t mode, uint16_t param);
+
+extern const safety_hooks body_hooks;
+extern const safety_hooks chrysler_hooks;
+extern const safety_hooks elm327_hooks;
+extern const safety_hooks nooutput_hooks;
+extern const safety_hooks alloutput_hooks;
+extern const safety_hooks ford_hooks;
+extern const safety_hooks gm_hooks;
+extern const safety_hooks honda_nidec_hooks;
+extern const safety_hooks honda_bosch_hooks;
+extern const safety_hooks hyundai_canfd_hooks;
+extern const safety_hooks hyundai_hooks;
+extern const safety_hooks hyundai_legacy_hooks;
+extern const safety_hooks mazda_hooks;
+extern const safety_hooks nissan_hooks;
+extern const safety_hooks subaru_hooks;
+extern const safety_hooks subaru_preglobal_hooks;
+extern const safety_hooks tesla_hooks;
+extern const safety_hooks toyota_hooks;
+extern const safety_hooks volkswagen_mqb_hooks;
+extern const safety_hooks volkswagen_pq_hooks;
+
+
+/* END NEW */
