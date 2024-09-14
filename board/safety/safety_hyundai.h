@@ -261,7 +261,7 @@ static int hyundai_fwd_hook(int bus_num, int addr) {
 }
 
 static safety_config hyundai_init(uint16_t param) {
-  const CanMsg HYUNDAI_LONG_TX_MSGS[] = {
+  static const CanMsg HYUNDAI_LONG_TX_MSGS[] = {
     {0x340, 0, 8}, // LKAS11 Bus 0
     {0x4F1, 0, 4}, // CLU11 Bus 0
     {0x485, 0, 4}, // LFAHDA_MFC Bus 0
@@ -275,23 +275,23 @@ static safety_config hyundai_init(uint16_t param) {
     {0x7D0, 0, 8}, // radar UDS TX addr Bus 0 (for radar disable)
   };
 
-  const CanMsg HYUNDAI_CAMERA_SCC_TX_MSGS[] = {
+  static const CanMsg HYUNDAI_CAMERA_SCC_TX_MSGS[] = {
     {0x340, 0, 8}, // LKAS11 Bus 0
     {0x4F1, 2, 4}, // CLU11 Bus 2
     {0x485, 0, 4}, // LFAHDA_MFC Bus 0
   };
 
-  RxCheck hyundai_rx_checks[] = {
+  static RxCheck hyundai_rx_checks[] = {
      HYUNDAI_COMMON_RX_CHECKS(false)
      HYUNDAI_SCC12_ADDR_CHECK(0)
   };
 
-  RxCheck hyundai_cam_scc_rx_checks[] = {
+  static RxCheck hyundai_cam_scc_rx_checks[] = {
     HYUNDAI_COMMON_RX_CHECKS(false)
     HYUNDAI_SCC12_ADDR_CHECK(2)
   };
 
-  RxCheck hyundai_long_rx_checks[] = {
+  static RxCheck hyundai_long_rx_checks[] = {
     HYUNDAI_COMMON_RX_CHECKS(false)
     // Use CLU11 (buttons) to manage controls allowed instead of SCC cruise state
     {.msg = {{0x4F1, 0, 4, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
@@ -317,7 +317,7 @@ static safety_config hyundai_init(uint16_t param) {
 
 static safety_config hyundai_legacy_init(uint16_t param) {
   // older hyundai models have less checks due to missing counters and checksums
-  RxCheck hyundai_legacy_rx_checks[] = {
+  static RxCheck hyundai_legacy_rx_checks[] = {
     HYUNDAI_COMMON_RX_CHECKS(true)
     HYUNDAI_SCC12_ADDR_CHECK(0)
   };

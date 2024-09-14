@@ -126,7 +126,7 @@ static int nissan_fwd_hook(int bus_num, int addr) {
 }
 
 static safety_config nissan_init(uint16_t param) {
-  const CanMsg NISSAN_TX_MSGS[] = {
+  static const CanMsg NISSAN_TX_MSGS[] = {
     {0x169, 0, 8},  // LKAS
     {0x2b1, 0, 8},  // PROPILOT_HUD
     {0x4cc, 0, 8},  // PROPILOT_HUD_INFO_MSG
@@ -136,7 +136,7 @@ static safety_config nissan_init(uint16_t param) {
   };
 
   // Signals duplicated below due to the fact that these messages can come in on either CAN bus, depending on car model.
-  RxCheck nissan_rx_checks[] = {
+  static RxCheck nissan_rx_checks[] = {
     {.msg = {{0x2, 0, 5, .frequency = 100U},
              {0x2, 1, 5, .frequency = 100U}, { 0 }}},  // STEER_ANGLE_SENSOR
     {.msg = {{0x285, 0, 8, .frequency = 50U},

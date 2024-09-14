@@ -239,30 +239,30 @@ static int subaru_fwd_hook(int bus_num, int addr) {
 }
 
 static safety_config subaru_init(uint16_t param) {
-  const CanMsg SUBARU_TX_MSGS[] = {
+  static const CanMsg SUBARU_TX_MSGS[] = {
     SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS, MSG_SUBARU_ES_LKAS)
   };
 
-  const CanMsg SUBARU_LONG_TX_MSGS[] = {
+  static const CanMsg SUBARU_LONG_TX_MSGS[] = {
     SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS, MSG_SUBARU_ES_LKAS)
     SUBARU_COMMON_LONG_TX_MSGS(SUBARU_MAIN_BUS)
   };
 
-  const CanMsg SUBARU_GEN2_TX_MSGS[] = {
+  static const CanMsg SUBARU_GEN2_TX_MSGS[] = {
     SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS, MSG_SUBARU_ES_LKAS)
   };
 
-  const CanMsg SUBARU_GEN2_LONG_TX_MSGS[] = {
+  static const CanMsg SUBARU_GEN2_LONG_TX_MSGS[] = {
     SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS, MSG_SUBARU_ES_LKAS)
     SUBARU_COMMON_LONG_TX_MSGS(SUBARU_ALT_BUS)
     SUBARU_GEN2_LONG_ADDITIONAL_TX_MSGS()
   };
 
-  RxCheck subaru_rx_checks[] = {
+  static RxCheck subaru_rx_checks[] = {
     SUBARU_COMMON_RX_CHECKS(SUBARU_MAIN_BUS)
   };
 
-  RxCheck subaru_gen2_rx_checks[] = {
+  static RxCheck subaru_gen2_rx_checks[] = {
     SUBARU_COMMON_RX_CHECKS(SUBARU_ALT_BUS)
   };
 

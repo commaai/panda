@@ -285,20 +285,20 @@ static bool toyota_tx_hook(const CANPacket_t *to_send) {
 }
 
 static safety_config toyota_init(uint16_t param) {
-  const CanMsg TOYOTA_TX_MSGS[] = {
+  static const CanMsg TOYOTA_TX_MSGS[] = {
     TOYOTA_COMMON_TX_MSGS
   };
 
-  const CanMsg TOYOTA_LONG_TX_MSGS[] = {
+  static const CanMsg TOYOTA_LONG_TX_MSGS[] = {
     TOYOTA_COMMON_LONG_TX_MSGS
   };
 
-  RxCheck toyota_lka_rx_checks[] = {
+  static RxCheck toyota_lka_rx_checks[] = {
     TOYOTA_COMMON_RX_CHECKS(false)
   };
 
   // Check the quality flag for angle measurement when using LTA, since it's not set on TSS-P cars
-  RxCheck toyota_lta_rx_checks[] = {
+  static RxCheck toyota_lta_rx_checks[] = {
     TOYOTA_COMMON_RX_CHECKS(true)
   };
 

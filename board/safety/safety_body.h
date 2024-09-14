@@ -33,11 +33,11 @@ static bool body_tx_hook(const CANPacket_t *to_send) {
 }
 
 static safety_config body_init(uint16_t param) {
-  RxCheck body_rx_checks[] = {
+  static RxCheck body_rx_checks[] = {
     {.msg = {{0x201, 0, 8, .check_checksum = false, .max_counter = 0U, .frequency = 100U}, { 0 }, { 0 }}},
   };
 
-  const CanMsg BODY_TX_MSGS[] = {{0x250, 0, 8}, {0x250, 0, 6}, {0x251, 0, 5},  // body
+  static const CanMsg BODY_TX_MSGS[] = {{0x250, 0, 8}, {0x250, 0, 6}, {0x251, 0, 5},  // body
                                  {0x350, 0, 8}, {0x350, 0, 6}, {0x351, 0, 5},  // knee
                                  {0x1, 0, 8}}; // CAN flasher
 

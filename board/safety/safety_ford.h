@@ -351,7 +351,7 @@ static safety_config ford_init(uint16_t param) {
 
   // warning: quality flags are not yet checked in openpilot's CAN parser,
   // this may be the cause of blocked messages
-  RxCheck ford_rx_checks[] = {
+  static RxCheck ford_rx_checks[] = {
     {.msg = {{FORD_BrakeSysFeatures, 0, 8, .check_checksum = true, .max_counter = 15U, .quality_flag=true, .frequency = 50U}, { 0 }, { 0 }}},
     // FORD_EngVehicleSpThrottle2 has a counter that either randomly skips or by 2, likely ECU bug
     // Some hybrid models also experience a bug where this checksum mismatches for one or two frames under heavy acceleration with ACC
@@ -364,7 +364,7 @@ static safety_config ford_init(uint16_t param) {
     {.msg = {{FORD_DesiredTorqBrk, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},
   };
 
-  const CanMsg FORD_CANFD_LONG_TX_MSGS[] = {
+  static const CanMsg FORD_CANFD_LONG_TX_MSGS[] = {
     {FORD_Steering_Data_FD1, 0, 8},
     {FORD_Steering_Data_FD1, 2, 8},
     {FORD_ACCDATA, 0, 8},
@@ -374,7 +374,7 @@ static safety_config ford_init(uint16_t param) {
     {FORD_IPMA_Data, 0, 8},
   };
 
-  const CanMsg FORD_CANFD_STOCK_TX_MSGS[] = {
+  static const CanMsg FORD_CANFD_STOCK_TX_MSGS[] = {
     {FORD_Steering_Data_FD1, 0, 8},
     {FORD_Steering_Data_FD1, 2, 8},
     {FORD_ACCDATA_3, 0, 8},
@@ -383,7 +383,7 @@ static safety_config ford_init(uint16_t param) {
     {FORD_IPMA_Data, 0, 8},
   };
 
-  const CanMsg FORD_STOCK_TX_MSGS[] = {
+  static const CanMsg FORD_STOCK_TX_MSGS[] = {
     {FORD_Steering_Data_FD1, 0, 8},
     {FORD_Steering_Data_FD1, 2, 8},
     {FORD_ACCDATA_3, 0, 8},
@@ -392,7 +392,7 @@ static safety_config ford_init(uint16_t param) {
     {FORD_IPMA_Data, 0, 8},
   };
 
-  const CanMsg FORD_LONG_TX_MSGS[] = {
+  static const CanMsg FORD_LONG_TX_MSGS[] = {
     {FORD_Steering_Data_FD1, 0, 8},
     {FORD_Steering_Data_FD1, 2, 8},
     {FORD_ACCDATA, 0, 8},

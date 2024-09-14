@@ -228,14 +228,15 @@ static safety_config chrysler_init(uint16_t param) {
     .CRUISE_BUTTONS   = 0x23A,  // Cruise control buttons
   };
 
-  RxCheck chrysler_ram_dt_rx_checks[] = {
+  static RxCheck chrysler_ram_dt_rx_checks[] = {
     {.msg = {{CHRYSLER_RAM_DT_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
     {.msg = {{CHRYSLER_RAM_DT_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
     {.msg = {{CHRYSLER_RAM_DT_ADDRS.ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
     {.msg = {{CHRYSLER_RAM_DT_ADDRS.ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
     {.msg = {{CHRYSLER_RAM_DT_ADDRS.DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
   };
-  RxCheck chrysler_rx_checks[] = {
+
+  static RxCheck chrysler_rx_checks[] = {
     {.msg = {{CHRYSLER_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
     {.msg = {{CHRYSLER_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
     //{.msg = {{ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}}},
@@ -243,7 +244,8 @@ static safety_config chrysler_init(uint16_t param) {
     {.msg = {{CHRYSLER_ADDRS.ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
     {.msg = {{CHRYSLER_ADDRS.DAS_3, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
   };
-  RxCheck chrysler_ram_hd_rx_checks[] = {
+
+  static RxCheck chrysler_ram_hd_rx_checks[] = {
     {.msg = {{CHRYSLER_RAM_HD_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
     {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
     {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
@@ -251,19 +253,19 @@ static safety_config chrysler_init(uint16_t param) {
     {.msg = {{CHRYSLER_RAM_HD_ADDRS.DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
   };
 
-  const CanMsg CHRYSLER_TX_MSGS[] = {
+  static const CanMsg CHRYSLER_TX_MSGS[] = {
     {CHRYSLER_ADDRS.CRUISE_BUTTONS, 0, 3},
     {CHRYSLER_ADDRS.LKAS_COMMAND, 0, 6},
     {CHRYSLER_ADDRS.DAS_6, 0, 8},
   };
 
-  const CanMsg CHRYSLER_RAM_DT_TX_MSGS[] = {
+  static const CanMsg CHRYSLER_RAM_DT_TX_MSGS[] = {
     {CHRYSLER_RAM_DT_ADDRS.CRUISE_BUTTONS, 2, 3},
     {CHRYSLER_RAM_DT_ADDRS.LKAS_COMMAND, 0, 8},
     {CHRYSLER_RAM_DT_ADDRS.DAS_6, 0, 8},
   };
 
-  const CanMsg CHRYSLER_RAM_HD_TX_MSGS[] = {
+  static const CanMsg CHRYSLER_RAM_HD_TX_MSGS[] = {
     {CHRYSLER_RAM_HD_ADDRS.CRUISE_BUTTONS, 2, 3},
     {CHRYSLER_RAM_HD_ADDRS.LKAS_COMMAND, 0, 8},
     {CHRYSLER_RAM_HD_ADDRS.DAS_6, 0, 8},

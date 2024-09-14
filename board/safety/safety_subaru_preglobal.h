@@ -106,13 +106,13 @@ static int subaru_preglobal_fwd_hook(int bus_num, int addr) {
 }
 
 static safety_config subaru_preglobal_init(uint16_t param) {
-  const CanMsg SUBARU_PG_TX_MSGS[] = {
+  static const CanMsg SUBARU_PG_TX_MSGS[] = {
     {MSG_SUBARU_PG_ES_Distance, SUBARU_PG_MAIN_BUS, 8},
     {MSG_SUBARU_PG_ES_LKAS,     SUBARU_PG_MAIN_BUS, 8}
   };
 
   // TODO: do checksum and counter checks after adding the signals to the outback dbc file
-  RxCheck subaru_preglobal_rx_checks[] = {
+  static RxCheck subaru_preglobal_rx_checks[] = {
     {.msg = {{MSG_SUBARU_PG_Throttle,        SUBARU_PG_MAIN_BUS, 8, .frequency = 100U}, { 0 }, { 0 }}},
     {.msg = {{MSG_SUBARU_PG_Steering_Torque, SUBARU_PG_MAIN_BUS, 8, .frequency = 50U}, { 0 }, { 0 }}},
     {.msg = {{MSG_SUBARU_PG_CruiseControl,   SUBARU_PG_MAIN_BUS, 8, .frequency = 20U}, { 0 }, { 0 }}},
