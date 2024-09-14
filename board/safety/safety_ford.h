@@ -91,9 +91,6 @@ static bool ford_get_quality_flag_valid(const CANPacket_t *to_push) {
   return valid;
 }
 
-static const uint16_t FORD_PARAM_LONGITUDINAL = 1;
-static const uint16_t FORD_PARAM_CANFD = 2;
-
 static bool ford_longitudinal = false;
 
 #define FORD_INACTIVE_CURVATURE 1000U
@@ -401,6 +398,9 @@ static safety_config ford_init(uint16_t param) {
     {FORD_LateralMotionControl, 0, 8},
     {FORD_IPMA_Data, 0, 8},
   };
+
+  const uint16_t FORD_PARAM_LONGITUDINAL = 1;
+  const uint16_t FORD_PARAM_CANFD = 2;
 
   UNUSED(param);
 #ifdef ALLOW_DEBUG

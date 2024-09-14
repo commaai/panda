@@ -274,12 +274,13 @@ static safety_config chrysler_init(uint16_t param) {
   safety_config ret;
 
   bool enable_ram_dt = GET_FLAG(param, CHRYSLER_PARAM_RAM_DT);
+  bool enable_ram_hd = GET_FLAG(param, CHRYSLER_PARAM_RAM_HD);
   if (enable_ram_dt) {
     chrysler_platform = CHRYSLER_RAM_DT;
     chrysler_addrs = &CHRYSLER_RAM_DT_ADDRS;
     ret = BUILD_SAFETY_CFG(chrysler_ram_dt_rx_checks, CHRYSLER_RAM_DT_TX_MSGS);
 #ifdef ALLOW_DEBUG
-  } else if (GET_FLAG(param, CHRYSLER_PARAM_RAM_HD)) {
+  } else if (enable_ram_hd) {
     chrysler_platform = CHRYSLER_RAM_HD;
     chrysler_addrs = &CHRYSLER_RAM_HD_ADDRS;
     ret = BUILD_SAFETY_CFG(chrysler_ram_hd_rx_checks, CHRYSLER_RAM_HD_TX_MSGS);
