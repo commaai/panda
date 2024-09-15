@@ -62,6 +62,7 @@ setup(
       "numpy",
       "ruff",
       "spidev",
+      "setuptools", # for setup.py
     ],
   },
   ext_modules=[],
