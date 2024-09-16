@@ -271,9 +271,6 @@ extern uint32_t safety_mode_cnt;
 // allow 1s of transition timeout after relay changes state before assessing malfunctioning
 extern const uint32_t RELAY_TRNS_TIMEOUT;
 
-
-/* NEW */
-
 typedef struct {
   uint16_t id;
   const safety_hooks *hooks;
@@ -307,6 +304,3 @@ extern const safety_hooks tesla_hooks;
 extern const safety_hooks toyota_hooks;
 extern const safety_hooks volkswagen_mqb_hooks;
 extern const safety_hooks volkswagen_pq_hooks;
-
-
-/* END NEW */
