@@ -1,8 +1,12 @@
+#pragma once
+
+#include "board_declarations.h"
+
 // /////////////////////// //
 // Uno (STM32F4) + Harness //
 // /////////////////////// //
 
-void uno_enable_can_transceiver(uint8_t transceiver, bool enabled) {
+static void uno_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver){
     case 1U:
       set_gpio_output(GPIOC, 1, !enabled);
@@ -22,7 +26,7 @@ void uno_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-void uno_enable_can_transceivers(bool enabled) {
+static void uno_enable_can_transceivers(bool enabled) {
   for(uint8_t i=1U; i<=4U; i++){
     // Leave main CAN always on for CAN-based ignition detection
     if((harness.status == HARNESS_STATUS_FLIPPED) ? (i == 3U) : (i == 1U)){
@@ -33,7 +37,7 @@ void uno_enable_can_transceivers(bool enabled) {
   }
 }
 
-void uno_set_led(uint8_t color, bool enabled) {
+static void uno_set_led(uint8_t color, bool enabled) {
   switch (color){
     case LED_RED:
       set_gpio_output(GPIOC, 9, !enabled);
@@ -49,7 +53,7 @@ void uno_set_led(uint8_t color, bool enabled) {
   }
 }
 
-void uno_set_bootkick(BootState state) {
+static void uno_set_bootkick(BootState state) {
   if (state == BOOT_BOOTKICK) {
     set_gpio_output(GPIOB, 14, false);
   } else {
@@ -58,7 +62,7 @@ void uno_set_bootkick(BootState state) {
   }
 }
 
-void uno_set_can_mode(uint8_t mode) {
+static void uno_set_can_mode(uint8_t mode) {
   uno_enable_can_transceiver(2U, false);
   uno_enable_can_transceiver(4U, false);
   switch (mode) {
@@ -90,24 +94,24 @@ void uno_set_can_mode(uint8_t mode) {
   }
 }
 
-bool uno_check_ignition(void){
+static bool uno_check_ignition(void){
   // ignition is checked through harness
   return harness_check_ignition();
 }
 
-void uno_set_usb_switch(bool phone){
+static void uno_set_usb_switch(bool phone){
   set_gpio_output(GPIOB, 3, phone);
 }
 
-void uno_set_ir_power(uint8_t percentage){
+static void uno_set_ir_power(uint8_t percentage){
   pwm_set(TIM4, 2, percentage);
 }
 
-void uno_set_fan_enabled(bool enabled){
+static void uno_set_fan_enabled(bool enabled){
   set_gpio_output(GPIOA, 1, enabled);
 }
 
-void uno_init(void) {
+static void uno_init(void) {
   common_init_gpio();
 
   // A8,A15: normal CAN3 mode
@@ -170,14 +174,14 @@ void uno_init(void) {
   uno_set_bootkick(BOOT_BOOTKICK);
 }
 
-void uno_init_bootloader(void) {
+static void uno_init_bootloader(void) {
   // GPS off
   set_gpio_output(GPIOB, 1, 0);
   set_gpio_output(GPIOC, 5, 0);
   set_gpio_output(GPIOC, 12, 0);
 }
 
-harness_configuration uno_harness_config = {
+static harness_configuration uno_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOC,
