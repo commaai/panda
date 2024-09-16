@@ -307,6 +307,12 @@ static bool honda_tx_hook(const CANPacket_t *to_send) {
 
 static safety_config honda_nidec_init(uint16_t param) {
   static CanMsg HONDA_N_TX_MSGS[] = {{0xE4, 0, 5}, {0x194, 0, 4}, {0x1FA, 0, 8}, {0x30C, 0, 8}, {0x33D, 0, 5}};
+
+  // For Nidecs with main on signal on an alternate msg (missing 0x326)
+  static RxCheck honda_nidec_alt_rx_checks[] = { 
+    HONDA_COMMON_NO_SCM_FEEDBACK_RX_CHECKS(0)
+  };
+
   const uint16_t HONDA_PARAM_NIDEC_ALT = 4;
 
   honda_hw = HONDA_NIDEC;
@@ -322,13 +328,11 @@ static safety_config honda_nidec_init(uint16_t param) {
   bool enable_nidec_alt = GET_FLAG(param, HONDA_PARAM_NIDEC_ALT);
 
   if (enable_nidec_alt) {
-    // For Nidecs with main on signal on an alternate msg (missing 0x326)
-    static RxCheck honda_nidec_alt_rx_checks[] = { HONDA_COMMON_NO_SCM_FEEDBACK_RX_CHECKS(0) };
-
     SET_RX_CHECKS(honda_nidec_alt_rx_checks, ret);
   } else {
     SET_RX_CHECKS(honda_common_rx_checks, ret);
   }
+
   SET_TX_MSGS(HONDA_N_TX_MSGS, ret);
 
   return ret;
@@ -382,11 +386,17 @@ static safety_config honda_bosch_init(uint16_t param) {
   }
 
   if (honda_bosch_radarless) {
-    honda_bosch_long ? SET_TX_MSGS(HONDA_RADARLESS_LONG_TX_MSGS, ret) : \
-                       SET_TX_MSGS(HONDA_RADARLESS_TX_MSGS, ret);
+    if (honda_bosch_long) {
+      SET_TX_MSGS(HONDA_RADARLESS_LONG_TX_MSGS, ret);
+    } else {
+      SET_TX_MSGS(HONDA_RADARLESS_TX_MSGS, ret);
+    }
   } else {
-    honda_bosch_long ? SET_TX_MSGS(HONDA_BOSCH_LONG_TX_MSGS, ret) : \
-                       SET_TX_MSGS(HONDA_BOSCH_TX_MSGS, ret);
+    if (honda_bosch_long) {
+      SET_TX_MSGS(HONDA_BOSCH_LONG_TX_MSGS, ret);
+    } else {
+      SET_TX_MSGS(HONDA_BOSCH_TX_MSGS, ret);
+    }
   }
   return ret;
 }

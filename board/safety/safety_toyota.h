@@ -322,8 +322,12 @@ static safety_config toyota_init(uint16_t param) {
     SET_TX_MSGS(TOYOTA_LONG_TX_MSGS, ret);
   }
 
-  toyota_lta ? SET_RX_CHECKS(toyota_lta_rx_checks, ret) : \
-               SET_RX_CHECKS(toyota_lka_rx_checks, ret);
+  if (toyota_lta) {
+    SET_RX_CHECKS(toyota_lta_rx_checks, ret);
+  } else {
+    SET_RX_CHECKS(toyota_lka_rx_checks, ret);
+  }
+
   return ret;
 }
 
