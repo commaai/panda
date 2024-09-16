@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdint.h>
+#include <stdbool.h>
+
 // ******************** Prototypes ********************
 typedef enum {
   BOOT_STANDBY,
