@@ -24,7 +24,7 @@ MSG_IPMA_Data = 0x3D8              # TX by OP, IPMA and LKAS user interface
 
 
 def checksum(msg):
-  addr, t, dat, bus = msg
+  addr, dat, bus = msg
   ret = bytearray(dat)
 
   if addr == MSG_Yaw_Data_FD1:
@@ -50,7 +50,7 @@ def checksum(msg):
     chksum = 0xff - (chksum & 0xff)
     ret[1] = chksum
 
-  return addr, t, ret, bus
+  return addr, ret, bus
 
 
 class Buttons:

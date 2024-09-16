@@ -174,6 +174,7 @@ board board_red = {
   .has_spi = false,
   .has_canfd = true,
   .fan_max_rpm = 0U,
+  .fan_max_pwm = 100U,
   .avdd_mV = 3300U,
   .fan_stall_recovery = false,
   .fan_enable_cooldown_time = 0U,
