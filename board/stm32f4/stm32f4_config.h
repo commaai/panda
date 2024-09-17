@@ -33,7 +33,7 @@
 #define PROVISION_CHUNK_ADDRESS 0x1FFF79E0U
 #define DEVICE_SERIAL_NUMBER_ADDRESS 0x1FFF79C0U
 
-#include "can_definitions.h"
+#include "can.h"
 #include "comms_definitions.h"
 
 #ifndef BOOTSTUB
