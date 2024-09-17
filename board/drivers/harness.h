@@ -51,7 +51,7 @@ bool harness_check_ignition(void) {
   return ret;
 }
 
-uint8_t harness_detect_orientation(void) {
+static uint8_t harness_detect_orientation(void) {
   uint8_t ret = harness.status;
 
   #ifndef BOOTSTUB
