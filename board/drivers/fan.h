@@ -1,14 +1,5 @@
-struct fan_state_t {
-  uint16_t tach_counter;
-  uint16_t rpm;
-  uint16_t target_rpm;
-  uint8_t power;
-  float error_integral;
-  uint8_t stall_counter;
-  uint8_t stall_threshold;
-  uint8_t total_stall_count;
-  uint8_t cooldown_counter;
-} fan_state_t;
+#include "fan_declarations.h"
+
 struct fan_state_t fan_state;
 
 const float FAN_I = 0.001f;

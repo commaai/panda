@@ -1,21 +1,8 @@
+#include "uart_declarations.h"
+
 // IRQs: USART2, USART3, UART5
 
 // ***************************** Definitions *****************************
-#define FIFO_SIZE_INT 0x400U
-
-typedef struct uart_ring {
-  volatile uint16_t w_ptr_tx;
-  volatile uint16_t r_ptr_tx;
-  uint8_t *elems_tx;
-  uint32_t tx_fifo_size;
-  volatile uint16_t w_ptr_rx;
-  volatile uint16_t r_ptr_rx;
-  uint8_t *elems_rx;
-  uint32_t rx_fifo_size;
-  USART_TypeDef *uart;
-  void (*callback)(struct uart_ring*);
-  bool overwrite;
-} uart_ring;
 
 #define UART_BUFFER(x, size_rx, size_tx, uart_ptr, callback_ptr, overwrite_mode) \
   uint8_t elems_rx_##x[size_rx]; \
@@ -33,11 +20,6 @@ typedef struct uart_ring {
     .callback = (callback_ptr), \
     .overwrite = (overwrite_mode) \
   };
-
-// ***************************** Function prototypes *****************************
-void debug_ring_callback(uart_ring *ring);
-void uart_tx_ring(uart_ring *q);
-void uart_send_break(uart_ring *u);
 
 // ******************************** UART buffers ********************************
 

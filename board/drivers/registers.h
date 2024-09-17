@@ -1,14 +1,4 @@
-
-typedef struct reg {
-  volatile uint32_t *address;
-  uint32_t value;
-  uint32_t check_mask;
-} reg;
-
-// 10 bit hash with 23 as a prime
-#define REGISTER_MAP_SIZE 0x3FFU
-#define HASHING_PRIME 23U
-#define CHECK_COLLISION(hash, addr) (((uint32_t) register_map[hash].address != 0U) && (register_map[hash].address != (addr)))
+#include "registers_declarations.h"
 
 reg register_map[REGISTER_MAP_SIZE];
 

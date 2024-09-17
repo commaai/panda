@@ -1,3 +1,5 @@
+#include "bootkick_declarations.h"
+
 bool bootkick_ign_prev = false;
 BootState boot_state = BOOT_BOOTKICK;
 uint8_t bootkick_harness_status_prev = HARNESS_STATUS_NC;
