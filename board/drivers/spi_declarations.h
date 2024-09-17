@@ -39,12 +39,7 @@ enum {
 };
 
 extern bool spi_tx_dma_done;
-extern uint8_t spi_state;
-extern uint8_t spi_endpoint;
-extern uint16_t spi_data_len_mosi;
-extern uint16_t spi_data_len_miso;
 extern uint16_t spi_checksum_error_count;
-extern bool spi_can_tx_ready;
 
 #define SPI_HEADER_SIZE 7U
 
@@ -54,8 +49,6 @@ void llspi_mosi_dma(uint8_t *addr, int len);
 void llspi_miso_dma(uint8_t *addr, int len);
 
 void can_tx_comms_resume_spi(void);
-uint16_t spi_version_packet(uint8_t *out);
 void spi_init(void);
-bool validate_checksum(const uint8_t *data, uint16_t len);
 void spi_rx_done(void);
 void spi_tx_done(bool reset);
