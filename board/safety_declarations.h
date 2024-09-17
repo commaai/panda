@@ -26,7 +26,6 @@
 uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len);
 
 extern const int MAX_WRONG_COUNTERS;
-extern const uint8_t MAX_MISSED_MSGS;
 #define MAX_ADDR_CHECK_MSGS 3U
 #define MAX_SAMPLE_VALS 6
 // used to represent floating point vehicle speed in a sample_t
@@ -268,8 +267,6 @@ extern int alternative_experience;
 
 // time since safety mode has been changed
 extern uint32_t safety_mode_cnt;
-// allow 1s of transition timeout after relay changes state before assessing malfunctioning
-extern const uint32_t RELAY_TRNS_TIMEOUT;
 
 typedef struct {
   uint16_t id;

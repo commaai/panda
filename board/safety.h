@@ -64,7 +64,6 @@ uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
 }
 
 const int MAX_WRONG_COUNTERS = 5;
-const uint8_t MAX_MISSED_MSGS = 10U;
 
 // This can be set by the safety hooks
 bool controls_allowed = false;
@@ -106,8 +105,6 @@ int alternative_experience = 0;
 
 // time since safety mode has been changed
 uint32_t safety_mode_cnt = 0U;
-// allow 1s of transition timeout after relay changes state before assessing malfunctioning
-const uint32_t RELAY_TRNS_TIMEOUT = 1U;
 
 uint16_t current_safety_mode = SAFETY_SILENT;
 uint16_t current_safety_param = 0;
@@ -226,6 +223,7 @@ int get_addr_check_index(const CANPacket_t *to_push, RxCheck addr_list[], const 
 
 // 1Hz safety function called by main. Now just a check for lagging safety messages
 void safety_tick(const safety_config *cfg) {
+  const uint8_t MAX_MISSED_MSGS = 10U;
   bool rx_checks_invalid = false;
   uint32_t ts = microsecond_timer_get();
   if (cfg != NULL) {
@@ -313,6 +311,9 @@ bool rx_msg_safety_check(const CANPacket_t *to_push,
 }
 
 void generic_rx_checks(bool stock_ecu_detected) {
+  // allow 1s of transition timeout after relay changes state before assessing malfunctioning
+  const uint32_t RELAY_TRNS_TIMEOUT = 1U;
+
   // exit controls on rising edge of gas press
   if (gas_pressed && !gas_pressed_prev && !(alternative_experience & ALT_EXP_DISABLE_DISENGAGE_ON_GAS)) {
     controls_allowed = false;
