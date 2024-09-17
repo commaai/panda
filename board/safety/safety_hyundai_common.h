@@ -44,7 +44,6 @@ static uint8_t hyundai_last_button_interaction;  // button messages since the us
 void hyundai_common_init(uint16_t param) {
   const int HYUNDAI_PARAM_EV_GAS = 1;
   const int HYUNDAI_PARAM_HYBRID_GAS = 2;
-  const int HYUNDAI_PARAM_LONGITUDINAL = 4;
   const int HYUNDAI_PARAM_CAMERA_SCC = 8;
   const int HYUNDAI_PARAM_CANFD_HDA2 = 16;
   const int HYUNDAI_PARAM_ALT_LIMITS = 64; // TODO: shift this down with the rest of the common flags
@@ -58,6 +57,7 @@ void hyundai_common_init(uint16_t param) {
   hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
 
 #ifdef ALLOW_DEBUG
+  const int HYUNDAI_PARAM_LONGITUDINAL = 4;
   hyundai_longitudinal = GET_FLAG(param, HYUNDAI_PARAM_LONGITUDINAL);
 #else
   hyundai_longitudinal = false;

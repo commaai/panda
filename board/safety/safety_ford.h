@@ -399,11 +399,10 @@ static safety_config ford_init(uint16_t param) {
     {FORD_IPMA_Data, 0, 8},
   };
 
-  const uint16_t FORD_PARAM_LONGITUDINAL = 1;
-  const uint16_t FORD_PARAM_CANFD = 2;
-
   UNUSED(param);
 #ifdef ALLOW_DEBUG
+  const uint16_t FORD_PARAM_LONGITUDINAL = 1;
+  const uint16_t FORD_PARAM_CANFD = 2;
   ford_longitudinal = GET_FLAG(param, FORD_PARAM_LONGITUDINAL);
   ford_canfd = GET_FLAG(param, FORD_PARAM_CANFD);
 #endif

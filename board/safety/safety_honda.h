@@ -345,7 +345,6 @@ static safety_config honda_bosch_init(uint16_t param) {
   static CanMsg HONDA_RADARLESS_LONG_TX_MSGS[] = {{0xE4, 0, 5}, {0x33D, 0, 8}, {0x1C8, 0, 8}, {0x30C, 0, 8}};  // Bosch radarless w/ gas and brakes
 
   const uint16_t HONDA_PARAM_ALT_BRAKE = 1;
-  const uint16_t HONDA_PARAM_BOSCH_LONG = 2;
   const uint16_t HONDA_PARAM_RADARLESS = 8;
 
   static RxCheck honda_common_alt_brake_rx_checks[] = {
@@ -371,6 +370,7 @@ static safety_config honda_bosch_init(uint16_t param) {
 
   // radar disabled so allow gas/brakes
 #ifdef ALLOW_DEBUG
+  const uint16_t HONDA_PARAM_BOSCH_LONG = 2;
   honda_bosch_long = GET_FLAG(param, HONDA_PARAM_BOSCH_LONG);
 #endif
 

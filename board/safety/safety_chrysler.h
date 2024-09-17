@@ -202,7 +202,6 @@ static int chrysler_fwd_hook(int bus_num, int addr) {
 static safety_config chrysler_init(uint16_t param) {
 
   const uint32_t CHRYSLER_PARAM_RAM_DT = 1U;  // set for Ram DT platform
-  const uint32_t CHRYSLER_PARAM_RAM_HD = 2U;  // set for Ram HD platform
 
   // CAN messages for the 5th gen RAM DT platform
   static const ChryslerAddrs CHRYSLER_RAM_DT_ADDRS = {
@@ -274,7 +273,12 @@ static safety_config chrysler_init(uint16_t param) {
   safety_config ret;
 
   bool enable_ram_dt = GET_FLAG(param, CHRYSLER_PARAM_RAM_DT);
+
+#ifdef ALLOW_DEBUG
+  const uint32_t CHRYSLER_PARAM_RAM_HD = 2U;  // set for Ram HD platform
   bool enable_ram_hd = GET_FLAG(param, CHRYSLER_PARAM_RAM_HD);
+#endif
+
   if (enable_ram_dt) {
     chrysler_platform = CHRYSLER_RAM_DT;
     chrysler_addrs = &CHRYSLER_RAM_DT_ADDRS;

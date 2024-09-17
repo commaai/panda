@@ -190,7 +190,6 @@ static int gm_fwd_hook(int bus_num, int addr) {
 
 static safety_config gm_init(uint16_t param) {
   const uint16_t GM_PARAM_HW_CAM = 1;
-  const uint16_t GM_PARAM_HW_CAM_LONG = 2;
 
   static const LongitudinalLimits GM_ASCM_LONG_LIMITS = {
     .max_gas = 3072,
@@ -240,12 +239,14 @@ static safety_config gm_init(uint16_t param) {
   }
 
 #ifdef ALLOW_DEBUG
+  const uint16_t GM_PARAM_HW_CAM_LONG = 2;
   gm_cam_long = GET_FLAG(param, GM_PARAM_HW_CAM_LONG);
 #endif
   gm_pcm_cruise = (gm_hw == GM_CAM) && !gm_cam_long;
 
   safety_config ret = BUILD_SAFETY_CFG(gm_rx_checks, GM_ASCM_TX_MSGS);
   if (gm_hw == GM_CAM) {
+    // cppcheck-suppress knownConditionTrueFalse
     ret = gm_cam_long ? BUILD_SAFETY_CFG(gm_rx_checks, GM_CAM_LONG_TX_MSGS) : BUILD_SAFETY_CFG(gm_rx_checks, GM_CAM_TX_MSGS);
   }
   return ret;
