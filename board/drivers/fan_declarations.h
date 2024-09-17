@@ -16,17 +16,8 @@ struct fan_state_t {
 };
 extern struct fan_state_t fan_state;
 
-extern const float FAN_I;
-
-extern const uint8_t FAN_TICK_FREQ;
-extern const uint8_t FAN_STALL_THRESHOLD_MIN;
-extern const uint8_t FAN_STALL_THRESHOLD_MAX;
-
-
 void fan_set_power(uint8_t percentage);
-
 void llfan_init(void);
 void fan_init(void);
-
 // Call this at FAN_TICK_FREQ
 void fan_tick(void);
