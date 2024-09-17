@@ -1,6 +1,6 @@
 #include "simple_watchdog_declarations.h"
 
-simple_watchdog_state_t wd_state;
+static simple_watchdog_state_t wd_state;
 
 void simple_watchdog_kick(void) {
   uint32_t ts = microsecond_timer_get();
