@@ -8,15 +8,15 @@ void unused_interrupt_handler(void) {
 
 interrupt interrupts[NUM_INTERRUPTS];
 
-bool check_interrupt_rate = false;
+static bool check_interrupt_rate = false;
 
-uint8_t interrupt_depth = 0U;
-uint32_t last_time = 0U;
-uint32_t idle_time = 0U;
-uint32_t busy_time = 0U;
+static uint32_t idle_time = 0U;
+static uint32_t busy_time = 0U;
 float interrupt_load = 0.0f;
 
 void handle_interrupt(IRQn_Type irq_type){
+  static uint8_t interrupt_depth = 0U;
+  static uint32_t last_time = 0U;
   ENTER_CRITICAL();
   if (interrupt_depth == 0U) {
     uint32_t time = microsecond_timer_get();

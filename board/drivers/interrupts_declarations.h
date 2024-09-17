@@ -27,12 +27,6 @@ extern interrupt interrupts[NUM_INTERRUPTS];
   interrupts[irq_num].max_call_rate = (call_rate_max); \
   interrupts[irq_num].call_rate_fault = (rate_fault);
 
-extern bool check_interrupt_rate;
-
-extern uint8_t interrupt_depth;
-extern uint32_t last_time;
-extern uint32_t idle_time;
-extern uint32_t busy_time;
 extern float interrupt_load;
 
 void handle_interrupt(IRQn_Type irq_type);
