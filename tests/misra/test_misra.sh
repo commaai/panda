@@ -36,7 +36,7 @@ echo "Cppcheck checkers list from test_misra.sh:" > $CHECKLIST
 
 cppcheck() {
   # get all gcc defines: arm-none-eabi-gcc -dM -E - < /dev/null
-  COMMON_DEFINES="-D__GNUC__=9 -UCMSIS_NVIC_VIRTUAL -UCMSIS_VECTAB_VIRTUAL -DALLOW_DEBUG"
+  COMMON_DEFINES="-D__GNUC__=9 -UCMSIS_NVIC_VIRTUAL -UCMSIS_VECTAB_VIRTUAL"
 
   # note that cppcheck build cache results in inconsistent results as of v2.13.0
   OUTPUT=$DIR/.output.log
