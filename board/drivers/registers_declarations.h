@@ -14,13 +14,6 @@ typedef struct reg {
 #define HASHING_PRIME 23U
 #define CHECK_COLLISION(hash, addr) (((uint32_t) register_map[hash].address != 0U) && (register_map[hash].address != (addr)))
 
-extern reg register_map[REGISTER_MAP_SIZE];
-
-// Hash spread in first and second iterations seems to be reasonable.
-// See: tests/development/register_hashmap_spread.py
-// Also, check the collision warnings in the debug output, and minimize those.
-uint16_t hash_addr(uint32_t input);
-
 // Do not put bits in the check mask that get changed by the hardware
 void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask);
 

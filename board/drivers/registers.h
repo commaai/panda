@@ -1,11 +1,11 @@
 #include "registers_declarations.h"
 
-reg register_map[REGISTER_MAP_SIZE];
+static reg register_map[REGISTER_MAP_SIZE];
 
 // Hash spread in first and second iterations seems to be reasonable.
 // See: tests/development/register_hashmap_spread.py
 // Also, check the collision warnings in the debug output, and minimize those.
-uint16_t hash_addr(uint32_t input){
+static uint16_t hash_addr(uint32_t input){
   return (((input >> 16U) ^ ((((input + 1U) & 0xFFFFU) * HASHING_PRIME) & 0xFFFFU)) & REGISTER_MAP_SIZE);
 }
 
