@@ -820,7 +820,7 @@ class UdsClient():
     data += struct.pack('!I', memory_size)[4 - memory_size_bytes:]
 
     data += data_record
-    self._uds_request(SERVICE_TYPE.WRITE_MEMORY_BY_ADDRESS, subfunction=0x00, data=data)
+    self._uds_request(SERVICE_TYPE.WRITE_MEMORY_BY_ADDRESS, subfunction=None, data=data)
 
   def clear_diagnostic_information(self, dtc_group_type: DTC_GROUP_TYPE):
     data = struct.pack('!I', dtc_group_type)[1:]  # 3 bytes
