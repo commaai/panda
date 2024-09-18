@@ -62,7 +62,7 @@ git clone https://github.com/commaai/panda.git
 cd panda
 
 # install dependencies
-pip install -r requirements.txt
+pip install -e .[dev]
 
 # install panda
 python setup.py install
@@ -97,7 +97,7 @@ The panda jungle uses different udev rules. See [the repo](https://github.com/co
 As a universal car interface, it should support every reasonable software interface.
 
 - [Python library](https://github.com/commaai/panda/tree/master/python)
-- [C++ library](https://github.com/commaai/openpilot/tree/master/selfdrive/boardd)
+- [C++ library](https://github.com/commaai/openpilot/tree/master/selfdrive/pandad)
 - [socketcan in kernel](https://github.com/commaai/panda/tree/master/drivers/linux) (alpha)
 
 ## Licensing

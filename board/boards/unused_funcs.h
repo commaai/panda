@@ -1,3 +1,5 @@
+#pragma once
+
 void unused_init_bootloader(void) {
 }
 

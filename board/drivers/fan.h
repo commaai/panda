@@ -86,7 +86,7 @@ void fan_tick(void) {
       float error = fan_state.target_rpm - fan_rpm_fast;
       fan_state.error_integral += FAN_I * error;
     }
-    fan_state.power = CLAMP(fan_state.error_integral, 0U, 100U);
+    fan_state.power = CLAMP(fan_state.error_integral, 0U, current_board->fan_max_pwm);
 
     // Set PWM and enable line
     pwm_set(TIM3, 3, fan_state.power);

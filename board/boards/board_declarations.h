@@ -1,3 +1,8 @@
+#pragma once
+
+#include <stdint.h>
+#include <stdbool.h>
+
 // ******************** Prototypes ********************
 typedef enum {
   BOOT_STANDBY,
@@ -29,6 +34,7 @@ struct board {
   const uint16_t avdd_mV;
   const bool fan_stall_recovery;
   const uint8_t fan_enable_cooldown_time;
+  const uint8_t fan_max_pwm;
   board_init init;
   board_init_bootloader init_bootloader;
   board_enable_can_transceiver enable_can_transceiver;
@@ -73,3 +79,12 @@ struct board {
 // CAN modes
 #define CAN_MODE_NORMAL 0U
 #define CAN_MODE_OBD_CAN2 1U
+
+extern struct board board_black;
+extern struct board board_dos;
+extern struct board board_uno;
+extern struct board board_tres;
+extern struct board board_grey;
+extern struct board board_white;
+extern struct board board_cuatro;
+extern struct board board_red;
