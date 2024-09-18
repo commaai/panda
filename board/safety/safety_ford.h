@@ -405,6 +405,8 @@ static safety_config ford_init(uint16_t param) {
 #endif
 
   safety_config ret;
+  // FIXME: cppcheck thinks that ford_canfd is always false. This is not true
+  // if ALLOW_DEBUG is defined but cppcheck is run without ALLOW_DEBUG
   // cppcheck-suppress knownConditionTrueFalse
   if (ford_canfd) {
     ret = ford_longitudinal ? BUILD_SAFETY_CFG(ford_rx_checks, FORD_CANFD_LONG_TX_MSGS) : \
