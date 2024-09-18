@@ -51,14 +51,16 @@ static uint32_t fca_giorgio_compute_crc(const CANPacket_t *to_push) {
   uint8_t crc = 0U;
   uint8_t final_xor = 0U;
 
-  for (int i = 0; i < len - 1; i++) {
+  for (int i = 0; i < (len - 1); i++) {
     crc ^= (uint8_t)GET_BYTE(to_push, i);
     crc = fca_giorgio_crc8_lut_j1850[crc];
   }
 
   // TODO: bruteforce final XORs for Panda relevant messages
-  if (addr == 0xFFU) {
+  if (addr == 0xFF) {
     final_xor = 0xFFU;
+  } else {
+    final_xor = 0x0;
   }
 
   return (uint8_t)(crc ^ final_xor);
@@ -114,7 +116,7 @@ static void fca_giorgio_rx_hook(const CANPacket_t *to_push) {
 
     // Signal: ABS_3.BRAKE_PEDAL_SWITCH
     if (addr == FCA_GIORGIO_ABS_3) {
-      brake_pressed = GET_BIT(to_push, 3);
+      brake_pressed = GET_BIT(to_push, 3U);
     }
 
     generic_rx_checks((addr == FCA_GIORGIO_LKA_COMMAND));
