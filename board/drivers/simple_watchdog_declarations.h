@@ -1,8 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdbool.h>
-
 typedef struct simple_watchdog_state_t {
   uint32_t fault;
   uint32_t last_ts;

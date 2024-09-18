@@ -1,8 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdbool.h>
-
 // IRQs: USART2, USART3, UART5
 
 // ***************************** Definitions *****************************

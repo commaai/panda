@@ -1,8 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdbool.h>
-
 #include "crc.h"
 
 #define SPI_TIMEOUT_US 10000U

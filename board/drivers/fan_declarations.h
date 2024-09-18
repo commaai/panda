@@ -1,8 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdbool.h>
-
 struct fan_state_t {
   uint16_t tach_counter;
   uint16_t rpm;
