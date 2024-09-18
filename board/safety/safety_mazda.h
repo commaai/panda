@@ -1,8 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdbool.h>
-
 #include "safety_declarations.h"
 
 // CAN msgs we care about

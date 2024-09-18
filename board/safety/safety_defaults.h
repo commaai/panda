@@ -1,8 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdbool.h>
-
 #include "safety_declarations.h"
 
 void default_rx_hook(const CANPacket_t *to_push) {

@@ -1,8 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdbool.h>
-
 #include "safety_declarations.h"
 
 // All common address checks except SCM_BUTTONS which isn't on one Nidec safety configuration

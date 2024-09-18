@@ -1,8 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdbool.h>
-
 #include "safety_declarations.h"
 
 extern uint16_t hyundai_canfd_crc_lut[256];
