@@ -35,8 +35,8 @@ static safety_config body_init(uint16_t param) {
   };
 
   static const CanMsg BODY_TX_MSGS[] = {{0x250, 0, 8}, {0x250, 0, 6}, {0x251, 0, 5},  // body
-                                 {0x350, 0, 8}, {0x350, 0, 6}, {0x351, 0, 5},  // knee
-                                 {0x1, 0, 8}}; // CAN flasher
+                                        {0x350, 0, 8}, {0x350, 0, 6}, {0x351, 0, 5},  // knee
+                                        {0x1, 0, 8}}; // CAN flasher
 
   UNUSED(param);
   return BUILD_SAFETY_CFG(body_rx_checks, BODY_TX_MSGS);
