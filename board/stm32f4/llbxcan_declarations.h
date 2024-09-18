@@ -1,8 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdbool.h>
-
 // Flasher and pedal use raw mailbox access
 #define GET_MAILBOX_BYTE(msg, b) (((int)(b) > 3) ? (((msg)->RDHR >> (8U * ((unsigned int)(b) % 4U))) & 0xFFU) : (((msg)->RDLR >> (8U * (unsigned int)(b))) & 0xFFU))
 #define GET_MAILBOX_BYTES_04(msg) ((msg)->RDLR)

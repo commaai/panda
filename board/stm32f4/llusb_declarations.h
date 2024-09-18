@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-
 extern USB_OTG_GlobalTypeDef *USBx;
 
 #define USBx_HOST       ((USB_OTG_HostTypeDef *)((uint32_t)USBx + USB_OTG_HOST_BASE))

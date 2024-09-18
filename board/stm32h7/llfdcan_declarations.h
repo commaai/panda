@@ -1,8 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdbool.h>
-
 // SAE J2284-4 document specifies a bus-line network running at 2 Mbit/s
 // SAE J2284-5 document specifies a point-to-point communication running at 5 Mbit/s
 
