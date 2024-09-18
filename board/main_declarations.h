@@ -1,8 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdbool.h>
-
 // ******************** Prototypes ********************
 void print(const char *a);
 void puth(unsigned int i);

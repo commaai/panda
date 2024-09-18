@@ -1,8 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdbool.h>
-
 extern const uint8_t PANDA_CAN_CNT;
 extern const uint8_t PANDA_BUS_CNT;
 
