@@ -9,18 +9,10 @@
 
 #define BUILD_SAFETY_CFG(rx, tx) ((safety_config){(rx), (sizeof((rx)) / sizeof((rx)[0])), \
                                                   (tx), (sizeof((tx)) / sizeof((tx)[0]))})
-#define SET_RX_CHECKS(rx, config) \
-  do { \
-    (config).rx_checks = (rx); \
-    (config).rx_checks_len = sizeof((rx)) / sizeof((rx)[0]); \
-  } while (0);
-
-#define SET_TX_MSGS(tx, config) \
-  do { \
-    (config).tx_msgs = (tx); \
-    (config).tx_msgs_len = sizeof((tx)) / sizeof((tx)[0]); \
-  } while(0);
-
+#define SET_RX_CHECKS(rx, config) ((config).rx_checks = (rx), \
+                                   (config).rx_checks_len = sizeof((rx)) / sizeof((rx)[0]))
+#define SET_TX_MSGS(tx, config) ((config).tx_msgs = (tx), \
+                                 (config).tx_msgs_len = sizeof((tx)) / sizeof((tx)[0]))
 #define UPDATE_VEHICLE_SPEED(val_ms) (update_sample(&vehicle_speed, ROUND((val_ms) * VEHICLE_SPEED_FACTOR)))
 
 uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len);
@@ -258,24 +250,3 @@ extern safety_config current_safety_config;
 
 int safety_fwd_hook(int bus_num, int addr);
 int set_safety_hooks(uint16_t mode, uint16_t param);
-
-extern const safety_hooks body_hooks;
-extern const safety_hooks chrysler_hooks;
-extern const safety_hooks elm327_hooks;
-extern const safety_hooks nooutput_hooks;
-extern const safety_hooks alloutput_hooks;
-extern const safety_hooks ford_hooks;
-extern const safety_hooks gm_hooks;
-extern const safety_hooks honda_nidec_hooks;
-extern const safety_hooks honda_bosch_hooks;
-extern const safety_hooks hyundai_canfd_hooks;
-extern const safety_hooks hyundai_hooks;
-extern const safety_hooks hyundai_legacy_hooks;
-extern const safety_hooks mazda_hooks;
-extern const safety_hooks nissan_hooks;
-extern const safety_hooks subaru_hooks;
-extern const safety_hooks subaru_preglobal_hooks;
-extern const safety_hooks tesla_hooks;
-extern const safety_hooks toyota_hooks;
-extern const safety_hooks volkswagen_mqb_hooks;
-extern const safety_hooks volkswagen_pq_hooks;
