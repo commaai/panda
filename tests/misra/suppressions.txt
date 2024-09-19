@@ -21,4 +21,3 @@ unusedFunction:*/interrupt_handlers*.h
 misra-c2012-2.5   # unused macros. a few legit, rest aren't common between F4/H7 builds. should we do this in the unusedFunction pass?
 misra-c2012-8.7
 misra-c2012-8.4
-misra-c2012-21.15
