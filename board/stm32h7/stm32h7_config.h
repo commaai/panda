@@ -2,9 +2,6 @@
 #include "stm32h7/inc/stm32h7xx_hal_gpio_ex.h"
 #define MCU_IDCODE 0x483U
 
-// from the linker script
-#define APP_START_ADDRESS 0x8020000U
-
 #define CORE_FREQ 240U // in Mhz
 //APB1 - 120Mhz, APB2 - 120Mhz
 #define APB1_FREQ (CORE_FREQ/4U)

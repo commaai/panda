@@ -2,9 +2,6 @@
 #include "stm32f4/inc/stm32f4xx_hal_gpio_ex.h"
 #define MCU_IDCODE 0x463U
 
-// from the linker script
-#define APP_START_ADDRESS 0x8004000U
-
 #define CORE_FREQ 96U // in MHz
 #define APB1_FREQ (CORE_FREQ/2U)
 #define APB1_TIMER_FREQ (APB1_FREQ*2U)  // APB1 is multiplied by 2 for the timer peripherals
