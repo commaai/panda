@@ -43,25 +43,6 @@ bool can_init(uint8_t can_number);
 void process_can(uint8_t can_number);
 
 // ********************* instantiate queues *********************
-#define declare_can_buffer(x, size) \
-  extern CANPacket_t elems_##x[size]; \
-  extern can_ring can_##x;
-
-#define CAN_RX_BUFFER_SIZE 4096U
-#define CAN_TX_BUFFER_SIZE 416U
-
-#ifdef STM32H7
-// ITCM RAM and DTCM RAM are the fastest for Cortex-M7 core access
-__attribute__((section(".axisram"))) declare_can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
-__attribute__((section(".itcmram"))) declare_can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
-__attribute__((section(".itcmram"))) declare_can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
-#else
-declare_can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
-declare_can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
-declare_can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
-#endif
-declare_can_buffer(tx3_q, CAN_TX_BUFFER_SIZE)
-
 #define CAN_QUEUES_ARRAY_SIZE 3
 extern can_ring *can_queues[CAN_QUEUES_ARRAY_SIZE];
 
@@ -94,7 +75,9 @@ extern bus_config_t bus_config[BUS_CONFIG_ARRAY_SIZE];
 
 void can_init_all(void);
 void can_set_orientation(bool flipped);
+#ifdef PANDA_JUNGLE
 void can_set_forwarding(uint8_t from, uint8_t to);
+#endif
 void ignition_can_hook(CANPacket_t *to_push);
 bool can_tx_check_min_slots_free(uint32_t min);
 uint8_t calculate_checksum(const uint8_t *dat, uint32_t len);

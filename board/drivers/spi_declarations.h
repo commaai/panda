@@ -35,7 +35,6 @@ enum {
   SPI_STATE_DATA_TX
 };
 
-extern bool spi_tx_dma_done;
 extern uint16_t spi_checksum_error_count;
 
 #define SPI_HEADER_SIZE 7U
@@ -46,6 +45,8 @@ void llspi_mosi_dma(uint8_t *addr, int len);
 void llspi_miso_dma(uint8_t *addr, int len);
 
 void can_tx_comms_resume_spi(void);
+#if defined(ENABLE_SPI) || defined(BOOTSTUB)
 void spi_init(void);
+#endif
 void spi_rx_done(void);
 void spi_tx_done(bool reset);

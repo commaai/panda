@@ -5,8 +5,9 @@
 // ***************************** Definitions *****************************
 
 #define UART_BUFFER(x, size_rx, size_tx, uart_ptr, callback_ptr, overwrite_mode) \
-  uint8_t elems_rx_##x[size_rx]; \
-  uint8_t elems_tx_##x[size_tx]; \
+  static uint8_t elems_rx_##x[size_rx]; \
+  static uint8_t elems_tx_##x[size_tx]; \
+  extern uart_ring uart_ring_##x; \
   uart_ring uart_ring_##x = {  \
     .w_ptr_tx = 0, \
     .r_ptr_tx = 0, \
@@ -131,20 +132,6 @@ void print(const char *a) {
     if (*in == '\n') putch('\r');
     putch(*in);
   }
-}
-
-void putui(uint32_t i) {
-  uint32_t i_copy = i;
-  char str[11];
-  uint8_t idx = 10;
-  str[idx] = '\0';
-  idx--;
-  do {
-    str[idx] = (i_copy % 10U) + 0x30U;
-    idx--;
-    i_copy /= 10;
-  } while (i_copy != 0U);
-  print(&str[idx + 1U]);
 }
 
 void puthx(uint32_t i, uint8_t len) {

@@ -14,7 +14,6 @@ uint8_t spi_buf_rx[SPI_BUF_SIZE];
 uint8_t spi_buf_tx[SPI_BUF_SIZE];
 #endif
 
-bool spi_tx_dma_done = false;
 static uint8_t spi_state = SPI_STATE_HEADER;
 static uint16_t spi_data_len_mosi;
 uint16_t spi_checksum_error_count = 0;
@@ -70,6 +69,7 @@ static uint16_t spi_version_packet(uint8_t *out) {
   return resp_len;
 }
 
+#if defined(ENABLE_SPI) || defined(BOOTSTUB)
 void spi_init(void) {
   // platform init
   llspi_init();
@@ -78,6 +78,7 @@ void spi_init(void) {
   spi_state = SPI_STATE_HEADER;
   llspi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
 }
+#endif
 
 static bool validate_checksum(const uint8_t *data, uint16_t len) {
   // TODO: can speed this up by casting the bulk to uint32_t and xor-ing the bytes afterwards

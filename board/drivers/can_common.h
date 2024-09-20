@@ -18,8 +18,12 @@ bool can_loopback = false;
 
 // ********************* instantiate queues *********************
 #define can_buffer(x, size) \
-  CANPacket_t elems_##x[size]; \
+  static CANPacket_t elems_##x[size]; \
+  extern can_ring can_##x; \
   can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = (size), .elems = (CANPacket_t *)&(elems_##x) };
+
+#define CAN_RX_BUFFER_SIZE 4096U
+#define CAN_TX_BUFFER_SIZE 416U
 
 #ifdef STM32H7
 // ITCM RAM and DTCM RAM are the fastest for Cortex-M7 core access
@@ -150,9 +154,11 @@ void can_set_orientation(bool flipped) {
   bus_config[2].can_num_lookup = flipped ? 0U : 2U;
 }
 
+#ifdef PANDA_JUNGLE
 void can_set_forwarding(uint8_t from, uint8_t to) {
   bus_config[from].forwarding_bus = to;
 }
+#endif
 
 void ignition_can_hook(CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
