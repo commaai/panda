@@ -126,14 +126,12 @@ static char to_hex_char(uint8_t a) {
 
 void usb_tick(void) {
   static uint16_t usb_last_frame_num = 0U;
-
   uint16_t current_frame_num = (USBx_DEVICE->DSTS & USB_OTG_DSTS_FNSOF_Msk) >> USB_OTG_DSTS_FNSOF_Pos;
   usb_enumerated = (current_frame_num != usb_last_frame_num);
   usb_last_frame_num = current_frame_num;
 }
 
 static void usb_setup(void) {
-
   static uint8_t device_desc[] = {
     DSCR_DEVICE_LEN, USB_DESC_TYPE_DEVICE, //Length, Type
     0x10, 0x02, // bcdUSB max version of USB supported (2.1)
@@ -151,7 +149,6 @@ static void usb_setup(void) {
     0xFF, 0xFF, 0xFF, 0x40, // bDeviceClass, bDeviceSubClass, bDeviceProtocol, bMaxPacketSize0
     0x01, 0x00 // bNumConfigurations, bReserved
   };
-
 
   static uint8_t configuration_desc[] = {
     DSCR_CONFIG_LEN, USB_DESC_TYPE_CONFIGURATION, // Length, Type,
@@ -224,7 +221,6 @@ static void usb_setup(void) {
     '0', '1' // "01"
   };
 
-
   // WCID (auto install WinUSB driver)
   // https://github.com/pbatard/libwdi/wiki/WCID-Devices
   // https://docs.microsoft.com/en-us/windows-hardware/drivers/usbcon/winusb-installation#automatic-installation-of--winusb-without-an-inf-file
@@ -262,7 +258,6 @@ static void usb_setup(void) {
     '{',0, 'c',0, 'c',0, 'e',0, '5',0, '2',0, '9',0, '1',0, 'c',0, '-',0, 'a',0, '6',0, '9',0, 'f',0, '-',0, '4',0 ,'9',0 ,'9',0 ,'5',0 ,'-',0, 'a',0, '4',0, 'c',0, '2',0, '-',0, '2',0, 'a',0, 'e',0, '5',0, '7',0, 'a',0, '5',0, '1',0, 'a',0, 'd',0, 'e',0, '9',0, '}',0, 0, 0, // bPropertyData ({CCE5291C-A69F-4995-A4C2-2AE57A51ADE9})
   };
 
-
   /*
   Binary Object Store descriptor used to expose WebUSB (and more WinUSB) metadata
   comments are from the wicg spec
@@ -270,7 +265,6 @@ static void usb_setup(void) {
     https://wicg.github.io/webusb/#webusb-platform-capability-descriptor
     https://github.com/sowbug/weblight/blob/192ad7a0e903542e2aa28c607d98254a12a6399d/firmware/webusb.c
     https://os.mbed.com/users/larsgk/code/USBDevice_WebUSB/file/1d8a6665d607/WebUSBDevice/
-
   */
   static uint8_t binary_object_store_desc[] = {
     // BOS header
@@ -531,9 +525,7 @@ static void usb_setup(void) {
 
 void usb_irqhandler(void) {
   //USBx->GINTMSK = 0;
-
   static uint8_t usbdata[0x100] __attribute__((aligned(4)));
-
   unsigned int gintsts = USBx->GINTSTS;
   unsigned int gotgint = USBx->GOTGINT;
   unsigned int daint = USBx_DEVICE->DAINT;

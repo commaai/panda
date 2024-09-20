@@ -23,13 +23,11 @@ typedef struct uart_ring {
 void debug_ring_callback(uart_ring *ring);
 void uart_tx_ring(uart_ring *q);
 uart_ring *get_ring_by_number(int a);
-
 // ************************* Low-level buffer functions *************************
 bool get_char(uart_ring *q, char *elem);
 bool injectc(uart_ring *q, char elem);
 bool put_char(uart_ring *q, char elem);
 void clear_uart_buff(uart_ring *q);
-
 // ************************ High-level debug functions **********************
 void putch(const char a);
 void print(const char *a);

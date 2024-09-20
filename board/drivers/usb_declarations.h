@@ -29,7 +29,6 @@ void usb_init(void);
 void refresh_can_tx_slots_available(void);
 
 // **** supporting defines ****
-
 #define  USB_REQ_GET_STATUS                             0x00
 #define  USB_REQ_CLEAR_FEATURE                          0x01
 #define  USB_REQ_SET_FEATURE                            0x03
@@ -111,9 +110,6 @@ void refresh_can_tx_slots_available(void);
 #define ENDPOINT_SND 0x00
 
 // packet read and write
-
 void usb_tick(void);
-
 // ***************************** USB port *****************************
-
 void can_tx_comms_resume_usb(void);

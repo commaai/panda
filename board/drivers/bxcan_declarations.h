@@ -16,9 +16,7 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg);
 // ***************************** CAN *****************************
 // CANx_TX IRQ Handler
 void process_can(uint8_t can_number);
-
 // CANx_RX0 IRQ Handler
 // blink blue when we are receiving CAN messages
 void can_rx(uint8_t can_number);
-
 bool can_init(uint8_t can_number);
