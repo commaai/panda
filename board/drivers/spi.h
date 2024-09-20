@@ -1,12 +1,7 @@
 #pragma once
 
+#include "spi_declarations.h"
 #include "crc.h"
-
-#define SPI_TIMEOUT_US 10000U
-
-// got max rate from hitting a non-existent endpoint
-// in a tight loop, plus some buffer
-#define SPI_IRQ_RATE  16000U
 
 #ifdef STM32H7
 #define SPI_BUF_SIZE 2048U
@@ -19,44 +14,18 @@ uint8_t spi_buf_rx[SPI_BUF_SIZE];
 uint8_t spi_buf_tx[SPI_BUF_SIZE];
 #endif
 
-#define SPI_CHECKSUM_START 0xABU
-#define SPI_SYNC_BYTE 0x5AU
-#define SPI_HACK 0x79U
-#define SPI_DACK 0x85U
-#define SPI_NACK 0x1FU
-
-// SPI states
-enum {
-  SPI_STATE_HEADER,
-  SPI_STATE_HEADER_ACK,
-  SPI_STATE_HEADER_NACK,
-  SPI_STATE_DATA_RX,
-  SPI_STATE_DATA_RX_ACK,
-  SPI_STATE_DATA_TX
-};
-
-bool spi_tx_dma_done = false;
-uint8_t spi_state = SPI_STATE_HEADER;
-uint8_t spi_endpoint;
-uint16_t spi_data_len_mosi;
-uint16_t spi_data_len_miso;
+static uint8_t spi_state = SPI_STATE_HEADER;
+static uint16_t spi_data_len_mosi;
 uint16_t spi_checksum_error_count = 0;
-bool spi_can_tx_ready = false;
+static bool spi_can_tx_ready = false;
 
-const unsigned char version_text[] = "VERSION";
-
-#define SPI_HEADER_SIZE 7U
-
-// low level SPI prototypes
-void llspi_init(void);
-void llspi_mosi_dma(uint8_t *addr, int len);
-void llspi_miso_dma(uint8_t *addr, int len);
+static const unsigned char version_text[] = "VERSION";
 
 void can_tx_comms_resume_spi(void) {
   spi_can_tx_ready = true;
 }
 
-uint16_t spi_version_packet(uint8_t *out) {
+static uint16_t spi_version_packet(uint8_t *out) {
   // this protocol version request is a stable portion of
   // the panda's SPI protocol. its contents match that of the
   // panda USB descriptors and are sufficent to list/enumerate
@@ -100,6 +69,7 @@ uint16_t spi_version_packet(uint8_t *out) {
   return resp_len;
 }
 
+#if defined(ENABLE_SPI) || defined(BOOTSTUB)
 void spi_init(void) {
   // platform init
   llspi_init();
@@ -108,8 +78,9 @@ void spi_init(void) {
   spi_state = SPI_STATE_HEADER;
   llspi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
 }
+#endif
 
-bool validate_checksum(const uint8_t *data, uint16_t len) {
+static bool validate_checksum(const uint8_t *data, uint16_t len) {
   // TODO: can speed this up by casting the bulk to uint32_t and xor-ing the bytes afterwards
   uint8_t checksum = SPI_CHECKSUM_START;
   for(uint16_t i = 0U; i < len; i++){
@@ -122,6 +93,8 @@ void spi_rx_done(void) {
   uint16_t response_len = 0U;
   uint8_t next_rx_state = SPI_STATE_HEADER_NACK;
   bool checksum_valid = false;
+  static uint8_t spi_endpoint;
+  static uint16_t spi_data_len_miso;
 
   // parse header
   spi_endpoint = spi_buf_rx[1];

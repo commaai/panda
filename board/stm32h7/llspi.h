@@ -1,3 +1,5 @@
+static bool spi_tx_dma_done = false;
+
 // master -> panda DMA start
 void llspi_mosi_dma(uint8_t *addr, int len) {
   // disable DMA + SPI

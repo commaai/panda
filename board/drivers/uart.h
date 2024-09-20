@@ -1,25 +1,13 @@
+#include "uart_declarations.h"
+
 // IRQs: USART2, USART3, UART5
 
 // ***************************** Definitions *****************************
-#define FIFO_SIZE_INT 0x400U
-
-typedef struct uart_ring {
-  volatile uint16_t w_ptr_tx;
-  volatile uint16_t r_ptr_tx;
-  uint8_t *elems_tx;
-  uint32_t tx_fifo_size;
-  volatile uint16_t w_ptr_rx;
-  volatile uint16_t r_ptr_rx;
-  uint8_t *elems_rx;
-  uint32_t rx_fifo_size;
-  USART_TypeDef *uart;
-  void (*callback)(struct uart_ring*);
-  bool overwrite;
-} uart_ring;
 
 #define UART_BUFFER(x, size_rx, size_tx, uart_ptr, callback_ptr, overwrite_mode) \
-  uint8_t elems_rx_##x[size_rx]; \
-  uint8_t elems_tx_##x[size_tx]; \
+  static uint8_t elems_rx_##x[size_rx]; \
+  static uint8_t elems_tx_##x[size_tx]; \
+  extern uart_ring uart_ring_##x; \
   uart_ring uart_ring_##x = {  \
     .w_ptr_tx = 0, \
     .r_ptr_tx = 0, \
@@ -34,9 +22,6 @@ typedef struct uart_ring {
     .overwrite = (overwrite_mode) \
   };
 
-// ***************************** Function prototypes *****************************
-void debug_ring_callback(uart_ring *ring);
-void uart_tx_ring(uart_ring *q);
 // ******************************** UART buffers ********************************
 
 // debug = USART2
@@ -147,20 +132,6 @@ void print(const char *a) {
     if (*in == '\n') putch('\r');
     putch(*in);
   }
-}
-
-void putui(uint32_t i) {
-  uint32_t i_copy = i;
-  char str[11];
-  uint8_t idx = 10;
-  str[idx] = '\0';
-  idx--;
-  do {
-    str[idx] = (i_copy % 10U) + 0x30U;
-    idx--;
-    i_copy /= 10;
-  } while (i_copy != 0U);
-  print(&str[idx + 1U]);
 }
 
 void puthx(uint32_t i, uint8_t len) {
