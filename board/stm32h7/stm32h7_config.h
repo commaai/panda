@@ -46,11 +46,11 @@ separate IRQs for RX and TX.
 #define PROVISION_CHUNK_ADDRESS 0x080FFFE0U
 #define DEVICE_SERIAL_NUMBER_ADDRESS 0x080FFFC0U
 
-#include "can_definitions.h"
+#include "can.h"
 #include "comms_definitions.h"
 
 #ifndef BOOTSTUB
-  #include "main_declarations.h"
+  #include "main_definitions.h"
 #else
   #include "bootstub_declarations.h"
 #endif
