@@ -18,7 +18,7 @@ typedef struct {
   uint8_t data[72];
 } asm_buffer;
 
-asm_buffer can_read_buffer = {.ptr = 0U, .tail_size = 0U};
+static asm_buffer can_read_buffer = {.ptr = 0U, .tail_size = 0U};
 
 int comms_can_read(uint8_t *data, uint32_t max_len) {
   uint32_t pos = 0U;
@@ -53,7 +53,7 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
   return pos;
 }
 
-asm_buffer can_write_buffer = {.ptr = 0U, .tail_size = 0U};
+static asm_buffer can_write_buffer = {.ptr = 0U, .tail_size = 0U};
 
 // send on CAN
 void comms_can_write(const uint8_t *data, uint32_t len) {
