@@ -117,7 +117,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         can_health[req->param1].brs_enabled = bus_config[req->param1].brs_enabled;
         can_health[req->param1].canfd_non_iso = bus_config[req->param1].canfd_non_iso;
         resp_len = sizeof(can_health[req->param1]);
-        (void)memcpy(resp, &can_health[req->param1], resp_len);
+        (void)memcpy(resp, (uint8_t*)(&can_health[req->param1]), resp_len);
       }
       break;
     // **** 0xc3: fetch MCU UID

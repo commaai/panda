@@ -31,7 +31,7 @@ void llspi_mosi_dma(uint8_t *addr, int len) {
 }
 
 // SPI MOSI DMA FINISHED
-void DMA2_Stream2_IRQ_Handler(void) {
+static void DMA2_Stream2_IRQ_Handler(void) {
   // Clear interrupt flag
   ENTER_CRITICAL();
   DMA2->LIFCR = DMA_LIFCR_CTCIF2;
@@ -42,7 +42,7 @@ void DMA2_Stream2_IRQ_Handler(void) {
 }
 
 // SPI MISO DMA FINISHED
-void DMA2_Stream3_IRQ_Handler(void) {
+static void DMA2_Stream3_IRQ_Handler(void) {
   // Clear interrupt flag
   DMA2->LIFCR = DMA_LIFCR_CTCIF3;
 
