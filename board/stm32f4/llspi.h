@@ -1,3 +1,4 @@
+#if defined(ENABLE_SPI) || defined(BOOTSTUB)
 void llspi_miso_dma(uint8_t *addr, int len) {
   // disable DMA
   DMA2_Stream3->CR &= ~DMA_SxCR_EN;
@@ -87,3 +88,4 @@ void llspi_init(void) {
   NVIC_EnableIRQ(DMA2_Stream2_IRQn);
   NVIC_EnableIRQ(DMA2_Stream3_IRQn);
 }
+#endif

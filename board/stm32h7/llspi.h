@@ -1,3 +1,4 @@
+#if defined(ENABLE_SPI) || defined(BOOTSTUB)
 // master -> panda DMA start
 void llspi_mosi_dma(uint8_t *addr, int len) {
   // disable DMA + SPI
@@ -105,3 +106,4 @@ void llspi_init(void) {
   NVIC_EnableIRQ(DMA2_Stream3_IRQn);
   NVIC_EnableIRQ(SPI4_IRQn);
 }
+#endif
