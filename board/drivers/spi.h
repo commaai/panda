@@ -14,16 +14,13 @@ uint8_t spi_buf_rx[SPI_BUF_SIZE];
 uint8_t spi_buf_tx[SPI_BUF_SIZE];
 #endif
 
+uint16_t spi_checksum_error_count = 0;
+
+#if defined(ENABLE_SPI) || defined(BOOTSTUB)
 static uint8_t spi_state = SPI_STATE_HEADER;
 static uint16_t spi_data_len_mosi;
-uint16_t spi_checksum_error_count = 0;
 static bool spi_can_tx_ready = false;
-
 static const unsigned char version_text[] = "VERSION";
-
-void can_tx_comms_resume_spi(void) {
-  spi_can_tx_ready = true;
-}
 
 static uint16_t spi_version_packet(uint8_t *out) {
   // this protocol version request is a stable portion of
@@ -69,7 +66,6 @@ static uint16_t spi_version_packet(uint8_t *out) {
   return resp_len;
 }
 
-#if defined(ENABLE_SPI) || defined(BOOTSTUB)
 void spi_init(void) {
   // platform init
   llspi_init();
@@ -78,7 +74,6 @@ void spi_init(void) {
   spi_state = SPI_STATE_HEADER;
   llspi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
 }
-#endif
 
 static bool validate_checksum(const uint8_t *data, uint16_t len) {
   // TODO: can speed this up by casting the bulk to uint32_t and xor-ing the bytes afterwards
@@ -231,3 +226,12 @@ void spi_tx_done(bool reset) {
     print("SPI: TX unexpected state: "); puth(spi_state); print("\n");
   }
 }
+
+void can_tx_comms_resume_spi(void) {
+  spi_can_tx_ready = true;
+}
+#else
+void can_tx_comms_resume_spi(void) {
+  return;
+}
+#endif

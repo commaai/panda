@@ -29,7 +29,6 @@ void llspi_mosi_dma(uint8_t *addr, int len) {
   DMA2_Stream2->CR |= DMA_SxCR_EN;
   register_set_bits(&(SPI1->CR2), SPI_CR2_RXDMAEN);
 }
-
 // SPI MOSI DMA FINISHED
 static void DMA2_Stream2_IRQ_Handler(void) {
   // Clear interrupt flag

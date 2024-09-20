@@ -58,7 +58,10 @@
 #include "drivers/watchdog.h"
 
 #include "drivers/spi.h"
-#include "stm32f4/llspi.h"
+
+#if defined(ENABLE_SPI) || defined(BOOTSTUB)
+  #include "stm32f4/llspi.h"
+#endif
 
 #if !defined(BOOTSTUB)
   #include "drivers/uart.h"
