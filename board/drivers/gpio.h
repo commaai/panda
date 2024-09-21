@@ -7,7 +7,10 @@
 #define PULL_UP 1
 #define PULL_DOWN 2
 
-#define OUTPUT_TYPE_OPEN_DRAIN 1U
+enum {
+  OUTPUT_TYPE_PUSH_PULL = 0U,
+  OUTPUT_TYPE_OPEN_DRAIN = 1U,
+};
 
 typedef struct {
   GPIO_TypeDef * const bank;
