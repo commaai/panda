@@ -7,19 +7,17 @@ from panda.tests.safety.common import CANPackerPanda
 
 MSG_DAS_steeringControl = 0x488
 MSG_DAS_Control = 0x2b9
-MSG_SCCM_rightStalk = 0x229
 
 class TestTeslaSafetyBase(common.PandaCarSafetyTest):
   RELAY_MALFUNCTION_ADDRS = {0: (MSG_DAS_steeringControl,)}
   FWD_BLACKLISTED_ADDRS = {2: [MSG_DAS_steeringControl]}
-  TX_MSGS = [[MSG_DAS_steeringControl, 0], [MSG_DAS_Control, 0], [MSG_SCCM_rightStalk, 1]]
+  TX_MSGS = [[MSG_DAS_steeringControl, 0], [MSG_DAS_Control, 0]]
 
   STANDSTILL_THRESHOLD = 1
   GAS_PRESSED_THRESHOLD = 3
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   packer: CANPackerPanda
-  packer_vehicle: CANPackerPanda
 
   @classmethod
   def setUpClass(cls):
@@ -46,10 +44,6 @@ class TestTeslaSafetyBase(common.PandaCarSafetyTest):
     values = {"DI_cruiseState": 2 if enable else 0}
     return self.packer.make_can_msg_panda("DI_state", 0, values)
 
-  def _control_lever_cmd(self, command):
-    values = {"SCCM_rightStalkStatus": command}
-    return self.packer_vehicle.make_can_msg_panda("SCCM_rightStalk", 1, values)
-
   def _long_control_msg(self, set_speed, acc_val=0, jerk_limits=(0, 0), accel_limits=(0, 0), aeb_event=0, bus=0):
     values = {
       "DAS_setSpeed": set_speed,
@@ -72,7 +66,6 @@ class TestTeslaStockSafety(TestTeslaSafetyBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("tesla_model3_party")
-    self.packer_vehicle = CANPackerPanda("tesla_model3_vehicle")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TESLA, 0)
     self.safety.init_tests()
@@ -85,23 +78,6 @@ class TestTeslaStockSafety(TestTeslaSafetyBase):
     values = {"EPAS3S_internalSAS": angle}
     return self.packer.make_can_msg_panda("EPAS3S_sysStatus", 0, values)
 
-  def test_acc_buttons(self):
-    """
-      cancel & idle allowed.
-    """
-    btns = [
-      (0, True),  # IDLE
-      (1, True),  # HALF UP
-      (2, False),  # FULL UP
-      (3, False),  # HALF DOWN
-      (4, False),  # FULL DOWN
-    ]
-    for btn, should_tx in btns:
-      for controls_allowed in (True, False):
-        self.safety.set_controls_allowed(controls_allowed)
-        tx = self._tx(self._control_lever_cmd(btn))
-        self.assertEqual(tx, should_tx)
-
 class TestTeslaLongitudinalSafetyBase(TestTeslaSafetyBase):
   RELAY_MALFUNCTION_ADDRS = {0: (MSG_DAS_steeringControl, MSG_DAS_Control)}
   FWD_BLACKLISTED_ADDRS = {2: [MSG_DAS_steeringControl, MSG_DAS_Control]}
@@ -112,7 +88,6 @@ class TestTeslaLongitudinalSafetyBase(TestTeslaSafetyBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("tesla_model3_party")
-    self.packer_vehicle = CANPackerPanda("tesla_model3_vehicle")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL)
     self.safety.init_tests()
