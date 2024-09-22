@@ -32,7 +32,7 @@ const uint8_t MAX_MISSED_MSGS = 10U;
 
 
 // sample struct that keeps 6 samples in memory
-struct sample_t {
+const struct sample_t {
   int values[MAX_SAMPLE_VALS];
   int min;
   int max;
@@ -176,7 +176,7 @@ void reset_sample(struct sample_t *sample);
 bool max_limit_check(int val, const int MAX, const int MIN);
 bool angle_dist_to_meas_check(int val, struct sample_t *val_meas,
   const int MAX_ERROR, const int MAX_VAL);
-bool dist_to_meas_check(int val, int val_last, struct sample_t *val_meas,
+bool dist_to_meas_check(int val, int val_last, const struct sample_t *val_meas,
   const int MAX_RATE_UP, const int MAX_RATE_DOWN, const int MAX_ERROR);
 bool driver_limit_check(int val, int val_last, const struct sample_t *val_driver,
   const int MAX, const int MAX_RATE_UP, const int MAX_RATE_DOWN,
