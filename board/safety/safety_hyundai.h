@@ -32,9 +32,10 @@ static const CanMsg HYUNDAI_TX_MSGS[] = {
   {0x485, 0, 4}, // LFAHDA_MFC Bus 0
 };
 
-#define HYUNDAI_COMMON_RX_CHECKS(legacy)                                                                                              \
+#define HYUNDAI_COMMON_RX_CHECKS(legacy)                                                                                      \
   {.msg = {{0x260, 0, 8, .check_checksum = true, .max_counter = 3U, .frequency = 100U},                                       \
-           {0x371, 0, 8, .frequency = 100U}, { 0 }}},                                                                         \
+           {0x371, 0, 8, .frequency = 100U},                                                                                  \
+           {0x91, 0, 8, .frequency = 100U}}},                                                                                 \
   {.msg = {{0x386, 0, 8, .check_checksum = !(legacy), .max_counter = (legacy) ? 0U : 15U, .frequency = 100U}, { 0 }, { 0 }}}, \
   {.msg = {{0x394, 0, 8, .check_checksum = !(legacy), .max_counter = (legacy) ? 0U : 7U, .frequency = 100U}, { 0 }, { 0 }}},  \
 
@@ -145,7 +146,9 @@ static void hyundai_rx_hook(const CANPacket_t *to_push) {
       gas_pressed = (((GET_BYTE(to_push, 4) & 0x7FU) << 1) | GET_BYTE(to_push, 3) >> 7) != 0U;
     } else if ((addr == 0x371) && hyundai_hybrid_gas_signal) {
       gas_pressed = GET_BYTE(to_push, 7) != 0U;
-    } else if ((addr == 0x260) && !hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
+    } else if ((addr == 0x91) && hyundai_fcev_gas_signal) {
+      gas_pressed = GET_BYTE(to_push, 6) != 0U;
+    } else if ((addr == 0x260) && !hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal && !hyundai_fcev_gas_signal) {
       gas_pressed = (GET_BYTE(to_push, 7) >> 6) != 0U;
     } else {
     }
@@ -323,6 +326,7 @@ static safety_config hyundai_legacy_init(uint16_t param) {
   hyundai_legacy = true;
   hyundai_longitudinal = false;
   hyundai_camera_scc = false;
+  hyundai_fcev_gas_signal = false;
   return BUILD_SAFETY_CFG(hyundai_legacy_rx_checks, HYUNDAI_TX_MSGS);
 }
 
