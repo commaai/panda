@@ -28,7 +28,7 @@ fi
 
 cd $PANDA_DIR
 if [ -z "${SKIP_BUILD}" ]; then
-  scons -j8
+  scons -j8 --compile_db
 fi
 
 CHECKLIST=$DIR/checkers.txt
@@ -61,6 +61,25 @@ cppcheck() {
   fi
 }
 
+if [ -z "$PANDA_SYSTEM_LEVEL_ONLY" ]; then
+# Test whole Panda project for unused functions / constants
+printf "\n${GREEN}** Panda project - tests: Cppcheck whole program + MISRA per translation unit **${NC}\n"
+cppcheck  --project=$PANDA_DIR/compile_commands.json \
+          --enable=all --addon=misra \
+          -i$PANDA_DIR/board/bootstub.c \
+          -i$PANDA_DIR/board/jungle/ \
+          -i$PANDA_DIR/crypto/
+# TODO enable bootstub and jungle for the whole build
+# Note: MISRA system level tests (e.g. rule 2.5) not supported by cppcheck 2.15 with --project argument
+
+
+# Test standalone Panda program. (Unused functions / constants will be more strict than whole project check)
+  printf "\n${GREEN}** Panda standalone - tests: Cppcheck whole program **${NC}\n"
+  cppcheck  --project=$PANDA_DIR/compile_commands_panda.json \
+            --enable=all --addon=misra
+fi
+
+# *** Legacy cppcheck test type by providing c files list ***
 # --force checks different macro combinations to avoid reporting macros and functions used by only one panda configuration
 # panda_macro_config.h lets cppcheck know macro combinations used for the build
 printf "\n${GREEN}** Panda tests: cppcheck whole program anlysis + Misra addon system level analysis **${NC}\n"
@@ -71,7 +90,8 @@ cppcheck  $PANDA_DIR/board/main.c -I$PANDA_DIR/board/ \
           --config-exclude=$PANDA_DIR/board/stm32f4/inc --config-exclude=$PANDA_DIR/board/stm32h7/inc \
           --include=$DIR/panda_macro_config.h -i$DIR \
           --enable=all --addon=misra \
-          --force --suppress=unknownMacro
+          --force
+# TODO remove this test when cppcheck fully supports system level misra reporting with --project
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 
 

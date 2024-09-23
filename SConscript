@@ -107,8 +107,8 @@ def build_project(project_name, project, extra_flags):
 
   # Bootstub
   crypto_obj = [
-    env.Object(f"rsa-{project_name}", f"{panda_root}/crypto/rsa.c"),
-    env.Object(f"sha-{project_name}", f"{panda_root}/crypto/sha.c")
+    env.Object(f"bootstub-rsa-{project_name}", f"{panda_root}/crypto/rsa.c"),
+    env.Object(f"bootstub-sha-{project_name}", f"{panda_root}/crypto/sha.c")
   ]
   bootstub_obj = env.Object(f"bootstub-{project_name}", File(project.get("BOOTSTUB", f"{panda_root}/board/bootstub.c")))
   bootstub_elf = env.Program(f"obj/bootstub.{project_name}.elf",

@@ -1,5 +1,5 @@
-// This is a dummy structure to allow cppcheck to test certain macro combinations 
-// together and in one seesion (needed for things like unused macros) 
+// This is a dummy structure to allow cppcheck to test certain macro combinations
+// together and in one seesion (needed for things like unused macros)
 // The structure should represents macro configurations used in scons
 
 #ifdef STM32H7
@@ -12,5 +12,4 @@
     #ifdef ENABLE_SPI
     #endif
   #endif
-#else
 #endif

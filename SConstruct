@@ -22,7 +22,13 @@ env = Environment(
 )
   
 if GetOption('compile_db'):
+    # whole project compilation database
     env.CompilationDatabase("compile_commands.json")
+
+    # Panda compilation database
+    env_p = env.Clone()
+    env_p["COMPILATIONDB_PATH_FILTER"] = '*board/[!jungle/][!bootstub]*'
+    env_p.CompilationDatabase("compile_commands_panda.json")
 
 # panda fw & test files
 SConscript('SConscript')
