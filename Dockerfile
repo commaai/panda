@@ -43,3 +43,7 @@ RUN cd /tmp/ && \
 COPY README.md panda.tar.* /tmp/
 RUN mkdir -p /tmp/pythonpath/panda && \
     tar -xvf /tmp/panda.tar.gz -C /tmp/pythonpath/panda/ || true
+
+RUN apt-get update && apt-get install -y clang-17 curl && \
+    curl -1sLf 'https://dl.cloudsmith.io/public/mull-project/mull-stable/setup.deb.sh' | bash && \
+    apt-get update && apt-get install -y mull-17

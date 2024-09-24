@@ -29,6 +29,18 @@ if GetOption('ubsan'):
   env['CFLAGS'] += flags
   env['LINKFLAGS'] += flags
 
+if GetOption('mutation'):
+  flags = [
+    "-fpass-plugin=/usr/lib/mull-ir-frontend-17",
+    "-g",
+    "-grecord-command-line",
+    "-fprofile-instr-generate",
+    "-fcoverage-mapping",
+  ]
+  env['CC'] = 'clang-17'
+  env['CFLAGS'] += flags
+  env['LINKFLAGS'] += flags
+
 panda = env.SharedObject("panda.os", "panda.c")
 libpanda = env.SharedLibrary("libpanda.so", [panda])
 

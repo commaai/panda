@@ -29,6 +29,7 @@ static uint8_t volkswagen_pq_get_counter(const CANPacket_t *to_push) {
   } else if (addr == MSG_GRA_NEU) {
     counter = (uint8_t)(GET_BYTE(to_push, 2) & 0xF0U) >> 4;
   } else {
+    counter = (uint8_t)(GET_BYTE(to_push, 2) & 0xF0U) >> 3;
   }
 
   return counter;
@@ -137,6 +138,10 @@ static void volkswagen_pq_rx_hook(const CANPacket_t *to_push) {
         bool cruise_engaged = (acc_status == 1) || (acc_status == 2);
         pcm_cruise_check(cruise_engaged);
       }
+    }
+
+    if (addr == MSG_MOTOR_3) {
+      gas_pressed = (GET_BYTE(to_push, 1));
     }
 
     // Signal: Motor_3.Fahrpedal_Rohsignal
