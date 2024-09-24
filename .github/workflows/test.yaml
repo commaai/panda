@@ -113,8 +113,6 @@ jobs:
           fetch-depth: 0 # need master to get diff
       - name: Build Docker image
         run: eval "$BUILD"
-      - name: Build with clang
-        run: ${{ env.RUN }} "scons --mutation -j$(nproc)"
       - name: Mutation tests
         timeout-minutes: 5
         run: ${{ env.RUN }} "cd tests/safety && ./mutation.sh"
