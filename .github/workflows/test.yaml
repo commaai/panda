@@ -109,6 +109,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # need master to get diff
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Build with clang
