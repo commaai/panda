@@ -18,8 +18,7 @@ env = Environment(
   CPPPATH=[".", "../../board/"],
 )
 
-system = platform.system()
-if system == "Darwin":
+if platform.system() == "Darwin":
   env.PrependENVPath('PATH', '/opt/homebrew/bin')
 
 if GetOption('ubsan'):

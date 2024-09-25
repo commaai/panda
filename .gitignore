@@ -31,4 +31,5 @@ tests/safety/coverage-out
 tests/safety/coverage.info
 
 *.profraw
+*.profdata
 mull.yml

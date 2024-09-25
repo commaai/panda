@@ -4,6 +4,7 @@ set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
 cd $DIR
 
+rm -f safety_*.profraw safety.profdata
 scons -j$(nproc) -D
 
 # run safety tests and generate coverage data
