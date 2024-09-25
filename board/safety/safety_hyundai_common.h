@@ -54,7 +54,7 @@ void hyundai_common_init(uint16_t param) {
   hyundai_camera_scc = GET_FLAG(param, HYUNDAI_PARAM_CAMERA_SCC);
   hyundai_canfd_hda2 = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2);
   hyundai_alt_limits = GET_FLAG(param, HYUNDAI_PARAM_ALT_LIMITS);
-  hyundai_fcev_gas_signal = GET_FLAG(param, HYUNDAI_PARAM_FCEV_GAS);
+  hyundai_fcev_gas_signal = !hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal && GET_FLAG(param, HYUNDAI_PARAM_FCEV_GAS);
 
   hyundai_last_button_interaction = HYUNDAI_PREV_BUTTON_SAMPLES;
 
