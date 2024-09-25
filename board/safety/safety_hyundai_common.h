@@ -119,7 +119,6 @@ uint32_t hyundai_common_canfd_compute_checksum(const CANPacket_t *to_push) {
   if (len == 24) {
     crc ^= 0x819dU;
   }
-
   if (len == 32) {
     crc ^= 0x9f5bU;
   }

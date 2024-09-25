@@ -29,7 +29,6 @@ static uint8_t ford_get_counter(const CANPacket_t *to_push) {
     // Signal: VehVActlBrk_No_Cnt
     cnt = (GET_BYTE(to_push, 2) >> 2) & 0xFU;
   }
-
   if (addr == FORD_Yaw_Data_FD1) {
     // Signal: VehRollYaw_No_Cnt
     cnt = GET_BYTE(to_push, 5);
@@ -46,12 +45,10 @@ static uint32_t ford_get_checksum(const CANPacket_t *to_push) {
     // Signal: VehVActlBrk_No_Cs
     chksum = GET_BYTE(to_push, 3);
   }
-
   if (addr == FORD_Yaw_Data_FD1) {
     // Signal: VehRollYawW_No_Cs
     chksum = GET_BYTE(to_push, 4);
   }
-
   return chksum;
 }
 
@@ -85,15 +82,12 @@ static bool ford_get_quality_flag_valid(const CANPacket_t *to_push) {
   if (addr == FORD_BrakeSysFeatures) {
     valid = (GET_BYTE(to_push, 2) >> 6) == 0x3U;           // VehVActlBrk_D_Qf
   }
-
   if (addr == FORD_EngVehicleSpThrottle2) {
     valid = ((GET_BYTE(to_push, 4) >> 5) & 0x3U) == 0x3U;  // VehVActlEng_D_Qf
   }
-
   if (addr == FORD_Yaw_Data_FD1) {
     valid = ((GET_BYTE(to_push, 6) >> 4) & 0x3U) == 0x3U;  // VehYawWActl_D_Qf
   }
-
   return valid;
 }
 
