@@ -25,7 +25,7 @@ if [ "$1" == "--report" ]; then
 fi
 
 # test line coverage
-INCOMPLETE_COVERAGE=$(llvm-cov-17 report -show-region-summary=false -show-branch-summary=false -instr-profile=safety.profdata ../libpanda/libpanda.so -sources ../../board/safety/safety_*.h | awk '$7 != "100.00%"' | head -n -1)
+INCOMPLETE_COVERAGE=$(llvm-cov-17 report -show-region-summary=false -show-branch-summary=false -instr-profile=safety.profdata ../libpanda/libpanda.so -sources ../../board/safety/safety_*.h ../../board/safety.h | awk '$7 != "100.00%"' | head -n -1)
 if [ ! $(echo "$INCOMPLETE_COVERAGE" | wc -l) -eq 2 ]; then
   echo "FAILED: Some files have less than 100% line coverage:"
   echo "$INCOMPLETE_COVERAGE"
