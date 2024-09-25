@@ -20,5 +20,5 @@ for safety_model in "${SAFETY_MODELS[@]}"; do
   echo -e "gitProjectRoot: ../../" >> mull.yml
 
   #PYTHONPATH=/home/batman/:/home/batman/panda/opendbc/:$PYTHONPATH mull-runner-17 --ld-search-path /lib/x86_64-linux-gnu/ ../libpanda/libpanda.so -test-program=./test_$safety_model.py || true
-  mull-runner-17 --ld-search-path /lib/x86_64-linux-gnu/ ../libpanda/libpanda.so -test-program=./test_$safety_model.py || true
+  mull-runner-17 --ld-search-path /lib/x86_64-linux-gnu/ ../libpanda/libpanda.so -test-program=./test_$safety_model.py
 done
