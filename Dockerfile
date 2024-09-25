@@ -20,8 +20,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf arm/ && \
     rm -rf thumb/nofp thumb/v6* thumb/v8* thumb/v7+fp thumb/v7-r+fp.sp && \
 
-RUN apt-get update && apt-get install -y curl clang-17
-    curl -1sLf 'https://dl.cloudsmith.io/public/mull-project/mull-stable/setup.deb.sh' | bash
+RUN apt-get update && apt-get install -y curl clang-17 && \
+    curl -1sLf 'https://dl.cloudsmith.io/public/mull-project/mull-stable/setup.deb.sh' | bash && \
     apt-get update && apt-get install -y mull-17
 
 ENV CPPCHECK_DIR=/tmp/cppcheck
