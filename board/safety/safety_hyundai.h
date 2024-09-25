@@ -254,9 +254,9 @@ static int hyundai_fwd_hook(int bus_num, int addr) {
   if (bus_num == 2) {
     bool is_lkas11_msg = (addr == 0x340);
     bool is_lfahda_mfc_msg = (addr == 0x485);
-    bool is_scc_msg = ((addr == 0x420) || (addr == 0x421) || (addr == 0x50A) || (addr == 0x389)) && hyundai_longitudinal && hyundai_camera_scc;
+    bool is_scc_msg = (addr == 0x420) || (addr == 0x421) || (addr == 0x50A) || (addr == 0x389);
 
-    bool block_msg = is_lkas11_msg || is_lfahda_mfc_msg || is_scc_msg;
+    bool block_msg = is_lkas11_msg || is_lfahda_mfc_msg || (is_scc_msg && hyundai_longitudinal && hyundai_camera_scc);
     if (!block_msg) {
       bus_fwd = 0;
     }
