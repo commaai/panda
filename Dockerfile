@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     cd /usr/lib/gcc/arm-none-eabi/* && \
     rm -rf arm/ && \
     rm -rf thumb/nofp thumb/v6* thumb/v8* thumb/v7+fp thumb/v7-r+fp.sp && \
-    apt-get install -y clang-17
+    apt-get update && apt-get install -y clang-17
 
 ENV CPPCHECK_DIR=/tmp/cppcheck
 COPY tests/misra/install.sh /tmp/
