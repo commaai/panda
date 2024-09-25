@@ -26,10 +26,11 @@ const LongitudinalLimits HYUNDAI_LONG_LIMITS = {
   .min_accel = -350,  // 1/100 m/s2
 };
 
-#define HYUNDAI_COMMON_TX_MSGS(scc_bus) \
-  {0x340, 0,       8},                  \
-  {0x4F1, scc_bus, 4},                  \
-  {0x485, 0,       4},                  \
+static const CanMsg HYUNDAI_TX_MSGS[] = {
+  {0x340, 0, 8}, // LKAS11 Bus 0
+  {0x4F1, 0, 4}, // CLU11 Bus 0
+  {0x485, 0, 4}, // LFAHDA_MFC Bus 0
+};
 
 #define HYUNDAI_LONG_COMMON_TX_MSGS(scc_bus) \
   {0x340, 0,       8},                       \
@@ -40,10 +41,6 @@ const LongitudinalLimits HYUNDAI_LONG_LIMITS = {
   {0x50A, 0,       8},                       \
   {0x389, 0,       8},                       \
   {0x4A2, 0,       2},                       \
-
-static const CanMsg HYUNDAI_TX_MSGS[] = {
-  HYUNDAI_COMMON_TX_MSGS(0)
-};
 
 #define HYUNDAI_COMMON_RX_CHECKS(legacy)                                                                                              \
   {.msg = {{0x260, 0, 8, .check_checksum = true, .max_counter = 3U, .frequency = 100U},                                       \
@@ -287,7 +284,9 @@ static safety_config hyundai_init(uint16_t param) {
   };
 
   static const CanMsg HYUNDAI_CAMERA_SCC_TX_MSGS[] = {
-    HYUNDAI_COMMON_TX_MSGS(2)
+    {0x340, 0, 8}, // LKAS11 Bus 0
+    {0x4F1, 2, 4}, // CLU11 Bus 2
+    {0x485, 0, 4}, // LFAHDA_MFC Bus 0
   };
 
   static const CanMsg HYUNDAI_CAMERA_SCC_LONG_TX_MSGS[] = {
