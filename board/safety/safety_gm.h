@@ -227,13 +227,7 @@ static safety_config gm_init(uint16_t param) {
                                           {0x1E1, 2, 7}, {0x184, 2, 8}};  // camera bus
 
   gm_hw = GET_FLAG(param, GM_PARAM_HW_CAM) ? GM_CAM : GM_ASCM;
-
-  if (gm_hw == GM_ASCM) {
-    gm_long_limits = &GM_ASCM_LONG_LIMITS;
-  } else if (gm_hw == GM_CAM) {
-    gm_long_limits = &GM_CAM_LONG_LIMITS;
-  } else {
-  }
+  gm_long_limits = (gm_hw == GM_CAM) ? &GM_CAM_LONG_LIMITS : &GM_ASCM_LONG_LIMITS;
 
 #ifdef ALLOW_DEBUG
   const uint16_t GM_PARAM_HW_CAM_LONG = 2;
