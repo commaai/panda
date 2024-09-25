@@ -163,7 +163,7 @@ static void hyundai_rx_hook(const CANPacket_t *to_push) {
 
     bool stock_ecu_detected = (addr == 0x340);
 
-    // If openpilot is controlling longitudinal we need to ensure the radar is turned off
+    // If openpilot is controlling longitudinal we need to ensure the radar is turned off on radar SCC cars
     // Enforce by checking we don't see SCC12
     if (hyundai_longitudinal && (addr == 0x421)) {
       stock_ecu_detected = true;
@@ -250,8 +250,16 @@ static int hyundai_fwd_hook(int bus_num, int addr) {
   if (bus_num == 0) {
     bus_fwd = 2;
   }
-  if ((bus_num == 2) && (addr != 0x340) && (addr != 0x485)) {
-    bus_fwd = 0;
+
+  if (bus_num == 2) {
+    bool is_lkas11_msg = (addr == 0x340);
+    bool is_lfahda_mfc_msg = (addr == 0x485);
+    bool is_scc_msg = ((addr == 0x420) || (addr == 0x421) || (addr == 0x50A) || (addr == 0x389)) && hyundai_longitudinal && hyundai_camera_scc;
+
+    bool block_msg = is_lkas11_msg || is_lfahda_mfc_msg || is_scc_msg;
+    if (!block_msg) {
+      bus_fwd = 0;
+    }
   }
 
   return bus_fwd;
@@ -278,22 +286,40 @@ static safety_config hyundai_init(uint16_t param) {
     {0x485, 0, 4}, // LFAHDA_MFC Bus 0
   };
 
+  // TODO: Utilize macros for common tx checks
+  static const CanMsg HYUNDAI_CAMERA_SCC_LONG_TX_MSGS[] = {
+    {0x340, 0, 8}, // LKAS11 Bus 0
+    {0x4F1, 2, 4}, // CLU11 Bus 2
+    {0x485, 0, 4}, // LFAHDA_MFC Bus 0
+    {0x420, 0, 8}, // SCC11 Bus 0
+    {0x421, 0, 8}, // SCC12 Bus 0
+    {0x50A, 0, 8}, // SCC13 Bus 0
+    {0x389, 0, 8}, // SCC14 Bus 0
+    {0x4A2, 0, 2}, // FRT_RADAR11 Bus 0
+  };
+
   hyundai_common_init(param);
   hyundai_legacy = false;
 
-  if (hyundai_camera_scc) {
-    hyundai_longitudinal = false;
-  }
-
   safety_config ret;
   if (hyundai_longitudinal) {
-    static RxCheck hyundai_long_rx_checks[] = {
-      HYUNDAI_COMMON_RX_CHECKS(false)
-      // Use CLU11 (buttons) to manage controls allowed instead of SCC cruise state
-      {.msg = {{0x4F1, 0, 4, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
-    };
+    if (hyundai_camera_scc) {
+      static RxCheck hyundai_camera_scc_long_rx_checks[] = {
+        HYUNDAI_COMMON_RX_CHECKS(false)
+        // Use CLU11 (buttons) to manage controls allowed instead of SCC cruise state
+        {.msg = {{0x4F1, 2, 4, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
+      };
 
-    ret = BUILD_SAFETY_CFG(hyundai_long_rx_checks, HYUNDAI_LONG_TX_MSGS);
+      ret = BUILD_SAFETY_CFG(hyundai_camera_scc_long_rx_checks, HYUNDAI_CAMERA_SCC_LONG_TX_MSGS);
+    } else {
+      static RxCheck hyundai_long_rx_checks[] = {
+        HYUNDAI_COMMON_RX_CHECKS(false)
+        // Use CLU11 (buttons) to manage controls allowed instead of SCC cruise state
+        {.msg = {{0x4F1, 0, 4, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
+      };
+
+      ret = BUILD_SAFETY_CFG(hyundai_long_rx_checks, HYUNDAI_LONG_TX_MSGS);
+    }
   } else if (hyundai_camera_scc) {
     static RxCheck hyundai_cam_scc_rx_checks[] = {
       HYUNDAI_COMMON_RX_CHECKS(false)
