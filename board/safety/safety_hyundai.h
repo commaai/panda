@@ -26,10 +26,23 @@ const LongitudinalLimits HYUNDAI_LONG_LIMITS = {
   .min_accel = -350,  // 1/100 m/s2
 };
 
+#define HYUNDAI_COMMON_TX_MSGS(scc_bus) \
+  {0x340, 0,       8},                  \
+  {0x4F1, scc_bus, 4},                  \
+  {0x485, 0,       4},                  \
+
+#define HYUNDAI_LONG_COMMON_TX_MSGS(scc_bus) \
+  {0x340, 0,       8},                       \
+  {0x4F1, scc_bus, 4},                       \
+  {0x485, 0,       4},                       \
+  {0x420, 0,       8},                       \
+  {0x421, 0,       8},                       \
+  {0x50A, 0,       8},                       \
+  {0x389, 0,       8},                       \
+  {0x4A2, 0,       2},                       \
+
 static const CanMsg HYUNDAI_TX_MSGS[] = {
-  {0x340, 0, 8}, // LKAS11 Bus 0
-  {0x4F1, 0, 4}, // CLU11 Bus 0
-  {0x485, 0, 4}, // LFAHDA_MFC Bus 0
+  HYUNDAI_COMMON_TX_MSGS(0)
 };
 
 #define HYUNDAI_COMMON_RX_CHECKS(legacy)                                                                                              \
@@ -267,35 +280,18 @@ static int hyundai_fwd_hook(int bus_num, int addr) {
 
 static safety_config hyundai_init(uint16_t param) {
   static const CanMsg HYUNDAI_LONG_TX_MSGS[] = {
-    {0x340, 0, 8}, // LKAS11 Bus 0
-    {0x4F1, 0, 4}, // CLU11 Bus 0
-    {0x485, 0, 4}, // LFAHDA_MFC Bus 0
-    {0x420, 0, 8}, // SCC11 Bus 0
-    {0x421, 0, 8}, // SCC12 Bus 0
-    {0x50A, 0, 8}, // SCC13 Bus 0
-    {0x389, 0, 8}, // SCC14 Bus 0
-    {0x4A2, 0, 2}, // FRT_RADAR11 Bus 0
+    HYUNDAI_LONG_COMMON_TX_MSGS(0)
     {0x38D, 0, 8}, // FCA11 Bus 0
     {0x483, 0, 8}, // FCA12 Bus 0
     {0x7D0, 0, 8}, // radar UDS TX addr Bus 0 (for radar disable)
   };
 
   static const CanMsg HYUNDAI_CAMERA_SCC_TX_MSGS[] = {
-    {0x340, 0, 8}, // LKAS11 Bus 0
-    {0x4F1, 2, 4}, // CLU11 Bus 2
-    {0x485, 0, 4}, // LFAHDA_MFC Bus 0
+    HYUNDAI_COMMON_TX_MSGS(2)
   };
 
-  // TODO: Utilize macros for common tx checks
   static const CanMsg HYUNDAI_CAMERA_SCC_LONG_TX_MSGS[] = {
-    {0x340, 0, 8}, // LKAS11 Bus 0
-    {0x4F1, 2, 4}, // CLU11 Bus 2
-    {0x485, 0, 4}, // LFAHDA_MFC Bus 0
-    {0x420, 0, 8}, // SCC11 Bus 0
-    {0x421, 0, 8}, // SCC12 Bus 0
-    {0x50A, 0, 8}, // SCC13 Bus 0
-    {0x389, 0, 8}, // SCC14 Bus 0
-    {0x4A2, 0, 2}, // FRT_RADAR11 Bus 0
+    HYUNDAI_LONG_COMMON_TX_MSGS(2)
   };
 
   hyundai_common_init(param);
