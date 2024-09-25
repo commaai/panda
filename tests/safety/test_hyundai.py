@@ -145,7 +145,7 @@ class TestHyundaiSafetyFCEV(TestHyundaiSafety):
 
   def _user_gas_msg(self, gas):
     values = {"ACCELERATOR_PEDAL": gas}
-    return self.packer.make_can_msg_panda("ACCELERATOR", 0, values)
+    return self.packer.make_can_msg_panda("FCEV_ACCELERATOR", 0, values)
 
 
 class TestHyundaiLegacySafety(TestHyundaiSafety):
