@@ -136,6 +136,18 @@ class TestHyundaiSafetyCameraSCC(TestHyundaiSafety):
     self.safety.init_tests()
 
 
+class TestHyundaiSafetyFCEV(TestHyundaiSafety):
+  def setUp(self):
+    self.packer = CANPackerPanda("hyundai_kia_generic")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, Panda.FLAG_HYUNDAI_FCEV_GAS)
+    self.safety.init_tests()
+
+  def _user_gas_msg(self, gas):
+    values = {"ACCELERATOR_PEDAL": gas}
+    return self.packer.make_can_msg_panda("ACCELERATOR", 0, values)
+
+
 class TestHyundaiLegacySafety(TestHyundaiSafety):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
