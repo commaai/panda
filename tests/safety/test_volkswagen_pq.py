@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 import pytest
+from panda import Panda
+from panda.tests.libpanda import libpanda_py
+import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
 MSG_LENKHILFE_3 = 0x0D0       # RX from EPS, for steering angle and driver steering torque
