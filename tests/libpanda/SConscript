@@ -1,3 +1,4 @@
+import os
 import platform
 
 COVERAGE_FLAGS = [
@@ -6,34 +7,31 @@ COVERAGE_FLAGS = [
 ]
 
 env = Environment(
-  CC='clang-17',
+  CC='clang',
   CFLAGS=[
     '-nostdlib',
     '-fno-builtin',
     '-std=gnu11',
     '-Wfatal-errors',
     '-Wno-pointer-to-int-cast',
-  ] + COVERAGE_FLAGS,
-  LINKFLAGS = COVERAGE_FLAGS,
+  ],
   CPPPATH=[".", "../../board/"],
 )
-
 if platform.system() == "Darwin":
   env.PrependENVPath('PATH', '/opt/homebrew/bin')
+
+TICI = os.path.isfile('/TICI')
+AGNOS = TICI
+if AGNOS:
+  env['CC'] = 'gcc'
+else:
+  env['CFLAGS'] += COVERAGE_FLAGS
+  env['LINKFLAGS'] += COVERAGE_FLAGS
 
 if GetOption('ubsan'):
   flags = [
     "-fsanitize=undefined",
     "-fno-sanitize-recover=undefined",
-  ]
-  env['CFLAGS'] += flags
-  env['LINKFLAGS'] += flags
-
-if GetOption('mutation'):
-  flags = [
-    '-fpass-plugin=/usr/lib/mull-ir-frontend-17',
-    '-g',
-    '-grecord-command-line',
   ]
   env['CFLAGS'] += flags
   env['LINKFLAGS'] += flags
