@@ -85,7 +85,7 @@ static uint32_t hyundai_get_checksum(const CANPacket_t *to_push) {
 static uint32_t hyundai_compute_checksum(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
-  uint16_t chksum = 0;
+  uint8_t chksum = 0;
   if (addr == 0x386) {
     // count the bits
     for (int i = 0; i < 8; i++) {
@@ -174,7 +174,7 @@ static void hyundai_rx_hook(const CANPacket_t *to_push) {
 
   // If openpilot is controlling longitudinal we need to ensure the radar is turned off
   // Enforce by checking we don't see SCC12
-  if (hyundai_longitudinal && (addr == 0x421)) {
+  if (hyundai_longitudinal) {
     stock_ecu_detected = stock_ecu_detected || ((addr == 0x421) && (bus == 0));
   }
   generic_rx_checks(stock_ecu_detected);
