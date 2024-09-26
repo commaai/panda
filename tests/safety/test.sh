@@ -17,18 +17,20 @@ done
 # generate coverage report
 llvm-profdata-17 merge -sparse safety_*.profraw -o safety.profdata
 
+LLVM_COV_ARGS="-instr-profile=safety.profdata ../libpanda/libpanda.so -sources ../../board/safety/safety_*.h ../../board/safety.h"
+
 # open html report
 if [ "$1" == "--report" ]; then
-  llvm-cov-17 show -format=html -show-branches=count -instr-profile=safety.profdata ../libpanda/libpanda.so -sources ../../board/safety/safety_*.h ../../board/safety.h -o coverage_report
+  llvm-cov-17 show -format=html -show-branches=count $LLVM_COV_ARGS -o coverage_report
   sensible-browser coverage_report/index.html
 fi
 
 # test line coverage
-INCOMPLETE_COVERAGE=$(llvm-cov-17 report -show-region-summary=false -show-branch-summary=false -instr-profile=safety.profdata ../libpanda/libpanda.so -sources ../../board/safety/safety_*.h ../../board/safety.h | awk '$7 != "100.00%"' | head -n -1)
+INCOMPLETE_COVERAGE=$(llvm-cov-17 report -show-region-summary=false -show-branch-summary=false $LLVM_COV_ARGS | awk '$7 != "100.00%"' | head -n -1)
 if [ ! $(echo "$INCOMPLETE_COVERAGE" | wc -l) -eq 2 ]; then
   echo "FAILED: Some files have less than 100% line coverage:"
   echo "$INCOMPLETE_COVERAGE"
-  llvm-cov-17 show -line-coverage-lt=100 -instr-profile=safety.profdata ../libpanda/libpanda.so -sources ../../board/safety/safety_*.h ../../board/safety.h
+  llvm-cov-17 show -line-coverage-lt=100 $LLVM_COV_ARGS 
   exit 1
 else
   echo "SUCCESS: All checked files have 100% line coverage!"
