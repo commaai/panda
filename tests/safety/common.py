@@ -293,7 +293,7 @@ class SteerRequestCutSafetyTest(TorqueSteeringSafetyTestBase, abc.ABC):
       should_tx = min_valid_steer_frames >= self.MIN_VALID_STEERING_FRAMES
       for idx in range(self.MAX_INVALID_STEERING_FRAMES * 2):
         tx = self._tx(self._torque_cmd_msg(self.MAX_TORQUE, steer_req=0))
-        assert should_tx and idx < self.MAX_INVALID_STEERING_FRAMES == tx
+        assert (should_tx and idx < self.MAX_INVALID_STEERING_FRAMES) == tx
 
       # Keep blocking after one steer_req mismatch
       for _ in range(100):
