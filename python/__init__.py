@@ -224,8 +224,7 @@ class Panda:
   FLAG_FORD_LONG_CONTROL = 1
   FLAG_FORD_CANFD = 2
 
-  def __init__(self, serial: str | None = None, claim: bool = True, disable_checks: bool = True, can_speed_kbps: int = 500):
-    self._connect_serial = serial
+  def __init__(self, serial: str | None = None, claim: bool = True, disable_checks: bool = True, can_speed_kbps: int = 500, cli: bool = True):
     self._disable_checks = disable_checks
 
     self._handle: BaseHandle
@@ -233,8 +232,37 @@ class Panda:
     self.can_rx_overflow_buffer = b''
     self._can_speed_kbps = can_speed_kbps
 
+    if cli and serial is None:
+        self._connect_serial = self._cli_select_panda()
+    else:
+        self._connect_serial = serial
+
     # connect and set mcu type
     self.connect(claim)
+
+  def _cli_select_panda(self):
+    dfu_pandas = PandaDFU.list()
+    if len(dfu_pandas) > 0:
+      print("INFO: some attached pandas are in DFU mode.")
+
+    pandas = self.list()
+    if len(pandas) == 0:
+      print("INFO: panda not available")
+      return None
+    if len(pandas) == 1:
+      print(f"INFO: connecting to panda {pandas[0]}")
+      time.sleep(1)
+      return pandas[0]
+    while True:
+      print("Multiple pandas available:")
+      pandas.sort()
+      for idx, serial in enumerate(pandas):
+        print(f"{[idx]}: {serial}")
+      try:
+        choice = int(input("Choose serial [0]:") or "0")
+        return pandas[choice]
+      except (ValueError, IndexError):
+        print("Enter a valid index.")
 
   def __enter__(self):
     return self
@@ -390,6 +418,12 @@ class Panda:
       context.close()
 
     return context, usb_handle, usb_serial, bootstub, bcd
+
+  def is_connected_spi(self):
+    return isinstance(self._handle, PandaSpiHandle)
+
+  def is_connected_usb(self):
+    return isinstance(self._handle, PandaUsbHandle)
 
   @classmethod
   def list(cls):
