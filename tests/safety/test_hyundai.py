@@ -176,7 +176,7 @@ class TestHyundaiLegacySafetyHEV(TestHyundaiSafety):
 class TestHyundaiCanCanfdHybridHda2Safety(TestHyundaiSafety):
   TX_MSGS = [[0x50, 0], [0x4F1, 1], [0x2A4, 0]]
   RELAY_MALFUNCTION_ADDRS = {0: (0x50, )}  # LKAS
-  FWD_BLACKLISTED_ADDRS = {2: (0x50, 0x2A4)}  # LKAS, CAM_0x2a4
+  FWD_BLACKLISTED_ADDRS = {2: [0x50, 0x2A4]}  # LKAS, CAM_0x2a4
 
   MAX_RATE_UP = 2
   MAX_RATE_DOWN = 3
