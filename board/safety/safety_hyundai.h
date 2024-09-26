@@ -29,6 +29,7 @@ const LongitudinalLimits HYUNDAI_LONG_LIMITS = {
 static const CanMsg HYUNDAI_TX_MSGS[] = {
   {0x340, 0, 8}, // LKAS11 Bus 0
   {0x4F1, 0, 4}, // CLU11 Bus 0
+  {0x484, 0, 8}, // HDA11_MFC Bus 0
   {0x485, 0, 4}, // LFAHDA_MFC Bus 0
 };
 
@@ -250,7 +251,7 @@ static int hyundai_fwd_hook(int bus_num, int addr) {
   if (bus_num == 0) {
     bus_fwd = 2;
   }
-  if ((bus_num == 2) && (addr != 0x340) && (addr != 0x485)) {
+  if ((bus_num == 2) && (addr != 0x340) && (addr != 0x485) && ((addr != 0x484) && hyundai_camera_scc && !hyundai_longitudinal)) {
     bus_fwd = 0;
   }
 
