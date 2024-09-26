@@ -7,7 +7,7 @@ COVERAGE_FLAGS = [
 ]
 
 env = Environment(
-  CC='clang',
+  CC='clang-17',
   CFLAGS=[
     '-nostdlib',
     '-fno-builtin',
