@@ -39,7 +39,7 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaCarSafetyTest, common.
 
   @classmethod
   def setup_class(cls):
-    super().setUpClass()
+    super().setup_class()
     if cls.__name__ == "TestHyundaiCanfdBase":
       cls.packer = None
       cls.safety = None
@@ -92,7 +92,7 @@ class TestHyundaiCanfdHDA1Base(TestHyundaiCanfdBase):
 
   @classmethod
   def setup_class(cls):
-    super().setUpClass()
+    super().setup_class()
     if cls.__name__ in ("TestHyundaiCanfdHDA1", "TestHyundaiCanfdHDA1AltButtons"):
       cls.packer = None
       cls.safety = None
@@ -144,12 +144,12 @@ class TestHyundaiCanfdHDA1Base(TestHyundaiCanfdBase):
   SAFETY_PARAM: int
 
   @classmethod
-  def setup_class(cls):
-    super().setUpClass()
+  def setu1_class(cls):
+    super().setup_class()
     if cls.__name__ in ("TestHyundaiCanfdHDA1", "TestHyundaiCanfdHDA1AltButtons"):
       cls.packer = None
       cls.safety = None
-      raise 
+      raise
   def setup_method(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpanda_py.libpanda

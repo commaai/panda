@@ -421,7 +421,7 @@ class TestHondaBoschAltBrakeSafetyBase(TestHondaBoschSafetyBase):
     Base Bosch safety test class with an alternate brake message
   """
   def setup_method(self):
-    super().setUp()
+    super().setup_method
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_ALT_BRAKE)
     self.safety.init_tests()
 
@@ -443,7 +443,7 @@ class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
     Covers the Honda Bosch safety mode with stock longitudinal
   """
   def setup_method(self):
-    super().setUp()
+    super().setup_method()
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, 0)
     self.safety.init_tests()
 
@@ -470,7 +470,7 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
   RELAY_MALFUNCTION_ADDRS = {0: (0xE4, 0x194), 1: (0x1DF,)}  # STEERING_CONTROL, ACC_CONTROL
 
   def setup_method(self):
-    super().setUp()
+    super().setup_method()
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_BOSCH_LONG)
     self.safety.init_tests()
 
@@ -530,7 +530,7 @@ class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschRadarlessS
   """
 
   def setup_method(self):
-    super().setUp()
+    super().setup_method()
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS)
     self.safety.init_tests()
 
@@ -541,7 +541,7 @@ class TestHondaBoschRadarlessAltBrakeSafety(HondaPcmEnableBase, TestHondaBoschRa
   """
 
   def setup_method(self):
-    super().setUp()
+    super().setup_method()
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS | Panda.FLAG_HONDA_ALT_BRAKE)
     self.safety.init_tests()
 
@@ -555,7 +555,7 @@ class TestHondaBoschRadarlessLongSafety(common.LongitudinalAccelSafetyTest, Hond
   FWD_BLACKLISTED_ADDRS = {2: [0xE4, 0xE5, 0x33D, 0x33DA, 0x33DB, 0x1C8, 0x30C]}
 
   def setup_method(self):
-    super().setUp()
+    super().setup_method()
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS | Panda.FLAG_HONDA_BOSCH_LONG)
     self.safety.init_tests()
 
