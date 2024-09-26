@@ -1,3 +1,4 @@
+import os
 import platform
 
 COVERAGE_FLAGS = [
@@ -19,6 +20,13 @@ env = Environment(
 )
 if platform.system() == "Darwin":
   env.PrependENVPath('PATH', '/opt/homebrew/bin')
+
+TICI = os.path.isfile('/TICI')
+AGNOS = TICI
+if AGNOS:
+  env['CC'] = 'gcc'
+  env['CFLAGS'] -= COVERAGE_FLAGS
+  env['LINKFLAGS'] -= COVERAGE_FLAGS
 
 if GetOption('ubsan'):
   flags = [
