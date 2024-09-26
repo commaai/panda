@@ -12,7 +12,6 @@ HW_TYPES=( 6 9 )
 for hw_type in "${HW_TYPES[@]}"; do
   echo "Testing HW_TYPE: $hw_type"
   LLVM_PROFILE_FILE="safety_%m.profraw" HW_TYPE=$hw_type pytest test_*.py
-  #PYTHONPATH=/home/batman/:/home/batman/panda/opendbc/:$PYTHONPATH LLVM_PROFILE_FILE="safety_%m.profraw" HW_TYPE=$hw_type pytest test_*.py
 done
 
 # generate coverage report
