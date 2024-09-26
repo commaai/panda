@@ -28,6 +28,7 @@ INCOMPLETE_COVERAGE=$(llvm-cov-17 report -show-region-summary=false -show-branch
 if [ ! $(echo "$INCOMPLETE_COVERAGE" | wc -l) -eq 2 ]; then
   echo "FAILED: Some files have less than 100% line coverage:"
   echo "$INCOMPLETE_COVERAGE"
+  llvm-cov-17 show -line-coverage-lt=100 -instr-profile=safety.profdata ../libpanda/libpanda.so -sources ../../board/safety/safety_*.h ../../board/safety.h
   exit 1
 else
   echo "SUCCESS: All checked files have 100% line coverage!"
