@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import pytest
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common

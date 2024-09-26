@@ -1,7 +1,6 @@
 import pytest
 import os
 import abc
-import pytest
 import importlib
 import numpy as np
 from collections.abc import Callable

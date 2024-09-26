@@ -100,6 +100,9 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
   def setup_class(cls):
     if cls.__name__ == "TestFordSafetyBase":
       raise pytest.skip()
+
+  def _set_prev_desired_angle(self, t):
+    t = round(t * self.DEG_TO_CAN)
     self.safety.set_desired_angle_last(t)
 
   def _reset_curvature_measurement(self, curvature, speed):
