@@ -57,6 +57,7 @@ setup(
       "pytest-xdist",
       "pytest-timeout",
       "pytest-randomly",
+      "pytest-subtests",
       "parameterized",
       "pre-commit",
       "numpy",
