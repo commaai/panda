@@ -169,17 +169,17 @@ static void hyundai_rx_hook(const CANPacket_t *to_push) {
     if (addr == 0x394) {
       brake_pressed = ((GET_BYTE(to_push, 5) >> 5U) & 0x3U) == 0x2U;
     }
-
-    const int steer_addr = hyundai_can_canfd_hybrid_hda2 ? 0x50 : 0x340;
-    bool stock_ecu_detected = (addr == steer_addr) && (bus == 0);
-
-    // If openpilot is controlling longitudinal we need to ensure the radar is turned off
-    // Enforce by checking we don't see SCC12
-    if (hyundai_longitudinal && (addr == 0x421)) {
-      stock_ecu_detected = true;
-    }
-    generic_rx_checks(stock_ecu_detected);
   }
+
+  const int steer_addr = hyundai_can_canfd_hybrid_hda2 ? 0x50 : 0x340;
+  bool stock_ecu_detected = (addr == steer_addr) && (bus == 0);
+
+  // If openpilot is controlling longitudinal we need to ensure the radar is turned off
+  // Enforce by checking we don't see SCC12
+  if (hyundai_longitudinal && (addr == 0x421)) {
+    stock_ecu_detected = stock_ecu_detected || ((addr == 0x421) && (bus == 0));
+  }
+  generic_rx_checks(stock_ecu_detected);
 }
 
 static bool hyundai_tx_hook(const CANPacket_t *to_send) {
