@@ -52,8 +52,8 @@ static const CanMsg HYUNDAI_TX_MSGS[] = {
   {.msg = {{0x421, (scc_bus), 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}}, \
 
 // Use CLU11 (buttons) to manage controls allowed instead of SCC cruise state
-#define HYUNDAI_CLU11_ADDR_CHECK(scc_bus)                                                                        \
-  {.msg = {{0x4F1, (scc_bus), 4, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}}, \
+#define HYUNDAI_CLU11_ADDR_CHECK                                                                         \
+  {.msg = {{0x4F1, 0, 4, .check_checksum = false, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}}, \
 
 static bool hyundai_legacy = false;
 
@@ -304,12 +304,12 @@ static safety_config hyundai_init(uint16_t param) {
   if (hyundai_longitudinal) {
     static RxCheck hyundai_long_rx_checks[] = {
       HYUNDAI_COMMON_RX_CHECKS(false)
-      HYUNDAI_CLU11_ADDR_CHECK(0)
+      HYUNDAI_CLU11_ADDR_CHECK
     };
 
     static RxCheck hyundai_camera_scc_long_rx_checks[] = {
       HYUNDAI_COMMON_RX_CHECKS(false)
-      HYUNDAI_CLU11_ADDR_CHECK(2)
+      HYUNDAI_CLU11_ADDR_CHECK
     };
 
     ret = hyundai_camera_scc ? BUILD_SAFETY_CFG(hyundai_camera_scc_long_rx_checks, HYUNDAI_CAMERA_SCC_LONG_TX_MSGS) : \
