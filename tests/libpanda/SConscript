@@ -14,8 +14,7 @@ env = Environment(
     '-std=gnu11',
     '-Wfatal-errors',
     '-Wno-pointer-to-int-cast',
-  ] + COVERAGE_FLAGS,
-  LINKFLAGS = COVERAGE_FLAGS,
+  ],
   CPPPATH=[".", "../../board/"],
 )
 if platform.system() == "Darwin":
@@ -25,8 +24,9 @@ TICI = os.path.isfile('/TICI')
 AGNOS = TICI
 if AGNOS:
   env['CC'] = 'gcc'
-  env['CFLAGS'] -= COVERAGE_FLAGS
-  env['LINKFLAGS'] -= COVERAGE_FLAGS
+else:
+  env['CFLAGS'] += COVERAGE_FLAGS
+  env['LINKFLAGS'] += COVERAGE_FLAGS
 
 if GetOption('ubsan'):
   flags = [
