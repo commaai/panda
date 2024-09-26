@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     apt-get update && apt-get install -y clang-17 && \
     ln -s $(which clang-17) /usr/bin/clang
 
-RUN apt-get update && apt-get install -y curl clang-17 && \
+RUN apt-get update && apt-get install -y curl && \
     curl -1sLf 'https://dl.cloudsmith.io/public/mull-project/mull-stable/setup.deb.sh' | bash && \
     apt-get update && apt-get install -y mull-17
 
