@@ -100,8 +100,6 @@ static uint32_t hyundai_compute_checksum(const CANPacket_t *to_push) {
       }
     }
     chksum = (chksum ^ 9U) & 15U;
-  } else if ((addr == 0x421) && hyundai_can_canfd_hybrid_hda2) {
-    chksum = hyundai_common_canfd_compute_checksum(to_push);
   } else {
     // sum of nibbles
     for (int i = 0; i < 8; i++) {
