@@ -28,10 +28,10 @@ static uint8_t ford_get_counter(const CANPacket_t *to_push) {
   if (addr == FORD_BrakeSysFeatures) {
     // Signal: VehVActlBrk_No_Cnt
     cnt = (GET_BYTE(to_push, 2) >> 2) & 0xFU;
-  } else if (addr == FORD_Yaw_Data_FD1) {
+  }
+  if (addr == FORD_Yaw_Data_FD1) {
     // Signal: VehRollYaw_No_Cnt
     cnt = GET_BYTE(to_push, 5);
-  } else {
   }
   return cnt;
 }
@@ -43,10 +43,10 @@ static uint32_t ford_get_checksum(const CANPacket_t *to_push) {
   if (addr == FORD_BrakeSysFeatures) {
     // Signal: VehVActlBrk_No_Cs
     chksum = GET_BYTE(to_push, 3);
-  } else if (addr == FORD_Yaw_Data_FD1) {
+  }
+  if (addr == FORD_Yaw_Data_FD1) {
     // Signal: VehRollYawW_No_Cs
     chksum = GET_BYTE(to_push, 4);
-  } else {
   }
   return chksum;
 }
@@ -60,14 +60,14 @@ static uint32_t ford_compute_checksum(const CANPacket_t *to_push) {
     chksum += GET_BYTE(to_push, 2) >> 6;                    // VehVActlBrk_D_Qf
     chksum += (GET_BYTE(to_push, 2) >> 2) & 0xFU;           // VehVActlBrk_No_Cnt
     chksum = 0xFFU - chksum;
-  } else if (addr == FORD_Yaw_Data_FD1) {
+  }
+  if (addr == FORD_Yaw_Data_FD1) {
     chksum += GET_BYTE(to_push, 0) + GET_BYTE(to_push, 1);  // VehRol_W_Actl
     chksum += GET_BYTE(to_push, 2) + GET_BYTE(to_push, 3);  // VehYaw_W_Actl
     chksum += GET_BYTE(to_push, 5);                         // VehRollYaw_No_Cnt
     chksum += GET_BYTE(to_push, 6) >> 6;                    // VehRolWActl_D_Qf
     chksum += (GET_BYTE(to_push, 6) >> 4) & 0x3U;           // VehYawWActl_D_Qf
     chksum = 0xFFU - chksum;
-  } else {
   }
 
   return chksum;
@@ -79,11 +79,12 @@ static bool ford_get_quality_flag_valid(const CANPacket_t *to_push) {
   bool valid = false;
   if (addr == FORD_BrakeSysFeatures) {
     valid = (GET_BYTE(to_push, 2) >> 6) == 0x3U;           // VehVActlBrk_D_Qf
-  } else if (addr == FORD_EngVehicleSpThrottle2) {
+  }
+  if (addr == FORD_EngVehicleSpThrottle2) {
     valid = ((GET_BYTE(to_push, 4) >> 5) & 0x3U) == 0x3U;  // VehVActlEng_D_Qf
-  } else if (addr == FORD_Yaw_Data_FD1) {
+  }
+  if (addr == FORD_Yaw_Data_FD1) {
     valid = ((GET_BYTE(to_push, 6) >> 4) & 0x3U) == 0x3U;  // VehYawWActl_D_Qf
-  } else {
   }
   return valid;
 }
@@ -316,8 +317,7 @@ static int ford_fwd_hook(int bus_num, int addr) {
       // Forward all traffic from bus 0 onward
       bus_fwd = FORD_CAM_BUS;
       break;
-    }
-    case FORD_CAM_BUS: {
+    } case FORD_CAM_BUS: {
       if (ford_lkas_msg_check(addr)) {
         // Block stock LKAS and UI messages
         bus_fwd = -1;
@@ -329,12 +329,10 @@ static int ford_fwd_hook(int bus_num, int addr) {
         bus_fwd = FORD_MAIN_BUS;
       }
       break;
-    }
-    default: {
+    } default: {
       // No other buses should be in use; fallback to do-not-forward
       bus_fwd = -1;
-      break;
-    }
+      break;}
   }
 
   return bus_fwd;
