@@ -28,6 +28,15 @@ else:
   env['CFLAGS'] += COVERAGE_FLAGS
   env['LINKFLAGS'] += COVERAGE_FLAGS
 
+if GetOption('mutation'):
+  flags = [
+    '-fpass-plugin=/usr/lib/mull-ir-frontend-17',
+    '-g',
+    '-grecord-command-line',
+  ]
+  env['CFLAGS'] += flags
+  env['LINKFLAGS'] += flags
+
 if GetOption('ubsan'):
   flags = [
     "-fsanitize=undefined",
