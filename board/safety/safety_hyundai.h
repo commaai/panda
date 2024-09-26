@@ -29,7 +29,6 @@ const LongitudinalLimits HYUNDAI_LONG_LIMITS = {
 static const CanMsg HYUNDAI_TX_MSGS[] = {
   {0x340, 0, 8}, // LKAS11 Bus 0
   {0x4F1, 0, 4}, // CLU11 Bus 0
-  {0x484, 0, 8}, // HDA11_MFC Bus 0
   {0x485, 0, 4}, // LFAHDA_MFC Bus 0
 };
 
@@ -251,8 +250,16 @@ static int hyundai_fwd_hook(int bus_num, int addr) {
   if (bus_num == 0) {
     bus_fwd = 2;
   }
-  if ((bus_num == 2) && (addr != 0x340) && (addr != 0x485) && ((addr != 0x484) && hyundai_camera_scc && !hyundai_longitudinal)) {
-    bus_fwd = 0;
+
+  if (bus_num == 2) {
+    bool is_lkas_11 = (addr == 0x340);
+    bool is_hda11_mfc = (addr == 0x484) && hyundai_camera_scc && !hyundai_longitudinal;
+    bool is_lfahda_mfc = (addr == 0x485);
+
+    bool block_msg = is_lkas_11 || is_hda11_mfc || is_lfahda_mfc;
+    if (!block_msg) {
+      bus_fwd = 0;
+    }
   }
 
   return bus_fwd;
@@ -276,6 +283,7 @@ static safety_config hyundai_init(uint16_t param) {
   static const CanMsg HYUNDAI_CAMERA_SCC_TX_MSGS[] = {
     {0x340, 0, 8}, // LKAS11 Bus 0
     {0x4F1, 2, 4}, // CLU11 Bus 2
+    {0x484, 0, 8}, // HDA11_MFC Bus 0
     {0x485, 0, 4}, // LFAHDA_MFC Bus 0
   };
 
