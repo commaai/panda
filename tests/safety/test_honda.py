@@ -421,7 +421,7 @@ class TestHondaBoschAltBrakeSafetyBase(TestHondaBoschSafetyBase):
     Base Bosch safety test class with an alternate brake message
   """
   def setup_method(self):
-    super().setup_method
+    super().setup_method()
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_ALT_BRAKE)
     self.safety.init_tests()
 

@@ -125,7 +125,7 @@ class TestTeslaLongitudinalSafety(TestTeslaSafety):
 
   def test_no_aeb(self):
     for aeb_event in range(4):
-      assert self._tx(self._long_control_msg(10, aeb_event=aeb_event)) == aeb_event == 0
+      assert self._tx(self._long_control_msg(10, aeb_event=aeb_event)) == (aeb_event == 0)
 
   def test_stock_aeb_passthrough(self):
     no_aeb_msg = self._long_control_msg(10, aeb_event=0)
