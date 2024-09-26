@@ -33,7 +33,6 @@ static uint8_t ford_get_counter(const CANPacket_t *to_push) {
     // Signal: VehRollYaw_No_Cnt
     cnt = GET_BYTE(to_push, 5);
   }
-
   return cnt;
 }
 
@@ -62,7 +61,6 @@ static uint32_t ford_compute_checksum(const CANPacket_t *to_push) {
     chksum += (GET_BYTE(to_push, 2) >> 2) & 0xFU;           // VehVActlBrk_No_Cnt
     chksum = 0xFFU - chksum;
   }
-
   if (addr == FORD_Yaw_Data_FD1) {
     chksum += GET_BYTE(to_push, 0) + GET_BYTE(to_push, 1);  // VehRol_W_Actl
     chksum += GET_BYTE(to_push, 2) + GET_BYTE(to_push, 3);  // VehYaw_W_Actl
