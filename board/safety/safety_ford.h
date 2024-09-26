@@ -1,3 +1,7 @@
+#pragma once
+
+#include "safety_declarations.h"
+
 // Safety-relevant CAN messages for Ford vehicles.
 #define FORD_EngBrakeData          0x165   // RX from PCM, for driver brake pedal and cruise state
 #define FORD_EngVehicleSpThrottle  0x204   // RX from PCM, for driver throttle input
@@ -17,59 +21,6 @@
 #define FORD_MAIN_BUS 0U
 #define FORD_CAM_BUS  2U
 
-const CanMsg FORD_STOCK_TX_MSGS[] = {
-  {FORD_Steering_Data_FD1, 0, 8},
-  {FORD_Steering_Data_FD1, 2, 8},
-  {FORD_ACCDATA_3, 0, 8},
-  {FORD_Lane_Assist_Data1, 0, 8},
-  {FORD_LateralMotionControl, 0, 8},
-  {FORD_IPMA_Data, 0, 8},
-};
-
-const CanMsg FORD_LONG_TX_MSGS[] = {
-  {FORD_Steering_Data_FD1, 0, 8},
-  {FORD_Steering_Data_FD1, 2, 8},
-  {FORD_ACCDATA, 0, 8},
-  {FORD_ACCDATA_3, 0, 8},
-  {FORD_Lane_Assist_Data1, 0, 8},
-  {FORD_LateralMotionControl, 0, 8},
-  {FORD_IPMA_Data, 0, 8},
-};
-
-const CanMsg FORD_CANFD_STOCK_TX_MSGS[] = {
-  {FORD_Steering_Data_FD1, 0, 8},
-  {FORD_Steering_Data_FD1, 2, 8},
-  {FORD_ACCDATA_3, 0, 8},
-  {FORD_Lane_Assist_Data1, 0, 8},
-  {FORD_LateralMotionControl2, 0, 8},
-  {FORD_IPMA_Data, 0, 8},
-};
-
-const CanMsg FORD_CANFD_LONG_TX_MSGS[] = {
-  {FORD_Steering_Data_FD1, 0, 8},
-  {FORD_Steering_Data_FD1, 2, 8},
-  {FORD_ACCDATA, 0, 8},
-  {FORD_ACCDATA_3, 0, 8},
-  {FORD_Lane_Assist_Data1, 0, 8},
-  {FORD_LateralMotionControl2, 0, 8},
-  {FORD_IPMA_Data, 0, 8},
-};
-
-// warning: quality flags are not yet checked in openpilot's CAN parser,
-// this may be the cause of blocked messages
-RxCheck ford_rx_checks[] = {
-  {.msg = {{FORD_BrakeSysFeatures, 0, 8, .check_checksum = true, .max_counter = 15U, .quality_flag=true, .frequency = 50U}, { 0 }, { 0 }}},
-  // FORD_EngVehicleSpThrottle2 has a counter that either randomly skips or by 2, likely ECU bug
-  // Some hybrid models also experience a bug where this checksum mismatches for one or two frames under heavy acceleration with ACC
-  // It has been confirmed that the Bronco Sport's camera only disallows ACC for bad quality flags, not counters or checksums, so we match that
-  {.msg = {{FORD_EngVehicleSpThrottle2, 0, 8, .check_checksum = false, .quality_flag=true, .frequency = 50U}, { 0 }, { 0 }}},
-  {.msg = {{FORD_Yaw_Data_FD1, 0, 8, .check_checksum = true, .max_counter = 255U, .quality_flag=true, .frequency = 100U}, { 0 }, { 0 }}},
-  // These messages have no counter or checksum
-  {.msg = {{FORD_EngBrakeData, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},
-  {.msg = {{FORD_EngVehicleSpThrottle, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},
-  {.msg = {{FORD_DesiredTorqBrk, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},
-};
-
 static uint8_t ford_get_counter(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
@@ -77,10 +28,10 @@ static uint8_t ford_get_counter(const CANPacket_t *to_push) {
   if (addr == FORD_BrakeSysFeatures) {
     // Signal: VehVActlBrk_No_Cnt
     cnt = (GET_BYTE(to_push, 2) >> 2) & 0xFU;
-  } else if (addr == FORD_Yaw_Data_FD1) {
+  }
+  if (addr == FORD_Yaw_Data_FD1) {
     // Signal: VehRollYaw_No_Cnt
     cnt = GET_BYTE(to_push, 5);
-  } else {
   }
   return cnt;
 }
@@ -92,10 +43,10 @@ static uint32_t ford_get_checksum(const CANPacket_t *to_push) {
   if (addr == FORD_BrakeSysFeatures) {
     // Signal: VehVActlBrk_No_Cs
     chksum = GET_BYTE(to_push, 3);
-  } else if (addr == FORD_Yaw_Data_FD1) {
+  }
+  if (addr == FORD_Yaw_Data_FD1) {
     // Signal: VehRollYawW_No_Cs
     chksum = GET_BYTE(to_push, 4);
-  } else {
   }
   return chksum;
 }
@@ -109,14 +60,14 @@ static uint32_t ford_compute_checksum(const CANPacket_t *to_push) {
     chksum += GET_BYTE(to_push, 2) >> 6;                    // VehVActlBrk_D_Qf
     chksum += (GET_BYTE(to_push, 2) >> 2) & 0xFU;           // VehVActlBrk_No_Cnt
     chksum = 0xFFU - chksum;
-  } else if (addr == FORD_Yaw_Data_FD1) {
+  }
+  if (addr == FORD_Yaw_Data_FD1) {
     chksum += GET_BYTE(to_push, 0) + GET_BYTE(to_push, 1);  // VehRol_W_Actl
     chksum += GET_BYTE(to_push, 2) + GET_BYTE(to_push, 3);  // VehYaw_W_Actl
     chksum += GET_BYTE(to_push, 5);                         // VehRollYaw_No_Cnt
     chksum += GET_BYTE(to_push, 6) >> 6;                    // VehRolWActl_D_Qf
     chksum += (GET_BYTE(to_push, 6) >> 4) & 0x3U;           // VehYawWActl_D_Qf
     chksum = 0xFFU - chksum;
-  } else {
   }
 
   return chksum;
@@ -128,34 +79,17 @@ static bool ford_get_quality_flag_valid(const CANPacket_t *to_push) {
   bool valid = false;
   if (addr == FORD_BrakeSysFeatures) {
     valid = (GET_BYTE(to_push, 2) >> 6) == 0x3U;           // VehVActlBrk_D_Qf
-  } else if (addr == FORD_EngVehicleSpThrottle2) {
+  }
+  if (addr == FORD_EngVehicleSpThrottle2) {
     valid = ((GET_BYTE(to_push, 4) >> 5) & 0x3U) == 0x3U;  // VehVActlEng_D_Qf
-  } else if (addr == FORD_Yaw_Data_FD1) {
+  }
+  if (addr == FORD_Yaw_Data_FD1) {
     valid = ((GET_BYTE(to_push, 6) >> 4) & 0x3U) == 0x3U;  // VehYawWActl_D_Qf
-  } else {
   }
   return valid;
 }
 
-const uint16_t FORD_PARAM_LONGITUDINAL = 1;
-const uint16_t FORD_PARAM_CANFD = 2;
-
-bool ford_longitudinal = false;
-bool ford_canfd = false;
-
-const LongitudinalLimits FORD_LONG_LIMITS = {
-  // acceleration cmd limits (used for brakes)
-  // Signal: AccBrkTot_A_Rq
-  .max_accel = 5641,       //  1.9999 m/s^s
-  .min_accel = 4231,       // -3.4991 m/s^2
-  .inactive_accel = 5128,  // -0.0008 m/s^2
-
-  // gas cmd limits
-  // Signal: AccPrpl_A_Rq & AccPrpl_A_Pred
-  .max_gas = 700,          //  2.0 m/s^2
-  .min_gas = 450,          // -0.5 m/s^2
-  .inactive_gas = 0,       // -5.0 m/s^2
-};
+static bool ford_longitudinal = false;
 
 #define FORD_INACTIVE_CURVATURE 1000U
 #define FORD_INACTIVE_CURVATURE_RATE 4096U
@@ -175,7 +109,7 @@ static bool ford_lkas_msg_check(int addr) {
 }
 
 // Curvature rate limits
-const SteeringLimits FORD_STEERING_LIMITS = {
+static const SteeringLimits FORD_STEERING_LIMITS = {
   .max_steer = 1000,
   .angle_deg_to_can = 50000,        // 1 / (2e-5) rad to can
   .max_angle_error = 100,           // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
@@ -261,6 +195,20 @@ static void ford_rx_hook(const CANPacket_t *to_push) {
 }
 
 static bool ford_tx_hook(const CANPacket_t *to_send) {
+  const LongitudinalLimits FORD_LONG_LIMITS = {
+    // acceleration cmd limits (used for brakes)
+    // Signal: AccBrkTot_A_Rq
+    .max_accel = 5641,       //  1.9999 m/s^s
+    .min_accel = 4231,       // -3.4991 m/s^2
+    .inactive_accel = 5128,  // -0.0008 m/s^2
+
+    // gas cmd limits
+    // Signal: AccPrpl_A_Rq & AccPrpl_A_Pred
+    .max_gas = 700,          //  2.0 m/s^2
+    .min_gas = 450,          // -0.5 m/s^2
+    .inactive_gas = 0,       // -5.0 m/s^2
+  };
+
   bool tx = true;
 
   int addr = GET_ADDR(to_send);
@@ -369,8 +317,7 @@ static int ford_fwd_hook(int bus_num, int addr) {
       // Forward all traffic from bus 0 onward
       bus_fwd = FORD_CAM_BUS;
       break;
-    }
-    case FORD_CAM_BUS: {
+    } case FORD_CAM_BUS: {
       if (ford_lkas_msg_check(addr)) {
         // Block stock LKAS and UI messages
         bus_fwd = -1;
@@ -382,25 +329,83 @@ static int ford_fwd_hook(int bus_num, int addr) {
         bus_fwd = FORD_MAIN_BUS;
       }
       break;
-    }
-    default: {
+    } default: {
       // No other buses should be in use; fallback to do-not-forward
       bus_fwd = -1;
-      break;
-    }
+      break;}
   }
 
   return bus_fwd;
 }
 
 static safety_config ford_init(uint16_t param) {
+  bool ford_canfd = false;
+
+  // warning: quality flags are not yet checked in openpilot's CAN parser,
+  // this may be the cause of blocked messages
+  static RxCheck ford_rx_checks[] = {
+    {.msg = {{FORD_BrakeSysFeatures, 0, 8, .check_checksum = true, .max_counter = 15U, .quality_flag=true, .frequency = 50U}, { 0 }, { 0 }}},
+    // FORD_EngVehicleSpThrottle2 has a counter that either randomly skips or by 2, likely ECU bug
+    // Some hybrid models also experience a bug where this checksum mismatches for one or two frames under heavy acceleration with ACC
+    // It has been confirmed that the Bronco Sport's camera only disallows ACC for bad quality flags, not counters or checksums, so we match that
+    {.msg = {{FORD_EngVehicleSpThrottle2, 0, 8, .check_checksum = false, .quality_flag=true, .frequency = 50U}, { 0 }, { 0 }}},
+    {.msg = {{FORD_Yaw_Data_FD1, 0, 8, .check_checksum = true, .max_counter = 255U, .quality_flag=true, .frequency = 100U}, { 0 }, { 0 }}},
+    // These messages have no counter or checksum
+    {.msg = {{FORD_EngBrakeData, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},
+    {.msg = {{FORD_EngVehicleSpThrottle, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},
+    {.msg = {{FORD_DesiredTorqBrk, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},
+  };
+
+  static const CanMsg FORD_CANFD_LONG_TX_MSGS[] = {
+    {FORD_Steering_Data_FD1, 0, 8},
+    {FORD_Steering_Data_FD1, 2, 8},
+    {FORD_ACCDATA, 0, 8},
+    {FORD_ACCDATA_3, 0, 8},
+    {FORD_Lane_Assist_Data1, 0, 8},
+    {FORD_LateralMotionControl2, 0, 8},
+    {FORD_IPMA_Data, 0, 8},
+  };
+
+  static const CanMsg FORD_CANFD_STOCK_TX_MSGS[] = {
+    {FORD_Steering_Data_FD1, 0, 8},
+    {FORD_Steering_Data_FD1, 2, 8},
+    {FORD_ACCDATA_3, 0, 8},
+    {FORD_Lane_Assist_Data1, 0, 8},
+    {FORD_LateralMotionControl2, 0, 8},
+    {FORD_IPMA_Data, 0, 8},
+  };
+
+  static const CanMsg FORD_STOCK_TX_MSGS[] = {
+    {FORD_Steering_Data_FD1, 0, 8},
+    {FORD_Steering_Data_FD1, 2, 8},
+    {FORD_ACCDATA_3, 0, 8},
+    {FORD_Lane_Assist_Data1, 0, 8},
+    {FORD_LateralMotionControl, 0, 8},
+    {FORD_IPMA_Data, 0, 8},
+  };
+
+  static const CanMsg FORD_LONG_TX_MSGS[] = {
+    {FORD_Steering_Data_FD1, 0, 8},
+    {FORD_Steering_Data_FD1, 2, 8},
+    {FORD_ACCDATA, 0, 8},
+    {FORD_ACCDATA_3, 0, 8},
+    {FORD_Lane_Assist_Data1, 0, 8},
+    {FORD_LateralMotionControl, 0, 8},
+    {FORD_IPMA_Data, 0, 8},
+  };
+
   UNUSED(param);
 #ifdef ALLOW_DEBUG
+  const uint16_t FORD_PARAM_LONGITUDINAL = 1;
+  const uint16_t FORD_PARAM_CANFD = 2;
   ford_longitudinal = GET_FLAG(param, FORD_PARAM_LONGITUDINAL);
   ford_canfd = GET_FLAG(param, FORD_PARAM_CANFD);
 #endif
 
   safety_config ret;
+  // FIXME: cppcheck thinks that ford_canfd is always false. This is not true
+  // if ALLOW_DEBUG is defined but cppcheck is run without ALLOW_DEBUG
+  // cppcheck-suppress knownConditionTrueFalse
   if (ford_canfd) {
     ret = ford_longitudinal ? BUILD_SAFETY_CFG(ford_rx_checks, FORD_CANFD_LONG_TX_MSGS) : \
                               BUILD_SAFETY_CFG(ford_rx_checks, FORD_CANFD_STOCK_TX_MSGS);

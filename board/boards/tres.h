@@ -1,35 +1,39 @@
+#pragma once
+
+#include "board_declarations.h"
+
 // ///////////////////////////
 // Tres (STM32H7) + Harness //
 // ///////////////////////////
 
-bool tres_ir_enabled;
-bool tres_fan_enabled;
-void tres_update_fan_ir_power(void) {
+static bool tres_ir_enabled;
+static bool tres_fan_enabled;
+static void tres_update_fan_ir_power(void) {
   red_chiplet_set_fan_or_usb_load_switch(tres_ir_enabled || tres_fan_enabled);
 }
 
-void tres_set_ir_power(uint8_t percentage){
+static void tres_set_ir_power(uint8_t percentage){
   tres_ir_enabled = (percentage > 0U);
   tres_update_fan_ir_power();
   pwm_set(TIM3, 4, percentage);
 }
 
-void tres_set_bootkick(BootState state) {
+static void tres_set_bootkick(BootState state) {
   set_gpio_output(GPIOA, 0, state != BOOT_BOOTKICK);
   set_gpio_output(GPIOC, 12, state != BOOT_RESET);
 }
 
-void tres_set_fan_enabled(bool enabled) {
+static void tres_set_fan_enabled(bool enabled) {
   // NOTE: fan controller reset doesn't work on a tres if IR is enabled
   tres_fan_enabled = enabled;
   tres_update_fan_ir_power();
 }
 
-bool tres_read_som_gpio (void) {
+static bool tres_read_som_gpio (void) {
   return (get_gpio_input(GPIOC, 2) != 0);
 }
 
-void tres_init(void) {
+static void tres_init(void) {
   // Enable USB 3.3V LDO for USB block
   register_set_bits(&(PWR->CR3), PWR_CR3_USBREGEN);
   register_set_bits(&(PWR->CR3), PWR_CR3_USB33DEN);
