@@ -252,7 +252,7 @@ static int hyundai_fwd_hook(int bus_num, int addr) {
   if (bus_num == 0) {
     bus_fwd = 2;
   }
-  if ((bus_num == 2) && (addr != 0x340) && (addr != 0x485) && ((addr != 0x484) && hyundai_camera_scc)) {
+  if ((bus_num == 2) && (addr != 0x340) && (addr != 0x485)) {
     bus_fwd = 0;
   }
 
