@@ -85,7 +85,7 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
                            (False, b"\x0F\x03\xAA\xAA\x00\x00\x00\x00"),  # non-tester present
                            (True, b"\x0F\x02\x3E\x00\x00\x00\x00\x00")):
       tester_present = libpanda_py.make_CANPacket(0x750, 0, msg)
-      assert should_tx and not stock_longitudinal == self._tx(tester_present)
+      assert (should_tx and not stock_longitudinal) == self._tx(tester_present)
 
   def test_block_aeb(self, stock_longitudinal: bool = False):
     for controls_allowed in (True, False):
@@ -96,7 +96,7 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
           if not bad:
             dat = [0]*6 + dat[-1:]
           msg = libpanda_py.make_CANPacket(0x283, 0, bytes(dat))
-          assert not bad and not stock_longitudinal == self._tx(msg)
+          assert (not bad and not stock_longitudinal) == self._tx(msg)
 
   # Only allow LTA msgs with no actuation
   def test_lta_steer_cmd(self):
