@@ -9,7 +9,7 @@ $DIR/install_mull.sh
 scons --mutation -j$(nproc) -D
 
 GIT_REF="${GIT_REF:-origin/master}"
-echo -e "timeout: 10000\ngitDiffRef: $GIT_REF\ngitProjectRoot: ../../" > mull.yml
+echo -e "mutators:\n  - cxx_all\ntimeout: 10000\ngitDiffRef: $GIT_REF\ngitProjectRoot: ../../" > mull.yml
 
 SAFETY_MODELS=$(find * | grep "^test_.*\.py")
 for safety_model in ${SAFETY_MODELS[@]}; do
