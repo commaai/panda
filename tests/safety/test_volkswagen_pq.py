@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-from panda import Panda
-from panda.tests.libpanda import libpanda_py
-import panda.tests.safety.common as common
+import pytest
 from panda.tests.safety.common import CANPackerPanda
 
 MSG_LENKHILFE_3 = 0x0D0       # RX from EPS, for steering angle and driver steering torque
@@ -36,7 +34,7 @@ class TestVolkswagenPqSafety(common.PandaCarSafetyTest, common.DriverTorqueSteer
     if cls.__name__ == "TestVolkswagenPqSafety":
       cls.packer = None
       cls.safety = None
-      raise unittest.SkipTest
+      raise pytest.skip()
 
   def _set_prev_torque(self, t):
     self.safety.set_desired_torque_last(t)

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import pytest
 import numpy as np
 import random
 
@@ -98,10 +99,7 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
   @classmethod
   def setup_class(cls):
     if cls.__name__ == "TestFordSafetyBase":
-      raise unittest.SkipTest
-
-  def _set_prev_desired_angle(self, t):
-    t = round(t * self.DEG_TO_CAN)
+      raise pytest.skip()
     self.safety.set_desired_angle_last(t)
 
   def _reset_curvature_measurement(self, curvature, speed):
@@ -402,7 +400,7 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
   @classmethod
   def setup_class(cls):
     if cls.__name__ == "TestFordLongitudinalSafetyBase":
-      raise unittest.SkipTest
+      raise pytest.skip()
 
   # ACC command
   def _acc_command_msg(self, gas: float, brake: float, cmbb_deny: bool = False):

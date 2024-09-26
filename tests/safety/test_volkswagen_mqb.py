@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import pytest
 import numpy as np
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
@@ -39,7 +40,7 @@ class TestVolkswagenMqbSafety(common.PandaCarSafetyTest, common.DriverTorqueStee
     if cls.__name__ == "TestVolkswagenMqbSafety":
       cls.packer = None
       cls.safety = None
-      raise unittest.SkipTest
+      raise pytest.skip()
 
   # Wheel speeds _esp_19_msg
   def _speed_msg(self, speed):

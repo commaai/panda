@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import pytest
 import numpy as np
 from panda import Panda
 import panda.tests.safety.common as common
@@ -26,7 +27,7 @@ class TestTeslaSafety(common.PandaCarSafetyTest):
 
   def setup_method(self):
     self.packer = None
-    raise unittest.SkipTest
+    raise pytest.skip()
 
   def _speed_msg(self, speed):
     values = {"DI_vehicleSpeed": speed / 0.447}
@@ -120,7 +121,7 @@ class TestTeslaRavenSteeringSafety(TestTeslaSteeringSafety):
 
 class TestTeslaLongitudinalSafety(TestTeslaSafety):
   def setup_method(self):
-    raise unittest.SkipTest
+    raise pytest.skip()
 
   def test_no_aeb(self):
     for aeb_event in range(4):

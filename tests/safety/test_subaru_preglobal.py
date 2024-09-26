@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import unittest
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -64,7 +63,3 @@ class TestSubaruPreglobalSafety(common.PandaCarSafetyTest, common.DriverTorqueSt
 class TestSubaruPreglobalReversedDriverTorqueSafety(TestSubaruPreglobalSafety):
   FLAGS = Panda.FLAG_SUBARU_PREGLOBAL_REVERSED_DRIVER_TORQUE
   DBC = "subaru_outback_2019_generated"
-
-
-if __name__ == "__main__":
-  unittest.main()
