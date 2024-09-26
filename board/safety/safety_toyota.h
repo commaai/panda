@@ -4,7 +4,7 @@
 
 // Stock longitudinal
 #define TOYOTA_COMMON_TX_MSGS                                                                                     \
-  {0x2E4, 0, 5}, {0x191, 0, 8}, {0x412, 0, 8}, {0x343, 0, 8}, {0x1D2, 0, 8},  /* LKAS + LTA + ACC & PCM cancel cmds */  \
+  {0x2E4, 0, 5}, {0x2E4, 0, 8}, {0x131, 0, 8}, {0x191, 0, 8}, {0x412, 0, 8}, {0x343, 0, 8}, {0x1D2, 0, 8},  /* LKAS + LTA + ACC & PCM cancel cmds */  \
 
 #define TOYOTA_COMMON_LONG_TX_MSGS                                                                                                          \
   TOYOTA_COMMON_TX_MSGS                                                                                                                     \
@@ -16,13 +16,18 @@
 #define TOYOTA_COMMON_RX_CHECKS(lta)                                                                        \
   {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .frequency = 83U}, { 0 }, { 0 }}},                        \
   {.msg = {{0x260, 0, 8, .check_checksum = true, .quality_flag = (lta), .frequency = 50U}, { 0 }, { 0 }}},  \
-  {.msg = {{0x1D2, 0, 8, .check_checksum = true, .frequency = 33U}, { 0 }, { 0 }}},                         \
-  {.msg = {{0x224, 0, 8, .check_checksum = false, .frequency = 40U},                                        \
-           {0x226, 0, 8, .check_checksum = false, .frequency = 40U}, { 0 }}},                               \
+  {.msg = {{0x1D2, 0, 8, .check_checksum = true, .frequency = 33U}, {0x176, 0, 8, .check_checksum = true, .frequency = 32U}, { 0 }}},\
+  {.msg = {{0x101, 0, 8, .check_checksum = false, .frequency = 50U},                                        \
+           {0x224, 0, 8, .check_checksum = false, .frequency = 40U},                                        \
+           {0x226, 0, 8, .check_checksum = false, .frequency = 40U}}},                                      \
 
-static bool toyota_alt_brake = false;
+static bool toyota_alt_brake_224 = false;
+static bool toyota_alt_brake_101 = false;
+static bool toyota_alt_pcm_cruise_176 = false;
+static bool toyota_alt_gas_pedal_116 = false;
 static bool toyota_stock_longitudinal = false;
 static bool toyota_lta = false;
+
 static int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
 static uint32_t toyota_compute_checksum(const CANPacket_t *to_push) {
@@ -87,14 +92,21 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
-    // exit controls on rising edge of gas press
-    if (addr == 0x1D2) {
-      // 5th bit is CRUISE_ACTIVE
+    if (!toyota_alt_pcm_cruise_176 && (addr == 0x1D2)) {
       bool cruise_engaged = GET_BIT(to_push, 5U);
       pcm_cruise_check(cruise_engaged);
+    }
+    if (toyota_alt_pcm_cruise_176 && (addr == 0x176)) {
+      bool cruise_engaged = GET_BIT(to_push, 5U);
+      pcm_cruise_check(cruise_engaged);
+    }
 
-      // sample gas pedal
-      gas_pressed = !GET_BIT(to_push, 4U);
+    // exit controls on rising edge of gas press
+    if (!toyota_alt_gas_pedal_116 && (addr == 0x1D2)) {
+      gas_pressed = !GET_BIT(to_push, 4U); // GAS_PEDAL.GAS_RELEASED
+    }
+    if (toyota_alt_gas_pedal_116 && (addr == 0x116)) {
+      gas_pressed = GET_BYTE(to_push, 1) != 0U; // GAS_PEDAL.GAS_PEDAL_USER
     }
 
     // sample speed
@@ -111,10 +123,15 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
       UPDATE_VEHICLE_SPEED(speed / 4.0 * 0.01 / 3.6);
     }
 
-    // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224
-    if (((addr == 0x224) && toyota_alt_brake) || ((addr == 0x226) && !toyota_alt_brake)) {
-      uint8_t bit = (addr == 0x224) ? 5U : 37U;
-      brake_pressed = GET_BIT(to_push, bit);
+    // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224, rav4 prime on 0x101
+    if (toyota_alt_brake_224 && !toyota_alt_brake_101 && (addr == 0x224)) {
+      brake_pressed = GET_BIT(to_push, 5U);
+    }
+    if (!toyota_alt_brake_224 && toyota_alt_brake_101 && (addr == 0x101)) {
+      brake_pressed = GET_BIT(to_push, 3U);
+    }
+    if (!toyota_alt_brake_224 && !toyota_alt_brake_101 && (addr == 0x226)) {
+      brake_pressed = GET_BIT(to_push, 37U);
     }
 
     bool stock_ecu_detected = addr == 0x2E4;  // STEERING_LKA
@@ -199,6 +216,14 @@ static bool toyota_tx_hook(const CANPacket_t *to_send) {
       // only allow the checksum, which is the last byte
       bool block = (GET_BYTES(to_send, 0, 4) != 0U) || (GET_BYTE(to_send, 4) != 0U) || (GET_BYTE(to_send, 5) != 0U);
       if (block) {
+        tx = false;
+      }
+    }
+
+    // LTA angle steering check for SecOC cars
+    if (addr == 0x131) {
+      // Block any form of actuation for now
+      if (GET_BYTE(to_send, 0) != 0U) {
         tx = false;
       }
     }
@@ -294,12 +319,19 @@ static safety_config toyota_init(uint16_t param) {
   // first byte is for EPS factor, second is for flags
   const uint32_t TOYOTA_PARAM_OFFSET = 8U;
   const uint32_t TOYOTA_EPS_FACTOR = (1UL << TOYOTA_PARAM_OFFSET) - 1U;
-  const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1UL << TOYOTA_PARAM_OFFSET;
+  const uint32_t TOYOTA_PARAM_ALT_BRAKE_224 = 1UL << TOYOTA_PARAM_OFFSET;
   const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2UL << TOYOTA_PARAM_OFFSET;
   const uint32_t TOYOTA_PARAM_LTA = 4UL << TOYOTA_PARAM_OFFSET;
+  const uint32_t TOYOTA_PARAM_SECOC_CAR = 8UL << TOYOTA_PARAM_OFFSET;
 
-  toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
+  toyota_alt_brake_224 = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE_224);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
+
+  bool secoc_car = GET_FLAG(param, TOYOTA_PARAM_SECOC_CAR);
+  toyota_alt_brake_101 = secoc_car;
+  toyota_alt_pcm_cruise_176 = secoc_car;
+  toyota_alt_gas_pedal_116 = secoc_car;
+
   toyota_lta = GET_FLAG(param, TOYOTA_PARAM_LTA);
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
 
@@ -339,7 +371,8 @@ static int toyota_fwd_hook(int bus_num, int addr) {
   if (bus_num == 2) {
     // block stock lkas messages and stock acc messages (if OP is doing ACC)
     // in TSS2, 0x191 is LTA which we need to block to avoid controls collision
-    bool is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412) || (addr == 0x191));
+    // on SecOC cars 0x131 is also LTA
+    bool is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412) || (addr == 0x191) || (addr == 0x131));
     // in TSS2 the camera does ACC as well, so filter 0x343
     bool is_acc_msg = (addr == 0x343);
     bool block_msg = is_lkas_msg || (is_acc_msg && !toyota_stock_longitudinal);
