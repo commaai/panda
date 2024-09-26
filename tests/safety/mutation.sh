@@ -9,14 +9,12 @@ $DIR/install_mull.sh
 scons --mutation -j$(nproc) -D
 
 GIT_REF="${GIT_REF:-origin/master}"
-echo -e "gitDiffRef: $GIT_REF\ngitProjectRoot: ../../" > mull.yml
+echo -e "timeout: 10000\ngitDiffRef: $GIT_REF\ngitProjectRoot: ../../" > mull.yml
 
 SAFETY_MODELS=$(find * | grep "^test_.*\.py")
 for safety_model in ${SAFETY_MODELS[@]}; do
   echo ""
   echo ""
   echo -e "Testing mutations on : $safety_model"
-
-  #PYTHONPATH=/home/batman/:/home/batman/panda/opendbc/:$PYTHONPATH mull-runner-17 --ld-search-path /lib/x86_64-linux-gnu/ ../libpanda/libpanda.so -test-program=./$safety_model
   mull-runner-17 --ld-search-path /lib/x86_64-linux-gnu/ ../libpanda/libpanda.so -test-program=./$safety_model
 done
