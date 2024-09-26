@@ -57,7 +57,7 @@ def add_regen_tests(cls):
   return cls
 
 
-class TestPandaSafetyBase:
+class PandaSafetyTestBase:
   safety: libpanda_py.Panda
 
   @classmethod
