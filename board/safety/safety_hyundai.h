@@ -320,10 +320,6 @@ static safety_config hyundai_init(uint16_t param) {
   hyundai_can_canfd_hybrid = GET_FLAG(param, HYUNDAI_PARAM_CAN_CANFD_HYBRID);
   hyundai_can_canfd_hybrid_hda2 = hyundai_can_canfd_hybrid && hyundai_canfd_hda2;
 
-  if (hyundai_can_canfd_hybrid_hda2) {
-    gen_crc_lookup_table_16(0x1021, hyundai_canfd_crc_lut);
-  }
-
   if (hyundai_camera_scc || hyundai_can_canfd_hybrid_hda2) {
     hyundai_longitudinal = false;
   }
