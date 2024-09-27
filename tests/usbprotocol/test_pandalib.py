@@ -1,10 +1,8 @@
-#!/usr/bin/env python3
 import random
-import unittest
 
 from panda import pack_can_buffer, unpack_can_buffer, DLC_TO_LEN
 
-class PandaTestPackUnpack(unittest.TestCase):
+class TestPandaPackUnpack:
   def test_panda_lib_pack_unpack(self):
     overflow_buf = b''
 
@@ -20,7 +18,4 @@ class PandaTestPackUnpack(unittest.TestCase):
       msgs, overflow_buf = unpack_can_buffer(overflow_buf + dat)
       unpacked.extend(msgs)
 
-    self.assertEqual(unpacked, to_pack)
-
-if __name__ == "__main__":
-  unittest.main()
+    assert unpacked == to_pack
