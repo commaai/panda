@@ -253,29 +253,24 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
         assert self.safety.get_angle_meas_min() == 0
         assert self.safety.get_angle_meas_max() == 0
 
-  def _frange_round(self, start, stop, step=1., round_ndigits=None):
-    value = start
-    while value < stop:
-      value += step
-      if round_ndigits:
-        multiplier = 10 ** round_ndigits
-
-        # Perform rounding
-        rounded_value = int(value * multiplier + (0.5 if value >= 0 else -0.5)) / multiplier
-        yield rounded_value
-      else:
-        yield value
 
   def test_steer_allowed(self, subtests):
-    #path_offsets = np.arange(-5.12, 5.11, 1).round()
-    #path_angles = np.arange(-0.5, 0.5235, 0.1).round(1)
-    #curvature_rates = np.arange(-0.001024, 0.00102375, 0.001).round(3)
-    #curvatures = np.arange(-0.02, 0.02094, 0.01).round(2)
+    def _frange_round(start, stop, step=1., round_ndigits=None):
+     # manually implement this since combinations of execnet and subtests (pytest-xdist related) cannot serialize np.float
+      value = start
+      while value < stop:
+        if round_ndigits:
+          multiplier = 10 ** round_ndigits
+          rounded_value = int(value * multiplier + (0.5 if value >= 0 else -0.5)) / multiplier
+          yield rounded_value
+        else:
+          yield value
+        value += step
 
-    path_offsets = self._frange_round(-5.12, 5.11, 1)
-    path_angles = self._frange_round(-0.5, 0.5235, 0.1, round_ndigits=1)
-    curvature_rates = self._frange_round(-0.001024, 0.00102375, 0.001, round_ndigits=3)
-    curvatures = self._frange_round(-0.02, 0.02094, 0.01, round_ndigits=2)
+    path_offsets = _frange_round(-5.12, 5.11, 1)
+    path_angles = _frange_round(-0.5, 0.5235, 0.1, round_ndigits=1)
+    curvature_rates = _frange_round(-0.001024, 0.00102375, 0.001, round_ndigits=3)
+    curvatures = _frange_round(-0.02, 0.02094, 0.01, round_ndigits=2)
 
     for speed in (self.CURVATURE_ERROR_MIN_SPEED - 1,
                   self.CURVATURE_ERROR_MIN_SPEED + 1):
