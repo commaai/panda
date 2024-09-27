@@ -154,7 +154,7 @@ static int get_addr_check_index(const CANPacket_t *to_push, RxCheck addr_list[],
 }
 
 static void update_addr_timestamp(RxCheck addr_list[], int index) {
-  if (index != -1)  {
+  if (index != -1) {
     uint32_t ts = microsecond_timer_get();
     addr_list[index].status.last_timestamp = ts;
   }
