@@ -73,6 +73,8 @@ class TestPandaComms:
       assert m == test_msg, "message buffer should contain valid test messages"
 
   def test_comms_reset_tx(self):
+    lpp.set_safety_hooks(Panda.SAFETY_ALLOUTPUT, 0)
+
     # store some test messages in the queue
     test_msg = (0x100, b"test", 0)
     packed = pack_can_buffer([test_msg for _ in range(100)])
