@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
 import random
-import unittest
 
 from panda import Panda, DLC_TO_LEN, USBPACKET_MAX_SIZE, pack_can_buffer, unpack_can_buffer
 from panda.tests.libpanda import libpanda_py
@@ -28,8 +26,8 @@ def random_can_messages(n, bus=None):
   return msgs
 
 
-class TestPandaComms(unittest.TestCase):
-  def setUp(self):
+class TestPandaComms:
+  def setup_method(self):
     lpp.comms_can_reset()
 
   def test_tx_queues(self):
@@ -121,8 +119,8 @@ class TestPandaComms(unittest.TestCase):
           while lpp.can_pop(TX_QUEUES[bus], pkt):
             queue_msgs.append(unpackage_can_msg(pkt))
 
-          self.assertEqual(len(queue_msgs), len(msgs))
-          self.assertEqual(queue_msgs, msgs)
+          assert len(queue_msgs) == len(msgs)
+          assert queue_msgs == msgs
 
   def test_can_receive_usb(self):
     msgs = random_can_messages(50000)
@@ -152,9 +150,5 @@ class TestPandaComms(unittest.TestCase):
         unpacked_msgs, overflow_buf = unpack_can_buffer(overflow_buf + buf)
         rx_msgs.extend(unpacked_msgs)
 
-    self.assertEqual(len(rx_msgs), len(msgs))
-    self.assertEqual(rx_msgs, msgs)
-
-
-if __name__ == "__main__":
-  unittest.main()
+    assert len(rx_msgs) == len(msgs)
+    assert rx_msgs == msgs
