@@ -5,6 +5,7 @@
 
 // include the safety policies.
 #include "safety/safety_defaults.h"
+#ifdef SAFETY_IMPLEMENTATIONS
 #include "safety/safety_honda.h"
 #include "safety/safety_toyota.h"
 #include "safety/safety_tesla.h"
@@ -24,6 +25,7 @@
 // CAN-FD only safety modes
 #ifdef CANFD
 #include "safety/safety_hyundai_canfd.h"
+#endif
 #endif
 
 // from cereal.car.CarParams.SafetyModel
@@ -361,6 +363,7 @@ static void reset_sample(struct sample_t *sample) {
 int set_safety_hooks(uint16_t mode, uint16_t param) {
   const safety_hook_config safety_hook_registry[] = {
     {SAFETY_SILENT, &nooutput_hooks},
+#ifdef SAFETY_IMPLEMENTATIONS
     {SAFETY_HONDA_NIDEC, &honda_nidec_hooks},
     {SAFETY_TOYOTA, &toyota_hooks},
     {SAFETY_ELM327, &elm327_hooks},
@@ -384,6 +387,7 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
     {SAFETY_SUBARU_PREGLOBAL, &subaru_preglobal_hooks},
     {SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},
     {SAFETY_ALLOUTPUT, &alloutput_hooks},
+#endif
 #endif
   };
 

@@ -161,6 +161,7 @@ int get_angle_meas_max(void){
 
 // ***** car specific helpers *****
 
+#ifdef SAFETY_IMPLEMENTATIONS
 void set_honda_alt_brake_msg(bool c){
   honda_alt_brake_msg = c;
 }
@@ -180,6 +181,7 @@ void set_honda_fwd_brake(bool c){
 bool get_honda_fwd_brake(void){
   return honda_fwd_brake;
 }
+#endif
 
 void init_tests(void){
   // get HW_TYPE from env variable set in test.sh
