@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import random
 from panda import Panda
 from panda.tests.libpanda import libpanda_py

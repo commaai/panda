@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import pytest
 from parameterized import parameterized_class
 from panda import Panda

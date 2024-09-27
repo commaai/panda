@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import panda.tests.safety.common as common
 
 from panda import Panda
