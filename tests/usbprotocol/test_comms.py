@@ -98,11 +98,11 @@ class TestPandaComms:
       assert m == test_msg, "message buffer should contain valid test messages"
 
 
-  def test_can_send_usb(self):
+  def test_can_send_usb(self, subtests):
     lpp.set_safety_hooks(Panda.SAFETY_ALLOUTPUT, 0)
 
     for bus in range(3):
-      with self.subTest(bus=bus):
+      with subtests.test(bus=bus):
         for _ in range(100):
           msgs = random_can_messages(200, bus=bus)
           packed = pack_can_buffer(msgs)
