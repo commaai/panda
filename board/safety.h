@@ -56,15 +56,6 @@
 #define SAFETY_BODY 27U
 #define SAFETY_HYUNDAI_CANFD 28U
 
-uint32_t GET_BYTES(const CANPacket_t *msg, int start, int len) {
-  uint32_t ret = 0U;
-  for (int i = 0; i < len; i++) {
-    const uint32_t shift = i * 8;
-    ret |= (((uint32_t)msg->data[start + i]) << shift);
-  }
-  return ret;
-}
-
 const int MAX_WRONG_COUNTERS = 5;
 
 // This can be set by the safety hooks
