@@ -1,3 +1,4 @@
+import pytest
 import random
 
 from panda import Panda, DLC_TO_LEN, USBPACKET_MAX_SIZE, pack_can_buffer, unpack_can_buffer
@@ -42,6 +43,7 @@ class TestPandaComms:
 
       assert unpackage_can_msg(can_pkt_rx) == message
 
+  @pytest.mark.order(1)
   def test_comms_reset_rx(self):
     # store some test messages in the queue
     test_msg = (0x100, b"test", 0)
@@ -124,6 +126,7 @@ class TestPandaComms:
           assert len(queue_msgs) == len(msgs)
           assert queue_msgs == msgs
 
+  @pytest.mark.order(2)
   def test_can_receive_usb(self):
     msgs = random_can_messages(50000)
     packets = [libpanda_py.make_CANPacket(m[0], m[2], m[1]) for m in msgs]
