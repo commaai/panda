@@ -1,5 +1,7 @@
 import platform
 
+Import('extra_safety_configs')
+
 CC = 'gcc'
 system = platform.system()
 if system == 'Darwin':
@@ -15,8 +17,9 @@ env = Environment(
     '-std=gnu11',
     '-Wfatal-errors',
     '-Wno-pointer-to-int-cast',
+    '-DEXTRA_SAFETY_CONFIGS' if extra_safety_configs() else '',
   ],
-  CPPPATH=[".", "../../board/"],
+  CPPPATH=[".", "../../board/", extra_safety_configs()],
 )
 if system == "Darwin":
   env.PrependENVPath('PATH', '/opt/homebrew/bin')

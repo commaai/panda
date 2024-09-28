@@ -1,11 +1,14 @@
 import os
 import subprocess
 
+EXTRA_SAFETY_CONFIGS = os.environ.get("EXTRA_SAFETY_CONFIGS", "")
+def extra_safety_configs(): return EXTRA_SAFETY_CONFIGS
+Export('extra_safety_configs')
 
 PREFIX = "arm-none-eabi-"
 BUILDER = "DEV"
 
-common_flags = []
+common_flags = ["-DEXTRA_SAFETY_CONFIGS" if extra_safety_configs() else ""]
 
 panda_root = Dir('.')
 
@@ -84,6 +87,7 @@ def build_project(project_name, project, extra_flags):
     '..',
     panda_root,
     f"{panda_root}/board/",
+    extra_safety_configs(),
   ]
 
   env = Environment(

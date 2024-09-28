@@ -161,7 +161,7 @@ int get_angle_meas_max(void){
 
 // ***** car specific helpers *****
 
-#ifdef SAFETY_IMPLEMENTATIONS
+#ifdef EXTRA_SAFEY_CONFIGS
 void set_honda_alt_brake_msg(bool c){
   honda_alt_brake_msg = c;
 }
