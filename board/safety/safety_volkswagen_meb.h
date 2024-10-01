@@ -23,12 +23,12 @@ const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
   .max_steer = 2068966, // 360 deg
   .angle_deg_to_can = 5747, // (1 / 0.0174) * 100 deg to can (minimize rounding error)
   .angle_rate_up_lookup = {
-    {0., 6., 15.},
-    {1200., 1000., 60.}
+    {0., 5., 15.},
+    {1200., 400., 40.}
   },
   .angle_rate_down_lookup = {
-    {0., 6., 15.},
-    {1200., 1100., 80}
+    {0., 5., 15.},
+    {1200., 800., 80.}
   },
   .inactive_angle_is_zero = true,
 };
@@ -79,12 +79,16 @@ int volkswagen_steer_power_prev = 0;
 bool volkswagen_esp_hold_confirmation = false;
 const int volkswagen_accel_overwrite = 0;
 
+bool vw_meb_get_longitudinal_allowed_override(void) {
+  return controls_allowed && controls_allowed_long && gas_pressed_prev;
+}
+
 // Safety checks for longitudinal actuation
 bool vw_meb_longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits, const int override_accel) {
   bool accel_valid = get_longitudinal_allowed() && !max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
+  bool accel_valid_override = vw_meb_get_longitudinal_allowed_override() && desired_accel == override_accel;
   bool accel_inactive = desired_accel == limits.inactive_accel;
-  bool accel_override = desired_accel == override_accel;
-  return !(accel_valid || (accel_inactive && accel_override));
+  return !(accel_valid || accel_inactive || accel_valid_override);
 }
 
 static uint32_t volkswagen_meb_get_checksum(const CANPacket_t *to_push) {
