@@ -23,7 +23,6 @@
 
 static bool toyota_secoc_car = false;
 static bool toyota_alt_brake = false;
-static bool toyota_alt_gas_pedal_116 = false;
 static bool toyota_stock_longitudinal = false;
 static bool toyota_lta = false;
 
@@ -101,10 +100,10 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
     }
 
     // exit controls on rising edge of gas press
-    if (!toyota_alt_gas_pedal_116 && (addr == 0x1D2)) {
+    if (!toyota_secoc_car && (addr == 0x1D2)) {
       gas_pressed = !GET_BIT(to_push, 4U); // GAS_PEDAL.GAS_RELEASED
     }
-    if (toyota_alt_gas_pedal_116 && (addr == 0x116)) {
+    if (toyota_secoc_car && (addr == 0x116)) {
       gas_pressed = GET_BYTE(to_push, 1) != 0U; // GAS_PEDAL.GAS_PEDAL_USER
     }
 
@@ -327,7 +326,6 @@ static safety_config toyota_init(uint16_t param) {
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
 
   toyota_secoc_car = GET_FLAG(param, TOYOTA_PARAM_SECOC_CAR);
-  toyota_alt_gas_pedal_116 = toyota_secoc_car;
 
   toyota_lta = GET_FLAG(param, TOYOTA_PARAM_LTA);
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
