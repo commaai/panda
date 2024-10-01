@@ -23,7 +23,6 @@
 
 static bool toyota_secoc_car = false;
 static bool toyota_alt_brake = false;
-static bool toyota_alt_pcm_cruise_176 = false;
 static bool toyota_alt_gas_pedal_116 = false;
 static bool toyota_stock_longitudinal = false;
 static bool toyota_lta = false;
@@ -92,11 +91,11 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
-    if (!toyota_alt_pcm_cruise_176 && (addr == 0x1D2)) {
+    if (!toyota_secoc_car && (addr == 0x1D2)) {
       bool cruise_engaged = GET_BIT(to_push, 5U);
       pcm_cruise_check(cruise_engaged);
     }
-    if (toyota_alt_pcm_cruise_176 && (addr == 0x176)) {
+    if (toyota_secoc_car && (addr == 0x176)) {
       bool cruise_engaged = GET_BIT(to_push, 5U);
       pcm_cruise_check(cruise_engaged);
     }
@@ -328,7 +327,6 @@ static safety_config toyota_init(uint16_t param) {
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
 
   toyota_secoc_car = GET_FLAG(param, TOYOTA_PARAM_SECOC_CAR);
-  toyota_alt_pcm_cruise_176 = toyota_secoc_car;
   toyota_alt_gas_pedal_116 = toyota_secoc_car;
 
   toyota_lta = GET_FLAG(param, TOYOTA_PARAM_LTA);
