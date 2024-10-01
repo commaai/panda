@@ -21,6 +21,7 @@
            {0x224, 0, 8, .check_checksum = false, .frequency = 40U},                                        \
            {0x226, 0, 8, .check_checksum = false, .frequency = 40U}}},                                      \
 
+static bool toyota_secoc_car = false;
 static bool toyota_alt_brake = false;
 static bool toyota_alt_brake_101 = false;
 static bool toyota_alt_pcm_cruise_176 = false;
@@ -327,10 +328,10 @@ static safety_config toyota_init(uint16_t param) {
   toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
 
-  bool secoc_car = GET_FLAG(param, TOYOTA_PARAM_SECOC_CAR);
-  toyota_alt_brake_101 = secoc_car;
-  toyota_alt_pcm_cruise_176 = secoc_car;
-  toyota_alt_gas_pedal_116 = secoc_car;
+  toyota_secoc_car = GET_FLAG(param, TOYOTA_PARAM_SECOC_CAR);
+  toyota_alt_brake_101 = toyota_secoc_car;
+  toyota_alt_pcm_cruise_176 = toyota_secoc_car;
+  toyota_alt_gas_pedal_116 = toyota_secoc_car;
 
   toyota_lta = GET_FLAG(param, TOYOTA_PARAM_LTA);
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
