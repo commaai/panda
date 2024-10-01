@@ -21,7 +21,7 @@
            {0x224, 0, 8, .check_checksum = false, .frequency = 40U},                                        \
            {0x226, 0, 8, .check_checksum = false, .frequency = 40U}}},                                      \
 
-static bool toyota_alt_brake_224 = false;
+static bool toyota_alt_brake = false;
 static bool toyota_alt_brake_101 = false;
 static bool toyota_alt_pcm_cruise_176 = false;
 static bool toyota_alt_gas_pedal_116 = false;
@@ -124,13 +124,13 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
     }
 
     // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224, rav4 prime on 0x101
-    if (toyota_alt_brake_224 && !toyota_alt_brake_101 && (addr == 0x224)) {
+    if (toyota_alt_brake && !toyota_alt_brake_101 && (addr == 0x224)) {
       brake_pressed = GET_BIT(to_push, 5U);
     }
-    if (!toyota_alt_brake_224 && toyota_alt_brake_101 && (addr == 0x101)) {
+    if (!toyota_alt_brake && toyota_alt_brake_101 && (addr == 0x101)) {
       brake_pressed = GET_BIT(to_push, 3U);
     }
-    if (!toyota_alt_brake_224 && !toyota_alt_brake_101 && (addr == 0x226)) {
+    if (!toyota_alt_brake && !toyota_alt_brake_101 && (addr == 0x226)) {
       brake_pressed = GET_BIT(to_push, 37U);
     }
 
@@ -319,12 +319,12 @@ static safety_config toyota_init(uint16_t param) {
   // first byte is for EPS factor, second is for flags
   const uint32_t TOYOTA_PARAM_OFFSET = 8U;
   const uint32_t TOYOTA_EPS_FACTOR = (1UL << TOYOTA_PARAM_OFFSET) - 1U;
-  const uint32_t TOYOTA_PARAM_ALT_BRAKE_224 = 1UL << TOYOTA_PARAM_OFFSET;
+  const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1UL << TOYOTA_PARAM_OFFSET;
   const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2UL << TOYOTA_PARAM_OFFSET;
   const uint32_t TOYOTA_PARAM_LTA = 4UL << TOYOTA_PARAM_OFFSET;
   const uint32_t TOYOTA_PARAM_SECOC_CAR = 8UL << TOYOTA_PARAM_OFFSET;
 
-  toyota_alt_brake_224 = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE_224);
+  toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
 
   bool secoc_car = GET_FLAG(param, TOYOTA_PARAM_SECOC_CAR);
