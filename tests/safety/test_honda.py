@@ -456,16 +456,16 @@ class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
     self.assertTrue(self._tx(msg))
 
     msg = self._bosh_supplemental_cmd_msg()
-    msg[0].data[0] = 42;
+    msg[0].data[0] = 42
     self.assertFalse(self._tx(msg))
 
     msg = self._bosh_supplemental_cmd_msg()
-    msg[0].data[4] = 42;
+    msg[0].data[4] = 42
     self.assertFalse(self._tx(msg))
 
     msg = self._bosh_supplemental_cmd_msg()
-    msg[0].data[4] = 0;
-    msg[0].data[7] = 42;
+    msg[0].data[4] = 0
+    msg[0].data[7] = 42
     self.assertTrue(self._tx(msg))
 
 
