@@ -30,7 +30,6 @@ static bool toyota_secoc_car = false;
 static bool toyota_alt_brake = false;
 static bool toyota_stock_longitudinal = false;
 static bool toyota_lta = false;
-
 static int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
 
 static uint32_t toyota_compute_checksum(const CANPacket_t *to_push) {
