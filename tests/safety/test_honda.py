@@ -447,6 +447,17 @@ class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
     self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, 0)
     self.safety.init_tests()
 
+  def _bosh_supplemental_cmd_msg(self):
+    values = {"SET_ME_X04": 0x04, "SET_ME_X80": 0x80, "SET_ME_X10": 0x10}
+    return self.packer.make_can_msg_panda("BOSCH_SUPPLEMENTAL_1", 0, values)
+
+  def test_supplemental_control_check(self):
+    msg = self._bosh_supplemental_cmd_msg()
+    self.assertTrue(self._tx(msg))
+
+    msg[0].data[0] = 42;
+    self.assertFalse(self._tx(msg))
+
 
 class TestHondaBoschAltBrakeSafety(HondaPcmEnableBase, TestHondaBoschAltBrakeSafetyBase):
   """
