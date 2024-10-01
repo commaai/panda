@@ -125,15 +125,15 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
       UPDATE_VEHICLE_SPEED(speed / 4.0 * 0.01 / 3.6);
     }
 
-    // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224, rav4 prime on 0x101
+    // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224, secoc on 0x101
+    if (!toyota_alt_brake && !toyota_secoc_car && (addr == 0x226)) {
+      brake_pressed = GET_BIT(to_push, 37U);
+    }
     if (toyota_alt_brake && !toyota_secoc_car && (addr == 0x224)) {
       brake_pressed = GET_BIT(to_push, 5U);
     }
     if (!toyota_alt_brake && toyota_secoc_car && (addr == 0x101)) {
       brake_pressed = GET_BIT(to_push, 3U);
-    }
-    if (!toyota_alt_brake && !toyota_secoc_car && (addr == 0x226)) {
-      brake_pressed = GET_BIT(to_push, 37U);
     }
 
     bool stock_ecu_detected = addr == 0x2E4;  // STEERING_LKA
