@@ -49,19 +49,16 @@ static uint8_t hyundai_get_counter(const CANPacket_t *to_push) {
   uint8_t cnt = 0;
   if (addr == 0x260) {
     cnt = (GET_BYTE(to_push, 7) >> 4) & 0x3U;
-  } 
-  if (addr == 0x386) {
+  } else if (addr == 0x386) {
     cnt = ((GET_BYTE(to_push, 3) >> 6) << 2) | (GET_BYTE(to_push, 1) >> 6);
-  }
-  if (addr == 0x394) {
+  } else if (addr == 0x394) {
     cnt = (GET_BYTE(to_push, 1) >> 5) & 0x7U;
-  } 
-  if (addr == 0x421) {
+  } else if (addr == 0x421) {
     cnt = GET_BYTE(to_push, 7) & 0xFU;
-  }
-  if (addr == 0x4F1) {
+  } else if (addr == 0x4F1) {
     cnt = (GET_BYTE(to_push, 3) >> 4) & 0xFU;
-  } 
+  } else {
+  }
   return cnt;
 }
 
@@ -71,15 +68,13 @@ static uint32_t hyundai_get_checksum(const CANPacket_t *to_push) {
   uint8_t chksum = 0;
   if (addr == 0x260) {
     chksum = GET_BYTE(to_push, 7) & 0xFU;
-  } 
-  if (addr == 0x386) {
+  } else if (addr == 0x386) {
     chksum = ((GET_BYTE(to_push, 7) >> 6) << 2) | (GET_BYTE(to_push, 5) >> 6);
-  } 
-  if (addr == 0x394) {
+  } else if (addr == 0x394) {
     chksum = GET_BYTE(to_push, 6) & 0xFU;
-  } 
-  if (addr == 0x421) {
+  } else if (addr == 0x421) {
     chksum = GET_BYTE(to_push, 7) >> 4;
+  } else {
   }
   return chksum;
 }
