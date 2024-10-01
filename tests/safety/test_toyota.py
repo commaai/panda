@@ -337,15 +337,16 @@ class TestToyotaSecOcSafety(TestToyotaStockLongitudinalBase):
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL | Panda.FLAG_TOYOTA_SECOC_CAR)
     self.safety.init_tests()
 
-  # This platform also has an alternate brake message, but same naming in the DBC, so same packer works
+  # This platform also has alternate brake and PCM messages, but same naming in the DBC, so same packer works
 
   def _user_gas_msg(self, gas):
     values = {"GAS_PEDAL_USER": gas}
     return self.packer.make_can_msg_panda("GAS_PEDAL", 0, values)
 
+  # TODO: verify we can send LTA with no actuation
   # No LTA message in the DBC
-  def test_lta_steer_cmd(self):
-    pass
+  # def test_lta_steer_cmd(self):
+  #  pass
 
 
 if __name__ == "__main__":
