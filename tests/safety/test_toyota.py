@@ -278,6 +278,25 @@ class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
     pass
 
 
+class TestToyotaSecOcSafety(TestToyotaSafetyTorque):
+
+  def setUp(self):
+    self.packer = CANPackerPanda("toyota_rav4_prime_generated")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_SECOC_CAR)
+    self.safety.init_tests()
+
+  # This platform also has an alternate brake message, but same naming in the DBC, so same packer works
+
+  def _user_gas_msg(self, gas):
+    values = {"GAS_PEDAL_USER": gas}
+    return self.packer.make_can_msg_panda("GAS_PEDAL", 0, values)
+
+  # No LTA message in the DBC
+  def test_lta_steer_cmd(self):
+    pass
+
+
 class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
 
   TX_MSGS = TOYOTA_COMMON_TX_MSGS
