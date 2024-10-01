@@ -9,7 +9,8 @@ from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
-TOYOTA_COMMON_TX_MSGS = [[0x2E4, 0], [0x131, 0], [0x191, 0], [0x412, 0], [0x343, 0], [0x1D2, 0]]  # LKAS + LTA + ACC & PCM cancel cmds
+TOYOTA_COMMON_TX_MSGS = [[0x2E4, 0], [0x191, 0], [0x412, 0], [0x343, 0], [0x1D2, 0]]  # LKAS + LTA + ACC & PCM cancel cmds
+TOYOTA_SECOC_TX_MSGS = [[0x131, 0]] + TOYOTA_COMMON_TX_MSGS
 TOYOTA_COMMON_LONG_TX_MSGS = [[0x283, 0], [0x2E6, 0], [0x2E7, 0], [0x33E, 0], [0x344, 0], [0x365, 0], [0x366, 0], [0x4CB, 0],  # DSU bus 0
                               [0x128, 1], [0x141, 1], [0x160, 1], [0x161, 1], [0x470, 1],  # DSU bus 1
                               [0x411, 0],  # PCS_HUD
@@ -21,7 +22,7 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
   TX_MSGS = TOYOTA_COMMON_TX_MSGS + TOYOTA_COMMON_LONG_TX_MSGS
   STANDSTILL_THRESHOLD = 0  # kph
   RELAY_MALFUNCTION_ADDRS = {0: (0x2E4, 0x343)}
-  FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x131, 0x191, 0x343]}
+  FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x343]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   EPS_SCALE = 73
 
@@ -278,31 +279,12 @@ class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
     pass
 
 
-class TestToyotaSecOcSafety(TestToyotaSafetyTorque):
-
-  def setUp(self):
-    self.packer = CANPackerPanda("toyota_rav4_prime_generated")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_SECOC_CAR)
-    self.safety.init_tests()
-
-  # This platform also has an alternate brake message, but same naming in the DBC, so same packer works
-
-  def _user_gas_msg(self, gas):
-    values = {"GAS_PEDAL_USER": gas}
-    return self.packer.make_can_msg_panda("GAS_PEDAL", 0, values)
-
-  # No LTA message in the DBC
-  def test_lta_steer_cmd(self):
-    pass
-
-
 class TestToyotaStockLongitudinalBase(TestToyotaSafetyBase):
 
   TX_MSGS = TOYOTA_COMMON_TX_MSGS
   # Base addresses minus ACC_CONTROL (0x343)
   RELAY_MALFUNCTION_ADDRS = {0: (0x2E4,)}
-  FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x131]}
+  FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191]}
 
   def test_diagnostics(self, stock_longitudinal: bool = True):
     super().test_diagnostics(stock_longitudinal=stock_longitudinal)
@@ -341,6 +323,29 @@ class TestToyotaStockLongitudinalAngle(TestToyotaStockLongitudinalBase, TestToyo
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL | Panda.FLAG_TOYOTA_LTA)
     self.safety.init_tests()
+
+
+class TestToyotaSecOcSafety(TestToyotaStockLongitudinalBase):
+
+  TX_MSGS = TOYOTA_SECOC_TX_MSGS
+  RELAY_MALFUNCTION_ADDRS = {0: (0x2E4,)}
+  FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x131]}
+
+  def setUp(self):
+    self.packer = CANPackerPanda("toyota_rav4_prime_generated")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL | Panda.FLAG_TOYOTA_SECOC_CAR)
+    self.safety.init_tests()
+
+  # This platform also has an alternate brake message, but same naming in the DBC, so same packer works
+
+  def _user_gas_msg(self, gas):
+    values = {"GAS_PEDAL_USER": gas}
+    return self.packer.make_can_msg_panda("GAS_PEDAL", 0, values)
+
+  # No LTA message in the DBC
+  def test_lta_steer_cmd(self):
+    pass
 
 
 if __name__ == "__main__":
