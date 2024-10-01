@@ -25,7 +25,7 @@ typedef enum {
 
 // TODO: find a better way to distinguish between H725 (using SMPS) and H723 (lacking SMPS)
 // The package will do for now, since we have only used TFBGA100 for H723
-PackageSMPSType get_package_smps_type(void) {
+static PackageSMPSType get_package_smps_type(void) {
   PackageSMPSType ret;
   RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN; // make sure SYSCFG clock is enabled. does seem to read fine without too though
 
