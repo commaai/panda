@@ -1,3 +1,7 @@
+#pragma once
+
+#include "board_declarations.h"
+
 // //////////////////// //
 // Grey Panda (STM32F4) //
 // //////////////////// //

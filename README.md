@@ -49,7 +49,7 @@ In addition, we run the [ruff linter](https://github.com/astral-sh/ruff) and [my
 Setup dependencies:
 ```bash
 # Ubuntu
-sudo apt-get install dfu-util gcc-arm-none-eabi python3-pip libffi-dev git
+sudo apt-get install dfu-util gcc-arm-none-eabi python3-pip libffi-dev git clang-17
 
 # macOS
 brew install --cask gcc-arm-embedded
