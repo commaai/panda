@@ -74,7 +74,7 @@ RxCheck volkswagen_meb_rx_checks[] = {
   {.msg = {{MSG_MEB_ABS_01, 0, 64, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
 };
 
-uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
+static uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
 int volkswagen_steer_power_prev = 0;
 bool volkswagen_esp_hold_confirmation = false;
 const int volkswagen_accel_overwrite = 0;
