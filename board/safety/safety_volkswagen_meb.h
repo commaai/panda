@@ -80,7 +80,7 @@ bool volkswagen_esp_hold_confirmation = false;
 const int volkswagen_accel_overwrite = 0;
 
 bool vw_meb_get_longitudinal_allowed_override(void) {
-  return controls_allowed && controls_allowed_long && gas_pressed_prev;
+  return controls_allowed && gas_pressed_prev;
 }
 
 // Safety checks for longitudinal actuation
