@@ -222,10 +222,15 @@ static bool toyota_tx_hook(const CANPacket_t *to_send) {
       }
     }
 
-    // LTA angle steering check for SecOC cars
+    // SecOC cars block any form of LTA actuation for now
     if (toyota_secoc_car && (addr == 0x131)) {
-      // Block any form of actuation for now
-      if (GET_BYTE(to_send, 0) != 0U) {
+      bool lta_request = GET_BIT(to_send, 3U);
+      bool lta_request2 = GET_BIT(to_send, 0U);
+      int lta_angle = (GET_BYTE(to_send, 2) << 8) | GET_BYTE(to_send, 3);
+      lta_angle = to_signed(lta_angle, 16);
+
+      bool actuation = lta_request || lta_request2 || (lta_angle != 0);
+      if (actuation) {
         tx = false;
       }
     }

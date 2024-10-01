@@ -108,7 +108,8 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
       self.safety.set_controls_allowed(engaged)
 
       should_tx = not req and not req2 and angle == 0 and torque_wind_down == 0
-      self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle, torque_wind_down)))
+      self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle, torque_wind_down)),
+                       f"{req=} {req2=} {angle=} {torque_wind_down=}")
 
   def test_rx_hook(self):
     # checksum checks
@@ -337,16 +338,23 @@ class TestToyotaSecOcSafety(TestToyotaStockLongitudinalBase):
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL | Panda.FLAG_TOYOTA_SECOC_CAR)
     self.safety.init_tests()
 
-  # This platform also has alternate brake and PCM messages, but same naming in the DBC, so same packer works
+  # This platform also has alternate brake and PCM messages, but same naming in the DBC, so same packers orks
 
   def _user_gas_msg(self, gas):
     values = {"GAS_PEDAL_USER": gas}
     return self.packer.make_can_msg_panda("GAS_PEDAL", 0, values)
 
-  # TODO: verify we can send LTA with no actuation
-  # No LTA message in the DBC
-  # def test_lta_steer_cmd(self):
-  #  pass
+  def _lta_msg(self, req, req2, angle_cmd, torque_wind_down=100):
+    values = {"STEER_REQUEST": req, "STEER_REQUEST_2": req2, "STEER_ANGLE_CMD": angle_cmd}
+    return self.packer.make_can_msg_panda("STEERING_LTA_2", 0, values)
+
+  # Only allow LTA msgs with no actuation
+  def test_lta_steer_cmd(self):
+    for engaged, req, req2, angle in itertools.product([True, False], [0, 1], [0, 1], np.linspace(-20, 20, 5)):
+      self.safety.set_controls_allowed(engaged)
+
+      should_tx = not req and not req2 and angle == 0
+      self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle)), f"{req=} {req2=} {angle=}")
 
 
 if __name__ == "__main__":
