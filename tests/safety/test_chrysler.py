@@ -121,7 +121,7 @@ class TestChryslerRamSafetyBase(TestChryslerSafetyBase):
   def setUpClass(cls):
     if cls.__name__ == "TestChryslerRamSafetyBase":
       raise unittest.SkipTest
-  
+
   # test correctness of lshift and rshift operators for setting vehicle_moving
   def test_rx_hook_vehicle_moving(self):
     self.assertFalse(self.safety.get_vehicle_moving())
@@ -182,6 +182,7 @@ class TestChryslerRamHDSafety(TestChryslerRamSafetyBase):
   def _speed_msg(self, speed):
     values = {"Vehicle_Speed": speed}
     return self.packer.make_can_msg_panda("ESP_8", 0, values)
+
 
 if __name__ == "__main__":
   unittest.main()
