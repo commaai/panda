@@ -226,10 +226,10 @@ static bool toyota_tx_hook(const CANPacket_t *to_send) {
     if (toyota_secoc_car && (addr == 0x131)) {
       bool lta_request = GET_BIT(to_send, 3U);
       bool lta_request2 = GET_BIT(to_send, 0U);
-      int lta_angle = (GET_BYTE(to_send, 2) << 8) | GET_BYTE(to_send, 3);
-      lta_angle = to_signed(lta_angle, 16);
+      int lta_angle_msb = GET_BYTE(to_send, 2);
+      int lta_angle_lsb = GET_BYTE(to_send, 3);
 
-      bool actuation = lta_request || lta_request2 || (lta_angle != 0);
+      bool actuation = lta_request || lta_request2 || (lta_angle_msb != 0) || (lta_angle_lsb != 0);
       if (actuation) {
         tx = false;
       }
