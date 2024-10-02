@@ -94,25 +94,25 @@ class TestChryslerPacificaSafety(TestChryslerSafetyBase):
 
     # speed_l byte 0
     msg = self._speed_msg(0)
-    msg[0].data[0] = 15;
+    msg[0].data[0] = 15
     self.assertTrue(self._rx(msg))
     self.assertTrue(self.safety.get_vehicle_moving())
 
     # speed_l byte 1
     msg = self._speed_msg(0)
-    msg[0].data[1] = 8;
+    msg[0].data[1] = 8
     self.assertTrue(self._rx(msg))
     self.assertFalse(self.safety.get_vehicle_moving())
 
     # speed_r byte 2
     msg = self._speed_msg(0)
-    msg[0].data[2] = 15;
+    msg[0].data[2] = 15
     self.assertTrue(self._rx(msg))
     self.assertTrue(self.safety.get_vehicle_moving())
 
     # speed_r byte 3
     msg = self._speed_msg(0)
-    msg[0].data[3] = 8;
+    msg[0].data[3] = 8
     self.assertTrue(self._rx(msg))
     self.assertFalse(self.safety.get_vehicle_moving())
 
@@ -122,6 +122,7 @@ class TestChryslerRamSafetyBase(TestChryslerSafetyBase):
     if cls.__name__ == "TestChryslerRamSafetyBase":
       raise unittest.SkipTest
   
+  # test correctness of lshift and rshift operators for setting vehicle_moving
   def test_rx_hook_vehicle_moving(self):
     self.assertFalse(self.safety.get_vehicle_moving())
 
