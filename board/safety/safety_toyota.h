@@ -333,11 +333,12 @@ static safety_config toyota_init(uint16_t param) {
   const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1UL << TOYOTA_PARAM_OFFSET;
   const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2UL << TOYOTA_PARAM_OFFSET;
   const uint32_t TOYOTA_PARAM_LTA = 4UL << TOYOTA_PARAM_OFFSET;
-  const uint32_t TOYOTA_PARAM_SECOC_CAR = 8UL << TOYOTA_PARAM_OFFSET;
 
 #ifdef ALLOW_DEBUG
+  const uint32_t TOYOTA_PARAM_SECOC_CAR = 8UL << TOYOTA_PARAM_OFFSET;
   toyota_secoc_car = GET_FLAG(param, TOYOTA_PARAM_SECOC_CAR);
 #endif
+
   toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
   toyota_stock_longitudinal = GET_FLAG(param, TOYOTA_PARAM_STOCK_LONGITUDINAL);
   toyota_lta = GET_FLAG(param, TOYOTA_PARAM_LTA);
