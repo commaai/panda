@@ -344,17 +344,19 @@ class TestToyotaSecOcSafety(TestToyotaStockLongitudinalBase):
     values = {"GAS_PEDAL_USER": gas}
     return self.packer.make_can_msg_panda("GAS_PEDAL", 0, values)
 
-  def _lta_msg(self, req, req2, angle_cmd, torque_wind_down=100):
+  # This platform sends both STEERING_LTA (same as other Toyota) and STEERING_LTA_2 (SecOC signed)
+  # STEERING_LTA is checked for no-actuation by the base class, STEERING_LTA_2 is checked for no-actuation below
+
+  def _lta_2_msg(self, req, req2, angle_cmd, torque_wind_down=100):
     values = {"STEER_REQUEST": req, "STEER_REQUEST_2": req2, "STEER_ANGLE_CMD": angle_cmd}
     return self.packer.make_can_msg_panda("STEERING_LTA_2", 0, values)
 
-  # Only allow LTA msgs with no actuation
-  def test_lta_steer_cmd(self):
+  def test_lta_2_steer_cmd(self):
     for engaged, req, req2, angle in itertools.product([True, False], [0, 1], [0, 1], np.linspace(-20, 20, 5)):
       self.safety.set_controls_allowed(engaged)
 
       should_tx = not req and not req2 and angle == 0
-      self.assertEqual(should_tx, self._tx(self._lta_msg(req, req2, angle)), f"{req=} {req2=} {angle=}")
+      self.assertEqual(should_tx, self._tx(self._lta_2_msg(req, req2, angle)), f"{req=} {req2=} {angle=}")
 
 
 if __name__ == "__main__":
