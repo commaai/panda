@@ -18,9 +18,12 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
 
   if(bus == 0) {
     if(addr == 0x155){
-      // Vehicle speed: (val * 0.5) * KPH_TO_MPS
-      float speed = ((((GET_BYTE(to_push, 6) & 0x0FU) << 6) | (GET_BYTE(to_push, 5) >> 2)) * 0.5) * 0.277778;
       vehicle_moving = !GET_BIT(to_push, 41U);
+    }
+
+    if(addr == 0x257){
+      // Vehicle speed: ((val * 0.08) - 40) * KPH_TO_MPS
+      float speed = (((((GET_BYTE(to_push, 2)) << 4) | (GET_BYTE(to_push, 1) >> 4)) * 0.08) - 40) * 0.277778;
       UPDATE_VEHICLE_SPEED(speed);
     }
 
@@ -177,7 +180,8 @@ static safety_config tesla_init(uint16_t param) {
 
   static RxCheck tesla_model3_y_rx_checks[] = {
     {.msg = {{0x2b9, 2, 8, .frequency = 25U}, { 0 }, { 0 }}},   // DAS_control
-    {.msg = {{0x155, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},   // ESP_wheelRotation (speed in kph)
+    {.msg = {{0x155, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},   // ESP_wheelRotation (standstill)
+    {.msg = {{0x257, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},   // DI_speed (speed in kph)
     {.msg = {{0x370, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},  // EPAS3S_internalSAS (steering angle)
     {.msg = {{0x118, 0, 8, .frequency = 100U}, { 0 }, { 0 }}},  // DI_systemStatus (gas pedal)
     {.msg = {{0x39d, 0, 5, .frequency = 25U}, { 0 }, { 0 }}},   // IBST_status (brakes)
