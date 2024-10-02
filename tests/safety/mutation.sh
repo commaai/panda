@@ -11,9 +11,9 @@ MUTATION_OPS="mutators: [cxx_increment, cxx_decrement, cxx_comparison, cxx_bound
 # TODO: add more files from board/safety
 MUTATION_SAFETY_FILES=( safety_body.h safety_defaults.h safety_elm327.h )
 
-# MODE_SAFETY_ONLY -> verify mutations on safety_xx.h with test_xx.py
-# MODE_DIFF_COVERAGE -> verify mutations with test_xx.py on the intersection between its code coverage and the current git diff
-MUTATION_MODE="${MUTATION_MODE:-MODE_DIFF_COVERAGE}"
+# SAFETY_ONLY -> verify mutations on safety_xx.h with test_xx.py
+# DIFF_COVERAGE -> verify mutations with test_xx.py on the intersection between its code coverage and the current git diff
+MUTATION_MODE="${MUTATION_MODE:-DIFF_COVERAGE}"
 
 GIT_REF="${GIT_REF:-origin/master}"
 GIT_ROOT=$(git rev-parse --show-toplevel)
@@ -30,7 +30,7 @@ scons --mutation -j$(nproc) -D
 
 SAFETY_TESTS=$(find * | grep "^test_.*\.py")
 for SAFETY_TEST in ${SAFETY_TESTS[@]}; do
-  if [[ $MUTATION_MODE == "MODE_SAFETY_ONLY" ]]; then
+  if [[ $MUTATION_MODE == "SAFETY_ONLY" ]]; then
     SAFETY_MODE=$(echo $SAFETY_TEST | sed -e 's/test_/safety_/g' | sed -e 's/\.py/\.h/g')
     if [[ ! " ${MUTATION_SAFETY_FILES[*]} " =~ [[:space:]]${SAFETY_MODE}[[:space:]] ]]; then
       continue

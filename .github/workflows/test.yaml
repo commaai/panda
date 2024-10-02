@@ -106,6 +106,9 @@ jobs:
   mutation:
     name: Mutation tests
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mutation_mode: ['DIFF_COVERAGE', 'SAFETY_ONLY']
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
@@ -115,7 +118,7 @@ jobs:
         run: eval "$BUILD"
       - name: Mutation tests
         timeout-minutes: 5
-        run: ${{ env.RUN }} "GIT_REF=${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && github.event.before || 'origin/master' }} cd tests/safety && ./mutation.sh"
+        run: ${{ env.RUN }} "GIT_REF=${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && github.event.before || 'origin/master' }} MUTATION_MODE=${{ matrix.mutation_mode }} cd tests/safety && ./mutation.sh"
 
   static_analysis:
     name: static analysis
