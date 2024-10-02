@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
   while True:
     print(chr(27) + "[2J") # clear screen
-    print(f"Connected to " + ("internal panda" if jungle.is_internal() else "External panda") + f" id: {jungle.get_serial()[0]}: {jungle.get_version()}")
+    print("Connected to " + ("internal panda" if jungle.is_internal() else "External panda") + f" id: {jungle.get_serial()[0]}: {jungle.get_version()}")
     for bus in range(3):
       print(f"\nBus {bus}:")
       health = jungle.can_health(bus)

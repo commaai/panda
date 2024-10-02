@@ -19,7 +19,7 @@ if __name__ == "__main__":
   panda = Panda()
   while True:
     print(chr(27) + "[2J") # clear screen
-    print(f"Connected to " + ("internal panda" if panda.is_internal() else "External panda") + f" id: {panda.get_serial()[0]}: {panda.get_version()}")
+    print("Connected to " + ("internal panda" if panda.is_internal() else "External panda") + f" id: {panda.get_serial()[0]}: {panda.get_version()}")
     for bus in range(3):
       print(f"\nBus {bus}:")
       health = panda.can_health(bus)
