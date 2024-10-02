@@ -338,7 +338,7 @@ class TestToyotaSecOcSafety(TestToyotaStockLongitudinalBase):
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL | Panda.FLAG_TOYOTA_SECOC_CAR)
     self.safety.init_tests()
 
-  # This platform also has alternate brake and PCM messages, but same naming in the DBC, so same packers orks
+  # This platform also has alternate brake and PCM messages, but same naming in the DBC, so same packers work
 
   def _user_gas_msg(self, gas):
     values = {"GAS_PEDAL_USER": gas}
