@@ -2,6 +2,15 @@ void safety_tick_current_safety_config() {
   safety_tick(&current_safety_config);
 }
 
+void safety_config_make_valid() {
+  for (int i = 0; i < current_safety_config.rx_checks_len; i++) {
+    current_safety_config.rx_checks[i].status.last_timestamp = 0;
+    current_safety_config.rx_checks[i].status.valid_checksum = true;
+    current_safety_config.rx_checks[i].status.valid_quality_flag = true;
+    current_safety_config.rx_checks[i].status.msg_seen = true;
+  }
+}
+
 bool safety_config_valid() {
   if (current_safety_config.rx_checks_len <= 0) {
     printf("missing RX checks\n");

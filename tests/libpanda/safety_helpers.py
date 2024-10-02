@@ -43,6 +43,7 @@ def setup_safety_helpers(ffi):
 
   void safety_tick_current_safety_config();
   bool safety_config_valid();
+  void safety_config_make_valid();
 
   void init_tests(void);
 

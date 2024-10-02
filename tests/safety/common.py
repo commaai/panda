@@ -983,3 +983,14 @@ class PandaCarSafetyTest(PandaSafetyTest):
     self.safety.safety_tick_current_safety_config()
     self.assertFalse(self.safety.get_controls_allowed())
     self.assertFalse(self.safety.safety_config_valid())
+
+  def test_safety_tick_lag(self):
+    self.safety.set_controls_allowed(True)
+    self.assertTrue(self.safety.get_controls_allowed())
+
+    self.safety.set_timer(0)
+    self.safety.safety_config_make_valid()
+    self.safety.safety_tick_current_safety_config()
+
+    self.assertTrue(self.safety.safety_config_valid())
+    self.assertTrue(self.safety.get_controls_allowed())
