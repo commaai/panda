@@ -115,8 +115,6 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
       if (addr == 0x1D2) {
         bool cruise_engaged = GET_BIT(to_push, 5U);
         pcm_cruise_check(cruise_engaged);
-      }
-      if (addr == 0x1D2) {
         gas_pressed = !GET_BIT(to_push, 4U); // GAS_PEDAL.GAS_RELEASED
       }
       if (!toyota_alt_brake && (addr == 0x226)) {
