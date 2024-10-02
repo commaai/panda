@@ -30,7 +30,7 @@
            {0x224, 0, 8, .check_checksum = false, .frequency = 40U},                                        \
            {0x226, 0, 8, .check_checksum = false, .frequency = 40U}}},                                      \
 
-static bool toyota_secoc_car = false;
+static bool toyota_secoc = false;
 static bool toyota_alt_brake = false;
 static bool toyota_stock_longitudinal = false;
 static bool toyota_lta = false;
@@ -98,20 +98,20 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
     }
 
     // enter controls on rising edge of ACC, exit controls on ACC off
-    if (!toyota_secoc_car && (addr == 0x1D2)) {
+    if (!toyota_secoc && (addr == 0x1D2)) {
       bool cruise_engaged = GET_BIT(to_push, 5U);
       pcm_cruise_check(cruise_engaged);
     }
-    if (toyota_secoc_car && (addr == 0x176)) {
+    if (toyota_secoc && (addr == 0x176)) {
       bool cruise_engaged = GET_BIT(to_push, 5U);
       pcm_cruise_check(cruise_engaged);
     }
 
     // exit controls on rising edge of gas press
-    if (!toyota_secoc_car && (addr == 0x1D2)) {
+    if (!toyota_secoc && (addr == 0x1D2)) {
       gas_pressed = !GET_BIT(to_push, 4U); // GAS_PEDAL.GAS_RELEASED
     }
-    if (toyota_secoc_car && (addr == 0x116)) {
+    if (toyota_secoc && (addr == 0x116)) {
       gas_pressed = GET_BYTE(to_push, 1) != 0U; // GAS_PEDAL.GAS_PEDAL_USER
     }
 
@@ -130,13 +130,13 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
     }
 
     // most cars have brake_pressed on 0x226, corolla and rav4 on 0x224, secoc on 0x101
-    if (!toyota_alt_brake && !toyota_secoc_car && (addr == 0x226)) {
+    if (!toyota_alt_brake && !toyota_secoc && (addr == 0x226)) {
       brake_pressed = GET_BIT(to_push, 37U);
     }
-    if (toyota_alt_brake && !toyota_secoc_car && (addr == 0x224)) {
+    if (toyota_alt_brake && !toyota_secoc && (addr == 0x224)) {
       brake_pressed = GET_BIT(to_push, 5U);
     }
-    if (!toyota_alt_brake && toyota_secoc_car && (addr == 0x101)) {
+    if (!toyota_alt_brake && toyota_secoc && (addr == 0x101)) {
       brake_pressed = GET_BIT(to_push, 3U);
     }
 
@@ -227,7 +227,7 @@ static bool toyota_tx_hook(const CANPacket_t *to_send) {
     }
 
     // SecOC cars block any form of LTA actuation for now
-    if (toyota_secoc_car && (addr == 0x131)) {
+    if (toyota_secoc && (addr == 0x131)) {
       bool lta_request = GET_BIT(to_send, 3U);
       bool lta_request2 = GET_BIT(to_send, 0U);
       int lta_angle_msb = GET_BYTE(to_send, 2);
@@ -339,8 +339,8 @@ static safety_config toyota_init(uint16_t param) {
   const uint32_t TOYOTA_PARAM_LTA = 4UL << TOYOTA_PARAM_OFFSET;
 
 #ifdef ALLOW_DEBUG
-  const uint32_t TOYOTA_PARAM_SECOC_CAR = 8UL << TOYOTA_PARAM_OFFSET;
-  toyota_secoc_car = GET_FLAG(param, TOYOTA_PARAM_SECOC_CAR);
+  const uint32_t TOYOTA_PARAM_SECOC = 8UL << TOYOTA_PARAM_OFFSET;
+  toyota_secoc = GET_FLAG(param, TOYOTA_PARAM_SECOC);
 #endif
 
   toyota_alt_brake = GET_FLAG(param, TOYOTA_PARAM_ALT_BRAKE);
@@ -350,7 +350,7 @@ static safety_config toyota_init(uint16_t param) {
 
   safety_config ret;
   if (toyota_stock_longitudinal) {
-    if (toyota_secoc_car) {
+    if (toyota_secoc) {
       SET_TX_MSGS(TOYOTA_SECOC_TX_MSGS, ret);
     } else {
       SET_TX_MSGS(TOYOTA_TX_MSGS, ret);
@@ -390,7 +390,7 @@ static int toyota_fwd_hook(int bus_num, int addr) {
     // in TSS2, 0x191 is LTA which we need to block to avoid controls collision
     bool is_lkas_msg = ((addr == 0x2E4) || (addr == 0x412) || (addr == 0x191));
     // on SecOC cars 0x131 is also LTA
-    is_lkas_msg |= toyota_secoc_car && (addr == 0x131);
+    is_lkas_msg |= toyota_secoc && (addr == 0x131);
     // in TSS2 the camera does ACC as well, so filter 0x343
     bool is_acc_msg = (addr == 0x343);
     bool block_msg = is_lkas_msg || (is_acc_msg && !toyota_stock_longitudinal);
