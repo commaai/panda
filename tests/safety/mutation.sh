@@ -4,7 +4,7 @@ set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
 cd $DIR
 
-MULL_OPS="mutators: [cxx_increment, cxx_decrement, cxx_comparison, cxx_bitwise_assignment, cxx_bitwise, cxx_arithmetic_assignment, cxx_arithmetic]"
+MULL_OPS="mutators: [cxx_increment, cxx_decrement, cxx_comparison, cxx_boundary, cxx_bitwise_assignment, cxx_bitwise, cxx_arithmetic_assignment, cxx_arithmetic]"
 MULL_MODE="${MULL_MODE:-SAFETY_ONLY}"
 
 GIT_REF="${GIT_REF:-origin/master}"
