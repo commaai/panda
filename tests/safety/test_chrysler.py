@@ -8,7 +8,6 @@ from panda.tests.safety.common import CANPackerPanda
 
 class TestChryslerSafetyBase(common.PandaCarSafetyTest, common.MotorTorqueSteeringSafetyTest):
   STANDSTILL_THRESHOLD = 0
-  RELAY_MALFUNCTION_ADDRS = {0: (0x292,)}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   MAX_RT_DELTA = 112
@@ -64,15 +63,12 @@ class TestChryslerSafetyBase(common.PandaCarSafetyTest, common.MotorTorqueSteeri
 
 class TestChryslerPacificaSafety(TestChryslerSafetyBase):
   TX_MSGS = [[0x23B, 0], [0x292, 0], [0x2A6, 0]]
-  STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDRS = {0: (0x292,)}
   FWD_BLACKLISTED_ADDRS = {2: [0x292, 0x2A6]}
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   MAX_RATE_UP = 3
   MAX_RATE_DOWN = 3
   MAX_TORQUE = 261
-  MAX_RT_DELTA = 112
 
   LKAS_ACTIVE_VALUE = 1
 
