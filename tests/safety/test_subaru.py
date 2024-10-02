@@ -106,6 +106,9 @@ class TestSubaruSafetyBase(common.PandaCarSafetyTest):
     values = {"Cruise_Activated": enable}
     return self.packer.make_can_msg_panda("CruiseControl", self.ALT_MAIN_BUS, values)
 
+  def test_angle_meas(self):
+    self.assertTrue(self._rx(self._angle_meas_msg(0)))
+    self.assertEqual(self.safety.get_angle_meas(0), 0)
 
 class TestSubaruStockLongitudinalSafetyBase(TestSubaruSafetyBase):
   def _cancel_msg(self, cancel, cruise_throttle=0):

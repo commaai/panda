@@ -34,6 +34,7 @@ def setup_safety_helpers(ffi):
   void set_angle_meas(int min, int max);
   int get_angle_meas_min(void);
   int get_angle_meas_max(void);
+  int get_angle_meas(int pos);
 
   bool get_cruise_engaged_prev(void);
   void set_cruise_engaged_prev(bool engaged);

@@ -158,6 +158,10 @@ int get_angle_meas_max(void){
   return angle_meas.max;
 }
 
+int get_angle_meas(int pos){
+  return angle_meas.values[pos];
+}
+
 
 // ***** car specific helpers *****
 
