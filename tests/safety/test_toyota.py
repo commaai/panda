@@ -335,7 +335,7 @@ class TestToyotaSecOcSafety(TestToyotaStockLongitudinalBase):
   def setUp(self):
     self.packer = CANPackerPanda("toyota_rav4_prime_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL | Panda.FLAG_TOYOTA_SECOC_CAR)
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL | Panda.FLAG_TOYOTA_SECOC)
     self.safety.init_tests()
 
   # This platform also has alternate brake and PCM messages, but same naming in the DBC, so same packers work
