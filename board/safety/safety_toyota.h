@@ -349,7 +349,6 @@ static safety_config toyota_init(uint16_t param) {
   toyota_dbc_eps_torque_factor = param & TOYOTA_EPS_FACTOR;
 
   safety_config ret;
-
   if (toyota_stock_longitudinal) {
     if (toyota_secoc_car) {
       SET_TX_MSGS(TOYOTA_SECOC_TX_MSGS, ret);
