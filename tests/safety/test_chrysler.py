@@ -6,29 +6,19 @@ import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
 
-class TestChryslerSafety(common.PandaCarSafetyTest, common.MotorTorqueSteeringSafetyTest):
-  TX_MSGS = [[0x23B, 0], [0x292, 0], [0x2A6, 0]]
+class TestChryslerSafetyBase(common.PandaCarSafetyTest, common.MotorTorqueSteeringSafetyTest):
   STANDSTILL_THRESHOLD = 0
   RELAY_MALFUNCTION_ADDRS = {0: (0x292,)}
-  FWD_BLACKLISTED_ADDRS = {2: [0x292, 0x2A6]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
-  MAX_RATE_UP = 3
-  MAX_RATE_DOWN = 3
-  MAX_TORQUE = 261
   MAX_RT_DELTA = 112
   RT_INTERVAL = 250000
   MAX_TORQUE_ERROR = 80
 
-  LKAS_ACTIVE_VALUE = 1
-
-  DAS_BUS = 0
-
-  def setUp(self):
-    self.packer = CANPackerPanda("chrysler_pacifica_2017_hybrid_generated")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, 0)
-    self.safety.init_tests()
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "TestChryslerSafetyBase":
+      raise unittest.SkipTest
 
   def _button_msg(self, cancel=False, resume=False):
     values = {"ACC_Cancel": cancel, "ACC_Resume": resume}
@@ -72,8 +62,80 @@ class TestChryslerSafety(common.PandaCarSafetyTest, common.MotorTorqueSteeringSa
       self.assertFalse(self._tx(self._button_msg(cancel=True, resume=True)))
       self.assertFalse(self._tx(self._button_msg(cancel=False, resume=False)))
 
+class TestChryslerPacificaSafety(TestChryslerSafetyBase):
+  TX_MSGS = [[0x23B, 0], [0x292, 0], [0x2A6, 0]]
+  STANDSTILL_THRESHOLD = 0
+  RELAY_MALFUNCTION_ADDRS = {0: (0x292,)}
+  FWD_BLACKLISTED_ADDRS = {2: [0x292, 0x2A6]}
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
-class TestChryslerRamDTSafety(TestChryslerSafety):
+  MAX_RATE_UP = 3
+  MAX_RATE_DOWN = 3
+  MAX_TORQUE = 261
+  MAX_RT_DELTA = 112
+
+  LKAS_ACTIVE_VALUE = 1
+
+  DAS_BUS = 0
+
+  def setUp(self):
+    self.packer = CANPackerPanda("chrysler_pacifica_2017_hybrid_generated")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, 0)
+    self.safety.init_tests()
+
+  def _speed_msg(self, speed):
+    values = {"SPEED_LEFT": speed, "SPEED_RIGHT": speed}
+    return self.packer.make_can_msg_panda("SPEED_1", 0, values)
+
+  # test correctness of lshift and rshift operators for setting vehicle_moving
+  def test_rx_hook_vehicle_moving(self):
+    self.assertFalse(self.safety.get_vehicle_moving())
+
+    # speed_l byte 0
+    msg = self._speed_msg(0)
+    msg[0].data[0] = 15;
+    self.assertTrue(self._rx(msg))
+    self.assertTrue(self.safety.get_vehicle_moving())
+
+    # speed_l byte 1
+    msg = self._speed_msg(0)
+    msg[0].data[1] = 8;
+    self.assertTrue(self._rx(msg))
+    self.assertFalse(self.safety.get_vehicle_moving())
+
+    # speed_r byte 2
+    msg = self._speed_msg(0)
+    msg[0].data[2] = 15;
+    self.assertTrue(self._rx(msg))
+    self.assertTrue(self.safety.get_vehicle_moving())
+
+    # speed_r byte 3
+    msg = self._speed_msg(0)
+    msg[0].data[3] = 8;
+    self.assertTrue(self._rx(msg))
+    self.assertFalse(self.safety.get_vehicle_moving())
+
+class TestChryslerRamSafetyBase(TestChryslerSafetyBase):
+  @classmethod
+  def setUpClass(cls):
+    if cls.__name__ == "TestChryslerRamSafetyBase":
+      raise unittest.SkipTest
+  
+  def test_rx_hook_vehicle_moving(self):
+    self.assertFalse(self.safety.get_vehicle_moving())
+
+    self.assertTrue(self._rx(self._speed_msg(1)))
+    self.assertTrue(self.safety.get_vehicle_moving())
+
+    self.assertTrue(self._rx(self._speed_msg(0)))
+    self.assertFalse(self.safety.get_vehicle_moving())
+
+    # test 4th bytes = 1, 5th bytes = 0
+    self.assertTrue(self._rx(self._speed_msg(2)))
+    self.assertTrue(self.safety.get_vehicle_moving())
+
+class TestChryslerRamDTSafety(TestChryslerRamSafetyBase):
   TX_MSGS = [[0xB1, 2], [0xA6, 0], [0xFA, 0]]
   RELAY_MALFUNCTION_ADDRS = {0: (0xA6,)}
   FWD_BLACKLISTED_ADDRS = {2: [0xA6, 0xFA]}
@@ -96,7 +158,7 @@ class TestChryslerRamDTSafety(TestChryslerSafety):
     values = {"Vehicle_Speed": speed}
     return self.packer.make_can_msg_panda("ESP_8", 0, values)
 
-class TestChryslerRamHDSafety(TestChryslerSafety):
+class TestChryslerRamHDSafety(TestChryslerRamSafetyBase):
   TX_MSGS = [[0x275, 0], [0x276, 0], [0x23A, 2]]
   RELAY_MALFUNCTION_ADDRS = {0: (0x276,)}
   FWD_BLACKLISTED_ADDRS = {2: [0x275, 0x276]}
@@ -119,7 +181,6 @@ class TestChryslerRamHDSafety(TestChryslerSafety):
   def _speed_msg(self, speed):
     values = {"Vehicle_Speed": speed}
     return self.packer.make_can_msg_panda("ESP_8", 0, values)
-
 
 if __name__ == "__main__":
   unittest.main()
