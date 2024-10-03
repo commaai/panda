@@ -108,10 +108,10 @@ class TestSubaruSafetyBase(common.PandaCarSafetyTest):
 
   def test_angle_meas(self):
     self.assertTrue(self._rx(self._angle_meas_msg(0)))
-    self.assertEqual(self.safety.get_angle_meas(0), 0)
+    self.assertEqual(self.safety.get_angle_meas_last(), 0)
 
     self.assertTrue(self._rx(self._angle_meas_msg(1)))
-    self.assertEqual(self.safety.get_angle_meas(0), 100)
+    self.assertEqual(self.safety.get_angle_meas_last(), 100)
 
   def test_vehicle_speed(self):
     self.assertTrue(self._rx(self._speed_msg(0)))
