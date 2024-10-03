@@ -20,7 +20,6 @@
 static uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
 static int volkswagen_steer_power_prev = 0;
 static bool volkswagen_esp_hold_confirmation = false;
-static const int volkswagen_accel_overwrite = 0;
 
 static bool vw_meb_get_longitudinal_allowed_override(void) {
   return controls_allowed && gas_pressed_prev;
@@ -253,6 +252,8 @@ static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
     .min_accel = -3500,
     .inactive_accel = 3010,  // VW sends one increment above the max range when inactive
   };
+
+  const int volkswagen_accel_overwrite = 0;
   
   int addr = GET_ADDR(to_send);
   bool tx = true;
