@@ -225,19 +225,6 @@ static bool toyota_tx_hook(const CANPacket_t *to_send) {
       }
     }
 
-    // SecOC cars block any form of LTA actuation for now
-    if (toyota_secoc && (addr == 0x131)) {
-      bool lta_request = GET_BIT(to_send, 3U);  // STEERING_LTA_2.STEER_REQUEST
-      bool lta_request2 = GET_BIT(to_send, 0U);  // STEERING_LTA_2.STEER_REQUEST_2
-      int lta_angle_msb = GET_BYTE(to_send, 2);  // STEERING_LTA_2.STEER_ANGLE_CMD (MSB)
-      int lta_angle_lsb = GET_BYTE(to_send, 3);  // STEERING_LTA_2.STEER_ANGLE_CMD (LSB)
-
-      bool actuation = lta_request || lta_request2 || (lta_angle_msb != 0) || (lta_angle_lsb != 0);
-      if (actuation) {
-        tx = false;
-      }
-    }
-
     // STEERING_LTA angle steering check
     if (addr == 0x191) {
       // check the STEER_REQUEST, STEER_REQUEST_2, TORQUE_WIND_DOWN, STEER_ANGLE_CMD signals
@@ -283,6 +270,20 @@ static bool toyota_tx_hook(const CANPacket_t *to_send) {
         if ((eps_torque > TOYOTA_LTA_MAX_MEAS_TORQUE) && (torque_wind_down != 0)) {
           tx = false;
         }
+      }
+    }
+
+    // STEERING_LTA_2 angle steering check (SecOC)
+    if (toyota_secoc && (addr == 0x131)) {
+      // SecOC cars block any form of LTA actuation for now
+      bool lta_request = GET_BIT(to_send, 3U);  // STEERING_LTA_2.STEER_REQUEST
+      bool lta_request2 = GET_BIT(to_send, 0U);  // STEERING_LTA_2.STEER_REQUEST_2
+      int lta_angle_msb = GET_BYTE(to_send, 2);  // STEERING_LTA_2.STEER_ANGLE_CMD (MSB)
+      int lta_angle_lsb = GET_BYTE(to_send, 3);  // STEERING_LTA_2.STEER_ANGLE_CMD (LSB)
+
+      bool actuation = lta_request || lta_request2 || (lta_angle_msb != 0) || (lta_angle_lsb != 0);
+      if (actuation) {
+        tx = false;
       }
     }
 
