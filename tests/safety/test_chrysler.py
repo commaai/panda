@@ -84,7 +84,6 @@ class TestChryslerPacificaSafety(TestChryslerSafetyBase):
     values = {"SPEED_LEFT": speed, "SPEED_RIGHT": speed}
     return self.packer.make_can_msg_panda("SPEED_1", 0, values)
 
-  # test correctness of lshift and rshift operators for setting vehicle_moving
   def test_rx_hook_vehicle_moving(self):
     self.assertFalse(self.safety.get_vehicle_moving())
 
@@ -118,18 +117,23 @@ class TestChryslerRamSafetyBase(TestChryslerSafetyBase):
     if cls.__name__ == "TestChryslerRamSafetyBase":
       raise unittest.SkipTest
 
-  # test correctness of lshift and rshift operators for setting vehicle_moving
   def test_rx_hook_vehicle_moving(self):
     self.assertFalse(self.safety.get_vehicle_moving())
 
-    self.assertTrue(self._rx(self._speed_msg(1)))
-    self.assertTrue(self.safety.get_vehicle_moving())
-
+    # test 4th bytes = 0, 5th bytes = 0
     self.assertTrue(self._rx(self._speed_msg(0)))
     self.assertFalse(self.safety.get_vehicle_moving())
 
+    # test 4th bytes = 0, 5th bytes = 128
+    self.assertTrue(self._rx(self._speed_msg(1)))
+    self.assertTrue(self.safety.get_vehicle_moving())
+
     # test 4th bytes = 1, 5th bytes = 0
     self.assertTrue(self._rx(self._speed_msg(2)))
+    self.assertTrue(self.safety.get_vehicle_moving())
+
+    # test 4th bytes = 1, 5th bytes = 128
+    self.assertTrue(self._rx(self._speed_msg(3)))
     self.assertTrue(self.safety.get_vehicle_moving())
 
 class TestChryslerRamDTSafety(TestChryslerRamSafetyBase):
