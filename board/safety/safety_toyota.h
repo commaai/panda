@@ -102,26 +102,26 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
     // exit controls on rising edge of brake press
     if (toyota_secoc) {
       if (addr == 0x176) {
-        bool cruise_engaged = GET_BIT(to_push, 5U);
+        bool cruise_engaged = GET_BIT(to_push, 5U);  // PCM_CRUISE.CRUISE_ACTIVE
         pcm_cruise_check(cruise_engaged);
       }
       if (addr == 0x116) {
-        gas_pressed = GET_BYTE(to_push, 1) != 0U; // GAS_PEDAL.GAS_PEDAL_USER
+        gas_pressed = GET_BYTE(to_push, 1) != 0U;  // GAS_PEDAL.GAS_PEDAL_USER
       }
       if (addr == 0x101) {
-        brake_pressed = GET_BIT(to_push, 3U);
+        brake_pressed = GET_BIT(to_push, 3U);  // BRAKE_MODULE.BRAKE_PRESSED (toyota_rav4_prime_generated.dbc)
       }
     } else {
       if (addr == 0x1D2) {
-        bool cruise_engaged = GET_BIT(to_push, 5U);
+        bool cruise_engaged = GET_BIT(to_push, 5U);  // PCM_CRUISE.CRUISE_ACTIVE
         pcm_cruise_check(cruise_engaged);
-        gas_pressed = !GET_BIT(to_push, 4U); // GAS_PEDAL.GAS_RELEASED
+        gas_pressed = !GET_BIT(to_push, 4U);  // PCM_CRUISE.GAS_RELEASED
       }
       if (!toyota_alt_brake && (addr == 0x226)) {
-        brake_pressed = GET_BIT(to_push, 37U);
+        brake_pressed = GET_BIT(to_push, 37U);  // BRAKE_MODULE.BRAKE_PRESSED (toyota_nodsu_pt_generated.dbc)
       }
       if (toyota_alt_brake && (addr == 0x224)) {
-        brake_pressed = GET_BIT(to_push, 5U);
+        brake_pressed = GET_BIT(to_push, 5U);  // BRAKE_MODULE.BRAKE_PRESSED (toyota_new_mc_pt_generated.dbc)
       }
     }
 
