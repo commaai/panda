@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-import unittest
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -27,7 +25,7 @@ class TestMazdaSafety(common.PandaCarSafetyTest, common.DriverTorqueSteeringSafe
   # Mazda actually does not set any bit when requesting torque
   NO_STEER_REQ_BIT = True
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("mazda_2017")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_MAZDA, 0)
@@ -73,14 +71,10 @@ class TestMazdaSafety(common.PandaCarSafetyTest, common.DriverTorqueSteeringSafe
   def test_buttons(self):
     # only cancel allows while controls not allowed
     self.safety.set_controls_allowed(0)
-    self.assertTrue(self._tx(self._button_msg(cancel=True)))
-    self.assertFalse(self._tx(self._button_msg(resume=True)))
+    assert self._tx(self._button_msg(cancel=True))
+    assert not self._tx(self._button_msg(resume=True))
 
     # do not block resume if we are engaged already
     self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._button_msg(cancel=True)))
-    self.assertTrue(self._tx(self._button_msg(resume=True)))
-
-
-if __name__ == "__main__":
-  unittest.main()
+    assert self._tx(self._button_msg(cancel=True))
+    assert self._tx(self._button_msg(resume=True))

@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
+import pytest
 import random
-import unittest
 
 from panda import Panda, DLC_TO_LEN, USBPACKET_MAX_SIZE, pack_can_buffer, unpack_can_buffer
 from panda.tests.libpanda import libpanda_py
@@ -28,8 +27,8 @@ def random_can_messages(n, bus=None):
   return msgs
 
 
-class TestPandaComms(unittest.TestCase):
-  def setUp(self):
+class TestPandaComms:
+  def setup_method(self):
     lpp.comms_can_reset()
 
   def test_tx_queues(self):
@@ -44,6 +43,7 @@ class TestPandaComms(unittest.TestCase):
 
       assert unpackage_can_msg(can_pkt_rx) == message
 
+  @pytest.mark.order(1)
   def test_comms_reset_rx(self):
     # store some test messages in the queue
     test_msg = (0x100, b"test", 0)
@@ -75,6 +75,8 @@ class TestPandaComms(unittest.TestCase):
       assert m == test_msg, "message buffer should contain valid test messages"
 
   def test_comms_reset_tx(self):
+    lpp.set_safety_hooks(Panda.SAFETY_ALLOUTPUT, 0)
+
     # store some test messages in the queue
     test_msg = (0x100, b"test", 0)
     packed = pack_can_buffer([test_msg for _ in range(100)])
@@ -100,11 +102,11 @@ class TestPandaComms(unittest.TestCase):
       assert m == test_msg, "message buffer should contain valid test messages"
 
 
-  def test_can_send_usb(self):
+  def test_can_send_usb(self, subtests):
     lpp.set_safety_hooks(Panda.SAFETY_ALLOUTPUT, 0)
 
     for bus in range(3):
-      with self.subTest(bus=bus):
+      with subtests.test(bus=bus):
         for _ in range(100):
           msgs = random_can_messages(200, bus=bus)
           packed = pack_can_buffer(msgs)
@@ -121,9 +123,10 @@ class TestPandaComms(unittest.TestCase):
           while lpp.can_pop(TX_QUEUES[bus], pkt):
             queue_msgs.append(unpackage_can_msg(pkt))
 
-          self.assertEqual(len(queue_msgs), len(msgs))
-          self.assertEqual(queue_msgs, msgs)
+          assert len(queue_msgs) == len(msgs)
+          assert queue_msgs == msgs
 
+  @pytest.mark.order(2)
   def test_can_receive_usb(self):
     msgs = random_can_messages(50000)
     packets = [libpanda_py.make_CANPacket(m[0], m[2], m[1]) for m in msgs]
@@ -152,9 +155,5 @@ class TestPandaComms(unittest.TestCase):
         unpacked_msgs, overflow_buf = unpack_can_buffer(overflow_buf + buf)
         rx_msgs.extend(unpacked_msgs)
 
-    self.assertEqual(len(rx_msgs), len(msgs))
-    self.assertEqual(rx_msgs, msgs)
-
-
-if __name__ == "__main__":
-  unittest.main()
+    assert len(rx_msgs) == len(msgs)
+    assert rx_msgs == msgs

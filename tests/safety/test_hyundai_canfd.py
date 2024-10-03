@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
+import pytest
 from parameterized import parameterized_class
-import unittest
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -38,12 +37,12 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaCarSafetyTest, common.
   BUTTONS_TX_BUS = 1
 
   @classmethod
-  def setUpClass(cls):
-    super().setUpClass()
+  def setup_class(cls):
+    super().setup_class()
     if cls.__name__ == "TestHyundaiCanfdBase":
       cls.packer = None
       cls.safety = None
-      raise unittest.SkipTest
+      raise pytest.skip()
 
   def _torque_driver_msg(self, torque):
     values = {"STEERING_COL_TORQUE": torque}
@@ -91,14 +90,14 @@ class TestHyundaiCanfdHDA1Base(TestHyundaiCanfdBase):
   SAFETY_PARAM: int
 
   @classmethod
-  def setUpClass(cls):
-    super().setUpClass()
+  def setup_class(cls):
+    super().setup_class()
     if cls.__name__ in ("TestHyundaiCanfdHDA1", "TestHyundaiCanfdHDA1AltButtons"):
       cls.packer = None
       cls.safety = None
-      raise unittest.SkipTest
+      raise pytest.skip()
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, self.SAFETY_PARAM)
@@ -133,7 +132,7 @@ class TestHyundaiCanfdHDA1AltButtons(TestHyundaiCanfdHDA1Base):
 
   SAFETY_PARAM: int
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_ALT_BUTTONS | self.SAFETY_PARAM)
@@ -153,7 +152,7 @@ class TestHyundaiCanfdHDA1AltButtons(TestHyundaiCanfdHDA1Base):
     for enabled in (True, False):
       for btn in range(8):
         self.safety.set_controls_allowed(enabled)
-        self.assertFalse(self._tx(self._button_msg(btn)))
+        assert not self._tx(self._button_msg(btn))
 
 
 class TestHyundaiCanfdHDA2EV(TestHyundaiCanfdBase):
@@ -168,7 +167,7 @@ class TestHyundaiCanfdHDA2EV(TestHyundaiCanfdBase):
   STEER_MSG = "LKAS"
   GAS_MSG = ("ACCELERATOR", "ACCELERATOR_PEDAL")
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_EV_GAS)
@@ -188,7 +187,7 @@ class TestHyundaiCanfdHDA2EVAltSteering(TestHyundaiCanfdBase):
   STEER_MSG = "LKAS_ALT"
   GAS_MSG = ("ACCELERATOR", "ACCELERATOR_PEDAL")
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_EV_GAS |
@@ -210,7 +209,7 @@ class TestHyundaiCanfdHDA2LongEV(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2EV
   GAS_MSG = ("ACCELERATOR", "ACCELERATOR_PEDAL")
   STEER_BUS = 1
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_EV_GAS)
@@ -245,12 +244,12 @@ class TestHyundaiCanfdHDA1Long(HyundaiLongitudinalBase, TestHyundaiCanfdHDA1Base
   SCC_BUS = 2
 
   @classmethod
-  def setUpClass(cls):
+  def setup_class(cls):
     if cls.__name__ == "TestHyundaiCanfdHDA1Long":
       cls.safety = None
-      raise unittest.SkipTest
+      raise pytest.skip()
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CAMERA_SCC | self.SAFETY_PARAM)
@@ -266,7 +265,3 @@ class TestHyundaiCanfdHDA1Long(HyundaiLongitudinalBase, TestHyundaiCanfdHDA1Base
   # no knockout
   def test_tester_present_allowed(self):
     pass
-
-
-if __name__ == "__main__":
-  unittest.main()

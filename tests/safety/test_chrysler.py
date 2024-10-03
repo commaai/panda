@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-import unittest
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -24,7 +22,7 @@ class TestChryslerSafety(common.PandaCarSafetyTest, common.MotorTorqueSteeringSa
 
   DAS_BUS = 0
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("chrysler_pacifica_2017_hybrid_generated")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, 0)
@@ -63,14 +61,14 @@ class TestChryslerSafety(common.PandaCarSafetyTest, common.MotorTorqueSteeringSa
       self.safety.set_controls_allowed(controls_allowed)
 
       # resume only while controls allowed
-      self.assertEqual(controls_allowed, self._tx(self._button_msg(resume=True)))
+      assert controls_allowed == self._tx(self._button_msg(resume=True))
 
       # can always cancel
-      self.assertTrue(self._tx(self._button_msg(cancel=True)))
+      assert self._tx(self._button_msg(cancel=True))
 
       # only one button at a time
-      self.assertFalse(self._tx(self._button_msg(cancel=True, resume=True)))
-      self.assertFalse(self._tx(self._button_msg(cancel=False, resume=False)))
+      assert not self._tx(self._button_msg(cancel=True, resume=True))
+      assert not self._tx(self._button_msg(cancel=False, resume=False))
 
 
 class TestChryslerRamDTSafety(TestChryslerSafety):
@@ -86,7 +84,7 @@ class TestChryslerRamDTSafety(TestChryslerSafety):
 
   LKAS_ACTIVE_VALUE = 2
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("chrysler_ram_dt_generated")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, Panda.FLAG_CHRYSLER_RAM_DT)
@@ -110,7 +108,7 @@ class TestChryslerRamHDSafety(TestChryslerSafety):
 
   LKAS_ACTIVE_VALUE = 2
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("chrysler_ram_hd_generated")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, Panda.FLAG_CHRYSLER_RAM_HD)
@@ -119,7 +117,3 @@ class TestChryslerRamHDSafety(TestChryslerSafety):
   def _speed_msg(self, speed):
     values = {"Vehicle_Speed": speed}
     return self.packer.make_can_msg_panda("ESP_8", 0, values)
-
-
-if __name__ == "__main__":
-  unittest.main()

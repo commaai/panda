@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-import unittest
+import pytest
 import numpy as np
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
@@ -36,11 +35,11 @@ class TestVolkswagenMqbSafety(common.PandaCarSafetyTest, common.DriverTorqueStee
   DRIVER_TORQUE_FACTOR = 3
 
   @classmethod
-  def setUpClass(cls):
+  def setup_class(cls):
     if cls.__name__ == "TestVolkswagenMqbSafety":
       cls.packer = None
       cls.safety = None
-      raise unittest.SkipTest
+      raise pytest.skip()
 
   # Wheel speeds _esp_19_msg
   def _speed_msg(self, speed):
@@ -108,11 +107,11 @@ class TestVolkswagenMqbSafety(common.PandaCarSafetyTest, common.DriverTorqueStee
     for brake_pressed, motor_14_signal, esp_05_signal in test_combinations:
       self._rx(self._motor_14_msg(False))
       self._rx(self._esp_05_msg(False))
-      self.assertFalse(self.safety.get_brake_pressed_prev())
+      assert not self.safety.get_brake_pressed_prev()
       self._rx(self._motor_14_msg(motor_14_signal))
       self._rx(self._esp_05_msg(esp_05_signal))
-      self.assertEqual(brake_pressed, self.safety.get_brake_pressed_prev(),
-                       f"expected {brake_pressed=} with {motor_14_signal=} and {esp_05_signal=}")
+      assert brake_pressed == self.safety.get_brake_pressed_prev(), \
+                       f"expected {brake_pressed=} with {motor_14_signal=} and {esp_05_signal=}"
 
   def test_torque_measurements(self):
     # TODO: make this test work with all cars
@@ -123,16 +122,16 @@ class TestVolkswagenMqbSafety(common.PandaCarSafetyTest, common.DriverTorqueStee
     self._rx(self._torque_driver_msg(0))
     self._rx(self._torque_driver_msg(0))
 
-    self.assertEqual(-50, self.safety.get_torque_driver_min())
-    self.assertEqual(50, self.safety.get_torque_driver_max())
+    assert -50 == self.safety.get_torque_driver_min()
+    assert 50 == self.safety.get_torque_driver_max()
 
     self._rx(self._torque_driver_msg(0))
-    self.assertEqual(0, self.safety.get_torque_driver_max())
-    self.assertEqual(-50, self.safety.get_torque_driver_min())
+    assert 0 == self.safety.get_torque_driver_max()
+    assert -50 == self.safety.get_torque_driver_min()
 
     self._rx(self._torque_driver_msg(0))
-    self.assertEqual(0, self.safety.get_torque_driver_max())
-    self.assertEqual(0, self.safety.get_torque_driver_min())
+    assert 0 == self.safety.get_torque_driver_max()
+    assert 0 == self.safety.get_torque_driver_min()
 
 
 class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety):
@@ -140,7 +139,7 @@ class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety):
   FWD_BLACKLISTED_ADDRS = {0: [MSG_LH_EPS_03], 2: [MSG_HCA_01, MSG_LDW_02]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("vw_mqb_2010")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, 0)
@@ -148,12 +147,12 @@ class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety):
 
   def test_spam_cancel_safety_check(self):
     self.safety.set_controls_allowed(0)
-    self.assertTrue(self._tx(self._gra_acc_01_msg(cancel=1)))
-    self.assertFalse(self._tx(self._gra_acc_01_msg(resume=1)))
-    self.assertFalse(self._tx(self._gra_acc_01_msg(_set=1)))
+    assert self._tx(self._gra_acc_01_msg(cancel=1))
+    assert not self._tx(self._gra_acc_01_msg(resume=1))
+    assert not self._tx(self._gra_acc_01_msg(_set=1))
     # do not block resume if we are engaged already
     self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._gra_acc_01_msg(resume=1)))
+    assert self._tx(self._gra_acc_01_msg(resume=1))
 
 
 class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
@@ -162,7 +161,7 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   INACTIVE_ACCEL = 3.01
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("vw_mqb_2010")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, Panda.FLAG_VOLKSWAGEN_LONG_CONTROL)
@@ -184,26 +183,26 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
       self.safety.set_controls_allowed(0)
       self._rx(self._tsk_status_msg(False, main_switch=False))
       self._rx(self._gra_acc_01_msg(_set=(button == "set"), resume=(button == "resume"), bus=0))
-      self.assertFalse(self.safety.get_controls_allowed(), f"controls allowed on {button} with main switch off")
+      assert not self.safety.get_controls_allowed(), f"controls allowed on {button} with main switch off"
       self._rx(self._tsk_status_msg(False, main_switch=True))
       self._rx(self._gra_acc_01_msg(_set=(button == "set"), resume=(button == "resume"), bus=0))
-      self.assertFalse(self.safety.get_controls_allowed(), f"controls allowed on {button} rising edge")
+      assert not self.safety.get_controls_allowed(), f"controls allowed on {button} rising edge"
       self._rx(self._gra_acc_01_msg(bus=0))
-      self.assertTrue(self.safety.get_controls_allowed(), f"controls not allowed on {button} falling edge")
+      assert self.safety.get_controls_allowed(), f"controls not allowed on {button} falling edge"
 
   def test_cancel_button(self):
     # Disable on rising edge of cancel button
     self._rx(self._tsk_status_msg(False, main_switch=True))
     self.safety.set_controls_allowed(1)
     self._rx(self._gra_acc_01_msg(cancel=True, bus=0))
-    self.assertFalse(self.safety.get_controls_allowed(), "controls allowed after cancel")
+    assert not self.safety.get_controls_allowed(), "controls allowed after cancel"
 
   def test_main_switch(self):
     # Disable as soon as main switch turns off
     self._rx(self._tsk_status_msg(False, main_switch=True))
     self.safety.set_controls_allowed(1)
     self._rx(self._tsk_status_msg(False, main_switch=False))
-    self.assertFalse(self.safety.get_controls_allowed(), "controls allowed after ACC main switch off")
+    assert not self.safety.get_controls_allowed(), "controls allowed after ACC main switch off"
 
   def test_accel_safety_check(self):
     for controls_allowed in [True, False]:
@@ -214,12 +213,8 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
         send = (controls_allowed and MIN_ACCEL <= accel <= MAX_ACCEL) or is_inactive_accel
         self.safety.set_controls_allowed(controls_allowed)
         # primary accel request used by ECU
-        self.assertEqual(send, self._tx(self._acc_06_msg(accel)), (controls_allowed, accel))
+        assert send == self._tx(self._acc_06_msg(accel)), (controls_allowed, accel)
         # additional accel request used by ABS/ESP
-        self.assertEqual(send, self._tx(self._acc_07_msg(accel)), (controls_allowed, accel))
+        assert send == self._tx(self._acc_07_msg(accel)), (controls_allowed, accel)
         # ensure the optional secondary accel field remains inactive for now
-        self.assertEqual(is_inactive_accel, self._tx(self._acc_07_msg(accel, secondary_accel=accel)), (controls_allowed, accel))
-
-
-if __name__ == "__main__":
-  unittest.main()
+        assert is_inactive_accel == self._tx(self._acc_07_msg(accel, secondary_accel=accel)), (controls_allowed, accel)

@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
 import enum
-import unittest
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -72,7 +70,7 @@ class TestSubaruSafetyBase(common.PandaCarSafetyTest):
 
   INACTIVE_GAS = 1818
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_SUBARU, self.FLAGS)
@@ -208,21 +206,17 @@ class TestSubaruGen2LongitudinalSafety(TestSubaruLongitudinalSafetyBase, TestSub
     button_did = 0x1130
 
     # Tester present is allowed for gen2 long to keep eyesight disabled
-    self.assertTrue(self._tx(self._es_uds_msg(tester_present)))
+    assert self._tx(self._es_uds_msg(tester_present))
 
     # Non-Tester present is not allowed
-    self.assertFalse(self._tx(self._es_uds_msg(not_tester_present)))
+    assert not self._tx(self._es_uds_msg(not_tester_present))
 
     # Only button_did is allowed to be read via UDS
     for did in range(0xFFFF):
       should_tx = (did == button_did)
-      self.assertEqual(self._tx(self._es_uds_msg(self._rdbi_msg(did))), should_tx)
+      assert self._tx(self._es_uds_msg(self._rdbi_msg(did))) == should_tx
 
     # any other msg is not allowed
     for sid in range(0xFF):
       msg = b'\x03' + sid.to_bytes(1) + b'\x00' * 6
-      self.assertFalse(self._tx(self._es_uds_msg(msg)))
-
-
-if __name__ == "__main__":
-  unittest.main()
+      assert not self._tx(self._es_uds_msg(msg))

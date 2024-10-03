@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-import unittest
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -25,7 +23,7 @@ class TestNissanSafety(common.PandaCarSafetyTest, common.AngleSteeringSafetyTest
   ANGLE_RATE_UP = [5., .8, .15]  # windup limit
   ANGLE_RATE_DOWN = [5., 3.5, .4]  # unwind limit
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("nissan_x_trail_2017_generated")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, 0)
@@ -76,7 +74,7 @@ class TestNissanSafety(common.PandaCarSafetyTest, common.AngleSteeringSafetyTest
         self.safety.set_controls_allowed(controls_allowed)
         args = {} if btn is None else {btn: 1}
         tx = self._tx(self._acc_button_cmd(**args))
-        self.assertEqual(tx, should_tx)
+        assert tx == should_tx
 
 
 class TestNissanSafetyAltEpsBus(TestNissanSafety):
@@ -85,7 +83,7 @@ class TestNissanSafetyAltEpsBus(TestNissanSafety):
   EPS_BUS = 1
   CRUISE_BUS = 1
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("nissan_x_trail_2017_generated")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, Panda.FLAG_NISSAN_ALT_EPS_BUS)
@@ -94,7 +92,7 @@ class TestNissanSafetyAltEpsBus(TestNissanSafety):
 
 class TestNissanLeafSafety(TestNissanSafety):
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("nissan_leaf_2018_generated")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, 0)
@@ -111,7 +109,3 @@ class TestNissanLeafSafety(TestNissanSafety):
   # TODO: leaf should use its own safety param
   def test_acc_buttons(self):
     pass
-
-
-if __name__ == "__main__":
-  unittest.main()

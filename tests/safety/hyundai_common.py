@@ -1,5 +1,4 @@
-import unittest
-
+import pytest
 import panda.tests.safety.common as common
 from panda.tests.libpanda import libpanda_py
 from panda.tests.safety.common import make_msg
@@ -28,16 +27,16 @@ class HyundaiButtonBase:
       - CANCEL allowed while cruise is enabled
     """
     self.safety.set_controls_allowed(0)
-    self.assertFalse(self._tx(self._button_msg(Buttons.RESUME, bus=self.BUTTONS_TX_BUS)))
-    self.assertFalse(self._tx(self._button_msg(Buttons.SET, bus=self.BUTTONS_TX_BUS)))
+    assert not self._tx(self._button_msg(Buttons.RESUME, bus=self.BUTTONS_TX_BUS))
+    assert not self._tx(self._button_msg(Buttons.SET, bus=self.BUTTONS_TX_BUS))
 
     self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._button_msg(Buttons.RESUME, bus=self.BUTTONS_TX_BUS)))
-    self.assertFalse(self._tx(self._button_msg(Buttons.SET, bus=self.BUTTONS_TX_BUS)))
+    assert self._tx(self._button_msg(Buttons.RESUME, bus=self.BUTTONS_TX_BUS))
+    assert not self._tx(self._button_msg(Buttons.SET, bus=self.BUTTONS_TX_BUS))
 
     for enabled in (True, False):
       self._rx(self._pcm_status_msg(enabled))
-      self.assertEqual(enabled, self._tx(self._button_msg(Buttons.CANCEL, bus=self.BUTTONS_TX_BUS)))
+      assert enabled == self._tx(self._button_msg(Buttons.CANCEL, bus=self.BUTTONS_TX_BUS))
 
   def test_enable_control_allowed_from_cruise(self):
     """
@@ -53,11 +52,11 @@ class HyundaiButtonBase:
           self._rx(self._button_msg(Buttons.NONE))
 
         self._rx(self._pcm_status_msg(False))
-        self.assertFalse(self.safety.get_controls_allowed())
+        assert not self.safety.get_controls_allowed()
         self._rx(self._button_msg(btn, main_button=main_button))
         self._rx(self._pcm_status_msg(True))
         controls_allowed = btn in ENABLE_BUTTONS or main_button
-        self.assertEqual(controls_allowed, self.safety.get_controls_allowed())
+        assert controls_allowed == self.safety.get_controls_allowed()
 
   def test_sampling_cruise_buttons(self):
     """
@@ -66,10 +65,10 @@ class HyundaiButtonBase:
     self._rx(self._button_msg(Buttons.SET))
     for i in range(2 * PREV_BUTTON_SAMPLES):
       self._rx(self._pcm_status_msg(False))
-      self.assertFalse(self.safety.get_controls_allowed())
+      assert not self.safety.get_controls_allowed()
       self._rx(self._pcm_status_msg(True))
       controls_allowed = i < PREV_BUTTON_SAMPLES
-      self.assertEqual(controls_allowed, self.safety.get_controls_allowed())
+      assert controls_allowed == self.safety.get_controls_allowed()
       self._rx(self._button_msg(Buttons.NONE))
 
 
@@ -80,10 +79,10 @@ class HyundaiLongitudinalBase(common.LongitudinalAccelSafetyTest):
   DISABLED_ECU_ACTUATION_MSG: tuple[int, int]
 
   @classmethod
-  def setUpClass(cls):
+  def setup_class(cls):
     if cls.__name__ == "HyundaiLongitudinalBase":
       cls.safety = None
-      raise unittest.SkipTest
+      raise pytest.skip()
 
   # override these tests from PandaCarSafetyTest, hyundai longitudinal uses button enable
   def test_disable_control_allowed_from_cruise(self):
@@ -117,7 +116,7 @@ class HyundaiLongitudinalBase(common.LongitudinalAccelSafetyTest):
         self.safety.set_controls_allowed(0)
         for _ in range(10):
           self._rx(self._button_msg(btn_prev))
-          self.assertFalse(self.safety.get_controls_allowed())
+          assert not self.safety.get_controls_allowed()
 
         # should enter controls allowed on falling edge and not transitioning to cancel
         should_enable = btn_cur != btn_prev and \
@@ -125,12 +124,12 @@ class HyundaiLongitudinalBase(common.LongitudinalAccelSafetyTest):
                         btn_prev in (Buttons.RESUME, Buttons.SET)
 
         self._rx(self._button_msg(btn_cur))
-        self.assertEqual(should_enable, self.safety.get_controls_allowed())
+        assert should_enable == self.safety.get_controls_allowed()
 
   def test_cancel_button(self):
     self.safety.set_controls_allowed(1)
     self._rx(self._button_msg(Buttons.CANCEL))
-    self.assertFalse(self.safety.get_controls_allowed())
+    assert not self.safety.get_controls_allowed()
 
   def test_tester_present_allowed(self):
     """
@@ -140,10 +139,10 @@ class HyundaiLongitudinalBase(common.LongitudinalAccelSafetyTest):
 
     addr, bus = self.DISABLED_ECU_UDS_MSG
     tester_present = libpanda_py.make_CANPacket(addr, bus, b"\x02\x3E\x80\x00\x00\x00\x00\x00")
-    self.assertTrue(self._tx(tester_present))
+    assert self._tx(tester_present)
 
     not_tester_present = libpanda_py.make_CANPacket(addr, bus, b"\x03\xAA\xAA\x00\x00\x00\x00\x00")
-    self.assertFalse(self._tx(not_tester_present))
+    assert not self._tx(not_tester_present)
 
   def test_disabled_ecu_alive(self):
     """
@@ -151,7 +150,6 @@ class HyundaiLongitudinalBase(common.LongitudinalAccelSafetyTest):
     """
 
     addr, bus = self.DISABLED_ECU_ACTUATION_MSG
-    self.assertFalse(self.safety.get_relay_malfunction())
+    assert not self.safety.get_relay_malfunction()
     self._rx(make_msg(bus, addr, 8))
-    self.assertTrue(self.safety.get_relay_malfunction())
-
+    assert self.safety.get_relay_malfunction()

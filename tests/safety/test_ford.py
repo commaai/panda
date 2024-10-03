@@ -1,7 +1,6 @@
-#!/usr/bin/env python3
+import pytest
 import numpy as np
 import random
-import unittest
 
 import panda.tests.safety.common as common
 
@@ -97,9 +96,9 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
   safety: libpanda_py.Panda
 
   @classmethod
-  def setUpClass(cls):
+  def setup_class(cls):
     if cls.__name__ == "TestFordSafetyBase":
-      raise unittest.SkipTest
+      raise pytest.skip()
 
   def _set_prev_desired_angle(self, t):
     t = round(t * self.DEG_TO_CAN)
@@ -212,14 +211,14 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
           elif msg == "yaw":
             to_push = self._yaw_rate_msg(0, 0, quality_flag=quality_flag)
 
-          self.assertEqual(quality_flag, self._rx(to_push))
-          self.assertEqual(quality_flag, self.safety.get_controls_allowed())
+          assert quality_flag == self._rx(to_push)
+          assert quality_flag == self.safety.get_controls_allowed()
 
         # Mess with checksum to make it fail, checksum is not checked for 2nd speed
         to_push[0].data[3] = 0  # Speed checksum & half of yaw signal
         should_rx = msg == "speed_2" and quality_flag
-        self.assertEqual(should_rx, self._rx(to_push))
-        self.assertEqual(should_rx, self.safety.get_controls_allowed())
+        assert should_rx == self._rx(to_push)
+        assert should_rx == self.safety.get_controls_allowed()
 
   def test_rx_hook_speed_mismatch(self):
     # Ford relies on speed for driver curvature limiting, so it checks two sources
@@ -232,7 +231,7 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
         self._rx(self._speed_msg_2(speed_2))
 
         within_delta = abs(speed - speed_2) <= self.MAX_SPEED_DELTA
-        self.assertEqual(self.safety.get_controls_allowed(), within_delta)
+        assert self.safety.get_controls_allowed() == within_delta
 
   def test_angle_measurements(self):
     """Tests rx hook correctly parses the curvature measurement from the vehicle speed and yaw rate"""
@@ -242,22 +241,35 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
         for c in (curvature, -curvature, 0, 0, 0, 0):
           self._rx(self._yaw_rate_msg(c, speed))
 
-        self.assertEqual(self.safety.get_angle_meas_min(), round(-curvature * self.DEG_TO_CAN))
-        self.assertEqual(self.safety.get_angle_meas_max(), round(curvature * self.DEG_TO_CAN))
+        assert self.safety.get_angle_meas_min() == round(-curvature * self.DEG_TO_CAN)
+        assert self.safety.get_angle_meas_max() == round(curvature * self.DEG_TO_CAN)
 
         self._rx(self._yaw_rate_msg(0, speed))
-        self.assertEqual(self.safety.get_angle_meas_min(), round(-curvature * self.DEG_TO_CAN))
-        self.assertEqual(self.safety.get_angle_meas_max(), 0)
+        assert self.safety.get_angle_meas_min() == round(-curvature * self.DEG_TO_CAN)
+        assert self.safety.get_angle_meas_max() == 0
 
         self._rx(self._yaw_rate_msg(0, speed))
-        self.assertEqual(self.safety.get_angle_meas_min(), 0)
-        self.assertEqual(self.safety.get_angle_meas_max(), 0)
+        assert self.safety.get_angle_meas_min() == 0
+        assert self.safety.get_angle_meas_max() == 0
 
-  def test_steer_allowed(self):
-    path_offsets = np.arange(-5.12, 5.11, 1).round()
-    path_angles = np.arange(-0.5, 0.5235, 0.1).round(1)
-    curvature_rates = np.arange(-0.001024, 0.00102375, 0.001).round(3)
-    curvatures = np.arange(-0.02, 0.02094, 0.01).round(2)
+
+  def test_steer_allowed(self, subtests):
+    def _frange_round(start, stop, step=1., round_ndigits=None):
+     # manually implement this since combinations of execnet and subtests (pytest-xdist related) cannot serialize np.float
+      value = start
+      while value < stop:
+        if round_ndigits:
+          multiplier = 10 ** round_ndigits
+          rounded_value = int(value * multiplier + (0.5 if value >= 0 else -0.5)) / multiplier
+          yield rounded_value
+        else:
+          yield value
+        value += step
+
+    path_offsets = _frange_round(-5.12, 5.11, 1)
+    path_angles = _frange_round(-0.5, 0.5235, 0.1, round_ndigits=1)
+    curvature_rates = _frange_round(-0.001024, 0.00102375, 0.001, round_ndigits=3)
+    curvatures = _frange_round(-0.02, 0.02094, 0.01, round_ndigits=2)
 
     for speed in (self.CURVATURE_ERROR_MIN_SPEED - 1,
                   self.CURVATURE_ERROR_MIN_SPEED + 1):
@@ -275,10 +287,10 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
                   # when request bit is 0, only allow curvature of 0 since the signal range
                   # is not large enough to enforce it tracking measured
                   should_tx = should_tx and (controls_allowed if steer_control_enabled else curvature == 0)
-                  with self.subTest(controls_allowed=controls_allowed, steer_control_enabled=steer_control_enabled,
+                  with subtests.test(controls_allowed=controls_allowed, steer_control_enabled=steer_control_enabled,
                                     path_offset=path_offset, path_angle=path_angle, curvature_rate=curvature_rate,
                                     curvature=curvature):
-                    self.assertEqual(should_tx, self._tx(self._lat_ctl_msg(steer_control_enabled, path_offset, path_angle, curvature, curvature_rate)))
+                    assert should_tx == self._tx(self._lat_ctl_msg(steer_control_enabled, path_offset, path_angle, curvature, curvature_rate))
 
   def test_curvature_rate_limit_up(self):
     """
@@ -305,7 +317,7 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
         self._reset_curvature_measurement(sign * (self.MAX_CURVATURE_ERROR + 1e-3), speed)
         for should_tx, curvature in cases:
           self._set_prev_desired_angle(sign * small_curvature)
-          self.assertEqual(should_tx, self._tx(self._lat_ctl_msg(True, 0, 0, sign * (small_curvature + curvature), 0)))
+          assert should_tx == self._tx(self._lat_ctl_msg(True, 0, 0, sign * (small_curvature + curvature), 0))
 
   def test_curvature_rate_limit_down(self):
     self.safety.set_controls_allowed(True)
@@ -328,31 +340,31 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
         self._reset_curvature_measurement(sign * (self.MAX_CURVATURE - self.MAX_CURVATURE_ERROR - 1e-3), speed)
         for should_tx, curvature in cases:
           self._set_prev_desired_angle(sign * self.MAX_CURVATURE)
-          self.assertEqual(should_tx, self._tx(self._lat_ctl_msg(True, 0, 0, sign * curvature, 0)))
+          assert should_tx == self._tx(self._lat_ctl_msg(True, 0, 0, sign * curvature, 0))
 
   def test_prevent_lkas_action(self):
     self.safety.set_controls_allowed(1)
-    self.assertFalse(self._tx(self._lkas_command_msg(1)))
+    assert not self._tx(self._lkas_command_msg(1))
 
     self.safety.set_controls_allowed(0)
-    self.assertFalse(self._tx(self._lkas_command_msg(1)))
+    assert not self._tx(self._lkas_command_msg(1))
 
   def test_acc_buttons(self):
     for allowed in (0, 1):
       self.safety.set_controls_allowed(allowed)
       for enabled in (True, False):
         self._rx(self._pcm_status_msg(enabled))
-        self.assertTrue(self._tx(self._acc_button_msg(Buttons.TJA_TOGGLE, 2)))
+        assert self._tx(self._acc_button_msg(Buttons.TJA_TOGGLE, 2))
 
     for allowed in (0, 1):
       self.safety.set_controls_allowed(allowed)
       for bus in (0, 2):
-        self.assertEqual(allowed, self._tx(self._acc_button_msg(Buttons.RESUME, bus)))
+        assert allowed == self._tx(self._acc_button_msg(Buttons.RESUME, bus))
 
     for enabled in (True, False):
       self._rx(self._pcm_status_msg(enabled))
       for bus in (0, 2):
-        self.assertEqual(enabled, self._tx(self._acc_button_msg(Buttons.CANCEL, bus)))
+        assert enabled == self._tx(self._acc_button_msg(Buttons.CANCEL, bus))
 
 
 class TestFordStockSafety(TestFordSafetyBase):
@@ -363,7 +375,7 @@ class TestFordStockSafety(TestFordSafetyBase):
     [MSG_LateralMotionControl, 0], [MSG_IPMA_Data, 0],
   ]
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
@@ -378,7 +390,7 @@ class TestFordCANFDStockSafety(TestFordSafetyBase):
     [MSG_LateralMotionControl2, 0], [MSG_IPMA_Data, 0],
   ]
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_FORD, Panda.FLAG_FORD_CANFD)
@@ -401,9 +413,9 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
   INACTIVE_GAS = -5.0
 
   @classmethod
-  def setUpClass(cls):
+  def setup_class(cls):
     if cls.__name__ == "TestFordLongitudinalSafetyBase":
-      raise unittest.SkipTest
+      raise pytest.skip()
 
   # ACC command
   def _acc_command_msg(self, gas: float, brake: float, cmbb_deny: bool = False):
@@ -421,9 +433,9 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
       self.safety.set_controls_allowed(controls_allowed)
       for cmbb_deny in (True, False):
         should_tx = not cmbb_deny
-        self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, self.INACTIVE_ACCEL, cmbb_deny)))
+        assert should_tx == self._tx(self._acc_command_msg(self.INACTIVE_GAS, self.INACTIVE_ACCEL, cmbb_deny))
         should_tx = controls_allowed and not cmbb_deny
-        self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.MAX_GAS, self.MAX_ACCEL, cmbb_deny)))
+        assert should_tx == self._tx(self._acc_command_msg(self.MAX_GAS, self.MAX_ACCEL, cmbb_deny))
 
   def test_gas_safety_check(self):
     for controls_allowed in (True, False):
@@ -431,7 +443,7 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
       for gas in np.concatenate((np.arange(self.MIN_GAS - 2, self.MAX_GAS + 2, 0.05), [self.INACTIVE_GAS])):
         gas = round(gas, 2)  # floats might not hit exact boundary conditions without rounding
         should_tx = (controls_allowed and self.MIN_GAS <= gas <= self.MAX_GAS) or gas == self.INACTIVE_GAS
-        self.assertEqual(should_tx, self._tx(self._acc_command_msg(gas, self.INACTIVE_ACCEL)))
+        assert should_tx == self._tx(self._acc_command_msg(gas, self.INACTIVE_ACCEL))
 
   def test_brake_safety_check(self):
     for controls_allowed in (True, False):
@@ -439,7 +451,7 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
       for brake in np.arange(self.MIN_ACCEL - 2, self.MAX_ACCEL + 2, 0.05):
         brake = round(brake, 2)  # floats might not hit exact boundary conditions without rounding
         should_tx = (controls_allowed and self.MIN_ACCEL <= brake <= self.MAX_ACCEL) or brake == self.INACTIVE_ACCEL
-        self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, brake)))
+        assert should_tx == self._tx(self._acc_command_msg(self.INACTIVE_GAS, brake))
 
 
 class TestFordLongitudinalSafety(TestFordLongitudinalSafetyBase):
@@ -450,7 +462,7 @@ class TestFordLongitudinalSafety(TestFordLongitudinalSafetyBase):
     [MSG_LateralMotionControl, 0], [MSG_IPMA_Data, 0],
   ]
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_FORD, Panda.FLAG_FORD_LONG_CONTROL)
@@ -465,12 +477,8 @@ class TestFordCANFDLongitudinalSafety(TestFordLongitudinalSafetyBase):
     [MSG_LateralMotionControl2, 0], [MSG_IPMA_Data, 0],
   ]
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_FORD, Panda.FLAG_FORD_LONG_CONTROL | Panda.FLAG_FORD_CANFD)
     self.safety.init_tests()
-
-
-if __name__ == "__main__":
-  unittest.main()

@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-import unittest
+import pytest
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -33,11 +32,11 @@ class TestVolkswagenPqSafety(common.PandaCarSafetyTest, common.DriverTorqueSteer
   DRIVER_TORQUE_FACTOR = 3
 
   @classmethod
-  def setUpClass(cls):
+  def setup_class(cls):
     if cls.__name__ == "TestVolkswagenPqSafety":
       cls.packer = None
       cls.safety = None
-      raise unittest.SkipTest
+      raise pytest.skip()
 
   def _set_prev_torque(self, t):
     self.safety.set_desired_torque_last(t)
@@ -104,16 +103,16 @@ class TestVolkswagenPqSafety(common.PandaCarSafetyTest, common.DriverTorqueSteer
     self._rx(self._torque_driver_msg(0))
     self._rx(self._torque_driver_msg(0))
 
-    self.assertEqual(-50, self.safety.get_torque_driver_min())
-    self.assertEqual(50, self.safety.get_torque_driver_max())
+    assert -50 == self.safety.get_torque_driver_min()
+    assert 50 == self.safety.get_torque_driver_max()
 
     self._rx(self._torque_driver_msg(0))
-    self.assertEqual(0, self.safety.get_torque_driver_max())
-    self.assertEqual(-50, self.safety.get_torque_driver_min())
+    assert 0 == self.safety.get_torque_driver_max()
+    assert -50 == self.safety.get_torque_driver_min()
 
     self._rx(self._torque_driver_msg(0))
-    self.assertEqual(0, self.safety.get_torque_driver_max())
-    self.assertEqual(0, self.safety.get_torque_driver_min())
+    assert 0 == self.safety.get_torque_driver_max()
+    assert 0 == self.safety.get_torque_driver_min()
 
 
 class TestVolkswagenPqStockSafety(TestVolkswagenPqSafety):
@@ -122,7 +121,7 @@ class TestVolkswagenPqStockSafety(TestVolkswagenPqSafety):
   FWD_BLACKLISTED_ADDRS = {2: [MSG_HCA_1, MSG_LDW_1]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("vw_golf_mk4")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_PQ, 0)
@@ -130,12 +129,12 @@ class TestVolkswagenPqStockSafety(TestVolkswagenPqSafety):
 
   def test_spam_cancel_safety_check(self):
     self.safety.set_controls_allowed(0)
-    self.assertTrue(self._tx(self._button_msg(cancel=True)))
-    self.assertFalse(self._tx(self._button_msg(resume=True)))
-    self.assertFalse(self._tx(self._button_msg(_set=True)))
+    assert self._tx(self._button_msg(cancel=True))
+    assert not self._tx(self._button_msg(resume=True))
+    assert not self._tx(self._button_msg(_set=True))
     # do not block resume if we are engaged already
     self.safety.set_controls_allowed(1)
-    self.assertTrue(self._tx(self._button_msg(resume=True)))
+    assert self._tx(self._button_msg(resume=True))
 
 
 class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety, common.LongitudinalAccelSafetyTest):
@@ -144,7 +143,7 @@ class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety, common.LongitudinalAcce
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
   INACTIVE_ACCEL = 3.01
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("vw_golf_mk4")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_PQ, Panda.FLAG_VOLKSWAGEN_LONG_CONTROL)
@@ -167,33 +166,29 @@ class TestVolkswagenPqLongSafety(TestVolkswagenPqSafety, common.LongitudinalAcce
       self._rx(self._motor_5_msg(main_switch=False))
       self._rx(self._button_msg(_set=(button == "set"), resume=(button == "resume"), bus=0))
       self._rx(self._button_msg(bus=0))
-      self.assertFalse(self.safety.get_controls_allowed(), f"controls allowed on {button} with main switch off")
+      assert not self.safety.get_controls_allowed(), f"controls allowed on {button} with main switch off"
       self._rx(self._motor_5_msg(main_switch=True))
       self._rx(self._button_msg(_set=(button == "set"), resume=(button == "resume"), bus=0))
-      self.assertFalse(self.safety.get_controls_allowed(), f"controls allowed on {button} rising edge")
+      assert not self.safety.get_controls_allowed(), f"controls allowed on {button} rising edge"
       self._rx(self._button_msg(bus=0))
-      self.assertTrue(self.safety.get_controls_allowed(), f"controls not allowed on {button} falling edge")
+      assert self.safety.get_controls_allowed(), f"controls not allowed on {button} falling edge"
 
   def test_cancel_button(self):
     # Disable on rising edge of cancel button
     self._rx(self._motor_5_msg(main_switch=True))
     self.safety.set_controls_allowed(1)
     self._rx(self._button_msg(cancel=True, bus=0))
-    self.assertFalse(self.safety.get_controls_allowed(), "controls allowed after cancel")
+    assert not self.safety.get_controls_allowed(), "controls allowed after cancel"
 
   def test_main_switch(self):
     # Disable as soon as main switch turns off
     self._rx(self._motor_5_msg(main_switch=True))
     self.safety.set_controls_allowed(1)
     self._rx(self._motor_5_msg(main_switch=False))
-    self.assertFalse(self.safety.get_controls_allowed(), "controls allowed after ACC main switch off")
+    assert not self.safety.get_controls_allowed(), "controls allowed after ACC main switch off"
 
   def test_torque_cmd_enable_variants(self):
     # The EPS rack accepts either 5 or 7 for an enabled status, with different low speed tuning behavior
     self.safety.set_controls_allowed(1)
     for enabled_status in (5, 7):
-      self.assertTrue(self._tx(self._torque_cmd_msg(self.MAX_RATE_UP, steer_req=1, hca_status=enabled_status)),
-                      f"torque cmd rejected with {enabled_status=}")
-
-if __name__ == "__main__":
-  unittest.main()
+      assert self._tx(self._torque_cmd_msg(self.MAX_RATE_UP, steer_req=1, hca_status=enabled_status)), f"torque cmd rejected with {enabled_status=}"

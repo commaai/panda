@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
 import random
-import unittest
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -69,7 +67,7 @@ class TestHyundaiSafety(HyundaiButtonBase, common.PandaCarSafetyTest, common.Dri
   cnt_cruise = 0
   cnt_button = 0
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, 0)
@@ -118,7 +116,7 @@ class TestHyundaiSafetyAltLimits(TestHyundaiSafety):
   MAX_RATE_DOWN = 3
   MAX_TORQUE = 270
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, Panda.FLAG_HYUNDAI_ALT_LIMITS)
@@ -129,7 +127,7 @@ class TestHyundaiSafetyCameraSCC(TestHyundaiSafety):
   BUTTONS_TX_BUS = 2  # tx on 2, rx on 0
   SCC_BUS = 2  # rx on 2
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, Panda.FLAG_HYUNDAI_CAMERA_SCC)
@@ -137,7 +135,7 @@ class TestHyundaiSafetyCameraSCC(TestHyundaiSafety):
 
 
 class TestHyundaiLegacySafety(TestHyundaiSafety):
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_LEGACY, 0)
@@ -145,7 +143,7 @@ class TestHyundaiLegacySafety(TestHyundaiSafety):
 
 
 class TestHyundaiLegacySafetyEV(TestHyundaiSafety):
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_LEGACY, 1)
@@ -157,7 +155,7 @@ class TestHyundaiLegacySafetyEV(TestHyundaiSafety):
 
 
 class TestHyundaiLegacySafetyHEV(TestHyundaiSafety):
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_LEGACY, 2)
@@ -175,7 +173,7 @@ class TestHyundaiLongitudinalSafety(HyundaiLongitudinalBase, TestHyundaiSafety):
   DISABLED_ECU_UDS_MSG = (0x7D0, 0)
   DISABLED_ECU_ACTUATION_MSG = (0x421, 0)
 
-  def setUp(self):
+  def setup_method(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI, Panda.FLAG_HYUNDAI_LONG)
@@ -201,16 +199,12 @@ class TestHyundaiLongitudinalSafety(HyundaiLongitudinalBase, TestHyundaiSafety):
     return self.packer.make_can_msg_panda("FCA11", 0, values)
 
   def test_no_aeb_fca11(self):
-    self.assertTrue(self._tx(self._fca11_msg()))
-    self.assertFalse(self._tx(self._fca11_msg(vsm_aeb_req=True)))
-    self.assertFalse(self._tx(self._fca11_msg(fca_aeb_req=True)))
-    self.assertFalse(self._tx(self._fca11_msg(aeb_decel=1.0)))
+    assert self._tx(self._fca11_msg())
+    assert not self._tx(self._fca11_msg(vsm_aeb_req=True))
+    assert not self._tx(self._fca11_msg(fca_aeb_req=True))
+    assert not self._tx(self._fca11_msg(aeb_decel=1.0))
 
   def test_no_aeb_scc12(self):
-    self.assertTrue(self._tx(self._accel_msg(0)))
-    self.assertFalse(self._tx(self._accel_msg(0, aeb_req=True)))
-    self.assertFalse(self._tx(self._accel_msg(0, aeb_decel=1.0)))
-
-
-if __name__ == "__main__":
-  unittest.main()
+    assert self._tx(self._accel_msg(0))
+    assert not self._tx(self._accel_msg(0, aeb_req=True))
+    assert not self._tx(self._accel_msg(0, aeb_decel=1.0))
