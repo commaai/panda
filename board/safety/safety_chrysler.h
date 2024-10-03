@@ -83,11 +83,11 @@ static void chrysler_rx_hook(const CANPacket_t *to_push) {
   // TODO: use the same message for both
   // update vehicle moving
   if ((chrysler_platform != CHRYSLER_PACIFICA) && (bus == 0) && (addr == chrysler_addrs->ESP_8)) {
-    vehicle_moving = (GET_BYTE(to_push, 4) != 0) || (GET_BYTE(to_push, 5) != 0U);
+    vehicle_moving = (GET_BYTE(to_push, 4) != 0U) || (GET_BYTE(to_push, 5) != 0U);
   }
   if ((chrysler_platform == CHRYSLER_PACIFICA) && (bus == 0) && (addr == 514)) {
-    bool speed_l = ((GET_BYTE(to_push, 0) << 4) != 0) || ((GET_BYTE(to_push, 1) >> 4) != 0);
-    bool speed_r = ((GET_BYTE(to_push, 2) << 4) != 0) || ((GET_BYTE(to_push, 3) >> 4) != 0);
+    bool speed_l = ((GET_BYTE(to_push, 0) << 4) != 0U) || ((GET_BYTE(to_push, 1) >> 4) != 0U);
+    bool speed_r = ((GET_BYTE(to_push, 2) << 4) != 0U) || ((GET_BYTE(to_push, 3) >> 4) != 0U);
     vehicle_moving = speed_l || speed_r;
   }
 
