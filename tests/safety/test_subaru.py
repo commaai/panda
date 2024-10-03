@@ -113,9 +113,14 @@ class TestSubaruSafetyBase(common.PandaCarSafetyTest):
     self.assertTrue(self._rx(self._angle_meas_msg(1)))
     self.assertEqual(self.safety.get_angle_meas(0), 100)
 
-  def test_vehicle_moving(self):
-    msg = self._speed_msg(0)
-    self.assertTrue(self._rx(msg))
+  def test_vehicle_speed(self):
+    self.assertTrue(self._rx(self._speed_msg(0)))
+    self.assertFalse(self.safety.get_vehicle_moving())
+    self.assertEqual(self.safety.get_vehicle_speed_last(), 0)
+
+    self.assertTrue(self._rx(self._speed_msg(1)))
+    self.assertTrue(self.safety.get_vehicle_moving())
+    self.assertEqual(self.safety.get_vehicle_speed_last(), 103)
 
 class TestSubaruStockLongitudinalSafetyBase(TestSubaruSafetyBase):
   def _cancel_msg(self, cancel, cruise_throttle=0):
