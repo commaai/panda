@@ -238,7 +238,7 @@ static bool toyota_tx_hook(const CANPacket_t *to_send) {
       }
     }
 
-    // LTA angle steering check
+    // STEERING_LTA angle steering check
     if (addr == 0x191) {
       // check the STEER_REQUEST, STEER_REQUEST_2, TORQUE_WIND_DOWN, STEER_ANGLE_CMD signals
       bool lta_request = GET_BIT(to_send, 0U);
