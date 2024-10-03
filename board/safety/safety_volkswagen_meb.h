@@ -3,47 +3,6 @@
 #include "safety_declarations.h"
 #include "safety_volkswagen_common.h"
 
-// lateral limits for curvature
-//const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
-//  // SG_ Curvature : 24|15@1+ (0.00625,0) [0|200] "Unit_1/mm" XXX
-//  // we do not enforce curvature error at the moment
-//  .max_steer = 31200,         // maximum curvature of 195 1/mm
-//  .angle_deg_to_can = 160,    // 1 / 0.00625 rad to can
-//  .angle_rate_up_lookup = {
-//    {5., 12., 25.},
-//    {4, 2, 1}
-//  },
-//  .angle_rate_down_lookup = {
-//    {5., 12., 25.},
-//    {5, 2.5, 1.5}
-//  },
-//  .inactive_angle_is_zero = true,
-//};
-
-// lateral limits for angle
-const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
-  // SG_ Steering_Angle : 24|15@1+ (0.0174,0) [0|360] "Unit_DegreOfArc" XXX
-  .max_steer = 2068966, // 360 deg
-  .angle_deg_to_can = 5747, // (1 / 0.0174) * 100 deg to can (minimize rounding error)
-  .angle_rate_up_lookup = {
-    {0., 5., 15.},
-    {1200., 400., 40.}
-  },
-  .angle_rate_down_lookup = {
-    {0., 5., 15.},
-    {1200., 800., 80.}
-  },
-  .inactive_angle_is_zero = true,
-};
-
-// longitudinal limits
-// acceleration in m/s2 * 1000 to avoid floating point math
-const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
-  .max_accel = 2000,
-  .min_accel = -3500,
-  .inactive_accel = 3010,  // VW sends one increment above the max range when inactive
-};
-
 #define MSG_MEB_ESP_01           0xFC    // RX, for wheel speeds
 #define MSG_MEB_ESP_03           0x14C   // RX, for accel pedal
 #define MSG_MEB_ESP_05           0x139   // RX, for ESP hold management
@@ -58,36 +17,17 @@ const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
 #define MSG_MEB_MOTOR_01         0x10B   // RX for TSK state
 #define MSG_MEB_TRAVEL_ASSIST_01 0x26B   // TX for Travel Assist status
 
-
-// Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
-const CanMsg VOLKSWAGEN_MEB_STOCK_TX_MSGS[] = {{MSG_HCA_03, 0, 24}, {MSG_GRA_ACC_01, 0, 8},
-                                               {MSG_GRA_ACC_01, 2, 8}, {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
-const CanMsg VOLKSWAGEN_MEB_LONG_TX_MSGS[] = {{MSG_MEB_ACC_01, 0, 48}, {MSG_MEB_ACC_02, 0, 32}, {MSG_HCA_03, 0, 24},
-                                              {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}, {MSG_MEB_TRAVEL_ASSIST_01, 0, 8}};
-
-RxCheck volkswagen_meb_rx_checks[] = {
-  {.msg = {{MSG_LH_EPS_03, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_MOTOR_14, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 10U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_MEB_MOTOR_01, 0, 32, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_GRA_ACC_01, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 33U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_MEB_EPS_01, 0, 32, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_MEB_ESP_01, 0, 48, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_MEB_ESP_03, 0, 32, .check_checksum = true, .max_counter = 15U, .frequency = 10U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_MEB_ESP_05, 0, 32, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
-  {.msg = {{MSG_MEB_ABS_01, 0, 64, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
-};
-
 static uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 poly 0x2F, aka 8H2F/AUTOSAR
-int volkswagen_steer_power_prev = 0;
-bool volkswagen_esp_hold_confirmation = false;
-const int volkswagen_accel_overwrite = 0;
+static int volkswagen_steer_power_prev = 0;
+static bool volkswagen_esp_hold_confirmation = false;
+static const int volkswagen_accel_overwrite = 0;
 
-bool vw_meb_get_longitudinal_allowed_override(void) {
+static bool vw_meb_get_longitudinal_allowed_override(void) {
   return controls_allowed && gas_pressed_prev;
 }
 
 // Safety checks for longitudinal actuation
-bool vw_meb_longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits, const int override_accel) {
+static bool vw_meb_longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits, const int override_accel) {
   bool accel_valid = get_longitudinal_allowed() && !max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
   bool accel_valid_override = vw_meb_get_longitudinal_allowed_override() && desired_accel == override_accel;
   bool accel_inactive = desired_accel == limits.inactive_accel;
@@ -144,11 +84,31 @@ static uint32_t volkswagen_meb_compute_crc(const CANPacket_t *to_push) {
 }
 
 static safety_config volkswagen_meb_init(uint16_t param) {
+  // Transmit of GRA_ACC_01 is allowed on bus 0 and 2 to keep compatibility with gateway and camera integration
+  static const CanMsg VOLKSWAGEN_MEB_STOCK_TX_MSGS[] = {{MSG_HCA_03, 0, 24}, {MSG_GRA_ACC_01, 0, 8},
+                                                       {MSG_GRA_ACC_01, 2, 8}, {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}};
+  
+  static const CanMsg VOLKSWAGEN_MEB_LONG_TX_MSGS[] = {{MSG_MEB_ACC_01, 0, 48}, {MSG_MEB_ACC_02, 0, 32}, {MSG_HCA_03, 0, 24},
+                                                       {MSG_LDW_02, 0, 8}, {MSG_LH_EPS_03, 2, 8}, {MSG_MEB_TRAVEL_ASSIST_01, 0, 8}};
+
+  static RxCheck volkswagen_meb_rx_checks[] = {
+    {.msg = {{MSG_LH_EPS_03, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
+    {.msg = {{MSG_MOTOR_14, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 10U}, { 0 }, { 0 }}},
+    {.msg = {{MSG_MEB_MOTOR_01, 0, 32, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
+    {.msg = {{MSG_GRA_ACC_01, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 33U}, { 0 }, { 0 }}},
+    {.msg = {{MSG_MEB_EPS_01, 0, 32, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
+    {.msg = {{MSG_MEB_ESP_01, 0, 48, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
+    {.msg = {{MSG_MEB_ESP_03, 0, 32, .check_checksum = true, .max_counter = 15U, .frequency = 10U}, { 0 }, { 0 }}},
+    {.msg = {{MSG_MEB_ESP_05, 0, 32, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
+    {.msg = {{MSG_MEB_ABS_01, 0, 64, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
+  };
+
   UNUSED(param);
 
   volkswagen_set_button_prev = false;
   volkswagen_resume_button_prev = false;
   volkswagen_steer_power_prev = 0;
+  volkswagen_esp_hold_confirmation = false;
 
 #ifdef ALLOW_DEBUG
   volkswagen_longitudinal = GET_FLAG(param, FLAG_VOLKSWAGEN_LONG_CONTROL);
@@ -253,6 +213,47 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
 }
 
 static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
+  // lateral limits for curvature
+  //const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
+  //  // SG_ Curvature : 24|15@1+ (0.00625,0) [0|200] "Unit_1/mm" XXX
+  //  // we do not enforce curvature error at the moment
+  //  .max_steer = 31200,         // maximum curvature of 195 1/mm
+  //  .angle_deg_to_can = 160,    // 1 / 0.00625 rad to can
+  //  .angle_rate_up_lookup = {
+  //    {5., 12., 25.},
+  //    {4, 2, 1}
+  //  },
+  //  .angle_rate_down_lookup = {
+  //    {5., 12., 25.},
+  //    {5, 2.5, 1.5}
+  //  },
+  //  .inactive_angle_is_zero = true,
+  //};
+
+  // lateral limits for angle
+  const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
+    // SG_ Steering_Angle : 24|15@1+ (0.0174,0) [0|360] "Unit_DegreOfArc" XXX
+    .max_steer = 2068966, // 360 deg
+    .angle_deg_to_can = 5747, // (1 / 0.0174) * 100 deg to can (minimize rounding error)
+    .angle_rate_up_lookup = {
+      {0., 5., 15.},
+      {1200., 400., 40.}
+    },
+    .angle_rate_down_lookup = {
+      {0., 5., 15.},
+      {1200., 800., 80.}
+    },
+    .inactive_angle_is_zero = true,
+  };
+
+  // longitudinal limits
+  // acceleration in m/s2 * 1000 to avoid floating point math
+  const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
+    .max_accel = 2000,
+    .min_accel = -3500,
+    .inactive_accel = 3010,  // VW sends one increment above the max range when inactive
+  };
+  
   int addr = GET_ADDR(to_send);
   bool tx = true;
 
