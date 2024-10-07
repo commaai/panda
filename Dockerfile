@@ -18,7 +18,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     apt clean && \
     cd /usr/lib/gcc/arm-none-eabi/* && \
     rm -rf arm/ && \
-    rm -rf thumb/nofp thumb/v6* thumb/v8* thumb/v7+fp thumb/v7-r+fp.sp
+    rm -rf thumb/nofp thumb/v6* thumb/v8* thumb/v7+fp thumb/v7-r+fp.sp && \
+    apt-get update && apt-get install -y clang-17 && \
+    ln -s $(which clang-17) /usr/bin/clang
+
+RUN apt-get update && apt-get install -y curl && \
+    curl -1sLf 'https://dl.cloudsmith.io/public/mull-project/mull-stable/setup.deb.sh' | bash && \
+    apt-get update && apt-get install -y mull-17
 
 ENV CPPCHECK_DIR=/tmp/cppcheck
 COPY tests/misra/install.sh /tmp/
@@ -31,7 +37,7 @@ RUN pip3 install --break-system-packages --no-cache-dir $PYTHONPATH/panda/[dev]
 
 # TODO: this should be a "pip install" or not even in this repo at all
 RUN git config --global --add safe.directory $PYTHONPATH/panda
-ENV OPENDBC_REF="5ed7a834a4e0e24c3968dd1e98ceb4b9d5f9791a"
+ENV OPENDBC_REF="e1ce3619a5db661ef2b406ccf258a253baf6eebc"
 RUN cd /tmp/ && \
     git clone --depth 1 https://github.com/commaai/opendbc opendbc_repo && \
     cd opendbc_repo && git fetch origin $OPENDBC_REF && git checkout FETCH_HEAD && rm -rf .git/ && \
