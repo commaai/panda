@@ -831,18 +831,10 @@ class Panda:
   @ensure_can_packet_version
   def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
     snds = pack_can_buffer(arr)
-    while True:
-      try:
-        for tx in snds:
-          while True:
-            bs = self._handle.bulkWrite(3, tx, timeout=timeout)
-            tx = tx[bs:]
-            if len(tx) == 0:
-              break
-            logger.error("CAN: PARTIAL SEND MANY, RETRYING")
-        break
-      except (usb1.USBErrorIO, usb1.USBErrorOverflow):
-        logger.error("CAN: BAD SEND MANY, RETRYING")
+    for tx in snds:
+      while len(tx) > 0:
+        bs = self._handle.bulkWrite(3, tx, timeout=timeout)
+        tx = tx[bs:]
 
   def can_send(self, addr, dat, bus, timeout=CAN_SEND_TIMEOUT_MS):
     self.can_send_many([[addr, dat, bus]], timeout=timeout)
