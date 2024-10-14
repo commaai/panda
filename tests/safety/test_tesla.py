@@ -6,12 +6,13 @@ import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
 MSG_DAS_steeringControl = 0x488
+MSG_APS_eacMonitor = 0x27d
 MSG_DAS_Control = 0x2b9
 
 class TestTeslaSafetyBase(common.PandaCarSafetyTest):
-  RELAY_MALFUNCTION_ADDRS = {0: (MSG_DAS_steeringControl,)}
-  FWD_BLACKLISTED_ADDRS = {2: [MSG_DAS_steeringControl]}
-  TX_MSGS = [[MSG_DAS_steeringControl, 0], [MSG_DAS_Control, 0]]
+  RELAY_MALFUNCTION_ADDRS = {0: (MSG_DAS_steeringControl, MSG_APS_eacMonitor)}
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_DAS_steeringControl, MSG_APS_eacMonitor]}
+  TX_MSGS = [[MSG_DAS_steeringControl, 0], [MSG_APS_eacMonitor, 0], [MSG_DAS_Control, 0]]
 
   STANDSTILL_THRESHOLD = 1
   GAS_PRESSED_THRESHOLD = 3
@@ -79,8 +80,8 @@ class TestTeslaStockSafety(TestTeslaSafetyBase):
     return self.packer.make_can_msg_panda("EPAS3S_sysStatus", 0, values)
 
 class TestTeslaLongitudinalSafetyBase(TestTeslaSafetyBase):
-  RELAY_MALFUNCTION_ADDRS = {0: (MSG_DAS_steeringControl, MSG_DAS_Control)}
-  FWD_BLACKLISTED_ADDRS = {2: [MSG_DAS_steeringControl, MSG_DAS_Control]}
+  RELAY_MALFUNCTION_ADDRS = {0: (MSG_DAS_steeringControl, MSG_APS_eacMonitor, MSG_DAS_Control)}
+  FWD_BLACKLISTED_ADDRS = {2: [MSG_DAS_steeringControl, MSG_APS_eacMonitor, MSG_DAS_Control]}
 
   MAX_ACCEL = 2.0
   MIN_ACCEL = -3.48
