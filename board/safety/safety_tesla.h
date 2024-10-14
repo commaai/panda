@@ -18,7 +18,7 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
 
   if(bus == 0) {
     if(addr == 0x286){
-      vehicle_moving = ((GET_BYTE(to_push, 5) & 0x1CU) >> 2) != 3;
+      vehicle_moving = ((GET_BYTE(to_push, 5) & 0x1CU) >> 2) != 3U;
     }
 
     if(addr == 0x257){
@@ -120,7 +120,7 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
       int raw_accel_min = ((GET_BYTE(to_send, 5) & 0x0FU) << 5) | (GET_BYTE(to_send, 4) >> 3);
 
       // Prevent both acceleration from being negative, as this could cause the car to reverse after coming to standstill
-      if (raw_accel_max < TESLA_LONG_LIMITS.inactive_accel && raw_accel_min < TESLA_LONG_LIMITS.inactive_accel){
+      if ((raw_accel_max < TESLA_LONG_LIMITS.inactive_accel) && (raw_accel_min < TESLA_LONG_LIMITS.inactive_accel)){
         violation = true;
       }
 

@@ -33,8 +33,8 @@ class TestTeslaSafetyBase(common.PandaCarSafetyTest):
     return self.packer.make_can_msg_panda("DI_speed", 0, values)
 
   def _vehicle_moving_msg(self, speed: float):
-    values = {"ESP_vehicleStandstillSts": 1 if speed <= self.STANDSTILL_THRESHOLD else 0}
-    return self.packer.make_can_msg_panda("ESP_B", 0, values)
+    values = {"DI_vehicleHoldState": 3 if speed <= self.STANDSTILL_THRESHOLD else 0}
+    return self.packer.make_can_msg_panda("DI_state", 0, values)
 
   def _user_gas_msg(self, gas):
     values = {"DI_accelPedalPos": gas}
