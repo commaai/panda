@@ -152,6 +152,10 @@ static int tesla_fwd_hook(int bus_num, int addr) {
       block_msg = true;
     }
 
+    if (addr == 0x27d) {
+      block_msg = true;
+    }
+
     if (tesla_longitudinal && (addr == 0x2b9) && !tesla_stock_aeb) {
       block_msg = true;
     }
