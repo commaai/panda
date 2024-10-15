@@ -951,8 +951,8 @@ class PandaCarSafetyTest(PandaSafetyTest):
 
     # Brake was already pressed
     self._rx(_user_brake_msg(1))
-    self.safety.set_controls_allowed(1)
     self._rx(self._vehicle_moving_msg(self.STANDSTILL_THRESHOLD))
+    self.safety.set_controls_allowed(1)
     self._rx(_user_brake_msg(1))
     self.assertTrue(self.safety.get_controls_allowed())
     self.assertTrue(self.safety.get_longitudinal_allowed())

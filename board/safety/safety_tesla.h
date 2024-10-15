@@ -17,10 +17,6 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
   }
 
   if(bus == 0) {
-    if(addr == 0x286){
-      vehicle_moving = ((GET_BYTE(to_push, 5) & 0x1CU) >> 2) != 3U;
-    }
-
     if(addr == 0x257){
       // Vehicle speed: ((val * 0.08) - 40) * KPH_TO_MPS
       float speed = (((((GET_BYTE(to_push, 2)) << 4) | (GET_BYTE(to_push, 1) >> 4)) * 0.08) - 40) * 0.277778;
@@ -39,6 +35,8 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
 
     // Cruise state
     if(addr == 0x286) {
+      vehicle_moving = ((GET_BYTE(to_push, 5) & 0x1CU) >> 2) != 3U;
+
       int cruise_state = ((GET_BYTE(to_push, 1) << 1 ) >> 5);
       bool cruise_engaged = (cruise_state == 2) ||  // ENABLED
                             (cruise_state == 3) ||  // STANDSTILL

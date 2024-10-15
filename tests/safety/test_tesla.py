@@ -79,7 +79,7 @@ class TestTeslaStockSafety(TestTeslaSafetyBase):
     values = {"EPAS3S_internalSAS": angle}
     return self.packer.make_can_msg_panda("EPAS3S_sysStatus", 0, values)
 
-class TestTeslaLongitudinalSafetyBase(TestTeslaSafetyBase):
+class TestTeslaLongitudinalSafety(TestTeslaSafetyBase):
   RELAY_MALFUNCTION_ADDRS = {0: (MSG_DAS_steeringControl, MSG_APS_eacMonitor, MSG_DAS_Control)}
   FWD_BLACKLISTED_ADDRS = {2: [MSG_DAS_steeringControl, MSG_APS_eacMonitor, MSG_DAS_Control]}
 
