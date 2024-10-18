@@ -19,7 +19,12 @@
   {0x283, 0, 7}, {0x2E6, 0, 8}, {0x2E7, 0, 8}, {0x33E, 0, 7}, {0x344, 0, 8}, {0x365, 0, 7}, {0x366, 0, 7}, {0x4CB, 0, 8},  /* DSU bus 0 */  \
   {0x128, 1, 6}, {0x141, 1, 4}, {0x160, 1, 8}, {0x161, 1, 7}, {0x470, 1, 4},  /* DSU bus 1 */                                               \
   {0x411, 0, 8},  /* PCS_HUD */                                                                                                             \
-  {0x750, 0, 8},  /* radar diagnostic address */                                                                                            \
+  {0x750, 0, 8},  /* radar diagnostic address */
+
+#define TOYOTA_COMMON_LONG_SECOC_TX_MSGS \
+  TOYOTA_COMMON_SECOC_TX_MSGS \
+  {0x183, 0, 8},
+
 
 #define TOYOTA_COMMON_RX_CHECKS(lta)                                                                        \
   {.msg = {{ 0xaa, 0, 8, .check_checksum = false, .frequency = 83U}, { 0 }, { 0 }}},                        \
@@ -330,6 +335,10 @@ static safety_config toyota_init(uint16_t param) {
     TOYOTA_COMMON_LONG_TX_MSGS
   };
 
+  static const CanMsg TOYOTA_SECOC_LONG_TX_MSGS[] = {
+    TOYOTA_COMMON_LONG_SECOC_TX_MSGS
+  };
+
   // safety param flags
   // first byte is for EPS factor, second is for flags
   const uint32_t TOYOTA_PARAM_OFFSET = 8U;
@@ -356,7 +365,11 @@ static safety_config toyota_init(uint16_t param) {
       SET_TX_MSGS(TOYOTA_TX_MSGS, ret);
     }
   } else {
-    SET_TX_MSGS(TOYOTA_LONG_TX_MSGS, ret);
+    if (toyota_secoc) {
+      SET_TX_MSGS(TOYOTA_SECOC_LONG_TX_MSGS, ret);
+    } else {
+      SET_TX_MSGS(TOYOTA_LONG_TX_MSGS, ret);
+    }
   }
 
   if (toyota_lta) {
@@ -393,6 +406,7 @@ static int toyota_fwd_hook(int bus_num, int addr) {
     is_lkas_msg |= toyota_secoc && (addr == 0x131);
     // in TSS2 the camera does ACC as well, so filter 0x343
     bool is_acc_msg = (addr == 0x343);
+    is_acc_msg |= toyota_secoc && (addr == 0x183);
     bool block_msg = is_lkas_msg || (is_acc_msg && !toyota_stock_longitudinal);
     if (!block_msg) {
       bus_fwd = 0;
