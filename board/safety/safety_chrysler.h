@@ -255,7 +255,6 @@ static safety_config chrysler_init(uint16_t param) {
     ret = BUILD_SAFETY_CFG(chrysler_ram_dt_rx_checks, CHRYSLER_RAM_DT_TX_MSGS);
 #ifdef ALLOW_DEBUG
   } else if (enable_ram_hd) {
-
     // CAN messages for the 5th gen RAM HD platform
     static const ChryslerAddrs CHRYSLER_RAM_HD_ADDRS = {
       .EPS_2            = 0x220,  // EPS driver input torque
