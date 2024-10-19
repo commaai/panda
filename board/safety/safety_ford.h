@@ -9,6 +9,7 @@
 #define FORD_BrakeSysFeatures      0x415   // RX from ABS, for vehicle speed
 #define FORD_EngVehicleSpThrottle2 0x202   // RX from PCM, for second vehicle speed
 #define FORD_Yaw_Data_FD1          0x91    // RX from RCM, for yaw rate
+#define FORD_EPAS_INFO             0x82    // RX from EPAS, for steering torque
 #define FORD_Steering_Data_FD1     0x083   // TX by OP, various driver switches and LKAS/CC buttons
 #define FORD_ACCDATA               0x186   // TX by OP, ACC controls
 #define FORD_ACCDATA_3             0x18A   // TX by OP, ACC/TJA user interface
@@ -98,6 +99,8 @@ static bool ford_longitudinal = false;
 #define FORD_CANFD_INACTIVE_CURVATURE_RATE 1024U
 
 #define FORD_MAX_SPEED_DELTA 2.0  // m/s
+#define FORD_DRIVER_STEERING_TORQUE_MIN 112 // -1 nm
+#define FORD_DRIVER_STEERING_TORQUE_MAX 144 //  1 nm
 
 static bool ford_lkas_msg_check(int addr) {
   return (addr == FORD_ACCDATA_3)
@@ -180,6 +183,13 @@ static void ford_rx_hook(const CANPacket_t *to_push) {
       unsigned int cruise_state = GET_BYTE(to_push, 1) & 0x07U;
       bool cruise_engaged = (cruise_state == 4U) || (cruise_state == 5U);
       pcm_cruise_check(cruise_engaged);
+    }
+
+    // Update driver steering state
+    if (addr == FORD_EPAS_INFO) {
+      uint8_t torque_driver = GET_BYTE(to_push, 1);
+      bool steer_pressed = torque_driver < FORD_DRIVER_STEERING_TORQUE_MIN || torque_driver > FORD_DRIVER_STEERING_TORQUE_MAX;
+      update_steering_pressed(steer_pressed, 5);
     }
 
     // If steering controls messages are received on the destination bus, it's an indication

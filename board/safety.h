@@ -72,6 +72,9 @@ bool gas_pressed = false;
 bool gas_pressed_prev = false;
 bool brake_pressed = false;
 bool brake_pressed_prev = false;
+bool steering_pressed = false;
+bool steering_pressed_prev = false;
+uint8_t steering_pressed_cnt = 0;
 bool regen_braking = false;
 bool regen_braking_prev = false;
 bool cruise_engaged_prev = false;
@@ -394,6 +397,8 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   gas_pressed_prev = false;
   brake_pressed = false;
   brake_pressed_prev = false;
+  steering_pressed = false;
+  steering_pressed_prev = false;
   regen_braking = false;
   regen_braking_prev = false;
   cruise_engaged_prev = false;
@@ -408,6 +413,7 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
   ts_steer_req_mismatch_last = 0;
   valid_steer_req_count = 0;
   invalid_steer_req_count = 0;
+  steering_pressed_cnt = 0;
 
   // reset samples
   reset_sample(&vehicle_speed);
@@ -476,6 +482,19 @@ void update_sample(struct sample_t *sample, int sample_new) {
       sample->max = sample->values[i];
     }
   }
+}
+
+// Applies filtering on steering pressed for noisy driver torque signals.
+void update_steering_pressed(bool steer_pressed, uint8_t steering_pressed_min_count) {
+  if (steer_pressed) {
+    steering_pressed_cnt += 1;
+  } else {
+    steering_pressed_cnt = 0;
+  }
+  if (steering_pressed_cnt > steering_pressed_min_count * 2) {
+    steering_pressed_cnt = steering_pressed_min_count * 2;
+  }
+  steering_pressed = steering_pressed_cnt > steering_pressed_min_count;
 }
 
 static bool max_limit_check(int val, const int MAX_VAL, const int MIN_VAL) {
@@ -693,6 +712,14 @@ bool steer_angle_cmd_checks(int desired_angle, bool steer_control_enabled, const
     // TODO: this speed fudge can be much lower, look at data to determine the lowest reasonable offset
     int delta_angle_up = (interpolate(limits.angle_rate_up_lookup, (vehicle_speed.min / VEHICLE_SPEED_FACTOR) - 1.) * limits.angle_deg_to_can) + 1.;
     int delta_angle_down = (interpolate(limits.angle_rate_down_lookup, (vehicle_speed.min / VEHICLE_SPEED_FACTOR) - 1.) * limits.angle_deg_to_can) + 1.;
+
+    // When steering is no longer pressed reset the last desired angle to the most recent measured
+    // angle. This allows for steering commands to continue from the position of the wheel when the
+    // driver steering speed is greater than the angle rate limit.
+    if (!steering_pressed && steering_pressed_prev) {
+      desired_angle_last = angle_meas.values[0];
+    }
+    steering_pressed_prev = steering_pressed;
 
     // allow down limits at zero since small floats will be rounded to 0
     int highest_desired_angle = desired_angle_last + ((desired_angle_last > 0) ? delta_angle_up : delta_angle_down);

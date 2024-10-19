@@ -173,6 +173,7 @@ bool safety_tx_hook(CANPacket_t *to_send);
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
 int to_signed(int d, int bits);
 void update_sample(struct sample_t *sample, int sample_new);
+void update_steering_pressed(bool steer_pressed, uint8_t steering_pressed_min_count);
 bool get_longitudinal_allowed(void);
 int ROUND(float val);
 void gen_crc_lookup_table_8(uint8_t poly, uint8_t crc_lut[]);
