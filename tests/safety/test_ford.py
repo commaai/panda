@@ -86,8 +86,8 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
   CURVATURE_ERROR_MIN_SPEED = 10.0  # m/s
 
   ANGLE_RATE_BP = [5., 25., 25.]
-  ANGLE_RATE_UP = [0.0002, 0.0001, 0.0001]  # windup limit
-  ANGLE_RATE_DOWN = [0.000225, 0.00015, 0.00015]  # unwind limit
+  ANGLE_RATE_UP = [0.00045, 0.000125, 0.000125]  # windup limit
+  ANGLE_RATE_DOWN = [0.00045, 0.00015, 0.00015]  # unwind limit
 
   cnt_speed = 0
   cnt_speed_2 = 0
