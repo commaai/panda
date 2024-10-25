@@ -86,8 +86,8 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
   CURVATURE_ERROR_MIN_SPEED = 10.0  # m/s
 
   ANGLE_RATE_BP = [5., 25., 25.]
-  ANGLE_RATE_UP = [0.0002, 0.0001, 0.0001]  # windup limit
-  ANGLE_RATE_DOWN = [0.000225, 0.00015, 0.00015]  # unwind limit
+  ANGLE_RATE_UP = [0.00045, 0.000125, 0.000125]  # windup limit
+  ANGLE_RATE_DOWN = [0.00045, 0.00015, 0.00015]  # unwind limit
 
   cnt_speed = 0
   cnt_speed_2 = 0
@@ -286,7 +286,7 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
     Since panda allows higher rate limits to avoid false positives, we need to allow a lower rate to move towards meas.
     """
     self.safety.set_controls_allowed(True)
-    small_curvature = 2 / self.DEG_TO_CAN  # significant small amount of curvature to cross boundary
+    small_curvature = 3 / self.DEG_TO_CAN  # significant small amount of curvature to cross boundary
 
     for speed in np.arange(0, 40, 0.5):
       limit_command = speed > self.CURVATURE_ERROR_MIN_SPEED
@@ -309,7 +309,7 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
 
   def test_curvature_rate_limit_down(self):
     self.safety.set_controls_allowed(True)
-    small_curvature = 2 / self.DEG_TO_CAN  # significant small amount of curvature to cross boundary
+    small_curvature = 3 / self.DEG_TO_CAN  # significant small amount of curvature to cross boundary
 
     for speed in np.arange(0, 40, 0.5):
       limit_command = speed > self.CURVATURE_ERROR_MIN_SPEED
