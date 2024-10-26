@@ -70,8 +70,6 @@ class PandaSpiTransferFailed(PandaSpiException):
   pass
 
 
-SPI_LOCK = threading.Lock()
-
 class PandaSpiTransfer(ctypes.Structure):
   _fields_ = [
     ('rx_buf', ctypes.c_uint64),
@@ -83,6 +81,9 @@ class PandaSpiTransfer(ctypes.Structure):
     ('expect_disconnect', ctypes.c_uint8),
   ]
 
+
+SPI_LOCK = threading.Lock()
+SPI_DEVICES = {}
 class SpiDevice:
   """
   Provides locked, thread-safe access to a panda's SPI interface.
@@ -100,9 +101,12 @@ class SpiDevice:
     if spidev is None:
       raise PandaSpiUnavailable("spidev is not installed")
 
-    self._spidev = spidev.SpiDev()  # pylint: disable=c-extension-no-member
-    self._spidev.open(0, 0)
-    self._spidev.max_speed_hz = speed
+    with SPI_LOCK:
+      if speed not in SPI_DEVICES:
+        SPI_DEVICES[speed] = spidev.SpiDev()  # pylint: disable=c-extension-no-member
+        SPI_DEVICES[speed].open(0, 0)
+        SPI_DEVICES[speed].max_speed_hz = speed
+      self._spidev = SPI_DEVICES[speed]
 
   @contextmanager
   def acquire(self):
@@ -115,8 +119,7 @@ class SpiDevice:
       SPI_LOCK.release()
 
   def close(self):
-    self._spidev.close()
-
+    pass
 
 
 class PandaSpiHandle(BaseHandle):

@@ -54,6 +54,8 @@ jobs:
         run: ${{ env.RUN }} "scons -j4 --ubsan"
       - name: Build jungle firmware with FINAL_PROVISIONING support
         run: ${{ env.RUN }} "FINAL_PROVISIONING=1 scons -j4 board/jungle"
+      - name: Build panda in release mode
+        run: ${{ env.RUN }} "CERT=certs/debug RELEASE=1 scons -j4"
 
   unit_tests:
     name: unit tests
