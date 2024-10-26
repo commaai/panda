@@ -223,6 +223,9 @@ static bool ford_tx_hook(const CANPacket_t *to_send) {
     // Signal: CmbbDeny_B_Actl
     bool cmbb_deny = GET_BIT(to_send, 37U);
 
+    // Signal: AccBrkPrchg_B_Rq & AccBrkDecel_B_Rq
+    bool brake_actuation = GET_BIT(to_send, 54U) || GET_BIT(to_send, 55U);
+
     bool violation = false;
     violation |= longitudinal_accel_checks(accel, FORD_LONG_LIMITS);
     violation |= longitudinal_gas_checks(gas, FORD_LONG_LIMITS);
@@ -230,6 +233,8 @@ static bool ford_tx_hook(const CANPacket_t *to_send) {
 
     // Safety check for stock AEB
     violation |= cmbb_deny; // do not prevent stock AEB actuation
+
+    violation |= !get_longitudinal_allowed() && brake_actuation;
 
     if (violation) {
       tx = false;
