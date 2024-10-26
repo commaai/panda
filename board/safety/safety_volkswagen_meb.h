@@ -25,6 +25,10 @@ static bool vw_meb_get_longitudinal_allowed_override(void) {
   return controls_allowed && gas_pressed_prev;
 }
 
+static bool max_limit_check(int val, const int MAX_VAL, const int MIN_VAL) {
+  return (val > MAX_VAL) || (val < MIN_VAL);
+}
+
 // Safety checks for longitudinal actuation
 static bool vw_meb_longitudinal_accel_checks(int desired_accel, const LongitudinalLimits limits, const int override_accel) {
   bool accel_valid = get_longitudinal_allowed() && !max_limit_check(desired_accel, limits.max_accel, limits.min_accel);
