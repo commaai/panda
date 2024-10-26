@@ -86,8 +86,8 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
   CURVATURE_ERROR_MIN_SPEED = 10.0  # m/s
 
   ANGLE_RATE_BP = [5., 25., 25.]
-  ANGLE_RATE_UP = [0.0002, 0.0001, 0.0001]  # windup limit
-  ANGLE_RATE_DOWN = [0.000225, 0.00015, 0.00015]  # unwind limit
+  ANGLE_RATE_UP = [0.00045, 0.0001, 0.0001]  # windup limit
+  ANGLE_RATE_DOWN = [0.00045, 0.00015, 0.00015]  # unwind limit
 
   cnt_speed = 0
   cnt_speed_2 = 0
@@ -290,7 +290,7 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
 
     for speed in np.arange(0, 40, 0.5):
       limit_command = speed > self.CURVATURE_ERROR_MIN_SPEED
-      max_delta_up = np.interp(speed, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
+      max_delta_up = np.interp(speed - 1, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
       max_delta_up_lower = np.interp(speed + 1, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
 
       cases = [
@@ -313,7 +313,7 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
 
     for speed in np.arange(0, 40, 0.5):
       limit_command = speed > self.CURVATURE_ERROR_MIN_SPEED
-      max_delta_down = np.interp(speed, self.ANGLE_RATE_BP, self.ANGLE_RATE_DOWN)
+      max_delta_down = np.interp(speed - 1, self.ANGLE_RATE_BP, self.ANGLE_RATE_DOWN)
       max_delta_down_lower = np.interp(speed + 1, self.ANGLE_RATE_BP, self.ANGLE_RATE_DOWN)
 
       cases = [
