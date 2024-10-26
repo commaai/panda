@@ -121,6 +121,39 @@ static safety_config volkswagen_meb_init(uint16_t param) {
                                    BUILD_SAFETY_CFG(volkswagen_meb_rx_checks, VOLKSWAGEN_MEB_STOCK_TX_MSGS);
 }
 
+// lateral limits for curvature
+//static const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
+//  // SG_ Curvature : 24|15@1+ (0.00625,0) [0|200] "Unit_1/mm" XXX
+//  // we do not enforce curvature error at the moment
+//  .max_steer = 31200,         // maximum curvature of 195 1/mm
+//  .angle_deg_to_can = 160,    // 1 / 0.00625 rad to can
+//  .angle_rate_up_lookup = {
+//    {5., 12., 25.},
+//    {4, 2, 1}
+//  },
+//  .angle_rate_down_lookup = {
+//    {5., 12., 25.},
+//    {5, 2.5, 1.5}
+//  },
+//  .inactive_angle_is_zero = true,
+//};
+
+// lateral limits for angle
+static const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
+  // SG_ Steering_Angle : 24|15@1+ (0.0174,0) [0|360] "Unit_DegreOfArc" XXX
+  .max_steer = 2068966, // 360 deg
+  .angle_deg_to_can = 5747, // (1 / 0.0174) * 100 deg to can (minimize rounding error)
+  .angle_rate_up_lookup = {
+    {0., 5., 15.},
+    {1200., 400., 40.}
+  },
+  .angle_rate_down_lookup = {
+    {0., 5., 15.},
+    {1200., 800., 80.}
+  },
+  .inactive_angle_is_zero = true,
+};
+
 static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
   if (GET_BUS(to_push) == 0U) {
     int addr = GET_ADDR(to_push);
@@ -216,39 +249,6 @@ static void volkswagen_meb_rx_hook(const CANPacket_t *to_push) {
 }
 
 static bool volkswagen_meb_tx_hook(const CANPacket_t *to_send) {
-  // lateral limits for curvature
-  //const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
-  //  // SG_ Curvature : 24|15@1+ (0.00625,0) [0|200] "Unit_1/mm" XXX
-  //  // we do not enforce curvature error at the moment
-  //  .max_steer = 31200,         // maximum curvature of 195 1/mm
-  //  .angle_deg_to_can = 160,    // 1 / 0.00625 rad to can
-  //  .angle_rate_up_lookup = {
-  //    {5., 12., 25.},
-  //    {4, 2, 1}
-  //  },
-  //  .angle_rate_down_lookup = {
-  //    {5., 12., 25.},
-  //    {5, 2.5, 1.5}
-  //  },
-  //  .inactive_angle_is_zero = true,
-  //};
-
-  // lateral limits for angle
-  const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
-    // SG_ Steering_Angle : 24|15@1+ (0.0174,0) [0|360] "Unit_DegreOfArc" XXX
-    .max_steer = 2068966, // 360 deg
-    .angle_deg_to_can = 5747, // (1 / 0.0174) * 100 deg to can (minimize rounding error)
-    .angle_rate_up_lookup = {
-      {0., 5., 15.},
-      {1200., 400., 40.}
-    },
-    .angle_rate_down_lookup = {
-      {0., 5., 15.},
-      {1200., 800., 80.}
-    },
-    .inactive_angle_is_zero = true,
-  };
-
   // longitudinal limits
   // acceleration in m/s2 * 1000 to avoid floating point math
   const LongitudinalLimits VOLKSWAGEN_MEB_LONG_LIMITS = {
