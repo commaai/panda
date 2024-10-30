@@ -20,7 +20,12 @@ def can_printer():
   start = sec_since_boot()
   lp = sec_since_boot()
   msgs = defaultdict(list)
+
   canbus = os.getenv("CAN")
+  if canbus == "3":
+    p.set_obd(True)
+    canbus = "1"
+
   while True:
     can_recv = p.can_recv()
     for address,dat, src in can_recv:
