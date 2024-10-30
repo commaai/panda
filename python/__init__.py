@@ -252,7 +252,6 @@ class Panda:
       return None
     if len(pandas) == 1:
       print(f"INFO: connecting to panda {pandas[0]}")
-      time.sleep(1)
       return pandas[0]
     while True:
       print("Multiple pandas available:")

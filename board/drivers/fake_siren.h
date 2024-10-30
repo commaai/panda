@@ -2,6 +2,8 @@
 
 #define CODEC_I2C_ADDR 0x10
 
+void fake_siren_init(void);
+
 void fake_siren_codec_enable(bool enabled) {
   if (enabled) {
     bool success = true;
@@ -28,7 +30,13 @@ void fake_siren_codec_enable(bool enabled) {
 
 
 void fake_siren_set(bool enabled) {
+  static bool initialized = false;
   static bool fake_siren_enabled = false;
+
+  if (!initialized) {
+    fake_siren_init();
+    initialized = true;
+  }
 
   if (enabled != fake_siren_enabled) {
     fake_siren_codec_enable(enabled);
