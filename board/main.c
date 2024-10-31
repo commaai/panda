@@ -325,11 +325,12 @@ int main(void) {
   // panda has an FPU, let's use it!
   enable_fpu();
 
+  microsecond_timer_init();
+
+  current_board->set_siren(false);
   if (current_board->fan_max_rpm > 0U) {
     fan_init();
   }
-
-  microsecond_timer_init();
 
   // init to SILENT and can silent
   set_safety_mode(SAFETY_SILENT, 0U);
