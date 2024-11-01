@@ -142,7 +142,7 @@ static void toyota_rx_hook(const CANPacket_t *to_push) {
     }
 
     bool stock_ecu_detected = addr == 0x2E4;  // STEERING_LKA
-    if (!toyota_stock_longitudinal && ((addr == 0x343) | (toyota_secoc && (addr == 0x183)))) {
+    if (!toyota_stock_longitudinal && ((addr == 0x343) || (toyota_secoc && (addr == 0x183)))) {
       stock_ecu_detected = true;  // ACC_CONTROL or ACC_CONTROL_2
     }
     generic_rx_checks(stock_ecu_detected);
