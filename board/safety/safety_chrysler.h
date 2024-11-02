@@ -211,18 +211,6 @@ static safety_config chrysler_init(uint16_t param) {
     .CRUISE_BUTTONS   = 0xB1,   // Cruise control buttons
   };
 
-  // CAN messages for the 5th gen RAM HD platform
-  static const ChryslerAddrs CHRYSLER_RAM_HD_ADDRS = {
-    .EPS_2            = 0x220,  // EPS driver input torque
-    .ESP_1            = 0x140,  // Brake pedal and vehicle speed
-    .ESP_8            = 0x11C,  // Brake pedal and vehicle speed
-    .ECM_5            = 0x22F,  // Throttle position sensor
-    .DAS_3            = 0x1F4,  // ACC engagement states from DASM
-    .DAS_6            = 0x275,  // LKAS HUD and auto headlight control from DASM
-    .LKAS_COMMAND     = 0x276,  // LKAS controls from DASM
-    .CRUISE_BUTTONS   = 0x23A,  // Cruise control buttons
-  };
-
   static RxCheck chrysler_ram_dt_rx_checks[] = {
     {.msg = {{CHRYSLER_RAM_DT_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
     {.msg = {{CHRYSLER_RAM_DT_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
@@ -240,14 +228,6 @@ static safety_config chrysler_init(uint16_t param) {
     {.msg = {{CHRYSLER_ADDRS.DAS_3, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
   };
 
-  static RxCheck chrysler_ram_hd_rx_checks[] = {
-    {.msg = {{CHRYSLER_RAM_HD_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
-    {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
-    {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
-    {.msg = {{CHRYSLER_RAM_HD_ADDRS.ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
-    {.msg = {{CHRYSLER_RAM_HD_ADDRS.DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
-  };
-
   static const CanMsg CHRYSLER_TX_MSGS[] = {
     {CHRYSLER_ADDRS.CRUISE_BUTTONS, 0, 3},
     {CHRYSLER_ADDRS.LKAS_COMMAND, 0, 6},
@@ -260,20 +240,40 @@ static safety_config chrysler_init(uint16_t param) {
     {CHRYSLER_RAM_DT_ADDRS.DAS_6, 0, 8},
   };
 
+#ifdef ALLOW_DEBUG
+  // CAN messages for the 5th gen RAM HD platform
+  static const ChryslerAddrs CHRYSLER_RAM_HD_ADDRS = {
+    .EPS_2            = 0x220,  // EPS driver input torque
+    .ESP_1            = 0x140,  // Brake pedal and vehicle speed
+    .ESP_8            = 0x11C,  // Brake pedal and vehicle speed
+    .ECM_5            = 0x22F,  // Throttle position sensor
+    .DAS_3            = 0x1F4,  // ACC engagement states from DASM
+    .DAS_6            = 0x275,  // LKAS HUD and auto headlight control from DASM
+    .LKAS_COMMAND     = 0x276,  // LKAS controls from DASM
+    .CRUISE_BUTTONS   = 0x23A,  // Cruise control buttons
+  };
+
+  static RxCheck chrysler_ram_hd_rx_checks[] = {
+    {.msg = {{CHRYSLER_RAM_HD_ADDRS.EPS_2, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
+    {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_1, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
+    {.msg = {{CHRYSLER_RAM_HD_ADDRS.ESP_8, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
+    {.msg = {{CHRYSLER_RAM_HD_ADDRS.ECM_5, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
+    {.msg = {{CHRYSLER_RAM_HD_ADDRS.DAS_3, 2, 8, .check_checksum = true, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},
+  };
+
   static const CanMsg CHRYSLER_RAM_HD_TX_MSGS[] = {
     {CHRYSLER_RAM_HD_ADDRS.CRUISE_BUTTONS, 2, 3},
     {CHRYSLER_RAM_HD_ADDRS.LKAS_COMMAND, 0, 8},
     {CHRYSLER_RAM_HD_ADDRS.DAS_6, 0, 8},
   };
 
-  safety_config ret;
-
-  bool enable_ram_dt = GET_FLAG(param, CHRYSLER_PARAM_RAM_DT);
-
-#ifdef ALLOW_DEBUG
   const uint32_t CHRYSLER_PARAM_RAM_HD = 2U;  // set for Ram HD platform
   bool enable_ram_hd = GET_FLAG(param, CHRYSLER_PARAM_RAM_HD);
 #endif
+
+  safety_config ret;
+
+  bool enable_ram_dt = GET_FLAG(param, CHRYSLER_PARAM_RAM_DT);
 
   if (enable_ram_dt) {
     chrysler_platform = CHRYSLER_RAM_DT;
