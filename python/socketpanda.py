@@ -25,7 +25,7 @@ SO_RXQ_OVFL = 40
 
 # Panda class substitute for socketcan device (to support using the uds/iso-tp/xcp/ccp library)
 class SocketPanda():
-  def __init__(self, interface:str="vcan0", bus=0, recv_buffer_size=212992) -> None:
+  def __init__(self, interface:str="can0", bus=0, recv_buffer_size=212992) -> None:
     self.interface = interface
     self.bus = bus
     self.recv_buffer_size = recv_buffer_size
