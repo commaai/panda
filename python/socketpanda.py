@@ -23,7 +23,7 @@ CAN_FRAME_FMT = "=IB3x8s"
 # https://github.com/torvalds/linux/blob/47ac09b91befbb6a235ab620c32af719f8208399/include/uapi/asm-generic/socket.h#L61
 SO_RXQ_OVFL = 40
 
-# Panda class substitue for socketcan device (to support using the uds/iso-tp/xcp/ccp library)
+# Panda class substitute for socketcan device (to support using the uds/iso-tp/xcp/ccp library)
 class SocketPanda():
   def __init__(self, interface:str="vcan0", bus=0, recv_buffer_size=212992) -> None:
     self.interface = interface
