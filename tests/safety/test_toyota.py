@@ -4,7 +4,7 @@ import random
 import unittest
 import itertools
 
-from panda import Panda, ALTERNATIVE_EXPERIENCE
+from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
@@ -366,24 +366,16 @@ class TestToyotaSecOcSafety(TestToyotaSafetyBase):
     values = {"ACCEL_CMD": accel}
     return self.packer.make_can_msg_panda("ACC_CONTROL_2", 0, values)
 
-  # FIXME: Replaces common test, refactor common tests to handle this situation better?
-  def test_accel_actuation_limits(self, stock_longitudinal=False):
-    limits = ((self.MIN_ACCEL, self.MAX_ACCEL, ALTERNATIVE_EXPERIENCE.DEFAULT),
-              (self.MIN_ACCEL, self.MAX_ACCEL, ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX))
+  # On a SecOC vehicle, we still transmit ACC_CONTROL but the accel value moves to ACC_CONTROL_2
+  # Verify that all non-idle accel values in ACC_CONTROL are rejected, verify ACC_CONTROL_2 accel normally
+  def _should_tx_1(self, controls_allowed: bool, stock_longitudinal: bool, accel: float, min_accel: float, max_accel: float):
+    return accel == self.INACTIVE_ACCEL
 
-    for min_accel, max_accel, alternative_experience in limits:
-      # enforce we don't skip over 0 or inactive accel
-      for accel in np.concatenate((np.arange(min_accel - 1, max_accel + 1, 0.05), [0, self.INACTIVE_ACCEL])):
-        accel = round(accel, 2)  # floats might not hit exact boundary conditions without rounding
-        for controls_allowed in [True, False]:
-          self.safety.set_controls_allowed(controls_allowed)
-          self.safety.set_alternative_experience(alternative_experience)
-          # On a SecOC vehicle, we still transmit ACC_CONTROL but the accel value moves to ACC_CONTROL_2
-          # Verify that all non-idle accel values in ACC_CONTROL are rejected, verify ACC_CONTROL_2 accel normally
-          should_tx_1 = accel == self.INACTIVE_ACCEL
-          should_tx_2 = (controls_allowed and min_accel <= accel <= max_accel) or accel == self.INACTIVE_ACCEL
-          self.assertEqual(should_tx_1, self._tx(self._accel_msg(accel)))
-          self.assertEqual(should_tx_2, self._tx(self._accel_2_msg(accel)))
+  def _should_tx_2(self, controls_allowed: bool, stock_longitudinal: bool, accel: float, min_accel: float, max_accel: float):
+    return (controls_allowed and min_accel <= accel <= max_accel) or accel == self.INACTIVE_ACCEL
+
+  def test_accel_actuation_limits(self, stock_longitudinal=False):
+    super().test_accel_actuation_limits(stock_longitudinal=stock_longitudinal)
 
 
 if __name__ == "__main__":
