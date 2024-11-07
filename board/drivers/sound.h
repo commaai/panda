@@ -4,8 +4,11 @@ const uint8_t sine[360] = { 127U, 129U, 131U, 133U, 135U, 138U, 140U, 142U, 144U
 // TODO: also double-buffer TX
 #define RX_BUF_SIZE 2000U
 #define TX_BUF_SIZE (RX_BUF_SIZE/2U)
+#define MIC_BUF_SIZE 1000U
 __attribute__((section(".sram4"))) uint16_t rx_buf[2][RX_BUF_SIZE];
 __attribute__((section(".sram4"))) uint16_t tx_buf[TX_BUF_SIZE];
+__attribute__((section(".sram4"))) uint16_t mic_buf[MIC_BUF_SIZE];
+
 
 void BDMA_Channel0_IRQ_Handler(void) {
   BDMA->IFCR |= BDMA_IFCR_CGIF0; // clear flag
@@ -24,15 +27,10 @@ void BDMA_Channel0_IRQ_Handler(void) {
   DMA1_Stream1->CR |= DMA_SxCR_EN;
 }
 
-void BDMA_Channel1_IRQ_Handler(void) {
-  BDMA->IFCR |= BDMA_IFCR_CGIF1; // clear flag
-
-  print("mic DMA\n");
-}
-
 void sound_init(void) {
+  mic_buf[0] = 0x5A5A;
+
   REGISTER_INTERRUPT(BDMA_Channel0_IRQn, BDMA_Channel0_IRQ_Handler, 64U, FAULT_INTERRUPT_RATE_SOUND_DMA)
-  REGISTER_INTERRUPT(BDMA_Channel1_IRQn, BDMA_Channel1_IRQ_Handler, 64U, FAULT_INTERRUPT_RATE_SOUND_DMA)
 
   // Init DAC
   register_set(&DAC1->MCR, 0U, 0xFFFFFFFFU);
@@ -87,18 +85,17 @@ void sound_init(void) {
   register_set(&DMAMUX2_Channel0->CCR, 16U, DMAMUX_CxCR_DMAREQ_ID_Msk); // SAI4_B_DMA
   register_set_bits(&BDMA_Channel0->CCR, BDMA_CCR_EN);
 
-  // init mic DMA (SAI1_A -> SAI4_A)
-  register_set(&BDMA_Channel1->CPAR, (uint32_t) &(SAI1_Block_A->DR), 0xFFFFFFFFU);
-  register_set(&BDMA_Channel1->CM0AR, (uint32_t) &(SAI4_Block_A->DR), 0xFFFFFFFFU);
-  BDMA_Channel1->CNDTR = 8U;
-  register_set(&BDMA_Channel1->CCR, (0b10 << BDMA_CCR_MSIZE_Pos) | (0b10 << BDMA_CCR_PSIZE_Pos), 0xFFFFU);
-  register_set(&DMAMUX2_Channel1->CCR, 16U, DMAMUX_CxCR_DMAREQ_ID_Msk); // SAI4_A_DMA
-  register_set_bits(&BDMA_Channel1->CCR, BDMA_CCR_EN);
+  // init mic DMA (SAI1_A -> memory)
+  register_set(&DMA1_Stream0->PAR, (uint32_t) &(SAI1_Block_A->DR), 0xFFFFFFFFU);
+  register_set(&DMA1_Stream0->M0AR, (uint32_t) mic_buf, 0xFFFFFFFFU);
+  DMA1_Stream0->NDTR = MIC_BUF_SIZE;
+  register_set(&DMA1_Stream0->CR, (0b01 << DMA_SxCR_MSIZE_Pos) | (0b01 << DMA_SxCR_PSIZE_Pos) | DMA_SxCR_MINC | DMA_SxCR_CIRC, 0xFFFFU);
+  register_set(&DMAMUX1_Channel0->CCR, 87U, DMAMUX_CxCR_DMAREQ_ID_Msk); // SAI1_A_DMA
+  register_set_bits(&DMA1_Stream0->CR, DMA_SxCR_EN);
 
   // enable all initted blocks
   register_set_bits(&SAI1_Block_A->CR1, SAI_xCR1_SAIEN);
   register_set_bits(&SAI4_Block_A->CR1, SAI_xCR1_SAIEN);
   register_set_bits(&SAI4_Block_B->CR1, SAI_xCR1_SAIEN);
-  NVIC_EnableIRQ(BDMA_Channel0_IRQn);
-  NVIC_EnableIRQ(BDMA_Channel1_IRQn);
+  NVIC_EnableIRQ(BDMA_Channel0_IRQn)
 }
