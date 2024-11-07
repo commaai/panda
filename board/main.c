@@ -176,7 +176,7 @@ static void tick_handler(void) {
         // SAI4_Block_A->DR = 0x1234U;
         //puth4(dat); print("\n");
         // puth(BDMA->ISR); print("\n");
-        puth(SAI1_Block_A->DR); print(" mic_buf:"); puth(mic_buf[5]); print(" DMA CR:"); puth(DMA1_Stream0->CR); print(" NDTR:"); puth(DMA1_Stream0->NDTR); print("\n");
+        puth(SAI1_Block_A->DR); print(" "); puth(SAI4_Block_A->DR); print(" mic_buf:"); puth(mic_buf[5]); print(" DMA CR:"); puth(DMA1_Stream0->CR); print(" NDTR:"); puth(DMA1_Stream0->NDTR); print("\n");
       //}
 
       // if(rx_buf[0].buf[0] != 0U) {

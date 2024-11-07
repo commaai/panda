@@ -28,7 +28,6 @@ void BDMA_Channel0_IRQ_Handler(void) {
 }
 
 void sound_init(void) {
-  mic_buf[0] = 0x5A5A;
 
   REGISTER_INTERRUPT(BDMA_Channel0_IRQn, BDMA_Channel0_IRQ_Handler, 64U, FAULT_INTERRUPT_RATE_SOUND_DMA)
 
@@ -85,7 +84,7 @@ void sound_init(void) {
   register_set(&DMAMUX2_Channel0->CCR, 16U, DMAMUX_CxCR_DMAREQ_ID_Msk); // SAI4_B_DMA
   register_set_bits(&BDMA_Channel0->CCR, BDMA_CCR_EN);
 
-  // init mic DMA (SAI1_A -> memory)
+  // init mic DMA 1 (SAI1_A -> memory)
   register_set(&DMA1_Stream0->PAR, (uint32_t) &(SAI1_Block_A->DR), 0xFFFFFFFFU);
   register_set(&DMA1_Stream0->M0AR, (uint32_t) mic_buf, 0xFFFFFFFFU);
   DMA1_Stream0->NDTR = MIC_BUF_SIZE;
@@ -93,9 +92,17 @@ void sound_init(void) {
   register_set(&DMAMUX1_Channel0->CCR, 87U, DMAMUX_CxCR_DMAREQ_ID_Msk); // SAI1_A_DMA
   register_set_bits(&DMA1_Stream0->CR, DMA_SxCR_EN);
 
+  // init mic DMA 2 (memory -> SAI4_A)
+  register_set(&BDMA_Channel1->CM0AR, (uint32_t) mic_buf, 0xFFFFFFFFU);
+  register_set(&BDMA_Channel1->CPAR, (uint32_t) &(SAI4_Block_A->DR), 0xFFFFFFFFU);
+  BDMA_Channel1->CNDTR = MIC_BUF_SIZE;
+  register_set(&BDMA_Channel1->CCR, (0b01 << BDMA_CCR_MSIZE_Pos) | (0b01 << BDMA_CCR_PSIZE_Pos) | BDMA_CCR_MINC | BDMA_CCR_CIRC | (0b1 << BDMA_CCR_DIR_Pos), 0xFFFFU);
+  register_set(&DMAMUX2_Channel1->CCR, 15U, DMAMUX_CxCR_DMAREQ_ID_Msk); // SAI4_A_DMA
+  register_set_bits(&BDMA_Channel1->CCR, BDMA_CCR_EN);
+
   // enable all initted blocks
   register_set_bits(&SAI1_Block_A->CR1, SAI_xCR1_SAIEN);
   register_set_bits(&SAI4_Block_A->CR1, SAI_xCR1_SAIEN);
   register_set_bits(&SAI4_Block_B->CR1, SAI_xCR1_SAIEN);
-  NVIC_EnableIRQ(BDMA_Channel0_IRQn)
+  NVIC_EnableIRQ(BDMA_Channel0_IRQn);
 }
