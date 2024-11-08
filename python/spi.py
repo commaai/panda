@@ -397,6 +397,9 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
     data = [struct.pack('>I', address), struct.pack('B', length - 1)]
     return self._cmd(0x11, data=data, read_bytes=length)
 
+  def get_bootloader_id(self):
+    return self.read(0x1FF1E7FE, 1)
+
   def get_chip_id(self) -> int:
     r = self._cmd(0x02, read_bytes=3)
     assert r[0] == 1  # response length - 1
