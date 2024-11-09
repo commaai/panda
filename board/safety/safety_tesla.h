@@ -126,7 +126,7 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
 
       violation |= longitudinal_accel_checks(raw_accel_max, TESLA_LONG_LIMITS);
       violation |= longitudinal_accel_checks(raw_accel_min, TESLA_LONG_LIMITS);
-    } else if(!tesla_longitudinal && acc_state == 13) {
+    } else if(acc_state == 13) {
       // Allow to cancel if not using openpilot longitudinal
     } else {
       violation = true;
