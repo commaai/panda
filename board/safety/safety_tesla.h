@@ -33,7 +33,7 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
       brake_pressed = (GET_BYTE(to_push, 2) & 0x03U)  == 2U;
     }
 
-    // Cruise state & standstill
+    // Cruise state
     if(addr == 0x286) {
       int cruise_state = ((GET_BYTE(to_push, 1) << 1 ) >> 5);
       bool cruise_engaged = (cruise_state == 2) ||  // ENABLED
