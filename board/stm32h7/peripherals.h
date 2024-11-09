@@ -1,4 +1,8 @@
+#ifdef BOOTSTUB
 void gpio_usb_init(void) {
+#else
+static void gpio_usb_init(void) {
+#endif
   // A11,A12: USB
   set_gpio_alternate(GPIOA, 11, GPIO_AF10_OTG1_FS);
   set_gpio_alternate(GPIOA, 12, GPIO_AF10_OTG1_FS);
@@ -122,6 +126,7 @@ void peripherals_init(void) {
   RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;  // clock source timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;  // main counter
   RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;  // fan pwm
+  RCC->APB1LENR |= RCC_APB1LENR_TIM4EN;  // beeper source
   RCC->APB1LENR |= RCC_APB1LENR_TIM6EN;  // interrupt timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM7EN;  // DMA trigger timer
   RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;  // tick timer

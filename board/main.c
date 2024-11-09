@@ -31,7 +31,7 @@
 
 // ********************* Serial debugging *********************
 
-bool check_started(void) {
+static bool check_started(void) {
   bool started = current_board->check_ignition() || ignition_can;
   return started;
 }
@@ -95,7 +95,7 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
       if (current_board->has_obd) {
         // Clear any pending messages in the can core (i.e. sending while comma power is unplugged)
         // TODO: rewrite using hardware queues rather than fifo to cancel specific messages
-        llcan_clear_send(CANIF_FROM_CAN_NUM(1));
+        can_clear_send(CANIF_FROM_CAN_NUM(1), 1);
         if (param == 0U) {
           current_board->set_can_mode(CAN_MODE_OBD_CAN2);
         } else {
@@ -127,11 +127,12 @@ bool is_car_safety_mode(uint16_t mode) {
 // ***************************** main code *****************************
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
+// cppcheck-suppress misra-c2012-8.4
 void __initialize_hardware_early(void) {
   early_initialization();
 }
 
-void __attribute__ ((noinline)) enable_fpu(void) {
+static void __attribute__ ((noinline)) enable_fpu(void) {
   // enable the FPU
   SCB->CPACR |= ((3UL << (10U * 2U)) | (3UL << (11U * 2U)));
 }
@@ -141,9 +142,12 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 #define HEARTBEAT_IGNITION_CNT_OFF 2U
 
 // called at 8Hz
-uint8_t loop_counter = 0U;
-uint8_t prev_harness_status = HARNESS_STATUS_NC;
-void tick_handler(void) {
+static void tick_handler(void) {
+  static uint32_t siren_countdown = 0; // siren plays while countdown > 0
+  static uint32_t controls_allowed_countdown = 0;
+  static uint8_t prev_harness_status = HARNESS_STATUS_NC;
+  static uint8_t loop_counter = 0U;
+
   if (TICK_TIMER->SR != 0U) {
 
     // siren
@@ -321,11 +325,12 @@ int main(void) {
   // panda has an FPU, let's use it!
   enable_fpu();
 
+  microsecond_timer_init();
+
+  current_board->set_siren(false);
   if (current_board->fan_max_rpm > 0U) {
     fan_init();
   }
-
-  microsecond_timer_init();
 
   // init to SILENT and can silent
   set_safety_mode(SAFETY_SILENT, 0U);

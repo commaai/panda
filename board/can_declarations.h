@@ -1,8 +1,5 @@
 #pragma once
 
-const uint8_t PANDA_CAN_CNT = 3U;
-const uint8_t PANDA_BUS_CNT = 3U;
-
 // bump this when changing the CAN packet
 #define CAN_PACKET_VERSION 4
 
@@ -26,8 +23,6 @@ typedef struct {
   unsigned char checksum;
   unsigned char data[CANPACKET_DATA_SIZE_MAX];
 } __attribute__((packed, aligned(4))) CANPacket_t;
-
-const unsigned char dlc_to_len[] = {0U, 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 12U, 16U, 20U, 24U, 32U, 48U, 64U};
 
 #define GET_BUS(msg) ((msg)->bus)
 #define GET_LEN(msg) (dlc_to_len[(msg)->data_len_code])

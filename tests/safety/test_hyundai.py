@@ -11,7 +11,7 @@ from panda.tests.safety.hyundai_common import HyundaiButtonBase, HyundaiLongitud
 # 4 bit checkusm used in some hyundai messages
 # lives outside the can packer because we never send this msg
 def checksum(msg):
-  addr, t, dat, bus = msg
+  addr, dat, bus = msg
 
   chksum = 0
   if addr == 0x386:
@@ -40,7 +40,7 @@ def checksum(msg):
     ret = bytearray(dat)
     ret[6 if addr == 0x394 else 7] |= chksum << (4 if addr == 0x421 else 0)
 
-  return addr, t, ret, bus
+  return addr, ret, bus
 
 
 class TestHyundaiSafety(HyundaiButtonBase, common.PandaCarSafetyTest, common.DriverTorqueSteeringSafetyTest, common.SteerRequestCutSafetyTest):

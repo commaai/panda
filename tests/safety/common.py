@@ -30,7 +30,7 @@ class CANPackerPanda(CANPacker):
     msg = self.make_can_msg(name_or_addr, bus, values)
     if fix_checksum is not None:
       msg = fix_checksum(msg)
-    addr, _, dat, bus = msg
+    addr, dat, bus = msg
     return libpanda_py.make_CANPacket(addr, bus, dat)
 
 

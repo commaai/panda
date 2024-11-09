@@ -1,9 +1,11 @@
+#include "bxcan_declarations.h"
+
 // IRQs: CAN1_TX, CAN1_RX0, CAN1_SCE
 //       CAN2_TX, CAN2_RX0, CAN2_SCE
 //       CAN3_TX, CAN3_RX0, CAN3_SCE
 
-CAN_TypeDef *cans[] = {CAN1, CAN2, CAN3};
-uint8_t can_irq_number[3][3] = {
+CAN_TypeDef *cans[CAN_ARRAY_SIZE] = {CAN1, CAN2, CAN3};
+uint8_t can_irq_number[CAN_IRQS_ARRAY_SIZE][CAN_IRQS_ARRAY_SIZE] = {
   { CAN1_TX_IRQn, CAN1_RX0_IRQn, CAN1_SCE_IRQn },
   { CAN2_TX_IRQn, CAN2_RX0_IRQn, CAN2_SCE_IRQn },
   { CAN3_TX_IRQn, CAN3_RX0_IRQn, CAN3_SCE_IRQn },
@@ -21,6 +23,11 @@ bool can_set_speed(uint8_t can_number) {
     (unsigned int)(can_silent) & (1U << can_number)
   );
   return ret;
+}
+
+void can_clear_send(CAN_TypeDef *CANx, uint8_t can_number) {
+  can_health[can_number].can_core_reset_cnt += 1U;
+  llcan_clear_send(CANx);
 }
 
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
@@ -52,14 +59,13 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
       can_health[can_number].total_rx_lost_cnt += 1U;
       CANx->RF0R &= ~(CAN_RF0R_FOVR0);
     }
-    can_health[can_number].can_core_reset_cnt += 1U;
-    llcan_clear_send(CANx);
+    can_clear_send(CANx, can_number);
   }
 }
 
 // ***************************** CAN *****************************
 // CANx_SCE IRQ Handler
-void can_sce(uint8_t can_number) {
+static void can_sce(uint8_t can_number) {
   update_can_health_pkt(can_number, 1U);
 }
 
@@ -177,17 +183,17 @@ void can_rx(uint8_t can_number) {
   }
 }
 
-void CAN1_TX_IRQ_Handler(void) { process_can(0); }
-void CAN1_RX0_IRQ_Handler(void) { can_rx(0); }
-void CAN1_SCE_IRQ_Handler(void) { can_sce(0); }
+static void CAN1_TX_IRQ_Handler(void) { process_can(0); }
+static void CAN1_RX0_IRQ_Handler(void) { can_rx(0); }
+static void CAN1_SCE_IRQ_Handler(void) { can_sce(0); }
 
-void CAN2_TX_IRQ_Handler(void) { process_can(1); }
-void CAN2_RX0_IRQ_Handler(void) { can_rx(1); }
-void CAN2_SCE_IRQ_Handler(void) { can_sce(1); }
+static void CAN2_TX_IRQ_Handler(void) { process_can(1); }
+static void CAN2_RX0_IRQ_Handler(void) { can_rx(1); }
+static void CAN2_SCE_IRQ_Handler(void) { can_sce(1); }
 
-void CAN3_TX_IRQ_Handler(void) { process_can(2); }
-void CAN3_RX0_IRQ_Handler(void) { can_rx(2); }
-void CAN3_SCE_IRQ_Handler(void) { can_sce(2); }
+static void CAN3_TX_IRQ_Handler(void) { process_can(2); }
+static void CAN3_RX0_IRQ_Handler(void) { can_rx(2); }
+static void CAN3_SCE_IRQ_Handler(void) { can_sce(2); }
 
 bool can_init(uint8_t can_number) {
   bool ret = false;
