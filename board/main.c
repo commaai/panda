@@ -170,28 +170,6 @@ static void tick_handler(void) {
       set_power_save_state(power_save_status);
     }
 
-    #ifdef STM32H7
-      //while((SAI4_Block_A->SR & SAI_xSR_FLVL) != 0U) {
-        // uint32_t dat = SAI1_Block_A->DR;
-        // SAI4_Block_A->DR = 0x1234U;
-        //puth4(dat); print("\n");
-        // puth(BDMA->ISR); print("\n");
-        puth(SAI1_Block_A->DR); print(" "); puth(SAI4_Block_A->DR); print(" mic_buf_rx:"); puth(mic_rx_buf[0][5]); print(" mic_buf_tx:"); puth(mic_tx_buf[5]); print(" DMA CR:"); puth(DMA1_Stream0->CR); print(" NDTR:"); puth(BDMA_Channel1->CNDTR); print("\n");
-      //}
-
-      // if(rx_buf[0].buf[0] != 0U) {
-      //   print("----\n");
-      //   print("RX BUFS[0]: "); puth4(rx_buf[0].buf[0]); print(" "); puth4(rx_buf[1].buf[0]); print("\n");
-      //   print("RX BUFS[1000]: "); puth4(rx_buf[0].buf[1000]); print(" "); puth4(rx_buf[1].buf[1000]); print("\n");
-      //   // print("TX BUFS[0]: "); puth4(tx_buf[0].buf[0]); print(" "); puth4(tx_buf[1].buf[0]); print("\n");
-      //   print("TIM7: "); puth4(TIM7->CNT); print("\n");
-      //   print("DMA1_S1->NDTR: "); puth(DMA1_Stream1->NDTR); print("\n");
-      //   print("DMA1_S1->CR: "); puth(DMA1_Stream1->CR); print("\n");
-      //   print("DMA1_S1->LISR: "); puth(DMA1->LISR); print("\n");
-      //   print("----\n");
-      // }
-    #endif
-
     // decimated to 1Hz
     if (loop_counter == 0U) {
       can_live = pending_can_live;
