@@ -158,6 +158,7 @@ static void tick_handler(void) {
     usb_tick();
     harness_tick();
     simple_watchdog_kick();
+    sound_tick();
 
     // re-init everything that uses harness status
     if (harness.status != prev_harness_status) {

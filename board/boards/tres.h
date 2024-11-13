@@ -97,5 +97,6 @@ board board_tres = {
   .set_ir_power = tres_set_ir_power,
   .set_siren = fake_siren_set,
   .set_bootkick = tres_set_bootkick,
-  .read_som_gpio = tres_read_som_gpio
+  .read_som_gpio = tres_read_som_gpio,
+  .set_amp_enabled = unused_set_amp_enabled
 };
