@@ -99,7 +99,7 @@ jobs:
       - name: Build FW
         run: ${{ env.RUN }} "scons -j$(nproc)"
       - name: Run MISRA C:2012 analysis
-        timeout-minutes: 1
+        timeout-minutes: 2
         run: ${{ env.RUN }} "cd tests/misra && ./test_misra.sh"
       - name: MISRA mutation tests
         timeout-minutes: 5
