@@ -171,10 +171,6 @@ static void tick_handler(void) {
       set_power_save_state(power_save_status);
     }
 
-    #ifdef STM32H7
-    print("mic dat: "); puth(DFSDM1_Filter0->FLTRDATAR >> 8); print("\n");
-    #endif
-
     // decimated to 1Hz
     if (loop_counter == 0U) {
       can_live = pending_can_live;
