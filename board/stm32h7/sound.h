@@ -1,15 +1,9 @@
-
 #define SOUND_RX_BUF_SIZE 2000U
 #define SOUND_TX_BUF_SIZE (SOUND_RX_BUF_SIZE/2U)
 
 __attribute__((section(".sram4"))) static uint16_t sound_rx_buf[2][SOUND_RX_BUF_SIZE];
 
-typedef enum {
-  OFF = 0,
-  IDLE = 1,
-  PLAYING = 2,
-} SoundStatus;
-static SoundStatus sound_status = OFF;
+static uint8_t sound_idle_count;
 
 // Playback processing
 static void BDMA_Channel0_IRQ_Handler(void) {
@@ -24,10 +18,10 @@ static void BDMA_Channel0_IRQ_Handler(void) {
     tx_buf[i/2U] = ((sound_rx_buf[buf_idx][i] + (1UL << 14)) >> 3);
   }
 
-  if (sound_status == OFF) {
+  if (sound_idle_count == 0U) {
     current_board->set_amp_enabled(true);
   }
-  sound_status = PLAYING;
+  sound_idle_count = 2U;
 
   DMA1->LIFCR |= 0xF40;
   DMA1_Stream1->CR &= ~DMA_SxCR_EN;
@@ -37,16 +31,11 @@ static void BDMA_Channel0_IRQ_Handler(void) {
 }
 
 void sound_tick(void) {
-  switch (sound_status) {
-    case IDLE:
+  if (sound_idle_count > 0U) {
+    sound_idle_count--;
+    if (sound_idle_count == 0U) {
       current_board->set_amp_enabled(false);
-      sound_status = OFF;
-      break;
-    case PLAYING:
-      sound_status = IDLE;
-      break;
-    default:
-      break;
+    }
   }
 }
 
