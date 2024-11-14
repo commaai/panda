@@ -35,14 +35,14 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
 
     // Cruise state
     if(addr == 0x286) {
-      vehicle_moving = ((GET_BYTE(to_push, 5) & 0x1CU) >> 2) != 3U;
-
       int cruise_state = ((GET_BYTE(to_push, 1) << 1 ) >> 5);
       bool cruise_engaged = (cruise_state == 2) ||  // ENABLED
                             (cruise_state == 3) ||  // STANDSTILL
                             (cruise_state == 4) ||  // OVERRIDE
                             (cruise_state == 6) ||  // PRE_FAULT
                             (cruise_state == 7);    // PRE_CANCEL
+
+      vehicle_moving = cruise_state != 3; // STANDSTILL
       pcm_cruise_check(cruise_engaged);
     }
   }
@@ -102,6 +102,7 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
 
   if(addr == 0x2b9) {
     // DAS_control: longitudinal control message
+    int acc_state = ((GET_BYTE(to_send, 1) & 0xF0U) >> 4);
     if (tesla_longitudinal) {
       // No AEB events may be sent by openpilot
       int aeb_event = GET_BYTE(to_send, 2) & 0x03U;
@@ -125,6 +126,8 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
 
       violation |= longitudinal_accel_checks(raw_accel_max, TESLA_LONG_LIMITS);
       violation |= longitudinal_accel_checks(raw_accel_min, TESLA_LONG_LIMITS);
+    } else if(acc_state == 13) {
+      // Allow to cancel if not using openpilot longitudinal
     } else {
       violation = true;
     }

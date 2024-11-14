@@ -14,7 +14,7 @@ class TestTeslaSafetyBase(common.PandaCarSafetyTest):
   FWD_BLACKLISTED_ADDRS = {2: [MSG_DAS_steeringControl, MSG_APS_eacMonitor]}
   TX_MSGS = [[MSG_DAS_steeringControl, 0], [MSG_APS_eacMonitor, 0], [MSG_DAS_Control, 0]]
 
-  STANDSTILL_THRESHOLD = 1
+  STANDSTILL_THRESHOLD = 0.1
   GAS_PRESSED_THRESHOLD = 3
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
@@ -34,7 +34,7 @@ class TestTeslaSafetyBase(common.PandaCarSafetyTest):
     return self.packer.make_can_msg_panda("DI_speed", 0, values)
 
   def _vehicle_moving_msg(self, speed: float):
-    values = {"DI_vehicleHoldState": 3 if speed <= self.STANDSTILL_THRESHOLD else 0}
+    values = {"DI_cruiseState": 3 if speed <= self.STANDSTILL_THRESHOLD else 2}
     return self.packer.make_can_msg_panda("DI_state", 0, values)
 
   def _user_gas_msg(self, gas):
