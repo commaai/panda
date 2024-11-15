@@ -32,10 +32,11 @@
 void LPTIM1_IRQHandler(void) {
   static uint8_t cnt = 0;
   if (LPTIM1->ISR & LPTIM_ISR_ARRM) {
+    uptime_cnt++;
     LPTIM1->ICR |= LPTIM_ICR_ARRMCF;
     current_board->set_siren((cnt++ % 2 == 0U));
   } else {
-    assert_fatal(false, "shouldn't happen");
+    //assert_fatal(false, "shouldn't happen");
   }
 }
 #endif
@@ -296,7 +297,7 @@ static void tick_handler(void) {
       }
 
       // on to the next one
-      uptime_cnt += 1U;
+      //uptime_cnt += 1U;
       safety_mode_cnt += 1U;
       ignition_can_cnt += 1U;
 
@@ -380,7 +381,15 @@ int main(void) {
   enable_interrupts();
 
   // LED should keep on blinking all the time
+  NVIC_DisableIRQ(TICK_TIMER_IRQ);
   while (true) {
+    __WFI();
+    SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
+    /*
+    SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+    */
+    continue;
+
     if (power_save_status == POWER_SAVE_STATUS_DISABLED) {
       #ifdef DEBUG_FAULTS
       if (fault_status == FAULT_STATUS_NONE) {
