@@ -127,7 +127,8 @@ void peripherals_init(void) {
   RCC->APB4ENR |= RCC_APB4ENR_SAI4EN;  // SAI4
 
   // Timers
-  RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;  // clock source timer
+  RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;     // clock source timer
+  RCC->APB1LENR |= RCC_APB1LENR_LPTIM1EN; // low power siren timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;  // main counter
   RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;  // fan pwm
   RCC->APB1LENR |= RCC_APB1LENR_TIM4EN;  // beeper source
@@ -135,6 +136,19 @@ void peripherals_init(void) {
   RCC->APB1LENR |= RCC_APB1LENR_TIM7EN;  // DMA trigger timer
   RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;  // tick timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM12EN;  // slow loop
+
+  // *** LPTIM ***
+  // prescaler 1:128
+  LPTIM1->CFGR &= ~LPTIM_CFGR_PRESC;
+  LPTIM1->CFGR |= (7 << LPTIM_CFGR_PRESC_Pos);
+
+  LPTIM1->CR |= LPTIM_CR_ENABLE;
+  LPTIM1->CMP = 0;
+  LPTIM1->ARR = 58875;
+  LPTIM1->CR |= LPTIM_CR_CNTSTRT;
+
+  LPTIM1->IER |= LPTIM_IER_ARRMIE;
+  NVIC_EnableIRQ(LPTIM1_IRQn);
 
 #ifdef PANDA_JUNGLE
   RCC->AHB3ENR |= RCC_AHB3ENR_SDMMC1EN; // SDMMC
