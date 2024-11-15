@@ -7,6 +7,7 @@
 // ////////////////////////// //
 
 static void cuatro_set_led(uint8_t color, bool enabled) {
+  if (enabled) enabled = false;
   switch (color) {
     case LED_RED:
       set_gpio_output(GPIOD, 15, !enabled);

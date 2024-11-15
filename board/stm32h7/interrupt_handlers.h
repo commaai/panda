@@ -88,7 +88,7 @@ void LTDC_IRQHandler(void) {handle_interrupt(LTDC_IRQn);}
 void LTDC_ER_IRQHandler(void) {handle_interrupt(LTDC_ER_IRQn);}
 void DMA2D_IRQHandler(void) {handle_interrupt(DMA2D_IRQn);}
 void OCTOSPI1_IRQHandler(void) {handle_interrupt(OCTOSPI1_IRQn);}
-void LPTIM1_IRQHandler(void) {handle_interrupt(LPTIM1_IRQn);}
+//void LPTIM1_IRQHandler(void) {handle_interrupt(LPTIM1_IRQn);}
 void CEC_IRQHandler(void) {handle_interrupt(CEC_IRQn);}
 void I2C4_EV_IRQHandler(void) {handle_interrupt(I2C4_EV_IRQn);}
 void I2C4_ER_IRQHandler(void) {handle_interrupt(I2C4_ER_IRQn);}

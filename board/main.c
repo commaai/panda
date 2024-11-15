@@ -28,6 +28,19 @@
 #include "can_comms.h"
 #include "main_comms.h"
 
+#ifdef STM32H7
+void LPTIM1_IRQHandler(void) {
+  static uint8_t cnt = 0;
+  if (LPTIM1->ISR & LPTIM_ISR_ARRM) {
+    LPTIM1->ICR |= LPTIM_ICR_ARRMCF;
+    current_board->set_siren((cnt++ % 2 == 0U));
+  } else {
+    assert_fatal(false, "shouldn't happen");
+  }
+}
+#endif
+
+
 
 // ********************* Serial debugging *********************
 
@@ -151,7 +164,7 @@ static void tick_handler(void) {
   if (TICK_TIMER->SR != 0U) {
 
     // siren
-    current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
+    //current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
 
     // tick drivers at 8Hz
     fan_tick();
@@ -171,8 +184,17 @@ static void tick_handler(void) {
       set_power_save_state(power_save_status);
     }
 
+   if (loop_counter == 0U) {
+
+      if (siren_countdown > 0U) {
+        siren_countdown -= 1U;
+      }
+
+   }
+
+
     // decimated to 1Hz
-    if (loop_counter == 0U) {
+    if (true) {
       can_live = pending_can_live;
 
       //puth(usart1_dma); print(" "); puth(DMA2_Stream5->M0AR); print(" "); puth(DMA2_Stream5->NDTR); print("\n");
@@ -211,10 +233,6 @@ static void tick_handler(void) {
         heartbeat_disabled = false;
       }
 
-      if (siren_countdown > 0U) {
-        siren_countdown -= 1U;
-      }
-
       if (controls_allowed || heartbeat_engaged) {
         controls_allowed_countdown = 30U;
       } else if (controls_allowed_countdown > 0U) {
@@ -233,22 +251,19 @@ static void tick_handler(void) {
         heartbeat_engaged_mismatches = 0U;
       }
 
-      if (!heartbeat_disabled) {
+      if (!heartbeat_lost) {
         // if the heartbeat has been gone for a while, go to SILENT safety mode and enter power save
-        if (heartbeat_counter >= (check_started() ? HEARTBEAT_IGNITION_CNT_ON : HEARTBEAT_IGNITION_CNT_OFF)) {
+        if (current_board->read_voltage_mV() < 150) {
           print("device hasn't sent a heartbeat for 0x");
           puth(heartbeat_counter);
           print(" seconds. Safety is set to SILENT mode.\n");
 
-          if (controls_allowed_countdown > 0U) {
-            siren_countdown = 3U;
+          if (true) {
+            siren_countdown = 1U;
             controls_allowed_countdown = 0U;
           }
 
-          // set flag to indicate the heartbeat was lost
-          if (is_car_safety_mode(current_safety_mode)) {
-            heartbeat_lost = true;
-          }
+          heartbeat_lost = true;
 
           // clear heartbeat engaged state
           heartbeat_engaged = false;
