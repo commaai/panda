@@ -86,54 +86,6 @@ static void red_chiplet_set_fan_or_usb_load_switch(bool enabled) {
 }
 
 static void red_chiplet_init(void) {
-  common_init_gpio();
-
-  // A8, A3: OBD_SBU1_RELAY, OBD_SBU2_RELAY
-  set_gpio_output_type(GPIOA, 8, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_pullup(GPIOA, 8, PULL_NONE);
-  set_gpio_output(GPIOA, 8, 1);
-  set_gpio_mode(GPIOA, 8, MODE_OUTPUT);
-
-  set_gpio_output_type(GPIOA, 3, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_pullup(GPIOA, 3, PULL_NONE);
-  set_gpio_output(GPIOA, 3, 1);
-  set_gpio_mode(GPIOA, 3, MODE_OUTPUT);
-
-  // G11,B10,D7,B11: transceiver enable
-  set_gpio_pullup(GPIOG, 11, PULL_NONE);
-  set_gpio_mode(GPIOG, 11, MODE_OUTPUT);
-
-  set_gpio_pullup(GPIOB, 10, PULL_NONE);
-  set_gpio_mode(GPIOB, 10, MODE_OUTPUT);
-
-  set_gpio_pullup(GPIOD, 7, PULL_NONE);
-  set_gpio_mode(GPIOD, 7, MODE_OUTPUT);
-
-  set_gpio_pullup(GPIOB, 11, PULL_NONE);
-  set_gpio_mode(GPIOB, 11, MODE_OUTPUT);
-
-  // D3: usb load switch
-  set_gpio_pullup(GPIOD, 3, PULL_NONE);
-  set_gpio_mode(GPIOD, 3, MODE_OUTPUT);
-
-  // B0: 5VOUT_S
-  set_gpio_pullup(GPIOB, 0, PULL_NONE);
-  set_gpio_mode(GPIOB, 0, MODE_ANALOG);
-
-  // Initialize harness
-  harness_init();
-
-
-  // Enable CAN transceivers
-  red_chiplet_enable_can_transceivers(true);
-
-  // Disable LEDs
-  red_set_led(LED_RED, false);
-  red_set_led(LED_GREEN, false);
-  red_set_led(LED_BLUE, false);
-
-  // Set normal CAN mode
-  red_chiplet_set_can_mode(CAN_MODE_NORMAL);
 }
 
 static harness_configuration red_chiplet_harness_config = {

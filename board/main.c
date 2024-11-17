@@ -30,18 +30,19 @@
 
 #ifdef STM32H7
 void LPTIM1_IRQHandler(void) {
-  static uint8_t cnt = 0;
+  //static uint8_t cnt = 0;
+  static bool on = true;
   if (LPTIM1->ISR & LPTIM_ISR_ARRM) {
-    uptime_cnt++;
     LPTIM1->ICR |= LPTIM_ICR_ARRMCF;
-    current_board->set_siren((cnt++ % 2 == 0U));
+
+    //uptime_cnt++;
+    on = !on;
+    //current_board->set_siren(on);
   } else {
     //assert_fatal(false, "shouldn't happen");
   }
 }
 #endif
-
-
 
 // ********************* Serial debugging *********************
 
@@ -322,10 +323,6 @@ int main(void) {
   clock_init();
   peripherals_init();
   detect_board_type();
-  // red+green leds enabled until succesful USB/SPI init, as a debug indicator
-  current_board->set_led(LED_RED, true);
-  current_board->set_led(LED_GREEN, true);
-  adc_init();
 
   // print hello
   print("\n\n\n************************ MAIN START ************************\n");
@@ -337,7 +334,21 @@ int main(void) {
   print("  Board type: 0x"); puth(hw_type); print("\n");
 
   // init board
+
   current_board->init();
+  //enable_interrupts();
+  //NVIC_EnableIRQ(LPTIM1_IRQn);
+  while (true) {
+    current_board->set_siren(true);
+    delay(512000U);
+    current_board->set_siren(false);
+    delay(512000U);
+    continue;
+
+    //SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+    __WFI();
+    SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
+  }
 
   // panda has an FPU, let's use it!
   enable_fpu();
@@ -383,10 +394,10 @@ int main(void) {
   // LED should keep on blinking all the time
   NVIC_DisableIRQ(TICK_TIMER_IRQ);
   while (true) {
+    //SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
     __WFI();
     SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
     /*
-    SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
     */
     continue;
 

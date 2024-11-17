@@ -33,7 +33,7 @@ if __name__ == "__main__":
   time.sleep(1)
   gpio_set(GPIO.STM_RST_N, 0)
   gpio_set(GPIO.STM_BOOT0, 0)
-  time.sleep(1)
+  time.sleep(0.2)
 
   print("flashing bootstub")
   PandaDFU(None).recover()
