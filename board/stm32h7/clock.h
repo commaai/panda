@@ -109,6 +109,8 @@ void clock_init(void) {
   register_set(&(RCC->D2CCIP2R), RCC_D2CCIP2R_USBSEL_1 | RCC_D2CCIP2R_USBSEL_0, RCC_D2CCIP2R_USBSEL);
   // Configure clock source for FDCAN (PLL1Q at 80Mhz)
   register_set(&(RCC->D2CCIP1R), RCC_D2CCIP1R_FDCANSEL_0, RCC_D2CCIP1R_FDCANSEL);
+  // Configure clock source for DFSDM1
+  register_set_bits(&(RCC->D2CCIP1R), RCC_D2CCIP1R_DFSDM1SEL);
   // Configure clock source for ADC1,2,3 (per_ck(currently HSE))
   register_set(&(RCC->D3CCIPR), RCC_D3CCIPR_ADCSEL_1, RCC_D3CCIPR_ADCSEL);
   //Enable the Clock Security System
