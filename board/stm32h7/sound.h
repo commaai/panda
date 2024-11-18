@@ -5,31 +5,6 @@ __attribute__((section(".sram4"))) static uint16_t sound_rx_buf[2][SOUND_RX_BUF_
 
 static uint8_t sound_idle_count;
 
-// Playback processing
-static void BDMA_Channel0_IRQ_Handler(void) {
-  __attribute__((section(".sram4"))) static uint16_t tx_buf[SOUND_TX_BUF_SIZE];
-
-  BDMA->IFCR |= BDMA_IFCR_CGIF0; // clear flag
-
-  // process samples (shift to 12b and bias to be unsigned)
-  // since we are playing mono and receiving stereo, we take every other sample
-  uint8_t buf_idx = (((BDMA_Channel0->CCR & BDMA_CCR_CT) >> BDMA_CCR_CT_Pos) == 1U) ? 0U : 1U;
-  for (uint16_t i=0U; i < SOUND_RX_BUF_SIZE; i += 2U) {
-    tx_buf[i/2U] = ((sound_rx_buf[buf_idx][i] + (1UL << 14)) >> 3);
-  }
-
-  if (sound_idle_count == 0U) {
-    current_board->set_amp_enabled(true);
-  }
-  sound_idle_count = 2U;
-
-  DMA1->LIFCR |= 0xF40;
-  DMA1_Stream1->CR &= ~DMA_SxCR_EN;
-  register_set(&DMA1_Stream1->M0AR, (uint32_t) tx_buf, 0xFFFFFFFFU);
-  DMA1_Stream1->NDTR = SOUND_TX_BUF_SIZE;
-  DMA1_Stream1->CR |= DMA_SxCR_EN;
-}
-
 void sound_tick(void) {
   if (sound_idle_count > 0U) {
     sound_idle_count--;
@@ -37,6 +12,40 @@ void sound_tick(void) {
       current_board->set_amp_enabled(false);
     }
   }
+}
+
+// Playback processing
+static void BDMA_Channel0_IRQ_Handler(void) {
+  __attribute__((section(".sram4"))) static uint16_t tx_buf[SOUND_TX_BUF_SIZE];
+
+  BDMA->IFCR |= BDMA_IFCR_CGIF0; // clear flag
+
+  uint8_t buf_idx = (((BDMA_Channel0->CCR & BDMA_CCR_CT) >> BDMA_CCR_CT_Pos) == 1U) ? 0U : 1U;
+
+  // process samples (shift to 12b and bias to be unsigned)
+  bool sound_playing = false;
+  for (uint16_t i=0U; i < SOUND_RX_BUF_SIZE; i += 2U) {
+    // since we are playing mono and receiving stereo, we take every other sample
+    tx_buf[i/2U] = ((sound_rx_buf[buf_idx][i] + (1UL << 14)) >> 3);
+    if (sound_rx_buf[buf_idx][i] > 0U) {
+      sound_playing = true;
+    }
+  }
+
+  // manage amp state
+  if (sound_playing) {
+    if (sound_idle_count == 0U) {
+      current_board->set_amp_enabled(true);
+    }
+    sound_idle_count = 4U;
+  }
+  sound_tick();
+
+  DMA1->LIFCR |= 0xF40;
+  DMA1_Stream1->CR &= ~DMA_SxCR_EN;
+  register_set(&DMA1_Stream1->M0AR, (uint32_t) tx_buf, 0xFFFFFFFFU);
+  DMA1_Stream1->NDTR = SOUND_TX_BUF_SIZE;
+  DMA1_Stream1->CR |= DMA_SxCR_EN;
 }
 
 void sound_init(void) {
