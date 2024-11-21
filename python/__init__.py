@@ -31,7 +31,7 @@ def calculate_checksum(data):
     res ^= b
   return res
 
-def pack_can_buffer(arr):
+def pack_can_buffer(arr, fd=False):
   snds = [b'']
   for address, dat, bus in arr:
     assert len(dat) in LEN_TO_DLC
@@ -41,7 +41,7 @@ def pack_can_buffer(arr):
     data_len_code = LEN_TO_DLC[len(dat)]
     header = bytearray(CANPACKET_HEAD_SIZE)
     word_4b = address << 3 | extended << 2
-    header[0] = (data_len_code << 4) | (bus << 1)
+    header[0] = (data_len_code << 4) | (bus << 1) | int(fd)
     header[1] = word_4b & 0xFF
     header[2] = (word_4b >> 8) & 0xFF
     header[3] = (word_4b >> 16) & 0xFF
@@ -807,6 +807,9 @@ class Panda:
   def set_canfd_non_iso(self, bus, non_iso):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xfc, bus, int(non_iso), b'')
 
+  def set_canfd_auto(self, bus, auto):
+      self._handle.controlWrite(Panda.REQUEST_OUT, 0xe8, bus, int(auto), b'')
+
   def set_uart_baud(self, uart, rate):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe4, uart, int(rate / 300), b'')
 
@@ -828,15 +831,15 @@ class Panda:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xc0, 0, 0, b'')
 
   @ensure_can_packet_version
-  def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
-    snds = pack_can_buffer(arr)
+  def can_send_many(self, arr, *, fd=False, timeout=CAN_SEND_TIMEOUT_MS):
+    snds = pack_can_buffer(arr, fd=fd)
     for tx in snds:
       while len(tx) > 0:
         bs = self._handle.bulkWrite(3, tx, timeout=timeout)
         tx = tx[bs:]
 
-  def can_send(self, addr, dat, bus, timeout=CAN_SEND_TIMEOUT_MS):
-    self.can_send_many([[addr, dat, bus]], timeout=timeout)
+  def can_send(self, addr, dat, bus, *, fd=False, timeout=CAN_SEND_TIMEOUT_MS):
+    self.can_send_many([[addr, dat, bus]], fd=fd, timeout=timeout)
 
   @ensure_can_packet_version
   def can_recv(self):
