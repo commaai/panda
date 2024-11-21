@@ -105,6 +105,20 @@ jobs:
         timeout-minutes: 5
         run: ${{ env.RUN }} "cd tests/misra && pytest -n8 test_mutation.py"
 
+  misra_mutation:
+    name: MISRA C:2012 Mutation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Docker image
+        run: eval "$BUILD"
+      - name: Build FW
+        run: ${{ env.RUN }} "scons -j$(nproc)"
+      - name: MISRA mutation tests
+        timeout-minutes: 5
+        run: ${{ env.RUN }} "cd tests/misra && pytest -n8 test_mutation.py"
+
   mutation:
     name: Mutation tests
     runs-on: ubuntu-latest
