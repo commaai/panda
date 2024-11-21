@@ -12,7 +12,7 @@ static void cuatro_set_led(uint8_t color, bool enabled) {
       set_gpio_output(GPIOD, 15, !enabled);
       break;
     case LED_GREEN:
-      set_gpio_output(GPIOD, 14, !enabled);
+      set_gpio_output(GPIOB, 2, !enabled);
       break;
     case LED_BLUE:
       set_gpio_output(GPIOE, 2, !enabled);
@@ -71,12 +71,20 @@ static void cuatro_set_bootkick(BootState state) {
   //set_gpio_output(GPIOC, 12, state != BOOT_RESET);
 }
 
+static void cuatro_set_siren(bool enabled){
+  beeper_enable(enabled);
+}
+
+static void cuatro_set_amp_enabled(bool enabled){
+  set_gpio_output(GPIOA, 5, enabled);
+}
+
 static void cuatro_init(void) {
   red_chiplet_init();
 
   // init LEDs as open drain
   set_gpio_output_type(GPIOE, 2, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_output_type(GPIOD, 14, OUTPUT_TYPE_OPEN_DRAIN);
+  set_gpio_output_type(GPIOB, 2, OUTPUT_TYPE_OPEN_DRAIN);
   set_gpio_output_type(GPIOD, 15, OUTPUT_TYPE_OPEN_DRAIN);
 
   // Power readout
@@ -120,6 +128,21 @@ static void cuatro_init(void) {
 
   // Clock source
   clock_source_init();
+
+  // Beeper
+  set_gpio_alternate(GPIOD, 14, GPIO_AF2_TIM4);
+  beeper_init();
+
+  // Sound codec
+  cuatro_set_amp_enabled(false);
+  set_gpio_alternate(GPIOA, 2, GPIO_AF8_SAI4);    // SAI4_SCK_B
+  set_gpio_alternate(GPIOC, 0, GPIO_AF8_SAI4);    // SAI4_FS_B
+  set_gpio_alternate(GPIOD, 11, GPIO_AF10_SAI4);  // SAI4_SD_A
+  set_gpio_alternate(GPIOE, 3, GPIO_AF8_SAI4);    // SAI4_SD_B
+  set_gpio_alternate(GPIOE, 4, GPIO_AF2_SAI1);    // SAI1_D2
+  set_gpio_alternate(GPIOE, 5, GPIO_AF2_SAI1);    // SAI1_CK2
+  set_gpio_alternate(GPIOE, 6, GPIO_AF10_SAI4);   // SAI4_MCLK_B
+  sound_init();
 }
 
 board board_cuatro = {
@@ -143,7 +166,8 @@ board board_cuatro = {
   .read_current_mA = cuatro_read_current_mA,
   .set_fan_enabled = cuatro_set_fan_enabled,
   .set_ir_power = tres_set_ir_power,
-  .set_siren = unused_set_siren,
+  .set_siren = cuatro_set_siren,
   .set_bootkick = cuatro_set_bootkick,
-  .read_som_gpio = tres_read_som_gpio
+  .read_som_gpio = tres_read_som_gpio,
+  .set_amp_enabled = cuatro_set_amp_enabled
 };
