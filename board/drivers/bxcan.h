@@ -89,6 +89,7 @@ void process_can(uint8_t can_number) {
       if ((CANx->TSR & CAN_TSR_RQCP0) == CAN_TSR_RQCP0) {
         if ((CANx->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
           CANPacket_t to_push;
+          to_push.fd = 0U;
           to_push.returned = 1U;
           to_push.rejected = 0U;
           to_push.extended = (CANx->sTxMailBox[0].TIR >> 2) & 0x1U;
@@ -144,6 +145,7 @@ void can_rx(uint8_t can_number) {
     // add to my fifo
     CANPacket_t to_push;
 
+    to_push.fd = 0U;
     to_push.returned = 0U;
     to_push.rejected = 0U;
     to_push.extended = (CANx->sFIFOMailBox[0].RIR >> 2) & 0x1U;
@@ -159,6 +161,7 @@ void can_rx(uint8_t can_number) {
     if (bus_fwd_num != -1) {
       CANPacket_t to_send;
 
+      to_send.fd = 0U;
       to_send.returned = 0U;
       to_send.rejected = 0U;
       to_send.extended = to_push.extended; // TXRQ
