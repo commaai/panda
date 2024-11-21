@@ -319,8 +319,8 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xe8: set can-fd auto swithing mode
     case 0xe8:
-        bus_config[req->param1].canfd_auto = req->param2 > 0U;
-        break;
+      bus_config[req->param1].canfd_auto = req->param2 > 0U;
+      break;
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:
       if (req->param1 == 0xFFFFU) {
