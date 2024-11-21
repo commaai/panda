@@ -101,8 +101,8 @@ void process_can(uint8_t can_number) {
 
           fifo->header[0] = (to_send.extended << 30) | ((to_send.extended != 0U) ? (to_send.addr) : (to_send.addr << 18));
 
-          // If canfd_auto is set, outgoing packets will be automatically sent as CAN FD if an incoming CAN-FD packet was received
-          bool fd = bus_config[can_number].canfd_auto ? bus_config[can_number].canfd_enabled : to_send.fd;
+          // If canfd_auto is set, outgoing packets will be automatically sent as CAN-FD if an incoming CAN-FD packet was seen
+          bool fd = bus_config[can_number].canfd_auto ? bus_config[can_number].canfd_enabled : (bool)(to_send.fd > 0U);
           uint32_t canfd_enabled_header = fd ? (1UL << 21) : 0UL;
 
           uint32_t brs_enabled_header = bus_config[can_number].brs_enabled ? (1UL << 20) : 0UL;
@@ -199,7 +199,7 @@ void can_rx(uint8_t can_number) {
     if (bus_fwd_num != -1) {
       CANPacket_t to_send;
 
-      to_push.fd = to_push.fd;
+      to_send.fd = to_push.fd;
       to_send.returned = 0U;
       to_send.rejected = 0U;
       to_send.extended = to_push.extended;
