@@ -52,6 +52,7 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
 #define MSG_SUBARU_Wheel_Speeds          0x13a
 
 #define MSG_SUBARU_ES_LKAS               0x122
+#define MSG_SUBARU_ES_LKAS_ANGLE         0x124
 #define MSG_SUBARU_ES_Brake              0x220
 #define MSG_SUBARU_ES_Distance           0x221
 #define MSG_SUBARU_ES_Status             0x222
@@ -95,6 +96,7 @@ const LongitudinalLimits SUBARU_LONG_LIMITS = {
 
 static bool subaru_gen2 = false;
 static bool subaru_longitudinal = false;
+static bool subaru_lkas_angle = false;
 
 const CanMsg SUBARU_TX_MSGS[] = {
   SUBARU_COMMON_TX_MSGS(SUBARU_MAIN_BUS, MSG_SUBARU_ES_LKAS)
@@ -132,10 +134,6 @@ RxCheck subaru_gen2_rx_checks[] = {
 const uint16_t SUBARU_PARAM_GEN2 = 1;
 const uint16_t SUBARU_PARAM_LONGITUDINAL = 2;
 const uint16_t SUBARU_PARAM_LKAS_ANGLE = 4;
-
-bool subaru_gen2 = false;
-bool subaru_longitudinal = false;
-bool subaru_lkas_angle = false;
 
 static uint32_t subaru_get_checksum(const CANPacket_t *to_push) {
   return (uint8_t)GET_BYTE(to_push, 0);
