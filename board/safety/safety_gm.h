@@ -216,9 +216,9 @@ static safety_config gm_init(uint16_t param) {
     {.msg = {{0x184, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},
     {.msg = {{0x34A, 0, 5, .frequency = 10U}, { 0 }, { 0 }}},
     {.msg = {{0x1E1, 0, 7, .frequency = 10U}, { 0 }, { 0 }}},
-    {.msg = {{0xBE, 0, 6, .frequency = 10U},    // Volt, Silverado, Acadia Denali
-             {0xBE, 0, 7, .frequency = 10U},    // Bolt EUV
-             {0xBE, 0, 8, .frequency = 10U}}},  // Escalade
+   // {.msg = {{0xBE, 0, 6, .frequency = 10U},    // Volt, Silverado, Acadia Denali
+   //          {0xBE, 0, 7, .frequency = 10U},    // Bolt EUV
+   //          {0xBE, 0, 8, .frequency = 10U}}},  // Escalade
     {.msg = {{0x1C4, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},
     {.msg = {{0xC9, 0, 8, .frequency = 10U}, { 0 }, { 0 }}},
   };
