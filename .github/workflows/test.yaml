@@ -88,8 +88,8 @@ jobs:
                           scons -j$(nproc) ${{ matrix.flags }} && \
                           tests/safety/test.sh"
 
-  misra:
-    name: MISRA C:2012
+  misra_linter:
+    name: MISRA C:2012 Linter
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -101,6 +101,17 @@ jobs:
       - name: Run MISRA C:2012 analysis
         timeout-minutes: 2
         run: ${{ env.RUN }} "cd tests/misra && ./test_misra.sh"
+
+  misra_mutation:
+    name: MISRA C:2012 Mutation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Docker image
+        run: eval "$BUILD"
+      - name: Build FW
+        run: ${{ env.RUN }} "scons -j$(nproc)"
       - name: MISRA mutation tests
         timeout-minutes: 5
         run: ${{ env.RUN }} "cd tests/misra && pytest -n8 test_mutation.py"

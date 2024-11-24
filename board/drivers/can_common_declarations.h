@@ -13,6 +13,7 @@ typedef struct {
   int8_t forwarding_bus;
   uint32_t can_speed;
   uint32_t can_data_speed;
+  bool canfd_auto;
   bool canfd_enabled;
   bool brs_enabled;
   bool canfd_non_iso;
