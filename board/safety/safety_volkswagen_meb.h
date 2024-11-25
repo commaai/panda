@@ -22,7 +22,7 @@ static uint8_t volkswagen_crc8_lut_8h2f[256]; // Static lookup table for CRC8 po
 static int volkswagen_steer_power_prev = 0;
 
 static bool vw_meb_get_longitudinal_allowed_override(void) {
-  return controls_allowed && gas_pressed_prev;
+  return controls_allowed && (gas_pressed_prev || gas_pressed);
 }
 
 static bool vw_meb_max_limit_check(int val, const int MAX_VAL, const int MIN_VAL) {
