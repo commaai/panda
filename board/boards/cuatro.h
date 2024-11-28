@@ -87,6 +87,10 @@ static void cuatro_init(void) {
   set_gpio_output_type(GPIOB, 2, OUTPUT_TYPE_OPEN_DRAIN);
   set_gpio_output_type(GPIOD, 15, OUTPUT_TYPE_OPEN_DRAIN);
 
+  // more open drain
+  set_gpio_output_type(GPIOD, 3, OUTPUT_TYPE_OPEN_DRAIN); // FAN_EN
+  set_gpio_output_type(GPIOC, 12, OUTPUT_TYPE_OPEN_DRAIN); // VBAT_EN
+
   // Power readout
   set_gpio_mode(GPIOC, 5, MODE_ANALOG);
   set_gpio_mode(GPIOA, 6, MODE_ANALOG);
