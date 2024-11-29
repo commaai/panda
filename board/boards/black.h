@@ -128,11 +128,6 @@ static void black_init(void) {
 
   // Enable CAN transceivers
   black_enable_can_transceivers(true);
-
-  // Disable LEDs
-  black_set_led(LED_RED, false);
-  black_set_led(LED_GREEN, false);
-  black_set_led(LED_BLUE, false);
 }
 
 static void black_init_bootloader(void) {

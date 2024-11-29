@@ -155,11 +155,6 @@ static void dos_init(void) {
   // Enable CAN transceivers
   dos_enable_can_transceivers(true);
 
-  // Disable LEDs
-  dos_set_led(LED_RED, false);
-  dos_set_led(LED_GREEN, false);
-  dos_set_led(LED_BLUE, false);
-
   // Bootkick
   dos_set_bootkick(true);
 
