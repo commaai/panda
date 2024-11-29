@@ -163,9 +163,6 @@ static void dos_init(void) {
   // Bootkick
   dos_set_bootkick(true);
 
-  // Set normal CAN mode
-  dos_set_can_mode(CAN_MODE_NORMAL);
-
   // Init clock source (camera strobe) using PWM
   clock_source_init();
 }

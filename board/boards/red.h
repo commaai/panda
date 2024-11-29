@@ -152,9 +152,6 @@ static void red_init(void) {
   red_set_led(LED_RED, false);
   red_set_led(LED_GREEN, false);
   red_set_led(LED_BLUE, false);
-
-  // Set normal CAN mode
-  red_set_can_mode(CAN_MODE_NORMAL);
 }
 
 static harness_configuration red_harness_config = {

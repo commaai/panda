@@ -160,9 +160,6 @@ static void uno_init(void) {
   uno_set_led(LED_GREEN, false);
   uno_set_led(LED_BLUE, false);
 
-  // Set normal CAN mode
-  uno_set_can_mode(CAN_MODE_NORMAL);
-
   // Switch to phone usb mode if harness connection is powered by less than 7V
   if(white_read_voltage_mV() < 7000U){
     uno_set_usb_switch(true);
