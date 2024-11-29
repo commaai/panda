@@ -152,10 +152,6 @@ static void white_grey_init(void) {
   set_gpio_alternate(GPIOC, 11, GPIO_AF7_USART3);
   set_gpio_pullup(GPIOC, 11, PULL_UP);
 
-
-  // Enable CAN transceivers
-  white_enable_can_transceivers(true);
-
   // Init usb power mode
   // Init in CDP mode only if panda is powered by 12V.
   // Otherwise a PC would not be able to flash a standalone panda

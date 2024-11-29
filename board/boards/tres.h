@@ -128,9 +128,6 @@ static void tres_init(void) {
   // Initialize harness
   harness_init();
 
-  // Enable CAN transceivers
-  tres_enable_can_transceivers(true);
-
   // C2: SOM GPIO used as input (fan control at boot)
   set_gpio_mode(GPIOC, 2, MODE_INPUT);
   set_gpio_pullup(GPIOC, 2, PULL_DOWN);

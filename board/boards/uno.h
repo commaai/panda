@@ -151,10 +151,6 @@ static void uno_init(void) {
   // Initialize harness
   harness_init();
 
-
-  // Enable CAN transceivers
-  uno_enable_can_transceivers(true);
-
   // Switch to phone usb mode if harness connection is powered by less than 7V
   if(white_read_voltage_mV() < 7000U){
     uno_set_usb_switch(true);

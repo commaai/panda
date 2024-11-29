@@ -143,10 +143,6 @@ static void red_init(void) {
 
   // Initialize harness
   harness_init();
-
-
-  // Enable CAN transceivers
-  red_enable_can_transceivers(true);
 }
 
 static harness_configuration red_harness_config = {
