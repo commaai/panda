@@ -136,9 +136,6 @@ static void tres_init(void) {
   red_set_led(LED_GREEN, false);
   red_set_led(LED_BLUE, false);
 
-  // Set normal CAN mode
-  tres_set_can_mode(CAN_MODE_NORMAL);
-
   // C2: SOM GPIO used as input (fan control at boot)
   set_gpio_mode(GPIOC, 2, MODE_INPUT);
   set_gpio_pullup(GPIOC, 2, PULL_DOWN);

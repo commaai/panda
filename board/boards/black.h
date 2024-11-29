@@ -126,7 +126,6 @@ static void black_init(void) {
   // Initialize harness
   harness_init();
 
-
   // Enable CAN transceivers
   black_enable_can_transceivers(true);
 
@@ -134,9 +133,6 @@ static void black_init(void) {
   black_set_led(LED_RED, false);
   black_set_led(LED_GREEN, false);
   black_set_led(LED_BLUE, false);
-
-  // Set normal CAN mode
-  black_set_can_mode(CAN_MODE_NORMAL);
 }
 
 static void black_init_bootloader(void) {

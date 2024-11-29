@@ -161,9 +161,6 @@ static void white_grey_init(void) {
   white_set_led(LED_GREEN, false);
   white_set_led(LED_BLUE, false);
 
-  // Set normal CAN mode
-  white_set_can_mode(CAN_MODE_NORMAL);
-
   // Init usb power mode
   // Init in CDP mode only if panda is powered by 12V.
   // Otherwise a PC would not be able to flash a standalone panda

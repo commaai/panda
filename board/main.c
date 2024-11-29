@@ -322,6 +322,7 @@ int main(void) {
 
   // init board
   current_board->init();
+  current_board->set_can_mode(CAN_MODE_NORMAL);
 
   // panda has an FPU, let's use it!
   enable_fpu();
