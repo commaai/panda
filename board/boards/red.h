@@ -147,11 +147,6 @@ static void red_init(void) {
 
   // Enable CAN transceivers
   red_enable_can_transceivers(true);
-
-  // Disable LEDs
-  red_set_led(LED_RED, false);
-  red_set_led(LED_GREEN, false);
-  red_set_led(LED_BLUE, false);
 }
 
 static harness_configuration red_harness_config = {

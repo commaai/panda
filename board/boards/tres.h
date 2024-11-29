@@ -131,11 +131,6 @@ static void tres_init(void) {
   // Enable CAN transceivers
   tres_enable_can_transceivers(true);
 
-  // Disable LEDs
-  red_set_led(LED_RED, false);
-  red_set_led(LED_GREEN, false);
-  red_set_led(LED_BLUE, false);
-
   // C2: SOM GPIO used as input (fan control at boot)
   set_gpio_mode(GPIOC, 2, MODE_INPUT);
   set_gpio_pullup(GPIOC, 2, PULL_DOWN);

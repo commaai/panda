@@ -95,11 +95,6 @@ static void cuatro_init(void) {
   // Enable CAN transceivers
   cuatro_enable_can_transceivers(true);
 
-  // Disable LEDs
-  red_set_led(LED_RED, false);
-  red_set_led(LED_GREEN, false);
-  red_set_led(LED_BLUE, false);
-
   // init LEDs as open drain
   set_gpio_output_type(GPIOC, 6, OUTPUT_TYPE_OPEN_DRAIN);
   set_gpio_output_type(GPIOC, 7, OUTPUT_TYPE_OPEN_DRAIN);

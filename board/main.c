@@ -361,6 +361,7 @@ int main(void) {
 
   current_board->set_led(LED_RED, false);
   current_board->set_led(LED_GREEN, false);
+  current_board->set_led(LED_BLUE, false);
 
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();

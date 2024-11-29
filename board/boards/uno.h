@@ -155,11 +155,6 @@ static void uno_init(void) {
   // Enable CAN transceivers
   uno_enable_can_transceivers(true);
 
-  // Disable LEDs
-  uno_set_led(LED_RED, false);
-  uno_set_led(LED_GREEN, false);
-  uno_set_led(LED_BLUE, false);
-
   // Switch to phone usb mode if harness connection is powered by less than 7V
   if(white_read_voltage_mV() < 7000U){
     uno_set_usb_switch(true);
