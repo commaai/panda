@@ -125,9 +125,6 @@ static void black_init(void) {
 
   // Initialize harness
   harness_init();
-
-  // Enable CAN transceivers
-  black_enable_can_transceivers(true);
 }
 
 static void black_init_bootloader(void) {

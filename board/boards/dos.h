@@ -151,10 +151,6 @@ static void dos_init(void) {
   // Initialize harness
   harness_init();
 
-
-  // Enable CAN transceivers
-  dos_enable_can_transceivers(true);
-
   // Bootkick
   dos_set_bootkick(true);
 

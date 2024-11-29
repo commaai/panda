@@ -92,9 +92,6 @@ static void cuatro_init(void) {
   // Initialize harness
   harness_init();
 
-  // Enable CAN transceivers
-  cuatro_enable_can_transceivers(true);
-
   // init LEDs as open drain
   set_gpio_output_type(GPIOC, 6, OUTPUT_TYPE_OPEN_DRAIN);
   set_gpio_output_type(GPIOC, 7, OUTPUT_TYPE_OPEN_DRAIN);
