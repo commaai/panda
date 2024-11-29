@@ -125,9 +125,6 @@ static void tres_init(void) {
   set_gpio_output(GPIOA, 3, 1);
   set_gpio_mode(GPIOA, 3, MODE_OUTPUT);
 
-  // Initialize harness
-  harness_init();
-
   // C2: SOM GPIO used as input (fan control at boot)
   set_gpio_mode(GPIOC, 2, MODE_INPUT);
   set_gpio_pullup(GPIOC, 2, PULL_DOWN);

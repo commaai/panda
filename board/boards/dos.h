@@ -148,9 +148,6 @@ static void dos_init(void) {
   pwm_init(TIM4, 2);
   dos_set_ir_power(0U);
 
-  // Initialize harness
-  harness_init();
-
   // Bootkick
   dos_set_bootkick(true);
 
