@@ -76,7 +76,32 @@ static void cuatro_set_amp_enabled(bool enabled){
 }
 
 static void cuatro_init(void) {
-  red_chiplet_init();
+  common_init_gpio();
+
+  // A8, A3: OBD_SBU1_RELAY, OBD_SBU2_RELAY
+  set_gpio_output_type(GPIOA, 8, OUTPUT_TYPE_OPEN_DRAIN);
+  set_gpio_pullup(GPIOA, 8, PULL_NONE);
+  set_gpio_output(GPIOA, 8, 1);
+  set_gpio_mode(GPIOA, 8, MODE_OUTPUT);
+
+  set_gpio_output_type(GPIOA, 3, OUTPUT_TYPE_OPEN_DRAIN);
+  set_gpio_pullup(GPIOA, 3, PULL_NONE);
+  set_gpio_output(GPIOA, 3, 1);
+  set_gpio_mode(GPIOA, 3, MODE_OUTPUT);
+
+  // Initialize harness
+  harness_init();
+
+  // Enable CAN transceivers
+  cuatro_enable_can_transceivers(true);
+
+  // Disable LEDs
+  red_set_led(LED_RED, false);
+  red_set_led(LED_GREEN, false);
+  red_set_led(LED_BLUE, false);
+
+  // Set normal CAN mode
+  tres_set_can_mode(CAN_MODE_NORMAL);
 
   // init LEDs as open drain
   set_gpio_output_type(GPIOC, 6, OUTPUT_TYPE_OPEN_DRAIN);
@@ -142,7 +167,7 @@ static void cuatro_init(void) {
 }
 
 board board_cuatro = {
-  .harness_config = &red_chiplet_harness_config,
+  .harness_config = &tres_harness_config,
   .has_obd = true,
   .has_spi = true,
   .has_canfd = true,
@@ -156,7 +181,7 @@ board board_cuatro = {
   .enable_can_transceiver = cuatro_enable_can_transceiver,
   .enable_can_transceivers = cuatro_enable_can_transceivers,
   .set_led = cuatro_set_led,
-  .set_can_mode = red_chiplet_set_can_mode,
+  .set_can_mode = tres_set_can_mode,
   .check_ignition = red_check_ignition,
   .read_voltage_mV = cuatro_read_voltage_mV,
   .read_current_mA = cuatro_read_current_mA,
