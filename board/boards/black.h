@@ -122,9 +122,6 @@ static void black_init(void) {
 
   // Turn on USB load switch.
   black_set_usb_load_switch(true);
-
-  // Initialize harness
-  harness_init();
 }
 
 static void black_init_bootloader(void) {

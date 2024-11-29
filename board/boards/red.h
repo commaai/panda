@@ -140,9 +140,6 @@ static void red_init(void) {
   set_gpio_pullup(GPIOB, 14, PULL_UP);
   set_gpio_mode(GPIOB, 14, MODE_OUTPUT);
   set_gpio_output(GPIOB, 14, 1);
-
-  // Initialize harness
-  harness_init();
 }
 
 static harness_configuration red_harness_config = {

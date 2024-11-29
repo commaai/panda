@@ -148,9 +148,6 @@ static void uno_init(void) {
   pwm_init(TIM4, 2);
   uno_set_ir_power(0U);
 
-  // Initialize harness
-  harness_init();
-
   // Switch to phone usb mode if harness connection is powered by less than 7V
   if(white_read_voltage_mV() < 7000U){
     uno_set_usb_switch(true);
