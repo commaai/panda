@@ -125,15 +125,15 @@ static safety_config volkswagen_meb_init(uint16_t param) {
 
 // lateral limits for curvature
 static const SteeringLimits VOLKSWAGEN_MEB_STEERING_LIMITS = {
-  .max_steer = 31036, // ~ 0.195 rad/m or 11.172677 deg/m
-  .angle_deg_to_can = 2777.7777, // ~ 1 / 0.00036 deg to can
-  .angle_rate_up_lookup = { // in deg
+  .max_steer = 29105, // ~ 0.195 rad/m
+  .angle_deg_to_can = 149253.7313, // ~ 1 / 0.00036 rad/m to can
+  .angle_rate_up_lookup = {
     {0., 5., 15.},
-    {0.3, 0.086, 0.0086} // in deg
+    {0.005, 0.0015, 0.00015} // in rad
   },
   .angle_rate_down_lookup = {
     {0., 5., 15.},
-    {0.3, 0.2, 0.02}
+    {0.005, 0.0034, 0.00034}
   },
   .inactive_angle_is_zero = true,
 };
