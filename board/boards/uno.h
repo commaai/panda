@@ -118,11 +118,6 @@ static void uno_init(void) {
   set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
   set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
 
-  // C0: OBD_SBU1 (orientation detection)
-  // C3: OBD_SBU2 (orientation detection)
-  set_gpio_mode(GPIOC, 0, MODE_ANALOG);
-  set_gpio_mode(GPIOC, 3, MODE_ANALOG);
-
   // GPS off
   set_gpio_output(GPIOB, 1, 0);
   set_gpio_output(GPIOC, 5, 0);
