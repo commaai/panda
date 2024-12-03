@@ -138,9 +138,6 @@ static void tres_init(void) {
   gpio_uart7_init();
   uart_init(&uart_ring_som_debug, 115200);
 
-  // SPI init
-  gpio_spi_init();
-
   // fan setup
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
 
