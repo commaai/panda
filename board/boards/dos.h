@@ -131,11 +131,6 @@ static void dos_init(void) {
   set_gpio_output(GPIOC, 10, 1);
   set_gpio_output(GPIOC, 11, 1);
 
-#ifdef ENABLE_SPI
-  // SPI init
-  gpio_spi_init();
-#endif
-
   // C8: FAN PWM aka TIM3_CH3
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
 

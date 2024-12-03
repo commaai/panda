@@ -358,6 +358,7 @@ int main(void) {
 
 #ifdef ENABLE_SPI
   if (current_board->has_spi) {
+    gpio_spi_init();
     spi_init();
   }
 #endif
