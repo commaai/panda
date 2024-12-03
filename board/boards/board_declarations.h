@@ -15,7 +15,6 @@ typedef void (*board_init_bootloader)(void);
 typedef void (*board_enable_can_transceiver)(uint8_t transceiver, bool enabled);
 typedef void (*board_enable_can_transceivers)(bool enabled);
 typedef void (*board_set_led)(uint8_t color, bool enabled);
-typedef void (*board_set_can_mode)(uint8_t mode);
 typedef bool (*board_check_ignition)(void);
 typedef uint32_t (*board_read_voltage_mV)(void);
 typedef uint32_t (*board_read_current_mA)(void);
@@ -41,7 +40,6 @@ struct board {
   board_enable_can_transceiver enable_can_transceiver;
   board_enable_can_transceivers enable_can_transceivers;
   board_set_led set_led;
-  board_set_can_mode set_can_mode;
   board_check_ignition check_ignition;
   board_read_voltage_mV read_voltage_mV;
   board_read_current_mA read_current_mA;

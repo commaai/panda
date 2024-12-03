@@ -57,38 +57,6 @@ static void dos_set_bootkick(BootState state) {
   set_gpio_output(GPIOC, 4, state != BOOT_BOOTKICK);
 }
 
-static void dos_set_can_mode(uint8_t mode) {
-  dos_enable_can_transceiver(2U, false);
-  dos_enable_can_transceiver(4U, false);
-  switch (mode) {
-    case CAN_MODE_NORMAL:
-    case CAN_MODE_OBD_CAN2:
-      if ((bool)(mode == CAN_MODE_NORMAL) != (bool)(harness.status == HARNESS_STATUS_FLIPPED)) {
-        // B12,B13: disable OBD mode
-        set_gpio_mode(GPIOB, 12, MODE_INPUT);
-        set_gpio_mode(GPIOB, 13, MODE_INPUT);
-
-        // B5,B6: normal CAN2 mode
-        set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
-        set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
-        dos_enable_can_transceiver(2U, true);
-      } else {
-        // B5,B6: disable normal CAN2 mode
-        set_gpio_mode(GPIOB, 5, MODE_INPUT);
-        set_gpio_mode(GPIOB, 6, MODE_INPUT);
-
-        // B12,B13: OBD mode
-        set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
-        set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
-        dos_enable_can_transceiver(4U, true);
-      }
-      break;
-    default:
-      print("Tried to set unsupported CAN mode: "); puth(mode); print("\n");
-      break;
-  }
-}
-
 static bool dos_check_ignition(void){
   // ignition is checked through harness
   return harness_check_ignition();
@@ -147,7 +115,15 @@ static harness_configuration dos_harness_config = {
   .pin_relay_SBU1 = 10,
   .pin_relay_SBU2 = 11,
   .adc_channel_SBU1 = 10,
-  .adc_channel_SBU2 = 13
+  .adc_channel_SBU2 = 13,
+  .GPIO_CAN2_RX_NORMAL = GPIOB,
+  .GPIO_CAN2_TX_NORMAL = GPIOB,
+  .GPIO_CAN2_RX_FLIPPED = GPIOB,
+  .GPIO_CAN2_TX_FLIPPED = GPIOB,
+  .pin_CAN2_RX_NORMAL = 12,
+  .pin_CAN2_TX_NORMAL = 13,
+  .pin_CAN2_RX_FLIPPED = 5,
+  .pin_CAN2_TX_FLIPPED = 6
 };
 
 board board_dos = {
@@ -169,7 +145,6 @@ board board_dos = {
   .enable_can_transceiver = dos_enable_can_transceiver,
   .enable_can_transceivers = dos_enable_can_transceivers,
   .set_led = dos_set_led,
-  .set_can_mode = dos_set_can_mode,
   .check_ignition = dos_check_ignition,
   .read_voltage_mV = white_read_voltage_mV,
   .read_current_mA = unused_read_current,

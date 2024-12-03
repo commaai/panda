@@ -12,6 +12,7 @@
 
 // Around (1Mbps / 8 bits/byte / 12 bytes per message)
 #define CAN_INTERRUPT_RATE 12000U
+#define GPIO_CAN2_AF GPIO_AF9_CAN2
 
 #define MAX_LED_FADE 8192U
 
