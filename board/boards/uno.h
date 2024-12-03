@@ -128,15 +128,6 @@ static void uno_init(void) {
   set_gpio_output(GPIOC, 5, 0);
   set_gpio_output(GPIOC, 12, 0);
 
-  // C10: OBD_SBU1_RELAY (harness relay driving output)
-  // C11: OBD_SBU2_RELAY (harness relay driving output)
-  set_gpio_mode(GPIOC, 10, MODE_OUTPUT);
-  set_gpio_mode(GPIOC, 11, MODE_OUTPUT);
-  set_gpio_output_type(GPIOC, 10, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_output_type(GPIOC, 11, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_output(GPIOC, 10, 1);
-  set_gpio_output(GPIOC, 11, 1);
-
   // C8: FAN PWM aka TIM3_CH3
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
 
