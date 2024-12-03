@@ -24,7 +24,6 @@ board board_grey = {
   .enable_can_transceiver = white_enable_can_transceiver,
   .enable_can_transceivers = white_enable_can_transceivers,
   .set_led = white_set_led,
-  .set_can_mode = white_set_can_mode,
   .check_ignition = white_check_ignition,
   .read_voltage_mV = white_read_voltage_mV,
   .read_current_mA = white_read_current_mA,

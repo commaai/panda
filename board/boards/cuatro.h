@@ -80,7 +80,7 @@ static void cuatro_set_amp_enabled(bool enabled){
 }
 
 static void cuatro_init(void) {
-  red_chiplet_init();
+  common_init_gpio();
 
   // init LEDs as open drain
   set_gpio_output_type(GPIOE, 2, OUTPUT_TYPE_OPEN_DRAIN);
@@ -118,9 +118,6 @@ static void cuatro_init(void) {
   gpio_uart7_init();
   uart_init(&uart_ring_som_debug, 115200);
 
-  // SPI init
-  gpio_spi_init();
-
   // fan setup
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
   register_set_bits(&(GPIOC->OTYPER), GPIO_OTYPER_OT8); // open drain
@@ -150,7 +147,7 @@ static void cuatro_init(void) {
 }
 
 board board_cuatro = {
-  .harness_config = &red_chiplet_harness_config,
+  .harness_config = &tres_harness_config,
   .has_obd = true,
   .has_spi = true,
   .has_canfd = true,
@@ -164,7 +161,6 @@ board board_cuatro = {
   .enable_can_transceiver = cuatro_enable_can_transceiver,
   .enable_can_transceivers = cuatro_enable_can_transceivers,
   .set_led = cuatro_set_led,
-  .set_can_mode = red_chiplet_set_can_mode,
   .check_ignition = red_check_ignition,
   .read_voltage_mV = cuatro_read_voltage_mV,
   .read_current_mA = cuatro_read_current_mA,
