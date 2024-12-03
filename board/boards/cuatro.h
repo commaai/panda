@@ -153,7 +153,6 @@ board board_cuatro = {
   .enable_can_transceiver = cuatro_enable_can_transceiver,
   .enable_can_transceivers = cuatro_enable_can_transceivers,
   .set_led = cuatro_set_led,
-  .set_can_mode = tres_set_can_mode,
   .check_ignition = red_check_ignition,
   .read_voltage_mV = cuatro_read_voltage_mV,
   .read_current_mA = cuatro_read_current_mA,

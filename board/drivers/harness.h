@@ -32,6 +32,37 @@ void set_intercept_relay(bool intercept, bool ignition_relay) {
   }
 }
 
+void set_can_mode(uint8_t mode) {
+  current_board->enable_can_transceiver(2U, false);
+  current_board->enable_can_transceiver(4U, false);
+  switch (mode) {
+    case CAN_MODE_NORMAL:
+    case CAN_MODE_OBD_CAN2:
+      if ((bool)(mode == CAN_MODE_NORMAL) != (bool)(harness.status == HARNESS_STATUS_FLIPPED)) {
+        // normal pins
+        set_gpio_mode(current_board->harness_config->GPIO_CAN2_RX_NORMAL, current_board->harness_config->pin_CAN2_RX_NORMAL, MODE_ANALOG);
+        set_gpio_mode(current_board->harness_config->GPIO_CAN2_TX_NORMAL, current_board->harness_config->pin_CAN2_TX_NORMAL, MODE_ANALOG);
+
+        // flipped pins
+        set_gpio_mode(current_board->harness_config->GPIO_CAN2_RX_FLIPPED, current_board->harness_config->pin_CAN2_RX_FLIPPED, GPIO_CAN2_AF);
+        set_gpio_mode(current_board->harness_config->GPIO_CAN2_TX_FLIPPED, current_board->harness_config->pin_CAN2_TX_FLIPPED, GPIO_CAN2_AF);
+        current_board->enable_can_transceiver(2U, true);
+      } else {
+        // normal pins
+        set_gpio_mode(current_board->harness_config->GPIO_CAN2_RX_FLIPPED, current_board->harness_config->pin_CAN2_RX_FLIPPED, MODE_ANALOG);
+        set_gpio_mode(current_board->harness_config->GPIO_CAN2_TX_FLIPPED, current_board->harness_config->pin_CAN2_TX_FLIPPED, MODE_ANALOG);
+
+        // flipped pins
+        set_gpio_mode(current_board->harness_config->GPIO_CAN2_RX_NORMAL, current_board->harness_config->pin_CAN2_RX_NORMAL, GPIO_CAN2_AF);
+        set_gpio_mode(current_board->harness_config->GPIO_CAN2_TX_NORMAL, current_board->harness_config->pin_CAN2_TX_NORMAL, GPIO_CAN2_AF);
+        current_board->enable_can_transceiver(4U, true);
+      }
+      break;
+    default:
+      break;
+  }
+}
+
 bool harness_check_ignition(void) {
   bool ret = false;
 
@@ -94,6 +125,8 @@ void harness_tick(void) {
 }
 
 void harness_init(void) {
+  set_can_mode(CAN_MODE_NORMAL);
+
   // init OBD_SBUx_RELAY
   set_gpio_output_type(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, OUTPUT_TYPE_OPEN_DRAIN);
   set_gpio_output_type(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, OUTPUT_TYPE_OPEN_DRAIN);

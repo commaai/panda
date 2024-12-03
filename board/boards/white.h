@@ -69,26 +69,6 @@ static void white_set_usb_power_mode(uint8_t mode){
   }
 }
 
-static void white_set_can_mode(uint8_t mode){
-  if (mode == CAN_MODE_NORMAL) {
-    // B12,B13: disable GMLAN mode
-    set_gpio_mode(GPIOB, 12, MODE_INPUT);
-    set_gpio_mode(GPIOB, 13, MODE_INPUT);
-
-    // B3,B4: disable GMLAN mode
-    set_gpio_mode(GPIOB, 3, MODE_INPUT);
-    set_gpio_mode(GPIOB, 4, MODE_INPUT);
-
-    // B5,B6: normal CAN2 mode
-    set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
-    set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
-
-    // A8,A15: normal CAN3 mode
-    set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
-    set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
-  }
-}
-
 static uint32_t white_read_voltage_mV(void){
   return adc_get_mV(12) * 11U;
 }
@@ -152,6 +132,22 @@ static void white_grey_init(void) {
   set_gpio_alternate(GPIOC, 11, GPIO_AF7_USART3);
   set_gpio_pullup(GPIOC, 11, PULL_UP);
 
+  // B12,B13: disable GMLAN mode
+  set_gpio_mode(GPIOB, 12, MODE_INPUT);
+  set_gpio_mode(GPIOB, 13, MODE_INPUT);
+
+  // B3,B4: disable GMLAN mode
+  set_gpio_mode(GPIOB, 3, MODE_INPUT);
+  set_gpio_mode(GPIOB, 4, MODE_INPUT);
+
+  // B5,B6: normal CAN2 mode
+  set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
+  set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
+
+  // A8,A15: normal CAN3 mode
+  set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
+  set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
+
   // Init usb power mode
   // Init in CDP mode only if panda is powered by 12V.
   // Otherwise a PC would not be able to flash a standalone panda
@@ -192,7 +188,6 @@ board board_white = {
   .enable_can_transceiver = white_enable_can_transceiver,
   .enable_can_transceivers = white_enable_can_transceivers,
   .set_led = white_set_led,
-  .set_can_mode = white_set_can_mode,
   .check_ignition = white_check_ignition,
   .read_voltage_mV = white_read_voltage_mV,
   .read_current_mA = white_read_current_mA,
