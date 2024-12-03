@@ -107,17 +107,6 @@ static uint32_t red_read_voltage_mV(void){
 static void red_init(void) {
   common_init_gpio();
 
-  //C10,C11 : OBD_SBU1_RELAY, OBD_SBU2_RELAY
-  set_gpio_output_type(GPIOC, 10, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_pullup(GPIOC, 10, PULL_NONE);
-  set_gpio_mode(GPIOC, 10, MODE_OUTPUT);
-  set_gpio_output(GPIOC, 10, 1);
-
-  set_gpio_output_type(GPIOC, 11, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_pullup(GPIOC, 11, PULL_NONE);
-  set_gpio_mode(GPIOC, 11, MODE_OUTPUT);
-  set_gpio_output(GPIOC, 11, 1);
-
   // G11,B3,D7,B4: transceiver enable
   set_gpio_pullup(GPIOG, 11, PULL_NONE);
   set_gpio_mode(GPIOG, 11, MODE_OUTPUT);

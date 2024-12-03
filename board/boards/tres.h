@@ -114,17 +114,6 @@ static void tres_init(void) {
 
   common_init_gpio();
 
-  // A8, A3: OBD_SBU1_RELAY, OBD_SBU2_RELAY
-  set_gpio_output_type(GPIOA, 8, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_pullup(GPIOA, 8, PULL_NONE);
-  set_gpio_output(GPIOA, 8, 1);
-  set_gpio_mode(GPIOA, 8, MODE_OUTPUT);
-
-  set_gpio_output_type(GPIOA, 3, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_pullup(GPIOA, 3, PULL_NONE);
-  set_gpio_output(GPIOA, 3, 1);
-  set_gpio_mode(GPIOA, 3, MODE_OUTPUT);
-
   // C2: SOM GPIO used as input (fan control at boot)
   set_gpio_mode(GPIOC, 2, MODE_INPUT);
   set_gpio_pullup(GPIOC, 2, PULL_DOWN);
