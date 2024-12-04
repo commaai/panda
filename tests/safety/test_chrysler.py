@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import unittest
+
+from opendbc.car.chrysler.values import ChryslerPandaFlags
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -89,7 +91,7 @@ class TestChryslerRamDTSafety(TestChryslerSafety):
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_ram_dt_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, Panda.FLAG_CHRYSLER_RAM_DT)
+    self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, ChryslerPandaFlags.FLAG_CHRYSLER_RAM_DT)
     self.safety.init_tests()
 
   def _speed_msg(self, speed):
@@ -113,7 +115,7 @@ class TestChryslerRamHDSafety(TestChryslerSafety):
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_ram_hd_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, Panda.FLAG_CHRYSLER_RAM_HD)
+    self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, ChryslerPandaFlags.FLAG_CHRYSLER_RAM_HD)
     self.safety.init_tests()
 
   def _speed_msg(self, speed):
