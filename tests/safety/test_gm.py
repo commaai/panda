@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import unittest
+
+from opendbc.car.gm.values import GMPandaFlags
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -187,7 +189,7 @@ class TestGmCameraSafety(TestGmCameraSafetyBase):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_GM, Panda.FLAG_GM_HW_CAM)
+    self.safety.set_safety_hooks(Panda.SAFETY_GM, GMPandaFlags.FLAG_GM_HW_CAM)
     self.safety.init_tests()
 
   def test_buttons(self):
@@ -219,7 +221,7 @@ class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase)
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_GM, Panda.FLAG_GM_HW_CAM | Panda.FLAG_GM_HW_CAM_LONG)
+    self.safety.set_safety_hooks(Panda.SAFETY_GM, GMPandaFlags.FLAG_GM_HW_CAM | GMPandaFlags.FLAG_GM_HW_CAM_LONG)
     self.safety.init_tests()
 
 
