@@ -218,5 +218,6 @@ board board_uno = {
   .set_ir_power = uno_set_ir_power,
   .set_siren = unused_set_siren,
   .set_bootkick = uno_set_bootkick,
-  .read_som_gpio = unused_read_som_gpio
+  .read_som_gpio = unused_read_som_gpio,
+  .set_amp_enabled = unused_set_amp_enabled
 };
