@@ -114,11 +114,11 @@ static const SteeringLimits FORD_STEERING_LIMITS = {
   .max_angle_error = 100,           // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
   .angle_rate_up_lookup = {
     {5., 25., 25.},
-    {0.0002, 0.0001, 0.0001}
+    {0.00045, 0.0001, 0.0001}
   },
   .angle_rate_down_lookup = {
     {5., 25., 25.},
-    {0.000225, 0.00015, 0.00015}
+    {0.00045, 0.00015, 0.00015}
   },
 
   // no blending at low speed due to lack of torque wind-up and inaccurate current curvature
@@ -223,6 +223,9 @@ static bool ford_tx_hook(const CANPacket_t *to_send) {
     // Signal: CmbbDeny_B_Actl
     bool cmbb_deny = GET_BIT(to_send, 37U);
 
+    // Signal: AccBrkPrchg_B_Rq & AccBrkDecel_B_Rq
+    bool brake_actuation = GET_BIT(to_send, 54U) || GET_BIT(to_send, 55U);
+
     bool violation = false;
     violation |= longitudinal_accel_checks(accel, FORD_LONG_LIMITS);
     violation |= longitudinal_gas_checks(gas, FORD_LONG_LIMITS);
@@ -230,6 +233,8 @@ static bool ford_tx_hook(const CANPacket_t *to_send) {
 
     // Safety check for stock AEB
     violation |= cmbb_deny; // do not prevent stock AEB actuation
+
+    violation |= !get_longitudinal_allowed() && brake_actuation;
 
     if (violation) {
       tx = false;

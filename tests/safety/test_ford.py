@@ -86,8 +86,8 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
   CURVATURE_ERROR_MIN_SPEED = 10.0  # m/s
 
   ANGLE_RATE_BP = [5., 25., 25.]
-  ANGLE_RATE_UP = [0.0002, 0.0001, 0.0001]  # windup limit
-  ANGLE_RATE_DOWN = [0.000225, 0.00015, 0.00015]  # unwind limit
+  ANGLE_RATE_UP = [0.00045, 0.0001, 0.0001]  # windup limit
+  ANGLE_RATE_DOWN = [0.00045, 0.00015, 0.00015]  # unwind limit
 
   cnt_speed = 0
   cnt_speed_2 = 0
@@ -290,7 +290,7 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
 
     for speed in np.arange(0, 40, 0.5):
       limit_command = speed > self.CURVATURE_ERROR_MIN_SPEED
-      max_delta_up = np.interp(speed, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
+      max_delta_up = np.interp(speed - 1, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
       max_delta_up_lower = np.interp(speed + 1, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
 
       cases = [
@@ -313,7 +313,7 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
 
     for speed in np.arange(0, 40, 0.5):
       limit_command = speed > self.CURVATURE_ERROR_MIN_SPEED
-      max_delta_down = np.interp(speed, self.ANGLE_RATE_BP, self.ANGLE_RATE_DOWN)
+      max_delta_down = np.interp(speed - 1, self.ANGLE_RATE_BP, self.ANGLE_RATE_DOWN)
       max_delta_down_lower = np.interp(speed + 1, self.ANGLE_RATE_BP, self.ANGLE_RATE_DOWN)
 
       cases = [
@@ -406,12 +406,14 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
       raise unittest.SkipTest
 
   # ACC command
-  def _acc_command_msg(self, gas: float, brake: float, cmbb_deny: bool = False):
+  def _acc_command_msg(self, gas: float, brake: float, brake_actuation: bool, cmbb_deny: bool = False):
     values = {
-      "AccPrpl_A_Rq": gas,                       # [-5|5.23] m/s^2
-      "AccPrpl_A_Pred": gas,                     # [-5|5.23] m/s^2
-      "AccBrkTot_A_Rq": brake,                   # [-20|11.9449] m/s^2
-      "CmbbDeny_B_Actl": 1 if cmbb_deny else 0,  # [0|1] deny AEB actuation
+      "AccPrpl_A_Rq": gas,                              # [-5|5.23] m/s^2
+      "AccPrpl_A_Pred": gas,                            # [-5|5.23] m/s^2
+      "AccBrkTot_A_Rq": brake,                          # [-20|11.9449] m/s^2
+      "AccBrkPrchg_B_Rq": 1 if brake_actuation else 0,  # Pre-charge brake request: 0=No, 1=Yes
+      "AccBrkDecel_B_Rq": 1 if brake_actuation else 0,  # Deceleration request: 0=Inactive, 1=Active
+      "CmbbDeny_B_Actl": 1 if cmbb_deny else 0,         # [0|1] deny AEB actuation
     }
     return self.packer.make_can_msg_panda("ACCDATA", 0, values)
 
@@ -421,9 +423,9 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
       self.safety.set_controls_allowed(controls_allowed)
       for cmbb_deny in (True, False):
         should_tx = not cmbb_deny
-        self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, self.INACTIVE_ACCEL, cmbb_deny)))
+        self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, self.INACTIVE_ACCEL, controls_allowed, cmbb_deny)))
         should_tx = controls_allowed and not cmbb_deny
-        self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.MAX_GAS, self.MAX_ACCEL, cmbb_deny)))
+        self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.MAX_GAS, self.MAX_ACCEL, controls_allowed, cmbb_deny)))
 
   def test_gas_safety_check(self):
     for controls_allowed in (True, False):
@@ -431,15 +433,17 @@ class TestFordLongitudinalSafetyBase(TestFordSafetyBase):
       for gas in np.concatenate((np.arange(self.MIN_GAS - 2, self.MAX_GAS + 2, 0.05), [self.INACTIVE_GAS])):
         gas = round(gas, 2)  # floats might not hit exact boundary conditions without rounding
         should_tx = (controls_allowed and self.MIN_GAS <= gas <= self.MAX_GAS) or gas == self.INACTIVE_GAS
-        self.assertEqual(should_tx, self._tx(self._acc_command_msg(gas, self.INACTIVE_ACCEL)))
+        self.assertEqual(should_tx, self._tx(self._acc_command_msg(gas, self.INACTIVE_ACCEL, controls_allowed)))
 
   def test_brake_safety_check(self):
     for controls_allowed in (True, False):
       self.safety.set_controls_allowed(controls_allowed)
-      for brake in np.arange(self.MIN_ACCEL - 2, self.MAX_ACCEL + 2, 0.05):
-        brake = round(brake, 2)  # floats might not hit exact boundary conditions without rounding
-        should_tx = (controls_allowed and self.MIN_ACCEL <= brake <= self.MAX_ACCEL) or brake == self.INACTIVE_ACCEL
-        self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, brake)))
+      for brake_actuation in (True, False):
+        for brake in np.arange(self.MIN_ACCEL - 2, self.MAX_ACCEL + 2, 0.05):
+          brake = round(brake, 2)  # floats might not hit exact boundary conditions without rounding
+          should_tx = (controls_allowed and self.MIN_ACCEL <= brake <= self.MAX_ACCEL) or brake == self.INACTIVE_ACCEL
+          should_tx = should_tx and (controls_allowed or not brake_actuation)
+          self.assertEqual(should_tx, self._tx(self._acc_command_msg(self.INACTIVE_GAS, brake, brake_actuation)))
 
 
 class TestFordLongitudinalSafety(TestFordLongitudinalSafetyBase):
