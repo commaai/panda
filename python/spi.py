@@ -70,8 +70,6 @@ class PandaSpiTransferFailed(PandaSpiException):
   pass
 
 
-SPI_LOCK = threading.Lock()
-
 class PandaSpiTransfer(ctypes.Structure):
   _fields_ = [
     ('rx_buf', ctypes.c_uint64),
@@ -83,6 +81,9 @@ class PandaSpiTransfer(ctypes.Structure):
     ('expect_disconnect', ctypes.c_uint8),
   ]
 
+
+SPI_LOCK = threading.Lock()
+SPI_DEVICES = {}
 class SpiDevice:
   """
   Provides locked, thread-safe access to a panda's SPI interface.
@@ -100,9 +101,12 @@ class SpiDevice:
     if spidev is None:
       raise PandaSpiUnavailable("spidev is not installed")
 
-    self._spidev = spidev.SpiDev()  # pylint: disable=c-extension-no-member
-    self._spidev.open(0, 0)
-    self._spidev.max_speed_hz = speed
+    with SPI_LOCK:
+      if speed not in SPI_DEVICES:
+        SPI_DEVICES[speed] = spidev.SpiDev()  # pylint: disable=c-extension-no-member
+        SPI_DEVICES[speed].open(0, 0)
+        SPI_DEVICES[speed].max_speed_hz = speed
+      self._spidev = SPI_DEVICES[speed]
 
   @contextmanager
   def acquire(self):
@@ -115,8 +119,7 @@ class SpiDevice:
       SPI_LOCK.release()
 
   def close(self):
-    self._spidev.close()
-
+    pass
 
 
 class PandaSpiHandle(BaseHandle):
@@ -394,9 +397,13 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
     data = [struct.pack('>I', address), struct.pack('B', length - 1)]
     return self._cmd(0x11, data=data, read_bytes=length)
 
+  def get_bootloader_id(self):
+    return self.read(0x1FF1E7FE, 1)
+
   def get_chip_id(self) -> int:
     r = self._cmd(0x02, read_bytes=3)
-    assert r[0] == 1  # response length - 1
+    if r[0] != 1: # response length - 1
+      raise PandaSpiException("incorrect response length")
     return ((r[1] << 8) + r[2])
 
   def go_cmd(self, address: int) -> None:
