@@ -18,6 +18,8 @@ void sound_tick(void) {
 static void BDMA_Channel0_IRQ_Handler(void) {
   __attribute__((section(".sram4"))) static uint16_t tx_buf[SOUND_TX_BUF_SIZE];
 
+  ENTER_CRITICAL();
+
   BDMA->IFCR |= BDMA_IFCR_CGIF0; // clear flag
 
   uint8_t buf_idx = (((BDMA_Channel0->CCR & BDMA_CCR_CT) >> BDMA_CCR_CT_Pos) == 1U) ? 0U : 1U;
@@ -46,6 +48,8 @@ static void BDMA_Channel0_IRQ_Handler(void) {
   register_set(&DMA1_Stream1->M0AR, (uint32_t) tx_buf, 0xFFFFFFFFU);
   DMA1_Stream1->NDTR = SOUND_TX_BUF_SIZE;
   DMA1_Stream1->CR |= DMA_SxCR_EN;
+
+  EXIT_CRITICAL();
 }
 
 void sound_init(void) {
