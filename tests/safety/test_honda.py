@@ -537,7 +537,7 @@ class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschRadarlessS
 
 class TestHondaBoschRadarlessAltSCMSafety(HondaPcmEnableBase, TestHondaBoschRadarlessSafetyBase):
   """
-    Covers the Honda Bosch Radarless safety mode with stock longitudinal
+    Covers the Honda Bosch Radarless safety mode with stock longitudinal　and an alternate SCM message
   """
 
   def setUp(self):
