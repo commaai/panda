@@ -286,7 +286,7 @@ static bool honda_tx_hook(const CANPacket_t *to_send) {
   // FORCE CANCEL: safety check only relevant when spamming the cancel button in Bosch HW
   // ensuring that only the cancel button press is sent (VAL 2) when controls are off.
   // This avoids unintended engagements while still allowing resume spam
-  if (((addr == 0x296) || (addr == 0x1A6))) && !controls_allowed && (bus == bus_buttons)) {
+  if (((addr == 0x296) || (addr == 0x1A6)) && !controls_allowed && (bus == bus_buttons)) {
     if (((GET_BYTE(to_send, 0) >> 5) & 0x7U) != 2U) {
       tx = false;
     }
