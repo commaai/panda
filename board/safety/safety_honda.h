@@ -286,7 +286,7 @@ static bool honda_tx_hook(const CANPacket_t *to_send) {
   // FORCE CANCEL: safety check only relevant when spamming the cancel button in Bosch HW
   // ensuring that only the cancel button press is sent (VAL 2) when controls are off.
   // This avoids unintended engagements while still allowing resume spam
-  if ((addr == 0x296) && !controls_allowed && (bus == bus_buttons)) {
+  if ((addr == 0x296 || addr == 0x1A6) && !controls_allowed && (bus == bus_buttons)) {
     if (((GET_BYTE(to_send, 0) >> 5) & 0x7U) != 2U) {
       tx = false;
     }
@@ -338,7 +338,7 @@ static safety_config honda_nidec_init(uint16_t param) {
 static safety_config honda_bosch_init(uint16_t param) {
   static CanMsg HONDA_BOSCH_TX_MSGS[] = {{0xE4, 0, 5}, {0xE5, 0, 8}, {0x296, 1, 4}, {0x33D, 0, 5}, {0x33DA, 0, 5}, {0x33DB, 0, 8}};  // Bosch
   static CanMsg HONDA_BOSCH_LONG_TX_MSGS[] = {{0xE4, 1, 5}, {0x1DF, 1, 8}, {0x1EF, 1, 8}, {0x1FA, 1, 8}, {0x30C, 1, 8}, {0x33D, 1, 5}, {0x33DA, 1, 5}, {0x33DB, 1, 8}, {0x39F, 1, 8}, {0x18DAB0F1, 1, 8}};  // Bosch w/ gas and brakes
-  static CanMsg HONDA_RADARLESS_TX_MSGS[] = {{0xE4, 0, 5}, {0x296, 2, 4}, {0x33D, 0, 8}};  // Bosch radarless
+  static CanMsg HONDA_RADARLESS_TX_MSGS[] = {{0xE4, 0, 5}, {0x296, 2, 4}, {0x1A6, 2, 4},{0x33D, 0, 8}};  // Bosch radarless
   static CanMsg HONDA_RADARLESS_LONG_TX_MSGS[] = {{0xE4, 0, 5}, {0x33D, 0, 8}, {0x1C8, 0, 8}, {0x30C, 0, 8}};  // Bosch radarless w/ gas and brakes
 
   const uint16_t HONDA_PARAM_ALT_BRAKE = 1;
@@ -365,6 +365,11 @@ static safety_config honda_bosch_init(uint16_t param) {
   // Checking for alternate brake override from safety parameter
   honda_alt_brake_msg = GET_FLAG(param, HONDA_PARAM_ALT_BRAKE);
 
+
+  // Only find one car Odyssey RC5 japanese type use this feature
+  const uint16_t HONDA_PARAM_NIDEC_ALT = 4;
+  bool enable_nidec_alt = GET_FLAG(param, HONDA_PARAM_NIDEC_ALT);
+
   // radar disabled so allow gas/brakes
 #ifdef ALLOW_DEBUG
   const uint16_t HONDA_PARAM_BOSCH_LONG = 2;
@@ -375,7 +380,16 @@ static safety_config honda_bosch_init(uint16_t param) {
   if (honda_bosch_radarless && honda_alt_brake_msg) {
     SET_RX_CHECKS(honda_common_alt_brake_rx_checks, ret);
   } else if (honda_bosch_radarless) {
-    SET_RX_CHECKS(honda_common_rx_checks, ret);
+    if (enable_nidec_alt) {
+      // for dyssey RC5 japanese type
+      static RxCheck honda_bosch_alt_rx_checks[] = { 
+        HONDA_COMMON_NO_SCM_FEEDBACK_RX_CHECKS(0)
+      };
+
+      SET_RX_CHECKS(honda_bosch_alt_rx_checks, ret);
+    } else {
+      SET_RX_CHECKS(honda_common_rx_checks, ret);
+    }
   } else if (honda_alt_brake_msg) {
     SET_RX_CHECKS(honda_bosch_alt_brake_rx_checks, ret);
   } else {
