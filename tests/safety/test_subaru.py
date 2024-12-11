@@ -68,7 +68,7 @@ class TestSubaruSafetyBase(common.PandaCarSafetyTest):
   ALT_MAIN_BUS = SUBARU_MAIN_BUS
   ALT_CAM_BUS = SUBARU_CAM_BUS
 
-  DEG_TO_CAN = 100
+  DEG_TO_CAN = 100.
 
   INACTIVE_GAS = 1818
 
@@ -167,6 +167,33 @@ class TestSubaruTorqueSafetyBase(TestSubaruSafetyBase, common.DriverTorqueSteeri
     return self.packer.make_can_msg_panda("ES_LKAS", SUBARU_MAIN_BUS, values)
 
 
+class TestSubaruAngleSafetyBase(TestSubaruSafetyBase, common.AngleSteeringSafetyTest):
+  ALT_MAIN_BUS = SUBARU_ALT_BUS
+
+  TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS, SubaruMsg.ES_LKAS_ANGLE)
+  RELAY_MALFUNCTION_ADDRS = {SUBARU_MAIN_BUS: (SubaruMsg.ES_LKAS_ANGLE, SubaruMsg.ES_LKAS,)}
+  FWD_BLACKLISTED_ADDRS = fwd_blacklisted_addr(SubaruMsg.ES_LKAS_ANGLE)
+
+  FLAGS = Panda.FLAG_SUBARU_LKAS_ANGLE
+
+  ANGLE_RATE_BP = [0, 15]
+  ANGLE_RATE_UP = [5, 0.15]
+  ANGLE_RATE_DOWN = [5, 0.4]
+
+  def _angle_cmd_msg(self, angle, enabled=1):
+    values = {"LKAS_Output": angle, "LKAS_Request": enabled}
+    return self.packer.make_can_msg_panda("ES_LKAS_ANGLE", 0, values)
+
+  def _angle_meas_msg(self, angle):
+    values = {"Steering_Angle": angle}
+    return self.packer.make_can_msg_panda("Steering_Torque", 0, values)
+
+  # need to use ES_DashStatus Message
+  def _pcm_status_msg(self, enable):
+    values = {"Cruise_Activated": enable}
+    return self.packer.make_can_msg_panda("ES_DashStatus", self.ALT_CAM_BUS, values)
+
+
 class TestSubaruGen1TorqueStockLongitudinalSafety(TestSubaruStockLongitudinalSafetyBase, TestSubaruTorqueSafetyBase):
   FLAGS = 0
   TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS)
@@ -184,6 +211,13 @@ class TestSubaruGen2TorqueSafetyBase(TestSubaruTorqueSafetyBase):
 class TestSubaruGen2TorqueStockLongitudinalSafety(TestSubaruStockLongitudinalSafetyBase, TestSubaruGen2TorqueSafetyBase):
   FLAGS = Panda.FLAG_SUBARU_GEN2
   TX_MSGS = lkas_tx_msgs(SUBARU_ALT_BUS)
+
+
+class TestSubaruGen2AngleStockLongitudinalSafety(TestSubaruStockLongitudinalSafetyBase, TestSubaruAngleSafetyBase):
+  ALT_MAIN_BUS = SUBARU_ALT_BUS
+
+  FLAGS = Panda.FLAG_SUBARU_GEN2 | Panda.FLAG_SUBARU_LKAS_ANGLE
+  TX_MSGS = lkas_tx_msgs(SUBARU_ALT_BUS) + lkas_tx_msgs(SUBARU_MAIN_BUS, SubaruMsg.ES_LKAS_ANGLE)
 
 
 class TestSubaruGen1LongitudinalSafety(TestSubaruLongitudinalSafetyBase, TestSubaruTorqueSafetyBase):
