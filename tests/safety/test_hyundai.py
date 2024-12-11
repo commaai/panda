@@ -129,6 +129,9 @@ class TestHyundaiSafetyCameraSCC(TestHyundaiSafety):
   BUTTONS_TX_BUS = 2  # tx on 2, rx on 0
   SCC_BUS = 2  # rx on 2
 
+  TX_MSGS = [[0x340, 0], [0x4F1, 0], [0x484, 0], [0x485, 0]]
+  FWD_BLACKLISTED_ADDRS = {2: [0x340, 0x484, 0x485]}
+
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
     self.safety = libpanda_py.libpanda
