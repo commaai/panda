@@ -116,7 +116,7 @@ static bool is_msg_valid(RxCheck addr_list[], int index) {
   if (index != -1) {
     if (!addr_list[index].status.valid_checksum || !addr_list[index].status.valid_quality_flag || (addr_list[index].status.wrong_counters >= MAX_WRONG_COUNTERS)) {
       valid = false;
-      controls_allowed = false;
+      //controls_allowed = false;
     }
   }
   return valid;
