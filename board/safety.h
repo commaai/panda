@@ -300,7 +300,7 @@ void safety_tick(const safety_config *cfg) {
       bool lagging = elapsed_time > MAX(timestep * MAX_MISSED_MSGS, 1e6);
       cfg->rx_checks[i].status.lagging = lagging;
       if (lagging) {
-        controls_allowed = false;
+        //controls_allowed = false;
       }
 
       if (lagging || !is_msg_valid(cfg->rx_checks, i)) {
