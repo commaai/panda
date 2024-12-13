@@ -103,7 +103,7 @@ static void honda_rx_hook(const CANPacket_t *to_push) {
     // Since some Nidec cars can brake down to 0 after the PCM disengages,
     // we don't disengage when the PCM does.
     if (!cruise_engaged && (honda_hw != HONDA_NIDEC)) {
-      controls_allowed = false;
+      //controls_allowed = false;
     }
     cruise_engaged_prev = cruise_engaged;
   }
