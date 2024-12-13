@@ -62,38 +62,6 @@ static void uno_set_bootkick(BootState state) {
   }
 }
 
-static void uno_set_can_mode(uint8_t mode) {
-  uno_enable_can_transceiver(2U, false);
-  uno_enable_can_transceiver(4U, false);
-  switch (mode) {
-    case CAN_MODE_NORMAL:
-    case CAN_MODE_OBD_CAN2:
-      if ((bool)(mode == CAN_MODE_NORMAL) != (bool)(harness.status == HARNESS_STATUS_FLIPPED)) {
-        // B12,B13: disable OBD mode
-        set_gpio_mode(GPIOB, 12, MODE_INPUT);
-        set_gpio_mode(GPIOB, 13, MODE_INPUT);
-
-        // B5,B6: normal CAN2 mode
-        set_gpio_alternate(GPIOB, 5, GPIO_AF9_CAN2);
-        set_gpio_alternate(GPIOB, 6, GPIO_AF9_CAN2);
-        uno_enable_can_transceiver(2U, true);
-      } else {
-        // B5,B6: disable normal CAN2 mode
-        set_gpio_mode(GPIOB, 5, MODE_INPUT);
-        set_gpio_mode(GPIOB, 6, MODE_INPUT);
-
-        // B12,B13: OBD mode
-        set_gpio_alternate(GPIOB, 12, GPIO_AF9_CAN2);
-        set_gpio_alternate(GPIOB, 13, GPIO_AF9_CAN2);
-        uno_enable_can_transceiver(4U, true);
-      }
-      break;
-    default:
-      print("Tried to set unsupported CAN mode: "); puth(mode); print("\n");
-      break;
-  }
-}
-
 static bool uno_check_ignition(void){
   // ignition is checked through harness
   return harness_check_ignition();
@@ -118,24 +86,10 @@ static void uno_init(void) {
   set_gpio_alternate(GPIOA, 8, GPIO_AF11_CAN3);
   set_gpio_alternate(GPIOA, 15, GPIO_AF11_CAN3);
 
-  // C0: OBD_SBU1 (orientation detection)
-  // C3: OBD_SBU2 (orientation detection)
-  set_gpio_mode(GPIOC, 0, MODE_ANALOG);
-  set_gpio_mode(GPIOC, 3, MODE_ANALOG);
-
   // GPS off
   set_gpio_output(GPIOB, 1, 0);
   set_gpio_output(GPIOC, 5, 0);
   set_gpio_output(GPIOC, 12, 0);
-
-  // C10: OBD_SBU1_RELAY (harness relay driving output)
-  // C11: OBD_SBU2_RELAY (harness relay driving output)
-  set_gpio_mode(GPIOC, 10, MODE_OUTPUT);
-  set_gpio_mode(GPIOC, 11, MODE_OUTPUT);
-  set_gpio_output_type(GPIOC, 10, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_output_type(GPIOC, 11, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_output(GPIOC, 10, 1);
-  set_gpio_output(GPIOC, 11, 1);
 
   // C8: FAN PWM aka TIM3_CH3
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
@@ -147,21 +101,6 @@ static void uno_init(void) {
   set_gpio_alternate(GPIOB, 7, GPIO_AF2_TIM4);
   pwm_init(TIM4, 2);
   uno_set_ir_power(0U);
-
-  // Initialize harness
-  harness_init();
-
-
-  // Enable CAN transceivers
-  uno_enable_can_transceivers(true);
-
-  // Disable LEDs
-  uno_set_led(LED_RED, false);
-  uno_set_led(LED_GREEN, false);
-  uno_set_led(LED_BLUE, false);
-
-  // Set normal CAN mode
-  uno_set_can_mode(CAN_MODE_NORMAL);
 
   // Switch to phone usb mode if harness connection is powered by less than 7V
   if(white_read_voltage_mV() < 7000U){
@@ -192,7 +131,15 @@ static harness_configuration uno_harness_config = {
   .pin_relay_SBU1 = 10,
   .pin_relay_SBU2 = 11,
   .adc_channel_SBU1 = 10,
-  .adc_channel_SBU2 = 13
+  .adc_channel_SBU2 = 13,
+  .GPIO_CAN2_RX_NORMAL = GPIOB,
+  .GPIO_CAN2_TX_NORMAL = GPIOB,
+  .GPIO_CAN2_RX_FLIPPED = GPIOB,
+  .GPIO_CAN2_TX_FLIPPED = GPIOB,
+  .pin_CAN2_RX_NORMAL = 12,
+  .pin_CAN2_TX_NORMAL = 13,
+  .pin_CAN2_RX_FLIPPED = 5,
+  .pin_CAN2_TX_FLIPPED = 6
 };
 
 board board_uno = {
@@ -210,7 +157,6 @@ board board_uno = {
   .enable_can_transceiver = uno_enable_can_transceiver,
   .enable_can_transceivers = uno_enable_can_transceivers,
   .set_led = uno_set_led,
-  .set_can_mode = uno_set_can_mode,
   .check_ignition = uno_check_ignition,
   .read_voltage_mV = white_read_voltage_mV,
   .read_current_mA = unused_read_current,
