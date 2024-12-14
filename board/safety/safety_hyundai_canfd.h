@@ -237,6 +237,8 @@ static safety_config hyundai_canfd_init(uint16_t param) {
   static const CanMsg HYUNDAI_CANFD_HDA2_ALT_STEERING_TX_MSGS[] = {
     {0x110, 0, 32}, // LKAS_ALT
     {0x1CF, 1, 8},  // CRUISE_BUTTON
+    // Needed for cruise control in case of ALT_BUTTONS.
+    {0x1A0, 1, 32}, // CRUISE_INFO
     {0x362, 0, 32}, // CAM_0x362
   };
 
@@ -303,15 +305,23 @@ static safety_config hyundai_canfd_init(uint16_t param) {
     if (hyundai_canfd_hda2) {
       // *** HDA2 checks ***
       // E-CAN is on bus 1, ADAS unit sends SCC messages on HDA2.
-      // Does not use the alt buttons message
-      static RxCheck hyundai_canfd_hda2_rx_checks[] = {
-        HYUNDAI_CANFD_COMMON_RX_CHECKS(1)
-        HYUNDAI_CANFD_BUTTONS_ADDR_CHECK(1)
-        HYUNDAI_CANFD_SCC_ADDR_CHECK(1)
-      };
-
-      ret = hyundai_canfd_hda2_alt_steering ? BUILD_SAFETY_CFG(hyundai_canfd_hda2_rx_checks, HYUNDAI_CANFD_HDA2_ALT_STEERING_TX_MSGS) : \
-                                              BUILD_SAFETY_CFG(hyundai_canfd_hda2_rx_checks, HYUNDAI_CANFD_HDA2_TX_MSGS);
+      if (hyundai_canfd_alt_buttons) {
+        static RxCheck hyundai_canfd_hda2_alt_buttons_rx_checks[] = {
+          HYUNDAI_CANFD_COMMON_RX_CHECKS(1)
+          HYUNDAI_CANFD_ALT_BUTTONS_ADDR_CHECK(1)
+          HYUNDAI_CANFD_SCC_ADDR_CHECK(1)
+        };
+        ret = hyundai_canfd_hda2_alt_steering ? BUILD_SAFETY_CFG(hyundai_canfd_hda2_alt_buttons_rx_checks, HYUNDAI_CANFD_HDA2_ALT_STEERING_TX_MSGS) : \
+                                                BUILD_SAFETY_CFG(hyundai_canfd_hda2_alt_buttons_rx_checks, HYUNDAI_CANFD_HDA2_TX_MSGS);
+      } else {
+        static RxCheck hyundai_canfd_hda2_rx_checks[] = {
+          HYUNDAI_CANFD_COMMON_RX_CHECKS(1)
+          HYUNDAI_CANFD_BUTTONS_ADDR_CHECK(1)
+          HYUNDAI_CANFD_SCC_ADDR_CHECK(1)
+        };
+        ret = hyundai_canfd_hda2_alt_steering ? BUILD_SAFETY_CFG(hyundai_canfd_hda2_rx_checks, HYUNDAI_CANFD_HDA2_ALT_STEERING_TX_MSGS) : \
+                                                BUILD_SAFETY_CFG(hyundai_canfd_hda2_rx_checks, HYUNDAI_CANFD_HDA2_TX_MSGS);
+      }
     } else if (!hyundai_camera_scc) {
       static RxCheck hyundai_canfd_radar_scc_alt_buttons_rx_checks[] = {
         HYUNDAI_CANFD_COMMON_RX_CHECKS(0)
