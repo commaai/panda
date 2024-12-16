@@ -2,6 +2,7 @@
 #define SOUND_TX_BUF_SIZE (SOUND_RX_BUF_SIZE/2U)
 
 __attribute__((section(".sram4"))) static uint16_t sound_rx_buf[2][SOUND_RX_BUF_SIZE];
+__attribute__((section(".sram4"))) static uint16_t sound_tx_buf[2][SOUND_TX_BUF_SIZE];
 
 static uint8_t sound_idle_count;
 
@@ -10,24 +11,24 @@ void sound_tick(void) {
     sound_idle_count--;
     if (sound_idle_count == 0U) {
       current_board->set_amp_enabled(false);
+      register_clear_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
     }
   }
 }
 
 // Playback processing
 static void BDMA_Channel0_IRQ_Handler(void) {
-  __attribute__((section(".sram4"))) static uint16_t tx_buf[SOUND_TX_BUF_SIZE];
-
   BDMA->IFCR |= BDMA_IFCR_CGIF0; // clear flag
 
-  uint8_t buf_idx = (((BDMA_Channel0->CCR & BDMA_CCR_CT) >> BDMA_CCR_CT_Pos) == 1U) ? 0U : 1U;
+  uint8_t rx_buf_idx = (((BDMA_Channel0->CCR & BDMA_CCR_CT) >> BDMA_CCR_CT_Pos) == 1U) ? 0U : 1U;
+  uint8_t tx_buf_idx = (((DMA1_Stream1->CR & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos) == 1U) ? 0U : 1U;
 
   // process samples (shift to 12b and bias to be unsigned)
   bool sound_playing = false;
   for (uint16_t i=0U; i < SOUND_RX_BUF_SIZE; i += 2U) {
     // since we are playing mono and receiving stereo, we take every other sample
-    tx_buf[i/2U] = ((sound_rx_buf[buf_idx][i] + (1UL << 14)) >> 3);
-    if (sound_rx_buf[buf_idx][i] > 0U) {
+    sound_tx_buf[tx_buf_idx][i/2U] = ((sound_rx_buf[rx_buf_idx][i] + (1UL << 14)) >> 3);
+    if (sound_rx_buf[rx_buf_idx][i] > 0U) {
       sound_playing = true;
     }
   }
@@ -36,16 +37,17 @@ static void BDMA_Channel0_IRQ_Handler(void) {
   if (sound_playing) {
     if (sound_idle_count == 0U) {
       current_board->set_amp_enabled(true);
+
+      // empty the other buf and start playing that
+      for (uint16_t i=0U; i < SOUND_TX_BUF_SIZE; i++) {
+        sound_tx_buf[1U - tx_buf_idx][i] = (1UL << 11);
+      }
+      register_set(&DMA1_Stream1->CR, (1UL - tx_buf_idx) << DMA_SxCR_CT_Pos, DMA_SxCR_CT_Msk);
+      register_set_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
     }
     sound_idle_count = 4U;
   }
   sound_tick();
-
-  DMA1->LIFCR |= 0xF40;
-  DMA1_Stream1->CR &= ~DMA_SxCR_EN;
-  register_set(&DMA1_Stream1->M0AR, (uint32_t) tx_buf, 0xFFFFFFFFU);
-  DMA1_Stream1->NDTR = SOUND_TX_BUF_SIZE;
-  DMA1_Stream1->CR |= DMA_SxCR_EN;
 }
 
 void sound_init(void) {
@@ -61,8 +63,11 @@ void sound_init(void) {
 
   // Setup DMA
   register_set(&DMA1_Stream1->PAR, (uint32_t) &(DAC1->DHR12R1), 0xFFFFFFFFU);
+  register_set(&DMA1_Stream1->M0AR, (uint32_t) sound_tx_buf[0], 0xFFFFFFFFU);
+  register_set(&DMA1_Stream1->M1AR, (uint32_t) sound_tx_buf[1], 0xFFFFFFFFU);
   register_set(&DMA1_Stream1->FCR, 0U, 0x00000083U);
-  DMA1_Stream1->CR = (0b11UL << DMA_SxCR_PL_Pos) | (0b01UL << DMA_SxCR_MSIZE_Pos) | (0b01UL << DMA_SxCR_PSIZE_Pos) | DMA_SxCR_MINC | (1U << DMA_SxCR_DIR_Pos);
+  DMA1_Stream1->NDTR = SOUND_TX_BUF_SIZE;
+  DMA1_Stream1->CR = DMA_SxCR_DBM | (0b11UL << DMA_SxCR_PL_Pos) | (0b01UL << DMA_SxCR_MSIZE_Pos) | (0b01UL << DMA_SxCR_PSIZE_Pos) | DMA_SxCR_MINC | (1U << DMA_SxCR_DIR_Pos);
 
   // Init trigger timer (little slower than 48kHz, pulled in sync by SAI4_FS_B)
   register_set(&TIM5->PSC, 2600U, 0xFFFFU);
