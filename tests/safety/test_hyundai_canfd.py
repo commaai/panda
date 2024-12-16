@@ -9,7 +9,7 @@ from panda.tests.safety.hyundai_common import HyundaiButtonBase, HyundaiLongitud
 
 
 class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaCarSafetyTest, common.DriverTorqueSteeringSafetyTest, common.SteerRequestCutSafetyTest):
-
+  SAFETY_PARAM = 0
   TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0]]
   STANDSTILL_THRESHOLD = 12  # 0.375 kph
   FWD_BLACKLISTED_ADDRS = {2: [0x50, 0x2a4]}
@@ -45,6 +45,12 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaCarSafetyTest, common.
       cls.safety = None
       raise unittest.SkipTest
 
+  def setUp(self):
+    self.packer = CANPackerPanda("hyundai_canfd")
+    self.safety = libpanda_py.libpanda
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, self.SAFETY_PARAM)
+    self.safety.init_tests()
+
   def _torque_driver_msg(self, torque):
     values = {"STEERING_COL_TORQUE": torque}
     return self.packer.make_can_msg_panda("MDPS", self.PT_BUS, values)
@@ -79,6 +85,29 @@ class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaCarSafetyTest, common.
     return self.packer.make_can_msg_panda("CRUISE_BUTTONS", bus, values)
 
 
+class HyundaiCanfdAltButtonsMixin:
+  @classmethod
+  def setUpClass(cls):
+    super().setUpClass()
+    cls.SAFETY_PARAM |= Panda.FLAG_HYUNDAI_CANFD_ALT_BUTTONS
+
+  def _button_msg(self, buttons, main_button=0, bus=1):
+    values = {
+      "CRUISE_BUTTONS": buttons,
+      "ADAPTIVE_CRUISE_MAIN_BTN": main_button,
+    }
+    return self.packer.make_can_msg_panda("CRUISE_BUTTONS_ALT", self.PT_BUS, values)
+
+  def test_button_sends(self):
+    """
+      No button send allowed with alt buttons.
+    """
+    for enabled in (True, False):
+      for btn in range(8):
+        self.safety.set_controls_allowed(enabled)
+        self.assertFalse(self._tx(self._button_msg(btn)))
+
+
 class TestHyundaiCanfdHDA1Base(TestHyundaiCanfdBase):
 
   TX_MSGS = [[0x12A, 0], [0x1A0, 1], [0x1CF, 0], [0x1E0, 0]]
@@ -88,7 +117,6 @@ class TestHyundaiCanfdHDA1Base(TestHyundaiCanfdBase):
 
   STEER_MSG = "LFA"
   BUTTONS_TX_BUS = 2
-  SAFETY_PARAM: int
 
   @classmethod
   def setUpClass(cls):
@@ -97,12 +125,6 @@ class TestHyundaiCanfdHDA1Base(TestHyundaiCanfdBase):
       cls.packer = None
       cls.safety = None
       raise unittest.SkipTest
-
-  def setUp(self):
-    self.packer = CANPackerPanda("hyundai_canfd")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, self.SAFETY_PARAM)
-    self.safety.init_tests()
 
 
 @parameterized_class([
@@ -129,71 +151,45 @@ class TestHyundaiCanfdHDA1(TestHyundaiCanfdHDA1Base):
   {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SCC_BUS": 2, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_EV_GAS | Panda.FLAG_HYUNDAI_CAMERA_SCC},
   {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SCC_BUS": 2, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_HYBRID_GAS | Panda.FLAG_HYUNDAI_CAMERA_SCC},
 ])
-class TestHyundaiCanfdHDA1AltButtons(TestHyundaiCanfdHDA1Base):
-
-  SAFETY_PARAM: int
-
-  def setUp(self):
-    self.packer = CANPackerPanda("hyundai_canfd")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_ALT_BUTTONS | self.SAFETY_PARAM)
-    self.safety.init_tests()
-
-  def _button_msg(self, buttons, main_button=0, bus=1):
-    values = {
-      "CRUISE_BUTTONS": buttons,
-      "ADAPTIVE_CRUISE_MAIN_BTN": main_button,
-    }
-    return self.packer.make_can_msg_panda("CRUISE_BUTTONS_ALT", self.PT_BUS, values)
-
-  def test_button_sends(self):
-    """
-      No button send allowed with alt buttons.
-    """
-    for enabled in (True, False):
-      for btn in range(8):
-        self.safety.set_controls_allowed(enabled)
-        self.assertFalse(self._tx(self._button_msg(btn)))
+class TestHyundaiCanfdHDA1AltButtons(HyundaiCanfdAltButtonsMixin, TestHyundaiCanfdHDA1Base):
+  pass
 
 
-class TestHyundaiCanfdHDA2EV(TestHyundaiCanfdBase):
+# ********************* HDA2 **********************
 
+
+# TODO: Handle ICE and HEV configurations.
+class TestHyundaiCanfdHDA2EVBase(TestHyundaiCanfdBase):
+  PT_BUS = 1
+  SCC_BUS = 1
+  GAS_MSG = ("ACCELERATOR", "ACCELERATOR_PEDAL")
+  FWD_BUS_LOOKUP = {0: 2, 2: 0}
+
+
+class TestHyundaiCanfdHDA2EV(TestHyundaiCanfdHDA2EVBase):
   TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0]]
-  RELAY_MALFUNCTION_ADDRS = {0: (0x50,)}  # LKAS
+  RELAY_MALFUNCTION_ADDRS = {0: (0x50,)}
   FWD_BLACKLISTED_ADDRS = {2: [0x50, 0x2a4]}
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
-
-  PT_BUS = 1
-  SCC_BUS = 1
   STEER_MSG = "LKAS"
-  GAS_MSG = ("ACCELERATOR", "ACCELERATOR_PEDAL")
-
-  def setUp(self):
-    self.packer = CANPackerPanda("hyundai_canfd")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_EV_GAS)
-    self.safety.init_tests()
+  SAFETY_PARAM = Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_EV_GAS
 
 
-# TODO: Handle ICE and HEV configurations once we see cars that use the new messages
-class TestHyundaiCanfdHDA2EVAltSteering(TestHyundaiCanfdBase):
-
+class TestHyundaiCanfdHDA2EVAltSteering(TestHyundaiCanfdHDA2EVBase):
   TX_MSGS = [[0x110, 0], [0x1CF, 1], [0x362, 0]]
-  RELAY_MALFUNCTION_ADDRS = {0: (0x110,)}  # LKAS_ALT
+  RELAY_MALFUNCTION_ADDRS = {0: (0x110,)}
   FWD_BLACKLISTED_ADDRS = {2: [0x110, 0x362]}
-  FWD_BUS_LOOKUP = {0: 2, 2: 0}
-
-  PT_BUS = 1
-  SCC_BUS = 1
   STEER_MSG = "LKAS_ALT"
-  GAS_MSG = ("ACCELERATOR", "ACCELERATOR_PEDAL")
+  SAFETY_PARAM = Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_EV_GAS | Panda.FLAG_HYUNDAI_CANFD_HDA2_ALT_STEERING
 
-  def setUp(self):
-    self.packer = CANPackerPanda("hyundai_canfd")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_EV_GAS |
-                                 Panda.FLAG_HYUNDAI_CANFD_HDA2_ALT_STEERING)
-    self.safety.init_tests()
+
+class TestHyundaiCanfdHDA2EVAltButtons(HyundaiCanfdAltButtonsMixin, TestHyundaiCanfdHDA2EV):
+  pass
+
+class TestHyundaiCanfdHDA2EVAltSteeringAltButtons(HyundaiCanfdAltButtonsMixin, TestHyundaiCanfdHDA2EVAltSteering):
+  pass
+
+
+# ********************* LONG **********************
 
 
 class TestHyundaiCanfdHDA2LongEV(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2EV):
@@ -209,12 +205,7 @@ class TestHyundaiCanfdHDA2LongEV(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2EV
   STEER_MSG = "LFA"
   GAS_MSG = ("ACCELERATOR", "ACCELERATOR_PEDAL")
   STEER_BUS = 1
-
-  def setUp(self):
-    self.packer = CANPackerPanda("hyundai_canfd")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_EV_GAS)
-    self.safety.init_tests()
+  SAFETY_PARAM = Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_EV_GAS
 
   def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
     values = {
@@ -246,15 +237,11 @@ class TestHyundaiCanfdHDA1Long(HyundaiLongitudinalBase, TestHyundaiCanfdHDA1Base
 
   @classmethod
   def setUpClass(cls):
+    super().setUpClass()
+    cls.SAFETY_PARAM |= Panda.FLAG_HYUNDAI_CAMERA_SCC
     if cls.__name__ == "TestHyundaiCanfdHDA1Long":
       cls.safety = None
       raise unittest.SkipTest
-
-  def setUp(self):
-    self.packer = CANPackerPanda("hyundai_canfd")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CAMERA_SCC | self.SAFETY_PARAM)
-    self.safety.init_tests()
 
   def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
     values = {
