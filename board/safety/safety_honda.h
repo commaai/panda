@@ -103,7 +103,7 @@ static void honda_rx_hook(const CANPacket_t *to_push) {
     // Since some Nidec cars can brake down to 0 after the PCM disengages,
     // we don't disengage when the PCM does.
     if (!cruise_engaged && (honda_hw != HONDA_NIDEC)) {
-      //controls_allowed = false;
+      controls_allowed = false;
     }
     cruise_engaged_prev = cruise_engaged;
   }
@@ -121,13 +121,10 @@ static void honda_rx_hook(const CANPacket_t *to_push) {
     }
 
     // exit controls once main or cancel are pressed
-    if ((button == HONDA_BTN_MAIN) || (button == HONDA_BTN_CANCEL)) {
+    if (((button == HONDA_BTN_MAIN) || (button == HONDA_BTN_CANCEL)) && (cruise_button_prev != button)) {
       controls_allowed = false;
     }
     cruise_button_prev = button;
-    if (acc_main_on) {
-      controls_allowed = true;
-    }
   }
 
   // user brake signal on 0x17C reports applied brake from computer brake on accord

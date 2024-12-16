@@ -116,7 +116,7 @@ static bool is_msg_valid(RxCheck addr_list[], int index) {
   if (index != -1) {
     if (!addr_list[index].status.valid_checksum || !addr_list[index].status.valid_quality_flag || (addr_list[index].status.wrong_counters >= MAX_WRONG_COUNTERS)) {
       valid = false;
-      //controls_allowed = false;
+      controls_allowed = false;
     }
   }
   return valid;
@@ -300,7 +300,7 @@ void safety_tick(const safety_config *cfg) {
       bool lagging = elapsed_time > MAX(timestep * MAX_MISSED_MSGS, 1e6);
       cfg->rx_checks[i].status.lagging = lagging;
       if (lagging) {
-        //controls_allowed = false;
+        controls_allowed = false;
       }
 
       if (lagging || !is_msg_valid(cfg->rx_checks, i)) {
