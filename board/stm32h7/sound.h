@@ -39,10 +39,10 @@ static void BDMA_Channel0_IRQ_Handler(void) {
       current_board->set_amp_enabled(true);
 
       // empty the other buf and start playing that
-      for (uint16_t i=0U; i < SOUND_TX_BUF_SIZE; i += 1U) {
-        sound_tx_buf[1U - tx_buf_idx][i] = (1U << 11);
+      for (uint16_t i=0U; i < SOUND_TX_BUF_SIZE; i++) {
+        sound_tx_buf[1U - tx_buf_idx][i] = (1UL << 11);
       }
-      register_set(&DMA1_Stream1->CR, (1U - tx_buf_idx) << DMA_SxCR_CT_Pos, DMA_SxCR_CT_Msk);
+      register_set(&DMA1_Stream1->CR, (1UL - tx_buf_idx) << DMA_SxCR_CT_Pos, DMA_SxCR_CT_Msk);
       register_set_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
     }
     sound_idle_count = 4U;
