@@ -58,7 +58,7 @@ void set_gpio_alternate(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode)
 void set_gpio_pullup(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
   ENTER_CRITICAL();
   uint32_t tmp = GPIO->PUPDR;
-  tmp &= ~(3U << (pin * 2U));
+  tmp &= ~((uint32_t)3U << ((uint32_t)(pin * 2U)));
   tmp |= (mode << (pin * 2U));
   register_set(&(GPIO->PUPDR), tmp, 0xFFFFFFFFU);
   EXIT_CRITICAL();
