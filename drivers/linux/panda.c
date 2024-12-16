@@ -21,7 +21,7 @@
 
 /* vendor and product id */
 #define PANDA_MODULE_NAME "panda"
-#define PANDA_VENDOR_ID 0XBBAA
+#define PANDA_VENDOR_ID 0X3801
 #define PANDA_PRODUCT_ID 0XDDCC
 
 #define PANDA_MAX_TX_URBS 20
