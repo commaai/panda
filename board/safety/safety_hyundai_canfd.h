@@ -154,10 +154,16 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *to_send) {
   }
 
   // cruise buttons check
-  if (addr == 0x1cf) {
-    int button = GET_BYTE(to_send, 2) & 0x7U;
-    bool is_cancel = (button == HYUNDAI_BTN_CANCEL);
-    bool is_resume = (button == HYUNDAI_BTN_RESUME);
+  const int button_addr = hyundai_canfd_alt_buttons ? 0x1aa : 0x1cf;
+  if (addr == button_addr) {
+    int cruise_button = 0;
+    if (addr == 0x1cf) {
+      cruise_button = GET_BYTE(to_send, 2) & 0x7U;
+    } else {
+      cruise_button = (GET_BYTE(to_send, 4) >> 4) & 0x7U;
+    }
+    bool is_cancel = (cruise_button == HYUNDAI_BTN_CANCEL);
+    bool is_resume = (cruise_button == HYUNDAI_BTN_RESUME);
 
     bool allowed = (is_cancel && cruise_engaged_prev) || (is_resume && controls_allowed);
     if (!allowed) {
@@ -231,12 +237,14 @@ static safety_config hyundai_canfd_init(uint16_t param) {
   static const CanMsg HYUNDAI_CANFD_HDA2_TX_MSGS[] = {
     {0x50, 0, 16},  // LKAS
     {0x1CF, 1, 8},  // CRUISE_BUTTON
+    {0x1AA, 1, 16}, // CRUISE_BUTTONS_ALT
     {0x2A4, 0, 24}, // CAM_0x2A4
   };
 
   static const CanMsg HYUNDAI_CANFD_HDA2_ALT_STEERING_TX_MSGS[] = {
     {0x110, 0, 32}, // LKAS_ALT
     {0x1CF, 1, 8},  // CRUISE_BUTTON
+    {0x1AA, 1, 16}, // CRUISE_BUTTONS_ALT
     // Needed for cruise control in case of ALT_BUTTONS.
     {0x1A0, 1, 32}, // CRUISE_INFO
     {0x362, 0, 32}, // CAM_0x362
@@ -262,6 +270,7 @@ static safety_config hyundai_canfd_init(uint16_t param) {
     {0x12A, 0, 16}, // LFA
     {0x1A0, 0, 32}, // CRUISE_INFO
     {0x1CF, 2, 8},  // CRUISE_BUTTON
+    {0x1AA, 2, 16}, // CRUISE_BUTTONS_ALT
     {0x1E0, 0, 16}, // LFAHDA_CLUSTER
   };
 

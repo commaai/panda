@@ -10,7 +10,7 @@ from panda.tests.safety.hyundai_common import HyundaiButtonBase, HyundaiLongitud
 
 class TestHyundaiCanfdBase(HyundaiButtonBase, common.PandaCarSafetyTest, common.DriverTorqueSteeringSafetyTest, common.SteerRequestCutSafetyTest):
   SAFETY_PARAM = 0
-  TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0]]
+  TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x1AA, 1], [0x2A4, 0]]
   STANDSTILL_THRESHOLD = 12  # 0.375 kph
   FWD_BLACKLISTED_ADDRS = {2: [0x50, 0x2a4]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
@@ -91,26 +91,20 @@ class HyundaiCanfdAltButtonsMixin:
     super().setUpClass()
     cls.SAFETY_PARAM |= Panda.FLAG_HYUNDAI_CANFD_ALT_BUTTONS
 
-  def _button_msg(self, buttons, main_button=0, bus=1):
+  def _button_msg(self, buttons, main_button=0, bus=None):
+    if bus is None:
+      bus = self.PT_BUS
     values = {
       "CRUISE_BUTTONS": buttons,
       "ADAPTIVE_CRUISE_MAIN_BTN": main_button,
     }
-    return self.packer.make_can_msg_panda("CRUISE_BUTTONS_ALT", self.PT_BUS, values)
-
-  def test_button_sends(self):
-    """
-      No button send allowed with alt buttons.
-    """
-    for enabled in (True, False):
-      for btn in range(8):
-        self.safety.set_controls_allowed(enabled)
-        self.assertFalse(self._tx(self._button_msg(btn)))
+    msg = self.packer.make_can_msg_panda("CRUISE_BUTTONS_ALT", bus, values)
+    return msg
 
 
 class TestHyundaiCanfdHDA1Base(TestHyundaiCanfdBase):
 
-  TX_MSGS = [[0x12A, 0], [0x1A0, 1], [0x1CF, 0], [0x1E0, 0]]
+  TX_MSGS = [[0x12A, 0], [0x1A0, 1], [0x1CF, 2], [0x1AA, 2], [0x1E0, 0]]
   RELAY_MALFUNCTION_ADDRS = {0: (0x12A,)}  # LFA
   FWD_BLACKLISTED_ADDRS = {2: [0x12A, 0x1E0]}
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
@@ -167,7 +161,7 @@ class TestHyundaiCanfdHDA2EVBase(TestHyundaiCanfdBase):
 
 
 class TestHyundaiCanfdHDA2EV(TestHyundaiCanfdHDA2EVBase):
-  TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0]]
+  TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x1AA, 1], [0x2A4, 0]]
   RELAY_MALFUNCTION_ADDRS = {0: (0x50,)}
   FWD_BLACKLISTED_ADDRS = {2: [0x50, 0x2a4]}
   STEER_MSG = "LKAS"
@@ -175,7 +169,7 @@ class TestHyundaiCanfdHDA2EV(TestHyundaiCanfdHDA2EVBase):
 
 
 class TestHyundaiCanfdHDA2EVAltSteering(TestHyundaiCanfdHDA2EVBase):
-  TX_MSGS = [[0x110, 0], [0x1CF, 1], [0x362, 0]]
+  TX_MSGS = [[0x110, 0], [0x1CF, 1], [0x1AA, 1], [0x362, 0]]
   RELAY_MALFUNCTION_ADDRS = {0: (0x110,)}
   FWD_BLACKLISTED_ADDRS = {2: [0x110, 0x362]}
   STEER_MSG = "LKAS_ALT"
@@ -194,7 +188,7 @@ class TestHyundaiCanfdHDA2EVAltSteeringAltButtons(HyundaiCanfdAltButtonsMixin, T
 
 class TestHyundaiCanfdHDA2LongEV(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2EV):
 
-  TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x2A4, 0], [0x51, 0], [0x730, 1], [0x12a, 1], [0x160, 1],
+  TX_MSGS = [[0x50, 0], [0x1CF, 1], [0x1AA, 1], [0x2A4, 0], [0x51, 0], [0x730, 1], [0x12a, 1], [0x160, 1],
              [0x1e0, 1], [0x1a0, 1], [0x1ea, 1], [0x200, 1], [0x345, 1], [0x1da, 1]]
 
   RELAY_MALFUNCTION_ADDRS = {0: (0x50,), 1: (0x1a0,)}  # LKAS, SCC_CONTROL
