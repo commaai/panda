@@ -71,10 +71,6 @@ static void cuatro_set_bootkick(BootState state) {
   //set_gpio_output(GPIOC, 12, state != BOOT_RESET);
 }
 
-static void cuatro_set_siren(bool enabled){
-  beeper_enable(enabled);
-}
-
 static void cuatro_set_amp_enabled(bool enabled){
   set_gpio_output(GPIOA, 5, enabled);
 }
@@ -86,6 +82,10 @@ static void cuatro_init(void) {
   set_gpio_output_type(GPIOE, 2, OUTPUT_TYPE_OPEN_DRAIN);
   set_gpio_output_type(GPIOB, 2, OUTPUT_TYPE_OPEN_DRAIN);
   set_gpio_output_type(GPIOD, 15, OUTPUT_TYPE_OPEN_DRAIN);
+
+  // more open drain
+  set_gpio_output_type(GPIOD, 3, OUTPUT_TYPE_OPEN_DRAIN); // FAN_EN
+  set_gpio_output_type(GPIOC, 12, OUTPUT_TYPE_OPEN_DRAIN); // VBAT_EN
 
   // Power readout
   set_gpio_mode(GPIOC, 5, MODE_ANALOG);
@@ -129,10 +129,6 @@ static void cuatro_init(void) {
   // Clock source
   clock_source_init();
 
-  // Beeper
-  set_gpio_alternate(GPIOD, 14, GPIO_AF2_TIM4);
-  beeper_init();
-
   // Sound codec
   cuatro_set_amp_enabled(false);
   set_gpio_alternate(GPIOA, 2, GPIO_AF8_SAI4);    // SAI4_SCK_B
@@ -165,8 +161,8 @@ board board_cuatro = {
   .read_voltage_mV = cuatro_read_voltage_mV,
   .read_current_mA = cuatro_read_current_mA,
   .set_fan_enabled = cuatro_set_fan_enabled,
-  .set_ir_power = tres_set_ir_power,
-  .set_siren = cuatro_set_siren,
+  .set_ir_power = unused_set_ir_power,
+  .set_siren = unused_set_siren,
   .set_bootkick = cuatro_set_bootkick,
   .read_som_gpio = tres_read_som_gpio,
   .set_amp_enabled = cuatro_set_amp_enabled
