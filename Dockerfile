@@ -39,7 +39,7 @@ RUN pip3 install --break-system-packages --no-cache-dir $PYTHONPATH/panda/[dev]
 RUN git config --global --add safe.directory $PYTHONPATH/panda
 ENV OPENDBC_REF="b89fe79950121ca93d8a1f0d3fd17df31703be2a"
 RUN cd /tmp/ && \
-    git clone --depth 1 https://github.com/commaai/opendbc opendbc_repo && \
+    git clone --depth 1 https://github.com/sunnypilot/opendbc opendbc_repo && \
     cd opendbc_repo && git fetch origin $OPENDBC_REF && git checkout FETCH_HEAD && rm -rf .git/ && \
     pip3 install --break-system-packages --no-cache-dir Cython numpy  && \
     ln -s $PWD/opendbc $PYTHONPATH/opendbc && \
