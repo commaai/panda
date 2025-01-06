@@ -75,4 +75,9 @@ setup(
     "Programming Language :: Python :: 3",
     "Topic :: System :: Hardware",
   ],
+  entry_points={
+    "can.interface": [
+      "panda=panda.python.pycanpanda:PandaBus",
+    ]
+  },
 )
