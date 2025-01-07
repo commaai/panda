@@ -376,11 +376,6 @@ static safety_config honda_bosch_init(uint16_t param) {
   // Checking for alternate brake override from safety parameter
   honda_alt_brake_msg = GET_FLAG(param, HONDA_PARAM_ALT_BRAKE);
 
-
-  // Only find one car Odyssey RC5 japanese type use this feature
-  const uint16_t HONDA_PARAM_NIDEC_ALT = 4;
-  bool enable_nidec_alt = GET_FLAG(param, HONDA_PARAM_NIDEC_ALT);
-
   // radar disabled so allow gas/brakes
 #ifdef ALLOW_DEBUG
   const uint16_t HONDA_PARAM_BOSCH_LONG = 2;
@@ -391,16 +386,7 @@ static safety_config honda_bosch_init(uint16_t param) {
   if (honda_bosch_radarless && honda_alt_brake_msg) {
     SET_RX_CHECKS(honda_common_alt_brake_rx_checks, ret);
   } else if (honda_bosch_radarless) {
-    if (enable_nidec_alt) {
-      // for dyssey RC5 japanese type
-      static RxCheck honda_bosch_alt_rx_checks[] = { 
-        HONDA_COMMON_NO_SCM_FEEDBACK_RX_CHECKS(0)
-      };
-
-      SET_RX_CHECKS(honda_bosch_alt_rx_checks, ret);
-    } else {
-      SET_RX_CHECKS(honda_common_rx_checks, ret);
-    }
+    SET_RX_CHECKS(honda_common_rx_checks, ret);
   } else if (honda_alt_brake_msg) {
     SET_RX_CHECKS(honda_bosch_alt_brake_rx_checks, ret);
   } else {
