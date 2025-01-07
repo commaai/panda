@@ -37,6 +37,10 @@ static bool honda_alt_brake_msg = false;
 static bool honda_fwd_brake = false;
 static bool honda_bosch_long = false;
 static bool honda_bosch_radarless = false;
+
+
+static bool honda_addr_1a6_detect = false;
+
 typedef enum {HONDA_NIDEC, HONDA_BOSCH} HondaHw;
 static HondaHw honda_hw = HONDA_NIDEC;
 
@@ -87,8 +91,16 @@ static void honda_rx_hook(const CANPacket_t *to_push) {
 
   // check ACC main state
   // 0x326 for all Bosch and some Nidec, 0x1A6 for some Nidec
-  if ((addr == 0x326) || (addr == 0x1A6)) {
-    acc_main_on = GET_BIT(to_push, ((addr == 0x326) ? 28U : 47U));
+  // Odyssey RC5 japanese type use 0x1a6 for scm_buttons and main_on signal
+  // But 0x326 also exist. So we need to ignore it.
+  if (addr == 0x1A6) {
+    honda_addr_1a6_detect = true;
+    acc_main_on = GET_BIT(to_push, 47U);
+    if (!acc_main_on) {
+      controls_allowed = false;
+    }
+  } else if (addr == 0x326 && !honda_addr_1a6_detect) {
+    acc_main_on = GET_BIT(to_push, 28U);
     if (!acc_main_on) {
       controls_allowed = false;
     }
