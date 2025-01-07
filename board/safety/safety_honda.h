@@ -133,7 +133,7 @@ static void honda_rx_hook(const CANPacket_t *to_push) {
     }
 
     // exit controls once main or cancel are pressed
-    if (((button == HONDA_BTN_MAIN) || (button == HONDA_BTN_CANCEL))) {
+    if ((button == HONDA_BTN_MAIN) || (button == HONDA_BTN_CANCEL)) {
       controls_allowed = false;
     }
     cruise_button_prev = button;
