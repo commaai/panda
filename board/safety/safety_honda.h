@@ -97,7 +97,9 @@ static void honda_rx_hook(const CANPacket_t *to_push) {
     if (!acc_main_on) {
       controls_allowed = false;
     }
-  } else if ((addr == 0x326) && (!honda_addr_1a6_detect)) {
+  } 
+  
+  if ((addr == 0x326) && (!honda_addr_1a6_detect)) {
     acc_main_on = GET_BIT(to_push, 28U);
     if (!acc_main_on) {
       controls_allowed = false;
