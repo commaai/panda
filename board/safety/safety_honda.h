@@ -37,8 +37,6 @@ static bool honda_alt_brake_msg = false;
 static bool honda_fwd_brake = false;
 static bool honda_bosch_long = false;
 static bool honda_bosch_radarless = false;
-
-
 static bool honda_addr_1a6_detect = false;
 
 typedef enum {HONDA_NIDEC, HONDA_BOSCH} HondaHw;
@@ -99,7 +97,7 @@ static void honda_rx_hook(const CANPacket_t *to_push) {
     if (!acc_main_on) {
       controls_allowed = false;
     }
-  } else if (addr == 0x326 && !honda_addr_1a6_detect) {
+  } else if ((addr == 0x326) && (!honda_addr_1a6_detect)) {
     acc_main_on = GET_BIT(to_push, 28U);
     if (!acc_main_on) {
       controls_allowed = false;
@@ -135,7 +133,7 @@ static void honda_rx_hook(const CANPacket_t *to_push) {
     }
 
     // exit controls once main or cancel are pressed
-    if (((button == HONDA_BTN_MAIN) || (button == HONDA_BTN_CANCEL)) &&(cruise_button_prev != button)) {
+    if (((button == HONDA_BTN_MAIN) || (button == HONDA_BTN_CANCEL))) {
       controls_allowed = false;
     }
     cruise_button_prev = button;
