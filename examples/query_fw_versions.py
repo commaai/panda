@@ -2,8 +2,8 @@
 import argparse
 from tqdm import tqdm
 from panda import Panda
-from panda.python.uds import UdsClient, MessageTimeoutError, NegativeResponseError, InvalidSubAddressError, \
-                             SESSION_TYPE, DATA_IDENTIFIER_TYPE
+from opendbc.car.uds import UdsClient, MessageTimeoutError, NegativeResponseError, InvalidSubAddressError, \
+                            SESSION_TYPE, DATA_IDENTIFIER_TYPE  # pylint: disable=import-error
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
