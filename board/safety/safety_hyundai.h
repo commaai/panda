@@ -269,7 +269,7 @@ static int hyundai_fwd_hook(int bus_num, int addr) {
     // Stock SCC messages, blocking when doing openpilot longitudinal on camera SCC cars
     bool is_scc_msg = (addr == 0x420) || (addr == 0x421) || (addr == 0x50A) || (addr == 0x389);
 
-    bool block_msg = is_lkas11_msg || is_lfahda_mfc_msg || (is_scc_msg && hyundai_longitudinal && hyundai_camera_scc);
+    bool block_msg = is_lkas_11 || is_lfahda_mfc || (is_scc_msg && hyundai_longitudinal && hyundai_camera_scc);
     if (!block_msg) {
       bus_fwd = 0;
     }
