@@ -144,6 +144,7 @@ class Panda:
   SERIAL_LIN2 = 3
   SERIAL_SOM_DEBUG = 4
 
+  USB_VIDS = (0xbbaa, 0x3801)  # 0x3801 is comma's registered VID
   USB_PIDS = (0xddee, 0xddcc)
   REQUEST_IN = usb1.ENDPOINT_IN | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
   REQUEST_OUT = usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
@@ -214,8 +215,7 @@ class Panda:
 
   FLAG_SUBARU_GEN2 = 1
   FLAG_SUBARU_LONG = 2
-
-  FLAG_SUBARU_PREGLOBAL_REVERSED_DRIVER_TORQUE = 1
+  FLAG_SUBARU_PREGLOBAL_REVERSED_DRIVER_TORQUE = 4
 
   FLAG_NISSAN_ALT_EPS_BUS = 1
 
@@ -385,7 +385,7 @@ class Panda:
     context.open()
     try:
       for device in context.getDeviceList(skip_on_error=True):
-        if device.getVendorID() == 0xbbaa and device.getProductID() in cls.USB_PIDS:
+        if device.getVendorID() in cls.USB_VIDS and device.getProductID() in cls.USB_PIDS:
           try:
             this_serial = device.getSerialNumber()
           except Exception:
@@ -441,7 +441,7 @@ class Panda:
     try:
       with usb1.USBContext() as context:
         for device in context.getDeviceList(skip_on_error=True):
-          if device.getVendorID() == 0xbbaa and device.getProductID() in cls.USB_PIDS:
+          if device.getVendorID() in cls.USB_VIDS and device.getProductID() in cls.USB_PIDS:
             try:
               serial = device.getSerialNumber()
               if len(serial) == 24:
