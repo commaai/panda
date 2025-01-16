@@ -2,8 +2,8 @@
 import argparse
 from tqdm import tqdm
 from panda import Panda
-from panda.python.uds import UdsClient, MessageTimeoutError, NegativeResponseError, InvalidSubAddressError, \
-                             SESSION_TYPE, DATA_IDENTIFIER_TYPE
+from opendbc.car.uds import UdsClient, MessageTimeoutError, NegativeResponseError, InvalidSubAddressError, \
+                            SESSION_TYPE, DATA_IDENTIFIER_TYPE
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         resp = {}
         for uds_data_id in sorted(uds_data_ids):
           try:
-            data = uds_client.read_data_by_identifier(uds_data_id)  # type: ignore
+            data = uds_client.read_data_by_identifier(uds_data_id)
             if data:
               resp[uds_data_id] = data
           except (NegativeResponseError, MessageTimeoutError, InvalidSubAddressError):
