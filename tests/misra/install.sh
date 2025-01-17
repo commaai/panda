@@ -10,7 +10,7 @@ fi
 
 cd $CPPCHECK_DIR
 
-VERS="2.15.0"
+VERS="2.16.0"
 git fetch --all --tags --force
 git checkout $VERS
 
