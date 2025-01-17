@@ -362,7 +362,7 @@ class TestToyotaSecOcSafety(TestToyotaSafetyBase):
       should_tx = not req and not req2 and angle == 0
       self.assertEqual(should_tx, self._tx(self._lta_2_msg(req, req2, angle)), f"{req=} {req2=} {angle=}")
 
-  def _accel_msg_2(self, accel, cancel_req=0):
+  def _accel_msg_2(self, accel):
     values = {"ACCEL_CMD": accel}
     return self.packer.make_can_msg_panda("ACC_CONTROL_2", 0, values)
 
