@@ -333,7 +333,7 @@ class TestToyotaSecOcSafety(TestToyotaStockLongitudinalBase):
   FWD_BLACKLISTED_ADDRS = {2: [0x2E4, 0x412, 0x191, 0x131]}
 
   def setUp(self):
-    self.packer = CANPackerPanda("toyota_rav4_prime_generated")
+    self.packer = CANPackerPanda("toyota_secoc_pt_generated")
     self.safety = libpanda_py.libpanda
     self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL | Panda.FLAG_TOYOTA_SECOC)
     self.safety.init_tests()
