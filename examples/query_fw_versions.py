@@ -97,7 +97,7 @@ if __name__ == "__main__":
         resp = {}
         for uds_data_id in sorted(uds_data_ids):
           try:
-            data = uds_client.read_data_by_identifier(uds_data_id)
+            data = uds_client.read_data_by_identifier(DATA_IDENTIFIER_TYPE(uds_data_id))
             if data:
               resp[uds_data_id] = data
           except (NegativeResponseError, MessageTimeoutError, InvalidSubAddressError):
