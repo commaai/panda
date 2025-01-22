@@ -409,6 +409,9 @@ static safety_config ford_init(uint16_t param) {
   ford_canfd = GET_FLAG(param, FORD_PARAM_CANFD);
 #endif
 
+  // Longitudinal is the default for CAN, and optional for CAN FD w/ ALLOW_DEBUG
+  ford_longitudinal = !ford_canfd || ford_longitudinal;
+
   safety_config ret;
   // FIXME: cppcheck thinks that ford_canfd is always false. This is not true
   // if ALLOW_DEBUG is defined but cppcheck is run without ALLOW_DEBUG
