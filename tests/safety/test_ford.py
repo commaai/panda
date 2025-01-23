@@ -441,7 +441,7 @@ class TestFordLongitudinalSafety(TestFordLongitudinalSafetyBase):
   def setUp(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
     self.safety = libpanda_py.libpanda
-    # Makes sure we enforce long safety even without long flag for CAN
+    # Make sure we enforce long safety even without long flag for CAN
     self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
     self.safety.init_tests()
 
