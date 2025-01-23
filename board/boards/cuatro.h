@@ -9,13 +9,13 @@
 static void cuatro_set_led(uint8_t color, bool enabled) {
   switch (color) {
     case LED_RED:
-      set_gpio_output(GPIOD, 15, !enabled);
+      set_gpio_output(GPIOC, 6, !enabled);
       break;
     case LED_GREEN:
-      set_gpio_output(GPIOB, 2, !enabled);
+      set_gpio_output(GPIOC, 7, !enabled);
       break;
     case LED_BLUE:
-      set_gpio_output(GPIOE, 2, !enabled);
+      set_gpio_output(GPIOC, 9, !enabled);
       break;
     default:
       break;
@@ -79,9 +79,9 @@ static void cuatro_init(void) {
   red_chiplet_init();
 
   // init LEDs as open drain
-  set_gpio_output_type(GPIOE, 2, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_output_type(GPIOB, 2, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_output_type(GPIOD, 15, OUTPUT_TYPE_OPEN_DRAIN);
+  set_gpio_output_type(GPIOC, 6, OUTPUT_TYPE_OPEN_DRAIN);
+  set_gpio_output_type(GPIOC, 7, OUTPUT_TYPE_OPEN_DRAIN);
+  set_gpio_output_type(GPIOC, 9, OUTPUT_TYPE_OPEN_DRAIN);
 
   // more open drain
   set_gpio_output_type(GPIOD, 3, OUTPUT_TYPE_OPEN_DRAIN); // FAN_EN
@@ -104,9 +104,8 @@ static void cuatro_init(void) {
   set_gpio_alternate(GPIOD, 13, GPIO_AF5_FDCAN3);
 
   // C2: SOM GPIO used as input (fan control at boot)
-  // FIXME: repurposed as mic clock output
-  // set_gpio_mode(GPIOC, 2, MODE_INPUT);
-  // set_gpio_pullup(GPIOC, 2, PULL_DOWN);
+  set_gpio_mode(GPIOC, 2, MODE_INPUT);
+  set_gpio_pullup(GPIOC, 2, PULL_DOWN);
 
   // SOM bootkick + reset lines
   cuatro_set_bootkick(BOOT_BOOTKICK);
@@ -136,8 +135,8 @@ static void cuatro_init(void) {
   set_gpio_alternate(GPIOC, 0, GPIO_AF8_SAI4);    // SAI4_FS_B
   set_gpio_alternate(GPIOD, 11, GPIO_AF10_SAI4);  // SAI4_SD_A
   set_gpio_alternate(GPIOE, 3, GPIO_AF8_SAI4);    // SAI4_SD_B
-  set_gpio_alternate(GPIOE, 4, GPIO_AF3_DFSDM1);  // DFSDM1_DATIN3 TODO: move to other pin!
-  set_gpio_alternate(GPIOC, 2, GPIO_AF6_DFSDM1);  // DFSDM1_CKOUT
+  set_gpio_alternate(GPIOE, 4, GPIO_AF3_DFSDM1);  // DFSDM1_DATIN3
+  set_gpio_alternate(GPIOE, 9, GPIO_AF3_DFSDM1);  // DFSDM1_CKOUT
   set_gpio_alternate(GPIOE, 6, GPIO_AF10_SAI4);   // SAI4_MCLK_B
   sound_init();
 }
