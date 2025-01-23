@@ -1,11 +1,22 @@
-#define SOUND_RX_BUF_SIZE 2000U
+#define SOUND_RX_BUF_SIZE 1000U
 #define SOUND_TX_BUF_SIZE (SOUND_RX_BUF_SIZE/2U)
 #define MIC_RX_BUF_SIZE 512U
 #define MIC_TX_BUF_SIZE (MIC_RX_BUF_SIZE * 2U)
 __attribute__((section(".sram4"))) static uint16_t sound_rx_buf[2][SOUND_RX_BUF_SIZE];
+__attribute__((section(".sram4"))) static uint16_t sound_tx_buf[2][SOUND_TX_BUF_SIZE];
 __attribute__((section(".sram4"))) static uint32_t mic_rx_buf[2][MIC_RX_BUF_SIZE];
 
 static uint8_t sound_idle_count;
+
+void sound_tick(void) {
+  if (sound_idle_count > 0U) {
+    sound_idle_count--;
+    if (sound_idle_count == 0U) {
+      current_board->set_amp_enabled(false);
+      register_clear_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
+    }
+  }
+}
 
 // Recording processing
 static void DMA1_Stream0_IRQ_Handler(void) {
@@ -25,16 +36,6 @@ static void DMA1_Stream0_IRQ_Handler(void) {
   register_set(&BDMA_Channel1->CM0AR, (uint32_t) tx_buf, 0xFFFFFFFFU);
   BDMA_Channel1->CNDTR = MIC_TX_BUF_SIZE;
   BDMA_Channel1->CCR |= BDMA_CCR_EN;
-}
-
-void sound_tick(void) {
-  if (sound_idle_count > 0U) {
-    sound_idle_count--;
-    if (sound_idle_count == 0U) {
-      current_board->set_amp_enabled(false);
-      register_clear_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
-    }
-  }
 }
 
 // Playback processing
