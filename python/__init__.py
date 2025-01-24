@@ -9,7 +9,7 @@ import binascii
 from functools import wraps, partial
 from itertools import accumulate
 
-from .base import BaseHandle
+from .base import TIMEOUT, BaseHandle
 from .constants import FW_PATH, McuType
 from .dfu import PandaDFU
 from .isotp import isotp_send, isotp_recv
@@ -846,11 +846,11 @@ class Panda:
     self.can_send_many([[addr, dat, bus]], fd=fd, timeout=timeout)
 
   @ensure_can_packet_version
-  def can_recv(self):
+  def can_recv(self, timeout=TIMEOUT):
     dat = bytearray()
     while True:
       try:
-        dat = self._handle.bulkRead(1, 16384) # Max receive batch size + 2 extra reserve frames
+        dat = self._handle.bulkRead(1, 16384, timeout) # Max receive batch size + 2 extra reserve frames
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         logger.error("CAN: BAD RECV, RETRYING")
