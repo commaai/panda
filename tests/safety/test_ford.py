@@ -60,7 +60,6 @@ class Buttons:
 
 
 # Ford safety has four different configurations tested here:
-#  * CAN with stock longitudinal
 #  * CAN with openpilot longitudinal
 #  * CAN FD with stock longitudinal
 #  * CAN FD with openpilot longitudinal
@@ -355,21 +354,6 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
         self.assertEqual(enabled, self._tx(self._acc_button_msg(Buttons.CANCEL, bus)))
 
 
-class TestFordStockSafety(TestFordSafetyBase):
-  STEER_MESSAGE = MSG_LateralMotionControl
-
-  TX_MSGS = [
-    [MSG_Steering_Data_FD1, 0], [MSG_Steering_Data_FD1, 2], [MSG_ACCDATA_3, 0], [MSG_Lane_Assist_Data1, 0],
-    [MSG_LateralMotionControl, 0], [MSG_IPMA_Data, 0],
-  ]
-
-  def setUp(self):
-    self.packer = CANPackerPanda("ford_lincoln_base_pt")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
-    self.safety.init_tests()
-
-
 class TestFordCANFDStockSafety(TestFordSafetyBase):
   STEER_MESSAGE = MSG_LateralMotionControl2
 
@@ -457,7 +441,8 @@ class TestFordLongitudinalSafety(TestFordLongitudinalSafetyBase):
   def setUp(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_FORD, Panda.FLAG_FORD_LONG_CONTROL)
+    # Make sure we enforce long safety even without long flag for CAN
+    self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
     self.safety.init_tests()
 
 
