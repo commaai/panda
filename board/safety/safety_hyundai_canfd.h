@@ -122,7 +122,7 @@ static void hyundai_canfd_rx_hook(const CANPacket_t *to_push) {
 
 static bool hyundai_canfd_tx_hook(const CANPacket_t *to_send) {
   const SteeringLimits HYUNDAI_CANFD_STEERING_LIMITS = {
-    .max_steer = 270,
+    .max_steer = 384,
     .max_rt_delta = 112,
     .max_rt_interval = 250000,
     .max_rate_up = 2,
@@ -215,7 +215,9 @@ static int hyundai_canfd_fwd_hook(int bus_num, int addr) {
     // CRUISE_INFO for non-HDA2, we send our own longitudinal commands
     bool is_scc_msg = ((addr == 0x1a0) && hyundai_longitudinal && !hyundai_canfd_hda2);
 
-    bool block_msg = is_lkas_msg || is_lfa_msg || is_lfahda_msg || is_scc_msg;
+    bool is_ccnc_msg = (addr == 0x161) || (addr == 0x162);
+
+    bool block_msg = is_lkas_msg || is_lfa_msg || is_lfahda_msg || is_scc_msg || is_ccnc_msg;
     if (!block_msg) {
       bus_fwd = 0;
     }
@@ -261,6 +263,8 @@ static safety_config hyundai_canfd_init(uint16_t param) {
     {0x1A0, 0, 32}, // CRUISE_INFO
     {0x1CF, 2, 8},  // CRUISE_BUTTON
     {0x1E0, 0, 16}, // LFAHDA_CLUSTER
+    {0x161, 0, 32}, // MSG_161
+    {0x162, 0, 32}, // MSG_162
   };
 
 
