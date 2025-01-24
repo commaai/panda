@@ -124,6 +124,7 @@ void peripherals_init(void) {
   RCC->APB1LENR |= RCC_APB1LENR_DAC12EN; // DAC
 
   // Audio
+  RCC->APB2ENR |= RCC_APB2ENR_DFSDM1EN; // D/S demodulator for mic
   RCC->APB4ENR |= RCC_APB4ENR_SAI4EN;  // SAI4
 
   // Timers
