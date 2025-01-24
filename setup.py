@@ -52,6 +52,7 @@ setup(
       "pycryptodome >= 3.9.8",
       "cffi",
       "flaky",
+      "python-can",
       "pytest",
       "pytest-mock",
       "pytest-xdist",
@@ -77,7 +78,7 @@ setup(
   ],
   entry_points={
     "can.interface": [
-      "panda=panda.python.pycanpanda:PandaBus",
+      "panda=panda.python.pycan:PandaBus",
     ]
   },
 )

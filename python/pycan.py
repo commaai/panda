@@ -1,5 +1,8 @@
 """
-python-can interface for openpilot/panda.
+Make a panda accessible via socketcan & python-can.
+
+This allows using tools like wireshark, caringcaribou, etc. with panda,
+which can be very useful when working with higher-level message protocols over CAN.
 
 """
 
@@ -20,39 +23,29 @@ logger = logging.getLogger(__name__)
 from panda import Panda
 from opendbc.car.can_definitions import CanData
 
+# Signal to pycan to do software filtering because we haven't.
 FILTERING_DONE = False
 
-# Panda.SAFETY_ELM327 will multioplex bus 1 to the OBD-II port,
-# unless its safety_param is set to 1.
-
-# panda.set_obd(True) will multiplex.
-
 class PandaBus(can.BusABC):
-  """CAN bus from a Panda by comma.ai."""
+  """python-can bus for a openpilot panda."""
 
   def __init__(
       self,
       channel: Any,
       can_filters: Optional[can.typechecking.CanFilters] = None,
-      serial: str | None = None,
-      claim: bool = False,
-      disable_checks: bool = True,
       safety_mode: int = Panda.SAFETY_NOOUTPUT,
       safety_param: int = 0,
-      can_speed_kbps: int = 500,
-      cli: bool = True,
       **kwargs: object,
   ):
     """
     Construct and open a Panda instance.
 
     :param channel: Panda bus; called channel by super.
+        Set to 3 to multiplex OBD.
     :param can_filters: From super.
-    :param serial: Panda serial number.
-    :param claim: Panda whether to claim.
-    :param disable_checks: Panda whether to disable checks.
-    :param can_speed_kbps: Panda CAN speed.
     :param safety_mode: Panda safety mode.
+    :param safety_param: Panda safety param.
+    :param **kwargs: Passed to Panda().
 
     :raises ValueError: If parameters are out of range
     :raises ~can.exceptions.CanInterfaceNotImplementedError:
@@ -60,14 +53,8 @@ class PandaBus(can.BusABC):
     :raises ~can.exceptions.CanInitializationError:
         If the bus cannot be initialized
     """
-
-    # Panda recv returns multiple messages but pycan recv should return one.
-    # TODO: Use a Queue for better clarity.
-    self._recv_buffer = deque()
-
-    self.p = Panda()
-    #self.p.reset()
-    #self.p.set_canfd_auto(self.bus, True)
+    # Init Panda
+    self.p = Panda(**kwargs)
     if channel == 3:
       self.p.set_obd(True)
       channel = 1
@@ -76,10 +63,11 @@ class PandaBus(can.BusABC):
     self.p.can_clear(self.bus) # TX queue
     self.p.can_clear(0xFFFF) # RX queue
     self.p.set_safety_mode(safety_mode, safety_param)
+    self._recv_buffer = deque()
 
     # Init for super.
     self._can_protocol = can.CanProtocol.CAN_FD
-    self.channel_info = f"Panda: serial {self.p.get_serial()}, channel {self.channel}"
+    self.channel_info = f"Panda: serial {self.p.get_serial()}, bus {self.bus}"
     # Must be run last.
     super().__init__(channel, can_filters=can_filters)
 
@@ -97,14 +85,12 @@ class PandaBus(can.BusABC):
     :rtype: can.Message
     :raises can.interfaces.remote.protocol.RemoteError:
     """
-    end_time = None if timeout is None else time.time() + timeout
-    while len(self._recv_buffer) == 0:
-      # TODO: handle 0.0
-      if timeout is not None and time.time() > end_time:
-        return None, FILTERING_DONE
-      recv = self.p.can_recv()
+    if not self._recv_buffer:
+      recv = self.p.can_recv(timeout=pycan_timeout_to_panda(timeout))
       recv_this_bus = [r for r in recv if r[2] == self.bus]
       self._recv_buffer.extend(recv_this_bus)
+    if not self._recv_buffer:
+      return None, FILTERING_DONE
     candata = self._recv_buffer.popleft()
     msg = panda_to_pycan(candata)
     return msg, FILTERING_DONE
@@ -124,11 +110,10 @@ class PandaBus(can.BusABC):
     :raises ~can.exceptions.CanOperationError:
         If an error occurred while sending
     """
-    timeout = timeout or 0
     addr, data, bus = pycan_to_panda(msg, self.bus)
     self.p.can_send(addr, data, bus,
                     fd=msg.is_fd,
-                    timeout=timeout*1000)
+                    timeout=pycan_timeout_to_panda(timeout))
 
   def shutdown(self):
     self.p.set_safety_mode(Panda.SAFETY_SILENT)
@@ -137,9 +122,8 @@ class PandaBus(can.BusABC):
     super().shutdown()
 
 def panda_to_pycan(candata: CanData) -> Message:
-  #addr, data, bus, is_remote = candata
   addr, data, bus = candata
-  is_remote = False
+  is_remote = False  # Not currently exposed by panda.
   return Message(channel=bus,
                  arbitration_id=addr,
                  is_extended_id=addr >= 0x800,
@@ -152,16 +136,26 @@ def panda_to_pycan(candata: CanData) -> Message:
 def pycan_to_panda(msg: Message, bus) -> CanData:
   return msg.arbitration_id, msg.data, bus
 
+def pycan_timeout_to_panda(timeout: Optional[float]) -> int:
+  if timeout is None:
+    # block forever
+    return 0
+  if timeout == 0:
+    # non-blocking
+    return -1
+  else:
+    # sec to millis
+    return int(timeout*1e3)
 
 # in_bus.recv => socketcan.send
 # socketcan.recv => in_bus.send
-def to_socketcan(in_bus: can.Bus):
-  out_bus = can.Bus(channel='vcan0', interface='socketcan',
-                                        local_loopback=True,
-                                        fd=True)
+def connect_to_socketcan(in_bus: can.Bus, socketcan_if='vcan0'):
+  out_bus = can.Bus(channel=socketcan_if, interface='socketcan',
+                    local_loopback=True, fd=True)
   abort = False
   next_in: Message
   next_out: Message
+  # This isn't the best bidi message passing, but it'll do for now.
   while not abort:
     if next_in is None:
       next_in = in_bus.recv(timeout=0.0)
@@ -179,11 +173,9 @@ def to_socketcan(in_bus: can.Bus):
 
 
 if __name__ == '__main__':
-    with PandaBus(
-      interface="panda",
-      channel = 1) as bus:
+    with PandaBus(interface="panda", channel = 1) as bus:
 
-        to_socketcan(bus)
+      connect_to_socketcan(bus)
 
         # bus.send(can.Message(
         #     arbitration_id=0x7DF,
@@ -193,14 +185,15 @@ if __name__ == '__main__':
         #     dlc=3,
         # ))
 
-        start = time.monotonic()
-        while time.monotonic() - start < 10:
-            _msg = bus.recv()
-            print(_msg)
+      start = time.monotonic()
+      while time.monotonic() - start < 10:
+          _msg = bus.recv()
+          print(_msg)
 
 
 
-# install: pip install -e panda
+# install prereqs:
+# pip install -e '.[dev]'
 
 
 ## mirror to socketcan:
