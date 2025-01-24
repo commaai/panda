@@ -326,7 +326,7 @@ class TestToyotaStockLongitudinalAngle(TestToyotaStockLongitudinalBase, TestToyo
     self.safety.init_tests()
 
 
-class TestToyotaSecOcSafety(TestToyotaSafetyBase):
+class TestToyotaSecOcSafety(TestToyotaStockLongitudinalBase):
 
   TX_MSGS = TOYOTA_SECOC_TX_MSGS
   RELAY_MALFUNCTION_ADDRS = {0: (0x2E4, 0x343, 0x183)}
