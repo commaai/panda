@@ -219,9 +219,18 @@ bool llcan_init(FDCAN_GlobalTypeDef *FDCANx) {
 }
 
 void llcan_clear_send(FDCAN_GlobalTypeDef *FDCANx) {
+
+  // TODO: few things we can do. for clearing data out of the fifo from ack errors when multiplexing or non-existent bus, we can remove msgs from the fifo (size 1)
+  // TODO: but the other case is bus off recovery,
   // from datasheet: "Transmit cancellation is not intended for Tx FIFO operation."
   // so we need to clear pending transmission manually by resetting FDCAN core
   FDCANx->IR |= 0x3FCFFFFFU; // clear all interrupts
-  bool ret = llcan_init(FDCANx);
+  FDCANx->TXBAR |= (1U << 0); // Since there's only one Tx FIFO element
+  while (FDCANx->TXBAR & (1U << 0));
+  // FDCAN_TXBCR
+  // don't init if reset is pending:
+  if ((FDCANx->CCCR & FDCAN_CCCR_INIT) == 0U) {
+    bool ret = llcan_init(FDCANx);
+  }
   UNUSED(ret);
 }
