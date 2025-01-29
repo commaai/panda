@@ -87,6 +87,7 @@ board board_tres = {
   .init = tres_init,
   .init_bootloader = unused_init_bootloader,
   .enable_can_transceiver = red_chiplet_enable_can_transceiver,
+  .get_can_transceiver = red_chiplet_get_can_transceiver,
   .enable_can_transceivers = red_chiplet_enable_can_transceivers,
   .set_led = red_set_led,
   .set_can_mode = red_chiplet_set_can_mode,

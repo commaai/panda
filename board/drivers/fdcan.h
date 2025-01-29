@@ -19,9 +19,12 @@ static bool can_set_speed(uint8_t can_number) {
 }
 
 void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number) {
-  can_health[can_number].can_core_reset_cnt += 1U;
-  can_health[can_number].total_tx_lost_cnt += (FDCAN_TX_FIFO_EL_CNT - (FDCANx->TXFQS & FDCAN_TXFQS_TFFL)); // TX FIFO msgs will be lost after reset
-  llcan_clear_send(FDCANx);
+  // Only reset the CAN core if the transceiver is enabled
+  if (current_board->get_can_transceiver(can_number)) {
+    can_health[can_number].can_core_reset_cnt += 1U;
+    can_health[can_number].total_tx_lost_cnt += (FDCAN_TX_FIFO_EL_CNT - (FDCANx->TXFQS & FDCAN_TXFQS_TFFL)); // TX FIFO msgs will be lost after reset
+    llcan_clear_send(FDCANx);
+  }
 }
 
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
@@ -72,7 +75,7 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
     if ((((can_health[can_number].last_error == CAN_ACK_ERROR) || (can_health[can_number].last_data_error == CAN_ACK_ERROR)) && (can_health[can_number].transmit_error_cnt > 127U)) ||
      ((ir_reg & FDCAN_IR_BO) != 0U)) {
      // This is assumed to be called in a loop a few hundred times on ignition off
-//      can_clear_send(FDCANx, can_number);
+      can_clear_send(FDCANx, can_number);
     }
   }
 }

@@ -27,6 +27,22 @@ static void red_chiplet_enable_can_transceiver(uint8_t transceiver, bool enabled
   }
 }
 
+static bool red_chiplet_get_can_transceiver(uint8_t transceiver) {
+  switch (transceiver) {
+    case 1U:
+      return get_gpio_input(GPIOG, 11);
+    case 2U:
+      return get_gpio_input(GPIOB, 10);
+    case 3U:
+      return get_gpio_input(GPIOD, 7);
+    case 4U:
+      return get_gpio_input(GPIOB, 11);
+    default:
+      return false;
+  }
+}
+
+
 static void red_chiplet_enable_can_transceivers(bool enabled) {
   uint8_t main_bus = (harness.status == HARNESS_STATUS_FLIPPED) ? 3U : 1U;
   for (uint8_t i=1U; i<=4U; i++) {

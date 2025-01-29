@@ -225,12 +225,13 @@ void llcan_clear_send(FDCAN_GlobalTypeDef *FDCANx) {
   // from datasheet: "Transmit cancellation is not intended for Tx FIFO operation."
   // so we need to clear pending transmission manually by resetting FDCAN core
   FDCANx->IR |= 0x3FCFFFFFU; // clear all interrupts
-  FDCANx->TXBAR |= (1U << 0); // Since there's only one Tx FIFO element
+//  FDCANx->TXBAR |= (1U << 0); // Since there's only one Tx FIFO element
+  FDCANx->TXBCR |= (1U << 0); // Since there's only one Tx FIFO element
   while (FDCANx->TXBAR & (1U << 0));
   // FDCAN_TXBCR
   // don't init if reset is pending:
   if ((FDCANx->CCCR & FDCAN_CCCR_INIT) == 0U) {
     bool ret = llcan_init(FDCANx);
+    UNUSED(ret);
   }
-  UNUSED(ret);
 }
