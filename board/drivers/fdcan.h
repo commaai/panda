@@ -20,7 +20,7 @@ static bool can_set_speed(uint8_t can_number) {
 
 void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number) {
   // Only reset the CAN core if the transceiver is enabled
-  if (current_board->get_can_transceiver(can_number)) {
+  if (current_board->can_transceiver_enabled(can_number)) {
     can_health[can_number].can_core_reset_cnt += 1U;
     can_health[can_number].total_tx_lost_cnt += (FDCAN_TX_FIFO_EL_CNT - (FDCANx->TXFQS & FDCAN_TXFQS_TFFL)); // TX FIFO msgs will be lost after reset
     llcan_clear_send(FDCANx);
