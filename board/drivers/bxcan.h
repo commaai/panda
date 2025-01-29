@@ -26,7 +26,6 @@ bool can_set_speed(uint8_t can_number) {
 }
 
 void can_clear_send(CAN_TypeDef *CANx, uint8_t can_number) {
-  can_health[can_number].can_core_reset_cnt += 1U;
   llcan_clear_send(CANx);
 }
 
