@@ -6,7 +6,9 @@ __attribute__((section(".sram4"))) static uint16_t sound_rx_buf[2][SOUND_RX_BUF_
 __attribute__((section(".sram4"))) static uint16_t sound_tx_buf[2][SOUND_TX_BUF_SIZE];
 __attribute__((section(".sram4"))) static uint32_t mic_rx_buf[2][MIC_RX_BUF_SIZE];
 
+#define SOUND_IDLE_TIMEOUT 4U
 static uint8_t sound_idle_count;
+static uint8_t mic_idle_count;
 
 void sound_tick(void) {
   if (sound_idle_count > 0U) {
@@ -14,6 +16,13 @@ void sound_tick(void) {
     if (sound_idle_count == 0U) {
       current_board->set_amp_enabled(false);
       register_clear_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
+    }
+  }
+
+  if (mic_idle_count > 0U) {
+    mic_idle_count--;
+    if (mic_idle_count == 0U) {
+      register_clear_bits(&DFSDM1_Channel0->CHCFGR1, DFSDM_CHCFGR1_DFSDMEN);
     }
   }
 }
@@ -67,8 +76,16 @@ static void BDMA_Channel0_IRQ_Handler(void) {
       register_set(&DMA1_Stream1->CR, (1UL - tx_buf_idx) << DMA_SxCR_CT_Pos, DMA_SxCR_CT_Msk);
       register_set_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
     }
-    sound_idle_count = 4U;
+    sound_idle_count = SOUND_IDLE_TIMEOUT;
   }
+
+  // manage mic state
+  if (mic_idle_count == 0U) {
+    register_set_bits(&DFSDM1_Channel0->CHCFGR1, DFSDM_CHCFGR1_DFSDMEN);
+    DFSDM1_Filter0->FLTCR1 |= DFSDM_FLTCR1_RSWSTART;
+  }
+  mic_idle_count = SOUND_IDLE_TIMEOUT;
+
   sound_tick();
 }
 
@@ -132,8 +149,6 @@ void sound_init(void) {
   register_set(&DFSDM1_Channel3->CHCFGR2, (2U << DFSDM_CHCFGR2_DTRBS_Pos), 0xFFFFFFF7U);
   register_set(&DFSDM1_Filter0->FLTFCR, (0U << DFSDM_FLTFCR_IOSR_Pos) | (64UL << DFSDM_FLTFCR_FOSR_Pos) | (4UL << DFSDM_FLTFCR_FORD_Pos), 0xE3FF00FFU);
   register_set(&DFSDM1_Filter0->FLTCR1, DFSDM_FLTCR1_FAST | (3UL << DFSDM_FLTCR1_RCH_Pos) | DFSDM_FLTCR1_RDMAEN | DFSDM_FLTCR1_RCONT | DFSDM_FLTCR1_DFEN, 0x672E7F3BU);
-  register_set_bits(&DFSDM1_Channel0->CHCFGR1, DFSDM_CHCFGR1_DFSDMEN);
-  DFSDM1_Filter0->FLTCR1 |= DFSDM_FLTCR1_RSWSTART;
 
   // DMA (DFSDM1 -> memory)
   register_set(&DMA1_Stream0->PAR, (uint32_t) &DFSDM1_Filter0->FLTRDATAR, 0xFFFFFFFFU);
