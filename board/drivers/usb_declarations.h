@@ -23,8 +23,6 @@ typedef union _USB_Setup {
   } b;
 } USB_Setup_TypeDef;
 
-extern bool usb_enumerated;
-
 void usb_init(void);
 void refresh_can_tx_slots_available(void);
 
