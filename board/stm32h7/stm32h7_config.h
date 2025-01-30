@@ -24,6 +24,7 @@ separate IRQs for RX and TX.
 1 / ((29 bits / 0.5Mbps) + (23 bits / 2Mbps)) = 14388Hz
 */
 #define CAN_INTERRUPT_RATE 16000U
+#define GPIO_CAN2_AF GPIO_AF9_FDCAN2
 
 #define MAX_LED_FADE 10240U
 
