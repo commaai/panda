@@ -29,13 +29,13 @@ static void dos_enable_can_transceiver(uint8_t transceiver, bool enabled) {
 static bool dos_can_transceiver_enabled(uint8_t transceiver) {
   switch (transceiver){
     case 1U:
-      return get_gpio_input(GPIOC, 1);
+      return !get_gpio_input(GPIOC, 1);
     case 2U:
-      return get_gpio_input(GPIOC, 13);
+      return !get_gpio_input(GPIOC, 13);
     case 3U:
-      return get_gpio_input(GPIOA, 0);
+      return !get_gpio_input(GPIOA, 0);
     case 4U:
-      return get_gpio_input(GPIOB, 10);
+      return !get_gpio_input(GPIOB, 10);
     default:
       return false;
   }

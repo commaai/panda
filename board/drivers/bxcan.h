@@ -51,8 +51,6 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   can_health[can_number].irq1_call_rate = interrupts[can_irq_number[can_number][1]].call_rate;
   can_health[can_number].irq2_call_rate = interrupts[can_irq_number[can_number][2]].call_rate;
 
-  can_clear_send(CANx, can_number);
-
   if (ir_reg != 0U) {
     can_health[can_number].total_error_cnt += 1U;
 
@@ -61,7 +59,7 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
       can_health[can_number].total_rx_lost_cnt += 1U;
       CANx->RF0R &= ~(CAN_RF0R_FOVR0);
     }
-//    can_clear_send(CANx, can_number);
+    can_clear_send(CANx, can_number);
   }
 }
 

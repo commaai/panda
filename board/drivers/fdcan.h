@@ -59,8 +59,6 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   can_health[can_number].irq0_call_rate = interrupts[can_irq_number[can_number][0]].call_rate;
   can_health[can_number].irq1_call_rate = interrupts[can_irq_number[can_number][1]].call_rate;
 
-  can_clear_send(FDCANx, can_number);
-
   if (ir_reg != 0U) {
     // Clear error interrupts
     FDCANx->IR |= (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EP | FDCAN_IR_BO | FDCAN_IR_RF0L);
@@ -74,7 +72,6 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
     // 2. H7 gets stuck in bus off recovery state indefinitely
     if ((((can_health[can_number].last_error == CAN_ACK_ERROR) || (can_health[can_number].last_data_error == CAN_ACK_ERROR)) && (can_health[can_number].transmit_error_cnt > 127U)) ||
      ((ir_reg & FDCAN_IR_BO) != 0U)) {
-     // This is assumed to be called in a loop a few hundred times on ignition off
       can_clear_send(FDCANx, can_number);
     }
   }
