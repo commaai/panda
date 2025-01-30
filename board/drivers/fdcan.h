@@ -23,7 +23,7 @@ void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number) {
   uint32_t time = microsecond_timer_get();
 
   // Resetting CAN core is a slow blocking operation, limit frequency
-  if ((time - last_reset) > 100000) {  // 10 Hz
+  if (get_ts_elapsed(time, last_reset) > 100000) {  // 10 Hz
     can_health[can_number].can_core_reset_cnt += 1U;
     can_health[can_number].total_tx_lost_cnt += (FDCAN_TX_FIFO_EL_CNT - (FDCANx->TXFQS & FDCAN_TXFQS_TFFL)); // TX FIFO msgs will be lost after reset
     llcan_clear_send(FDCANx);
