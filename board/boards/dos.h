@@ -26,21 +26,6 @@ static void dos_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-static bool dos_can_transceiver_enabled(uint8_t transceiver) {
-  switch (transceiver){
-    case 1U:
-      return !get_gpio_input(GPIOC, 1);
-    case 2U:
-      return !get_gpio_input(GPIOC, 13);
-    case 3U:
-      return !get_gpio_input(GPIOA, 0);
-    case 4U:
-      return !get_gpio_input(GPIOB, 10);
-    default:
-      return false;
-  }
-}
-
 static void dos_enable_can_transceivers(bool enabled) {
   for(uint8_t i=1U; i<=4U; i++){
     // Leave main CAN always on for CAN-based ignition detection
@@ -217,7 +202,7 @@ board board_dos = {
   .init_bootloader = unused_init_bootloader,
   .enable_can_transceiver = dos_enable_can_transceiver,
   .enable_can_transceivers = dos_enable_can_transceivers,
-  .can_transceiver_enabled = dos_can_transceiver_enabled,
+  .can_transceiver_enabled = unused_can_transceiver_enabled,
   .set_led = dos_set_led,
   .set_can_mode = dos_set_can_mode,
   .check_ignition = dos_check_ignition,

@@ -155,6 +155,7 @@ board board_cuatro = {
   .init_bootloader = unused_init_bootloader,
   .enable_can_transceiver = cuatro_enable_can_transceiver,
   .enable_can_transceivers = cuatro_enable_can_transceivers,
+  .can_transceiver_enabled = unused_can_transceiver_enabled,
   .set_led = cuatro_set_led,
   .set_can_mode = red_chiplet_set_can_mode,
   .check_ignition = red_check_ignition,

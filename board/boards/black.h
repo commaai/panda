@@ -174,6 +174,7 @@ board board_black = {
   .init_bootloader = black_init_bootloader,
   .enable_can_transceiver = black_enable_can_transceiver,
   .enable_can_transceivers = black_enable_can_transceivers,
+  .can_transceiver_enabled = unused_can_transceiver_enabled,
   .set_led = black_set_led,
   .set_can_mode = black_set_can_mode,
   .check_ignition = black_check_ignition,

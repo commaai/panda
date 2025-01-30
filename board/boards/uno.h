@@ -209,6 +209,7 @@ board board_uno = {
   .init_bootloader = uno_init_bootloader,
   .enable_can_transceiver = uno_enable_can_transceiver,
   .enable_can_transceivers = uno_enable_can_transceivers,
+  .can_transceiver_enabled = unused_can_transceiver_enabled,
   .set_led = uno_set_led,
   .set_can_mode = uno_set_can_mode,
   .check_ignition = uno_check_ignition,

@@ -30,3 +30,8 @@ bool unused_read_som_gpio(void) {
 void unused_set_amp_enabled(bool enabled) {
   UNUSED(enabled);
 }
+
+bool unused_can_transceiver_enabled(uint8_t transceiver) {
+  UNUSED(transceiver);
+  return false;
+}
