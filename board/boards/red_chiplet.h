@@ -42,13 +42,13 @@ static void red_chiplet_enable_can_transceivers(bool enabled) {
 static bool red_chiplet_can_transceiver_enabled(uint8_t transceiver) {
   switch (transceiver) {
     case 1U:
-      return get_gpio_input(GPIOG, 11);
+      return !get_gpio_input(GPIOG, 11);
     case 2U:
-      return get_gpio_input(GPIOB, 10);
+      return !get_gpio_input(GPIOB, 10);
     case 3U:
-      return get_gpio_input(GPIOD, 7);
+      return !get_gpio_input(GPIOD, 7);
     case 4U:
-      return get_gpio_input(GPIOB, 11);
+      return !get_gpio_input(GPIOB, 11);
     default:
       return false;
   }
