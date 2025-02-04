@@ -1,3 +1,7 @@
+"""
+Make a socketcan interface look like a panda.
+
+"""
 import socket
 import struct
 
