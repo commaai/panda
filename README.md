@@ -1,11 +1,3 @@
-THIS PROJECT IS STILL IN PROGRESS
-
-Adaption to Seat Cupra Born (MEB)
-
-The EPS on engine can bus is not SECOC secured
-
-Panda can 0 is connected to R242 camera. (camera data filter) Panda can 2 is connected to sensors can bus. (camera data filter) Panda can 1 is connected to engine can bus. (steering command sender)
-
 # Welcome to panda
 
 ![panda tests](https://github.com/commaai/panda/workflows/tests/badge.svg)
