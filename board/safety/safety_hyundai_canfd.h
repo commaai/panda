@@ -225,8 +225,8 @@ static int hyundai_canfd_fwd_hook(int bus_num, int addr) {
 }
 
 static safety_config hyundai_canfd_init(uint16_t param) {
-  const int HYUNDAI_PARAM_CANFD_HDA2_ALT_STEERING = 128;
-  const int HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 32;
+  const int FLAG_HYUNDAI_CANFD_HDA2_ALT_STEERING = 128;
+  const int FLAG_HYUNDAI_CANFD_ALT_BUTTONS = 32;
 
   static const CanMsg HYUNDAI_CANFD_HDA2_TX_MSGS[] = {
     {0x50, 0, 16},  // LKAS
@@ -267,8 +267,8 @@ static safety_config hyundai_canfd_init(uint16_t param) {
   hyundai_common_init(param);
 
   gen_crc_lookup_table_16(0x1021, hyundai_canfd_crc_lut);
-  hyundai_canfd_alt_buttons = GET_FLAG(param, HYUNDAI_PARAM_CANFD_ALT_BUTTONS);
-  hyundai_canfd_hda2_alt_steering = GET_FLAG(param, HYUNDAI_PARAM_CANFD_HDA2_ALT_STEERING);
+  hyundai_canfd_alt_buttons = GET_FLAG(param, FLAG_HYUNDAI_CANFD_ALT_BUTTONS);
+  hyundai_canfd_hda2_alt_steering = GET_FLAG(param, FLAG_HYUNDAI_CANFD_HDA2_ALT_STEERING);
 
   // no long for radar-SCC HDA1 yet
   if (!hyundai_canfd_hda2 && !hyundai_camera_scc) {
