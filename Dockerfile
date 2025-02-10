@@ -41,7 +41,7 @@ ENV OPENDBC_REF="25b3266b0bf95fced1589fd28f824227da62ffc0"
 RUN cd /tmp/ && \
     git clone --depth 1 https://github.com/commaai/opendbc opendbc_repo && \
     cd opendbc_repo && git fetch origin $OPENDBC_REF && git checkout FETCH_HEAD && rm -rf .git/ && \
-    pip3 install --break-system-packages --no-cache-dir Cython numpy  && \
+    pip3 install --break-system-packages --no-cache-dir Cython numpy pycapnp  && \
     ln -s $PWD/opendbc $PYTHONPATH/opendbc && \
     scons -j8 --minimal opendbc/
 
