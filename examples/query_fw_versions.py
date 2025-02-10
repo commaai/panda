@@ -77,7 +77,7 @@ if __name__ == "__main__":
       for sub_addr in sub_addrs:
         sub_addr_str = hex(sub_addr) if sub_addr is not None else None
         t.set_description(f"{hex(addr)}, {sub_addr_str}")
-        uds_client = UdsClient(panda, addr, rx_addr, bus, sub_addr=sub_addr, timeout=0.2, debug=args.debug)
+        uds_client = UdsClient(panda, addr, rx_addr, bus, sub_addr=sub_addr, timeout=0.2)
         # Check for anything alive at this address, and switch to the highest
         # available diagnostic session without security access
         try:
