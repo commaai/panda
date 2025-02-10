@@ -2,6 +2,7 @@
 import argparse
 from tqdm import tqdm
 from panda import Panda
+from opendbc.car.carlog import carlog
 from opendbc.car.uds import UdsClient, MessageTimeoutError, NegativeResponseError, InvalidSubAddressError, \
                             SESSION_TYPE, DATA_IDENTIFIER_TYPE
 
@@ -17,6 +18,9 @@ if __name__ == "__main__":
   parser.add_argument("--bus")
   parser.add_argument('-s', '--serial', help="Serial number of panda to use")
   args = parser.parse_args()
+
+  if args.debug:
+    carlog.setLevel('DEBUG')
 
   if args.addr:
     addrs = [int(args.addr, base=16)]
