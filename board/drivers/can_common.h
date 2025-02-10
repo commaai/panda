@@ -173,6 +173,13 @@ void ignition_can_hook(CANPacket_t *to_push) {
       ignition_can_cnt = 0U;
     }
 
+    // Rivian exception
+    if ((addr == 0x152) && (len == 8)) {
+      // VDM_OutputSignals
+      ignition_can = GET_BIT(to_push, 60U);
+      ignition_can_cnt = 0U;
+    }
+
     // Tesla exception
     if ((addr == 0x348) && (len == 8)) {
       // GTW_status
