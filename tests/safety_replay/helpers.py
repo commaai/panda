@@ -1,5 +1,5 @@
-import panda.tests.libpanda.libpanda_py as libpanda_py
 from opendbc.car.toyota.values import ToyotaPandaFlags
+import panda.tests.libpanda.libpanda_py as libpanda_py
 from panda import Panda
 
 def to_signed(d, bits):
