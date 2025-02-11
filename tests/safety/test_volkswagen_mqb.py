@@ -5,6 +5,7 @@ from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
+from opendbc.car.volkswagen.values import VolkswagenPandaFlags
 
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
@@ -165,7 +166,7 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
   def setUp(self):
     self.packer = CANPackerPanda("vw_mqb_2010")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, Panda.FLAG_VOLKSWAGEN_LONG_CONTROL)
+    self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, VolkswagenPandaFlags.FLAG_VOLKSWAGEN_LONG_CONTROL)
     self.safety.init_tests()
 
   # stock cruise controls are entirely bypassed under openpilot longitudinal control

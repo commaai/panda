@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 from parameterized import parameterized_class
 import unittest
+
+from opendbc.car.hyundai.values import HyundaiPandaFlags
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -107,13 +109,17 @@ class TestHyundaiCanfdHDA1Base(TestHyundaiCanfdBase):
 
 @parameterized_class([
   # Radar SCC, test with long flag to ensure flag is not respected until it is supported
-  {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SCC_BUS": 0, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_LONG},
-  {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SCC_BUS": 0, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_EV_GAS | Panda.FLAG_HYUNDAI_LONG},
-  {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SCC_BUS": 0, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_HYBRID_GAS | Panda.FLAG_HYUNDAI_LONG},
+  {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SCC_BUS": 0, "SAFETY_PARAM": HyundaiPandaFlags.FLAG_HYUNDAI_LONG},
+  {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SCC_BUS": 0, "SAFETY_PARAM": HyundaiPandaFlags.FLAG_HYUNDAI_EV_GAS |
+                                                                                  HyundaiPandaFlags.FLAG_HYUNDAI_LONG},
+  {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SCC_BUS": 0, "SAFETY_PARAM": HyundaiPandaFlags.FLAG_HYUNDAI_HYBRID_GAS |
+                                                                                      HyundaiPandaFlags.FLAG_HYUNDAI_LONG},
   # Camera SCC
-  {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SCC_BUS": 2, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_CAMERA_SCC},
-  {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SCC_BUS": 2, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_EV_GAS | Panda.FLAG_HYUNDAI_CAMERA_SCC},
-  {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SCC_BUS": 2, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_HYBRID_GAS | Panda.FLAG_HYUNDAI_CAMERA_SCC},
+  {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SCC_BUS": 2, "SAFETY_PARAM": HyundaiPandaFlags.FLAG_HYUNDAI_CAMERA_SCC},
+  {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SCC_BUS": 2, "SAFETY_PARAM": HyundaiPandaFlags.FLAG_HYUNDAI_EV_GAS |
+                                                                                  HyundaiPandaFlags.FLAG_HYUNDAI_CAMERA_SCC},
+  {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SCC_BUS": 2, "SAFETY_PARAM": HyundaiPandaFlags.FLAG_HYUNDAI_HYBRID_GAS |
+                                                                                      HyundaiPandaFlags.FLAG_HYUNDAI_CAMERA_SCC},
 ])
 class TestHyundaiCanfdHDA1(TestHyundaiCanfdHDA1Base):
   pass
@@ -121,13 +127,16 @@ class TestHyundaiCanfdHDA1(TestHyundaiCanfdHDA1Base):
 
 @parameterized_class([
   # Radar SCC, test with long flag to ensure flag is not respected until it is supported
-  {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SCC_BUS": 0, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_LONG},
-  {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SCC_BUS": 0, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_EV_GAS | Panda.FLAG_HYUNDAI_LONG},
-  {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SCC_BUS": 0, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_HYBRID_GAS | Panda.FLAG_HYUNDAI_LONG},
+  {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SCC_BUS": 0, "SAFETY_PARAM": HyundaiPandaFlags.FLAG_HYUNDAI_LONG},
+  {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SCC_BUS": 0, "SAFETY_PARAM": HyundaiPandaFlags.FLAG_HYUNDAI_EV_GAS | HyundaiPandaFlags.FLAG_HYUNDAI_LONG},
+  {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SCC_BUS": 0, "SAFETY_PARAM": HyundaiPandaFlags.FLAG_HYUNDAI_HYBRID_GAS |
+                                                                                      HyundaiPandaFlags.FLAG_HYUNDAI_LONG},
   # Camera SCC
-  {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SCC_BUS": 2, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_CAMERA_SCC},
-  {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SCC_BUS": 2, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_EV_GAS | Panda.FLAG_HYUNDAI_CAMERA_SCC},
-  {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SCC_BUS": 2, "SAFETY_PARAM": Panda.FLAG_HYUNDAI_HYBRID_GAS | Panda.FLAG_HYUNDAI_CAMERA_SCC},
+  {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SCC_BUS": 2, "SAFETY_PARAM": HyundaiPandaFlags.FLAG_HYUNDAI_CAMERA_SCC},
+  {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SCC_BUS": 2, "SAFETY_PARAM": HyundaiPandaFlags.FLAG_HYUNDAI_EV_GAS |
+                                                                                  HyundaiPandaFlags.FLAG_HYUNDAI_CAMERA_SCC},
+  {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SCC_BUS": 2, "SAFETY_PARAM": HyundaiPandaFlags.FLAG_HYUNDAI_HYBRID_GAS |
+                                                                                      HyundaiPandaFlags.FLAG_HYUNDAI_CAMERA_SCC},
 ])
 class TestHyundaiCanfdHDA1AltButtons(TestHyundaiCanfdHDA1Base):
 
@@ -136,7 +145,7 @@ class TestHyundaiCanfdHDA1AltButtons(TestHyundaiCanfdHDA1Base):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_ALT_BUTTONS | self.SAFETY_PARAM)
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, HyundaiPandaFlags.FLAG_HYUNDAI_CANFD_ALT_BUTTONS | self.SAFETY_PARAM)
     self.safety.init_tests()
 
   def _button_msg(self, buttons, main_button=0, bus=1):
@@ -171,7 +180,7 @@ class TestHyundaiCanfdHDA2EV(TestHyundaiCanfdBase):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_EV_GAS)
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, HyundaiPandaFlags.FLAG_HYUNDAI_CANFD_HDA2 | HyundaiPandaFlags.FLAG_HYUNDAI_EV_GAS)
     self.safety.init_tests()
 
 
@@ -191,8 +200,8 @@ class TestHyundaiCanfdHDA2EVAltSteering(TestHyundaiCanfdBase):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_EV_GAS |
-                                 Panda.FLAG_HYUNDAI_CANFD_HDA2_ALT_STEERING)
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, HyundaiPandaFlags.FLAG_HYUNDAI_CANFD_HDA2 | HyundaiPandaFlags.FLAG_HYUNDAI_EV_GAS |
+                                 HyundaiPandaFlags.FLAG_HYUNDAI_CANFD_HDA2_ALT_STEERING)
     self.safety.init_tests()
 
 
@@ -213,7 +222,8 @@ class TestHyundaiCanfdHDA2LongEV(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2EV
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CANFD_HDA2 | Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_EV_GAS)
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, HyundaiPandaFlags.FLAG_HYUNDAI_CANFD_HDA2 |
+                                 HyundaiPandaFlags.FLAG_HYUNDAI_LONG | HyundaiPandaFlags.FLAG_HYUNDAI_EV_GAS)
     self.safety.init_tests()
 
   def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):
@@ -227,9 +237,9 @@ class TestHyundaiCanfdHDA2LongEV(HyundaiLongitudinalBase, TestHyundaiCanfdHDA2EV
 # Tests HDA1 longitudinal for ICE, hybrid, EV
 @parameterized_class([
   # Camera SCC is the only supported configuration for HDA1 longitudinal, TODO: allow radar SCC
-  {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SAFETY_PARAM": Panda.FLAG_HYUNDAI_LONG},
-  {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SAFETY_PARAM": Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_EV_GAS},
-  {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SAFETY_PARAM": Panda.FLAG_HYUNDAI_LONG | Panda.FLAG_HYUNDAI_HYBRID_GAS},
+  {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SAFETY_PARAM": HyundaiPandaFlags.FLAG_HYUNDAI_LONG},
+  {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SAFETY_PARAM": HyundaiPandaFlags.FLAG_HYUNDAI_LONG | HyundaiPandaFlags.FLAG_HYUNDAI_EV_GAS},
+  {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SAFETY_PARAM": HyundaiPandaFlags.FLAG_HYUNDAI_LONG | HyundaiPandaFlags.FLAG_HYUNDAI_HYBRID_GAS},
 ])
 class TestHyundaiCanfdHDA1Long(HyundaiLongitudinalBase, TestHyundaiCanfdHDA1Base):
 
@@ -253,7 +263,7 @@ class TestHyundaiCanfdHDA1Long(HyundaiLongitudinalBase, TestHyundaiCanfdHDA1Base
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_canfd")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, Panda.FLAG_HYUNDAI_CAMERA_SCC | self.SAFETY_PARAM)
+    self.safety.set_safety_hooks(Panda.SAFETY_HYUNDAI_CANFD, HyundaiPandaFlags.FLAG_HYUNDAI_CAMERA_SCC | self.SAFETY_PARAM)
     self.safety.init_tests()
 
   def _accel_msg(self, accel, aeb_req=False, aeb_decel=0):

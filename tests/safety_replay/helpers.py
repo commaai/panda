@@ -1,3 +1,4 @@
+from opendbc.car.toyota.values import ToyotaPandaFlags
 import panda.tests.libpanda.libpanda_py as libpanda_py
 from panda import Panda
 
@@ -12,7 +13,7 @@ def is_steering_msg(mode, param, addr):
   if mode in (Panda.SAFETY_HONDA_NIDEC, Panda.SAFETY_HONDA_BOSCH):
     ret = (addr == 0xE4) or (addr == 0x194) or (addr == 0x33D) or (addr == 0x33DA) or (addr == 0x33DB)
   elif mode == Panda.SAFETY_TOYOTA:
-    ret = addr == (0x191 if param & Panda.FLAG_TOYOTA_LTA else 0x2E4)
+    ret = addr == (0x191 if param & ToyotaPandaFlags.FLAG_TOYOTA_LTA else 0x2E4)
   elif mode == Panda.SAFETY_GM:
     ret = addr == 384
   elif mode == Panda.SAFETY_HYUNDAI:
@@ -33,7 +34,7 @@ def get_steer_value(mode, param, to_send):
     torque = (to_send.data[0] << 8) | to_send.data[1]
     torque = to_signed(torque, 16)
   elif mode == Panda.SAFETY_TOYOTA:
-    if param & Panda.FLAG_TOYOTA_LTA:
+    if param & ToyotaPandaFlags.FLAG_TOYOTA_LTA:
       angle = (to_send.data[1] << 8) | to_send.data[2]
       angle = to_signed(angle, 16)
     else:

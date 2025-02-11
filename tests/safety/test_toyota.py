@@ -4,6 +4,7 @@ import random
 import unittest
 import itertools
 
+from opendbc.car.toyota.values import ToyotaPandaFlags
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -166,7 +167,7 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_LTA)
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | ToyotaPandaFlags.FLAG_TOYOTA_LTA)
     self.safety.init_tests()
 
   # Only allow LKA msgs with no actuation
@@ -268,7 +269,7 @@ class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
   def setUp(self):
     self.packer = CANPackerPanda("toyota_new_mc_pt_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_ALT_BRAKE)
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | ToyotaPandaFlags.FLAG_TOYOTA_ALT_BRAKE)
     self.safety.init_tests()
 
   def _user_brake_msg(self, brake):
@@ -313,7 +314,7 @@ class TestToyotaStockLongitudinalTorque(TestToyotaStockLongitudinalBase, TestToy
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL)
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | ToyotaPandaFlags.FLAG_TOYOTA_STOCK_LONGITUDINAL)
     self.safety.init_tests()
 
 
@@ -322,7 +323,7 @@ class TestToyotaStockLongitudinalAngle(TestToyotaStockLongitudinalBase, TestToyo
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL | Panda.FLAG_TOYOTA_LTA)
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | ToyotaPandaFlags.FLAG_TOYOTA_STOCK_LONGITUDINAL | ToyotaPandaFlags.FLAG_TOYOTA_LTA)
     self.safety.init_tests()
 
 
@@ -335,7 +336,7 @@ class TestToyotaSecOcSafety(TestToyotaStockLongitudinalBase):
   def setUp(self):
     self.packer = CANPackerPanda("toyota_secoc_pt_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL | Panda.FLAG_TOYOTA_SECOC)
+    self.safety.set_safety_hooks(Panda.SAFETY_TOYOTA, self.EPS_SCALE | ToyotaPandaFlags.FLAG_TOYOTA_STOCK_LONGITUDINAL | ToyotaPandaFlags.FLAG_TOYOTA_SECOC)
     self.safety.init_tests()
 
   # This platform also has alternate brake and PCM messages, but same naming in the DBC, so same packers work
