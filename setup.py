@@ -52,6 +52,7 @@ setup(
       "pycryptodome >= 3.9.8",
       "cffi",
       "flaky",
+      # "opendbc",
       "pytest",
       "pytest-mock",
       "pytest-xdist",
