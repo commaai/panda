@@ -18,7 +18,7 @@ class TestElm327(TestDefaultRxHookBase):
 
   def setUp(self):
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_ELM327, 0)
+    self.safety.set_safety_hooks(Safety.SAFETY_ELM327, 0)
     self.safety.init_tests()
 
   def test_tx_hook(self):

@@ -2,7 +2,7 @@
 import unittest
 
 from opendbc.car.subaru.values import SubaruSafetyFlags
-from panda import Panda
+from panda import Safety
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
@@ -30,7 +30,7 @@ class TestSubaruPreglobalSafety(common.PandaCarSafetyTest, common.DriverTorqueSt
   def setUp(self):
     self.packer = CANPackerPanda(self.DBC)
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_SUBARU_PREGLOBAL, self.FLAGS)
+    self.safety.set_safety_hooks(Safety.SAFETY_SUBARU_PREGLOBAL, self.FLAGS)
     self.safety.init_tests()
 
   def _set_prev_torque(self, t):
