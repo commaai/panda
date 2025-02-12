@@ -9,6 +9,7 @@ import time
 import random
 import argparse
 
+from opendbc.safety import Safety
 from panda import Panda
 
 def get_test_string():
@@ -50,8 +51,8 @@ def run_test(sleep_duration):
     raise Exception("Connect white/grey and black panda to run this test!")
 
   # disable safety modes
-  black_panda.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
-  other_panda.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+  black_panda.set_safety_mode(Safety.SAFETY_ALLOUTPUT)
+  other_panda.set_safety_mode(Safety.SAFETY_ALLOUTPUT)
 
   # test health packet
   print("black panda health", black_panda.health())
@@ -60,7 +61,7 @@ def run_test(sleep_duration):
   # test black -> other
   while True:
     # Switch on relay
-    black_panda.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+    black_panda.set_safety_mode(Safety.SAFETY_ALLOUTPUT)
     time.sleep(0.05)
 
     if not test_buses(black_panda, other_panda, (0, False, [0])):
@@ -68,7 +69,7 @@ def run_test(sleep_duration):
       raise Exception("Open error")
 
     # Switch off relay
-    black_panda.set_safety_mode(Panda.SAFETY_SILENT)
+    black_panda.set_safety_mode(Safety.SAFETY_SILENT)
     time.sleep(0.05)
 
     if not test_buses(black_panda, other_panda, (0, False, [0, 2])):
