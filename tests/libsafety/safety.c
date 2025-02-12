@@ -13,18 +13,11 @@ void can_tx_comms_resume_spi(void) { };
 
 #include "health.h"
 #include "faults.h"
-#include "libc.h"
 #include "boards/board_declarations.h"
 #include "safety.h"
 #include "main_definitions.h"
 #include "drivers/can_common.h"
 
-can_ring *rx_q = &can_rx_q;
-can_ring *tx1_q = &can_tx1_q;
-can_ring *tx2_q = &can_tx2_q;
-can_ring *tx3_q = &can_tx3_q;
-
-#include "comms_definitions.h"
 #include "can_comms.h"
 
 // libpanda stuff
