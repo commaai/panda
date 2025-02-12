@@ -9,11 +9,7 @@ rm -f ../libpanda/*.gcda
 scons -j$(nproc) -D --coverage
 
 # run safety tests and generate coverage data
-HW_TYPES=( 6 9 )
-for hw_type in "${HW_TYPES[@]}"; do
-  echo "Testing HW_TYPE: $hw_type"
-  HW_TYPE=$hw_type pytest test_*.py
-done
+pytest test_*.py
 
 # generate and open report
 if [ "$1" == "--report" ]; then
