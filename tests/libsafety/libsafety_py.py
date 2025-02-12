@@ -3,10 +3,10 @@ from cffi import FFI
 from typing import Any, Protocol
 
 from panda import LEN_TO_DLC
-from panda.tests.libpanda.safety_helpers import PandaSafety, setup_safety_helpers
+from panda.tests.libsafety.safety_helpers import PandaSafety, setup_safety_helpers
 
-libpanda_dir = os.path.dirname(os.path.abspath(__file__))
-libpanda_fn = os.path.join(libpanda_dir, "libpanda.so")
+libsafety_dir = os.path.dirname(os.path.abspath(__file__))
+libsafety_fn = os.path.join(libsafety_dir, "libsafety.so")
 
 ffi = FFI()
 
@@ -79,7 +79,7 @@ class Panda(PandaSafety, Protocol):
   def set_safety_hooks(self, mode: int, param: int) -> int: ...
 
 
-libpanda: Panda = ffi.dlopen(libpanda_fn)
+libsafety: Panda = ffi.dlopen(libsafety_fn)
 
 
 # helpers
@@ -91,6 +91,6 @@ def make_CANPacket(addr: int, bus: int, dat):
   ret[0].data_len_code = LEN_TO_DLC[len(dat)]
   ret[0].bus = bus
   ret[0].data = bytes(dat)
-  libpanda.can_set_checksum(ret)
+  libsafety.can_set_checksum(ret)
 
   return ret
