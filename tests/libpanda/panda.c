@@ -26,6 +26,3 @@ can_ring *tx3_q = &can_tx3_q;
 
 #include "comms_definitions.h"
 #include "can_comms.h"
-
-// libpanda stuff
-#include "safety_helpers.h"
