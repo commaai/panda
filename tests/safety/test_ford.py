@@ -6,7 +6,7 @@ import unittest
 import panda.tests.safety.common as common
 from opendbc.car.ford.values import FordSafetyFlags
 
-from panda import Panda
+from opendbc.safety import Safety
 from panda.tests.libpanda import libpanda_py
 from panda.tests.safety.common import CANPackerPanda
 
@@ -366,7 +366,7 @@ class TestFordCANFDStockSafety(TestFordSafetyBase):
   def setUp(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_FORD, FordSafetyFlags.FLAG_FORD_CANFD)
+    self.safety.set_safety_hooks(Safety.SAFETY_FORD, FordSafetyFlags.FLAG_FORD_CANFD)
     self.safety.init_tests()
 
 
@@ -443,7 +443,7 @@ class TestFordLongitudinalSafety(TestFordLongitudinalSafetyBase):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
     self.safety = libpanda_py.libpanda
     # Make sure we enforce long safety even without long flag for CAN
-    self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
+    self.safety.set_safety_hooks(Safety.SAFETY_FORD, 0)
     self.safety.init_tests()
 
 
@@ -458,7 +458,7 @@ class TestFordCANFDLongitudinalSafety(TestFordLongitudinalSafetyBase):
   def setUp(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_FORD, FordSafetyFlags.FLAG_FORD_LONG_CONTROL | FordSafetyFlags.FLAG_FORD_CANFD)
+    self.safety.set_safety_hooks(Safety.SAFETY_FORD, FordSafetyFlags.FLAG_FORD_LONG_CONTROL | FordSafetyFlags.FLAG_FORD_CANFD)
     self.safety.init_tests()
 
 

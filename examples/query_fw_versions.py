@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import argparse
 from tqdm import tqdm
-from panda import Panda
 from opendbc.car.carlog import carlog
 from opendbc.car.uds import UdsClient, MessageTimeoutError, NegativeResponseError, InvalidSubAddressError, \
                             SESSION_TYPE, DATA_IDENTIFIER_TYPE
+from opendbc.safety import Safety
+from panda import Panda
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -63,7 +64,7 @@ if __name__ == "__main__":
     exit()
 
   panda = Panda(serial=args.serial)
-  panda.set_safety_mode(Panda.SAFETY_ELM327, 1 if args.no_obd else 0)
+  panda.set_safety_mode(Safety.SAFETY_ELM327, 1 if args.no_obd else 0)
   print("querying addresses ...")
   with tqdm(addrs) as t:
     for addr in t:
