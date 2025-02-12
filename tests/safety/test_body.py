@@ -4,7 +4,7 @@ import unittest
 import panda.tests.safety.common as common
 
 from opendbc.safety import Safety
-from panda.tests.libpanda import libpanda_py
+from panda.tests.libsafety import libsafety_py
 from panda.tests.safety.common import CANPackerPanda
 
 
@@ -14,7 +14,7 @@ class TestBody(common.PandaSafetyTest):
 
   def setUp(self):
     self.packer = CANPackerPanda("comma_body")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_BODY, 0)
     self.safety.init_tests()
 

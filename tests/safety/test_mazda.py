@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import unittest
 from opendbc.safety import Safety
-from panda.tests.libpanda import libpanda_py
+from panda.tests.libsafety import libsafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
@@ -29,7 +29,7 @@ class TestMazdaSafety(common.PandaCarSafetyTest, common.DriverTorqueSteeringSafe
 
   def setUp(self):
     self.packer = CANPackerPanda("mazda_2017")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_MAZDA, 0)
     self.safety.init_tests()
 

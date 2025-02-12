@@ -3,7 +3,7 @@ import unittest
 
 from opendbc.car.gm.values import GMSafetyFlags
 from opendbc.safety import Safety
-from panda.tests.libpanda import libpanda_py
+from panda.tests.libsafety import libsafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
@@ -98,7 +98,7 @@ class TestGmSafetyBase(common.PandaCarSafetyTest, common.DriverTorqueSteeringSaf
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_GM, 0)
     self.safety.init_tests()
 
@@ -158,7 +158,7 @@ class TestGmAscmSafety(GmLongitudinalBase, TestGmSafetyBase):
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_GM, 0)
     self.safety.init_tests()
 
@@ -188,7 +188,7 @@ class TestGmCameraSafety(TestGmCameraSafetyBase):
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_GM, GMSafetyFlags.FLAG_GM_HW_CAM)
     self.safety.init_tests()
 
@@ -220,7 +220,7 @@ class TestGmCameraLongitudinalSafety(GmLongitudinalBase, TestGmCameraSafetyBase)
   def setUp(self):
     self.packer = CANPackerPanda("gm_global_a_powertrain_generated")
     self.packer_chassis = CANPackerPanda("gm_global_a_chassis")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_GM, GMSafetyFlags.FLAG_GM_HW_CAM | GMSafetyFlags.FLAG_GM_HW_CAM_LONG)
     self.safety.init_tests()
 

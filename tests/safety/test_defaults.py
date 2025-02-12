@@ -4,7 +4,7 @@ import unittest
 import panda.tests.safety.common as common
 
 from opendbc.safety import Safety
-from panda.tests.libpanda import libpanda_py
+from panda.tests.libsafety import libsafety_py
 
 
 class TestDefaultRxHookBase(common.PandaSafetyTest):
@@ -19,7 +19,7 @@ class TestNoOutput(TestDefaultRxHookBase):
   TX_MSGS = []
 
   def setUp(self):
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_NOOUTPUT, 0)
     self.safety.init_tests()
 
@@ -28,7 +28,7 @@ class TestSilent(TestNoOutput):
   """SILENT uses same hooks as NOOUTPUT"""
 
   def setUp(self):
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_SILENT, 0)
     self.safety.init_tests()
 
@@ -39,7 +39,7 @@ class TestAllOutput(TestDefaultRxHookBase):
              for bus in range(4)]
 
   def setUp(self):
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_ALLOUTPUT, 0)
     self.safety.init_tests()
 
@@ -64,7 +64,7 @@ class TestAllOutputPassthrough(TestAllOutput):
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
   def setUp(self):
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_ALLOUTPUT, 1)
     self.safety.init_tests()
 
