@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 import argparse
 from tqdm import tqdm
-from opendbc.safety import Safety
-from panda import Panda
 from opendbc.car.carlog import carlog
 from opendbc.car.uds import UdsClient, MessageTimeoutError, NegativeResponseError, InvalidSubAddressError, \
                             SESSION_TYPE, DATA_IDENTIFIER_TYPE
+from opendbc.safety import Safety
+from panda import Panda
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
