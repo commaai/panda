@@ -128,7 +128,8 @@ class TestHyundaiCanfdHDA1(TestHyundaiCanfdHDA1Base):
 @parameterized_class([
   # Radar SCC, test with long flag to ensure flag is not respected until it is supported
   {"GAS_MSG": ("ACCELERATOR_BRAKE_ALT", "ACCELERATOR_PEDAL_PRESSED"), "SCC_BUS": 0, "SAFETY_PARAM": HyundaiSafetyFlags.FLAG_HYUNDAI_LONG},
-  {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SCC_BUS": 0, "SAFETY_PARAM": HyundaiSafetyFlags.FLAG_HYUNDAI_EV_GAS | HyundaiSafetyFlags.FLAG_HYUNDAI_LONG},
+  {"GAS_MSG": ("ACCELERATOR", "ACCELERATOR_PEDAL"), "SCC_BUS": 0, "SAFETY_PARAM": HyundaiSafetyFlags.FLAG_HYUNDAI_EV_GAS |
+                                                                                  HyundaiSafetyFlags.FLAG_HYUNDAI_LONG},
   {"GAS_MSG": ("ACCELERATOR_ALT", "ACCELERATOR_PEDAL"), "SCC_BUS": 0, "SAFETY_PARAM": HyundaiSafetyFlags.FLAG_HYUNDAI_HYBRID_GAS |
                                                                                       HyundaiSafetyFlags.FLAG_HYUNDAI_LONG},
   # Camera SCC
