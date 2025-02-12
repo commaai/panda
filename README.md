@@ -78,7 +78,8 @@ For example, to receive CAN messages:
 ```
 And to send one on bus 0:
 ``` python
->>> panda.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+>>> from opendbc.safety import Safety
+>>> panda.set_safety_mode(Safety.SAFETY_ALLOUTPUT)
 >>> panda.can_send(0x1aa, b'message', 0)
 ```
 Note that you may have to setup [udev rules](https://github.com/commaai/panda/tree/master/drivers/linux) for Linux, such as
@@ -90,7 +91,7 @@ EOF
 sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 
-The panda jungle uses different udev rules. See [the repo](https://github.com/commaai/panda_jungle#udev-rules) for instructions. 
+The panda jungle uses different udev rules. See [the repo](https://github.com/commaai/panda_jungle#udev-rules) for instructions.
 
 ## Software interface support
 
