@@ -263,8 +263,8 @@ static safety_config hyundai_canfd_init(uint16_t param) {
     {0x1A0, 0, 32}, // CRUISE_INFO
     {0x1CF, 2, 8},  // CRUISE_BUTTON
     {0x1E0, 0, 16}, // LFAHDA_CLUSTER
-    {0x161, 0, 32}, // MSG_161
-    {0x162, 0, 32}, // MSG_162
+    {0x161, 0, 32}, // CCNC_0x161
+    {0x162, 0, 32}, // CCNC_0x162
   };
 
 
