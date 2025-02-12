@@ -2,7 +2,7 @@
 import unittest
 import numpy as np
 
-from opendbc.car.tesla.values import TeslaPandaFlags
+from opendbc.car.tesla.values import TeslaSafetyFlags
 from panda import Panda
 import panda.tests.safety.common as common
 from panda.tests.libpanda import libpanda_py
@@ -114,7 +114,7 @@ class TestTeslaRavenSteeringSafety(TestTeslaSteeringSafety):
   def setUp(self):
     self.packer = CANPackerPanda("tesla_can")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TESLA, TeslaPandaFlags.FLAG_TESLA_RAVEN)
+    self.safety.set_safety_hooks(Panda.SAFETY_TESLA, TeslaSafetyFlags.FLAG_TESLA_RAVEN)
     self.safety.init_tests()
 
   def _angle_meas_msg(self, angle: float):
@@ -167,7 +167,7 @@ class TestTeslaChassisLongitudinalSafety(TestTeslaLongitudinalSafety):
   def setUp(self):
     self.packer = CANPackerPanda("tesla_can")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TESLA, TeslaPandaFlags.FLAG_TESLA_LONG_CONTROL)
+    self.safety.set_safety_hooks(Panda.SAFETY_TESLA, TeslaSafetyFlags.FLAG_TESLA_LONG_CONTROL)
     self.safety.init_tests()
 
 
@@ -179,7 +179,7 @@ class TestTeslaPTLongitudinalSafety(TestTeslaLongitudinalSafety):
   def setUp(self):
     self.packer = CANPackerPanda("tesla_powertrain")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TESLA, TeslaPandaFlags.FLAG_TESLA_LONG_CONTROL | TeslaPandaFlags.FLAG_TESLA_POWERTRAIN)
+    self.safety.set_safety_hooks(Panda.SAFETY_TESLA, TeslaSafetyFlags.FLAG_TESLA_LONG_CONTROL | TeslaSafetyFlags.FLAG_TESLA_POWERTRAIN)
     self.safety.init_tests()
 
 
