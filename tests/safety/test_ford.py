@@ -6,7 +6,7 @@ import unittest
 import panda.tests.safety.common as common
 from opendbc.car.ford.values import FordSafetyFlags
 
-from panda import Safety
+from opendbc.safety import Safety
 from panda.tests.libpanda import libpanda_py
 from panda.tests.safety.common import CANPackerPanda
 

@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from opendbc.car.honda.values import HondaSafetyFlags
-from panda import Safety
+from opendbc.safety import Safety
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, MAX_WRONG_COUNTERS

@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from opendbc.car.tesla.values import TeslaSafetyFlags
-from panda import Safety
+from opendbc.safety import Safety
 import panda.tests.safety.common as common
 from panda.tests.libpanda import libpanda_py
 from panda.tests.safety.common import CANPackerPanda
