@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import unittest
-from panda import Panda
+from opendbc.safety import Safety
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
@@ -30,7 +30,7 @@ class TestMazdaSafety(common.PandaCarSafetyTest, common.DriverTorqueSteeringSafe
   def setUp(self):
     self.packer = CANPackerPanda("mazda_2017")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_MAZDA, 0)
+    self.safety.set_safety_hooks(Safety.SAFETY_MAZDA, 0)
     self.safety.init_tests()
 
   def _torque_meas_msg(self, torque):

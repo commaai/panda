@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import time
 import struct
+from opendbc.safety import Safety
 from panda import Panda
 from hexdump import hexdump
 from panda.python.isotp import isotp_send, isotp_recv
@@ -30,7 +31,7 @@ def get_supported_pids():
 
 if __name__ == "__main__":
   panda = Panda()
-  panda.set_safety_mode(Panda.SAFETY_ELM327)
+  panda.set_safety_mode(Safety.SAFETY_ELM327)
   panda.can_clear(0)
 
   # 09 02 = Get VIN

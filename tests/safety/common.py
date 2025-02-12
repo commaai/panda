@@ -6,7 +6,7 @@ import numpy as np
 from collections.abc import Callable
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
-from panda import ALTERNATIVE_EXPERIENCE
+from opendbc.safety import ALTERNATIVE_EXPERIENCE
 from panda.tests.libpanda import libpanda_py
 
 MAX_WRONG_COUNTERS = 5

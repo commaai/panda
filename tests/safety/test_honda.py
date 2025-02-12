@@ -2,7 +2,8 @@
 import unittest
 import numpy as np
 
-from panda import Panda
+from opendbc.car.honda.values import HondaSafetyFlags
+from opendbc.safety import Safety
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, MAX_WRONG_COUNTERS
@@ -267,7 +268,7 @@ class TestHondaNidecSafetyBase(HondaBase):
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_touring_2016_can_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, 0)
+    self.safety.set_safety_hooks(Safety.SAFETY_HONDA_NIDEC, 0)
     self.safety.init_tests()
 
   def _send_brake_msg(self, brake, aeb_req=0, bus=0):
@@ -357,7 +358,7 @@ class TestHondaNidecPcmAltSafety(TestHondaNidecPcmSafety):
   def setUp(self):
     self.packer = CANPackerPanda("acura_ilx_2016_can_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_NIDEC, Panda.FLAG_HONDA_NIDEC_ALT)
+    self.safety.set_safety_hooks(Safety.SAFETY_HONDA_NIDEC, HondaSafetyFlags.FLAG_HONDA_NIDEC_ALT)
     self.safety.init_tests()
 
   def _acc_state_msg(self, main_on):
@@ -422,7 +423,7 @@ class TestHondaBoschAltBrakeSafetyBase(TestHondaBoschSafetyBase):
   """
   def setUp(self):
     super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_ALT_BRAKE)
+    self.safety.set_safety_hooks(Safety.SAFETY_HONDA_BOSCH, HondaSafetyFlags.FLAG_HONDA_ALT_BRAKE)
     self.safety.init_tests()
 
   def _user_brake_msg(self, brake):
@@ -444,7 +445,7 @@ class TestHondaBoschSafety(HondaPcmEnableBase, TestHondaBoschSafetyBase):
   """
   def setUp(self):
     super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, 0)
+    self.safety.set_safety_hooks(Safety.SAFETY_HONDA_BOSCH, 0)
     self.safety.init_tests()
 
 
@@ -471,7 +472,7 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
 
   def setUp(self):
     super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_BOSCH_LONG)
+    self.safety.set_safety_hooks(Safety.SAFETY_HONDA_BOSCH, HondaSafetyFlags.FLAG_HONDA_BOSCH_LONG)
     self.safety.init_tests()
 
   def _send_gas_brake_msg(self, gas, accel):
@@ -531,7 +532,7 @@ class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschRadarlessS
 
   def setUp(self):
     super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS)
+    self.safety.set_safety_hooks(Safety.SAFETY_HONDA_BOSCH, HondaSafetyFlags.FLAG_HONDA_RADARLESS)
     self.safety.init_tests()
 
 
@@ -542,7 +543,7 @@ class TestHondaBoschRadarlessAltBrakeSafety(HondaPcmEnableBase, TestHondaBoschRa
 
   def setUp(self):
     super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS | Panda.FLAG_HONDA_ALT_BRAKE)
+    self.safety.set_safety_hooks(Safety.SAFETY_HONDA_BOSCH, HondaSafetyFlags.FLAG_HONDA_RADARLESS | HondaSafetyFlags.FLAG_HONDA_ALT_BRAKE)
     self.safety.init_tests()
 
 
@@ -556,7 +557,7 @@ class TestHondaBoschRadarlessLongSafety(common.LongitudinalAccelSafetyTest, Hond
 
   def setUp(self):
     super().setUp()
-    self.safety.set_safety_hooks(Panda.SAFETY_HONDA_BOSCH, Panda.FLAG_HONDA_RADARLESS | Panda.FLAG_HONDA_BOSCH_LONG)
+    self.safety.set_safety_hooks(Safety.SAFETY_HONDA_BOSCH, HondaSafetyFlags.FLAG_HONDA_RADARLESS | HondaSafetyFlags.FLAG_HONDA_BOSCH_LONG)
     self.safety.init_tests()
 
   def _accel_msg(self, accel):

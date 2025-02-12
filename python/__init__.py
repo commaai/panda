@@ -101,42 +101,7 @@ ensure_health_packet_version = partial(ensure_version, "health", "HEALTH_PACKET_
 
 
 
-class ALTERNATIVE_EXPERIENCE:
-  DEFAULT = 0
-  DISABLE_DISENGAGE_ON_GAS = 1
-  DISABLE_STOCK_AEB = 2
-  RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX = 8
-  ALLOW_AEB = 16
-
 class Panda:
-
-  # matches cereal.car.CarParams.SafetyModel
-  SAFETY_SILENT = 0
-  SAFETY_HONDA_NIDEC = 1
-  SAFETY_TOYOTA = 2
-  SAFETY_ELM327 = 3
-  SAFETY_GM = 4
-  SAFETY_HONDA_BOSCH_GIRAFFE = 5
-  SAFETY_FORD = 6
-  SAFETY_HYUNDAI = 8
-  SAFETY_CHRYSLER = 9
-  SAFETY_TESLA = 10
-  SAFETY_SUBARU = 11
-  SAFETY_MAZDA = 13
-  SAFETY_NISSAN = 14
-  SAFETY_VOLKSWAGEN_MQB = 15
-  SAFETY_ALLOUTPUT = 17
-  SAFETY_GM_ASCM = 18
-  SAFETY_NOOUTPUT = 19
-  SAFETY_HONDA_BOSCH = 20
-  SAFETY_VOLKSWAGEN_PQ = 21
-  SAFETY_SUBARU_PREGLOBAL = 22
-  SAFETY_HYUNDAI_LEGACY = 23
-  SAFETY_HYUNDAI_COMMUNITY = 24
-  SAFETY_STELLANTIS = 25
-  SAFETY_FAW = 26
-  SAFETY_BODY = 27
-  SAFETY_HYUNDAI_CANFD = 28
 
   SERIAL_DEBUG = 0
   SERIAL_ESP = 1
@@ -183,47 +148,6 @@ class Panda:
   HARNESS_STATUS_NC = 0
   HARNESS_STATUS_NORMAL = 1
   HARNESS_STATUS_FLIPPED = 2
-
-  # first byte is for EPS scaling factor
-  FLAG_TOYOTA_ALT_BRAKE = (1 << 8)
-  FLAG_TOYOTA_STOCK_LONGITUDINAL = (2 << 8)
-  FLAG_TOYOTA_LTA = (4 << 8)
-  FLAG_TOYOTA_SECOC = (8 << 8)
-
-  FLAG_HONDA_ALT_BRAKE = 1
-  FLAG_HONDA_BOSCH_LONG = 2
-  FLAG_HONDA_NIDEC_ALT = 4
-  FLAG_HONDA_RADARLESS = 8
-
-  FLAG_HYUNDAI_EV_GAS = 1
-  FLAG_HYUNDAI_HYBRID_GAS = 2
-  FLAG_HYUNDAI_LONG = 4
-  FLAG_HYUNDAI_CAMERA_SCC = 8
-  FLAG_HYUNDAI_CANFD_HDA2 = 16
-  FLAG_HYUNDAI_CANFD_ALT_BUTTONS = 32
-  FLAG_HYUNDAI_ALT_LIMITS = 64
-  FLAG_HYUNDAI_CANFD_HDA2_ALT_STEERING = 128
-
-  FLAG_TESLA_POWERTRAIN = 1
-  FLAG_TESLA_LONG_CONTROL = 2
-  FLAG_TESLA_RAVEN = 4
-
-  FLAG_VOLKSWAGEN_LONG_CONTROL = 1
-
-  FLAG_CHRYSLER_RAM_DT = 1
-  FLAG_CHRYSLER_RAM_HD = 2
-
-  FLAG_SUBARU_GEN2 = 1
-  FLAG_SUBARU_LONG = 2
-  FLAG_SUBARU_PREGLOBAL_REVERSED_DRIVER_TORQUE = 4
-
-  FLAG_NISSAN_ALT_EPS_BUS = 1
-
-  FLAG_GM_HW_CAM = 1
-  FLAG_GM_HW_CAM_LONG = 2
-
-  FLAG_FORD_LONG_CONTROL = 1
-  FLAG_FORD_CANFD = 2
 
   def __init__(self, serial: str | None = None, claim: bool = True, disable_checks: bool = True, can_speed_kbps: int = 500, cli: bool = True):
     self._disable_checks = disable_checks
@@ -788,7 +712,7 @@ class Panda:
   def set_power_save(self, power_save_enabled=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe7, int(power_save_enabled), 0, b'')
 
-  def set_safety_mode(self, mode=SAFETY_SILENT, param=0):
+  def set_safety_mode(self, mode=0, param=0):  # Safety.SAFETY_SILENT
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
 
   def set_obd(self, obd):
