@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import unittest
 
-from opendbc.car.subaru.values import SubaruPandaFlags
+from opendbc.car.subaru.values import SubaruSafetyFlags
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -64,7 +64,7 @@ class TestSubaruPreglobalSafety(common.PandaCarSafetyTest, common.DriverTorqueSt
 
 
 class TestSubaruPreglobalReversedDriverTorqueSafety(TestSubaruPreglobalSafety):
-  FLAGS = SubaruPandaFlags.FLAG_SUBARU_PREGLOBAL_REVERSED_DRIVER_TORQUE
+  FLAGS = SubaruSafetyFlags.FLAG_SUBARU_PREGLOBAL_REVERSED_DRIVER_TORQUE
   DBC = "subaru_outback_2019_generated"
 
 

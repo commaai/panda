@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import unittest
 
-from opendbc.car.nissan.values import NissanPandaFlags
+from opendbc.car.nissan.values import NissanSafetyFlags
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -90,7 +90,7 @@ class TestNissanSafetyAltEpsBus(TestNissanSafety):
   def setUp(self):
     self.packer = CANPackerPanda("nissan_x_trail_2017_generated")
     self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, NissanPandaFlags.FLAG_NISSAN_ALT_EPS_BUS)
+    self.safety.set_safety_hooks(Panda.SAFETY_NISSAN, NissanSafetyFlags.FLAG_NISSAN_ALT_EPS_BUS)
     self.safety.init_tests()
 
 

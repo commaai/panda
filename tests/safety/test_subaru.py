@@ -2,7 +2,7 @@
 import enum
 import unittest
 
-from opendbc.car.subaru.values import SubaruPandaFlags
+from opendbc.car.subaru.values import SubaruSafetyFlags
 from panda import Panda
 from panda.tests.libpanda import libpanda_py
 import panda.tests.safety.common as common
@@ -184,17 +184,17 @@ class TestSubaruGen2TorqueSafetyBase(TestSubaruTorqueSafetyBase):
 
 
 class TestSubaruGen2TorqueStockLongitudinalSafety(TestSubaruStockLongitudinalSafetyBase, TestSubaruGen2TorqueSafetyBase):
-  FLAGS = SubaruPandaFlags.FLAG_SUBARU_GEN2
+  FLAGS = SubaruSafetyFlags.FLAG_SUBARU_GEN2
   TX_MSGS = lkas_tx_msgs(SUBARU_ALT_BUS)
 
 
 class TestSubaruGen1LongitudinalSafety(TestSubaruLongitudinalSafetyBase, TestSubaruTorqueSafetyBase):
-  FLAGS = SubaruPandaFlags.FLAG_SUBARU_LONG
+  FLAGS = SubaruSafetyFlags.FLAG_SUBARU_LONG
   TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS) + long_tx_msgs(SUBARU_MAIN_BUS)
 
 
 class TestSubaruGen2LongitudinalSafety(TestSubaruLongitudinalSafetyBase, TestSubaruGen2TorqueSafetyBase):
-  FLAGS = SubaruPandaFlags.FLAG_SUBARU_LONG | SubaruPandaFlags.FLAG_SUBARU_GEN2
+  FLAGS = SubaruSafetyFlags.FLAG_SUBARU_LONG | SubaruSafetyFlags.FLAG_SUBARU_GEN2
   TX_MSGS = lkas_tx_msgs(SUBARU_ALT_BUS) + long_tx_msgs(SUBARU_ALT_BUS) + gen2_long_additional_tx_msgs()
 
   def _rdbi_msg(self, did: int):
