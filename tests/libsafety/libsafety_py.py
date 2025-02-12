@@ -1,6 +1,6 @@
 import os
 from cffi import FFI
-from typing import Any, Protocol
+from typing import Protocol
 
 from panda import LEN_TO_DLC
 from panda.tests.libsafety.safety_helpers import PandaSafety, setup_safety_helpers
@@ -32,25 +32,7 @@ int set_safety_hooks(uint16_t mode, uint16_t param);
 """)
 
 ffi.cdef("""
-typedef struct {
-  volatile uint32_t w_ptr;
-  volatile uint32_t r_ptr;
-  uint32_t fifo_size;
-  CANPacket_t *elems;
-} can_ring;
-
-extern can_ring *rx_q;
-extern can_ring *tx1_q;
-extern can_ring *tx2_q;
-extern can_ring *tx3_q;
-
-bool can_pop(can_ring *q, CANPacket_t *elem);
-bool can_push(can_ring *q, CANPacket_t *elem);
 void can_set_checksum(CANPacket_t *packet);
-int comms_can_read(uint8_t *data, uint32_t max_len);
-void comms_can_write(uint8_t *data, uint32_t len);
-void comms_can_reset(void);
-uint32_t can_slots_empty(can_ring *q);
 """)
 
 setup_safety_helpers(ffi)
@@ -67,9 +49,6 @@ class CANPacket:
 
 class Panda(PandaSafety, Protocol):
   # CAN
-  tx1_q: Any
-  tx2_q: Any
-  tx3_q: Any
   def can_set_checksum(self, p: CANPacket) -> None: ...
 
   # safety
