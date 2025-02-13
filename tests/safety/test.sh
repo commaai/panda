@@ -9,7 +9,7 @@ rm -f ../libsafety/*.gcda
 scons -j$(nproc) -D --coverage
 
 # run safety tests and generate coverage data
-HW_TYPES=( 6 )
+HW_TYPES=( 6 9 )
 for hw_type in "${HW_TYPES[@]}"; do
   echo "Testing HW_TYPE: $hw_type"
   HW_TYPE=$hw_type pytest test_*.py
@@ -24,7 +24,7 @@ fi
 
 # test coverage
 GCOV_OUTPUT=$(gcov -n ../libsafety/safety.c)
-INCOMPLETE_COVERAGE=$(echo "$GCOV_OUTPUT" | paste -s -d' \n' | grep -E "File.*(safety\/safety_.*)|(safety)\.h" | grep -v "100.00%" || true)
+INCOMPLETE_COVERAGE=$(echo "$GCOV_OUTPUT" | paste -s -d' \n' | grep -E "File.*(\/safety\/safety_.*)|(safety)\.h" | grep -v "100.00%" || true)
 if [ -n "$INCOMPLETE_COVERAGE" ]; then
   echo "FAILED: Some files have less than 100% coverage:"
   echo "$INCOMPLETE_COVERAGE"
