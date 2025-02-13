@@ -4,7 +4,7 @@ import numpy as np
 
 from opendbc.car.honda.values import HondaSafetyFlags
 from opendbc.safety import Safety
-from panda.tests.libpanda import libpanda_py
+from panda.tests.libsafety import libsafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda, MAX_WRONG_COUNTERS
 
@@ -267,7 +267,7 @@ class TestHondaNidecSafetyBase(HondaBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_touring_2016_can_generated")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_HONDA_NIDEC, 0)
     self.safety.init_tests()
 
@@ -357,7 +357,7 @@ class TestHondaNidecPcmAltSafety(TestHondaNidecPcmSafety):
   """
   def setUp(self):
     self.packer = CANPackerPanda("acura_ilx_2016_can_generated")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_HONDA_NIDEC, HondaSafetyFlags.FLAG_HONDA_NIDEC_ALT)
     self.safety.init_tests()
 
@@ -386,7 +386,7 @@ class TestHondaBoschSafetyBase(HondaBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("honda_accord_2018_can_generated")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
 
   def _alt_brake_msg(self, brake):
     values = {"BRAKE_PRESSED": brake, "COUNTER": self.cnt_brake % 4}
@@ -488,10 +488,10 @@ class TestHondaBoschLongSafety(HondaButtonEnableBase, TestHondaBoschSafetyBase):
     pass
 
   def test_diagnostics(self):
-    tester_present = libpanda_py.make_CANPacket(0x18DAB0F1, self.PT_BUS, b"\x02\x3E\x80\x00\x00\x00\x00\x00")
+    tester_present = libsafety_py.make_CANPacket(0x18DAB0F1, self.PT_BUS, b"\x02\x3E\x80\x00\x00\x00\x00\x00")
     self.assertTrue(self._tx(tester_present))
 
-    not_tester_present = libpanda_py.make_CANPacket(0x18DAB0F1, self.PT_BUS, b"\x03\xAA\xAA\x00\x00\x00\x00\x00")
+    not_tester_present = libsafety_py.make_CANPacket(0x18DAB0F1, self.PT_BUS, b"\x03\xAA\xAA\x00\x00\x00\x00\x00")
     self.assertFalse(self._tx(not_tester_present))
 
   def test_gas_safety_check(self):
@@ -522,7 +522,7 @@ class TestHondaBoschRadarlessSafetyBase(TestHondaBoschSafetyBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("honda_civic_ex_2022_can_generated")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
 
 
 class TestHondaBoschRadarlessSafety(HondaPcmEnableBase, TestHondaBoschRadarlessSafetyBase):

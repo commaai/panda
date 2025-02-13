@@ -1,7 +1,7 @@
 import unittest
 
 import panda.tests.safety.common as common
-from panda.tests.libpanda import libpanda_py
+from panda.tests.libsafety import libsafety_py
 from panda.tests.safety.common import make_msg
 
 
@@ -139,10 +139,10 @@ class HyundaiLongitudinalBase(common.LongitudinalAccelSafetyTest):
     """
 
     addr, bus = self.DISABLED_ECU_UDS_MSG
-    tester_present = libpanda_py.make_CANPacket(addr, bus, b"\x02\x3E\x80\x00\x00\x00\x00\x00")
+    tester_present = libsafety_py.make_CANPacket(addr, bus, b"\x02\x3E\x80\x00\x00\x00\x00\x00")
     self.assertTrue(self._tx(tester_present))
 
-    not_tester_present = libpanda_py.make_CANPacket(addr, bus, b"\x03\xAA\xAA\x00\x00\x00\x00\x00")
+    not_tester_present = libsafety_py.make_CANPacket(addr, bus, b"\x03\xAA\xAA\x00\x00\x00\x00\x00")
     self.assertFalse(self._tx(not_tester_present))
 
   def test_disabled_ecu_alive(self):

@@ -6,7 +6,7 @@ import itertools
 
 from opendbc.car.toyota.values import ToyotaSafetyFlags
 from opendbc.safety import Safety
-from panda.tests.libpanda import libpanda_py
+from panda.tests.libsafety import libsafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
@@ -28,7 +28,7 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
   EPS_SCALE = 73
 
   packer: CANPackerPanda
-  safety: libpanda_py.Panda
+  safety: libsafety_py.Panda
 
   @classmethod
   def setUpClass(cls):
@@ -86,7 +86,7 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
     for should_tx, msg in ((False, b"\x6D\x02\x3E\x00\x00\x00\x00\x00"),  # fwdCamera tester present
                            (False, b"\x0F\x03\xAA\xAA\x00\x00\x00\x00"),  # non-tester present
                            (True, b"\x0F\x02\x3E\x00\x00\x00\x00\x00")):
-      tester_present = libpanda_py.make_CANPacket(0x750, 0, msg)
+      tester_present = libsafety_py.make_CANPacket(0x750, 0, msg)
       self.assertEqual(should_tx and not stock_longitudinal, self._tx(tester_present))
 
   def test_block_aeb(self, stock_longitudinal: bool = False):
@@ -97,7 +97,7 @@ class TestToyotaSafetyBase(common.PandaCarSafetyTest, common.LongitudinalAccelSa
           dat = [random.randint(1, 255) for _ in range(7)]
           if not bad:
             dat = [0]*6 + dat[-1:]
-          msg = libpanda_py.make_CANPacket(0x283, 0, bytes(dat))
+          msg = libsafety_py.make_CANPacket(0x283, 0, bytes(dat))
           self.assertEqual(not bad and not stock_longitudinal, self._tx(msg))
 
   # Only allow LTA msgs with no actuation
@@ -146,7 +146,7 @@ class TestToyotaSafetyTorque(TestToyotaSafetyBase, common.MotorTorqueSteeringSaf
 
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_TOYOTA, self.EPS_SCALE)
     self.safety.init_tests()
 
@@ -166,7 +166,7 @@ class TestToyotaSafetyAngle(TestToyotaSafetyBase, common.AngleSteeringSafetyTest
 
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_TOYOTA, self.EPS_SCALE | ToyotaSafetyFlags.FLAG_TOYOTA_LTA)
     self.safety.init_tests()
 
@@ -268,7 +268,7 @@ class TestToyotaAltBrakeSafety(TestToyotaSafetyTorque):
 
   def setUp(self):
     self.packer = CANPackerPanda("toyota_new_mc_pt_generated")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_TOYOTA, self.EPS_SCALE | ToyotaSafetyFlags.FLAG_TOYOTA_ALT_BRAKE)
     self.safety.init_tests()
 
@@ -313,7 +313,7 @@ class TestToyotaStockLongitudinalTorque(TestToyotaStockLongitudinalBase, TestToy
 
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_TOYOTA, self.EPS_SCALE | ToyotaSafetyFlags.FLAG_TOYOTA_STOCK_LONGITUDINAL)
     self.safety.init_tests()
 
@@ -322,7 +322,7 @@ class TestToyotaStockLongitudinalAngle(TestToyotaStockLongitudinalBase, TestToyo
 
   def setUp(self):
     self.packer = CANPackerPanda("toyota_nodsu_pt_generated")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_TOYOTA, self.EPS_SCALE | ToyotaSafetyFlags.FLAG_TOYOTA_STOCK_LONGITUDINAL | ToyotaSafetyFlags.FLAG_TOYOTA_LTA)
     self.safety.init_tests()
 
@@ -335,7 +335,7 @@ class TestToyotaSecOcSafety(TestToyotaStockLongitudinalBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("toyota_secoc_pt_generated")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_TOYOTA, self.EPS_SCALE | ToyotaSafetyFlags.FLAG_TOYOTA_STOCK_LONGITUDINAL | ToyotaSafetyFlags.FLAG_TOYOTA_SECOC)
     self.safety.init_tests()
 

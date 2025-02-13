@@ -4,7 +4,7 @@ import unittest
 
 from opendbc.car.hyundai.values import HyundaiSafetyFlags
 from opendbc.safety import Safety
-from panda.tests.libpanda import libpanda_py
+from panda.tests.libsafety import libsafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 from panda.tests.safety.hyundai_common import HyundaiButtonBase, HyundaiLongitudinalBase
@@ -73,7 +73,7 @@ class TestHyundaiSafety(HyundaiButtonBase, common.PandaCarSafetyTest, common.Dri
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_HYUNDAI, 0)
     self.safety.init_tests()
 
@@ -122,7 +122,7 @@ class TestHyundaiSafetyAltLimits(TestHyundaiSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_HYUNDAI, HyundaiSafetyFlags.FLAG_HYUNDAI_ALT_LIMITS)
     self.safety.init_tests()
 
@@ -133,7 +133,7 @@ class TestHyundaiSafetyCameraSCC(TestHyundaiSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_HYUNDAI, HyundaiSafetyFlags.FLAG_HYUNDAI_CAMERA_SCC)
     self.safety.init_tests()
 
@@ -141,7 +141,7 @@ class TestHyundaiSafetyCameraSCC(TestHyundaiSafety):
 class TestHyundaiLegacySafety(TestHyundaiSafety):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_HYUNDAI_LEGACY, 0)
     self.safety.init_tests()
 
@@ -149,7 +149,7 @@ class TestHyundaiLegacySafety(TestHyundaiSafety):
 class TestHyundaiLegacySafetyEV(TestHyundaiSafety):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_HYUNDAI_LEGACY, 1)
     self.safety.init_tests()
 
@@ -161,7 +161,7 @@ class TestHyundaiLegacySafetyEV(TestHyundaiSafety):
 class TestHyundaiLegacySafetyHEV(TestHyundaiSafety):
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_HYUNDAI_LEGACY, 2)
     self.safety.init_tests()
 
@@ -179,7 +179,7 @@ class TestHyundaiLongitudinalSafety(HyundaiLongitudinalBase, TestHyundaiSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("hyundai_kia_generic")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_HYUNDAI, HyundaiSafetyFlags.FLAG_HYUNDAI_LONG)
     self.safety.init_tests()
 

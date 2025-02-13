@@ -1,6 +1,6 @@
 from opendbc.car.toyota.values import ToyotaSafetyFlags
 from opendbc.safety import Safety
-import panda.tests.libpanda.libpanda_py as libpanda_py
+import panda.tests.libsafety.libsafety_py as libsafety_py
 
 def to_signed(d, bits):
   ret = d
@@ -58,7 +58,7 @@ def get_steer_value(mode, param, to_send):
   return torque, angle
 
 def package_can_msg(msg):
-  return libpanda_py.make_CANPacket(msg.address, msg.src % 4, msg.dat)
+  return libsafety_py.make_CANPacket(msg.address, msg.src % 4, msg.dat)
 
 def init_segment(safety, lr, mode, param):
   sendcan = (msg for msg in lr if msg.which() == 'sendcan')

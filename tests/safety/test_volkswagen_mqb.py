@@ -2,7 +2,7 @@
 import unittest
 import numpy as np
 from opendbc.safety import Safety
-from panda.tests.libpanda import libpanda_py
+from panda.tests.libsafety import libsafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 from opendbc.car.volkswagen.values import VolkswagenSafetyFlags
@@ -143,7 +143,7 @@ class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("vw_mqb_2010")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_VOLKSWAGEN_MQB, 0)
     self.safety.init_tests()
 
@@ -165,7 +165,7 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("vw_mqb_2010")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_VOLKSWAGEN_MQB, VolkswagenSafetyFlags.FLAG_VOLKSWAGEN_LONG_CONTROL)
     self.safety.init_tests()
 
