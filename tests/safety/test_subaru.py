@@ -4,7 +4,7 @@ import unittest
 
 from opendbc.car.subaru.values import SubaruSafetyFlags
 from opendbc.safety import Safety
-from panda.tests.libpanda import libpanda_py
+from panda.tests.libsafety import libsafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 from functools import partial
@@ -76,7 +76,7 @@ class TestSubaruSafetyBase(common.PandaCarSafetyTest):
 
   def setUp(self):
     self.packer = CANPackerPanda("subaru_global_2017_generated")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_SUBARU, self.FLAGS)
     self.safety.init_tests()
 
@@ -201,7 +201,7 @@ class TestSubaruGen2LongitudinalSafety(TestSubaruLongitudinalSafetyBase, TestSub
     return b'\x03\x22' + did.to_bytes(2) + b'\x00\x00\x00\x00'
 
   def _es_uds_msg(self, msg: bytes):
-    return libpanda_py.make_CANPacket(SubaruMsg.ES_UDS_Request, 2, msg)
+    return libsafety_py.make_CANPacket(SubaruMsg.ES_UDS_Request, 2, msg)
 
   def test_es_uds_message(self):
     tester_present = b'\x02\x3E\x80\x00\x00\x00\x00\x00'
