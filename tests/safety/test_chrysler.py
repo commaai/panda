@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import unittest
-from panda import Panda
-from panda.tests.libpanda import libpanda_py
+
+from opendbc.car.chrysler.values import ChryslerSafetyFlags
+from opendbc.safety import Safety
+from panda.tests.libsafety import libsafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
@@ -26,8 +28,8 @@ class TestChryslerSafety(common.PandaCarSafetyTest, common.MotorTorqueSteeringSa
 
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_pacifica_2017_hybrid_generated")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, 0)
+    self.safety = libsafety_py.libsafety
+    self.safety.set_safety_hooks(Safety.SAFETY_CHRYSLER, 0)
     self.safety.init_tests()
 
   def _button_msg(self, cancel=False, resume=False):
@@ -88,8 +90,8 @@ class TestChryslerRamDTSafety(TestChryslerSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_ram_dt_generated")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, Panda.FLAG_CHRYSLER_RAM_DT)
+    self.safety = libsafety_py.libsafety
+    self.safety.set_safety_hooks(Safety.SAFETY_CHRYSLER, ChryslerSafetyFlags.FLAG_CHRYSLER_RAM_DT)
     self.safety.init_tests()
 
   def _speed_msg(self, speed):
@@ -112,8 +114,8 @@ class TestChryslerRamHDSafety(TestChryslerSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("chrysler_ram_hd_generated")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_CHRYSLER, Panda.FLAG_CHRYSLER_RAM_HD)
+    self.safety = libsafety_py.libsafety
+    self.safety.set_safety_hooks(Safety.SAFETY_CHRYSLER, ChryslerSafetyFlags.FLAG_CHRYSLER_RAM_HD)
     self.safety.init_tests()
 
   def _speed_msg(self, speed):

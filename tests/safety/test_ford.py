@@ -4,9 +4,10 @@ import random
 import unittest
 
 import panda.tests.safety.common as common
+from opendbc.car.ford.values import FordSafetyFlags
 
-from panda import Panda
-from panda.tests.libpanda import libpanda_py
+from opendbc.safety import Safety
+from panda.tests.libsafety import libsafety_py
 from panda.tests.safety.common import CANPackerPanda
 
 MSG_EngBrakeData = 0x165           # RX from PCM, for driver brake pedal and cruise state
@@ -93,7 +94,7 @@ class TestFordSafetyBase(common.PandaCarSafetyTest):
   cnt_yaw_rate = 0
 
   packer: CANPackerPanda
-  safety: libpanda_py.Panda
+  safety: libsafety_py.Panda
 
   @classmethod
   def setUpClass(cls):
@@ -364,8 +365,8 @@ class TestFordCANFDStockSafety(TestFordSafetyBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_FORD, Panda.FLAG_FORD_CANFD)
+    self.safety = libsafety_py.libsafety
+    self.safety.set_safety_hooks(Safety.SAFETY_FORD, FordSafetyFlags.FLAG_FORD_CANFD)
     self.safety.init_tests()
 
 
@@ -440,9 +441,9 @@ class TestFordLongitudinalSafety(TestFordLongitudinalSafetyBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
-    self.safety = libpanda_py.libpanda
+    self.safety = libsafety_py.libsafety
     # Make sure we enforce long safety even without long flag for CAN
-    self.safety.set_safety_hooks(Panda.SAFETY_FORD, 0)
+    self.safety.set_safety_hooks(Safety.SAFETY_FORD, 0)
     self.safety.init_tests()
 
 
@@ -456,8 +457,8 @@ class TestFordCANFDLongitudinalSafety(TestFordLongitudinalSafetyBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("ford_lincoln_base_pt")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_FORD, Panda.FLAG_FORD_LONG_CONTROL | Panda.FLAG_FORD_CANFD)
+    self.safety = libsafety_py.libsafety
+    self.safety.set_safety_hooks(Safety.SAFETY_FORD, FordSafetyFlags.FLAG_FORD_LONG_CONTROL | FordSafetyFlags.FLAG_FORD_CANFD)
     self.safety.init_tests()
 
 

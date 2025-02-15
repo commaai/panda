@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import binascii
+from opendbc.safety import Safety
 from panda import Panda
 
 def tesla_tester():
@@ -13,7 +14,7 @@ def tesla_tester():
   # Now set the panda from its default of SAFETY_SILENT (read only) to SAFETY_ALLOUTPUT
   # Careful, as this will let us send any CAN messages we want (which could be very bad!)
   print("Setting Panda to output mode...")
-  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+  p.set_safety_mode(Safety.SAFETY_ALLOUTPUT)
 
   # BDY 0x248 is the MCU_commands message, which includes folding mirrors, opening the trunk, frunk, setting the cars lock state and more.
   # For our test, we will edit the 3rd byte, which is MCU_lockRequest. 0x01 will lock, 0x02 will unlock:
@@ -26,7 +27,7 @@ def tesla_tester():
 
   #Back to safety...
   print("Disabling output on Panda...")
-  p.set_safety_mode(Panda.SAFETY_SILENT)
+  p.set_safety_mode(Safety.SAFETY_SILENT)
 
   print("Reading VIN from 0x568. This is painfully slow and can take up to 3 minutes (1 minute per message; 3 messages needed for full VIN)...")
 

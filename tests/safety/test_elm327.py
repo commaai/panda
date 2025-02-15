@@ -3,8 +3,9 @@ import unittest
 
 import panda.tests.safety.common as common
 
-from panda import DLC_TO_LEN, Panda
-from panda.tests.libpanda import libpanda_py
+from opendbc.safety import Safety
+from panda import DLC_TO_LEN
+from panda.tests.libsafety import libsafety_py
 from panda.tests.safety.test_defaults import TestDefaultRxHookBase
 
 GM_CAMERA_DIAG_ADDR = 0x24B
@@ -17,8 +18,8 @@ class TestElm327(TestDefaultRxHookBase):
                                       ] for bus in range(4)]
 
   def setUp(self):
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_ELM327, 0)
+    self.safety = libsafety_py.libsafety
+    self.safety.set_safety_hooks(Safety.SAFETY_ELM327, 0)
     self.safety.init_tests()
 
   def test_tx_hook(self):

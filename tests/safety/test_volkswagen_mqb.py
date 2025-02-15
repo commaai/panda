@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import unittest
 import numpy as np
-from panda import Panda
-from panda.tests.libpanda import libpanda_py
+from opendbc.safety import Safety
+from panda.tests.libsafety import libsafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
+from opendbc.car.volkswagen.values import VolkswagenSafetyFlags
 
 MAX_ACCEL = 2.0
 MIN_ACCEL = -3.5
@@ -142,8 +143,8 @@ class TestVolkswagenMqbStockSafety(TestVolkswagenMqbSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("vw_mqb_2010")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, 0)
+    self.safety = libsafety_py.libsafety
+    self.safety.set_safety_hooks(Safety.SAFETY_VOLKSWAGEN_MQB, 0)
     self.safety.init_tests()
 
   def test_spam_cancel_safety_check(self):
@@ -164,8 +165,8 @@ class TestVolkswagenMqbLongSafety(TestVolkswagenMqbSafety):
 
   def setUp(self):
     self.packer = CANPackerPanda("vw_mqb_2010")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_VOLKSWAGEN_MQB, Panda.FLAG_VOLKSWAGEN_LONG_CONTROL)
+    self.safety = libsafety_py.libsafety
+    self.safety.set_safety_hooks(Safety.SAFETY_VOLKSWAGEN_MQB, VolkswagenSafetyFlags.FLAG_VOLKSWAGEN_LONG_CONTROL)
     self.safety.init_tests()
 
   # stock cruise controls are entirely bypassed under openpilot longitudinal control
