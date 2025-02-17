@@ -11,6 +11,7 @@ MSG_DAS_steeringControl = 0x488
 MSG_APS_eacMonitor = 0x27d
 MSG_DAS_Control = 0x2b9
 
+
 class TestTeslaSafetyBase(common.PandaCarSafetyTest):
   RELAY_MALFUNCTION_ADDRS = {0: (MSG_DAS_steeringControl, MSG_APS_eacMonitor)}
   FWD_BLACKLISTED_ADDRS = {2: [MSG_DAS_steeringControl, MSG_APS_eacMonitor]}
@@ -59,6 +60,7 @@ class TestTeslaSafetyBase(common.PandaCarSafetyTest):
     }
     return self.packer.make_can_msg_panda("DAS_control", bus, values)
 
+
 class TestTeslaStockSafety(TestTeslaSafetyBase):
   # Angle control limits
   DEG_TO_CAN = 10
@@ -80,6 +82,7 @@ class TestTeslaStockSafety(TestTeslaSafetyBase):
   def _angle_meas_msg(self, angle: float):
     values = {"EPAS3S_internalSAS": angle}
     return self.packer.make_can_msg_panda("EPAS3S_sysStatus", 0, values)
+
 
 class TestTeslaLongitudinalSafety(TestTeslaSafetyBase):
   RELAY_MALFUNCTION_ADDRS = {0: (MSG_DAS_steeringControl, MSG_APS_eacMonitor, MSG_DAS_Control)}
