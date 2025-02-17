@@ -103,15 +103,14 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
 
   // DAS_control: longitudinal control message
   if (addr == 0x2b9) {
-    // TODO: check op aeb all the time
+    // No AEB events may be sent by openpilot
+    int aeb_event = GET_BYTE(to_send, 2) & 0x03U;
+    if (aeb_event != 0) {
+      violation = true;
+    }
+
     int acc_state = GET_BYTE(to_send, 1) >> 4;
     if (tesla_longitudinal) {
-      // No AEB events may be sent by openpilot
-      int aeb_event = GET_BYTE(to_send, 2) & 0x03U;
-      if (aeb_event != 0) {
-        violation = true;
-      }
-
       // Don't send messages when the stock AEB system is active
       if (tesla_stock_aeb) {
         violation = true;
