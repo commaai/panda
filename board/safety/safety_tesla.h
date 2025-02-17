@@ -10,8 +10,8 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
 
   if (bus == 0) {
+    // Steering angle: (0.1 * val) - 819.2 in deg.
     if (addr == 0x370) {
-      // Steering angle: (0.1 * val) - 819.2 in deg.
       // Store it 1/10 deg to match steering request
       int angle_meas_new = (((GET_BYTE(to_push, 4) & 0x3FU) << 8) | GET_BYTE(to_push, 5)) - 8192U;
       update_sample(&angle_meas, angle_meas_new);
@@ -87,8 +87,8 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
   bool violation = false;
 
+  // Steering control: (0.1 * val) - 1638.35 in deg.
   if (addr == 0x488) {
-    // Steering control: (0.1 * val) - 1638.35 in deg.
     // We use 1/10 deg as a unit here
     int raw_angle_can = ((GET_BYTE(to_send, 0) & 0x7FU) << 8) | GET_BYTE(to_send, 1);
     int desired_angle = raw_angle_can - 16384;
@@ -101,9 +101,10 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
     }
   }
 
+  // DAS_control: longitudinal control message
   if (addr == 0x2b9) {
-    // DAS_control: longitudinal control message
-    int acc_state = (GET_BYTE(to_send, 1) & 0xF0U) >> 4;
+    // TODO: check op aeb all the time
+    int acc_state = GET_BYTE(to_send, 1) >> 4;
     if (tesla_longitudinal) {
       // No AEB events may be sent by openpilot
       int aeb_event = GET_BYTE(to_send, 2) & 0x03U;
@@ -127,10 +128,12 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
 
       violation |= longitudinal_accel_checks(raw_accel_max, TESLA_LONG_LIMITS);
       violation |= longitudinal_accel_checks(raw_accel_min, TESLA_LONG_LIMITS);
-    } else if (acc_state == 13) {
-      // Allow to cancel if not using openpilot longitudinal
     } else {
-      violation = true;
+      // Can only send cancel longitudinal messages if not using openpilot longitudinal
+      // TODO: check stock aeb here and don't even allow cancel? other brands don't iirc
+      if (acc_state != 13) {  // ACC_CANCEL_GENERIC_SILENT
+        violation = true;
+      }
     }
   }
 
@@ -151,14 +154,12 @@ static int tesla_fwd_hook(int bus_num, int addr) {
 
   if (bus_num == 2) {
     bool block_msg = false;
-    if (addr == 0x488) {
+    // DAS_steeringControl, APS_eacMonitor
+    if ((addr == 0x488) || (addr == 0x27d)) {
       block_msg = true;
     }
 
-    if (addr == 0x27d) {
-      block_msg = true;
-    }
-
+    // DAS_control
     if (tesla_longitudinal && (addr == 0x2b9) && !tesla_stock_aeb) {
       block_msg = true;
     }
