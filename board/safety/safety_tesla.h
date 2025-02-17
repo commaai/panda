@@ -179,7 +179,9 @@ static safety_config tesla_init(uint16_t param) {
     {0x27D, 0, 3},  // APS_eacMonitor
   };
 
+#ifdef ALLOW_DEBUG
   tesla_longitudinal = GET_FLAG(param, TESLA_FLAG_LONGITUDINAL_CONTROL);
+#endif
 
   tesla_stock_aeb = false;
 
