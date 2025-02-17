@@ -83,6 +83,10 @@ class TestTeslaStockSafety(TestTeslaSafetyBase):
     values = {"EPAS3S_internalSAS": angle}
     return self.packer.make_can_msg_panda("EPAS3S_sysStatus", 0, values)
 
+  def test_no_aeb(self):
+    for aeb_event in range(4):
+      self.assertEqual(self._tx(self._long_control_msg(10, acc_val=13, aeb_event=aeb_event)), aeb_event == 0)
+
 
 class TestTeslaLongitudinalSafety(TestTeslaSafetyBase):
   RELAY_MALFUNCTION_ADDRS = {0: (MSG_DAS_steeringControl, MSG_APS_eacMonitor, MSG_DAS_Control)}

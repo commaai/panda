@@ -130,6 +130,7 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
     } else {
       // Can only send cancel longitudinal messages if not using openpilot longitudinal
       // TODO: check stock aeb here and don't even allow cancel? other brands don't iirc
+      // TODO: test no actuation
       if (acc_state != 13) {  // ACC_CANCEL_GENERIC_SILENT
         violation = true;
       }
