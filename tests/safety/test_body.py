@@ -3,8 +3,8 @@ import unittest
 
 import panda.tests.safety.common as common
 
-from panda import Panda
-from panda.tests.libpanda import libpanda_py
+from opendbc.safety import Safety
+from panda.tests.libsafety import libsafety_py
 from panda.tests.safety.common import CANPackerPanda
 
 
@@ -14,8 +14,8 @@ class TestBody(common.PandaSafetyTest):
 
   def setUp(self):
     self.packer = CANPackerPanda("comma_body")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_BODY, 0)
+    self.safety = libsafety_py.libsafety
+    self.safety.set_safety_hooks(Safety.SAFETY_BODY, 0)
     self.safety.init_tests()
 
   def _motors_data_msg(self, speed_l, speed_r):

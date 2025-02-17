@@ -33,6 +33,7 @@ export GIT_BRANCH=${env.GIT_BRANCH}
 export GIT_COMMIT=${env.GIT_COMMIT}
 export PYTHONPATH=${env.TEST_DIR}/../
 export PYTHONWARNINGS=error
+ln -sf /data/openpilot/opendbc_repo/opendbc /data/opendbc
 
 cd ${env.TEST_DIR} || true
 ${cmd}

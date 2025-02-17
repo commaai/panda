@@ -9,6 +9,8 @@ import binascii
 from functools import wraps, partial
 from itertools import accumulate
 
+from opendbc.safety import Safety
+
 from .base import BaseHandle
 from .constants import FW_PATH, McuType
 from .dfu import PandaDFU
@@ -31,7 +33,7 @@ def calculate_checksum(data):
     res ^= b
   return res
 
-def pack_can_buffer(arr):
+def pack_can_buffer(arr, fd=False):
   snds = [b'']
   for address, dat, bus in arr:
     assert len(dat) in LEN_TO_DLC
@@ -41,7 +43,7 @@ def pack_can_buffer(arr):
     data_len_code = LEN_TO_DLC[len(dat)]
     header = bytearray(CANPACKET_HEAD_SIZE)
     word_4b = address << 3 | extended << 2
-    header[0] = (data_len_code << 4) | (bus << 1)
+    header[0] = (data_len_code << 4) | (bus << 1) | int(fd)
     header[1] = word_4b & 0xFF
     header[2] = (word_4b >> 8) & 0xFF
     header[3] = (word_4b >> 16) & 0xFF
@@ -101,42 +103,7 @@ ensure_health_packet_version = partial(ensure_version, "health", "HEALTH_PACKET_
 
 
 
-class ALTERNATIVE_EXPERIENCE:
-  DEFAULT = 0
-  DISABLE_DISENGAGE_ON_GAS = 1
-  DISABLE_STOCK_AEB = 2
-  RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX = 8
-  ALLOW_AEB = 16
-
 class Panda:
-
-  # matches cereal.car.CarParams.SafetyModel
-  SAFETY_SILENT = 0
-  SAFETY_HONDA_NIDEC = 1
-  SAFETY_TOYOTA = 2
-  SAFETY_ELM327 = 3
-  SAFETY_GM = 4
-  SAFETY_HONDA_BOSCH_GIRAFFE = 5
-  SAFETY_FORD = 6
-  SAFETY_HYUNDAI = 8
-  SAFETY_CHRYSLER = 9
-  SAFETY_TESLA = 10
-  SAFETY_SUBARU = 11
-  SAFETY_MAZDA = 13
-  SAFETY_NISSAN = 14
-  SAFETY_VOLKSWAGEN_MQB = 15
-  SAFETY_ALLOUTPUT = 17
-  SAFETY_GM_ASCM = 18
-  SAFETY_NOOUTPUT = 19
-  SAFETY_HONDA_BOSCH = 20
-  SAFETY_VOLKSWAGEN_PQ = 21
-  SAFETY_SUBARU_PREGLOBAL = 22
-  SAFETY_HYUNDAI_LEGACY = 23
-  SAFETY_HYUNDAI_COMMUNITY = 24
-  SAFETY_STELLANTIS = 25
-  SAFETY_FAW = 26
-  SAFETY_BODY = 27
-  SAFETY_HYUNDAI_CANFD = 28
 
   SERIAL_DEBUG = 0
   SERIAL_ESP = 1
@@ -144,6 +111,7 @@ class Panda:
   SERIAL_LIN2 = 3
   SERIAL_SOM_DEBUG = 4
 
+  USB_VIDS = (0xbbaa, 0x3801)  # 0x3801 is comma's registered VID
   USB_PIDS = (0xddee, 0xddcc)
   REQUEST_IN = usb1.ENDPOINT_IN | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
   REQUEST_OUT = usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
@@ -183,46 +151,6 @@ class Panda:
   HARNESS_STATUS_NORMAL = 1
   HARNESS_STATUS_FLIPPED = 2
 
-  # first byte is for EPS scaling factor
-  FLAG_TOYOTA_ALT_BRAKE = (1 << 8)
-  FLAG_TOYOTA_STOCK_LONGITUDINAL = (2 << 8)
-  FLAG_TOYOTA_LTA = (4 << 8)
-  FLAG_TOYOTA_SECOC = (8 << 8)
-
-  FLAG_HONDA_ALT_BRAKE = 1
-  FLAG_HONDA_BOSCH_LONG = 2
-  FLAG_HONDA_NIDEC_ALT = 4
-  FLAG_HONDA_RADARLESS = 8
-
-  FLAG_HYUNDAI_EV_GAS = 1
-  FLAG_HYUNDAI_HYBRID_GAS = 2
-  FLAG_HYUNDAI_LONG = 4
-  FLAG_HYUNDAI_CAMERA_SCC = 8
-  FLAG_HYUNDAI_CANFD_HDA2 = 16
-  FLAG_HYUNDAI_CANFD_ALT_BUTTONS = 32
-  FLAG_HYUNDAI_ALT_LIMITS = 64
-  FLAG_HYUNDAI_CANFD_HDA2_ALT_STEERING = 128
-
-  FLAG_TESLA_LONG_CONTROL = 1
-
-  FLAG_VOLKSWAGEN_LONG_CONTROL = 1
-
-  FLAG_CHRYSLER_RAM_DT = 1
-  FLAG_CHRYSLER_RAM_HD = 2
-
-  FLAG_SUBARU_GEN2 = 1
-  FLAG_SUBARU_LONG = 2
-
-  FLAG_SUBARU_PREGLOBAL_REVERSED_DRIVER_TORQUE = 1
-
-  FLAG_NISSAN_ALT_EPS_BUS = 1
-
-  FLAG_GM_HW_CAM = 1
-  FLAG_GM_HW_CAM_LONG = 2
-
-  FLAG_FORD_LONG_CONTROL = 1
-  FLAG_FORD_CANFD = 2
-
   def __init__(self, serial: str | None = None, claim: bool = True, disable_checks: bool = True, can_speed_kbps: int = 500, cli: bool = True):
     self._disable_checks = disable_checks
 
@@ -250,7 +178,6 @@ class Panda:
       return None
     if len(pandas) == 1:
       print(f"INFO: connecting to panda {pandas[0]}")
-      time.sleep(1)
       return pandas[0]
     while True:
       print("Multiple pandas available:")
@@ -323,6 +250,10 @@ class Panda:
     # reset comms
     self.can_reset_communications()
 
+    # disable automatic CAN-FD switching
+    for bus in range(PANDA_BUS_CNT):
+      self.set_canfd_auto(bus, False)
+
     # set CAN speed
     for bus in range(PANDA_BUS_CNT):
       self.set_can_speed_kbps(bus, self._can_speed_kbps)
@@ -380,7 +311,7 @@ class Panda:
     context.open()
     try:
       for device in context.getDeviceList(skip_on_error=True):
-        if device.getVendorID() == 0xbbaa and device.getProductID() in cls.USB_PIDS:
+        if device.getVendorID() in cls.USB_VIDS and device.getProductID() in cls.USB_PIDS:
           try:
             this_serial = device.getSerialNumber()
           except Exception:
@@ -436,7 +367,7 @@ class Panda:
     try:
       with usb1.USBContext() as context:
         for device in context.getDeviceList(skip_on_error=True):
-          if device.getVendorID() == 0xbbaa and device.getProductID() in cls.USB_PIDS:
+          if device.getVendorID() in cls.USB_VIDS and device.getProductID() in cls.USB_PIDS:
             try:
               serial = device.getSerialNumber()
               if len(serial) == 24:
@@ -783,7 +714,7 @@ class Panda:
   def set_power_save(self, power_save_enabled=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe7, int(power_save_enabled), 0, b'')
 
-  def set_safety_mode(self, mode=SAFETY_SILENT, param=0):
+  def set_safety_mode(self, mode=Safety.SAFETY_SILENT, param=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
 
   def set_obd(self, obd):
@@ -806,6 +737,9 @@ class Panda:
   def set_canfd_non_iso(self, bus, non_iso):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xfc, bus, int(non_iso), b'')
 
+  def set_canfd_auto(self, bus, auto):
+      self._handle.controlWrite(Panda.REQUEST_OUT, 0xe8, bus, int(auto), b'')
+
   def set_uart_baud(self, uart, rate):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe4, uart, int(rate / 300), b'')
 
@@ -827,23 +761,15 @@ class Panda:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xc0, 0, 0, b'')
 
   @ensure_can_packet_version
-  def can_send_many(self, arr, timeout=CAN_SEND_TIMEOUT_MS):
-    snds = pack_can_buffer(arr)
-    while True:
-      try:
-        for tx in snds:
-          while True:
-            bs = self._handle.bulkWrite(3, tx, timeout=timeout)
-            tx = tx[bs:]
-            if len(tx) == 0:
-              break
-            logger.error("CAN: PARTIAL SEND MANY, RETRYING")
-        break
-      except (usb1.USBErrorIO, usb1.USBErrorOverflow):
-        logger.error("CAN: BAD SEND MANY, RETRYING")
+  def can_send_many(self, arr, *, fd=False, timeout=CAN_SEND_TIMEOUT_MS):
+    snds = pack_can_buffer(arr, fd=fd)
+    for tx in snds:
+      while len(tx) > 0:
+        bs = self._handle.bulkWrite(3, tx, timeout=timeout)
+        tx = tx[bs:]
 
-  def can_send(self, addr, dat, bus, timeout=CAN_SEND_TIMEOUT_MS):
-    self.can_send_many([[addr, dat, bus]], timeout=timeout)
+  def can_send(self, addr, dat, bus, *, fd=False, timeout=CAN_SEND_TIMEOUT_MS):
+    self.can_send_many([[addr, dat, bus]], fd=fd, timeout=timeout)
 
   @ensure_can_packet_version
   def can_recv(self):

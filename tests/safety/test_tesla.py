@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import unittest
-from panda import Panda
-from panda.tests.libpanda import libpanda_py
+
+from opendbc.car.tesla.values import TeslaSafetyFlags
+from opendbc.safety import Safety
+from panda.tests.libsafety import libsafety_py
 import panda.tests.safety.common as common
 from panda.tests.safety.common import CANPackerPanda
 
@@ -67,8 +69,8 @@ class TestTeslaStockSafety(TestTeslaSafetyBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("tesla_model3_party")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TESLA, 0)
+    self.safety = libsafety_py.libsafety
+    self.safety.set_safety_hooks(Safty.SAFETY_TESLA, 0)
     self.safety.init_tests()
 
   def _angle_cmd_msg(self, angle: float, enabled: bool):
@@ -89,8 +91,8 @@ class TestTeslaLongitudinalSafety(TestTeslaSafetyBase):
 
   def setUp(self):
     self.packer = CANPackerPanda("tesla_model3_party")
-    self.safety = libpanda_py.libpanda
-    self.safety.set_safety_hooks(Panda.SAFETY_TESLA, Panda.FLAG_TESLA_LONG_CONTROL)
+    self.safety = libsafety_py.libsafety
+    self.safety.set_safety_hooks(Safety.SAFETY_TESLA, TeslaSafetyFlags.FLAG_TESLA_LONG_CONTROL)
     self.safety.init_tests()
 
   def test_no_aeb(self):

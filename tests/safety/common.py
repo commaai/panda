@@ -6,14 +6,14 @@ import numpy as np
 from collections.abc import Callable
 
 from opendbc.can.packer import CANPacker  # pylint: disable=import-error
-from panda import ALTERNATIVE_EXPERIENCE
-from panda.tests.libpanda import libpanda_py
+from opendbc.safety import ALTERNATIVE_EXPERIENCE
+from panda.tests.libsafety import libsafety_py
 
 MAX_WRONG_COUNTERS = 5
 MAX_SAMPLE_VALS = 6
 VEHICLE_SPEED_FACTOR = 100
 
-MessageFunction = Callable[[float], libpanda_py.CANPacket]
+MessageFunction = Callable[[float], libsafety_py.CANPacket]
 
 def sign_of(a):
   return 1 if a > 0 else -1
@@ -22,7 +22,7 @@ def sign_of(a):
 def make_msg(bus, addr, length=8, dat=None):
   if dat is None:
     dat = b'\x00' * length
-  return libpanda_py.make_CANPacket(addr, bus, dat)
+  return libsafety_py.make_CANPacket(addr, bus, dat)
 
 
 class CANPackerPanda(CANPacker):
@@ -31,7 +31,7 @@ class CANPackerPanda(CANPacker):
     if fix_checksum is not None:
       msg = fix_checksum(msg)
     addr, dat, bus = msg
-    return libpanda_py.make_CANPacket(addr, bus, dat)
+    return libsafety_py.make_CANPacket(addr, bus, dat)
 
 
 def add_regen_tests(cls):
@@ -57,7 +57,7 @@ def add_regen_tests(cls):
 
 
 class PandaSafetyTestBase(unittest.TestCase):
-  safety: libpanda_py.Panda
+  safety: libsafety_py.Panda
 
   @classmethod
   def setUpClass(cls):

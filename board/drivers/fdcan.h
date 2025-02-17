@@ -19,9 +19,16 @@ static bool can_set_speed(uint8_t can_number) {
 }
 
 void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number) {
-  can_health[can_number].can_core_reset_cnt += 1U;
-  can_health[can_number].total_tx_lost_cnt += (FDCAN_TX_FIFO_EL_CNT - (FDCANx->TXFQS & FDCAN_TXFQS_TFFL)); // TX FIFO msgs will be lost after reset
-  llcan_clear_send(FDCANx);
+  static uint32_t last_reset = 0U;
+  uint32_t time = microsecond_timer_get();
+
+  // Resetting CAN core is a slow blocking operation, limit frequency
+  if (get_ts_elapsed(time, last_reset) > 100000U) {  // 10 Hz
+    can_health[can_number].can_core_reset_cnt += 1U;
+    can_health[can_number].total_tx_lost_cnt += (FDCAN_TX_FIFO_EL_CNT - (FDCANx->TXFQS & FDCAN_TXFQS_TFFL)); // TX FIFO msgs will be lost after reset
+    llcan_clear_send(FDCANx);
+    last_reset = time;
+  }
 }
 
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
@@ -100,7 +107,11 @@ void process_can(uint8_t can_number) {
           fifo = (canfd_fifo *)(TxFIFOSA + (tx_index * FDCAN_TX_FIFO_EL_SIZE));
 
           fifo->header[0] = (to_send.extended << 30) | ((to_send.extended != 0U) ? (to_send.addr) : (to_send.addr << 18));
-          uint32_t canfd_enabled_header = bus_config[can_number].canfd_enabled ? (1UL << 21) : 0UL;
+
+          // If canfd_auto is set, outgoing packets will be automatically sent as CAN-FD if an incoming CAN-FD packet was seen
+          bool fd = bus_config[can_number].canfd_auto ? bus_config[can_number].canfd_enabled : (bool)(to_send.fd > 0U);
+          uint32_t canfd_enabled_header = fd ? (1UL << 21) : 0UL;
+
           uint32_t brs_enabled_header = bus_config[can_number].brs_enabled ? (1UL << 20) : 0UL;
           fifo->header[1] = (to_send.data_len_code << 16) | canfd_enabled_header | brs_enabled_header;
 
@@ -115,6 +126,7 @@ void process_can(uint8_t can_number) {
           // Send back to USB
           CANPacket_t to_push;
 
+          to_push.fd = fd;
           to_push.returned = 1U;
           to_push.rejected = 0U;
           to_push.extended = to_send.extended;
@@ -168,15 +180,16 @@ void can_rx(uint8_t can_number) {
     // getting address
     fifo = (canfd_fifo *)(RxFIFO0SA + (rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE));
 
+    bool canfd_frame = ((fifo->header[1] >> 21) & 0x1U);
+    bool brs_frame = ((fifo->header[1] >> 20) & 0x1U);
+
+    to_push.fd = canfd_frame;
     to_push.returned = 0U;
     to_push.rejected = 0U;
     to_push.extended = (fifo->header[0] >> 30) & 0x1U;
     to_push.addr = ((to_push.extended != 0U) ? (fifo->header[0] & 0x1FFFFFFFU) : ((fifo->header[0] >> 18) & 0x7FFU));
     to_push.bus = bus_number;
     to_push.data_len_code = ((fifo->header[1] >> 16) & 0xFU);
-
-    bool canfd_frame = ((fifo->header[1] >> 21) & 0x1U);
-    bool brs_frame = ((fifo->header[1] >> 20) & 0x1U);
 
     uint8_t data_len_w = (dlc_to_len[to_push.data_len_code] / 4U);
     data_len_w += ((dlc_to_len[to_push.data_len_code] % 4U) > 0U) ? 1U : 0U;
@@ -193,6 +206,7 @@ void can_rx(uint8_t can_number) {
     if (bus_fwd_num != -1) {
       CANPacket_t to_send;
 
+      to_send.fd = to_push.fd;
       to_send.returned = 0U;
       to_send.rejected = 0U;
       to_send.extended = to_push.extended;

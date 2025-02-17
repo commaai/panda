@@ -101,13 +101,14 @@ void peripherals_init(void) {
   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOFEN;
   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOGEN;
 
-  // Enable CPU access to SRAM1 and SRAM2 (in domain D2) for DMA
+  // Enable CPU access to SRAMs for DMA
   RCC->AHB2ENR |= RCC_AHB2ENR_SRAM1EN | RCC_AHB2ENR_SRAM2EN;
 
   // Supplemental
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;  // DAC DMA
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;  // SPI DMA
   RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN;
+  RCC->AHB4ENR |= RCC_AHB4ENR_BDMAEN; // Audio DMA
 
   // Connectivity
   RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;  // SPI
@@ -122,6 +123,10 @@ void peripherals_init(void) {
   RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN; // Enable ADC12 clocks
   RCC->APB1LENR |= RCC_APB1LENR_DAC12EN; // DAC
 
+  // Audio
+  RCC->APB2ENR |= RCC_APB2ENR_DFSDM1EN; // D/S demodulator for mic
+  RCC->APB4ENR |= RCC_APB4ENR_SAI4EN;  // SAI4
+
   // Timers
   RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;  // clock source timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;  // main counter
@@ -130,6 +135,7 @@ void peripherals_init(void) {
   RCC->APB1LENR |= RCC_APB1LENR_TIM7EN;  // DMA trigger timer
   RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;  // tick timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM12EN;  // slow loop
+  RCC->APB1LENR |= RCC_APB1LENR_TIM5EN; // sound trigger timer
 
 #ifdef PANDA_JUNGLE
   RCC->AHB3ENR |= RCC_AHB3ENR_SDMMC1EN; // SDMMC

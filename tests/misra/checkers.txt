@@ -10,8 +10,8 @@ TEST variant options:
 
 Critical errors
 ---------------
-No critical errors, all files were checked.
-Important: Analysis is still not guaranteed to be 'complete' it is possible there are false negatives.
+No critical errors encountered.
+Note: There might still have been non-critical bailouts which might lead to false negatives.
 
 
 Open source checkers
@@ -465,8 +465,8 @@ TEST variant options:
 
 Critical errors
 ---------------
-No critical errors, all files were checked.
-Important: Analysis is still not guaranteed to be 'complete' it is possible there are false negatives.
+No critical errors encountered.
+Note: There might still have been non-critical bailouts which might lead to false negatives.
 
 
 Open source checkers

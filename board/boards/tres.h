@@ -69,7 +69,6 @@ static void tres_init(void) {
   set_gpio_alternate(GPIOC, 10, GPIO_AF4_I2C5);
   set_gpio_alternate(GPIOC, 11, GPIO_AF4_I2C5);
   register_set_bits(&(GPIOC->OTYPER), GPIO_OTYPER_OT10 | GPIO_OTYPER_OT11); // open drain
-  fake_siren_init();
 
   // Clock source
   clock_source_init();
@@ -98,5 +97,6 @@ board board_tres = {
   .set_ir_power = tres_set_ir_power,
   .set_siren = fake_siren_set,
   .set_bootkick = tres_set_bootkick,
-  .read_som_gpio = tres_read_som_gpio
+  .read_som_gpio = tres_read_som_gpio,
+  .set_amp_enabled = unused_set_amp_enabled
 };

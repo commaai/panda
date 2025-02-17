@@ -114,11 +114,11 @@ static const SteeringLimits FORD_STEERING_LIMITS = {
   .max_angle_error = 100,           // 0.002 * FORD_STEERING_LIMITS.angle_deg_to_can
   .angle_rate_up_lookup = {
     {5., 25., 25.},
-    {0.0002, 0.0001, 0.0001}
+    {0.00045, 0.0001, 0.0001}
   },
   .angle_rate_down_lookup = {
     {5., 25., 25.},
-    {0.000225, 0.00015, 0.00015}
+    {0.00045, 0.00015, 0.00015}
   },
 
   // no blending at low speed due to lack of torque wind-up and inaccurate current curvature
@@ -223,6 +223,9 @@ static bool ford_tx_hook(const CANPacket_t *to_send) {
     // Signal: CmbbDeny_B_Actl
     bool cmbb_deny = GET_BIT(to_send, 37U);
 
+    // Signal: AccBrkPrchg_B_Rq & AccBrkDecel_B_Rq
+    bool brake_actuation = GET_BIT(to_send, 54U) || GET_BIT(to_send, 55U);
+
     bool violation = false;
     violation |= longitudinal_accel_checks(accel, FORD_LONG_LIMITS);
     violation |= longitudinal_gas_checks(gas, FORD_LONG_LIMITS);
@@ -230,6 +233,8 @@ static bool ford_tx_hook(const CANPacket_t *to_send) {
 
     // Safety check for stock AEB
     violation |= cmbb_deny; // do not prevent stock AEB actuation
+
+    violation |= !get_longitudinal_allowed() && brake_actuation;
 
     if (violation) {
       tx = false;
@@ -358,42 +363,33 @@ static safety_config ford_init(uint16_t param) {
     {.msg = {{FORD_DesiredTorqBrk, 0, 8, .frequency = 50U}, { 0 }, { 0 }}},
   };
 
+  #define FORD_COMMON_TX_MSGS       \
+    {FORD_Steering_Data_FD1, 0, 8}, \
+    {FORD_Steering_Data_FD1, 2, 8}, \
+    {FORD_ACCDATA_3, 0, 8},         \
+    {FORD_Lane_Assist_Data1, 0, 8}, \
+    {FORD_IPMA_Data, 0, 8},         \
+
   static const CanMsg FORD_CANFD_LONG_TX_MSGS[] = {
-    {FORD_Steering_Data_FD1, 0, 8},
-    {FORD_Steering_Data_FD1, 2, 8},
+    FORD_COMMON_TX_MSGS
     {FORD_ACCDATA, 0, 8},
-    {FORD_ACCDATA_3, 0, 8},
-    {FORD_Lane_Assist_Data1, 0, 8},
     {FORD_LateralMotionControl2, 0, 8},
-    {FORD_IPMA_Data, 0, 8},
   };
 
   static const CanMsg FORD_CANFD_STOCK_TX_MSGS[] = {
-    {FORD_Steering_Data_FD1, 0, 8},
-    {FORD_Steering_Data_FD1, 2, 8},
-    {FORD_ACCDATA_3, 0, 8},
-    {FORD_Lane_Assist_Data1, 0, 8},
+    FORD_COMMON_TX_MSGS
     {FORD_LateralMotionControl2, 0, 8},
-    {FORD_IPMA_Data, 0, 8},
   };
 
   static const CanMsg FORD_STOCK_TX_MSGS[] = {
-    {FORD_Steering_Data_FD1, 0, 8},
-    {FORD_Steering_Data_FD1, 2, 8},
-    {FORD_ACCDATA_3, 0, 8},
-    {FORD_Lane_Assist_Data1, 0, 8},
+    FORD_COMMON_TX_MSGS
     {FORD_LateralMotionControl, 0, 8},
-    {FORD_IPMA_Data, 0, 8},
   };
 
   static const CanMsg FORD_LONG_TX_MSGS[] = {
-    {FORD_Steering_Data_FD1, 0, 8},
-    {FORD_Steering_Data_FD1, 2, 8},
+    FORD_COMMON_TX_MSGS
     {FORD_ACCDATA, 0, 8},
-    {FORD_ACCDATA_3, 0, 8},
-    {FORD_Lane_Assist_Data1, 0, 8},
     {FORD_LateralMotionControl, 0, 8},
-    {FORD_IPMA_Data, 0, 8},
   };
 
   UNUSED(param);
@@ -404,6 +400,9 @@ static safety_config ford_init(uint16_t param) {
   ford_canfd = GET_FLAG(param, FORD_PARAM_CANFD);
 #endif
 
+  // Longitudinal is the default for CAN, and optional for CAN FD w/ ALLOW_DEBUG
+  ford_longitudinal = !ford_canfd || ford_longitudinal;
+
   safety_config ret;
   // FIXME: cppcheck thinks that ford_canfd is always false. This is not true
   // if ALLOW_DEBUG is defined but cppcheck is run without ALLOW_DEBUG
@@ -412,6 +411,7 @@ static safety_config ford_init(uint16_t param) {
     ret = ford_longitudinal ? BUILD_SAFETY_CFG(ford_rx_checks, FORD_CANFD_LONG_TX_MSGS) : \
                               BUILD_SAFETY_CFG(ford_rx_checks, FORD_CANFD_STOCK_TX_MSGS);
   } else {
+    // cppcheck-suppress knownConditionTrueFalse
     ret = ford_longitudinal ? BUILD_SAFETY_CFG(ford_rx_checks, FORD_LONG_TX_MSGS) : \
                               BUILD_SAFETY_CFG(ford_rx_checks, FORD_STOCK_TX_MSGS);
   }

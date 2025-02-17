@@ -4,6 +4,7 @@ import time
 from collections import defaultdict
 import binascii
 
+from opendbc.safety import Safety
 from panda import Panda
 
 # fake
@@ -16,24 +17,28 @@ def can_printer():
   time.sleep(1)
 
   p.can_clear(0xFFFF)
-  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+  p.set_safety_mode(Safety.SAFETY_ALLOUTPUT)
 
   start = sec_since_boot()
   lp = sec_since_boot()
-  msgs = defaultdict(list)
+  all_msgs = defaultdict(list)
+
   canbus = os.getenv("CAN")
+  if canbus == "3":
+    p.set_obd(True)
+    canbus = "1"
+
   while True:
     can_recv = p.can_recv()
-    for address, dat, src in can_recv:
-      if canbus is None or str(src) == canbus:
-        msgs[address].append((dat, src))
+    for addr, dat, bus in can_recv:
+      if canbus is None or str(bus) == canbus:
+        all_msgs[(addr, bus)].append((dat))
 
     if sec_since_boot() - lp > 0.1:
       dd = chr(27) + "[2J"
       dd += "%5.2f\n" % (sec_since_boot() - start)
-      for k, v in sorted(msgs.items()):
-        last_msg, last_src = v[-1]
-        dd += "%d: %s(%6d): %s\n" % (last_src, "%04X(%4d)" % (k, k), len(v), binascii.hexlify(last_msg).decode())
+      for (addr, bus), dat_log in sorted(all_msgs.items()):
+        dd += "%d: %s(%6d): %s\n" % (bus, "%04X(%4d)" % (addr, addr), len(dat_log), binascii.hexlify(dat_log[-1]).decode())
       print(dd)
       lp = sec_since_boot()
 
