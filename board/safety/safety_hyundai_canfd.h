@@ -108,7 +108,7 @@ static void hyundai_canfd_rx_hook(const CANPacket_t *to_push) {
     }
   }
 
-  const int steer_addr = hyundai_canfd_hda2 ? hyundai_canfd_hda2_get_lkas_addr() : 0x12a;
+  const int steer_addr = hyundai_canfd_hda2 ? hyundai_canfd_hda2_get_lkas_addr() : 0xCB;
   bool stock_ecu_detected = (addr == steer_addr) && (bus == 0);
   if (hyundai_longitudinal) {
     // on HDA2, ensure ADRV ECU is still knocked out
@@ -143,7 +143,7 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
 
   // steering
-  const int steer_addr = (hyundai_canfd_hda2 && !hyundai_longitudinal) ? hyundai_canfd_hda2_get_lkas_addr() : 0x12a;
+  const int steer_addr = (hyundai_canfd_hda2 && !hyundai_longitudinal) ? hyundai_canfd_hda2_get_lkas_addr() : 0xCB;
   if (addr == steer_addr) {
     int desired_torque = (((GET_BYTE(to_send, 6) & 0xFU) << 7U) | (GET_BYTE(to_send, 5) >> 1U)) - 1024U;
     bool steer_req = GET_BIT(to_send, 52U);
@@ -207,7 +207,7 @@ static int hyundai_canfd_fwd_hook(int bus_num, int addr) {
     // LKAS for HDA2, LFA for HDA1
     int hda2_lfa_block_addr = hyundai_canfd_hda2_alt_steering ? 0x362 : 0x2a4;
     bool is_lkas_msg = ((addr == hyundai_canfd_hda2_get_lkas_addr()) || (addr == hda2_lfa_block_addr)) && hyundai_canfd_hda2;
-    bool is_lfa_msg = ((addr == 0x12a) && !hyundai_canfd_hda2);
+    bool is_lfa_msg = ((addr == 0xCB) && !hyundai_canfd_hda2);
 
     // HUD icons
     bool is_lfahda_msg = ((addr == 0x1e0) && !hyundai_canfd_hda2);
@@ -246,7 +246,7 @@ static safety_config hyundai_canfd_init(uint16_t param) {
     {0x2A4, 0, 24}, // CAM_0x2A4
     {0x51, 0, 32},  // ADRV_0x51
     {0x730, 1, 8},  // tester present for ADAS ECU disable
-    {0x12A, 1, 16}, // LFA
+    {0xCB, 1, 24}, // LFA
     {0x160, 1, 16}, // ADRV_0x160
     {0x1E0, 1, 16}, // LFAHDA_CLUSTER
     {0x1A0, 1, 32}, // CRUISE_INFO
@@ -257,7 +257,7 @@ static safety_config hyundai_canfd_init(uint16_t param) {
   };
 
   static const CanMsg HYUNDAI_CANFD_HDA1_TX_MSGS[] = {
-    {0x12A, 0, 16}, // LFA
+    {0xCB, 0, 24}, // LFA
     {0x1A0, 0, 32}, // CRUISE_INFO
     {0x1CF, 2, 8},  // CRUISE_BUTTON
     {0x1E0, 0, 16}, // LFAHDA_CLUSTER
