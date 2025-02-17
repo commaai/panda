@@ -12,7 +12,7 @@ MSG_APS_eacMonitor = 0x27d
 MSG_DAS_Control = 0x2b9
 
 
-class TestTeslaSafetyBase(common.PandaCarSafetyTest, common.AngleSteeringSafetyTest):
+class TestTeslaSafetyBase(common.PandaCarSafetyTest, common.AngleSteeringSafetyTest, common.LongitudinalAccelSafetyTest):
   RELAY_MALFUNCTION_ADDRS = {0: (MSG_DAS_steeringControl, MSG_APS_eacMonitor)}
   FWD_BLACKLISTED_ADDRS = {2: [MSG_DAS_steeringControl, MSG_APS_eacMonitor]}
   TX_MSGS = [[MSG_DAS_steeringControl, 0], [MSG_APS_eacMonitor, 0], [MSG_DAS_Control, 0]]
@@ -27,6 +27,11 @@ class TestTeslaSafetyBase(common.PandaCarSafetyTest, common.AngleSteeringSafetyT
   ANGLE_RATE_BP = [0., 5., 15.]
   ANGLE_RATE_UP = [10., 1.6, .3]  # windup limit
   ANGLE_RATE_DOWN = [10., 7.0, .8]  # unwind limit
+
+  # Long control limits
+  MAX_ACCEL = 2.0
+  MIN_ACCEL = -3.48
+  INACTIVE_ACCEL = 0.0
 
   packer: CANPackerPanda
 
@@ -75,6 +80,10 @@ class TestTeslaSafetyBase(common.PandaCarSafetyTest, common.AngleSteeringSafetyT
     }
     return self.packer.make_can_msg_panda("DAS_control", bus, values)
 
+  def _accel_msg(self, accel: float):
+    # For common.LongitudinalAccelSafetyTest
+    return self._long_control_msg(10, accel_limits=(accel, max(accel, 0)))
+
   def test_vehicle_speed_measurements(self):
     # OVERRIDDEN: 79.1667 is the max speed in m/s
     self._common_measurement_test(self._speed_msg, 0, 285 / 3.6, common.VEHICLE_SPEED_FACTOR, self.safety.get_vehicle_speed_min, self.safety.get_vehicle_speed_max)
@@ -88,28 +97,29 @@ class TestTeslaStockSafety(TestTeslaSafetyBase):
     self.safety.set_safety_hooks(Safety.SAFETY_TESLA, 0)
     self.safety.init_tests()
 
+  def test_accel_actuation_limits(self, stock_longitudinal=True):
+    super().test_accel_actuation_limits(stock_longitudinal)
+
+  def test_cancel(self):
+    self.safety.set_controls_allowed(True)
+    self.assertFalse(self._tx(self._long_control_msg(10, acc_val=0)))
+    self.assertFalse(self._tx(self._long_control_msg(0, acc_val=13, accel_limits=(self.MIN_ACCEL, self.MAX_ACCEL))))
+    self.assertTrue(self._tx(self._long_control_msg(0, acc_val=13)))
+
   def test_no_aeb(self):
     for aeb_event in range(4):
       self.assertEqual(self._tx(self._long_control_msg(10, acc_val=13, aeb_event=aeb_event)), aeb_event == 0)
 
 
-class TestTeslaLongitudinalSafety(TestTeslaSafetyBase, common.LongitudinalAccelSafetyTest):
+class TestTeslaLongitudinalSafety(TestTeslaSafetyBase):
   RELAY_MALFUNCTION_ADDRS = {0: (MSG_DAS_steeringControl, MSG_APS_eacMonitor, MSG_DAS_Control)}
   FWD_BLACKLISTED_ADDRS = {2: [MSG_DAS_steeringControl, MSG_APS_eacMonitor, MSG_DAS_Control]}
-
-  MAX_ACCEL = 2.0
-  MIN_ACCEL = -3.48
-  INACTIVE_ACCEL = 0.0
 
   def setUp(self):
     self.packer = CANPackerPanda("tesla_model3_party")
     self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_TESLA, TeslaSafetyFlags.FLAG_TESLA_LONG_CONTROL)
     self.safety.init_tests()
-
-  def _accel_msg(self, accel: float):
-    # For common.LongitudinalAccelSafetyTest
-    return self._long_control_msg(10, accel_limits=(accel, max(accel, 0)))
 
   def test_no_aeb(self):
     for aeb_event in range(4):

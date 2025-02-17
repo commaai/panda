@@ -109,29 +109,33 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
       violation = true;
     }
 
+    int raw_accel_max = ((GET_BYTE(to_send, 6) & 0x1FU) << 4) | (GET_BYTE(to_send, 5) >> 4);
+    int raw_accel_min = ((GET_BYTE(to_send, 5) & 0x0FU) << 5) | (GET_BYTE(to_send, 4) >> 3);
     int acc_state = GET_BYTE(to_send, 1) >> 4;
+
     if (tesla_longitudinal) {
       // Don't send messages when the stock AEB system is active
       if (tesla_stock_aeb) {
         violation = true;
       }
 
-      // Don't allow any acceleration limits above the safety limits
-      int raw_accel_max = ((GET_BYTE(to_send, 6) & 0x1FU) << 4) | (GET_BYTE(to_send, 5) >> 4);
-      int raw_accel_min = ((GET_BYTE(to_send, 5) & 0x0FU) << 5) | (GET_BYTE(to_send, 4) >> 3);
-
       // Prevent both acceleration from being negative, as this could cause the car to reverse after coming to standstill
       if ((raw_accel_max < TESLA_LONG_LIMITS.inactive_accel) && (raw_accel_min < TESLA_LONG_LIMITS.inactive_accel)) {
         violation = true;
       }
 
+      // Don't allow any acceleration limits above the safety limits
       violation |= longitudinal_accel_checks(raw_accel_max, TESLA_LONG_LIMITS);
       violation |= longitudinal_accel_checks(raw_accel_min, TESLA_LONG_LIMITS);
     } else {
-      // Can only send cancel longitudinal messages if not using openpilot longitudinal
-      // TODO: check stock aeb here and don't even allow cancel? other brands don't iirc
-      // TODO: test no actuation
+      // does allowing cancel here disrupt stock AEB? TODO: find out and add safety or remove comment
+      // Can only send cancel longitudinal messages when not controlling longitudinal
       if (acc_state != 13) {  // ACC_CANCEL_GENERIC_SILENT
+        violation = true;
+      }
+
+      // No actuation is allowed when not controlling longitudinal
+      if ((raw_accel_max != TESLA_LONG_LIMITS.inactive_accel) || (raw_accel_min != TESLA_LONG_LIMITS.inactive_accel)) {
         violation = true;
       }
     }
