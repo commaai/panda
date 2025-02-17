@@ -9,32 +9,32 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
-  if((addr == 0x370) && (bus == 0)) {
+  if ((addr == 0x370) && (bus == 0)) {
     // Steering angle: (0.1 * val) - 819.2 in deg.
     // Store it 1/10 deg to match steering request
     int angle_meas_new = (((GET_BYTE(to_push, 4) & 0x3FU) << 8) | GET_BYTE(to_push, 5)) - 8192U;
     update_sample(&angle_meas, angle_meas_new);
   }
 
-  if(bus == 0) {
-    if(addr == 0x257){
+  if (bus == 0) {
+    if (addr == 0x257) {
       // Vehicle speed: ((val * 0.08) - 40) * KPH_TO_MPS
       float speed = (((((GET_BYTE(to_push, 2)) << 4) | (GET_BYTE(to_push, 1) >> 4)) * 0.08) - 40) * 0.277778;
       UPDATE_VEHICLE_SPEED(speed);
     }
 
     // Gas pressed
-    if(addr == 0x118){
+    if (addr == 0x118) {
       gas_pressed = (GET_BYTE(to_push, 4) != 0U);
     }
 
     // Brake pressed
-    if(addr == 0x39d){
+    if (addr == 0x39d) {
       brake_pressed = (GET_BYTE(to_push, 2) & 0x03U)  == 2U;
     }
 
     // Cruise state
-    if(addr == 0x286) {
+    if (addr == 0x286) {
       int cruise_state = ((GET_BYTE(to_push, 1) << 1 ) >> 5);
       bool cruise_engaged = (cruise_state == 2) ||  // ENABLED
                             (cruise_state == 3) ||  // STANDSTILL
@@ -86,7 +86,7 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
   int addr = GET_ADDR(to_send);
   bool violation = false;
 
-  if(addr == 0x488) {
+  if (addr == 0x488) {
     // Steering control: (0.1 * val) - 1638.35 in deg.
     // We use 1/10 deg as a unit here
     int raw_angle_can = (((GET_BYTE(to_send, 0) & 0x7FU) << 8) | GET_BYTE(to_send, 1));
@@ -100,7 +100,7 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
     }
   }
 
-  if(addr == 0x2b9) {
+  if (addr == 0x2b9) {
     // DAS_control: longitudinal control message
     int acc_state = ((GET_BYTE(to_send, 1) & 0xF0U) >> 4);
     if (tesla_longitudinal) {
@@ -120,13 +120,13 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
       int raw_accel_min = ((GET_BYTE(to_send, 5) & 0x0FU) << 5) | (GET_BYTE(to_send, 4) >> 3);
 
       // Prevent both acceleration from being negative, as this could cause the car to reverse after coming to standstill
-      if ((raw_accel_max < TESLA_LONG_LIMITS.inactive_accel) && (raw_accel_min < TESLA_LONG_LIMITS.inactive_accel)){
+      if ((raw_accel_max < TESLA_LONG_LIMITS.inactive_accel) && (raw_accel_min < TESLA_LONG_LIMITS.inactive_accel)) {
         violation = true;
       }
 
       violation |= longitudinal_accel_checks(raw_accel_max, TESLA_LONG_LIMITS);
       violation |= longitudinal_accel_checks(raw_accel_min, TESLA_LONG_LIMITS);
-    } else if(acc_state == 13) {
+    } else if (acc_state == 13) {
       // Allow to cancel if not using openpilot longitudinal
     } else {
       violation = true;
@@ -143,12 +143,12 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
 static int tesla_fwd_hook(int bus_num, int addr) {
   int bus_fwd = -1;
 
-  if(bus_num == 0) {
+  if (bus_num == 0) {
     // Party to autopilot
     bus_fwd = 2;
   }
 
-  if(bus_num == 2) {
+  if (bus_num == 2) {
     bool block_msg = false;
     if (addr == 0x488) {
       block_msg = true;
@@ -162,7 +162,7 @@ static int tesla_fwd_hook(int bus_num, int addr) {
       block_msg = true;
     }
 
-    if(!block_msg) {
+    if (!block_msg) {
       bus_fwd = 0;
     }
   }
