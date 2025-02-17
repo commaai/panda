@@ -70,7 +70,7 @@ class TestTeslaStockSafety(TestTeslaSafetyBase):
   def setUp(self):
     self.packer = CANPackerPanda("tesla_model3_party")
     self.safety = libsafety_py.libsafety
-    self.safety.set_safety_hooks(Safty.SAFETY_TESLA, 0)
+    self.safety.set_safety_hooks(Safety.SAFETY_TESLA, 0)
     self.safety.init_tests()
 
   def _angle_cmd_msg(self, angle: float, enabled: bool):
