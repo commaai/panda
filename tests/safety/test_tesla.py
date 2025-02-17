@@ -12,7 +12,7 @@ MSG_APS_eacMonitor = 0x27d
 MSG_DAS_Control = 0x2b9
 
 
-class TestTeslaSafetyBase(common.PandaCarSafetyTest):
+class TestTeslaSafetyBase(common.PandaCarSafetyTest, common.AngleSteeringSafetyTest):
   RELAY_MALFUNCTION_ADDRS = {0: (MSG_DAS_steeringControl, MSG_APS_eacMonitor)}
   FWD_BLACKLISTED_ADDRS = {2: [MSG_DAS_steeringControl, MSG_APS_eacMonitor]}
   TX_MSGS = [[MSG_DAS_steeringControl, 0], [MSG_APS_eacMonitor, 0], [MSG_DAS_Control, 0]]
@@ -21,6 +21,13 @@ class TestTeslaSafetyBase(common.PandaCarSafetyTest):
   GAS_PRESSED_THRESHOLD = 3
   FWD_BUS_LOOKUP = {0: 2, 2: 0}
 
+  # Angle control limits
+  DEG_TO_CAN = 10
+
+  ANGLE_RATE_BP = [0., 5., 15.]
+  ANGLE_RATE_UP = [10., 1.6, .3]  # windup limit
+  ANGLE_RATE_DOWN = [10., 7.0, .8]  # unwind limit
+
   packer: CANPackerPanda
 
   @classmethod
@@ -28,12 +35,20 @@ class TestTeslaSafetyBase(common.PandaCarSafetyTest):
     if cls.__name__ == "TestTeslaSafetyBase":
       raise unittest.SkipTest
 
+  def _angle_cmd_msg(self, angle: float, enabled: bool):
+    values = {"DAS_steeringAngleRequest": angle, "DAS_steeringControlType": 1 if enabled else 0}
+    return self.packer.make_can_msg_panda("DAS_steeringControl", 0, values)
+
+  def _angle_meas_msg(self, angle: float):
+    values = {"EPAS3S_internalSAS": angle}
+    return self.packer.make_can_msg_panda("EPAS3S_sysStatus", 0, values)
+
   def _user_brake_msg(self, brake):
     values = {"IBST_driverBrakeApply": 2 if brake else 1}
     return self.packer.make_can_msg_panda("IBST_status", 0, values)
 
   def _speed_msg(self, speed):
-    values = {"DI_vehicleSpeed": speed / 0.277778}
+    values = {"DI_vehicleSpeed": speed * 3.6}
     return self.packer.make_can_msg_panda("DI_speed", 0, values)
 
   def _vehicle_moving_msg(self, speed: float):
@@ -60,28 +75,18 @@ class TestTeslaSafetyBase(common.PandaCarSafetyTest):
     }
     return self.packer.make_can_msg_panda("DAS_control", bus, values)
 
+  def test_vehicle_speed_measurements(self):
+    # OVERRIDDEN: 79.1667 is the max speed in m/s
+    self._common_measurement_test(self._speed_msg, 0, 285 / 3.6, common.VEHICLE_SPEED_FACTOR, self.safety.get_vehicle_speed_min, self.safety.get_vehicle_speed_max)
+
 
 class TestTeslaStockSafety(TestTeslaSafetyBase):
-  # Angle control limits
-  DEG_TO_CAN = 10
-
-  ANGLE_RATE_BP = [0., 5., 15.]
-  ANGLE_RATE_UP = [10., 1.6, .3]  # windup limit
-  ANGLE_RATE_DOWN = [10., 7.0, .8]  # unwind limit
 
   def setUp(self):
     self.packer = CANPackerPanda("tesla_model3_party")
     self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_TESLA, 0)
     self.safety.init_tests()
-
-  def _angle_cmd_msg(self, angle: float, enabled: bool):
-    values = {"DAS_steeringAngleRequest": angle, "DAS_steeringControlType": 1 if enabled else 0}
-    return self.packer.make_can_msg_panda("DAS_steeringControl", 0, values)
-
-  def _angle_meas_msg(self, angle: float):
-    values = {"EPAS3S_internalSAS": angle}
-    return self.packer.make_can_msg_panda("EPAS3S_sysStatus", 0, values)
 
   def test_no_aeb(self):
     for aeb_event in range(4):
