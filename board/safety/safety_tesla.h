@@ -9,14 +9,15 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
   int addr = GET_ADDR(to_push);
 
-  if ((addr == 0x370) && (bus == 0)) {
-    // Steering angle: (0.1 * val) - 819.2 in deg.
-    // Store it 1/10 deg to match steering request
-    int angle_meas_new = (((GET_BYTE(to_push, 4) & 0x3FU) << 8) | GET_BYTE(to_push, 5)) - 8192U;
-    update_sample(&angle_meas, angle_meas_new);
-  }
-
   if (bus == 0) {
+    if (addr == 0x370) {
+      // Steering angle: (0.1 * val) - 819.2 in deg.
+      // Store it 1/10 deg to match steering request
+      int angle_meas_new = (((GET_BYTE(to_push, 4) & 0x3FU) << 8) | GET_BYTE(to_push, 5)) - 8192U;
+      update_sample(&angle_meas, angle_meas_new);
+    }
+
+    // Vehicle speed
     if (addr == 0x257) {
       // Vehicle speed: ((val * 0.08) - 40) * KPH_TO_MPS
       float speed = (((((GET_BYTE(to_push, 2)) << 4) | (GET_BYTE(to_push, 1) >> 4)) * 0.08) - 40) * 0.277778;
