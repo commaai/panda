@@ -173,10 +173,11 @@ void ignition_can_hook(CANPacket_t *to_push) {
       ignition_can_cnt = 0U;
     }
 
-    // Tesla exception
-    if ((addr == 0x348) && (len == 8)) {
-      // GTW_status
-      ignition_can = (GET_BYTE(to_push, 0) & 0x1U) != 0U;
+    // Tesla Model 3/Y exception
+    if ((addr == 0x221) && (len == 8)) {
+      // VCFRONT_LVPowerState->VCFRONT_vehiclePowerState
+      int power_state = (GET_BYTE(to_push, 0) >> 5U) & 0x3U;
+      ignition_can = power_state == 0x3;  // VEHICLE_POWER_STATE_DRIVE=3
       ignition_can_cnt = 0U;
     }
 
