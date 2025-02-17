@@ -93,7 +93,7 @@ class TestTeslaStockSafety(TestTeslaSafetyBase):
       self.assertEqual(self._tx(self._long_control_msg(10, acc_val=13, aeb_event=aeb_event)), aeb_event == 0)
 
 
-class TestTeslaLongitudinalSafety(TestTeslaSafetyBase):
+class TestTeslaLongitudinalSafety(TestTeslaSafetyBase, common.LongitudinalAccelSafetyTest):
   RELAY_MALFUNCTION_ADDRS = {0: (MSG_DAS_steeringControl, MSG_APS_eacMonitor, MSG_DAS_Control)}
   FWD_BLACKLISTED_ADDRS = {2: [MSG_DAS_steeringControl, MSG_APS_eacMonitor, MSG_DAS_Control]}
 
@@ -106,6 +106,10 @@ class TestTeslaLongitudinalSafety(TestTeslaSafetyBase):
     self.safety = libsafety_py.libsafety
     self.safety.set_safety_hooks(Safety.SAFETY_TESLA, TeslaSafetyFlags.FLAG_TESLA_LONG_CONTROL)
     self.safety.init_tests()
+
+  def _accel_msg(self, accel: float):
+    # For common.LongitudinalAccelSafetyTest
+    return self._long_control_msg(10, accel_limits=(accel, max(accel, 0)))
 
   def test_no_aeb(self):
     for aeb_event in range(4):
