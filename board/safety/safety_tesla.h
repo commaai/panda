@@ -31,12 +31,12 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
 
     // Brake pressed
     if (addr == 0x39d) {
-      brake_pressed = (GET_BYTE(to_push, 2) & 0x03U)  == 2U;
+      brake_pressed = (GET_BYTE(to_push, 2) & 0x03U) == 2U;
     }
 
     // Cruise state
     if (addr == 0x286) {
-      int cruise_state = ((GET_BYTE(to_push, 1) << 1 ) >> 5);
+      int cruise_state = (GET_BYTE(to_push, 1) >> 4) & 0x07U;
       bool cruise_engaged = (cruise_state == 2) ||  // ENABLED
                             (cruise_state == 3) ||  // STANDSTILL
                             (cruise_state == 4) ||  // OVERRIDE
@@ -51,15 +51,15 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
   if (bus == 2) {
     if (tesla_longitudinal && (addr == 0x2b9)) {
       // "AEB_ACTIVE"
-      tesla_stock_aeb = ((GET_BYTE(to_push, 2) & 0x03U) == 1U);
+      tesla_stock_aeb = (GET_BYTE(to_push, 2) & 0x03U) == 1U;
     }
   }
 
-  generic_rx_checks((addr == 0x488) && (bus == 0));
-  generic_rx_checks((addr == 0x27d) && (bus == 0));
+  generic_rx_checks((addr == 0x488) && (bus == 0));  // DAS_steeringControl
+  generic_rx_checks((addr == 0x27d) && (bus == 0));  // APS_eacMonitor
 
   if (tesla_longitudinal) {
-      generic_rx_checks((addr == 0x2b9) && (bus == 0));
+    generic_rx_checks((addr == 0x2b9) && (bus == 0));
   }
 }
 
@@ -103,7 +103,7 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
 
   if (addr == 0x2b9) {
     // DAS_control: longitudinal control message
-    int acc_state = ((GET_BYTE(to_send, 1) & 0xF0U) >> 4);
+    int acc_state = (GET_BYTE(to_send, 1) & 0xF0U) >> 4;
     if (tesla_longitudinal) {
       // No AEB events may be sent by openpilot
       int aeb_event = GET_BYTE(to_send, 2) & 0x03U;
