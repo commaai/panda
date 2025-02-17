@@ -20,7 +20,7 @@ static void tesla_rx_hook(const CANPacket_t *to_push) {
     // Vehicle speed
     if (addr == 0x257) {
       // Vehicle speed: ((val * 0.08) - 40) / MS_TO_KPH
-      float speed = (((((GET_BYTE(to_push, 2)) << 4) | (GET_BYTE(to_push, 1) >> 4)) * 0.08) - 40) / 3.6;
+      float speed = ((((GET_BYTE(to_push, 2) << 4) | (GET_BYTE(to_push, 1) >> 4)) * 0.08) - 40) / 3.6;
       UPDATE_VEHICLE_SPEED(speed);
     }
 
@@ -90,7 +90,7 @@ static bool tesla_tx_hook(const CANPacket_t *to_send) {
   if (addr == 0x488) {
     // Steering control: (0.1 * val) - 1638.35 in deg.
     // We use 1/10 deg as a unit here
-    int raw_angle_can = (((GET_BYTE(to_send, 0) & 0x7FU) << 8) | GET_BYTE(to_send, 1));
+    int raw_angle_can = ((GET_BYTE(to_send, 0) & 0x7FU) << 8) | GET_BYTE(to_send, 1);
     int desired_angle = raw_angle_can - 16384;
     int steer_control_type = GET_BYTE(to_send, 2) >> 6;
     bool steer_control_enabled = (steer_control_type != 0) &&  // NONE
