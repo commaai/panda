@@ -102,10 +102,11 @@ class TestTeslaStockSafety(TestTeslaSafetyBase):
     super().test_accel_actuation_limits(stock_longitudinal)
 
   def test_cancel(self):
-    self.safety.set_controls_allowed(True)
-    self.assertFalse(self._tx(self._long_control_msg(10, acc_val=0)))
-    self.assertFalse(self._tx(self._long_control_msg(0, acc_val=13, accel_limits=(self.MIN_ACCEL, self.MAX_ACCEL))))
-    self.assertTrue(self._tx(self._long_control_msg(0, acc_val=13)))
+    for accval in range(16):
+      self.safety.set_controls_allowed(True)
+      should_tx = accval == 13  # ACC_CANCEL_GENERIC_SILENT
+      self.assertFalse(self._tx(self._long_control_msg(0, acc_val=accval, accel_limits=(self.MIN_ACCEL, self.MAX_ACCEL))))
+      self.assertEqual(should_tx, self._tx(self._long_control_msg(0, acc_val=accval)))
 
   def test_no_aeb(self):
     for aeb_event in range(4):
