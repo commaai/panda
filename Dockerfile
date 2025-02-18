@@ -37,7 +37,7 @@ RUN pip3 install --break-system-packages --no-cache-dir $PYTHONPATH/panda/[dev]
 
 # TODO: this should be a "pip install" or not even in this repo at all
 RUN git config --global --add safe.directory $PYTHONPATH/panda
-ENV OPENDBC_REF="950e7b34efa64d2ad41df3300652661fbae06f57"
+ENV OPENDBC_REF="87a51e38b53d91075419f01b4cd2e625ee7d4516"
 RUN cd /tmp/ && \
     git clone --depth 1 https://github.com/commaai/opendbc opendbc_repo && \
     cd opendbc_repo && git fetch origin $OPENDBC_REF && git checkout FETCH_HEAD && rm -rf .git/ && \
