@@ -84,7 +84,7 @@ def build_project(project_name, project, extra_flags):
     '..',
     panda_root,
     f"{panda_root}/board/",
-    f"{panda_root}/../opendbc_repo/opendbc/safety/",
+    f"{panda_root}/../opendbc/safety/",
   ]
 
   env = Environment(

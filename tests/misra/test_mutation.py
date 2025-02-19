@@ -29,6 +29,7 @@ mutations = [
   # default
   (None, None, False),
   # F4 only
+  ("board/stm32f4/llbxcan.h", "", False),  # no change should pass
   ("board/stm32f4/llbxcan.h", "s/1U/1/g", True),
   # H7 only
   ("board/stm32h7/llfdcan.h", "s/return ret;/if (true) { return ret; } else { return false; }/g", True),
@@ -67,14 +68,15 @@ for p in patterns:
 @pytest.mark.parametrize("fn, patch, should_fail", mutations)
 def test_misra_mutation(fn, patch, should_fail):
   with tempfile.TemporaryDirectory() as tmp:
-    shutil.copytree(ROOT, tmp, dirs_exist_ok=True)
+    shutil.copytree(ROOT, tmp + "/panda", dirs_exist_ok=True)
+    shutil.copytree(ROOT + "../opendbc_repo/opendbc", tmp + "/opendbc", dirs_exist_ok=True)
 
     # apply patch
     if fn is not None:
-      r = os.system(f"cd {tmp} && sed -i '{patch}' {fn}")
+      r = os.system(f"cd {tmp}/panda && sed -i '{patch}' {fn}")
       assert r == 0
 
     # run test
-    r = subprocess.run("SKIP_TABLES_DIFF=1 SKIP_BUILD=1 tests/misra/test_misra.sh", cwd=tmp, shell=True)
+    r = subprocess.run("SKIP_TABLES_DIFF=1 panda/tests/misra/test_misra.sh", cwd=tmp, shell=True)
     failed = r.returncode != 0
     assert failed == should_fail
