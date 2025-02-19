@@ -188,4 +188,3 @@ SConscript('board/jungle/SConscript')
 # test files
 if GetOption('extras'):
   SConscript('tests/libpanda/SConscript')
-  SConscript('tests/libsafety/SConscript')
