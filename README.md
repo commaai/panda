@@ -17,9 +17,7 @@ panda speaks CAN and CAN FD, and it runs on [STM32F413](https://www.st.com/resou
 
 ## Safety Model
 
-When a panda powers up, by default it's in `SAFETY_SILENT` mode. While in `SAFETY_SILENT` mode, the CAN buses are forced to be silent. In order to send messages, you have to select a safety mode. Some of safety modes (for example `SAFETY_ALLOUTPUT`) are disabled in release firmwares. In order to use them, compile and flash your own build.
-
-Safety modes optionally support `controls_allowed`, which allows or blocks a subset of messages based on a customizable state in the board.
+panda is compiled with safety firmware provided by [opendbc](https://github.com/commaai/opendbc). See details about the car safety models, safety testing, and code rigor on that repository.
 
 ## Code Rigor
 
