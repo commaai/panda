@@ -29,7 +29,6 @@ mutations = [
   # default
   (None, None, False),
   # F4 only
-  ("board/stm32f4/llbxcan.h", "", False),  # no change should pass
   ("board/stm32f4/llbxcan.h", "s/1U/1/g", True),
   # H7 only
   ("board/stm32h7/llfdcan.h", "s/return ret;/if (true) { return ret; } else { return false; }/g", True),
