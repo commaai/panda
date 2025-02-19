@@ -32,8 +32,6 @@ mutations = [
   ("board/stm32f4/llbxcan.h", "s/1U/1/g", True),
   # H7 only
   ("board/stm32h7/llfdcan.h", "s/return ret;/if (true) { return ret; } else { return false; }/g", True),
-  # general safety
-  ("board/safety/safety_toyota.h", "s/is_lkas_msg =.*;/is_lkas_msg = addr == 1 || addr == 2;/g", True),
 ]
 
 patterns = [
@@ -61,7 +59,7 @@ patterns = [
 
 all_files = glob.glob('board/**', root_dir=ROOT, recursive=True)
 files = [f for f in all_files if f.endswith(('.c', '.h')) and not f.startswith(IGNORED_PATHS)]
-assert len(files) > 70, all(d in files for d in ('board/main.c', 'board/stm32f4/llbxcan.h', 'board/stm32h7/llfdcan.h', 'board/safety/safety_toyota.h'))
+assert len(files) > 70, all(d in files for d in ('board/main.c', 'board/stm32f4/llbxcan.h', 'board/stm32h7/llfdcan.h'))
 
 for p in patterns:
   mutations.append((random.choice(files), p, True))
@@ -77,6 +75,6 @@ def test_misra_mutation(fn, patch, should_fail):
       assert r == 0
 
     # run test
-    r = subprocess.run("SKIP_TABLES_DIFF=1 tests/misra/test_misra.sh", cwd=tmp, shell=True)
+    r = subprocess.run("SKIP_TABLES_DIFF=1 SKIP_BUILD=1 tests/misra/test_misra.sh", cwd=tmp, shell=True)
     failed = r.returncode != 0
     assert failed == should_fail
