@@ -70,24 +70,6 @@ jobs:
       - name: Test communication protocols
         run: $RUN "cd tests/usbprotocol && ./test.sh"
 
-  safety:
-    name: safety
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        flags: ['', '--ubsan']
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build Docker image
-        run: eval "$BUILD"
-      - name: Run safety tests
-        timeout-minutes: 5
-        run: |
-          ${{ env.RUN }} "scons -c -j$(nproc) && \
-                          scons -j$(nproc) ${{ matrix.flags }} && \
-                          tests/safety/test.sh"
-
   misra_linter:
     name: MISRA C:2012 Linter
     runs-on: ubuntu-latest
