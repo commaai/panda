@@ -17,7 +17,7 @@ panda speaks CAN and CAN FD, and it runs on [STM32F413](https://www.st.com/resou
 
 ## Safety Model
 
-panda is compiled with safety firmware provided by [opendbc](https://github.com/commaai/opendbc). See details about the car safety models, safety testing, and code rigor on that repository.
+panda is compiled with safety firmware provided by [opendbc](https://github.com/commaai/opendbc). See details about the car safety models, safety testing, and code rigor in that repository.
 
 ## Code Rigor
 
