@@ -17,9 +17,7 @@ panda speaks CAN and CAN FD, and it runs on [STM32F413](https://www.st.com/resou
 
 ## Safety Model
 
-When a panda powers up, by default it's in `SAFETY_SILENT` mode. While in `SAFETY_SILENT` mode, the CAN buses are forced to be silent. In order to send messages, you have to select a safety mode. Some of safety modes (for example `SAFETY_ALLOUTPUT`) are disabled in release firmwares. In order to use them, compile and flash your own build.
-
-Safety modes optionally support `controls_allowed`, which allows or blocks a subset of messages based on a customizable state in the board.
+panda is compiled with safety firmware provided by [opendbc](https://github.com/commaai/opendbc). See details about the car safety models, safety testing, and code rigor in that repository.
 
 ## Code Rigor
 
@@ -30,7 +28,7 @@ These are the [CI regression tests](https://github.com/commaai/panda/actions) we
 * A generic static code analysis is performed by [cppcheck](https://github.com/danmar/cppcheck/).
 * In addition, [cppcheck](https://github.com/danmar/cppcheck/) has a specific addon to check for [MISRA C:2012](https://misra.org.uk/) violations. See [current coverage](https://github.com/commaai/panda/blob/master/tests/misra/coverage_table).
 * Compiler options are relatively strict: the flags `-Wall -Wextra -Wstrict-prototypes -Werror` are enforced.
-* The [safety logic](https://github.com/commaai/panda/tree/master/board/safety) is tested and verified by [unit tests](https://github.com/commaai/panda/tree/master/tests/safety) for each supported car variant.
+* The [safety logic](https://github.com/commaai/panda/tree/master/opendbc/safety) is tested and verified by [unit tests](https://github.com/commaai/panda/tree/master/opendbc/safety/tests) for each supported car variant.
 to ensure that the behavior remains unchanged.
 * A hardware-in-the-loop test verifies panda's functionalities on all active panda variants, including:
   * additional safety model checks
@@ -40,7 +38,6 @@ to ensure that the behavior remains unchanged.
 
 The above tests are themselves tested by:
 * a [mutation test](tests/misra/test_mutation.py) on the MISRA coverage
-* 100% line coverage enforced on the safety unit tests
 
 In addition, we run the [ruff linter](https://github.com/astral-sh/ruff) and [mypy](https://mypy-lang.org/) on panda's Python library.
 
