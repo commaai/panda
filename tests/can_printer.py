@@ -4,7 +4,7 @@ import time
 from collections import defaultdict
 import binascii
 
-from opendbc.safety import Safety
+from opendbc.car.structs import CarParams
 from panda import Panda
 
 # fake
@@ -17,7 +17,7 @@ def can_printer():
   time.sleep(1)
 
   p.can_clear(0xFFFF)
-  p.set_safety_mode(Safety.SAFETY_ALLOUTPUT)
+  p.set_safety_mode(CarParams.SafetyModel.allOutput)
 
   start = sec_since_boot()
   lp = sec_since_boot()

@@ -2,7 +2,7 @@ import time
 import pytest
 
 from opendbc.car.hyundai.values import HyundaiSafetyFlags
-from opendbc.safety import Safety
+from opendbc.car.structs import CarParams
 from panda import Panda
 
 
@@ -38,9 +38,9 @@ def test_hw_type(p):
 def test_heartbeat(p, panda_jungle):
   panda_jungle.set_ignition(True)
   # TODO: add more cases here once the tests aren't super slow
-  p.set_safety_mode(mode=Safety.SAFETY_HYUNDAI, param=HyundaiSafetyFlags.FLAG_HYUNDAI_LONG)
+  p.set_safety_mode(mode=CarParams.SafetyModel.hyundai, param=HyundaiSafetyFlags.FLAG_HYUNDAI_LONG)
   p.send_heartbeat()
-  assert p.health()['safety_mode'] == Safety.SAFETY_HYUNDAI
+  assert p.health()['safety_mode'] == CarParams.SafetyModel.hyundai
   assert p.health()['safety_param'] == HyundaiSafetyFlags.FLAG_HYUNDAI_LONG
 
   # shouldn't do anything once we're in a car safety mode
@@ -50,7 +50,7 @@ def test_heartbeat(p, panda_jungle):
 
   h = p.health()
   assert h['heartbeat_lost']
-  assert h['safety_mode'] == Safety.SAFETY_SILENT
+  assert h['safety_mode'] == CarParams.SafetyModel.silent
   assert h['safety_param'] == 0
   assert h['controls_allowed'] == 0
 

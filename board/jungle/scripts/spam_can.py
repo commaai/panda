@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 import random
-from opendbc.safety import Safety
+from opendbc.car.structs import CarParams
 from panda import PandaJungle
 
 def get_test_string():
@@ -10,7 +10,7 @@ def get_test_string():
 if __name__ == "__main__":
   p = PandaJungle()
 
-  p.set_safety_mode(Safety.SAFETY_ALLOUTPUT)
+  p.set_safety_mode(CarParams.SafetyModel.allOutput)
 
   print("Spamming all buses...")
   while True:

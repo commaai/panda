@@ -2,7 +2,7 @@
 import os
 import time
 
-from opendbc.safety import Safety
+from opendbc.car.structs import CarParams
 from panda import Panda
 
 
@@ -13,7 +13,7 @@ if __name__ == "__main__":
       with Panda(disable_checks=False) as p:
         if not flag_set:
           p.set_heartbeat_disabled()
-          p.set_safety_mode(Safety.SAFETY_ELM327, 30)
+          p.set_safety_mode(CarParams.SafetyModel.elm327, 30)
           flag_set = True
 
         # shutdown when told

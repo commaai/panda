@@ -75,8 +75,8 @@ For example, to receive CAN messages:
 ```
 And to send one on bus 0:
 ``` python
->>> from opendbc.safety import Safety
->>> panda.set_safety_mode(Safety.SAFETY_ALLOUTPUT)
+>>> from opendbc.car.structs import CarParams
+>>> panda.set_safety_mode(CarParams.SafetyModel.allOutput)
 >>> panda.can_send(0x1aa, b'message', 0)
 ```
 Note that you may have to setup [udev rules](https://github.com/commaai/panda/tree/master/drivers/linux) for Linux, such as
