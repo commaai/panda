@@ -1,5 +1,5 @@
 from opendbc.car.toyota.values import ToyotaSafetyFlags
-from opendbc.safety import Safety
+from opendbc.car.structs import CarParams
 import panda.tests.libsafety.libsafety_py as libsafety_py
 
 def to_signed(d, bits):
@@ -10,49 +10,49 @@ def to_signed(d, bits):
 
 def is_steering_msg(mode, param, addr):
   ret = False
-  if mode in (Safety.SAFETY_HONDA_NIDEC, Safety.SAFETY_HONDA_BOSCH):
+  if mode in (CarParams.SafetyModel.hondaNidec, CarParams.SafetyModel.hondaBosch):
     ret = (addr == 0xE4) or (addr == 0x194) or (addr == 0x33D) or (addr == 0x33DA) or (addr == 0x33DB)
-  elif mode == Safety.SAFETY_TOYOTA:
-    ret = addr == (0x191 if param & ToyotaSafetyFlags.FLAG_TOYOTA_LTA else 0x2E4)
-  elif mode == Safety.SAFETY_GM:
+  elif mode == CarParams.SafetyModel.toyota:
+    ret = addr == (0x191 if param & ToyotaSafetyFlags.LTA else 0x2E4)
+  elif mode == CarParams.SafetyModel.gm:
     ret = addr == 384
-  elif mode == Safety.SAFETY_HYUNDAI:
+  elif mode == CarParams.SafetyModel.hyundai:
     ret = addr == 832
-  elif mode == Safety.SAFETY_CHRYSLER:
+  elif mode == CarParams.SafetyModel.chrysler:
     ret = addr == 0x292
-  elif mode == Safety.SAFETY_SUBARU:
+  elif mode == CarParams.SafetyModel.subaru:
     ret = addr == 0x122
-  elif mode == Safety.SAFETY_FORD:
+  elif mode == CarParams.SafetyModel.ford:
     ret = addr == 0x3d3
-  elif mode == Safety.SAFETY_NISSAN:
+  elif mode == CarParams.SafetyModel.nissan:
     ret = addr == 0x169
   return ret
 
 def get_steer_value(mode, param, to_send):
   torque, angle = 0, 0
-  if mode in (Safety.SAFETY_HONDA_NIDEC, Safety.SAFETY_HONDA_BOSCH):
+  if mode in (CarParams.SafetyModel.hondaNidec, CarParams.SafetyModel.hondaBosch):
     torque = (to_send.data[0] << 8) | to_send.data[1]
     torque = to_signed(torque, 16)
-  elif mode == Safety.SAFETY_TOYOTA:
-    if param & ToyotaSafetyFlags.FLAG_TOYOTA_LTA:
+  elif mode == CarParams.SafetyModel.toyota:
+    if param & ToyotaSafetyFlags.LTA:
       angle = (to_send.data[1] << 8) | to_send.data[2]
       angle = to_signed(angle, 16)
     else:
       torque = (to_send.data[1] << 8) | (to_send.data[2])
       torque = to_signed(torque, 16)
-  elif mode == Safety.SAFETY_GM:
+  elif mode == CarParams.SafetyModel.gm:
     torque = ((to_send.data[0] & 0x7) << 8) | to_send.data[1]
     torque = to_signed(torque, 11)
-  elif mode == Safety.SAFETY_HYUNDAI:
+  elif mode == CarParams.SafetyModel.hyundai:
     torque = (((to_send.data[3] & 0x7) << 8) | to_send.data[2]) - 1024
-  elif mode == Safety.SAFETY_CHRYSLER:
+  elif mode == CarParams.SafetyModel.chrysler:
     torque = (((to_send.data[0] & 0x7) << 8) | to_send.data[1]) - 1024
-  elif mode == Safety.SAFETY_SUBARU:
+  elif mode == CarParams.SafetyModel.subaru:
     torque = ((to_send.data[3] & 0x1F) << 8) | to_send.data[2]
     torque = -to_signed(torque, 13)
-  elif mode == Safety.SAFETY_FORD:
+  elif mode == CarParams.SafetyModel.ford:
     angle = ((to_send.data[0] << 3) | (to_send.data[1] >> 5)) - 1000
-  elif mode == Safety.SAFETY_NISSAN:
+  elif mode == CarParams.SafetyModel.nissan:
     angle = (to_send.data[0] << 10) | (to_send.data[1] << 2) | (to_send.data[2] >> 6)
     angle = -angle + (1310 * 100)
   return torque, angle

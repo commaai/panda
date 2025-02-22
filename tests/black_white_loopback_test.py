@@ -9,7 +9,7 @@ import os
 import time
 import random
 import argparse
-from opendbc.safety import Safety
+from opendbc.car.structs import CarParams
 from panda import Panda
 
 def get_test_string():
@@ -48,8 +48,8 @@ def run_test(sleep_duration):
     raise Exception("Connect white/grey and black panda to run this test!")
 
   # disable safety modes
-  black_panda.set_safety_mode(Safety.SAFETY_ALLOUTPUT)
-  other_panda.set_safety_mode(Safety.SAFETY_ALLOUTPUT)
+  black_panda.set_safety_mode(CarParams.SafetyModel.allOutput)
+  other_panda.set_safety_mode(CarParams.SafetyModel.allOutput)
 
   # test health packet
   print("black panda health", black_panda.health())
@@ -63,9 +63,9 @@ def run_test(sleep_duration):
     print("Number of cycles:", counter, "Non-zero bus errors:", nonzero_bus_errors, "Zero bus errors:", zero_bus_errors, "Content errors:", content_errors)
 
     # Toggle relay
-    black_panda.set_safety_mode(Safety.SAFETY_SILENT)
+    black_panda.set_safety_mode(CarParams.SafetyModel.silent)
     time.sleep(1)
-    black_panda.set_safety_mode(Safety.SAFETY_ALLOUTPUT)
+    black_panda.set_safety_mode(CarParams.SafetyModel.allOutput)
     time.sleep(1)
 
 
