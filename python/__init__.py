@@ -9,7 +9,7 @@ import binascii
 from functools import wraps, partial
 from itertools import accumulate
 
-from opendbc.safety import Safety
+from opendbc.car.structs import CarParams
 
 from .base import BaseHandle
 from .constants import FW_PATH, McuType
@@ -714,7 +714,7 @@ class Panda:
   def set_power_save(self, power_save_enabled=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe7, int(power_save_enabled), 0, b'')
 
-  def set_safety_mode(self, mode=Safety.SAFETY_SILENT, param=0):
+  def set_safety_mode(self, mode=CarParams.SafetyModel.silent, param=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
 
   def set_obd(self, obd):
