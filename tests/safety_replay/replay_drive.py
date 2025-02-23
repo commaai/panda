@@ -3,7 +3,7 @@ import argparse
 import os
 from collections import Counter
 
-from panda.tests.libsafety import libsafety_py
+from opendbc.safety.tests.libsafety import libsafety_py
 from panda.tests.safety_replay.helpers import package_can_msg, init_segment
 
 # replay a drive to check for safety violations
