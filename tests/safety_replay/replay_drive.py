@@ -3,7 +3,7 @@ import argparse
 import os
 from collections import Counter
 
-from panda.tests.libsafety import libsafety_py
+from opendbc.safety.tests.libsafety import libsafety_py
 from panda.tests.safety_replay.helpers import package_can_msg, init_segment
 
 # replay a drive to check for safety violations
@@ -82,7 +82,7 @@ if __name__ == "__main__":
   parser.add_argument("--alternative-experience", type=int, help="Override the alternative experience from the log")
   args = parser.parse_args()
 
-  lr = LogReader(args.route_or_segment_name[0])
+  lr = LogReader(args.route_or_segment_name[0], sort_by_time=True)
 
   if None in (args.mode, args.param, args.alternative_experience):
     for msg in lr:

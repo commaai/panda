@@ -1,6 +1,6 @@
 from opendbc.car.toyota.values import ToyotaSafetyFlags
 from opendbc.car.structs import CarParams
-import panda.tests.libsafety.libsafety_py as libsafety_py
+from opendbc.safety.tests.libsafety import libsafety_py
 
 def to_signed(d, bits):
   ret = d
