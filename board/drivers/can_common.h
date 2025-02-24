@@ -193,7 +193,6 @@ void ignition_can_hook(CANPacket_t *to_push) {
         ignition_can = power_state == 0x3;  // VEHICLE_POWER_STATE_DRIVE=3
         ignition_can_cnt = 0U;
       }
-
       prev_counter = counter;
     }
 
