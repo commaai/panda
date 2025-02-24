@@ -30,10 +30,10 @@ if __name__ == "__main__":
   print("resetting into DFU")
   gpio_set(GPIO.STM_RST_N, 1)
   gpio_set(GPIO.STM_BOOT0, 1)
-  time.sleep(1)
+  time.sleep(0.5)
   gpio_set(GPIO.STM_RST_N, 0)
   gpio_set(GPIO.STM_BOOT0, 0)
-  time.sleep(1)
+  assert Panda.wait_for_dfu(None, timeout=10)
 
   print("flashing bootstub")
   PandaDFU(None).recover()
@@ -41,7 +41,7 @@ if __name__ == "__main__":
   gpio_set(GPIO.STM_RST_N, 1)
   time.sleep(0.5)
   gpio_set(GPIO.STM_RST_N, 0)
-  time.sleep(1)
+  assert Panda.wait_for_panda(None, timeout=10)
 
   print("flashing app")
   p = Panda()
