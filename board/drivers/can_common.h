@@ -186,7 +186,7 @@ void ignition_can_hook(CANPacket_t *to_push) {
       static int prev_counter = -1;
       int counter = GET_BYTE(to_push, 6) >> 4;
 
-      if ((counter == ((prev_counter + 1) % 16) && (prev_counter != -1)) {
+      if ((counter == ((prev_counter + 1) % 16)) && (prev_counter != -1)) {
         ignition_can_cnt += 1U;
         // VCFRONT_LVPowerState->VCFRONT_vehiclePowerState
         int power_state = (GET_BYTE(to_push, 0) >> 5U) & 0x3U;
