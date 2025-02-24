@@ -182,10 +182,19 @@ void ignition_can_hook(CANPacket_t *to_push) {
 
     // Tesla Model 3/Y exception
     if ((addr == 0x221) && (len == 8)) {
-      // VCFRONT_LVPowerState->VCFRONT_vehiclePowerState
-      int power_state = (GET_BYTE(to_push, 0) >> 5U) & 0x3U;
-      ignition_can = power_state == 0x3;  // VEHICLE_POWER_STATE_DRIVE=3
-      ignition_can_cnt = 0U;
+      // 0x221 overlaps with Rivian which has random data on byte 0
+      static int prev_counter = -1;
+      int counter = GET_BYTE(to_push, 6) >> 4;
+
+      if ((counter == ((prev_counter + 1) % 16) && (prev_counter != -1)) {
+        ignition_can_cnt += 1U;
+        // VCFRONT_LVPowerState->VCFRONT_vehiclePowerState
+        int power_state = (GET_BYTE(to_push, 0) >> 5U) & 0x3U;
+        ignition_can = power_state == 0x3;  // VEHICLE_POWER_STATE_DRIVE=3
+        ignition_can_cnt = 0U;
+      }
+
+      prev_counter = counter;
     }
 
     // Mazda exception
