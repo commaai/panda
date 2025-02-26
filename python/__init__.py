@@ -14,7 +14,6 @@ from opendbc.car.structs import CarParams
 from .base import BaseHandle
 from .constants import FW_PATH, McuType
 from .dfu import PandaDFU
-from .isotp import isotp_send, isotp_recv
 from .spi import PandaSpiHandle, PandaSpiException, PandaProtocolMismatch
 from .usb import PandaUsbHandle
 from .utils import logger
@@ -794,14 +793,6 @@ class Panda:
 
     """
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf1, bus, 0, b'')
-
-  # ******************* isotp *******************
-
-  def isotp_send(self, addr, dat, bus, recvaddr=None, subaddr=None):
-    return isotp_send(self, dat, addr, bus, recvaddr, subaddr)
-
-  def isotp_recv(self, addr, bus=0, sendaddr=None, subaddr=None):
-    return isotp_recv(self, addr, bus, sendaddr, subaddr)
 
   # ******************* serial *******************
 
