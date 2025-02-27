@@ -710,6 +710,9 @@ class Panda:
 
   # ******************* configuration *******************
 
+  def set_alternative_experience(self, alternative_experience):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xdf, int(alternative_experience), 0, b'')
+
   def set_power_save(self, power_save_enabled=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe7, int(power_save_enabled), 0, b'')
 
