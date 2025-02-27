@@ -85,19 +85,13 @@ if __name__ == "__main__":
   lr = LogReader(args.route_or_segment_name[0], sort_by_time=True)
 
   if None in (args.mode, args.param, args.alternative_experience):
-    for msg in lr:
-      if msg.which() == 'carParams':
-        if args.mode is None:
-          args.mode = msg.carParams.safetyConfigs[-1].safetyModel.raw
-        if args.param is None:
-          args.param = msg.carParams.safetyConfigs[-1].safetyParam
-        if args.alternative_experience is None:
-          args.alternative_experience = msg.carParams.alternativeExperience
-        break
-    else:
-      raise Exception("carParams not found in log. Set safety mode and param manually.")
-
-    lr.reset()
+    CP = lr.first('carParams')
+    if args.mode is None:
+      args.mode = CP.safetyConfigs[-1].safetyModel.raw
+    if args.param is None:
+      args.param = CP.safetyConfigs[-1].safetyParam
+    if args.alternative_experience is None:
+      args.alternative_experience = CP.alternativeExperience
 
   print(f"replaying {args.route_or_segment_name[0]} with safety mode {args.mode}, param {args.param}, alternative experience {args.alternative_experience}")
   replay_drive(lr, args.mode, args.param, args.alternative_experience, segment=len(lr.logreader_identifiers) == 1)
