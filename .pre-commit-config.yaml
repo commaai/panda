@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.6.0
+  rev: v5.0.0
   hooks:
     - id: check-ast
     - id: check-yaml
@@ -9,12 +9,12 @@ repos:
     - id: check-executables-have-shebangs
     - id: check-shebang-scripts-are-executable
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.11.2
+  rev: v1.15.0
   hooks:
     - id: mypy
       additional_dependencies: ['numpy', 'types-requests', 'types-atomicwrites',
                                 'types-pycurl']
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.6.8
+  rev: v0.9.9
   hooks:
     - id: ruff
