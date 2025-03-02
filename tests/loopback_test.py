@@ -6,6 +6,7 @@ import random
 import argparse
 from itertools import permutations
 
+from opendbc.car.structs import CarParams
 from panda import Panda
 
 def get_test_string():
@@ -25,7 +26,7 @@ def run_test_w_pandas(pandas, sleep_duration):
   print("H", h)
 
   for hh in h:
-    hh.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+    hh.set_safety_mode(CarParams.SafetyModel.allOutput)
 
   # test both directions
   for ho in permutations(list(range(len(h))), r=2):

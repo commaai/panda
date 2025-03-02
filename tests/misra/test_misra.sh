@@ -47,6 +47,7 @@ cppcheck() {
   $CPPCHECK_DIR/cppcheck --inline-suppr -I $PANDA_DIR/board/ \
           -I "$(arm-none-eabi-gcc -print-file-name=include)" \
           -I $PANDA_DIR/board/stm32f4/inc/ -I $PANDA_DIR/board/stm32h7/inc/ \
+          -I $PANDA_DIR/../opendbc/safety/ \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
           --suppress=*:*include/* --error-exitcode=2 --check-level=exhaustive --safety \
           --platform=arm32-wchar_t4 $COMMON_DEFINES --checkers-report=$CHECKLIST.tmp \

@@ -2,7 +2,8 @@
 import random
 import unittest
 
-from panda import Panda, DLC_TO_LEN, USBPACKET_MAX_SIZE, pack_can_buffer, unpack_can_buffer
+from opendbc.car.structs import CarParams
+from panda import DLC_TO_LEN, USBPACKET_MAX_SIZE, pack_can_buffer, unpack_can_buffer
 from panda.tests.libpanda import libpanda_py
 
 lpp = libpanda_py.libpanda
@@ -101,7 +102,7 @@ class TestPandaComms(unittest.TestCase):
 
 
   def test_can_send_usb(self):
-    lpp.set_safety_hooks(Panda.SAFETY_ALLOUTPUT, 0)
+    lpp.set_safety_hooks(CarParams.SafetyModel.allOutput, 0)
 
     for bus in range(3):
       with self.subTest(bus=bus):

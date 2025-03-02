@@ -7,6 +7,7 @@ import itertools
 import threading
 from typing import Any
 
+from opendbc.car.structs import CarParams
 from panda import Panda
 
 JUNGLE = "JUNGLE" in os.environ
@@ -44,9 +45,9 @@ if __name__ == "__main__":
       raise Exception("Connect two pandas to perform this test!")
     sender = Panda(serials[0])
     receiver = Panda(serials[1])
-    receiver.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+    receiver.set_safety_mode(CarParams.SafetyModel.allOutput)
 
-  sender.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+  sender.set_safety_mode(CarParams.SafetyModel.allOutput)
 
   # Start transmisson
   threading.Thread(target=flood_tx, args=(sender,)).start()

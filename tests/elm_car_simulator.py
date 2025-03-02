@@ -10,6 +10,7 @@ import time
 import threading
 from collections import deque
 
+from opendbc.car.structs import CarParams
 from panda import Panda
 
 def lin_checksum(dat):
@@ -61,7 +62,7 @@ class ELMCarSimulator():
         self.__on = on
 
     def start(self):
-        self.panda.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+        self.panda.set_safety_mode(CarParams.SafetyModel.allOutput)
         if self.__lin_enable:
             self.__lin_monitor_thread.start()
         if self.__can_enable:

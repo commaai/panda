@@ -1,11 +1,12 @@
 import time
 from flaky import flaky
 
+from opendbc.car.structs import CarParams
 from panda import Panda
 from panda.tests.hitl.helpers import time_many_sends
 
 def test_can_loopback(p):
-  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+  p.set_safety_mode(CarParams.SafetyModel.allOutput)
   p.set_can_loopback(True)
 
   for bus in (0, 1, 2):
@@ -30,7 +31,7 @@ def test_can_loopback(p):
 def test_reliability(p):
   MSG_COUNT = 100
 
-  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+  p.set_safety_mode(CarParams.SafetyModel.allOutput)
   p.set_can_loopback(True)
   p.set_can_speed_kbps(0, 1000)
 
@@ -60,7 +61,7 @@ def test_reliability(p):
 @flaky(max_runs=6, min_passes=1)
 def test_throughput(p):
   # enable output mode
-  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+  p.set_safety_mode(CarParams.SafetyModel.allOutput)
 
   # enable CAN loopback mode
   p.set_can_loopback(True)

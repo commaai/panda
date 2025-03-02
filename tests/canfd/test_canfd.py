@@ -3,6 +3,7 @@ import os
 import time
 import random
 from collections import defaultdict
+from opendbc.car.structs import CarParams
 from panda import Panda, calculate_checksum, DLC_TO_LEN
 from panda import PandaJungle
 from panda.tests.hitl.helpers import time_many_sends
@@ -44,14 +45,14 @@ def panda_init(serial, enable_canfd=False, enable_non_iso=False):
       p.set_can_data_speed_kbps(bus, 2000)
     if enable_non_iso:
       p.set_canfd_non_iso(bus, True)
-  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+  p.set_safety_mode(CarParams.SafetyModel.allOutput)
   return p
 
 def test_canfd_throughput(p, p_recv=None):
   two_pandas = p_recv is not None
-  p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+  p.set_safety_mode(CarParams.SafetyModel.allOutput)
   if two_pandas:
-    p_recv.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+    p_recv.set_safety_mode(CarParams.SafetyModel.allOutput)
   # enable output mode
   else:
     p.set_can_loopback(True)

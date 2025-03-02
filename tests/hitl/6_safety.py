@@ -1,10 +1,11 @@
 import time
 
+from opendbc.car.structs import CarParams
 from panda import Panda
 
 
 def test_safety_nooutput(p):
-  p.set_safety_mode(Panda.SAFETY_SILENT)
+  p.set_safety_mode(CarParams.SafetyModel.silent)
   p.set_can_loopback(True)
 
   # send a message on bus 0
@@ -20,10 +21,10 @@ def test_safety_nooutput(p):
 
 def test_canfd_safety_modes(p):
   # works on all pandas
-  p.set_safety_mode(Panda.SAFETY_TOYOTA)
-  assert p.health()['safety_mode'] == Panda.SAFETY_TOYOTA
+  p.set_safety_mode(CarParams.SafetyModel.toyota)
+  assert p.health()['safety_mode'] == CarParams.SafetyModel.toyota
 
   # shouldn't be able to set a CAN-FD safety mode on non CAN-FD panda
-  p.set_safety_mode(Panda.SAFETY_HYUNDAI_CANFD)
-  expected_mode = Panda.SAFETY_HYUNDAI_CANFD if p.get_type() in Panda.H7_DEVICES else Panda.SAFETY_SILENT
+  p.set_safety_mode(CarParams.SafetyModel.hyundaiCanfd)
+  expected_mode = CarParams.SafetyModel.hyundaiCanfd if p.get_type() in Panda.H7_DEVICES else CarParams.SafetyModel.silent
   assert p.health()['safety_mode'] == expected_mode
