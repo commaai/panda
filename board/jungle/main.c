@@ -60,9 +60,6 @@ void tick_handler(void) {
       }
     }
 
-    // tick drivers at 8Hz
-    usb_tick();
-
     // decimated to 1Hz
     if ((loop_counter % 8) == 0U) {
       #ifdef DEBUG

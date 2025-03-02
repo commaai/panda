@@ -155,7 +155,6 @@ static void tick_handler(void) {
 
     // tick drivers at 8Hz
     fan_tick();
-    usb_tick();
     harness_tick();
     simple_watchdog_kick();
     sound_tick();

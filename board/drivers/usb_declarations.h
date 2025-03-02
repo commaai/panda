@@ -107,7 +107,5 @@ void refresh_can_tx_slots_available(void);
 #define ENDPOINT_RCV 0x80
 #define ENDPOINT_SND 0x00
 
-// packet read and write
-void usb_tick(void);
 // ***************************** USB port *****************************
 void can_tx_comms_resume_usb(void);

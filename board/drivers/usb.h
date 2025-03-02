@@ -122,12 +122,6 @@ static char to_hex_char(uint8_t a) {
   return ret;
 }
 
-void usb_tick(void) {
-  static uint16_t usb_last_frame_num = 0U;
-  uint16_t current_frame_num = (USBx_DEVICE->DSTS & USB_OTG_DSTS_FNSOF_Msk) >> USB_OTG_DSTS_FNSOF_Pos;
-  usb_last_frame_num = current_frame_num;
-}
-
 static void usb_setup(void) {
   static uint8_t device_desc[] = {
     DSCR_DEVICE_LEN, USB_DESC_TYPE_DEVICE, //Length, Type
