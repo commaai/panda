@@ -182,7 +182,7 @@ void ignition_can_hook(CANPacket_t *to_push) {
       int counter = GET_BYTE(to_push, 1) & 0xFU;  // max is only 14
 
       if ((counter == ((prev_counter + 1) % 15)) && (prev_counter != -1)) {
-        // VDM_OutputSignals
+        // VDM_OutputSignals->VDM_EpasPowerMode
         ignition_can = GET_BIT(to_push, 60U);
         ignition_can_cnt = 0U;
       }
