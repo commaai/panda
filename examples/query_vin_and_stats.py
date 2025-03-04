@@ -4,7 +4,7 @@ import struct
 from opendbc.car.structs import CarParams
 from panda import Panda
 from hexdump import hexdump
-from panda.python.isotp import isotp_send, isotp_recv
+from opendbc.car.isotp import isotp_send, isotp_recv
 
 # 0x7e0 = Toyota
 # 0x18DB33F1 for Honda?
