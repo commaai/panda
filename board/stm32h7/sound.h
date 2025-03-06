@@ -49,16 +49,26 @@ static void DMA1_Stream0_IRQ_Handler(void) {
 
 // Playback processing
 static void BDMA_Channel0_IRQ_Handler(void) {
+  static uint8_t playback_buf = 0U;
+
   BDMA->IFCR |= BDMA_IFCR_CGIF0; // clear flag
 
   uint8_t rx_buf_idx = (((BDMA_Channel0->CCR & BDMA_CCR_CT) >> BDMA_CCR_CT_Pos) == 1U) ? 0U : 1U;
-  uint8_t tx_buf_idx = (((DMA1_Stream1->CR & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos) == 1U) ? 0U : 1U;
+  playback_buf = 1U - playback_buf;
+
+  // wait until we're done playing the current buf
+  for (uint32_t timeout_counter = 100000U; timeout_counter > 0U; timeout_counter--){
+    uint8_t playing_buf = (DMA1_Stream1->CR & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos;
+    if ((playing_buf != playback_buf) || (!(DMA1_Stream1->CR & DMA_SxCR_EN))) {
+      break;
+    }
+  }
 
   // process samples (shift to 12b and bias to be unsigned)
   bool sound_playing = false;
   for (uint16_t i=0U; i < SOUND_RX_BUF_SIZE; i += 2U) {
     // since we are playing mono and receiving stereo, we take every other sample
-    sound_tx_buf[tx_buf_idx][i/2U] = ((sound_rx_buf[rx_buf_idx][i] + (1UL << 14)) >> 3);
+    sound_tx_buf[playback_buf][i/2U] = ((sound_rx_buf[rx_buf_idx][i] + (1UL << 14)) >> 3);
     if (sound_rx_buf[rx_buf_idx][i] > 0U) {
       sound_playing = true;
     }
@@ -71,9 +81,10 @@ static void BDMA_Channel0_IRQ_Handler(void) {
 
       // empty the other buf and start playing that
       for (uint16_t i=0U; i < SOUND_TX_BUF_SIZE; i++) {
-        sound_tx_buf[1U - tx_buf_idx][i] = (1UL << 11);
+        sound_tx_buf[1U - playback_buf][i] = (1UL << 11);
       }
-      register_set(&DMA1_Stream1->CR, (1UL - tx_buf_idx) << DMA_SxCR_CT_Pos, DMA_SxCR_CT_Msk);
+      register_clear_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
+      register_set(&DMA1_Stream1->CR, (1UL - playback_buf) << DMA_SxCR_CT_Pos, DMA_SxCR_CT_Msk);
       register_set_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
     }
     sound_idle_count = SOUND_IDLE_TIMEOUT;
