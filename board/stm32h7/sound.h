@@ -8,7 +8,6 @@ __attribute__((section(".sram4"))) static uint32_t mic_rx_buf[2][MIC_RX_BUF_SIZE
 
 #define SOUND_IDLE_TIMEOUT 4U
 static uint8_t sound_idle_count;
-static uint8_t playback_buf;
 static uint8_t mic_idle_count;
 
 void sound_tick(void) {
@@ -50,13 +49,15 @@ static void DMA1_Stream0_IRQ_Handler(void) {
 
 // Playback processing
 static void BDMA_Channel0_IRQ_Handler(void) {
+  static uint8_t playback_buf = 0U;
+
   BDMA->IFCR |= BDMA_IFCR_CGIF0; // clear flag
 
   uint8_t rx_buf_idx = (((BDMA_Channel0->CCR & BDMA_CCR_CT) >> BDMA_CCR_CT_Pos) == 1U) ? 0U : 1U;
   playback_buf = 1U - playback_buf;
 
   // wait until we're done playing the current buf
-  for (uint32_t timeout_counter = 100000U; timeout_counter > 0; timeout_counter--){
+  for (uint32_t timeout_counter = 100000U; timeout_counter > 0U; timeout_counter--){
     uint8_t playing_buf = (DMA1_Stream1->CR & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos;
     if ((playing_buf != playback_buf) || (!(DMA1_Stream1->CR & DMA_SxCR_EN))) {
       break;
