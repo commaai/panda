@@ -77,14 +77,14 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
     case SAFETY_SILENT:
       set_intercept_relay(false, false);
       if (current_board->has_obd) {
-        current_board->set_can_mode(CAN_MODE_NORMAL);
+        set_can_mode(CAN_MODE_NORMAL);
       }
       can_silent = ALL_CAN_SILENT;
       break;
     case SAFETY_NOOUTPUT:
       set_intercept_relay(false, false);
       if (current_board->has_obd) {
-        current_board->set_can_mode(CAN_MODE_NORMAL);
+        set_can_mode(CAN_MODE_NORMAL);
       }
       can_silent = ALL_CAN_LIVE;
       break;
@@ -97,9 +97,9 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
         // TODO: rewrite using hardware queues rather than fifo to cancel specific messages
         can_clear_send(CANIF_FROM_CAN_NUM(1), 1);
         if (param == 0U) {
-          current_board->set_can_mode(CAN_MODE_OBD_CAN2);
+          set_can_mode(CAN_MODE_OBD_CAN2);
         } else {
-          current_board->set_can_mode(CAN_MODE_NORMAL);
+          set_can_mode(CAN_MODE_NORMAL);
         }
       }
       can_silent = ALL_CAN_LIVE;
@@ -109,7 +109,7 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
       heartbeat_counter = 0U;
       heartbeat_lost = false;
       if (current_board->has_obd) {
-        current_board->set_can_mode(CAN_MODE_NORMAL);
+        set_can_mode(CAN_MODE_NORMAL);
       }
       can_silent = ALL_CAN_LIVE;
       break;
@@ -319,6 +319,9 @@ int main(void) {
 
   // init board
   current_board->init();
+  if (current_board->harness_config->has_harness) {
+    harness_init();
+  }
 
   // panda has an FPU, let's use it!
   enable_fpu();
@@ -351,12 +354,14 @@ int main(void) {
 
 #ifdef ENABLE_SPI
   if (current_board->has_spi) {
+    gpio_spi_init();
     spi_init();
   }
 #endif
 
   current_board->set_led(LED_RED, false);
   current_board->set_led(LED_GREEN, false);
+  current_board->set_led(LED_BLUE, false);
 
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();

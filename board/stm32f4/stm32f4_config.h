@@ -12,6 +12,7 @@
 
 // Around (1Mbps / 8 bits/byte / 12 bytes per message)
 #define CAN_INTERRUPT_RATE 12000U
+#define GPIO_CAN2_AF GPIO_AF9_CAN2
 
 #define MAX_LED_FADE 8192U
 
@@ -73,7 +74,7 @@
 void early_gpio_float(void) {
   RCC->AHB1ENR = RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN;
 
-  GPIOA->MODER = 0; GPIOB->MODER = 0; GPIOC->MODER = 0;
+  GPIOB->MODER = 0; GPIOC->MODER = 0;
   GPIOA->ODR = 0; GPIOB->ODR = 0; GPIOC->ODR = 0;
   GPIOA->PUPDR = 0; GPIOB->PUPDR = 0; GPIOC->PUPDR = 0;
 }
