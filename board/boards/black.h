@@ -108,7 +108,6 @@ static harness_configuration black_harness_config = {
 board board_black = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &black_harness_config,
-  .has_obd = true,
   .has_spi = false,
   .has_canfd = false,
   .fan_max_rpm = 0U,

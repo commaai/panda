@@ -27,7 +27,6 @@ typedef void (*board_set_amp_enabled)(bool enabled);
 
 struct board {
   harness_configuration *harness_config;
-  const bool has_obd;
   const bool has_spi;
   const bool has_canfd;
   const uint16_t fan_max_rpm;

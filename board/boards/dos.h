@@ -128,7 +128,6 @@ static harness_configuration dos_harness_config = {
 
 board board_dos = {
   .harness_config = &dos_harness_config,
-  .has_obd = true,
 #ifdef ENABLE_SPI
   .has_spi = true,
 #else

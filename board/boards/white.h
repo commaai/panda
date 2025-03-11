@@ -175,7 +175,6 @@ static harness_configuration white_harness_config = {
 board board_white = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &white_harness_config,
-  .has_obd = false,
   .has_spi = false,
   .has_canfd = false,
   .fan_max_rpm = 0U,

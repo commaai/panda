@@ -144,7 +144,6 @@ static harness_configuration uno_harness_config = {
 
 board board_uno = {
   .harness_config = &uno_harness_config,
-  .has_obd = true,
   .has_spi = false,
   .has_canfd = false,
   .fan_max_rpm = 5100U,

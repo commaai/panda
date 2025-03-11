@@ -140,7 +140,6 @@ static void cuatro_init(void) {
 
 board board_cuatro = {
   .harness_config = &tres_harness_config,
-  .has_obd = true,
   .has_spi = true,
   .has_canfd = true,
   .fan_max_rpm = 12500U,
