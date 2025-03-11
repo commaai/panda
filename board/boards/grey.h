@@ -21,7 +21,6 @@ board board_grey = {
   .init = white_grey_init,
   .init_bootloader = white_grey_init_bootloader,
   .enable_can_transceiver = white_enable_can_transceiver,
-  .enable_can_transceivers = white_enable_can_transceivers,
   .set_led = white_set_led,
   .check_ignition = white_check_ignition,
   .read_voltage_mV = white_read_voltage_mV,

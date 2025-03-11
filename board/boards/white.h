@@ -18,15 +18,7 @@ static void white_enable_can_transceiver(uint8_t transceiver, bool enabled) {
       set_gpio_output(GPIOA, 0, !enabled);
       break;
     default:
-      print("Invalid CAN transceiver ("); puth(transceiver); print("): enabling failed\n");
       break;
-  }
-}
-
-static void white_enable_can_transceivers(bool enabled) {
-  uint8_t t1 = enabled ? 1U : 2U;  // leave transceiver 1 enabled to detect CAN ignition
-  for(uint8_t i=t1; i<=3U; i++) {
-    white_enable_can_transceiver(i, enabled);
   }
 }
 
@@ -185,7 +177,6 @@ board board_white = {
   .init = white_grey_init,
   .init_bootloader = white_grey_init_bootloader,
   .enable_can_transceiver = white_enable_can_transceiver,
-  .enable_can_transceivers = white_enable_can_transceivers,
   .set_led = white_set_led,
   .check_ignition = white_check_ignition,
   .read_voltage_mV = white_read_voltage_mV,

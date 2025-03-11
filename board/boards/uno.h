@@ -26,17 +26,6 @@ static void uno_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-static void uno_enable_can_transceivers(bool enabled) {
-  for(uint8_t i=1U; i<=4U; i++){
-    // Leave main CAN always on for CAN-based ignition detection
-    if((harness.status == HARNESS_STATUS_FLIPPED) ? (i == 3U) : (i == 1U)){
-      uno_enable_can_transceiver(i, true);
-    } else {
-      uno_enable_can_transceiver(i, enabled);
-    }
-  }
-}
-
 static void uno_set_led(uint8_t color, bool enabled) {
   switch (color){
     case LED_RED:
@@ -154,7 +143,6 @@ board board_uno = {
   .init = uno_init,
   .init_bootloader = uno_init_bootloader,
   .enable_can_transceiver = uno_enable_can_transceiver,
-  .enable_can_transceivers = uno_enable_can_transceivers,
   .set_led = uno_set_led,
   .check_ignition = uno_check_ignition,
   .read_voltage_mV = white_read_voltage_mV,

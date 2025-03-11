@@ -41,18 +41,6 @@ static void cuatro_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-static void cuatro_enable_can_transceivers(bool enabled) {
-  uint8_t main_bus = (harness.status == HARNESS_STATUS_FLIPPED) ? 3U : 1U;
-  for (uint8_t i=1U; i<=4U; i++) {
-    // Leave main CAN always on for CAN-based ignition detection
-    if (i == main_bus) {
-      cuatro_enable_can_transceiver(i, true);
-    } else {
-      cuatro_enable_can_transceiver(i, enabled);
-    }
-  }
-}
-
 static uint32_t cuatro_read_voltage_mV(void) {
   return adc_get_mV(8) * 11U;
 }
@@ -150,7 +138,6 @@ board board_cuatro = {
   .init = cuatro_init,
   .init_bootloader = unused_init_bootloader,
   .enable_can_transceiver = cuatro_enable_can_transceiver,
-  .enable_can_transceivers = cuatro_enable_can_transceivers,
   .set_led = cuatro_set_led,
   .check_ignition = red_check_ignition,
   .read_voltage_mV = cuatro_read_voltage_mV,

@@ -25,18 +25,6 @@ static void red_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-static void red_enable_can_transceivers(bool enabled) {
-  uint8_t main_bus = (harness.status == HARNESS_STATUS_FLIPPED) ? 3U : 1U;
-  for (uint8_t i=1U; i<=4U; i++) {
-    // Leave main CAN always on for CAN-based ignition detection
-    if (i == main_bus) {
-      red_enable_can_transceiver(i, true);
-    } else {
-      red_enable_can_transceiver(i, enabled);
-    }
-  }
-}
-
 static void red_set_led(uint8_t color, bool enabled) {
   switch (color) {
     case LED_RED:
@@ -124,7 +112,6 @@ board board_red = {
   .init = red_init,
   .init_bootloader = unused_init_bootloader,
   .enable_can_transceiver = red_enable_can_transceiver,
-  .enable_can_transceivers = red_enable_can_transceivers,
   .set_led = red_set_led,
   .check_ignition = red_check_ignition,
   .read_voltage_mV = red_read_voltage_mV,
