@@ -76,14 +76,14 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
   switch (mode_copy) {
     case SAFETY_SILENT:
       set_intercept_relay(false, false);
-      if (current_board->has_obd) {
+      if (current_board->harness_config->has_harness) {
         current_board->set_can_mode(CAN_MODE_NORMAL);
       }
       can_silent = ALL_CAN_SILENT;
       break;
     case SAFETY_NOOUTPUT:
       set_intercept_relay(false, false);
-      if (current_board->has_obd) {
+      if (current_board->harness_config->has_harness) {
         current_board->set_can_mode(CAN_MODE_NORMAL);
       }
       can_silent = ALL_CAN_LIVE;
@@ -92,7 +92,7 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
       set_intercept_relay(false, false);
       heartbeat_counter = 0U;
       heartbeat_lost = false;
-      if (current_board->has_obd) {
+      if (current_board->harness_config->has_harness) {
         // Clear any pending messages in the can core (i.e. sending while comma power is unplugged)
         // TODO: rewrite using hardware queues rather than fifo to cancel specific messages
         can_clear_send(CANIF_FROM_CAN_NUM(1), 1);
@@ -108,7 +108,7 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
       set_intercept_relay(true, false);
       heartbeat_counter = 0U;
       heartbeat_lost = false;
-      if (current_board->has_obd) {
+      if (current_board->harness_config->has_harness) {
         current_board->set_can_mode(CAN_MODE_NORMAL);
       }
       can_silent = ALL_CAN_LIVE;
@@ -319,6 +319,10 @@ int main(void) {
 
   // init board
   current_board->init();
+  current_board->set_can_mode(CAN_MODE_NORMAL);
+  if (current_board->harness_config->has_harness) {
+    harness_init();
+  }
 
   // panda has an FPU, let's use it!
   enable_fpu();
@@ -334,7 +338,7 @@ int main(void) {
   set_safety_mode(SAFETY_SILENT, 0U);
 
   // enable CAN TXs
-  current_board->enable_can_transceivers(true);
+  enable_can_transceivers(true);
 
   // init watchdog for heartbeat loop, fed at 8Hz
   simple_watchdog_init(FAULT_HEARTBEAT_LOOP_WATCHDOG, (3U * 1000000U / 8U));
@@ -351,12 +355,14 @@ int main(void) {
 
 #ifdef ENABLE_SPI
   if (current_board->has_spi) {
+    gpio_spi_init();
     spi_init();
   }
 #endif
 
   current_board->set_led(LED_RED, false);
   current_board->set_led(LED_GREEN, false);
+  current_board->set_led(LED_BLUE, false);
 
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();
