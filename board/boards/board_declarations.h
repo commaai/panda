@@ -13,7 +13,6 @@ typedef enum {
 typedef void (*board_init)(void);
 typedef void (*board_init_bootloader)(void);
 typedef void (*board_enable_can_transceiver)(uint8_t transceiver, bool enabled);
-typedef void (*board_enable_can_transceivers)(bool enabled);
 typedef void (*board_set_led)(uint8_t color, bool enabled);
 typedef void (*board_set_can_mode)(uint8_t mode);
 typedef bool (*board_check_ignition)(void);
@@ -28,7 +27,6 @@ typedef void (*board_set_amp_enabled)(bool enabled);
 
 struct board {
   harness_configuration *harness_config;
-  const bool has_obd;
   const bool has_spi;
   const bool has_canfd;
   const uint16_t fan_max_rpm;
@@ -39,7 +37,6 @@ struct board {
   board_init init;
   board_init_bootloader init_bootloader;
   board_enable_can_transceiver enable_can_transceiver;
-  board_enable_can_transceivers enable_can_transceivers;
   board_set_led set_led;
   board_set_can_mode set_can_mode;
   board_check_ignition check_ignition;
