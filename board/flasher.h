@@ -132,6 +132,7 @@ void soft_flasher_start(void) {
 
   gpio_usart2_init();
   gpio_usb_init();
+  led_init();
 
   // enable USB
   usb_init();

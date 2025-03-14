@@ -54,9 +54,9 @@ void early_initialization(void) {
   early_gpio_float();
 
   detect_board_type();
-  led_init();
 
   if (enter_bootloader_mode == ENTER_BOOTLOADER_MAGIC) {
+    led_init();
     #ifdef PANDA
     current_board->init_bootloader();
     #endif
