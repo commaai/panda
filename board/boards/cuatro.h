@@ -50,12 +50,7 @@ static void cuatro_set_amp_enabled(bool enabled){
 static void cuatro_init(void) {
   common_init_gpio();
 
-  // init LEDs as open drain
-  set_gpio_output_type(GPIOC, 6, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_output_type(GPIOC, 7, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_output_type(GPIOC, 9, OUTPUT_TYPE_OPEN_DRAIN);
-
-  // more open drain
+  // open drain
   set_gpio_output_type(GPIOD, 3, OUTPUT_TYPE_OPEN_DRAIN); // FAN_EN
   set_gpio_output_type(GPIOC, 12, OUTPUT_TYPE_OPEN_DRAIN); // VBAT_EN
 

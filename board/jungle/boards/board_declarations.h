@@ -42,11 +42,6 @@ struct board {
 #define HW_TYPE_V1 1U
 #define HW_TYPE_V2 2U
 
-// LED colors
-#define LED_RED 0U
-#define LED_GREEN 1U
-#define LED_BLUE 2U
-
 // CAN modes
 #define CAN_MODE_NORMAL 0U
 #define CAN_MODE_OBD_CAN2 3U
