@@ -12,7 +12,7 @@
 #include "drivers/clock_source.h"
 #include "boards/white.h"
 #include "boards/grey.h"
-#include "boards/black.h"
+#include "boards/board_black.h"
 #include "boards/uno.h"
 #include "boards/dos.h"
 
