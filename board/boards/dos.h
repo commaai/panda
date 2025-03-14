@@ -26,22 +26,6 @@ static void dos_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-static void dos_set_led(uint8_t color, bool enabled) {
-  switch (color){
-    case LED_RED:
-      set_gpio_output(GPIOC, 9, !enabled);
-      break;
-     case LED_GREEN:
-      set_gpio_output(GPIOC, 7, !enabled);
-      break;
-    case LED_BLUE:
-      set_gpio_output(GPIOC, 6, !enabled);
-      break;
-    default:
-      break;
-  }
-}
-
 static void dos_set_bootkick(BootState state) {
   set_gpio_output(GPIOC, 4, state != BOOT_BOOTKICK);
 }
@@ -155,7 +139,8 @@ board board_dos = {
   .init = dos_init,
   .init_bootloader = unused_init_bootloader,
   .enable_can_transceiver = dos_enable_can_transceiver,
-  .set_led = dos_set_led,
+  .led_GPIO = {GPIOC, GPIOC, GPIOC},
+  .led_pin = {9, 7, 6},
   .set_can_mode = dos_set_can_mode,
   .check_ignition = dos_check_ignition,
   .read_voltage_mV = white_read_voltage_mV,
