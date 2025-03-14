@@ -10,11 +10,6 @@
 #include "drivers/fan.h"
 #include "stm32f4/llfan.h"
 #include "drivers/clock_source.h"
-#include "boards/white.h"
-#include "boards/grey.h"
-#include "boards/board_black.h"
-#include "boards/uno.h"
-#include "boards/dos.h"
 
 // Unused functions on F4
 void sound_tick(void) {}

@@ -13,9 +13,6 @@
 #include "drivers/fake_siren.h"
 #include "stm32h7/sound.h"
 #include "drivers/clock_source.h"
-#include "boards/red.h"
-#include "boards/tres.h"
-#include "boards/cuatro.h"
 
 
 void detect_board_type(void) {
