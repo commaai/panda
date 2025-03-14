@@ -1,4 +1,4 @@
-#include "../interface/bootkick.h"
+#include "../bootkick.h"
 
 bool bootkick_reset_triggered = false;
 

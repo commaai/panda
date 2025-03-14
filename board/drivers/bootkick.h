@@ -1,4 +1,4 @@
-#include "../bootkick_declarations.h"
+#pragma once
 
 extern bool bootkick_reset_triggered;
 

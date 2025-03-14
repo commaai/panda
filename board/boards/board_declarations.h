@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "../drivers/harness_declarations.h"
+#include "../drivers/harness.h"
 
 // ******************** Prototypes ********************
 typedef enum {
