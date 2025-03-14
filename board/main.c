@@ -5,7 +5,7 @@
 #include "drivers/pwm.h"
 #include "drivers/usb.h"
 #include "drivers/simple_watchdog.h"
-#include "drivers/bootkick.h"
+#include "drivers/interface/bootkick.h"
 
 #include "early_init.h"
 #include "provision.h"
