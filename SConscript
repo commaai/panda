@@ -1,6 +1,6 @@
 import os
 import subprocess
-
+import glob
 
 PREFIX = "arm-none-eabi-"
 BUILDER = "DEV"
@@ -116,9 +116,15 @@ def build_project(project_name, project, extra_flags):
                                      [startup] + crypto_obj + [bootstub_obj])
   env.Objcopy(f"obj/bootstub.{project_name}.bin", bootstub_elf)
 
+  # Collect all C files from the directory
+  board_sources = glob.glob(f"{panda_root}/board/boards/source/*.c")
+
+  # Turn them into object files, namespaced by project
+  board_objects = [env.Object(f"obj/{project_name}_{os.path.basename(src).replace('.c', '')}", src) for src in board_sources]
+
   # Build main
   main_obj = env.Object(f"main-{project_name}", project["MAIN"])
-  main_elf = env.Program(f"obj/{project_name}.elf", [startup, main_obj],
+  main_elf = env.Program(f"obj/{project_name}.elf", [startup, main_obj] + board_objects,
     LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"obj/{project_name}.bin", main_elf)
 
