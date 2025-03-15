@@ -1,16 +1,17 @@
-#include "critical_declarations.h"
+#pragma once
 
 // ********************* Critical section helpers *********************
-uint8_t global_critical_depth = 0U;
+void enable_interrupts(void);
+void disable_interrupts(void);
 
-static volatile bool interrupts_enabled = false;
+extern uint8_t global_critical_depth;
 
-void enable_interrupts(void) {
-  interrupts_enabled = true;
-  __enable_irq();
-}
+#define ENTER_CRITICAL()                                      \
+  __disable_irq();                                            \
+  global_critical_depth += 1U;
 
-void disable_interrupts(void) {
-  interrupts_enabled = false;
-  __disable_irq();
-}
+#define EXIT_CRITICAL()                                       \
+  global_critical_depth -= 1U;                                \
+  if ((global_critical_depth == 0U) && interrupts_enabled) {  \
+    __enable_irq();                                           \
+  }
