@@ -39,6 +39,27 @@ extern int pending_can_live;
 extern int can_silent;
 extern bool can_loopback;
 
+// ********************* instantiate queues *********************
+#define can_buffer(x, size) \
+  static CANPacket_t elems_##x[size]; \
+  extern can_ring can_##x; \
+  can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = (size), .elems = (CANPacket_t *)&(elems_##x) };
+
+#define CAN_RX_BUFFER_SIZE 4096U
+#define CAN_TX_BUFFER_SIZE 416U
+
+#ifdef STM32H7
+// ITCM RAM and DTCM RAM are the fastest for Cortex-M7 core access
+__attribute__((section(".axisram"))) can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
+__attribute__((section(".itcmram"))) can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
+__attribute__((section(".itcmram"))) can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
+#else
+can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
+can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
+can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
+#endif
+can_buffer(tx3_q, CAN_TX_BUFFER_SIZE)
+
 // ******************* functions prototypes *********************
 bool can_init(uint8_t can_number);
 void process_can(uint8_t can_number);

@@ -16,27 +16,6 @@ int pending_can_live = 0;
 int can_silent = ALL_CAN_SILENT;
 bool can_loopback = false;
 
-// ********************* instantiate queues *********************
-#define can_buffer(x, size) \
-  static CANPacket_t elems_##x[size]; \
-  extern can_ring can_##x; \
-  can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = (size), .elems = (CANPacket_t *)&(elems_##x) };
-
-#define CAN_RX_BUFFER_SIZE 4096U
-#define CAN_TX_BUFFER_SIZE 416U
-
-#ifdef STM32H7
-// ITCM RAM and DTCM RAM are the fastest for Cortex-M7 core access
-__attribute__((section(".axisram"))) can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
-__attribute__((section(".itcmram"))) can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
-__attribute__((section(".itcmram"))) can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
-#else
-can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
-can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
-can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
-#endif
-can_buffer(tx3_q, CAN_TX_BUFFER_SIZE)
-
 // FIXME:
 // cppcheck-suppress misra-c2012-9.3
 can_ring *can_queues[CAN_QUEUES_ARRAY_SIZE] = {&can_tx1_q, &can_tx2_q, &can_tx3_q};
