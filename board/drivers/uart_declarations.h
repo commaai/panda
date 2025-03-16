@@ -1,4 +1,5 @@
 #pragma once
+#include "platform_definitions.h"
 
 // IRQs: USART2, USART3, UART5
 

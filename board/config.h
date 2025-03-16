@@ -32,6 +32,12 @@
   #endif
 #endif
 
+#ifndef BOOTSTUB
+  #include "main_definitions.h"
+#else
+  #include "bootstub_declarations.h"
+#endif
+
 // platform includes
 #ifdef STM32H7
   #include "stm32h7/stm32h7_config.h"

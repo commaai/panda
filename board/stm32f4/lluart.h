@@ -1,3 +1,5 @@
+#pragma once
+#include "drivers/interrupts_declarations.h"
 // ***************************** Interrupt handlers *****************************
 
 void uart_tx_ring(uart_ring *q){
