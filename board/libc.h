@@ -1,4 +1,6 @@
 // **** libc ****
+#pragma once
+#include <stdint.h>
 
 void delay(uint32_t a) {
   volatile uint32_t i;

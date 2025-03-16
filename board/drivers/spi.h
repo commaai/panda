@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string.h>
+
 #include "spi_declarations.h"
 #include "crc.h"
 

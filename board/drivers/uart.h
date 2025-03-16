@@ -1,4 +1,6 @@
 #include "uart_declarations.h"
+#include "critical_declarations.h"
+#include <stddef.h>
 
 // IRQs: USART2, USART3, UART5
 

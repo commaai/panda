@@ -1,4 +1,7 @@
 #pragma once
+#include <stdbool.h>
+#include "faults_declarations.h"
+#include "platform_definitions.h"
 
 typedef struct interrupt {
   IRQn_Type irq_type;
@@ -26,6 +29,7 @@ extern interrupt interrupts[NUM_INTERRUPTS];
 extern float interrupt_load;
 
 void handle_interrupt(IRQn_Type irq_type);
+void enable_interrupt_timer(void);
 // Every second
 void interrupt_timer_handler(void);
 void init_interrupts(bool check_rate_limit);

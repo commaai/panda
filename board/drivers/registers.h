@@ -1,4 +1,6 @@
 #include "registers_declarations.h"
+#include "critical.h"
+#include "faults_declarations.h"
 
 static reg register_map[REGISTER_MAP_SIZE];
 

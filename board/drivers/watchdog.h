@@ -1,3 +1,6 @@
+#pragma once
+#include "platform_definitions.h"
+
 typedef enum {
   WATCHDOG_50_MS = (400U - 1U),
   WATCHDOG_500_MS = 4000U,

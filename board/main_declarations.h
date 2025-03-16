@@ -1,4 +1,5 @@
 #pragma once
+#include "platform_definitions.h"
 
 // ******************** Prototypes ********************
 void print(const char *a);
