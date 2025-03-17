@@ -23,23 +23,8 @@ typedef struct uart_ring {
   bool overwrite;
 } uart_ring;
 
-#define UART_BUFFER(x, size_rx, size_tx, uart_ptr, callback_ptr, overwrite_mode) \
-  static uint8_t elems_rx_##x[size_rx]; \
-  static uint8_t elems_tx_##x[size_tx]; \
-  extern uart_ring uart_ring_##x; \
-  uart_ring uart_ring_##x = {  \
-    .w_ptr_tx = 0, \
-    .r_ptr_tx = 0, \
-    .elems_tx = ((uint8_t *)&(elems_tx_##x)), \
-    .tx_fifo_size = (size_tx), \
-    .w_ptr_rx = 0, \
-    .r_ptr_rx = 0, \
-    .elems_rx = ((uint8_t *)&(elems_rx_##x)), \
-    .rx_fifo_size = (size_rx), \
-    .uart = (uart_ptr), \
-    .callback = (callback_ptr), \
-    .overwrite = (overwrite_mode) \
-  };
+extern uart_ring uart_ring_som_debug;
+extern uart_ring uart_ring_debug;
 
 // ***************************** Function prototypes *****************************
 void debug_ring_callback(uart_ring *ring);
@@ -61,15 +46,3 @@ void puth4(unsigned int i);
 #endif
 void hexdump(const void *a, int l);
 
-// ******************************** UART buffers ********************************
-
-// debug = USART2
-UART_BUFFER(debug, FIFO_SIZE_INT, FIFO_SIZE_INT, USART2, debug_ring_callback, true)
-
-// SOM debug = UART7
-#ifdef STM32H7
-  UART_BUFFER(som_debug, FIFO_SIZE_INT, FIFO_SIZE_INT, UART7, NULL, true)
-#else
-  // UART7 is not available on F4
-  UART_BUFFER(som_debug, 1U, 1U, NULL, NULL, true)
-#endif

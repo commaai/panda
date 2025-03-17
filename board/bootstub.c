@@ -19,6 +19,7 @@
 #include "obj/cert.h"
 #include "obj/gitversion.h"
 #include "flasher.h"
+#include "libc.h"
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {

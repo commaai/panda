@@ -10,7 +10,7 @@ static void watchdog_feed(void) {
   IND_WDG->KR = 0xAAAAU;
 }
 
-void watchdog_init(WatchdogTimeout timeout) {
+static inline void watchdog_init(WatchdogTimeout timeout) {
   // enable watchdog
   IND_WDG->KR = 0xCCCCU;
   IND_WDG->KR = 0x5555U;
