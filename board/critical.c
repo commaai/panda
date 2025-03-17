@@ -1,5 +1,4 @@
-#pragma once
-#include "critical_declarations.h"
+#include "critical.h"
 #include <stdbool.h>
 
 // ********************* Critical section helpers *********************

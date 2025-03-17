@@ -1,6 +1,6 @@
 #pragma once
 
-#include "board_declarations.h"
+#include "boards/board.h"
 
 // /////////////////////// //
 // Uno (STM32F4) + Harness //

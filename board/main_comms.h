@@ -1,7 +1,5 @@
 #pragma once
 #include "board/can_comms.h"
-#include "obj/gitversion.h"
-#include "drivers/bootkick.h"
 #include "drivers/can_common.h"
 #include "safety.h"
 #include "power_saving.h"

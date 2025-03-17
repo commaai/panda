@@ -4,13 +4,16 @@
 #include <stdbool.h>
 #include "board/drivers/harness_configuration.h"
 
-#ifndef PANDA_JUNGLE
-// ******************** Prototypes ********************
 typedef enum {
   BOOT_STANDBY,
   BOOT_BOOTKICK,
   BOOT_RESET,
 } BootState;
+
+#ifdef PANDA_JUNGLE
+    #include "jungle/boards/board.h"
+#else
+// ******************** Prototypes ********************
 
 typedef void (*board_init)(void);
 typedef void (*board_init_bootloader)(void);
@@ -84,7 +87,4 @@ extern struct board board_grey;
 extern struct board board_white;
 extern struct board board_cuatro;
 extern struct board board_red;
-
-#else
-    #include "jungle/boards/board.h"
 #endif

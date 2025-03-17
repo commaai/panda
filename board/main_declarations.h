@@ -1,7 +1,7 @@
 #pragma once
 #include "platform_definitions.h"
 #include "drivers/harness_configuration.h"
-#include "boards/board_declarations.h"
+#include "boards/board.h"
 
 // ******************** Prototypes ********************
 void print(const char *a);

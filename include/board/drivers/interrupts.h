@@ -1,6 +1,6 @@
 #pragma once
 #include <stdbool.h>
-#include "faults_declarations.h"
+#include "faults.h"
 #include "platform_definitions.h"
 
 typedef struct interrupt {

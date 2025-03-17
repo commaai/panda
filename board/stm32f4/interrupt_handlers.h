@@ -1,7 +1,7 @@
 // ********************* Bare interrupt handlers *********************
 // Only implemented the STM32F413 interrupts for now
 #pragma once
-#include "drivers/interrupts_declarations.h"
+#include "drivers/interrupts.h"
 
 void WWDG_IRQHandler(void) {handle_interrupt(WWDG_IRQn);}
 void PVD_IRQHandler(void) {handle_interrupt(PVD_IRQn);}

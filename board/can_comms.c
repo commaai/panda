@@ -1,6 +1,9 @@
 #include "can_comms.h"
-#include "can_common.h"
+
 #include <string.h>
+
+#include "config.h"
+#include "can_common.h"
 
 typedef struct {
   uint32_t ptr;

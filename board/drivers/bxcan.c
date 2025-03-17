@@ -1,4 +1,6 @@
 #include "bxcan.h"
+#include <string.h>
+#include "stm32f4/llbxcan_declarations.h"
 
 
 // IRQs: CAN1_TX, CAN1_RX0, CAN1_SCE

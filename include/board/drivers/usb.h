@@ -1,5 +1,8 @@
 #pragma once
 #include <stdint.h>
+#include <stddef.h>
+
+#define USBPACKET_MAX_SIZE 0x40U
 
 // IRQs: OTG_FS
 

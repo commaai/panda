@@ -1,6 +1,6 @@
 #pragma once
 
-#include "board_declarations.h"
+#include "boards/board.h"
 
 // ///////////////////////////// //
 // Red Panda (STM32H7) + Harness //

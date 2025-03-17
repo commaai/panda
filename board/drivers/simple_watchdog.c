@@ -1,4 +1,5 @@
-#include "simple_watchdog_declarations.h"
+#include "simple_watchdog.h"
+#include "config.h"
 
 static simple_watchdog_state_t wd_state;
 
