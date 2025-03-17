@@ -8,7 +8,7 @@
 #include "drivers/timers.h"
 #include "health.h"
 #include "faults.h"
-#include "safety2.h"
+#include "safety.h"
 #include "drivers/led.h"
 
 // IRQs: CAN1_TX, CAN1_RX0, CAN1_SCE
