@@ -89,7 +89,7 @@ def build_project(project_name, project, extra_flags):
     f"{panda_root}/include/board/drivers/",
     f"{panda_root}/include/board/jungle/",
     f"{panda_root}/include/board/jungle/boards/",
-    #f"{panda_root}/../opendbc/safety/",
+    f"{panda_root}/../opendbc/safety/",
   ]
 
   env = Environment(
@@ -119,7 +119,6 @@ def build_project(project_name, project, extra_flags):
 
   # Sources shared by all Panda variants
   sources = [
-      env.Object(f"safety2-{project_name}", f"{panda_root}/board/safety2.c"),
       env.Object(f"can-{project_name}", f"{panda_root}/board/can.c"),
       env.Object(f"can_comms-{project_name}", f"{panda_root}/board/can_comms.c"),
       env.Object(f"critical-{project_name}", f"{panda_root}/board/critical.c"),
