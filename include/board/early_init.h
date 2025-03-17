@@ -11,7 +11,7 @@ extern uint32_t enter_bootloader_mode;
 typedef void (*bootloader_fcn)(void);
 typedef bootloader_fcn *bootloader_fcn_ptr;
 
-static void jump_to_bootloader(void) {
+static inline void jump_to_bootloader(void) {
   // do enter bootloader
   enter_bootloader_mode = 0;
 
@@ -27,7 +27,7 @@ static void jump_to_bootloader(void) {
   NVIC_SystemReset();
 }
 
-void early_initialization(void) {
+static inline void early_initialization(void) {
   // Reset global critical depth
   disable_interrupts();
   global_critical_depth = 0;

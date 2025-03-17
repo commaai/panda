@@ -13,11 +13,11 @@
 #define ENTER_CRITICAL() 0
 #define EXIT_CRITICAL() 0
 
-void print(const char *a) {
+static inline void print(const char *a) {
   printf("%s", a);
 }
 
-void puth(unsigned int i) {
+static inline void puth(unsigned int i) {
   printf("%u", i);
 }
 
@@ -29,7 +29,7 @@ TIM_TypeDef timer;
 TIM_TypeDef *MICROSECOND_TIMER = &timer;
 uint32_t microsecond_timer_get(void);
 
-uint32_t microsecond_timer_get(void) {
+static inline uint32_t microsecond_timer_get(void) {
   return MICROSECOND_TIMER->CNT;
 }
 

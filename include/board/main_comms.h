@@ -13,7 +13,7 @@ extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 void set_safety_mode(uint16_t mode, uint16_t param);
 bool is_car_safety_mode(uint16_t mode);
 
-static int get_health_pkt(void *dat) {
+static inline int get_health_pkt(void *dat) {
   COMPILE_TIME_ASSERT(sizeof(struct health_t) <= USBPACKET_MAX_SIZE);
   struct health_t * health = (struct health_t*)dat;
 
@@ -57,7 +57,7 @@ static int get_health_pkt(void *dat) {
 }
 
 // send on serial, first byte to select the ring
-void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
+static inline void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   uart_ring *ur = get_ring_by_number(data[0]);
   if ((len != 0U) && (ur != NULL)) {
     if ((data[0] < 2U) || (data[0] >= 4U)) {
@@ -70,7 +70,7 @@ void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   }
 }
 
-int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
+static inline int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   unsigned int resp_len = 0;
   uart_ring *ur = NULL;
   uint32_t time;
