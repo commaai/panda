@@ -1,4 +1,4 @@
-
+#pragma once
 void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask);
 
 void adc_init(void) {

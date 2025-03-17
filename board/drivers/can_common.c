@@ -1,6 +1,6 @@
 #include "can_common.h"
 #include "config.h"
-#include "safety.h"
+#include "safety2.h"
 
 uint32_t safety_tx_blocked = 0;
 uint32_t safety_rx_invalid = 0;

@@ -7,7 +7,7 @@
 #include "can_common.h"
 #include "can_comms.h"
 #include "health.h"
-#include "safety.h"
+#include "safety2.h"
 #include "drivers/led.h"
 
 // IRQs: FDCAN1_IT0, FDCAN1_IT1

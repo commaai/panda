@@ -1,3 +1,4 @@
+#pragma once
 
 typedef struct {
   ADC_TypeDef *adc;

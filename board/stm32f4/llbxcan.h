@@ -1,3 +1,4 @@
+#pragma once
 #include "llbxcan_declarations.h"
 
 // kbps multiplied by 10
