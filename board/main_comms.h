@@ -1,7 +1,7 @@
 #pragma once
 #include "board/can_comms.h"
 #include "drivers/can_common.h"
-#include "safety.h"
+#include "safety2.h"
 #include "power_saving.h"
 #include "provision.h"
 #include "early_init.h"

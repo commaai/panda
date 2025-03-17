@@ -1,3 +1,4 @@
+#pragma once
 #include "board/boards/board.h"
 
 #include "stm32h7/lladc.h"

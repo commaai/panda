@@ -1,3 +1,4 @@
+#pragma once
 // from the linker script
 #ifdef STM32H7
   #define APP_START_ADDRESS 0x8020000U

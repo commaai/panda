@@ -1,3 +1,4 @@
+#pragma once
 #include "stm32f4_platform_definitions.h"
 
 #include "can.h"

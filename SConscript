@@ -88,7 +88,8 @@ def build_project(project_name, project, extra_flags):
     f"{panda_root}/include/board/",
     f"{panda_root}/include/board/drivers/",
     f"{panda_root}/include/board/jungle/",
-    f"{panda_root}/../opendbc/safety/",
+    f"{panda_root}/include/board/jungle/boards/",
+    #f"{panda_root}/../opendbc/safety/",
   ]
 
   env = Environment(
@@ -118,19 +119,21 @@ def build_project(project_name, project, extra_flags):
 
   # Sources shared by all Panda variants
   sources = [
+      env.Object(f"safety2-{project_name}", f"{panda_root}/board/safety2.c"),
       env.Object(f"can-{project_name}", f"{panda_root}/board/can.c"),
       env.Object(f"can_comms-{project_name}", f"{panda_root}/board/can_comms.c"),
       env.Object(f"critical-{project_name}", f"{panda_root}/board/critical.c"),
       env.Object(f"faults-{project_name}", f"{panda_root}/board/faults.c"),
       env.Object(f"drivers_can_common-{project_name}", f"{panda_root}/board/drivers/can_common.c"),
       env.Object(f"drivers_clock_source-{project_name}", f"{panda_root}/board/drivers/clock_source.c"),
-      env.Object(f"drivers_usb-{project_name}", f"{panda_root}/board/drivers/usb.c"),
-      env.Object(f"drivers_spi-{project_name}", f"{panda_root}/board/drivers/spi.c"),
-      env.Object(f"drivers_timers-{project_name}", f"{panda_root}/board/drivers/timers.c"),
-      env.Object(f"drivers_uart-{project_name}", f"{panda_root}/board/drivers/uart.c"),
+      env.Object(f"drivers_gpio-{project_name}", f"{panda_root}/board/drivers/gpio.c"),
       env.Object(f"drivers_interrupts-{project_name}", f"{panda_root}/board/drivers/interrupts.c"),
       env.Object(f"drivers_registers-{project_name}", f"{panda_root}/board/drivers/registers.c"),
       env.Object(f"drivers_simple_watchdog-{project_name}", f"{panda_root}/board/drivers/simple_watchdog.c"),
+      env.Object(f"drivers_spi-{project_name}", f"{panda_root}/board/drivers/spi.c"),
+      env.Object(f"drivers_timers-{project_name}", f"{panda_root}/board/drivers/timers.c"),
+      env.Object(f"drivers_uart-{project_name}", f"{panda_root}/board/drivers/uart.c"),
+      env.Object(f"drivers_usb-{project_name}", f"{panda_root}/board/drivers/usb.c"),
   ]
 
   # Jungle board does not get these drivers.

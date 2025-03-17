@@ -1,3 +1,4 @@
+#pragma once
 #include "stm32h7/lli2c.h"
 
 #define CODEC_I2C_ADDR 0x10

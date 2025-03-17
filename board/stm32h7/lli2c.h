@@ -1,3 +1,4 @@
+#pragma once
 // TODO: this driver relies heavily on polling,
 // if we want it to be more async, we should use interrupts
 

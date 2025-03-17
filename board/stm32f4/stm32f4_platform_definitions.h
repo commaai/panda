@@ -1,3 +1,4 @@
+#pragma once
 #include "stm32f4/inc/stm32f4xx.h"
 #include "stm32f4/inc/stm32f4xx_hal_gpio_ex.h"
 #define MCU_IDCODE 0x463U
