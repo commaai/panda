@@ -1,5 +1,6 @@
-#include "fan_declarations.h"
+#include "fan.h"
 #include "utils.h"
+#include "pwm.h"
 
 struct fan_state_t fan_state;
 

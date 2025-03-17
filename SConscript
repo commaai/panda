@@ -131,12 +131,12 @@ def build_project(project_name, project, extra_flags):
       env.Object(f"drivers_interrupts-{project_name}", f"{panda_root}/board/drivers/interrupts.c"),
       env.Object(f"drivers_registers-{project_name}", f"{panda_root}/board/drivers/registers.c"),
       env.Object(f"drivers_simple_watchdog-{project_name}", f"{panda_root}/board/drivers/simple_watchdog.c"),
-
   ]
 
   # Jungle board does not get these drivers.
   if "PANDA_JUNGLE" not in " ".join(extra_flags):
       sources.extend([
+          env.Object(f"drivers_fan-{project_name}", f"{panda_root}/board/drivers/fan.c"),
           env.Object(f"power_saving-{project_name}", f"{panda_root}/board/power_saving.c"),
           env.Object(f"drivers_bootkick-{project_name}", f"{panda_root}/board/drivers/bootkick.c"),
           env.Object(f"drivers_harness-{project_name}", f"{panda_root}/board/drivers/harness.c"),

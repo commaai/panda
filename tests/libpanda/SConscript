@@ -21,6 +21,8 @@ env = Environment(
     "../../board/",
     "../../include/",
     "../../include/board/",
+    "../../include/board/boards/",
+    "../../include/board/drivers/",
     "../../../opendbc/safety/"
   ],
 )
