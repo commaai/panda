@@ -1,4 +1,4 @@
-#include "board/boards/board_declarations.h"
+#include "board/boards/board.h"
 
 #include "stm32h7/lladc.h"
 #include "jungle/boards/board_v2.h"

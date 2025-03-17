@@ -1,4 +1,5 @@
-#include "interrupts_declarations.h"
+#include "interrupts.h"
+#include "config.h"
 
 void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!

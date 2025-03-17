@@ -1,6 +1,6 @@
 #pragma once
 #include "drivers/uart.h"
-#include "drivers/interrupts_declarations.h"
+#include "drivers/interrupts.h"
 // ***************************** Interrupt handlers *****************************
 
 void uart_tx_ring(uart_ring *q){

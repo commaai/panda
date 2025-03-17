@@ -1,6 +1,7 @@
 #include "usb.h"
-#include "config.h"
+#include <stdbool.h>
 
+#include "config.h"
 static uint8_t response[USBPACKET_MAX_SIZE];
 
 // current packet

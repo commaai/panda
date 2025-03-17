@@ -1,6 +1,6 @@
 #pragma once
-#include "drivers/interrupts_declarations.h"
-#include "drivers/registers_declarations.h"
+#include "drivers/interrupts.h"
+#include "drivers/registers.h"
 
 #if defined(ENABLE_SPI) || defined(BOOTSTUB)
 void llspi_miso_dma(uint8_t *addr, int len) {

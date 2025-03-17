@@ -1,6 +1,6 @@
 #pragma once
 #include <stdint.h>
-#include "drivers/interrupts_declarations.h"
+#include "drivers/interrupts.h"
 
 // ********************* Critical section helpers *********************
 void enable_interrupts(void);

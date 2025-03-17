@@ -1,6 +1,6 @@
 #pragma once
 #include "critical.h"
-#include "registers_declarations.h"
+#include "registers.h"
 #include "platform_definitions.h"
 
 #define MODE_INPUT 0

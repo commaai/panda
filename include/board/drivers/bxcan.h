@@ -5,7 +5,9 @@
 #include "can.h"
 #include "can_common.h"
 #include "can_comms.h"
+#include "drivers/timers.h"
 #include "health.h"
+#include "faults.h"
 #include "safety.h"
 #include "drivers/led.h"
 

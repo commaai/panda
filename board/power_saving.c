@@ -1,7 +1,13 @@
 #include "power_saving.h"
 #include "config.h"
 #include "drivers/gpio.h"
-#include "boards/board_declarations.h"
+#include "boards/board.h"
+
+#ifdef STM32H7
+  #include "drivers/fdcan.h"
+#else
+  #include "drivers/bxcan.h"
+#endif
 
 // WARNING: To stay in compliance with the SIL2 rules laid out in STM UM1840, we should never implement any of the available hardware low power modes.
 // See rule: CoU_3

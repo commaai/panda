@@ -120,29 +120,39 @@ def build_project(project_name, project, extra_flags):
   sources = [
       env.Object(f"can-{project_name}", f"{panda_root}/board/can.c"),
       env.Object(f"can_comms-{project_name}", f"{panda_root}/board/can_comms.c"),
+      env.Object(f"critical-{project_name}", f"{panda_root}/board/critical.c"),
+      env.Object(f"faults-{project_name}", f"{panda_root}/board/faults.c"),
       env.Object(f"drivers_can_common-{project_name}", f"{panda_root}/board/drivers/can_common.c"),
+      env.Object(f"drivers_clock_source-{project_name}", f"{panda_root}/board/drivers/clock_source.c"),
       env.Object(f"drivers_usb-{project_name}", f"{panda_root}/board/drivers/usb.c"),
+      env.Object(f"drivers_spi-{project_name}", f"{panda_root}/board/drivers/spi.c"),
+      env.Object(f"drivers_timers-{project_name}", f"{panda_root}/board/drivers/timers.c"),
       env.Object(f"drivers_uart-{project_name}", f"{panda_root}/board/drivers/uart.c"),
-      env.Object(f"drivers_bootkick-{project_name}", f"{panda_root}/board/drivers/bootkick.c"),
-      env.Object(f"drivers_harness-{project_name}", f"{panda_root}/board/drivers/harness.c"),
+      env.Object(f"drivers_interrupts-{project_name}", f"{panda_root}/board/drivers/interrupts.c"),
+      env.Object(f"drivers_registers-{project_name}", f"{panda_root}/board/drivers/registers.c"),
+      env.Object(f"drivers_simple_watchdog-{project_name}", f"{panda_root}/board/drivers/simple_watchdog.c"),
+
   ]
 
-  # Sources for Jungle
+  # Jungle board does not get these drivers.
   if "PANDA_JUNGLE" not in " ".join(extra_flags):
       sources.extend([
           env.Object(f"power_saving-{project_name}", f"{panda_root}/board/power_saving.c"),
+          env.Object(f"drivers_bootkick-{project_name}", f"{panda_root}/board/drivers/bootkick.c"),
+          env.Object(f"drivers_harness-{project_name}", f"{panda_root}/board/drivers/harness.c"),
       ])
-
-  if "DSTM32H7" in " ".join(project["PROJECT_FLAGS"]):
-      sources.append(env.Object(f"drivers_fdcan-{project_name}", f"{panda_root}/board/drivers/fdcan.c"))
-  if "DSTM32F4" in " ".join(project["PROJECT_FLAGS"]):
-      sources.append(env.Object(f"drivers_bxcan-{project_name}", f"{panda_root}/board/drivers/bxcan.c"))
 
   bootstub_obj = env.Object(f"bootstub-{project_name}", File(project.get("BOOTSTUB", f"{panda_root}/board/bootstub.c")))
   bootstub_elf = env.Program(f"obj/bootstub.{project_name}.elf",
                                      [startup] + crypto_obj + sources + [bootstub_obj])
   env.Objcopy(f"obj/bootstub.{project_name}.bin", bootstub_elf)
 
+
+  # Add some more sources that we skip for bootstub.
+  if "DSTM32H7" in " ".join(project["PROJECT_FLAGS"]):
+      sources.append(env.Object(f"drivers_fdcan-{project_name}", f"{panda_root}/board/drivers/fdcan.c"))
+  if "DSTM32F4" in " ".join(project["PROJECT_FLAGS"]):
+      sources.append(env.Object(f"drivers_bxcan-{project_name}", f"{panda_root}/board/drivers/bxcan.c"))
   # Build main
   main_obj = env.Object(f"main-{project_name}", project["MAIN"])
   main_elf = env.Program(f"obj/{project_name}.elf", [startup, main_obj] + sources,

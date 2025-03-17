@@ -2,17 +2,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "drivers/harness_configuration.h"
-#include "boards/board_declarations.h"
-
-/* notes
-
-board struct defined here:
-  #include "boards/board_declarations.h"
-
-board pointer instantiated in
-#include "main_definitions.h"
-#include "boostub_declarations.h"
- */
+#include "board/boards/board.h"
 
 extern board* current_board;
 

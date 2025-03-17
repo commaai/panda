@@ -4,7 +4,6 @@
 #include "health.h"
 
 #include "can.h"
-//#include "critical.h"
 #include "drivers/usb.h"
 
 
