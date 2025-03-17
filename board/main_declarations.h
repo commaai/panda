@@ -1,5 +1,7 @@
 #pragma once
 #include "platform_definitions.h"
+#include "drivers/harness_configuration.h"
+#include "boards/board_declarations.h"
 
 // ******************** Prototypes ********************
 void print(const char *a);
@@ -7,8 +9,6 @@ void puth(unsigned int i);
 void puth2(unsigned int i);
 void puth4(unsigned int i);
 void hexdump(const void *a, int l);
-typedef struct board board;
-typedef struct harness_configuration harness_configuration;
 void pwm_init(TIM_TypeDef *TIM, uint8_t channel);
 void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
 

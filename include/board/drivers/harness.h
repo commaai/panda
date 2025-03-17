@@ -1,4 +1,20 @@
 #pragma once
+#include <stdbool.h>
+#include <stdint.h>
+#include "drivers/harness_configuration.h"
+#include "boards/board_declarations.h"
+
+/* notes
+
+board struct defined here:
+  #include "boards/board_declarations.h"
+
+board pointer instantiated in
+#include "main_definitions.h"
+#include "boostub_declarations.h"
+ */
+
+extern board* current_board;
 
 #define HARNESS_STATUS_NC 0U
 #define HARNESS_STATUS_NORMAL 1U
@@ -13,19 +29,6 @@ struct harness_t {
 };
 extern struct harness_t harness;
 
-struct harness_configuration {
-  const bool has_harness;
-  GPIO_TypeDef * const GPIO_SBU1;
-  GPIO_TypeDef * const GPIO_SBU2;
-  GPIO_TypeDef * const GPIO_relay_SBU1;
-  GPIO_TypeDef * const GPIO_relay_SBU2;
-  const uint8_t pin_SBU1;
-  const uint8_t pin_SBU2;
-  const uint8_t pin_relay_SBU1;
-  const uint8_t pin_relay_SBU2;
-  const uint8_t adc_channel_SBU1;
-  const uint8_t adc_channel_SBU2;
-};
 
 // The ignition relay is only used for testing purposes
 void set_intercept_relay(bool intercept, bool ignition_relay);

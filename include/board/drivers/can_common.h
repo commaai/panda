@@ -1,4 +1,13 @@
 #pragma once
+#include <stdbool.h>
+#include <stdint.h>
+#include "health.h"
+
+#include "can.h"
+//#include "critical.h"
+#include "drivers/usb.h"
+
+
 
 typedef struct {
   volatile uint32_t w_ptr;
@@ -42,6 +51,7 @@ extern bool can_loopback;
 // ******************* functions prototypes *********************
 bool can_init(uint8_t can_number);
 void process_can(uint8_t can_number);
+extern void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg);
 
 // ********************* instantiate queues *********************
 #define CAN_QUEUES_ARRAY_SIZE 3
@@ -55,6 +65,7 @@ extern can_ring *can_queues[CAN_QUEUES_ARRAY_SIZE];
 bool can_pop(can_ring *q, CANPacket_t *elem);
 bool can_push(can_ring *q, const CANPacket_t *elem);
 uint32_t can_slots_empty(const can_ring *q);
+void can_clear(can_ring *q);
 
 // assign CAN numbering
 // bus num: CAN Bus numbers in panda, sent to/from USB
@@ -86,3 +97,28 @@ void can_set_checksum(CANPacket_t *packet);
 bool can_check_checksum(CANPacket_t *packet);
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook);
 bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len);
+
+// ********************* instantiate queues *********************
+#define can_buffer(x, size) \
+  static CANPacket_t elems_##x[size]; \
+  extern can_ring can_##x; \
+  can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = (size), .elems = (CANPacket_t *)&(elems_##x) };
+
+#define CAN_RX_BUFFER_SIZE 4096U
+#define CAN_TX_BUFFER_SIZE 416U
+
+#ifdef STM32H7
+// ITCM RAM and DTCM RAM are the fastest for Cortex-M7 core access
+__attribute__((section(".axisram"))) can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
+__attribute__((section(".itcmram"))) can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
+__attribute__((section(".itcmram"))) can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
+#else
+can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
+can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
+can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
+#endif
+can_buffer(tx3_q, CAN_TX_BUFFER_SIZE)
+
+// FIXME:
+// cppcheck-suppress misra-c2012-9.3
+can_ring *can_queues[CAN_QUEUES_ARRAY_SIZE] = {&can_tx1_q, &can_tx2_q, &can_tx3_q};

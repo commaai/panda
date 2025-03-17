@@ -1,4 +1,5 @@
 // Early bringup
+#include "drivers/led.h"
 #define ENTER_BOOTLOADER_MAGIC 0xdeadbeefU
 #define ENTER_SOFTLOADER_MAGIC 0xdeadc0deU
 #define BOOT_NORMAL 0xdeadb111U

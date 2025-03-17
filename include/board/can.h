@@ -1,4 +1,9 @@
 #pragma once
+#include <stdint.h>
+
+#define PANDA_CAN_CNT 3U
+#define PANDA_BUS_CNT 3U
+extern const uint8_t dlc_to_len[];
 
 // bump this when changing the CAN packet
 #define CAN_PACKET_VERSION 4

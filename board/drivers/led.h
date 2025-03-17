@@ -1,3 +1,6 @@
+#pragma once
+#include "gpio.h"
+#include "config.h"
 
 #define LED_RED 0U
 #define LED_GREEN 1U

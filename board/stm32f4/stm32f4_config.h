@@ -14,9 +14,14 @@
 #include "stm32f4/peripherals.h"
 #include "stm32f4/interrupt_handlers.h"
 #include "drivers/timers.h"
-#include "stm32f4/board.h"
 #include "stm32f4/clock.h"
 #include "drivers/watchdog.h"
+
+#ifdef PANDA_JUNGLE
+  #include "board/jungle/stm32f4/board.h"
+#else
+  #include "board/stm32f4/board.h"
+#endif
 
 #include "drivers/spi.h"
 #include "stm32f4/llspi.h"

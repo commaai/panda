@@ -16,11 +16,15 @@
 #include "drivers/watchdog.h"
 
 #if !defined(BOOTSTUB)
-  #include "drivers/uart.h"
   #include "stm32h7/lluart.h"
 #endif
 
-#include "stm32h7/board.h"
+#ifdef PANDA_JUNGLE
+  #include "board/jungle/stm32h7/board.h"
+#else
+  #include "board/stm32h7/board.h"
+#endif
+
 #include "stm32h7/clock.h"
 
 #ifdef BOOTSTUB

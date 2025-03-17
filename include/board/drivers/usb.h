@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 // IRQs: OTG_FS
 

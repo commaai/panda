@@ -1,4 +1,5 @@
 #pragma once
+#include "drivers/uart.h"
 #include "drivers/interrupts_declarations.h"
 static void uart_rx_ring(uart_ring *q){
   // Do not read out directly if DMA enabled

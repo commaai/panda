@@ -1,4 +1,7 @@
-#include "power_saving_declarations.h"
+#include "power_saving.h"
+#include "config.h"
+#include "drivers/gpio.h"
+#include "boards/board_declarations.h"
 
 // WARNING: To stay in compliance with the SIL2 rules laid out in STM UM1840, we should never implement any of the available hardware low power modes.
 // See rule: CoU_3
