@@ -26,11 +26,11 @@ static void cuatro_enable_can_transceiver(uint8_t transceiver, bool enabled) {
 }
 
 static uint32_t cuatro_read_voltage_mV(void) {
-  return adc_get_mV(8) * 11U;
+  return (voltage_raw * current_board->avdd_mV) / 65535U * 11U;
 }
 
 static uint32_t cuatro_read_current_mA(void) {
-  return adc_get_mV(3) * 2U;
+  return (current_raw * current_board->avdd_mV) / 65535U * 2;
 }
 
 static void cuatro_set_fan_enabled(bool enabled) {
