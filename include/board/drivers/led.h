@@ -8,13 +8,13 @@
 
 extern board* current_board;
 
-void led_set(uint8_t color, bool enabled) {
+static inline void led_set(uint8_t color, bool enabled) {
   if (color < 3U) {
     set_gpio_output(current_board->led_GPIO[color], current_board->led_pin[color], !enabled);
   }
 }
 
-void led_init(void) {
+static inline void led_init(void) {
   for (uint8_t i = 0U; i<3U; i++){
     set_gpio_pullup(current_board->led_GPIO[i], current_board->led_pin[i], PULL_NONE);
     set_gpio_mode(current_board->led_GPIO[i], current_board->led_pin[i], MODE_OUTPUT);

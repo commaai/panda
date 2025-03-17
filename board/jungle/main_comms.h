@@ -1,4 +1,5 @@
 #pragma once
+#include "libc.h"
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 bool generated_can_traffic = false;

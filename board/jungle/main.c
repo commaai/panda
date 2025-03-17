@@ -25,6 +25,7 @@
 
 #include "board/can_comms.h"
 #include "main_comms.h"
+#include "libc.h"
 
 
 // ********************* Serial debugging *********************

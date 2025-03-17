@@ -9,8 +9,8 @@ void puth(unsigned int i);
 void puth2(unsigned int i);
 void puth4(unsigned int i);
 void hexdump(const void *a, int l);
-void pwm_init(TIM_TypeDef *TIM, uint8_t channel);
-void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
+//void pwm_init(TIM_TypeDef *TIM, uint8_t channel);
+//void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
 
 // ********************* Globals **********************
 extern uint8_t hw_type;

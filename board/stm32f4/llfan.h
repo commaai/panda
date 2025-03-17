@@ -1,4 +1,5 @@
 #pragma once
+#include "pwm.h"
 // TACH interrupt handler
 static void EXTI2_IRQ_Handler(void) {
   volatile unsigned int pr = EXTI->PR & (1U << 2);
