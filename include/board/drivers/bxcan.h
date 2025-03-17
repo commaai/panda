@@ -1,4 +1,13 @@
 #pragma once
+#include <stdbool.h>
+#include "platform_definitions.h"
+#include "utils.h"
+#include "can.h"
+#include "can_common.h"
+#include "can_comms.h"
+#include "health.h"
+#include "safety.h"
+#include "drivers/led.h"
 
 // IRQs: CAN1_TX, CAN1_RX0, CAN1_SCE
 //       CAN2_TX, CAN2_RX0, CAN2_SCE
@@ -11,7 +20,6 @@ extern uint8_t can_irq_number[CAN_IRQS_ARRAY_SIZE][CAN_IRQS_ARRAY_SIZE];
 
 bool can_set_speed(uint8_t can_number);
 void can_clear_send(CAN_TypeDef *CANx, uint8_t can_number);
-void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg);
 
 // ***************************** CAN *****************************
 // CANx_TX IRQ Handler

@@ -1,4 +1,14 @@
 #pragma once
+#include <stdint.h>
+#include <stdbool.h>
+#include "board/config.h"
+#include "utils.h"
+#include "can.h"
+#include "can_common.h"
+#include "can_comms.h"
+#include "health.h"
+#include "safety.h"
+#include "drivers/led.h"
 
 // IRQs: FDCAN1_IT0, FDCAN1_IT1
 //       FDCAN2_IT0, FDCAN2_IT1
@@ -17,7 +27,6 @@ extern FDCAN_GlobalTypeDef *cans[CANS_ARRAY_SIZE];
 #define CAN_ACK_ERROR 3U
 
 void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number);
-void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg);
 
 // ***************************** CAN *****************************
 // FDFDCANx_IT1 IRQ Handler (TX)

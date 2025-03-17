@@ -1,4 +1,5 @@
-#include "usb_declarations.h"
+#include "usb.h"
+#include "config.h"
 
 static uint8_t response[USBPACKET_MAX_SIZE];
 

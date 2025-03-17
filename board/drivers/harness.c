@@ -1,4 +1,6 @@
-#include "harness_declarations.h"
+#include "harness.h"
+#include "gpio.h"
+#include "config.h"
 
 struct harness_t harness;
 

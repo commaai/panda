@@ -1,4 +1,5 @@
 #pragma once
+#include "drivers/uart.h"
 #include "drivers/interrupts_declarations.h"
 // ***************************** Interrupt handlers *****************************
 

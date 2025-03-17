@@ -1,3 +1,13 @@
+#pragma once
+#include "board/can_comms.h"
+#include "obj/gitversion.h"
+#include "drivers/bootkick.h"
+#include "drivers/can_common.h"
+#include "safety.h"
+#include "power_saving.h"
+#include "provision.h"
+#include "early_init.h"
+
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 // Prototypes

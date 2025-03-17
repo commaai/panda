@@ -2,7 +2,9 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "board/drivers/harness_configuration.h"
 
+#ifndef PANDA_JUNGLE
 // ******************** Prototypes ********************
 typedef enum {
   BOOT_STANDBY,
@@ -24,7 +26,7 @@ typedef void (*board_set_bootkick)(BootState state);
 typedef bool (*board_read_som_gpio)(void);
 typedef void (*board_set_amp_enabled)(bool enabled);
 
-struct board {
+typedef struct board {
   harness_configuration *harness_config;
   GPIO_TypeDef * const led_GPIO[3];
   const uint8_t led_pin[3];
@@ -48,7 +50,7 @@ struct board {
   board_set_bootkick set_bootkick;
   board_read_som_gpio read_som_gpio;
   board_set_amp_enabled set_amp_enabled;
-};
+} board;
 
 // ******************* Definitions ********************
 // These should match the enums in cereal/log.capnp and __init__.py
@@ -82,3 +84,7 @@ extern struct board board_grey;
 extern struct board board_white;
 extern struct board board_cuatro;
 extern struct board board_red;
+
+#else
+    #include "jungle/boards/board.h"
+#endif

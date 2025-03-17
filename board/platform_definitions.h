@@ -6,6 +6,7 @@
 //  TIM_TypeDef
 //  IRQn_Type
 //  USART_TypeDef
+//  CAN_TypeDef
 #ifdef STM32H7
   #include "stm32h7/stm32h7_platform_definitions.h"
 #elif defined(STM32F4)

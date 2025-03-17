@@ -1,16 +1,6 @@
-/*
-  CAN transactions to and from the host come in the form of
-  a certain number of CANPacket_t. The transaction is split
-  into multiple transfers or chunks.
-
-  * comms_can_read outputs this buffer in chunks of a specified length.
-    chunks are always the given length, except the last one.
-  * comms_can_write reads in this buffer in chunks.
-  * both functions maintain an overflow buffer for a partial CANPacket_t that
-    spans multiple transfers/chunks.
-  * the overflow buffers are reset by a dedicated control transfer handler,
-    which is sent by the host on each start of a connection.
-*/
+#include "can_comms.h"
+#include "can_common.h"
+#include <string.h>
 
 typedef struct {
   uint32_t ptr;
