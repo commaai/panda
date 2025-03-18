@@ -1,6 +1,6 @@
-#pragma once
+#include "lladc.h"
 
-static inline void adc_init(void) {
+void adc_init(void) {
   ADC1->CR &= ~(ADC_CR_DEEPPWD); //Reset deep-power-down mode
   ADC1->CR |= ADC_CR_ADVREGEN; // Enable ADC regulator
   while(!(ADC1->ISR & ADC_ISR_LDORDY));
@@ -15,7 +15,7 @@ static inline void adc_init(void) {
   while(!(ADC1->ISR & ADC_ISR_ADRDY));
 }
 
-static inline uint16_t adc_get_raw(uint8_t channel) {
+static uint16_t adc_get_raw(uint8_t channel) {
   uint16_t res = 0U;
   ADC1->SQR1 &= ~(ADC_SQR1_L);
   ADC1->SQR1 = (uint32_t)channel << 6U;
@@ -35,6 +35,6 @@ static inline uint16_t adc_get_raw(uint8_t channel) {
   return res;
 }
 
-static inline uint16_t adc_get_mV(uint8_t channel) {
+uint16_t adc_get_mV(uint8_t channel) {
   return (adc_get_raw(channel) * current_board->avdd_mV) / 65535U;
 }

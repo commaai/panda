@@ -4,7 +4,7 @@
 #include "drivers/harness_configuration.h"
 #include "board/boards/board.h"
 
-extern board* current_board;
+extern board *current_board;
 
 #define HARNESS_STATUS_NC 0U
 #define HARNESS_STATUS_NORMAL 1U

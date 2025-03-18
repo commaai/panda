@@ -1,4 +1,5 @@
-#pragma once
+#include "sound.h"
+#include "interrupts.h"
 #define SOUND_RX_BUF_SIZE 1000U
 #define SOUND_TX_BUF_SIZE (SOUND_RX_BUF_SIZE/2U)
 #define MIC_RX_BUF_SIZE 512U

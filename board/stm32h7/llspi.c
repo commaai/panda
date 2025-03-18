@@ -1,4 +1,5 @@
-#pragma once
+#include "llspi.h"
+#include "critical.h"
 #include "drivers/interrupts.h"
 #include "drivers/registers.h"
 

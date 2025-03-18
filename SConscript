@@ -163,7 +163,15 @@ def build_project(project_name, project, extra_flags):
         env.Object(f"stm32h7_peripherals-{project_name}", f"{panda_root}/board/stm32h7/peripherals.c"),
         env.Object(f"stm32h7_llfdcan-{project_name}", f"{panda_root}/board/stm32h7/llfdcan.c"),
         env.Object(f"stm32h7_llusb-{project_name}", f"{panda_root}/board/stm32h7/llusb.c"),
-        thing("llfan")
+        thing("llfan"),
+        thing("clock"),
+        thing("lladc"),
+        thing("lldac"),
+        thing("llflash"),
+        thing("lli2c"),
+        thing("llspi"),
+        thing("lluart"),
+        thing("sound"),
       ])
 
   def thing(name):

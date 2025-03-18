@@ -1,4 +1,6 @@
 #include "clock.h"
+#include "registers.h"
+#include "platform_definitions.h"
 void clock_init(void) {
   // enable external oscillator
   register_set_bits(&(RCC->CR), RCC_CR_HSEON);
