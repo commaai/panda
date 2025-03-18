@@ -1,7 +1,9 @@
-#pragma once
+#include "llfan.h"
+#include "fan.h"
+#include "interrupts.h"
 #include "pwm.h"
 // TACH interrupt handler
-static void EXTI2_IRQ_Handler(void) {
+void EXTI2_IRQ_Handler(void) {
   volatile unsigned int pr = EXTI->PR1 & (1U << 2);
   if ((pr & (1U << 2)) != 0U) {
     fan_state.tach_counter++;

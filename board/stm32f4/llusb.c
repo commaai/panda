@@ -1,5 +1,5 @@
-#pragma once
-#include "llusb_declarations.h"
+#include "llusb.h"
+#include "interrupts.h"
 
 USB_OTG_GlobalTypeDef *USBx = USB_OTG_FS;
 

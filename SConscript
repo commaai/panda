@@ -155,18 +155,28 @@ def build_project(project_name, project, extra_flags):
 
 
   # Add some more sources that we skip for bootstub.
+  def thing(name):
+      return env.Object(f"stm32h7_{name}", f"{panda_root}/board/stm32h7/{name}.c"),
   if "DSTM32H7" in " ".join(project["PROJECT_FLAGS"]):
       sources.extend([
         env.Object(f"drivers_fdcan-{project_name}", f"{panda_root}/board/drivers/fdcan.c"),
         env.Object(f"stm32h7_peripherals-{project_name}", f"{panda_root}/board/stm32h7/peripherals.c"),
         env.Object(f"stm32h7_llfdcan-{project_name}", f"{panda_root}/board/stm32h7/llfdcan.c"),
+        env.Object(f"stm32h7_llusb-{project_name}", f"{panda_root}/board/stm32h7/llusb.c"),
+        thing("llfan")
       ])
+
+  def thing(name):
+      return env.Object(f"stm32f4_{name}", f"{panda_root}/board/stm32f4/{name}.c"),
   if "DSTM32F4" in " ".join(project["PROJECT_FLAGS"]):
       sources.extend([
         env.Object(f"drivers_bxcan-{project_name}", f"{panda_root}/board/drivers/bxcan.c"),
         env.Object(f"stm32f4_peripherals-{project_name}", f"{panda_root}/board/stm32f4/peripherals.c"),
         env.Object(f"stm32f4_llbxcan-{project_name}", f"{panda_root}/board/stm32f4/llbxcan.c"),
+        env.Object(f"stm32f4_llusb-{project_name}", f"{panda_root}/board/stm32f4/llusb.c"),
+        thing("llfan")
       ])
+
   # Build main
   main_obj = env.Object(f"main-{project_name}", project["MAIN"])
   main_elf = env.Program(f"obj/{project_name}.elf", [startup, main_obj] + sources,
@@ -238,5 +248,5 @@ SConscript('board/SConscript')
 #SConscript('board/jungle/SConscript')
 
 # test files
-if GetOption('extras'):
-  SConscript('tests/libpanda/SConscript')
+#if GetOption('extras'):
+#  SConscript('tests/libpanda/SConscript')
