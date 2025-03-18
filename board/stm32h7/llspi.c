@@ -1,6 +1,7 @@
-#pragma once
+#include "llspi.h"
 #include "drivers/interrupts.h"
 #include "drivers/registers.h"
+#include "critical.h"
 
 #if defined(ENABLE_SPI) || defined(BOOTSTUB)
 // master -> panda DMA start
