@@ -1,4 +1,4 @@
-#pragma once
+#include "lladc.h"
 
 void adc_init(void) {
   register_set(&(ADC->CCR), ADC_CCR_TSVREFE | ADC_CCR_VBATE, 0xC30000U);

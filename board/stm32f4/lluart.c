@@ -1,5 +1,5 @@
-#pragma once
-#include "drivers/uart.h"
+#include "lluart.h"
+#include "critical.h"
 #include "drivers/interrupts.h"
 // ***************************** Interrupt handlers *****************************
 

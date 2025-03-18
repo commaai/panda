@@ -174,7 +174,11 @@ def build_project(project_name, project, extra_flags):
         env.Object(f"stm32f4_peripherals-{project_name}", f"{panda_root}/board/stm32f4/peripherals.c"),
         env.Object(f"stm32f4_llbxcan-{project_name}", f"{panda_root}/board/stm32f4/llbxcan.c"),
         env.Object(f"stm32f4_llusb-{project_name}", f"{panda_root}/board/stm32f4/llusb.c"),
-        thing("llfan")
+        thing("clock"),
+        thing("lladc"),
+        thing("llflash"),
+        thing("llspi"),
+        thing("lluart"),
       ])
 
   # Build main
