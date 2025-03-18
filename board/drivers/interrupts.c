@@ -1,4 +1,6 @@
 #include "interrupts.h"
+#include "critical.h"
+#include "timers.h"
 #include "config.h"
 
 void unused_interrupt_handler(void) {

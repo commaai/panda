@@ -13,7 +13,6 @@ typedef struct interrupt {
 } interrupt;
 
 void interrupt_timer_init(void);
-uint32_t microsecond_timer_get(void);
 void unused_interrupt_handler(void);
 
 extern interrupt interrupts[NUM_INTERRUPTS];

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "boards/board.h"
+#include "stm32f4/peripherals.h"
 
 // ///////////////////// //
 // White Panda (STM32F4) //

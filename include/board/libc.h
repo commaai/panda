@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+extern void print(const char *a);
 void delay(uint32_t a);
 void assert_fatal(bool condition, const char *msg);
 void *memset(void *str, int c, unsigned int n);

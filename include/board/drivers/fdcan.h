@@ -1,14 +1,8 @@
 #pragma once
 #include <stdint.h>
 #include <stdbool.h>
-#include "board/config.h"
-#include "utils.h"
 #include "can.h"
-#include "can_common.h"
-#include "can_comms.h"
-#include "health.h"
-#include "safety.h"
-#include "drivers/led.h"
+#include "platform_definitions.h"
 
 // IRQs: FDCAN1_IT0, FDCAN1_IT1
 //       FDCAN2_IT0, FDCAN2_IT1

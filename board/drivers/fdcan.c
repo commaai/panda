@@ -1,6 +1,13 @@
 #include "fdcan.h"
+#include "can.h"
 #include "can_common.h"
 #include "libc.h"
+#include "led.h"
+#include "timers.h"
+#include "llfdcan.h"
+#include "interrupts.h"
+#include "critical.h"
+#include "safety.h"
 
 FDCAN_GlobalTypeDef *cans[CANS_ARRAY_SIZE] = {FDCAN1, FDCAN2, FDCAN3};
 

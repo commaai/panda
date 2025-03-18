@@ -1,4 +1,3 @@
-#pragma once
 #include "libc.h"
 #include <stdint.h>
 
