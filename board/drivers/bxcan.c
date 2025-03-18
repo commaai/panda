@@ -2,7 +2,7 @@
 #include <string.h>
 #include "interrupts.h"
 #include "critical.h"
-#include "stm32f4/llbxcan_declarations.h"
+#include "stm32f4/llbxcan.h"
 
 
 // IRQs: CAN1_TX, CAN1_RX0, CAN1_SCE
