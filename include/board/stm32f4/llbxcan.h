@@ -1,4 +1,8 @@
 #pragma once
+#include <stdint.h>
+#include <stdbool.h>
+#include "platform_definitions.h"
+#include "registers.h"
 
 // SAE 2284-3 : minimum 16 tq, SJW 3, sample point at 81.3%
 #define CAN_QUANTA 16U

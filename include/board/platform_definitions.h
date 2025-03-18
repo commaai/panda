@@ -7,6 +7,7 @@
 //  IRQn_Type
 //  USART_TypeDef
 //  CAN_TypeDef
+#define CAN_INIT_TIMEOUT_MS 500U
 #ifdef STM32H7
   #include "stm32h7/stm32h7_platform_definitions.h"
 #elif defined(STM32F4)
