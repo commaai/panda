@@ -1,4 +1,5 @@
 #pragma once
+#include "platform_definitions.h"
 #include "registers.h"
 #define PWM_COUNTER_OVERFLOW 2000U // To get ~50kHz
 

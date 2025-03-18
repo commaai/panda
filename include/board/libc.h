@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <stdbool.h>
 
 void delay(uint32_t a);
 void assert_fatal(bool condition, const char *msg);
