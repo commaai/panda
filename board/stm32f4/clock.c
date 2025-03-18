@@ -1,5 +1,5 @@
-#pragma once
-static inline void clock_init(void) {
+#include "clock.h"
+void clock_init(void) {
   // enable external oscillator
   register_set_bits(&(RCC->CR), RCC_CR_HSEON);
   while ((RCC->CR & RCC_CR_HSERDY) == 0U);
