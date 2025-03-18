@@ -1,4 +1,5 @@
 #include "critical.h"
+#include "interrupts.h"
 #include <stdbool.h>
 
 // ********************* Critical section helpers *********************
