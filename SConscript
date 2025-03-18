@@ -163,6 +163,7 @@ def build_project(project_name, project, extra_flags):
       sources.extend([
         env.Object(f"drivers_bxcan-{project_name}", f"{panda_root}/board/drivers/bxcan.c"),
         env.Object(f"stm32f4_peripherals-{project_name}", f"{panda_root}/board/stm32f4/peripherals.c"),
+        env.Object(f"stm32f4_llbxcan-{project_name}", f"{panda_root}/board/stm32f4/llbxcan.c"),
       ])
   # Build main
   main_obj = env.Object(f"main-{project_name}", project["MAIN"])
