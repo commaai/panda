@@ -31,10 +31,8 @@
   #include "board/drivers/bxcan.h"
 #endif
 
-#include "board/obj/gitversion.h"
-
 #include "board/can_comms.h"
-#include "main_comms.h"
+#include "jungle/main_comms.h"
 #include "libc.h"
 
 
