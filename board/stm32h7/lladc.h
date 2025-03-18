@@ -58,7 +58,6 @@ static void ADC_IRQ_Handler(void) {
   }
 }
 
-
 void adc_init(void) {
   // ADC1 for one-off conversions
   ADC1->CR = ADC_CR_ADVREGEN;

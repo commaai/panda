@@ -8,6 +8,10 @@ from panda import Panda
 
 @pytest.mark.skip_panda_types((Panda.HW_TYPE_DOS, ))
 def test_voltage(p):
+  # LPF needs to stabilize first
+  while p.health()['uptime'] < 1:
+    time.sleep(0.1)
+
   for _ in range(10):
     voltage = p.health()['voltage']
     assert ((voltage > 11000) and (voltage < 13000))
