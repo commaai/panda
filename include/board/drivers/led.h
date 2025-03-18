@@ -6,7 +6,7 @@
 #define LED_GREEN 1U
 #define LED_BLUE 2U
 
-extern board* current_board;
+extern board *current_board;
 
 static inline void led_set(uint8_t color, bool enabled) {
   if (color < 3U) {

@@ -1,4 +1,7 @@
-#pragma once
+#include "clock.h"
+#include <stdbool.h>
+#include "registers.h"
+#include "platform_definitions.h"
 /*
 HSE: 25MHz
 PLL1Q: 80MHz (for FDCAN)
@@ -26,7 +29,7 @@ typedef enum {
 
 // TODO: find a better way to distinguish between H725 (using SMPS) and H723 (lacking SMPS)
 // The package will do for now, since we have only used TFBGA100 for H723
-static inline PackageSMPSType get_package_smps_type(void) {
+static PackageSMPSType get_package_smps_type(void) {
   PackageSMPSType ret;
   RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN; // make sure SYSCFG clock is enabled. does seem to read fine without too though
 
@@ -46,7 +49,7 @@ static inline PackageSMPSType get_package_smps_type(void) {
   return ret;
 }
 
-static inline void clock_init(void) {
+void clock_init(void) {
   /*
     WARNING: PWR->CR3's lower byte can only be written once
     * subsequent writes will silently fail

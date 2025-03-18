@@ -1,4 +1,5 @@
 #include "llflash.h"
+#include "platform_definitions.h"
 
 bool flash_is_locked(void) {
     return (FLASH->CR & FLASH_CR_LOCK);
