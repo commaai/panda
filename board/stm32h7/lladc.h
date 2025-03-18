@@ -42,7 +42,7 @@ void adc2_start_channel(uint8_t channel) {
 }
 
 static void ADC_IRQ_Handler(void) {
-  if (ADC2->ISR & ADC_ISR_EOC) {
+  if ((ADC2->ISR & ADC_ISR_EOC) != 0U) {
     uint16_t res = ADC2->DR;
     uint8_t next_channel = CADC_CHANNEL_NONE;
 
@@ -52,7 +52,7 @@ static void ADC_IRQ_Handler(void) {
     } else if (cadc_state.current_channel == current_board->current_cadc_channel) {
       cadc_state.current_raw = (((CADC_FILTERING - 1U) * cadc_state.current_raw) + res) / CADC_FILTERING;
       next_channel = (current_board->voltage_cadc_channel != CADC_CHANNEL_NONE) ? current_board->voltage_cadc_channel : current_board->current_cadc_channel;
-    }
+    } else {}
 
     adc2_start_channel(next_channel);
   }
