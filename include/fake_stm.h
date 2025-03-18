@@ -9,6 +9,7 @@
 #define CANFD
 #define ALLOW_DEBUG
 #define PANDA
+#define FAULT_RELAY_MALFUNCTION             (1UL << 0)
 
 #define ENTER_CRITICAL() 0
 #define EXIT_CRITICAL() 0
@@ -27,10 +28,12 @@ typedef struct {
 
 TIM_TypeDef timer;
 TIM_TypeDef *MICROSECOND_TIMER = &timer;
-uint32_t microsecond_timer_get(void);
+
 
 static inline uint32_t microsecond_timer_get(void) {
   return MICROSECOND_TIMER->CNT;
 }
 
 typedef uint32_t GPIO_TypeDef;
+
+void refresh_can_tx_slots_available(void) {}

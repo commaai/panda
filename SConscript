@@ -86,6 +86,8 @@ def build_project(project_name, project, extra_flags):
     f"{panda_root}/board/",
     f"{panda_root}/include/",
     f"{panda_root}/include/board/",
+    f"{panda_root}/include/board/stm32h7",
+    f"{panda_root}/include/board/boards/",
     f"{panda_root}/include/board/drivers/",
     f"{panda_root}/include/board/jungle/",
     f"{panda_root}/include/board/jungle/boards/",
@@ -133,6 +135,7 @@ def build_project(project_name, project, extra_flags):
       env.Object(f"drivers_timers-{project_name}", f"{panda_root}/board/drivers/timers.c"),
       env.Object(f"drivers_uart-{project_name}", f"{panda_root}/board/drivers/uart.c"),
       env.Object(f"drivers_usb-{project_name}", f"{panda_root}/board/drivers/usb.c"),
+      env.Object(f"unused_funcs-{project_name}", f"{panda_root}/board/boards/unused_funcs.c"),
   ]
 
   # Jungle board does not get these drivers.
@@ -152,9 +155,15 @@ def build_project(project_name, project, extra_flags):
 
   # Add some more sources that we skip for bootstub.
   if "DSTM32H7" in " ".join(project["PROJECT_FLAGS"]):
-      sources.append(env.Object(f"drivers_fdcan-{project_name}", f"{panda_root}/board/drivers/fdcan.c"))
+      sources.extend([
+        env.Object(f"drivers_fdcan-{project_name}", f"{panda_root}/board/drivers/fdcan.c"),
+        env.Object(f"stm32h7_peripherals-{project_name}", f"{panda_root}/board/stm32h7/peripherals.c"),
+      ])
   if "DSTM32F4" in " ".join(project["PROJECT_FLAGS"]):
-      sources.append(env.Object(f"drivers_bxcan-{project_name}", f"{panda_root}/board/drivers/bxcan.c"))
+      sources.extend([
+        env.Object(f"drivers_bxcan-{project_name}", f"{panda_root}/board/drivers/bxcan.c"),
+        env.Object(f"stm32f4_peripherals-{project_name}", f"{panda_root}/board/stm32f4/peripherals.c"),
+      ])
   # Build main
   main_obj = env.Object(f"main-{project_name}", project["MAIN"])
   main_elf = env.Program(f"obj/{project_name}.elf", [startup, main_obj] + sources,
@@ -223,7 +232,7 @@ with open("board/obj/cert.h", "w") as f:
 SConscript('board/SConscript')
 
 # panda jungle fw
-SConscript('board/jungle/SConscript')
+#SConscript('board/jungle/SConscript')
 
 # test files
 if GetOption('extras'):

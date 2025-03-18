@@ -1,6 +1,5 @@
 #pragma once
-#include "critical.h"
-#include "registers.h"
+#include <stdbool.h>
 #include "platform_definitions.h"
 
 #define MODE_INPUT 0

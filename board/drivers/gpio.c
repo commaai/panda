@@ -1,4 +1,6 @@
 #include "gpio.h"
+#include "critical.h"
+#include "registers.h"
 
 void set_gpio_mode(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
   ENTER_CRITICAL();

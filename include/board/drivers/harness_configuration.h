@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "platform_definitions.h"
+#include "gpio.h"
 
 typedef struct harness_configuration {
   const bool has_harness;

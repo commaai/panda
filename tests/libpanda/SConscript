@@ -49,8 +49,13 @@ if GetOption('ubsan'):
   env['CFLAGS'] += flags
   env['LINKFLAGS'] += flags
 
+# Add can_common.c as a build target
+can_common = env.SharedObject("drivers_can_common.os", "../../board/drivers/can_common.c")
+can = env.SharedObject("can.os", "../../board/can.c")
+faults = env.SharedObject("fault.os", "../../board/faults.c")
+
 panda = env.SharedObject("panda.os", "panda.c")
-libpanda = env.SharedLibrary("libpanda.so", [panda])
+libpanda = env.SharedLibrary("libpanda.so", [panda, can, can_common, faults])
 
 if GetOption('coverage'):
   env.Append(
