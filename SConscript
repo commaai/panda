@@ -135,45 +135,59 @@ def build_project(project_name, project, extra_flags):
       ("drivers_gpio", f"{panda_root}/board/drivers/gpio.c"),
       ("drivers_interrupts", f"{panda_root}/board/drivers/interrupts.c"),
       ("drivers_registers", f"{panda_root}/board/drivers/registers.c"),
-      ("drivers_simple_watchdog", f"{panda_root}/board/drivers/simple_watchdog.c"),
       ("drivers_spi", f"{panda_root}/board/drivers/spi.c"),
       ("drivers_timers", f"{panda_root}/board/drivers/timers.c"),
       ("drivers_usb", f"{panda_root}/board/drivers/usb.c"),
       ("unused_funcs", f"{panda_root}/board/boards/unused_funcs.c"),
-      ("drivers_fan", f"{panda_root}/board/drivers/fan.c"),
-      # maybe not in jungle
-      ("drivers_harness", f"{panda_root}/board/drivers/harness.c"),
   ]
 
-  # Jungle board does not get these drivers.
-  if "PANDA_JUNGLE" not in " ".join(extra_flags):
+  _is_panda_jungle = "PANDA_JUNGLE" in " ".join(extra_flags)
+  _is_stm32h7 = "DSTM32H7" in " ".join(project["PROJECT_FLAGS"])
+  _is_stm32f4 = "DSTM32F4" in " ".join(project["PROJECT_FLAGS"])
+
+  # Jungle does not get these drivers.
+  if not _is_panda_jungle:
       sources.extend([
+          ("drivers_harness", f"{panda_root}/board/drivers/harness.c"),
+          ("drivers_simple_watchdog", f"{panda_root}/board/drivers/simple_watchdog.c"),
+          ("drivers_fan", f"{panda_root}/board/drivers/fan.c"),
+      ])
+  if _is_panda_jungle:
+      sources.extend([
+          ("jungle_board", f"{panda_root}/board/jungle/boards/board.c"),
       ])
 
-  if "DSTM32H7" in " ".join(project["PROJECT_FLAGS"]):
+  if _is_stm32h7:
       sources.extend([
         ("stm32h7_peripherals", f"{panda_root}/board/stm32h7/peripherals.c"),
         ("stm32h7_llusb", f"{panda_root}/board/stm32h7/llusb.c"),
-        ("stm32h7_llfan", f"{panda_root}/board/stm32h7/llfan.c"),
         ("stm32h7_clock", f"{panda_root}/board/stm32h7/clock.c"),
         ("stm32h7_lladc", f"{panda_root}/board/stm32h7/lladc.c"),
         ("stm32h7_lldac", f"{panda_root}/board/stm32h7/lldac.c"),
         ("stm32h7_llflash", f"{panda_root}/board/stm32h7/llflash.c"),
         ("stm32h7_lli2c", f"{panda_root}/board/stm32h7/lli2c.c"),
         ("stm32h7_llspi", f"{panda_root}/board/stm32h7/llspi.c"),
-        ("stm32h7_sound", f"{panda_root}/board/stm32h7/sound.c"),
       ])
+      if not _is_panda_jungle:
+          sources.extend([
+            ("stm32h7_llfan", f"{panda_root}/board/stm32h7/llfan.c"),
+            ("stm32h7_sound", f"{panda_root}/board/stm32h7/sound.c"),
+          ])
 
-  if "DSTM32F4" in " ".join(project["PROJECT_FLAGS"]):
+
+  if _is_stm32f4:
       sources.extend([
         ("stm32f4_peripherals", f"{panda_root}/board/stm32f4/peripherals.c"),
         ("stm32f4_llusb", f"{panda_root}/board/stm32f4/llusb.c"),
-        ("stm32f4_llfan", f"{panda_root}/board/stm32f4/llfan.c"),
         ("stm32f4_clock", f"{panda_root}/board/stm32f4/clock.c"),
         ("stm32f4_lladc", f"{panda_root}/board/stm32f4/lladc.c"),
         ("stm32f4_llflash", f"{panda_root}/board/stm32f4/llflash.c"),
         ("stm32f4_llspi", f"{panda_root}/board/stm32f4/llspi.c"),
       ])
+      if not _is_panda_jungle:
+          sources.extend([
+            ("stm32f4_llfan", f"{panda_root}/board/stm32f4/llfan.c"),
+          ])
 
   # Create a bootstub-specific environment with -DBOOTSTUB flag
   bootstub_env = env.Clone()
@@ -198,22 +212,29 @@ def build_project(project_name, project, extra_flags):
 
   # Needed for full build.
   sources.extend( [
-      ("main_comms", f"{panda_root}/board/main_comms.c"),
       ("can", f"{panda_root}/board/can.c"),
       ("can_comms", f"{panda_root}/board/can_comms.c"),
-      ("drivers_bootkick", f"{panda_root}/board/drivers/bootkick.c"),
       ("drivers_can_common", f"{panda_root}/board/drivers/can_common.c"),
       ("drivers_uart", f"{panda_root}/board/drivers/uart.c"),
       ("main_definitions", f"{panda_root}/board/main_definitions.c"),
-      ("power_saving", f"{panda_root}/board/power_saving.c"),
   ])
-  if "DSTM32H7" in " ".join(project["PROJECT_FLAGS"]):
+  if _is_panda_jungle:
+      sources.extend([
+          ("jungle_main_comms", f"{panda_root}/board/jungle/main_comms.c"),
+      ])
+  else:
+      sources.extend([
+          ("power_saving", f"{panda_root}/board/power_saving.c"),
+          ("main_comms", f"{panda_root}/board/main_comms.c"),
+          ("drivers_bootkick", f"{panda_root}/board/drivers/bootkick.c"),
+      ])
+  if _is_stm32h7:
       sources.extend([
         ("drivers_fdcan", f"{panda_root}/board/drivers/fdcan.c"),
         ("stm32h7_llfdcan", f"{panda_root}/board/stm32h7/llfdcan.c"),
         ("stm32h7_lluart", f"{panda_root}/board/stm32h7/lluart.c"),
       ])
-  if "DSTM32F4" in " ".join(project["PROJECT_FLAGS"]):
+  if _is_stm32f4:
       sources.extend([
         ("drivers_bxcan", f"{panda_root}/board/drivers/bxcan.c"),
         ("stm32f4_llbxcan", f"{panda_root}/board/stm32f4/llbxcan.c"),
@@ -289,7 +310,7 @@ with open("board/obj/cert.h", "w") as f:
 SConscript('board/SConscript')
 
 # panda jungle fw
-#SConscript('board/jungle/SConscript')
+SConscript('board/jungle/SConscript')
 
 # test files
 #if GetOption('extras'):
