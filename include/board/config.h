@@ -34,5 +34,5 @@
 #ifndef BOOTSTUB
   #include "main_definitions.h"
 #else
-  #include "bootstub_declarations.h"
+  #include "bootstub_definitions.h"
 #endif

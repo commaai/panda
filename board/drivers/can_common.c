@@ -3,7 +3,7 @@
 #include "timers.h"
 #include "faults.h"
 #include "critical.h"
-#include "safety.h"
+#include "safety_declarations.h"
 
 uint32_t safety_tx_blocked = 0;
 uint32_t safety_rx_invalid = 0;

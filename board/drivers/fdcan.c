@@ -7,7 +7,7 @@
 #include "llfdcan.h"
 #include "interrupts.h"
 #include "critical.h"
-#include "safety.h"
+#include "safety_declarations.h"
 
 FDCAN_GlobalTypeDef *cans[CANS_ARRAY_SIZE] = {FDCAN1, FDCAN2, FDCAN3};
 

@@ -20,7 +20,7 @@
 #include "early_init.h"
 #include "provision.h"
 
-#include "safety.h"
+#include "safety_declarations.h"
 
 #include "health.h"
 
@@ -34,7 +34,6 @@
 
 #include "power_saving.h"
 
-#include "obj/gitversion.h"
 
 #include "can_comms.h"
 #include "main_comms.h"
