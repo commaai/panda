@@ -1,8 +1,6 @@
-#include "stm32h7/lluart.h"
+#pragma once
+#include "drivers/uart.h"
 #include "drivers/interrupts.h"
-#include "critical.h"
-#include "platform_definitions.h"
-
 static void uart_rx_ring(uart_ring *q){
   // Do not read out directly if DMA enabled
   ENTER_CRITICAL();

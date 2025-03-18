@@ -1,4 +1,4 @@
-#include "llspi.h"
+#pragma once
 #include "drivers/interrupts.h"
 #include "drivers/registers.h"
 
