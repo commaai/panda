@@ -1,25 +1,32 @@
-#define BOOTSTUB
-
 #define VERS_TAG 0x53524556
 #define MIN_VERSION 2
 
 // ********************* Includes *********************
+#include "flasher.h"
+
 #include "config.h"
+// platform includes
+#ifdef STM32H7
+  #include "stm32h7/stm32h7_config.h"
+#elif defined(STM32F4)
+  #include "stm32f4/stm32f4_config.h"
+#endif
 
 #include "drivers/led.h"
 #include "drivers/pwm.h"
 #include "drivers/usb.h"
 
-#include "early_init.h"
 #include "provision.h"
+#include "interrupts.h"
+#include "critical.h"
 
 #include "crypto/rsa.h"
 #include "crypto/sha.h"
 
 #include "obj/cert.h"
-#include "obj/gitversion.h"
-#include "flasher.h"
 #include "libc.h"
+#include "early_init.h"
+
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {

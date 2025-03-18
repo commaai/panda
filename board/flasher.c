@@ -1,6 +1,15 @@
-#pragma once
+#include "flasher.h"
+#include <stddef.h>
 #include "libc.h"
-#include "comms_definitions.h"
+#include "config.h"
+#include "critical.h"
+#include "led.h"
+#include "provision.h"
+#include "peripherals.h"
+#include "usb.h"
+#include "spi.h"
+#include "utils.h"
+#include "obj/gitversion.h"
 // from the linker script
 #ifdef STM32H7
   #define APP_START_ADDRESS 0x8020000U
@@ -11,6 +20,8 @@
   #include "stm32f4/llflash.h"
   #include "stm32f4/peripherals.h"
 #endif
+#include "comms_definitions.h"
+#include "early_init.h"
 
 // flasher state variables
 uint32_t *prog_ptr = NULL;

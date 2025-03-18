@@ -4,11 +4,11 @@
 #include "utils.h"
 #include "can.h"
 #include "can_common.h"
-#include "can_comms.h"
+#include "comms_definitions.h"
 #include "drivers/timers.h"
 #include "health.h"
 #include "faults.h"
-#include "safety.h"
+#include "safety_declarations.h"
 #include "drivers/led.h"
 
 // IRQs: CAN1_TX, CAN1_RX0, CAN1_SCE

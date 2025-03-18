@@ -11,7 +11,7 @@
   //#include "fake_stm.h"
 #endif
 
-#include "safety.h"
+#include "safety_declarations.h"
 
 #include "board/drivers/led.h"
 #include "board/drivers/pwm.h"
