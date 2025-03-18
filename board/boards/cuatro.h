@@ -25,12 +25,8 @@ static void cuatro_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-static uint32_t cuatro_read_voltage_mV(void) {
-  return (voltage_raw * current_board->avdd_mV) / 65535U * 11U;
-}
-
 static uint32_t cuatro_read_current_mA(void) {
-  return (current_raw * current_board->avdd_mV) / 65535U * 2;
+  return ADC_RAW_TO_mV(cadc_state.current_raw) * 2U;
 }
 
 static void cuatro_set_fan_enabled(bool enabled) {
@@ -127,6 +123,7 @@ board board_cuatro = {
   .led_pin = {6, 7, 9},
   .led_pwm_channels = {1, 2, 4},
   .set_can_mode = tres_set_can_mode,
+  .check_ignition = red_check_ignition,
   .read_voltage_mV = cuatro_read_voltage_mV,
   .read_current_mA = cuatro_read_current_mA,
   .set_fan_enabled = cuatro_set_fan_enabled,
@@ -134,5 +131,7 @@ board board_cuatro = {
   .set_siren = unused_set_siren,
   .set_bootkick = cuatro_set_bootkick,
   .read_som_gpio = tres_read_som_gpio,
-  .set_amp_enabled = cuatro_set_amp_enabled
+  .set_amp_enabled = cuatro_set_amp_enabled,
+  .voltage_cadc_channel = 8U,
+  .current_cadc_channel = 3U
 };
