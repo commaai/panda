@@ -1,6 +1,11 @@
 // Early bringup
 #pragma once
 #include "drivers/led.h"
+#include "critical.h"
+
+extern void early_gpio_float(void);
+extern void detect_board_type(void);
+
 #define ENTER_BOOTLOADER_MAGIC 0xdeadbeefU
 #define ENTER_SOFTLOADER_MAGIC 0xdeadc0deU
 #define BOOT_NORMAL 0xdeadb111U

@@ -1,8 +1,8 @@
-#include <string.h>
-
 #include "config.h"
-#include "spi.h"
 #include "crc.h"
+#include "libc.h"
+#include "spi.h"
+#include "comms_definitions.h"
 
 #ifdef STM32H7
 #define SPI_BUF_SIZE 2048U

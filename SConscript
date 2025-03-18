@@ -122,6 +122,7 @@ def build_project(project_name, project, extra_flags):
 
   # Sources shared by all Panda variants
   sources = [
+      env.Object(f"libc-{project_name}", f"{panda_root}/board/libc.c"),
       env.Object(f"can-{project_name}", f"{panda_root}/board/can.c"),
       env.Object(f"can_comms-{project_name}", f"{panda_root}/board/can_comms.c"),
       env.Object(f"critical-{project_name}", f"{panda_root}/board/critical.c"),

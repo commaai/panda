@@ -1,10 +1,15 @@
 #pragma once
 #include "libc.h"
+#include "comms_definitions.h"
 // from the linker script
 #ifdef STM32H7
   #define APP_START_ADDRESS 0x8020000U
+  #include "stm32h7/llflash.h"
+  #include "stm32h7/peripherals.h"
 #elif defined(STM32F4)
   #define APP_START_ADDRESS 0x8004000U
+  #include "stm32f4/llflash.h"
+  #include "stm32f4/peripherals.h"
 #endif
 
 // flasher state variables

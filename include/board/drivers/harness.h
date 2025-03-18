@@ -5,6 +5,7 @@
 #include "board/boards/board.h"
 
 extern board *current_board;
+extern uint16_t adc_get_mV(uint8_t channel);
 
 #define HARNESS_STATUS_NC 0U
 #define HARNESS_STATUS_NORMAL 1U
