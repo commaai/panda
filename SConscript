@@ -87,6 +87,7 @@ def build_project(project_name, project, extra_flags):
     f"{panda_root}/include/",
     f"{panda_root}/include/board/",
     f"{panda_root}/include/board/stm32h7",
+    f"{panda_root}/include/board/stm32f4",
     f"{panda_root}/include/board/boards/",
     f"{panda_root}/include/board/drivers/",
     f"{panda_root}/include/board/jungle/",
@@ -158,6 +159,7 @@ def build_project(project_name, project, extra_flags):
       sources.extend([
         env.Object(f"drivers_fdcan-{project_name}", f"{panda_root}/board/drivers/fdcan.c"),
         env.Object(f"stm32h7_peripherals-{project_name}", f"{panda_root}/board/stm32h7/peripherals.c"),
+        env.Object(f"stm32h7_llfdcan-{project_name}", f"{panda_root}/board/stm32h7/llfdcan.c"),
       ])
   if "DSTM32F4" in " ".join(project["PROJECT_FLAGS"]):
       sources.extend([
