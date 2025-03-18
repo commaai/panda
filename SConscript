@@ -120,26 +120,29 @@ def build_project(project_name, project, extra_flags):
     env.Object(f"sha-{project_name}", f"{panda_root}/crypto/sha.c")
   ]
 
+  def make_object(_env, name, path):
+      return _env.Object(f"{name}-{project_name}", path)
+
   # Sources shared by all Panda variants
   sources = [
       #  bootstub_definitions, flasher,
-      env.Object(f"sf-{project_name}", f"{panda_root}/../opendbc/safety/safety.c"),
-      env.Object(f"early_init-{project_name}", f"{panda_root}/board/early_init.c"),
-      env.Object(f"libc-{project_name}", f"{panda_root}/board/libc.c"),
-      env.Object(f"critical-{project_name}", f"{panda_root}/board/critical.c"),
-      env.Object(f"faults-{project_name}", f"{panda_root}/board/faults.c"),
-      env.Object(f"drivers_clock_source-{project_name}", f"{panda_root}/board/drivers/clock_source.c"),
-      env.Object(f"drivers_gpio-{project_name}", f"{panda_root}/board/drivers/gpio.c"),
-      env.Object(f"drivers_interrupts-{project_name}", f"{panda_root}/board/drivers/interrupts.c"),
-      env.Object(f"drivers_registers-{project_name}", f"{panda_root}/board/drivers/registers.c"),
-      env.Object(f"drivers_simple_watchdog-{project_name}", f"{panda_root}/board/drivers/simple_watchdog.c"),
-      env.Object(f"drivers_spi-{project_name}", f"{panda_root}/board/drivers/spi.c"),
-      env.Object(f"drivers_timers-{project_name}", f"{panda_root}/board/drivers/timers.c"),
-      env.Object(f"drivers_usb-{project_name}", f"{panda_root}/board/drivers/usb.c"),
-      env.Object(f"unused_funcs-{project_name}", f"{panda_root}/board/boards/unused_funcs.c"),
-      env.Object(f"drivers_fan-{project_name}", f"{panda_root}/board/drivers/fan.c"),
+      ("safety", f"{panda_root}/../opendbc/safety/safety.c"),
+      ("early_init", f"{panda_root}/board/early_init.c"),
+      ("libc", f"{panda_root}/board/libc.c"),
+      ("critical", f"{panda_root}/board/critical.c"),
+      ("faults", f"{panda_root}/board/faults.c"),
+      ("drivers_clock_source", f"{panda_root}/board/drivers/clock_source.c"),
+      ("drivers_gpio", f"{panda_root}/board/drivers/gpio.c"),
+      ("drivers_interrupts", f"{panda_root}/board/drivers/interrupts.c"),
+      ("drivers_registers", f"{panda_root}/board/drivers/registers.c"),
+      ("drivers_simple_watchdog", f"{panda_root}/board/drivers/simple_watchdog.c"),
+      ("drivers_spi", f"{panda_root}/board/drivers/spi.c"),
+      ("drivers_timers", f"{panda_root}/board/drivers/timers.c"),
+      ("drivers_usb", f"{panda_root}/board/drivers/usb.c"),
+      ("unused_funcs", f"{panda_root}/board/boards/unused_funcs.c"),
+      ("drivers_fan", f"{panda_root}/board/drivers/fan.c"),
       # maybe not in jungle
-      env.Object(f"drivers_harness-{project_name}", f"{panda_root}/board/drivers/harness.c"),
+      ("drivers_harness", f"{panda_root}/board/drivers/harness.c"),
   ]
 
   # Jungle board does not get these drivers.
@@ -149,65 +152,78 @@ def build_project(project_name, project, extra_flags):
 
   if "DSTM32H7" in " ".join(project["PROJECT_FLAGS"]):
       sources.extend([
-        env.Object(f"stm32h7_peripherals-{project_name}", f"{panda_root}/board/stm32h7/peripherals.c"),
-        env.Object(f"stm32h7_llusb-{project_name}", f"{panda_root}/board/stm32h7/llusb.c"),
-        env.Object(f"stm32h7_llfan", f"{panda_root}/board/stm32h7/llfan.c"),
-        env.Object(f"stm32h7_clock", f"{panda_root}/board/stm32h7/clock.c"),
-        env.Object(f"stm32h7_lladc", f"{panda_root}/board/stm32h7/lladc.c"),
-        env.Object(f"stm32h7_lldac", f"{panda_root}/board/stm32h7/lldac.c"),
-        env.Object(f"stm32h7_llflash", f"{panda_root}/board/stm32h7/llflash.c"),
-        env.Object(f"stm32h7_lli2c", f"{panda_root}/board/stm32h7/lli2c.c"),
-        env.Object(f"stm32h7_llspi", f"{panda_root}/board/stm32h7/llspi.c"),
-        env.Object(f"stm32h7_lluart", f"{panda_root}/board/stm32h7/lluart.c"),
-        env.Object(f"stm32h7_sound", f"{panda_root}/board/stm32h7/sound.c"),
+        ("stm32h7_peripherals", f"{panda_root}/board/stm32h7/peripherals.c"),
+        ("stm32h7_llusb", f"{panda_root}/board/stm32h7/llusb.c"),
+        ("stm32h7_llfan", f"{panda_root}/board/stm32h7/llfan.c"),
+        ("stm32h7_clock", f"{panda_root}/board/stm32h7/clock.c"),
+        ("stm32h7_lladc", f"{panda_root}/board/stm32h7/lladc.c"),
+        ("stm32h7_lldac", f"{panda_root}/board/stm32h7/lldac.c"),
+        ("stm32h7_llflash", f"{panda_root}/board/stm32h7/llflash.c"),
+        ("stm32h7_lli2c", f"{panda_root}/board/stm32h7/lli2c.c"),
+        ("stm32h7_llspi", f"{panda_root}/board/stm32h7/llspi.c"),
+        ("stm32h7_sound", f"{panda_root}/board/stm32h7/sound.c"),
       ])
 
   if "DSTM32F4" in " ".join(project["PROJECT_FLAGS"]):
       sources.extend([
-        env.Object(f"stm32f4_peripherals-{project_name}", f"{panda_root}/board/stm32f4/peripherals.c"),
-        env.Object(f"stm32f4_llusb-{project_name}", f"{panda_root}/board/stm32f4/llusb.c"),
-        env.Object(f"stm32f4_llfan", f"{panda_root}/board/stm32f4/llfan.c"),
-        env.Object(f"stm32f4_clock", f"{panda_root}/board/stm32f4/clock.c"),
-        env.Object(f"stm32f4_lladc", f"{panda_root}/board/stm32f4/lladc.c"),
-        env.Object(f"stm32f4_llflash", f"{panda_root}/board/stm32f4/llflash.c"),
-        env.Object(f"stm32f4_llspi", f"{panda_root}/board/stm32f4/llspi.c"),
-        env.Object(f"stm32f4_lluart", f"{panda_root}/board/stm32f4/lluart.c"),
+        ("stm32f4_peripherals", f"{panda_root}/board/stm32f4/peripherals.c"),
+        ("stm32f4_llusb", f"{panda_root}/board/stm32f4/llusb.c"),
+        ("stm32f4_llfan", f"{panda_root}/board/stm32f4/llfan.c"),
+        ("stm32f4_clock", f"{panda_root}/board/stm32f4/clock.c"),
+        ("stm32f4_lladc", f"{panda_root}/board/stm32f4/lladc.c"),
+        ("stm32f4_llflash", f"{panda_root}/board/stm32f4/llflash.c"),
+        ("stm32f4_llspi", f"{panda_root}/board/stm32f4/llspi.c"),
       ])
 
-  bootstub_definitions = env.Object(f"bootstub_definitions-{project_name}", f"{panda_root}/board/bootstub_definitions.c"),
-  flasher = env.Object(f"flasher-{project_name}", f"{panda_root}/board/flasher.c")
-  bootstub_sources = sources + [flasher, bootstub_definitions]
-  bootstub_obj = env.Object(f"bootstub-{project_name}", File(project.get("BOOTSTUB", f"{panda_root}/board/bootstub.c")))
-  bootstub_elf = env.Program(f"obj/bootstub.{project_name}.elf",
-                                     [startup] + crypto_obj + bootstub_sources +
-                                     [bootstub_obj])
-  env.Objcopy(f"obj/bootstub.{project_name}.bin", bootstub_elf)
+  # Create a bootstub-specific environment with -DBOOTSTUB flag
+  bootstub_env = env.Clone()
+  bootstub_env.Append(CFLAGS=["-DBOOTSTUB"])
+  bootstub_env.Append(ASFLAGS=["-DBOOTSTUB"])
+  bootstub_env.Append(LINKFLAGS=["-DBOOTSTUB"])
+
+  # Use bootstub_env for all bootstub-related objects
+  bootstub_definitions = (f"bootstub_definitions", f"{panda_root}/board/bootstub_definitions.c")
+  flasher = (f"flasher", f"{panda_root}/board/flasher.c")
+
+  # Recompile all sources with the bootstub environment for bootstub use
+  bootstub_sources = [
+    make_object(bootstub_env, f"bootstubx-{name}", path)
+    for name, path in sources + [bootstub_definitions, flasher]]
+
+  # Compile bootstub.c with bootstub environment
+  bootstub_obj = bootstub_env.Object(f"bootstub-{project_name}", File(project.get("BOOTSTUB", f"{panda_root}/board/bootstub.c")))
+  bootstub_elf = bootstub_env.Program(f"obj/bootstub.{project_name}.elf",
+                                   [startup] + bootstub_sources + crypto_obj + [bootstub_obj])
+  bootstub_env.Objcopy(f"obj/bootstub.{project_name}.bin", bootstub_elf)
 
   # Needed for full build.
   sources.extend( [
-      env.Object(f"main_comms-{project_name}", f"{panda_root}/board/main_comms.c"),
-      env.Object(f"can-{project_name}", f"{panda_root}/board/can.c"),
-      env.Object(f"can_comms-{project_name}", f"{panda_root}/board/can_comms.c"),
-      env.Object(f"drivers_bootkick-{project_name}", f"{panda_root}/board/drivers/bootkick.c"),
-      env.Object(f"drivers_can_common-{project_name}", f"{panda_root}/board/drivers/can_common.c"),
-      env.Object(f"drivers_uart-{project_name}", f"{panda_root}/board/drivers/uart.c"),
-      env.Object(f"main_definitions-{project_name}", f"{panda_root}/board/main_definitions.c"),
-      env.Object(f"power_saving-{project_name}", f"{panda_root}/board/power_saving.c"),
+      ("main_comms", f"{panda_root}/board/main_comms.c"),
+      ("can", f"{panda_root}/board/can.c"),
+      ("can_comms", f"{panda_root}/board/can_comms.c"),
+      ("drivers_bootkick", f"{panda_root}/board/drivers/bootkick.c"),
+      ("drivers_can_common", f"{panda_root}/board/drivers/can_common.c"),
+      ("drivers_uart", f"{panda_root}/board/drivers/uart.c"),
+      ("main_definitions", f"{panda_root}/board/main_definitions.c"),
+      ("power_saving", f"{panda_root}/board/power_saving.c"),
   ])
   if "DSTM32H7" in " ".join(project["PROJECT_FLAGS"]):
       sources.extend([
-        env.Object(f"drivers_fdcan-{project_name}", f"{panda_root}/board/drivers/fdcan.c"),
-        env.Object(f"stm32h7_llfdcan-{project_name}", f"{panda_root}/board/stm32h7/llfdcan.c"),
+        ("drivers_fdcan", f"{panda_root}/board/drivers/fdcan.c"),
+        ("stm32h7_llfdcan", f"{panda_root}/board/stm32h7/llfdcan.c"),
+        ("stm32h7_lluart", f"{panda_root}/board/stm32h7/lluart.c"),
       ])
   if "DSTM32F4" in " ".join(project["PROJECT_FLAGS"]):
       sources.extend([
-        env.Object(f"drivers_bxcan-{project_name}", f"{panda_root}/board/drivers/bxcan.c"),
-        env.Object(f"stm32f4_llbxcan-{project_name}", f"{panda_root}/board/stm32f4/llbxcan.c"),
+        ("drivers_bxcan", f"{panda_root}/board/drivers/bxcan.c"),
+        ("stm32f4_llbxcan", f"{panda_root}/board/stm32f4/llbxcan.c"),
+        ("stm32f4_lluart", f"{panda_root}/board/stm32f4/lluart.c"),
       ])
 
   # Build main
+  main_sources = [make_object(env, name, path) for  name, path in sources]
   main_obj = env.Object(f"main-{project_name}", project["MAIN"])
-  main_elf = env.Program(f"obj/{project_name}.elf", [startup, main_obj] + sources,
+  main_elf = env.Program(f"obj/{project_name}.elf", [startup, main_obj] + main_sources,
     LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"obj/{project_name}.bin", main_elf)
 
