@@ -1,4 +1,8 @@
 #include "llspi.h"
+#include "config.h"
+#include "critical.h"
+#include "timers.h"
+#include "utils.h"
 #include "drivers/interrupts.h"
 #include "drivers/registers.h"
 
