@@ -1,5 +1,7 @@
 #include "bxcan.h"
 #include <string.h>
+#include "interrupts.h"
+#include "critical.h"
 #include "stm32f4/llbxcan_declarations.h"
 
 

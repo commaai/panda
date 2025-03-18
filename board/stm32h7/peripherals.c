@@ -1,5 +1,6 @@
-#pragma once
+#include "peripherals.h"
 #include "drivers/gpio.h"
+#include "drivers/registers.h"
 #include "drivers/interrupts.h"
 
 #ifdef BOOTSTUB

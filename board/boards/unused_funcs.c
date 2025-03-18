@@ -1,4 +1,4 @@
-#pragma once
+#include "unused_funcs.h"
 
 void unused_init_bootloader(void) {
 }

@@ -57,7 +57,7 @@ static inline int get_health_pkt(void *dat) {
 }
 
 // send on serial, first byte to select the ring
-static inline void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
+void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   uart_ring *ur = get_ring_by_number(data[0]);
   if ((len != 0U) && (ur != NULL)) {
     if ((data[0] < 2U) || (data[0] >= 4U)) {
@@ -70,7 +70,7 @@ static inline void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   }
 }
 
-static inline int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
+int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   unsigned int resp_len = 0;
   uart_ring *ur = NULL;
   uint32_t time;

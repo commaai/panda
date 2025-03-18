@@ -1,5 +1,5 @@
 #pragma once
-void dac_init(DAC_TypeDef *dac, uint8_t channel, bool dma) {
+static inline void dac_init(DAC_TypeDef *dac, uint8_t channel, bool dma) {
   register_set(&dac->CR, 0U, 0xFFFFU);
   register_set(&dac->MCR, 0U, 0xFFFFU);
 
@@ -28,7 +28,7 @@ void dac_init(DAC_TypeDef *dac, uint8_t channel, bool dma) {
 }
 
 // Set channel 1 value, in mV
-void dac_set(DAC_TypeDef *dac, uint8_t channel, uint32_t value) {
+static inline void dac_set(DAC_TypeDef *dac, uint8_t channel, uint32_t value) {
   uint32_t raw_val = MAX(MIN(value * (1UL << 8U) / 3300U, (1UL << 8U)), 0U);  
   switch(channel) {
     case 1:
