@@ -35,5 +35,3 @@ static inline uint32_t microsecond_timer_get(void) {
 }
 
 typedef uint32_t GPIO_TypeDef;
-
-void refresh_can_tx_slots_available(void) {}

@@ -1,3 +1,4 @@
+# root SCscript
 import os
 import subprocess
 
@@ -69,7 +70,7 @@ def build_project(project_name, project, extra_flags):
     "-Wall",
     "-Wextra",
     "-Wstrict-prototypes",
-    #"-Werror",
+    "-Werror",
     "-mlittle-endian",
     "-mthumb",
     "-nostdlib",
@@ -313,5 +314,5 @@ SConscript('board/SConscript')
 SConscript('board/jungle/SConscript')
 
 # test files
-#if GetOption('extras'):
-#  SConscript('tests/libpanda/SConscript')
+if GetOption('extras'):
+  SConscript('tests/libpanda/SConscript')
