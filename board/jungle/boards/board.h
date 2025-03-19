@@ -1,3 +1,4 @@
+#pragma once
 // ******************** Prototypes ********************
 typedef void (*board_init)(void);
 typedef void (*board_set_led)(uint8_t color, bool enabled);

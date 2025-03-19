@@ -47,7 +47,7 @@ separate IRQs for RX and TX.
 #include "comms_definitions.h"
 
 #ifndef BOOTSTUB
-  #include "main_definitions.h"
+  #include "main_declarations.h"
 #else
   #include "bootstub_declarations.h"
 #endif
