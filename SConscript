@@ -113,10 +113,18 @@ def build_project(project_name, project, extra_flags):
       env.Object(f"sha-{project_name}", f"{panda_root}/crypto/sha.c")
   ]
 
+  # Add necessary sources for bootstub
+  bootstub_sources = [
+      f"{panda_root}/board/bootstub.c",
+      # [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/*.c")]
+      f"{panda_root}/board/libc.c",
+      # Add other required source files here
+  ]
   # Compile bootstub
-  bootstub_obj = env.Object(f"bootstub-{project_name}", File(project.get("BOOTSTUB", f"{panda_root}/board/bootstub.c")))
-  bootstub_elf = env.Program(f"obj/bootstub.{project_name}.elf",
-                              [startup] + crypto_obj + [bootstub_obj])
+  # Compile bootstub sources
+  bootstub_objs = [env.Object(f"bootstub-{project_name}-{i}", src) for i, src in enumerate(bootstub_sources)]
+  # Link bootstub ELF
+  bootstub_elf = env.Program(f"obj/bootstub.{project_name}.elf", [startup] + crypto_obj + bootstub_objs)
   env.Objcopy(f"obj/bootstub.{project_name}.bin", bootstub_elf)
 
   # Compile all main source files into object files
@@ -145,11 +153,10 @@ source_files = (
     [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/jungle/stm32f4/*.c")] +  # Correct path for jungle STM32F4 files
     [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/jungle/stm32h7/*.c")] +  # Correct path for jungle STM32H7 files
     [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/stm32f4/*.c")] +
-    [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/stm32h7/*.c")]
-)
+    [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/stm32h7/*.c")])
 source_files = [s.replace("board/", "", 1) for s in source_files]
-print(source_files)
-exit()
+# print(source_files)
+# exit()
 f4_exclusion_list = ['board_cuatro.c', 'board_grey.c', 'board_red.c', 'board_tres.c']
 f4_source_files = [file for file in source_files if file.split('/')[-1] not in f4_exclusion_list]
 

@@ -1,4 +1,6 @@
 #include "libc.h"
+#include "fake_stm.h"
+
 // **** libc ****
 
 void delay(uint32_t a) {

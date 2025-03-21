@@ -1,4 +1,6 @@
 #pragma once
+#include <stdint.h>
+#include <stdbool.h>
 // **** libc ****
 
 void delay(uint32_t a);
