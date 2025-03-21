@@ -127,8 +127,6 @@ def build_project(project_name, project, extra_flags):
   for src in project["MAIN"]:
     # Generate a unique object file name based on the relative path
     obj_name = f"obj/{src.replace('/', '_').replace('.c', '')}_{project_name}.o"
-    # Debug: Print source and object file paths
-    print(f"Compiling: {src} -> {obj_name}")
     # Compile the source file
     main_objs.append(env.Object(obj_name, src))
   # Link all object files into the final binary
@@ -149,6 +147,7 @@ source_files = (
     [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/stm32f4/*.c")] +
     [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/stm32h7/*.c")]
 )
+source_files = [s.replace("board/", "", 1) for s in source_files]
 
 base_project_f4 = {
   "MAIN": source_files,
@@ -206,8 +205,8 @@ with open("board/obj/cert.h", "w") as f:
 # panda fw
 SConscript('board/SConscript')
 
-# panda jungle fw
-SConscript('board/jungle/SConscript')
+# # panda jungle fw
+# SConscript('board/jungle/SConscript')
 
 # test files
 if GetOption('extras'):
