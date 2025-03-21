@@ -88,3 +88,18 @@ extern struct board board_grey;
 extern struct board board_white;
 extern struct board board_cuatro;
 extern struct board board_red;
+
+extern harness_configuration white_harness_config;
+extern uart_ring uart_ring_som_debug;
+
+uint32_t white_read_voltage_mV(void);
+void white_grey_init(void);
+void white_grey_init_bootloader(void);
+void white_enable_can_transceiver(uint8_t transceiver, bool enabled);
+void white_set_led(uint8_t color, bool enabled);
+void white_set_can_mode(uint8_t mode);
+bool white_check_ignition(void);
+uint32_t white_read_current_mA(void);
+void red_set_led(uint8_t color, bool enabled);
+bool red_check_ignition(void);
+uint32_t red_read_voltage_mV(void);

@@ -1,4 +1,5 @@
 #pragma once
+#include "board_declarations.h"
 
 void unused_init_bootloader(void);
 

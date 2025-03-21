@@ -1,10 +1,12 @@
+#include "unused_funcs.h"
 #include "board_declarations.h"
+#include "stm32f4/inc/stm32f4xx_hal_gpio_ex.h"
 
 // ///////////////////// //
 // White Panda (STM32F4) //
 // ///////////////////// //
 
-static void white_enable_can_transceiver(uint8_t transceiver, bool enabled) {
+void white_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver){
     case 1U:
       set_gpio_output(GPIOC, 1, !enabled);
@@ -20,7 +22,7 @@ static void white_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-static void white_set_led(uint8_t color, bool enabled) {
+void white_set_led(uint8_t color, bool enabled) {
   switch (color){
     case LED_RED:
       set_gpio_output(GPIOC, 9, !enabled);
@@ -59,7 +61,7 @@ static void white_set_usb_power_mode(uint8_t mode){
   }
 }
 
-static void white_set_can_mode(uint8_t mode){
+void white_set_can_mode(uint8_t mode){
   if (mode == CAN_MODE_NORMAL) {
     // B12,B13: disable GMLAN mode
     set_gpio_mode(GPIOB, 12, MODE_INPUT);
@@ -79,21 +81,21 @@ static void white_set_can_mode(uint8_t mode){
   }
 }
 
-static uint32_t white_read_voltage_mV(void){
+uint32_t white_read_voltage_mV(void){
   return adc_get_mV(12) * 11U;
 }
 
-static uint32_t white_read_current_mA(void){
+uint32_t white_read_current_mA(void){
   // This isn't in mA, but we're keeping it for backwards compatibility
   return adc_get_raw(13);
 }
 
-static bool white_check_ignition(void){
+bool white_check_ignition(void){
   // ignition is on PA1
   return !get_gpio_input(GPIOA, 1);
 }
 
-static void white_grey_init(void) {
+void white_grey_init(void) {
   common_init_gpio();
 
   // C3: current sense
@@ -156,13 +158,13 @@ static void white_grey_init(void) {
   set_gpio_output(GPIOC, 14, 0);
 }
 
-static void white_grey_init_bootloader(void) {
+void white_grey_init_bootloader(void) {
   // ESP/GPS off
   set_gpio_output(GPIOC, 5, 0);
   set_gpio_output(GPIOC, 14, 0);
 }
 
-static harness_configuration white_harness_config = {
+harness_configuration white_harness_config = {
   .has_harness = false
 };
 

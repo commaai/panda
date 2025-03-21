@@ -1,4 +1,6 @@
+#include "unused_funcs.h"
 #include "board_declarations.h"
+#include "stm32f4/inc/stm32f4xx_hal_gpio_ex.h"
 
 // /////////////////////////////// //
 // Black Panda (STM32F4) + Harness //

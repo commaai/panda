@@ -1,3 +1,4 @@
+#pragma once
 // cppcheck-suppress-macro misra-c2012-1.2; allow __typeof__ extension
 #define MIN(a, b) ({ \
   __typeof__ (a) _a = (a); \

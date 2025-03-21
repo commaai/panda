@@ -148,9 +148,13 @@ source_files = (
     [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/stm32h7/*.c")]
 )
 source_files = [s.replace("board/", "", 1) for s in source_files]
+print(source_files)
+exit()
+f4_exclusion_list = ['board_cuatro.c', 'board_grey.c', 'board_red.c', 'board_tres.c']
+f4_source_files = [file for file in source_files if file.split('/')[-1] not in f4_exclusion_list]
 
 base_project_f4 = {
-  "MAIN": source_files,
+  "MAIN": f4_source_files,
   "STARTUP_FILE": File("./board/stm32f4/startup_stm32f413xx.s"),
   "LINKER_SCRIPT": File("./board/stm32f4/stm32f4_flash.ld"),
   "APP_START_ADDRESS": "0x8004000",
@@ -167,8 +171,11 @@ base_project_f4 = {
   ],
 }
 
+h7_exclusion_list = ['board_black.c', 'board_cuatro.c', 'board_dos.c', 'board_uno.c', 'board_white.c']
+h7_source_files = [file for file in source_files if file.split('/')[-1] not in h7_exclusion_list]
+
 base_project_h7 = {
-  "MAIN": source_files,
+  "MAIN": h7_source_files,
   "STARTUP_FILE": File("./board/stm32h7/startup_stm32h7x5xx.s"),
   "LINKER_SCRIPT": File("./board/stm32h7/stm32h7x5_flash.ld"),
   "APP_START_ADDRESS": "0x8020000",

@@ -1,5 +1,5 @@
 #pragma once
-
+#include "../config.h"
 #define HARNESS_STATUS_NC 0U
 #define HARNESS_STATUS_NORMAL 1U
 #define HARNESS_STATUS_FLIPPED 2U

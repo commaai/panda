@@ -1,4 +1,9 @@
-#include "board_declarations.h"
+#include "unused_funcs.h"
+#include "stm32h7/inc/stm32h7xx_hal_gpio_ex.h"
+// #ifdef BOOTSTUB
+// #pragma BOOTSTUB DEFINED
+// #include "board/bootstub_declarations.h"
+// #endif
 
 // ///////////////////////////
 // Tres (STM32H7) + Harness //

@@ -1,4 +1,6 @@
+#include "unused_funcs.h"
 #include "board_declarations.h"
+#include "stm32h7/inc/stm32h7xx_hal_gpio_ex.h"
 
 // ///////////////////////////// //
 // Red Panda (STM32H7) + Harness //
@@ -23,7 +25,7 @@ static void red_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-static void red_set_led(uint8_t color, bool enabled) {
+void red_set_led(uint8_t color, bool enabled) {
   switch (color) {
     case LED_RED:
       set_gpio_output(GPIOE, 4, !enabled);
@@ -81,12 +83,12 @@ static void red_set_can_mode(uint8_t mode) {
   }
 }
 
-static bool red_check_ignition(void) {
+bool red_check_ignition(void) {
   // ignition is checked through harness
   return harness_check_ignition();
 }
 
-static uint32_t red_read_voltage_mV(void){
+uint32_t red_read_voltage_mV(void){
   return adc_get_mV(2) * 11U; // TODO: is this correct?
 }
 

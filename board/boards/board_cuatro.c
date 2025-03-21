@@ -1,4 +1,6 @@
+#include "unused_funcs.h"
 #include "board_declarations.h"
+#include "stm32h7/inc/stm32h7xx_hal_gpio_ex.h"
 
 // ////////////////////////// //
 // Cuatro (STM32H7) + Harness //
