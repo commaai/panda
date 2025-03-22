@@ -40,7 +40,7 @@ static void cuatro_set_fan_enabled(bool enabled) {
 static void cuatro_set_bootkick(BootState state) {
   set_gpio_output(GPIOA, 0, state != BOOT_BOOTKICK);
   // TODO: confirm we need this
-  set_gpio_output(GPIOC, 12, state != BOOT_RESET);
+  //set_gpio_output(GPIOC, 12, state != BOOT_RESET);
 }
 
 static void cuatro_set_amp_enabled(bool enabled){
