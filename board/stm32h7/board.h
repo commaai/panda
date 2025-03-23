@@ -1,7 +1,8 @@
 // ///////////////////////////////////////////////////////////// //
 // Hardware abstraction layer for all different supported boards //
 // ///////////////////////////////////////////////////////////// //
-#include "boards/board_declarations.h"
+#pragma once
+#include "boards/board.h"
 #include "boards/unused_funcs.h"
 
 // ///// Board definition and detection ///// //
@@ -19,7 +20,7 @@
 
 
 void detect_board_type(void) {
-  // On STM32H7 pandas, we use two different sets of pins.
+  // On STM32H7 pandas, we use twor different sets of pins.
   const uint8_t id1 = detect_with_pull(GPIOF, 7, PULL_UP) |
                      (detect_with_pull(GPIOF, 8, PULL_UP) << 1U) |
                      (detect_with_pull(GPIOF, 9, PULL_UP) << 2U) |
