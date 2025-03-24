@@ -1,6 +1,7 @@
 // ********************* Includes *********************
 #include "config.h"
 
+#include "drivers/led.h"
 #include "drivers/pwm.h"
 #include "drivers/usb.h"
 #include "drivers/simple_watchdog.h"
@@ -189,11 +190,11 @@ static void tick_handler(void) {
       #endif
 
       // set green LED to be controls allowed
-      current_board->set_led(LED_GREEN, controls_allowed | green_led_enabled);
+      led_set(LED_GREEN, controls_allowed | green_led_enabled);
 
       // turn off the blue LED, turned on by CAN
       // unless we are in power saving mode
-      current_board->set_led(LED_BLUE, (uptime_cnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
+      led_set(LED_BLUE, (uptime_cnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
 
       const bool recent_heartbeat = heartbeat_counter == 0U;
 
@@ -303,9 +304,10 @@ int main(void) {
   clock_init();
   peripherals_init();
   detect_board_type();
+  led_init();
   // red+green leds enabled until succesful USB/SPI init, as a debug indicator
-  current_board->set_led(LED_RED, true);
-  current_board->set_led(LED_GREEN, true);
+  led_set(LED_RED, true);
+  led_set(LED_GREEN, true);
   adc_init();
 
   // print hello
@@ -360,9 +362,9 @@ int main(void) {
   }
 #endif
 
-  current_board->set_led(LED_RED, false);
-  current_board->set_led(LED_GREEN, false);
-  current_board->set_led(LED_BLUE, false);
+  led_set(LED_RED, false);
+  led_set(LED_GREEN, false);
+  led_set(LED_BLUE, false);
 
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();
@@ -375,24 +377,24 @@ int main(void) {
       #endif
         // useful for debugging, fade breaks = panda is overloaded
         for (uint32_t fade = 0U; fade < MAX_LED_FADE; fade += 1U) {
-          current_board->set_led(LED_RED, true);
+          led_set(LED_RED, true);
           delay(fade >> 4);
-          current_board->set_led(LED_RED, false);
+          led_set(LED_RED, false);
           delay((MAX_LED_FADE - fade) >> 4);
         }
 
         for (uint32_t fade = MAX_LED_FADE; fade > 0U; fade -= 1U) {
-          current_board->set_led(LED_RED, true);
+          led_set(LED_RED, true);
           delay(fade >> 4);
-          current_board->set_led(LED_RED, false);
+          led_set(LED_RED, false);
           delay((MAX_LED_FADE - fade) >> 4);
         }
 
       #ifdef DEBUG_FAULTS
       } else {
-          current_board->set_led(LED_RED, 1);
+          led_set(LED_RED, 1);
           delay(512000U);
-          current_board->set_led(LED_RED, 0);
+          led_set(LED_RED, 0);
           delay(512000U);
         }
       #endif
