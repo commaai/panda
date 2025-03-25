@@ -150,5 +150,7 @@ board board_dos = {
   .set_siren = dos_set_siren,
   .set_bootkick = dos_set_bootkick,
   .read_som_gpio = dos_read_som_gpio,
-  .set_amp_enabled = unused_set_amp_enabled
+  .set_amp_enabled = unused_set_amp_enabled,
+  .voltage_cadc_channel = CADC_CHANNEL_NONE,
+  .current_cadc_channel = CADC_CHANNEL_NONE
 };

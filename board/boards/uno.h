@@ -162,5 +162,7 @@ board board_uno = {
   .set_siren = unused_set_siren,
   .set_bootkick = uno_set_bootkick,
   .read_som_gpio = unused_read_som_gpio,
-  .set_amp_enabled = unused_set_amp_enabled
+  .set_amp_enabled = unused_set_amp_enabled,
+  .voltage_cadc_channel = CADC_CHANNEL_NONE,
+  .current_cadc_channel = CADC_CHANNEL_NONE
 };
