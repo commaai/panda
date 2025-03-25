@@ -157,7 +157,7 @@ source_files = (
 source_files = [s.replace("board/", "", 1) for s in source_files]
 # print(source_files)
 # exit()
-f4_exclusion_list = ['board_cuatro.c', 'board_grey.c', 'board_red.c', 'board_tres.c', 'fake_siren.c', 'fan.c', 'fdcan.c']
+f4_exclusion_list = ['cuatro.c', 'grey.c', 'red.c', 'tres.c', 'fake_siren.c', 'fan.c', 'fdcan.c']
 f4_source_files = [file for file in source_files if file.split('/')[-1] not in f4_exclusion_list]
 
 base_project_f4 = {
@@ -178,7 +178,7 @@ base_project_f4 = {
   ],
 }
 
-h7_exclusion_list = ['board_black.c', 'board_cuatro.c', 'board_dos.c', 'board_uno.c', 'board_white.c', 'bxcan.c']
+h7_exclusion_list = ['black.c', 'dos.c', 'uno.c', 'white.c', 'bxcan.c']
 h7_source_files = [file for file in source_files if file.split('/')[-1] not in h7_exclusion_list]
 
 base_project_h7 = {

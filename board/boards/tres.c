@@ -15,7 +15,7 @@ static void tres_update_fan_ir_power(void) {
   set_gpio_output(GPIOD, 3, tres_ir_enabled || tres_fan_enabled);
 }
 
-static void tres_set_ir_power(uint8_t percentage){
+void tres_set_ir_power(uint8_t percentage){
   tres_ir_enabled = (percentage > 0U);
   tres_update_fan_ir_power();
   pwm_set(TIM3, 4, percentage);
@@ -51,7 +51,7 @@ static void tres_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-static void tres_set_can_mode(uint8_t mode) {
+void tres_set_can_mode(uint8_t mode) {
   current_board->enable_can_transceiver(2U, false);
   current_board->enable_can_transceiver(4U, false);
   switch (mode) {
@@ -93,7 +93,7 @@ static void tres_set_can_mode(uint8_t mode) {
   }
 }
 
-static bool tres_read_som_gpio (void) {
+bool tres_read_som_gpio (void) {
   return (get_gpio_input(GPIOC, 2) != 0);
 }
 
@@ -135,7 +135,7 @@ static void tres_init(void) {
   clock_source_init();
 }
 
-static harness_configuration tres_harness_config = {
+harness_configuration tres_harness_config = {
   .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,

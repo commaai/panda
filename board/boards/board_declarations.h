@@ -91,6 +91,7 @@ extern struct board board_cuatro;
 extern struct board board_red;
 
 extern harness_configuration white_harness_config;
+extern harness_configuration tres_harness_config;
 extern struct uart_ring uart_ring_som_debug;
 
 uint32_t white_read_voltage_mV(void);
@@ -104,3 +105,7 @@ uint32_t white_read_current_mA(void);
 void red_set_led(uint8_t color, bool enabled);
 bool red_check_ignition(void);
 uint32_t red_read_voltage_mV(void);
+void tres_set_ir_power(uint8_t percentage);
+void tres_set_can_mode(uint8_t mode);
+bool tres_read_som_gpio (void);
+
