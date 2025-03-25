@@ -66,42 +66,42 @@ def build_project(project_name, project, extra_flags):
   linkerscript_fn = File(project["LINKER_SCRIPT"]).srcnode().relpath
 
   flags = project["PROJECT_FLAGS"] + extra_flags + common_flags + [
-      "-Wall",
-      "-Wextra",
-      "-Wstrict-prototypes",
-      "-Werror",
-      "-mlittle-endian",
-      "-mthumb",
-      "-nostdlib",
-      "-fno-builtin",
-      "-std=gnu11",
-      "-fmax-errors=1",
-      f"-T{linkerscript_fn}",
+    "-Wall",
+    "-Wextra",
+    "-Wstrict-prototypes",
+    "-Werror",
+    "-mlittle-endian",
+    "-mthumb",
+    "-nostdlib",
+    "-fno-builtin",
+    "-std=gnu11",
+    "-fmax-errors=1",
+    f"-T{linkerscript_fn}",
   ]
 
   includes = [
-      '.',
-      '..',
-      panda_root,
-      f"{panda_root}/board/",
-      f"{panda_root}/../opendbc/safety/",
+    '.',
+    '..',
+    panda_root,
+    f"{panda_root}/board/",
+    f"{panda_root}/../opendbc/safety/",
   ]
 
   env = Environment(
-      ENV=os.environ,
-      CC=PREFIX + 'gcc',
-      AS=PREFIX + 'gcc',
-      OBJCOPY=PREFIX + 'objcopy',
-      OBJDUMP=PREFIX + 'objdump',
-      CFLAGS=flags,
-      ASFLAGS=flags,
-      LINKFLAGS=flags,
-      CPPPATH=includes,
-      ASCOM="$AS $ASFLAGS -o $TARGET -c $SOURCES",
-      BUILDERS={
-          'Objcopy': Builder(generator=objcopy, suffix='.bin', src_suffix='.elf')
-      },
-      tools=["default", "compilation_db"],
+    ENV=os.environ,
+    CC=PREFIX + 'gcc',
+    AS=PREFIX + 'gcc',
+    OBJCOPY=PREFIX + 'objcopy',
+    OBJDUMP=PREFIX + 'objdump',
+    CFLAGS=flags,
+    ASFLAGS=flags,
+    LINKFLAGS=flags,
+    CPPPATH=includes,
+    ASCOM="$AS $ASFLAGS -o $TARGET -c $SOURCES",
+    BUILDERS={
+        'Objcopy': Builder(generator=objcopy, suffix='.bin', src_suffix='.elf')
+    },
+    tools=["default", "compilation_db"],
   )
 
   # Compile startup file
@@ -109,16 +109,16 @@ def build_project(project_name, project, extra_flags):
 
   # Compile crypto files
   crypto_obj = [
-      env.Object(f"rsa-{project_name}", f"{panda_root}/crypto/rsa.c"),
-      env.Object(f"sha-{project_name}", f"{panda_root}/crypto/sha.c")
+    env.Object(f"rsa-{project_name}", f"{panda_root}/crypto/rsa.c"),
+    env.Object(f"sha-{project_name}", f"{panda_root}/crypto/sha.c")
   ]
 
   # Add necessary sources for bootstub
   bootstub_sources = [
-      f"{panda_root}/board/bootstub.c",
-      # [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/*.c")]
-      f"{panda_root}/board/libc.c",# TODO: Add other sources to the build
-      # Add other required source files here
+    f"{panda_root}/board/bootstub.c",
+    # [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/*.c")]
+    f"{panda_root}/board/libc.c",# TODO: Add other sources to the build
+    # Add other required source files here
   ]
   # Compile bootstub
   # Compile bootstub sources
@@ -139,7 +139,7 @@ def build_project(project_name, project, extra_flags):
     main_objs.append(env.Object(obj_name, src))
   # Link all object files into the final binary
   main_elf = env.Program(f"obj/{project_name}.elf", [startup] + main_objs,
-                          LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
+                        LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"obj/{project_name}.bin", main_elf)
 
   # Sign main binary
@@ -148,12 +148,12 @@ def build_project(project_name, project, extra_flags):
 
 # TODO: Separate source files for jungle boards
 source_files = (
-    [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/boards/*.c")] +  # Correct path for board_black.c
-    [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/drivers/*.c")] +
-    # [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/jungle/stm32f4/*.c")] +  # Correct path for jungle STM32F4 files
-    # [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/jungle/stm32h7/*.c")] +  # Correct path for jungle STM32H7 files
-    [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/stm32f4/*.c")] +
-    [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/stm32h7/*.c")])
+  [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/boards/*.c")] +  # Correct path for board_black.c
+  [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/drivers/*.c")] +
+  # [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/jungle/stm32f4/*.c")] +  # Correct path for jungle STM32F4 files
+  # [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/jungle/stm32h7/*.c")] +  # Correct path for jungle STM32H7 files
+  [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/stm32f4/*.c")] +
+  [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/stm32h7/*.c")])
 source_files = [s.replace("board/", "", 1) for s in source_files]
 # print(source_files)
 # exit()
