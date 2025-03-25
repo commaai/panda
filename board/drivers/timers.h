@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 void microsecond_timer_init(void);
 
 uint32_t microsecond_timer_get(void);

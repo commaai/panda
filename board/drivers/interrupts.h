@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config.h"
+
 typedef struct interrupt {
   IRQn_Type irq_type;
   void (*handler)(void);

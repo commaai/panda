@@ -1,5 +1,5 @@
 #include "registers.h"
-
+#include "board/critical.h"
 // 10 bit hash with 23 as a prime
 #define REGISTER_MAP_SIZE 0x3FFU
 #define HASHING_PRIME 23U

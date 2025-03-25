@@ -1,5 +1,7 @@
 #pragma once
+#include <stdint.h>
 
+#include "config.h"
 // IRQs: OTG_FS
 
 typedef union {

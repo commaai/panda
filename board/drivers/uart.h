@@ -1,5 +1,7 @@
 #pragma once
-
+#include <stdint.h>
+#include "config.h"
+#include "boards/board_declarations.h"
 // IRQs: USART2, USART3, UART5
 
 // ***************************** Definitions *****************************

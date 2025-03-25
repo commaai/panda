@@ -1,5 +1,7 @@
 #pragma once
-#include "board_declarations.h"
+#include "boards/board_declarations.h"
+#include <stdint.h>
+#include <stdbool.h>
 
 void unused_init_bootloader(void);
 

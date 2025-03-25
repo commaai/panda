@@ -1,4 +1,6 @@
 #include "clock_source.h"
+#include "registers.h"
+#include "config.h"
 
 void clock_source_set_period(uint8_t period) {
   register_set(&(TIM1->ARR), ((period*10U) - 1U), 0xFFFFU);

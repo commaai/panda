@@ -1,10 +1,12 @@
 #pragma once
 
+#include "config.h"
 // ********************* Critical section helpers *********************
 void enable_interrupts(void);
 void disable_interrupts(void);
 
 extern uint8_t global_critical_depth;
+static volatile bool interrupts_enabled = false;
 
 #define ENTER_CRITICAL()                                      \
   __disable_irq();                                            \

@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 typedef struct reg {
   volatile uint32_t *address;

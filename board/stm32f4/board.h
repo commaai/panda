@@ -2,8 +2,8 @@
 // ///////////////////////////////////////////////////////////// //
 // Hardware abstraction layer for all different supported boards //
 // ///////////////////////////////////////////////////////////// //
-#include "boards/unused_funcs.h"
 #include "boards/board_declarations.h"
+#include "boards/unused_funcs.h"
 
 // ///// Board definition and detection ///// //
 #include "stm32f4/lladc.h"

@@ -1,5 +1,10 @@
 #pragma once
 
+#include <stdbool.h>
+#include <stdint.h>
+#include "../health.h"
+#include "../can_declarations.h"
+
 typedef struct {
   volatile uint32_t w_ptr;
   volatile uint32_t r_ptr;

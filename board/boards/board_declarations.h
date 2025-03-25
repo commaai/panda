@@ -2,9 +2,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "../drivers/harness.h"
-
+#include "board/drivers/harness.h"
+#include "board/drivers/uart.h"
 // ******************** Prototypes ********************
+
 typedef enum {
   BOOT_STANDBY,
   BOOT_BOOTKICK,
@@ -90,7 +91,7 @@ extern struct board board_cuatro;
 extern struct board board_red;
 
 extern harness_configuration white_harness_config;
-extern uart_ring uart_ring_som_debug;
+extern struct uart_ring uart_ring_som_debug;
 
 uint32_t white_read_voltage_mV(void);
 void white_grey_init(void);

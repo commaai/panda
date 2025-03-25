@@ -1,10 +1,10 @@
 #include "fan.h"
+#include "boards/unused_funcs.h"
 
 struct fan_state_t fan_state;
 
 static const uint8_t FAN_TICK_FREQ = 8U;
 static const uint8_t FAN_STALL_THRESHOLD_MIN = 3U;
-
 
 void fan_set_power(uint8_t percentage) {
   fan_state.target_rpm = ((current_board->fan_max_rpm * CLAMP(percentage, 0U, 100U)) / 100U);

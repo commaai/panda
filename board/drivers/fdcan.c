@@ -1,6 +1,11 @@
 #include "fdcan.h"
+#include "can_common.h"
+#include "board/can_comms.h"
 
 #define CAN_ACK_ERROR 3U
+
+int safety_fwd_hook(int bus_num, int addr);
+bool safety_rx_hook(const CANPacket_t *to_push);
 
 typedef struct {
   volatile uint32_t header[2];

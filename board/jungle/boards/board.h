@@ -1,4 +1,8 @@
 #pragma once
+
+#include <stdint.h>
+#include <stdbool.h>
+
 // ******************** Prototypes ********************
 typedef void (*board_init)(void);
 typedef void (*board_set_led)(uint8_t color, bool enabled);

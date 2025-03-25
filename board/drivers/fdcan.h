@@ -1,5 +1,5 @@
 #pragma once
-
+#include "board/stm32h7/stm32h7_config.h"
 // IRQs: FDCAN1_IT0, FDCAN1_IT1
 //       FDCAN2_IT0, FDCAN2_IT1
 //       FDCAN3_IT0, FDCAN3_IT1

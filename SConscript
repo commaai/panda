@@ -117,15 +117,15 @@ def build_project(project_name, project, extra_flags):
   bootstub_sources = [
       f"{panda_root}/board/bootstub.c",
       # [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/*.c")]
-      f"{panda_root}/board/libc.c",
+      f"{panda_root}/board/libc.c",# TODO: Add other sources to the build
       # Add other required source files here
   ]
   # Compile bootstub
   # Compile bootstub sources
-  bootstub_objs = [env.Object(f"bootstub-{project_name}-{i}", src) for i, src in enumerate(bootstub_sources)]
-  # Link bootstub ELF
-  bootstub_elf = env.Program(f"obj/bootstub.{project_name}.elf", [startup] + crypto_obj + bootstub_objs)
-  env.Objcopy(f"obj/bootstub.{project_name}.bin", bootstub_elf)
+  # bootstub_objs = [env.Object(f"bootstub-{project_name}-{i}", src) for i, src in enumerate(bootstub_sources)]
+  # # Link bootstub ELF
+  # bootstub_elf = env.Program(f"obj/bootstub.{project_name}.elf", [startup] + crypto_obj + bootstub_objs)
+  # env.Objcopy(f"obj/bootstub.{project_name}.bin", bootstub_elf)
 
   # Compile all main source files into object files
   # main_objs = [env.Object(f"obj/{os.path.splitext(src)[0].replace('/', '_')}_{project_name}.o", src)
@@ -150,14 +150,14 @@ def build_project(project_name, project, extra_flags):
 source_files = (
     [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/boards/*.c")] +  # Correct path for board_black.c
     [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/drivers/*.c")] +
-    [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/jungle/stm32f4/*.c")] +  # Correct path for jungle STM32F4 files
-    [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/jungle/stm32h7/*.c")] +  # Correct path for jungle STM32H7 files
+    # [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/jungle/stm32f4/*.c")] +  # Correct path for jungle STM32F4 files
+    # [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/jungle/stm32h7/*.c")] +  # Correct path for jungle STM32H7 files
     [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/stm32f4/*.c")] +
     [os.path.relpath(f) for f in glob.glob(f"{panda_root}/board/stm32h7/*.c")])
 source_files = [s.replace("board/", "", 1) for s in source_files]
 # print(source_files)
 # exit()
-f4_exclusion_list = ['board_cuatro.c', 'board_grey.c', 'board_red.c', 'board_tres.c']
+f4_exclusion_list = ['board_cuatro.c', 'board_grey.c', 'board_red.c', 'board_tres.c', 'fake_siren.c', 'fan.c', 'fdcan.c']
 f4_source_files = [file for file in source_files if file.split('/')[-1] not in f4_exclusion_list]
 
 base_project_f4 = {
@@ -178,7 +178,7 @@ base_project_f4 = {
   ],
 }
 
-h7_exclusion_list = ['board_black.c', 'board_cuatro.c', 'board_dos.c', 'board_uno.c', 'board_white.c']
+h7_exclusion_list = ['board_black.c', 'board_cuatro.c', 'board_dos.c', 'board_uno.c', 'board_white.c', 'bxcan.c']
 h7_source_files = [file for file in source_files if file.split('/')[-1] not in h7_exclusion_list]
 
 base_project_h7 = {

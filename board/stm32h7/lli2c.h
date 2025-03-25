@@ -1,4 +1,8 @@
 #pragma once
+
+#include <stdbool.h>
+#include "config.h"
+
 // TODO: this driver relies heavily on polling,
 // if we want it to be more async, we should use interrupts
 

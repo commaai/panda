@@ -1,5 +1,7 @@
 #include "watchdog.h"
 
+#include "config.h"
+
 static void watchdog_feed(void) {
   IND_WDG->KR = 0xAAAAU;
 }

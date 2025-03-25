@@ -1,4 +1,6 @@
 #include "bootkick.h"
+#include <stdint.h>
+#include "harness.h"
 
 bool bootkick_reset_triggered = false;
 

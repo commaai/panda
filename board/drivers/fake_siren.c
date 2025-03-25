@@ -1,4 +1,5 @@
 #include "fake_siren.h"
+#include "stm32h7/stm32h7_config.h"
 
 #define CODEC_I2C_ADDR 0x10
 
@@ -24,27 +25,6 @@ static void fake_siren_codec_enable(bool enabled) {
       }
     }
   }
-}
-
-void fake_siren_set(bool enabled) {
-  static bool initialized = false;
-  static bool fake_siren_enabled = false;
-
-  if (!initialized) {
-    fake_siren_init();
-    initialized = true;
-  }
-
-  if (enabled != fake_siren_enabled) {
-    fake_siren_codec_enable(enabled);
-  }
-
-  if (enabled) {
-    register_set_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
-  } else {
-    register_clear_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
-  }
-  fake_siren_enabled = enabled;
 }
 
 static void fake_siren_init(void) {
@@ -78,4 +58,25 @@ static void fake_siren_init(void) {
   // Enable the I2C to the codec
   i2c_init(I2C5);
   fake_siren_codec_enable(false);
+}
+
+void fake_siren_set(bool enabled) {
+  static bool initialized = false;
+  static bool fake_siren_enabled = false;
+
+  if (!initialized) {
+    fake_siren_init();
+    initialized = true;
+  }
+
+  if (enabled != fake_siren_enabled) {
+    fake_siren_codec_enable(enabled);
+  }
+
+  if (enabled) {
+    register_set_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
+  } else {
+    register_clear_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
+  }
+  fake_siren_enabled = enabled;
 }

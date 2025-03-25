@@ -1,4 +1,7 @@
 #pragma once
+#include "board/drivers/uart.h"
+
+typedef struct uart_ring uart_ring;
 
 void uart_tx_ring(uart_ring *q);
 
