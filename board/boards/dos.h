@@ -106,7 +106,7 @@ static void dos_init(void) {
   dos_set_bootkick(true);
 
   // Init clock source (camera strobe) using PWM
-  clock_source_init();
+  clock_source_init(false);
 }
 
 static harness_configuration dos_harness_config = {
