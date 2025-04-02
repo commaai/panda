@@ -129,7 +129,7 @@ static void tres_init(void) {
   register_set_bits(&(GPIOC->OTYPER), GPIO_OTYPER_OT10 | GPIO_OTYPER_OT11); // open drain
 
   // Clock source
-  clock_source_init();
+  clock_source_init(false);
 }
 
 static harness_configuration tres_harness_config = {
