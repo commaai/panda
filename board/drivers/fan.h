@@ -74,7 +74,7 @@ void fan_tick(void) {
     if (fan_state.target_rpm == 0U) {
       fan_state.error_integral = 0.0f;
     } else {
-      float error = (fan_state.target_rpm - fan_rpm_fast) / current_board->fan_max_rpm;
+      float error = (fan_state.target_rpm - fan_rpm_fast) / ((float) current_board->fan_max_rpm);
       fan_state.error_integral += FAN_I * error;
     }
     fan_state.error_integral = CLAMP(fan_state.error_integral, 0U, current_board->fan_max_pwm);
