@@ -1,7 +1,6 @@
 #include "jungle/main_comms.h"
 #include "config.h"
 #include "can_common.h"
-#include "comms_definitions.h"
 #include "libc.h"
 #include "usb.h"
 #include "provision.h"

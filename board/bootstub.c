@@ -17,14 +17,11 @@
 #include "drivers/usb.h"
 
 #include "provision.h"
-#include "interrupts.h"
-#include "critical.h"
 
 #include "crypto/rsa.h"
 #include "crypto/sha.h"
 
 #include "obj/cert.h"
-#include "libc.h"
 #include "early_init.h"
 
 

@@ -1,5 +1,4 @@
 #include "config.h"
-#include "crc.h"
 #include "libc.h"
 #include "spi.h"
 #include "comms_definitions.h"

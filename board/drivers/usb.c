@@ -3,7 +3,6 @@
 #include "config.h"
 #include "comms_definitions.h"
 #include "critical.h"
-#include "platform_definitions.h"
 
 #ifdef STM32H7
   #include "stm32h7/llusb.h"

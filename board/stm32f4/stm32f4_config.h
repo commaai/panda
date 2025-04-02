@@ -2,7 +2,6 @@
 #include "stm32f4_platform_definitions.h"
 
 #include "can.h"
-#include "comms_definitions.h"
 
 #include "libc.h"
 #include "critical.h"

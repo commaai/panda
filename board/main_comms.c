@@ -29,7 +29,6 @@
   #include "board/stm32f4/lluart.h"
 #endif
 
-// TODO: should this be static?
 int get_health_pkt(void *dat) {
   COMPILE_TIME_ASSERT(sizeof(struct health_t) <= USBPACKET_MAX_SIZE);
   struct health_t * health = (struct health_t*)dat;

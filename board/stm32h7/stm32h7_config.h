@@ -1,6 +1,5 @@
 #pragma once
 #include "can.h"
-#include "comms_definitions.h"
 #include "stm32h7_platform_definitions.h"
 
 #include "libc.h"

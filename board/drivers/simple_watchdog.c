@@ -1,8 +1,5 @@
 #include "simple_watchdog.h"
-#include "timers.h"
 #include "config.h"
-#include "faults.h"
-#include "can.h" // TODO: delete this after we clean up safety.h
 #include "safety_declarations.h"
 
 static simple_watchdog_state_t wd_state;

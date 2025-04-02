@@ -4,7 +4,6 @@
 #include "utils.h"
 #include "can.h"
 #include "can_common.h"
-#include "comms_definitions.h"
 #include "drivers/timers.h"
 #include "health.h"
 #include "faults.h"
