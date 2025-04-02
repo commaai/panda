@@ -152,10 +152,6 @@ def build_project(project_name, project, extra_flags):
           ("drivers_simple_watchdog", f"{panda_root}/board/drivers/simple_watchdog.c"),
           ("drivers_fan", f"{panda_root}/board/drivers/fan.c"),
       ])
-  if _is_panda_jungle:
-      sources.extend([
-          ("jungle_board", f"{panda_root}/board/jungle/boards/board.c"),
-      ])
 
   if _is_stm32h7:
       sources.extend([

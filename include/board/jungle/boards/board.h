@@ -58,10 +58,20 @@ typedef struct board {
 #define SBU2 1U
 
 // ********************* Globals **********************
-extern uint8_t harness_orientation;
-extern uint8_t can_mode;
-extern uint8_t ignition;
+static uint8_t __attribute__((unused)) harness_orientation = HARNESS_ORIENTATION_NONE;
+static uint8_t __attribute__((unused)) can_mode = CAN_MODE_NORMAL;
+static uint8_t __attribute__((unused)) ignition = 0U;
 
-void unused_set_individual_ignition(uint8_t bitmask);
-void unused_board_enable_header_pin(uint8_t pin_num, bool enabled);
-void unused_set_panda_individual_power(uint8_t port_num, bool enabled);
+static void __attribute__((unused)) unused_set_individual_ignition(uint8_t bitmask) {
+  UNUSED(bitmask);
+}
+
+static void __attribute__((unused)) unused_board_enable_header_pin(uint8_t pin_num, bool enabled) {
+  UNUSED(pin_num);
+  UNUSED(enabled);
+}
+
+static void __attribute__((unused)) unused_set_panda_individual_power(uint8_t port_num, bool enabled) {
+  UNUSED(port_num);
+  UNUSED(enabled);
+}
