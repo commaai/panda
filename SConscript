@@ -139,7 +139,6 @@ def build_project(project_name, project, extra_flags):
       ("drivers_spi", f"{panda_root}/board/drivers/spi.c"),
       ("drivers_timers", f"{panda_root}/board/drivers/timers.c"),
       ("drivers_usb", f"{panda_root}/board/drivers/usb.c"),
-      ("unused_funcs", f"{panda_root}/board/boards/unused_funcs.c"),
   ]
 
   _is_panda_jungle = "PANDA_JUNGLE" in " ".join(extra_flags)
