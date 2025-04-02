@@ -1,7 +1,6 @@
 #pragma once
 #include <stdint.h>
 #include <stdbool.h>
-#include "drivers/spi.h"
 
 #if defined(ENABLE_SPI) || defined(BOOTSTUB)
 void llspi_init(void);

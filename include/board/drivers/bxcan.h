@@ -1,14 +1,7 @@
 #pragma once
 #include <stdbool.h>
 #include "platform_definitions.h"
-#include "utils.h"
-#include "can.h"
 #include "can_common.h"
-#include "drivers/timers.h"
-#include "health.h"
-#include "faults.h"
-#include "safety_declarations.h"
-#include "drivers/led.h"
 
 // IRQs: CAN1_TX, CAN1_RX0, CAN1_SCE
 //       CAN2_TX, CAN2_RX0, CAN2_SCE

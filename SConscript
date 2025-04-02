@@ -1,4 +1,3 @@
-# root SCscript
 import os
 import subprocess
 

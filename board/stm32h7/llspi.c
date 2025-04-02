@@ -2,6 +2,7 @@
 #include "critical.h"
 #include "drivers/interrupts.h"
 #include "drivers/registers.h"
+#include "drivers/spi.h"
 
 #if defined(ENABLE_SPI) || defined(BOOTSTUB)
 // master -> panda DMA start

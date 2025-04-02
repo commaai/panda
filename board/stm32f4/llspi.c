@@ -1,10 +1,10 @@
 #include "llspi.h"
-#include "config.h"
 #include "critical.h"
 #include "timers.h"
-#include "utils.h"
 #include "drivers/interrupts.h"
 #include "drivers/registers.h"
+#include "drivers/spi.h"
+
 
 #if defined(ENABLE_SPI) || defined(BOOTSTUB)
 void llspi_miso_dma(uint8_t *addr, int len) {

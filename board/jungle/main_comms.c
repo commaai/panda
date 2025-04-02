@@ -3,6 +3,7 @@
 #include "can_common.h"
 #include "libc.h"
 #include "usb.h"
+#include "uart.h"
 #include "provision.h"
 #include "timers.h"
 #include "board/health.h"

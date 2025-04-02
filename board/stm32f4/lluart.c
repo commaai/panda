@@ -1,6 +1,7 @@
 #include "lluart.h"
 #include "critical.h"
 #include "drivers/interrupts.h"
+#include "drivers/uart.h"
 // ***************************** Interrupt handlers *****************************
 
 void uart_tx_ring(uart_ring *q){

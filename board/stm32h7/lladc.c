@@ -1,4 +1,5 @@
 #include "lladc.h"
+#include "config.h"
 
 void adc_init(void) {
   ADC1->CR &= ~(ADC_CR_DEEPPWD); //Reset deep-power-down mode

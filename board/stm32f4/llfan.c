@@ -1,6 +1,5 @@
 #include "stm32f4/llfan.h"
 #include "fan.h"
-#include "platform_definitions.h"
 #include "interrupts.h"
 #include "pwm.h"
 

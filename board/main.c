@@ -13,6 +13,7 @@
 
 #include "drivers/led.h"
 #include "drivers/pwm.h"
+#include "drivers/uart.h"
 #include "drivers/usb.h"
 #include "drivers/simple_watchdog.h"
 #include "drivers/bootkick.h"
