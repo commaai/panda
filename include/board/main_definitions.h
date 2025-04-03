@@ -1,5 +1,4 @@
 #pragma once
-#include <stdint.h>
 #include "boards/board.h"
 
 // ******************** Prototypes ********************
@@ -8,10 +7,6 @@ extern void puth(unsigned int i);
 extern void puth2(unsigned int i);
 extern void puth4(unsigned int i);
 extern void hexdump(const void *a, int l);
-
-//TODO(aubsw): Figure out the best spot to declare these. Currently inlined in pwm.h
-//void pwm_init(TIM_TypeDef *TIM, uint8_t channel);
-//void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
 
 // ********************* Globals **********************
 extern uint8_t hw_type;
