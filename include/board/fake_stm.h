@@ -1,4 +1,5 @@
 // minimal code to fake a panda for tests
+#pragma once
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>

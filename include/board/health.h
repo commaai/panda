@@ -1,4 +1,6 @@
 // When changing these structs, python/__init__.py needs to be kept up to date!
+#pragma once
+#include <stdint.h>
 
 #define HEALTH_PACKET_VERSION 16
 struct __attribute__((packed)) health_t {

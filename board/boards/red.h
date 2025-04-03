@@ -1,6 +1,7 @@
 #pragma once
 
-#include "board_declarations.h"
+#include "board_config.h"
+#include "drivers/gpio.h"
 
 // ///////////////////////////// //
 // Red Panda (STM32H7) + Harness //

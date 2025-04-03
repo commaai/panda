@@ -1,6 +1,17 @@
 // ********************* Includes *********************
 #include "config.h"
 
+// platform includes
+#ifdef STM32H7
+  #include "stm32h7/stm32h7_config.h"
+#elif defined(STM32F4)
+  #include "stm32f4/stm32f4_config.h"
+#else
+  // TODO: uncomment this, cppcheck complains
+  // building for tests
+  //#include "fake_stm.h"
+#endif
+
 #include "drivers/led.h"
 #include "drivers/pwm.h"
 #include "drivers/usb.h"
@@ -10,6 +21,7 @@
 #include "early_init.h"
 #include "provision.h"
 
+#include "board/can_declarations.h"
 #include "safety.h"
 
 #include "health.h"

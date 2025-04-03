@@ -1,3 +1,8 @@
+#pragma once
+#include "drivers/gpio.h"
+#include "drivers/registers.h"
+#include "drivers/interrupts.h"
+
 #ifdef BOOTSTUB
 void gpio_usb_init(void) {
 #else

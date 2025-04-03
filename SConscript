@@ -84,6 +84,12 @@ def build_project(project_name, project, extra_flags):
     '..',
     panda_root,
     f"{panda_root}/board/",
+    f"{panda_root}/include/",
+    f"{panda_root}/include/board/",
+    f"{panda_root}/include/board/drivers/",
+    f"{panda_root}/include/board/stm32h7/",
+    f"{panda_root}/include/board/stm32f4/",
+    f"{panda_root}/include/board/jungle/",
     f"{panda_root}/../opendbc/safety/",
   ]
 

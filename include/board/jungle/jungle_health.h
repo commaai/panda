@@ -1,3 +1,4 @@
+#pragma once
 // When changing these structs, python/__init__.py needs to be kept up to date!
 
 #define JUNGLE_HEALTH_PACKET_VERSION 1

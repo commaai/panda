@@ -1,4 +1,6 @@
 #pragma once
+#include <stdbool.h>
+#include "platform_definitions.h"
 
 // ******************** Prototypes ********************
 void print(const char *a);

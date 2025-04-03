@@ -1,3 +1,4 @@
+#pragma once
 /*
 HSE: 25MHz
 PLL1Q: 80MHz (for FDCAN)

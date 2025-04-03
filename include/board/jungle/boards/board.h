@@ -1,3 +1,7 @@
+#pragma once
+#include <stdbool.h>
+#include <stdint.h>
+#include "platform_definitions.h"
 // ******************** Prototypes ********************
 typedef void (*board_init)(void);
 typedef void (*board_board_tick)(void);
@@ -13,7 +17,7 @@ typedef void (*board_enable_header_pin)(uint8_t pin_num, bool enabled);
 typedef float (*board_get_channel_power)(uint8_t channel);
 typedef uint16_t (*board_get_sbu_mV)(uint8_t channel, uint8_t sbu);
 
-struct board {
+typedef struct board {
   GPIO_TypeDef * const led_GPIO[3];
   const uint8_t led_pin[3];
   const bool has_canfd;
@@ -35,7 +39,7 @@ struct board {
 
   // TODO: shouldn't need these
   bool has_spi;
-};
+} board;
 
 // ******************* Definitions ********************
 #define HW_TYPE_UNKNOWN 0U

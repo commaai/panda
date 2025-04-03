@@ -1,3 +1,4 @@
+#include "board_config.h"
 // ******************** Prototypes ********************
 void print(const char *a){ UNUSED(a); }
 void puth(uint8_t i){ UNUSED(i); }

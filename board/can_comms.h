@@ -1,3 +1,4 @@
+#pragma once
 /*
   CAN transactions to and from the host come in the form of
   a certain number of CANPacket_t. The transaction is split

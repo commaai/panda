@@ -1,3 +1,4 @@
+#pragma once
 #include "clock_source_declarations.h"
 
 void clock_source_set_period(uint8_t period) {
