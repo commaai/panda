@@ -5,6 +5,7 @@
 #include "flasher.h"
 
 #include "config.h"
+#include "critical.h"
 // platform includes
 #ifdef STM32H7
   #include "stm32h7/stm32h7_config.h"

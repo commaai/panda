@@ -1,21 +1,9 @@
 #pragma once
 #include "stm32f4_platform_definitions.h"
 
-#include "can.h"
-
-#include "libc.h"
-#include "critical.h"
-#include "faults.h"
-#include "utils.h"
-
-#include "drivers/registers.h"
-#include "drivers/interrupts.h"
-#include "drivers/gpio.h"
 #include "stm32f4/peripherals.h"
 #include "stm32f4/interrupt_handlers.h"
-#include "drivers/timers.h"
 #include "stm32f4/clock.h"
-#include "drivers/watchdog.h"
 
 #ifdef PANDA_JUNGLE
   #include "board/jungle/stm32f4/board.h"
@@ -23,11 +11,9 @@
   #include "board/stm32f4/board.h"
 #endif
 
-#include "drivers/spi.h"
 #include "stm32f4/llspi.h"
 
 #if !defined(BOOTSTUB)
-  #include "drivers/uart.h"
   #include "stm32f4/lluart.h"
 #endif
 

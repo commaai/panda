@@ -1,5 +1,6 @@
 // ********************* Includes *********************
 #include "config.h"
+#include "critical.h"
 // platform includes
 #ifdef STM32H7
   #include "stm32h7/stm32h7_config.h"
@@ -16,6 +17,7 @@
 #include "drivers/uart.h"
 #include "drivers/usb.h"
 #include "drivers/simple_watchdog.h"
+#include "drivers/spi.h"
 #include "drivers/bootkick.h"
 
 #include "early_init.h"

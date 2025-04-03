@@ -1,19 +1,8 @@
 #pragma once
-#include "can.h"
 #include "stm32h7_platform_definitions.h"
 
-#include "libc.h"
-#include "critical.h"
-#include "faults.h"
-#include "utils.h"
-
-#include "drivers/registers.h"
-#include "drivers/interrupts.h"
-#include "drivers/gpio.h"
 #include "stm32h7/peripherals.h"
 #include "stm32h7/interrupt_handlers.h"
-#include "drivers/timers.h"
-#include "drivers/watchdog.h"
 
 #if !defined(BOOTSTUB)
   #include "stm32h7/lluart.h"
@@ -34,8 +23,6 @@
 #endif
 
 #include "stm32h7/llusb.h"
-
-#include "drivers/spi.h"
 #include "stm32h7/llspi.h"
 
 void early_gpio_float(void) {
