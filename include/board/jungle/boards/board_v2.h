@@ -1,6 +1,11 @@
 // ///////////////////////// //
 // Jungle board v2 (STM32H7) //
 // ///////////////////////// //
+#pragma once
+#include "drivers/gpio.h"
+#include "drivers/registers.h"
+#include "jungle/stm32h7/lladc.h"
+
 
 gpio_t power_pins[] = {
   {.bank = GPIOA, .pin = 0},

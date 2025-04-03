@@ -1,3 +1,4 @@
+#pragma once
 #include "can_common_declarations.h"
 
 uint32_t safety_tx_blocked = 0;

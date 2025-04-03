@@ -1,4 +1,7 @@
+#pragma once
 #include "interrupts_declarations.h"
+#include "drivers/timers.h"
+#include "utils.h"
 
 void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!

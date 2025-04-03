@@ -1,4 +1,10 @@
 // Early bringup
+#pragma once
+#include "critical.h"
+#include "drivers/gpio.h"
+#include "drivers/led.h"
+#include "drivers/registers.h"
+
 #define ENTER_BOOTLOADER_MAGIC 0xdeadbeefU
 #define ENTER_SOFTLOADER_MAGIC 0xdeadc0deU
 #define BOOT_NORMAL 0xdeadb111U

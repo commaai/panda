@@ -1,3 +1,4 @@
+#pragma once
 #include "uart_declarations.h"
 
 // IRQs: USART2, USART3, UART5

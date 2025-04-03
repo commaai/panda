@@ -1,6 +1,7 @@
 #pragma once
 
 #include "spi_declarations.h"
+#include "comms_definitions.h"
 #include "crc.h"
 
 #ifdef STM32H7

@@ -1,3 +1,31 @@
+#include "comms_definitions.h"
+#include "config.h"
+#include "drivers/clock_source.h"
+#include "board/can_comms.h"
+#include "drivers/can_common.h"
+#include "health.h"
+#include "power_saving.h"
+#include "provision.h"
+#include "drivers/harness.h"
+#include "drivers/fan.h"
+#include "drivers/interrupts.h"
+#include "drivers/spi.h"
+#include "drivers/timers.h"
+#include "faults.h"
+#include "drivers/bootkick.h"
+#include "drivers/uart.h"
+#include "early_init.h"
+
+#ifdef STM32H7
+  #include "drivers/fdcan.h"
+  #include "board/stm32h7/llfdcan.h"
+  #include "board/stm32h7/lluart.h"
+#else
+  #include "drivers/bxcan.h"
+  #include "board/stm32f4/llbxcan.h"
+  #include "board/stm32f4/lluart.h"
+#endif
+
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 // Prototypes

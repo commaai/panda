@@ -1,3 +1,4 @@
+#pragma once
 #include "fdcan_declarations.h"
 
 FDCAN_GlobalTypeDef *cans[CANS_ARRAY_SIZE] = {FDCAN1, FDCAN2, FDCAN3};

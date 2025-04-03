@@ -1,7 +1,9 @@
 // ///////////////////////// //
 // Jungle board v1 (STM32F4) //
 // ///////////////////////// //
-
+#pragma once
+#include "jungle/boards/board.h"
+#include "drivers/gpio.h"
 void board_v1_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver) {
     case 1U:

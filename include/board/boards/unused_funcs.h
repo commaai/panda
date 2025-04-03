@@ -1,4 +1,6 @@
 #pragma once
+#include "board_config.h"
+
 
 void unused_init_bootloader(void) {
 }

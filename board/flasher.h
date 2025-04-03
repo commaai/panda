@@ -1,9 +1,25 @@
+#pragma once
+#include <stddef.h>
+#include "libc.h"
+#include "config.h"
+#include "critical.h"
+#include "drivers/led.h"
+#include "drivers/spi.h"
+#include "drivers/usb.h"
+#include "provision.h"
+#include "utils.h"
 // from the linker script
 #ifdef STM32H7
   #define APP_START_ADDRESS 0x8020000U
+  #include "stm32h7/llflash.h"
+  #include "stm32h7/peripherals.h"
 #elif defined(STM32F4)
   #define APP_START_ADDRESS 0x8004000U
+  #include "stm32f4/llflash.h"
+  #include "stm32f4/peripherals.h"
 #endif
+#include "comms_definitions.h"
+#include "early_init.h"
 
 // flasher state variables
 uint32_t *prog_ptr = NULL;

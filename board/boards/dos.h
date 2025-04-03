@@ -1,6 +1,6 @@
 #pragma once
 
-#include "board_declarations.h"
+#include "board_config.h"
 
 // /////////////////////// //
 // Dos (STM32F4) + Harness //

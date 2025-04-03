@@ -1,7 +1,7 @@
 // ///////////////////////////////////////////////////////////// //
 // Hardware abstraction layer for all different supported boards //
 // ///////////////////////////////////////////////////////////// //
-#include "boards/board_declarations.h"
+#pragma once
 #include "boards/unused_funcs.h"
 
 // ///// Board definition and detection ///// //

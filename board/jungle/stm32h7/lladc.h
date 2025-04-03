@@ -1,3 +1,4 @@
+#include "jungle/boards/board.h"
 
 typedef struct {
   ADC_TypeDef *adc;

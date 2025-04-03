@@ -1,3 +1,10 @@
+#pragma once
+#include "critical.h"
+#include "drivers/interrupts.h"
+#include "drivers/registers.h"
+#include "drivers/spi.h"
+#include "utils.h"
+
 #if defined(ENABLE_SPI) || defined(BOOTSTUB)
 // master -> panda DMA start
 void llspi_mosi_dma(uint8_t *addr, int len) {

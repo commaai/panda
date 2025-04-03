@@ -1,4 +1,7 @@
+#pragma once
 #include "main_declarations.h"
+#include <stdbool.h>
+#include <stdint.h>
 
 // ********************* Globals **********************
 uint8_t hw_type = 0;
