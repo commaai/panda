@@ -6,9 +6,9 @@
 #include "stm32f4/clock.h"
 
 #ifdef PANDA_JUNGLE
-  #include "board/jungle/stm32f4/board.h"
+  #include "jungle/stm32f4/board.h"
 #else
-  #include "board/stm32f4/board.h"
+  #include "stm32f4/board.h"
 #endif
 
 #include "stm32f4/llspi.h"
