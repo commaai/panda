@@ -1,7 +1,6 @@
 // this is where we manage the dongle ID assigned during our
 // manufacturing. aside from this, there's a UID for the MCU
 #pragma once
-#include "config.h"
 #include "libc.h"
 
 #define PROVISION_CHUNK_LEN 0x20

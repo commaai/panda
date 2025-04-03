@@ -1,6 +1,7 @@
 #pragma once
 
 #include "boards/board.h"
+#include "drivers/gpio.h"
 #include "stm32f4/peripherals.h"
 
 // ///////////////////// //
