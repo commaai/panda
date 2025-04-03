@@ -1,6 +1,6 @@
 #include "llusb.h"
 #include "platform_definitions.h"
-#include "interrupts.h"
+#include "drivers/interrupts.h"
 #include "libc.h"
 
 USB_OTG_GlobalTypeDef *USBx = USB_OTG_HS;

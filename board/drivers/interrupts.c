@@ -1,6 +1,6 @@
 #include "interrupts.h"
 #include "critical.h"
-#include "timers.h"
+#include "drivers/timers.h"
 #include "can.h" // TODO: delete this after we clean up safety.h
 #include "config.h"
 #include "safety_declarations.h"

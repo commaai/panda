@@ -1,7 +1,7 @@
 #include "stm32f4/llfan.h"
-#include "fan.h"
-#include "interrupts.h"
-#include "pwm.h"
+#include "drivers/interrupts.h"
+#include "drivers/fan.h"
+#include "drivers/pwm.h"
 
 // TACH interrupt handler
 void EXTI2_IRQ_Handler(void) {

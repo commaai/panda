@@ -1,6 +1,6 @@
 #include "sound.h"
 #include "config.h"
-#include "interrupts.h"
+#include "drivers/interrupts.h"
 #define SOUND_RX_BUF_SIZE 1000U
 #define SOUND_TX_BUF_SIZE (SOUND_RX_BUF_SIZE/2U)
 #define MIC_RX_BUF_SIZE 512U

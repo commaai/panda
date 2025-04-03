@@ -1,8 +1,8 @@
 #include "can_common.h"
 #include "config.h"
-#include "timers.h"
-#include "faults.h"
 #include "critical.h"
+#include "drivers/timers.h"
+#include "faults.h"
 #include "safety_declarations.h"
 
 uint32_t safety_tx_blocked = 0;

@@ -2,7 +2,7 @@
 #include "can_common.h"
 #include "config.h"
 #include "libc.h"
-#include "spi.h"
+#include "drivers/spi.h"
 #include "utils.h"
 
 typedef struct {

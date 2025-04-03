@@ -1,7 +1,7 @@
 #pragma once
 
-#include "pwm.h"
 #include "boards/board.h"
+#include "drivers/pwm.h"
 
 // /////////////////////// //
 // Uno (STM32F4) + Harness //

@@ -1,6 +1,6 @@
 #include "fan.h"
+#include "drivers/pwm.h"
 #include "utils.h"
-#include "pwm.h"
 
 struct fan_state_t fan_state;
 

@@ -1,8 +1,8 @@
 #include "stm32h7/llfan.h"
-#include "fan.h"
+#include "drivers/fan.h"
+#include "drivers/interrupts.h"
+#include "drivers/pwm.h"
 #include "platform_definitions.h"
-#include "interrupts.h"
-#include "pwm.h"
 // TACH interrupt handler
 void EXTI2_IRQ_Handler(void) {
   volatile unsigned int pr = EXTI->PR1 & (1U << 2);

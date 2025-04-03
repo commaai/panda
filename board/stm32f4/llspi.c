@@ -1,6 +1,6 @@
 #include "llspi.h"
 #include "critical.h"
-#include "timers.h"
+#include "drivers/timers.h"
 #include "drivers/interrupts.h"
 #include "drivers/registers.h"
 #include "drivers/spi.h"
