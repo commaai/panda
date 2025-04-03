@@ -5,6 +5,7 @@
 
 // TODO: Implement for 32-bit timers
 
+// TODO(aubsw): Maybe we don't want to inline this...
 static inline void pwm_init(TIM_TypeDef *TIM, uint8_t channel){
     // Enable timer and auto-reload
     register_set(&(TIM->CR1), TIM_CR1_CEN | TIM_CR1_ARPE, 0x3FU);

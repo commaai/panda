@@ -1,5 +1,4 @@
 #pragma once
-#include "drivers/harness_configuration.h"
 #include "boards/board.h"
 // ******************** Prototypes ********************
 extern void print(const char *a);

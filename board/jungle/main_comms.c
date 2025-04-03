@@ -10,6 +10,7 @@
 #include "jungle_health.h"
 #include "early_init.h"
 #include "obj/gitversion.h"
+#include "utils.h"
 
 #ifdef STM32H7
   #include "drivers/fdcan.h"

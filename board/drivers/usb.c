@@ -1,8 +1,8 @@
 #include "usb.h"
 #include <stdbool.h>
-#include "config.h"
 #include "comms_definitions.h"
 #include "critical.h"
+#include "utils.h"
 
 #ifdef STM32H7
   #include "stm32h7/llusb.h"
