@@ -35,6 +35,8 @@ struct board {
   const bool fan_stall_recovery;
   const uint8_t fan_enable_cooldown_time;
   const uint8_t fan_max_pwm;
+  const uint8_t voltage_cadc_channel;
+  const uint8_t current_cadc_channel;
   board_init init;
   board_init_bootloader init_bootloader;
   board_enable_can_transceiver enable_can_transceiver;
@@ -73,6 +75,8 @@ struct board {
 // CAN modes
 #define CAN_MODE_NORMAL 0U
 #define CAN_MODE_OBD_CAN2 1U
+
+#define CADC_CHANNEL_NONE 0xFFU
 
 extern struct board board_black;
 extern struct board board_dos;
