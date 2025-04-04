@@ -20,7 +20,7 @@ env = Environment(
     ".",
     "../../board/",
     "../../../opendbc/",
-    "../../../opendbc/opendbc/safety/"],
+    "../../../opendbc/safety/"],
 )
 if system == "Darwin":
   env.PrependENVPath('PATH', '/opt/homebrew/bin')

@@ -1,5 +1,5 @@
 #pragma once
-#include "opendbc/safety/board/can.h"
+#include "safety/board/can.h"
 
 #define CANPACKET_HEAD_SIZE 6U
 #define CAN_PACKET_VERSION 4

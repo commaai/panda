@@ -1,8 +1,9 @@
 // minimal code to fake a panda for tests
+#pragma once
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include "opendbc/safety/board/fake_stm.h"
+#include "safety/board/fake_stm.h"
 
 #define CANFD
 

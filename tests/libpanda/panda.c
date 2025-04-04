@@ -1,4 +1,4 @@
-#include "fake_stm.h"
+#include "fake_stm_panda.h"
 #include "config.h"
 #include "can.h"
 
@@ -15,7 +15,7 @@ void can_tx_comms_resume_spi(void) { };
 #include "faults.h"
 #include "libc.h"
 #include "boards/board_declarations.h"
-#include "opendbc/safety/safety.h"
+#include "safety/safety.h"
 #include "main_definitions.h"
 #include "drivers/can_common.h"
 
