@@ -42,7 +42,7 @@
 #include "libc.h"
 #include "critical.h"
 #include "faults.h"
-#include "utils.h"
+#include "opendbc/safety/board/utils.h"
 
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"
