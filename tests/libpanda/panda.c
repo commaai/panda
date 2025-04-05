@@ -17,7 +17,7 @@ void can_tx_comms_resume_spi(void) { };
 #include "boards/board_declarations.h"
 #include "safety/safety.h"
 #include "main_definitions.h"
-#include "drivers/can_common.h"
+#include "drivers/can_common_panda.h"
 
 can_ring *rx_q = &can_rx_q;
 can_ring *tx1_q = &can_tx1_q;
