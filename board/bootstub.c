@@ -1,24 +1,30 @@
-#define BOOTSTUB
-
 #define VERS_TAG 0x53524556
 #define MIN_VERSION 2
 
 // ********************* Includes *********************
+#include "flasher.h"
+
 #include "config.h"
+#include "critical.h"
+// platform includes
+#ifdef STM32H7
+  #include "stm32h7/stm32h7_config.h"
+#elif defined(STM32F4)
+  #include "stm32f4/stm32f4_config.h"
+#endif
 
 #include "drivers/led.h"
 #include "drivers/pwm.h"
 #include "drivers/usb.h"
 
-#include "early_init.h"
 #include "provision.h"
 
 #include "crypto/rsa.h"
 #include "crypto/sha.h"
 
 #include "obj/cert.h"
-#include "obj/gitversion.h"
-#include "flasher.h"
+#include "early_init.h"
+
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {
@@ -31,6 +37,8 @@ void fail(void) {
 
 // know where to sig check
 extern void *_app_start[];
+
+extern void clock_init(void);
 
 // FIXME: sometimes your panda will fail flashing and will quickly blink a single Green LED
 // BOUNTY: $200 coupon on shop.comma.ai or $100 check.

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -ex
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PANDA_DIR=$(realpath $DIR/../../)
@@ -44,12 +44,17 @@ cppcheck() {
   echo -e "\n\n\n\n\nTEST variant options:" >> $CHECKLIST
   echo -e ""${@//$PANDA_DIR/}"\n\n" >> $CHECKLIST # (absolute path removed)
 
-  $CPPCHECK_DIR/cppcheck --inline-suppr -I $PANDA_DIR/board/ \
+  $CPPCHECK_DIR/cppcheck --inline-suppr -I \
+          $PANDA_DIR/board/ \
+          $PANDA_DIR/board/drivers/ \
+          $PANDA_DIR/include/board/ \
+          $PANDA_DIR/include/board/drivers/ \
           -I "$(arm-none-eabi-gcc -print-file-name=include)" \
           -I $PANDA_DIR/board/stm32f4/inc/ -I $PANDA_DIR/board/stm32h7/inc/ \
           -I $PANDA_DIR/../opendbc/safety/ \
+          -I $PANDA_DIR/../opendbc/safety/board \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
-          --suppress=*:*include/* --error-exitcode=2 --check-level=exhaustive --safety \
+          --error-exitcode=2 --check-level=exhaustive --safety \
           --platform=arm32-wchar_t4 $COMMON_DEFINES --checkers-report=$CHECKLIST.tmp \
           --std=c11 "$@" 2>&1 | tee $OUTPUT
 

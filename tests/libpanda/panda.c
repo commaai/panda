@@ -1,6 +1,7 @@
 #include "fake_stm_panda.h"
 #include "config.h"
-#include "can.h"
+#include "can_panda.h"
+#include "drivers/harness_configuration.h"
 
 bool can_init(uint8_t can_number) { return true; }
 void process_can(uint8_t can_number) { }
@@ -12,11 +13,11 @@ void can_tx_comms_resume_usb(void) { };
 void can_tx_comms_resume_spi(void) { };
 
 #include "health.h"
-#include "faults.h"
+#include "faults_panda.h"
 #include "libc.h"
-#include "boards/board_declarations.h"
 #include "safety/safety.h"
 #include "main_definitions.h"
+#include "boards/board.h"
 #include "drivers/can_common_panda.h"
 
 can_ring *rx_q = &can_rx_q;
