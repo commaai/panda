@@ -220,6 +220,10 @@ bool can_tx_check_min_slots_free(uint32_t min) {
     (can_slots_empty(&can_tx3_q) >= min);
 }
 
+bool can_check_checksum(CANPacket_t *packet) {
+  return (calculate_checksum((uint8_t *) packet, CANPACKET_HEAD_SIZE + GET_LEN(packet)) == 0U);
+}
+
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
   if (skip_tx_hook || safety_tx_hook(to_push) != 0) {
     if (bus_number < PANDA_BUS_CNT) {

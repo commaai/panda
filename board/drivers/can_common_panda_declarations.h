@@ -81,5 +81,6 @@ void can_set_forwarding(uint8_t from, uint8_t to);
 #endif
 void ignition_can_hook(CANPacket_t *to_push);
 bool can_tx_check_min_slots_free(uint32_t min);
+bool can_check_checksum(CANPacket_t *packet);
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook);
 bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len);
