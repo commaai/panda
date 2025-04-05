@@ -1,7 +1,7 @@
 // ********************* Includes *********************
 #include "board/config.h"
 
-#include "safety.h"
+#include "safety/safety.h"
 
 #include "board/drivers/led.h"
 #include "board/drivers/pwm.h"
@@ -13,7 +13,7 @@
 #include "board/health.h"
 #include "jungle_health.h"
 
-#include "board/drivers/can_common.h"
+#include "board/drivers/can_common_panda.h"
 
 #ifdef STM32H7
   #include "board/drivers/fdcan.h"

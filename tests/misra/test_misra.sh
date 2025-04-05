@@ -63,7 +63,7 @@ cppcheck() {
   fi
 }
 
-PANDA_OPTS="--enable=all --disable=unusedFunction -DPANDA --addon=misra"
+PANDA_OPTS="--enable=all --disable=unusedFunction -DPANDA --addon=misra -I $PANDA_DIR/../opendbc  -I $PANDA_DIR/../opendbc/safety/ "
 
 printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
 cppcheck $PANDA_OPTS -DSTM32F4 -DSTM32F413xx $PANDA_DIR/board/main.c
