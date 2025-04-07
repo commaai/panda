@@ -126,11 +126,7 @@ def build_project(project_name, project, extra_flags):
   # Sources shared by all Panda variants
   sources = [
       #  bootstub_definitions, flasher,
-      ("safety", f"{panda_root}/../opendbc/safety/main.c"),
-      ("early_init", f"{panda_root}/board/early_init.c"),
-      ("libc", f"{panda_root}/board/libc.c"),
       ("critical", f"{panda_root}/board/critical.c"),
-      ("faults", f"{panda_root}/board/faults.c"),
       ("drivers_clock_source", f"{panda_root}/board/drivers/clock_source.c"),
       ("drivers_gpio", f"{panda_root}/board/drivers/gpio.c"),
       ("drivers_interrupts", f"{panda_root}/board/drivers/interrupts.c"),
@@ -138,6 +134,10 @@ def build_project(project_name, project, extra_flags):
       ("drivers_spi", f"{panda_root}/board/drivers/spi.c"),
       ("drivers_timers", f"{panda_root}/board/drivers/timers.c"),
       ("drivers_usb", f"{panda_root}/board/drivers/usb.c"),
+      ("early_init", f"{panda_root}/board/early_init.c"),
+      ("faults", f"{panda_root}/board/faults.c"),
+      ("libc", f"{panda_root}/board/libc.c"),
+      ("safety", f"{panda_root}/../opendbc/safety/main.c"),
   ]
 
   _is_panda_jungle = "PANDA_JUNGLE" in " ".join(extra_flags)
@@ -154,6 +154,7 @@ def build_project(project_name, project, extra_flags):
 
   if _is_stm32h7:
       sources.extend([
+        ("drivers_fake_siren", f"{panda_root}/board/drivers/fake_siren.c"),
         ("stm32h7_peripherals", f"{panda_root}/board/stm32h7/peripherals.c"),
         ("stm32h7_llusb", f"{panda_root}/board/stm32h7/llusb.c"),
         ("stm32h7_clock", f"{panda_root}/board/stm32h7/clock.c"),
@@ -172,12 +173,12 @@ def build_project(project_name, project, extra_flags):
 
   if _is_stm32f4:
       sources.extend([
-        ("stm32f4_peripherals", f"{panda_root}/board/stm32f4/peripherals.c"),
-        ("stm32f4_llusb", f"{panda_root}/board/stm32f4/llusb.c"),
         ("stm32f4_clock", f"{panda_root}/board/stm32f4/clock.c"),
+        ("stm32f4_llusb", f"{panda_root}/board/stm32f4/llusb.c"),
         ("stm32f4_lladc", f"{panda_root}/board/stm32f4/lladc.c"),
         ("stm32f4_llflash", f"{panda_root}/board/stm32f4/llflash.c"),
         ("stm32f4_llspi", f"{panda_root}/board/stm32f4/llspi.c"),
+        ("stm32f4_peripherals", f"{panda_root}/board/stm32f4/peripherals.c"),
       ])
       if not _is_panda_jungle:
           sources.extend([
@@ -219,9 +220,9 @@ def build_project(project_name, project, extra_flags):
       ])
   else:
       sources.extend([
-          ("power_saving", f"{panda_root}/board/power_saving.c"),
-          ("main_comms", f"{panda_root}/board/main_comms.c"),
           ("drivers_bootkick", f"{panda_root}/board/drivers/bootkick.c"),
+          ("main_comms", f"{panda_root}/board/main_comms.c"),
+          ("power_saving", f"{panda_root}/board/power_saving.c"),
       ])
   if _is_stm32h7:
       sources.extend([
