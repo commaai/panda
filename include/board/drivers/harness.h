@@ -2,9 +2,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "drivers/harness_configuration.h"
-#include "boards/board.h"
 
-extern board *current_board;
 extern uint16_t adc_get_mV(uint8_t channel);
 
 #define HARNESS_STATUS_NC 0U

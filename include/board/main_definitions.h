@@ -1,8 +1,7 @@
 #pragma once
 #include <stdbool.h>
 #include <stdint.h>
-
-typedef struct board board; // Forward decl.
+#include "boards/board.h"
 
 // ******************** Prototypes ********************
 extern void print(const char *a);

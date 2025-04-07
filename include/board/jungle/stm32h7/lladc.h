@@ -1,4 +1,5 @@
 #pragma once
+#include "config.h"
 
 typedef struct {
   ADC_TypeDef *adc;

@@ -1,16 +1,15 @@
 #pragma once
 #include <stdint.h>
 #include <stdbool.h>
+#include "boards/board.h"
 
 #ifdef BOOTSTUB
-
-typedef struct board board; // Forward decl.
 
 // No UART support in bootloader
 typedef struct uart_ring {} uart_ring;
 extern uart_ring uart_ring_som_debug;
 extern uart_ring uart_ring_debug;
-extern uart_ring *get_ring_by_number(int a);
+uart_ring *get_ring_by_number(int a);
 
 // ******************** Prototypes ********************
 extern void print(const char *a);

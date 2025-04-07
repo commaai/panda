@@ -1,4 +1,5 @@
 #include "power_saving.h"
+#include "config.h"
 #include "libc.h"
 #include "drivers/gpio.h"
 #include "drivers/harness.h"

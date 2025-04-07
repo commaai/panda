@@ -27,7 +27,7 @@ extern uart_ring uart_ring_som_debug;
 extern uart_ring uart_ring_debug;
 
 // ***************************** Function prototypes *****************************
-void debug_ring_callback(uart_ring *ring);
+extern void debug_ring_callback(uart_ring *ring);
 void uart_tx_ring(uart_ring *q);
 uart_ring *get_ring_by_number(int a);
 // ************************* Low-level buffer functions *************************

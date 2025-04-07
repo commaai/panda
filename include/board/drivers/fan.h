@@ -1,8 +1,5 @@
 #pragma once
 #include <stdint.h>
-#include "boards/board.h"
-
-extern board *current_board;
 
 struct fan_state_t {
   uint16_t tach_counter;

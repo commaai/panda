@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "platform_definitions.h"
+#include "drivers/harness_configuration.h"
 
 #ifdef PANDA_JUNGLE
 #include "jungle/boards/board.h"
@@ -30,7 +31,6 @@ typedef void (*board_set_bootkick)(BootState state);
 typedef bool (*board_read_som_gpio)(void);
 typedef void (*board_set_amp_enabled)(bool enabled);
 
-typedef struct harness_configuration harness_configuration; // Forward decl.
 typedef struct board {
   harness_configuration *harness_config;
   GPIO_TypeDef * const led_GPIO[3];

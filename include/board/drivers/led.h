@@ -1,12 +1,10 @@
 #pragma once
 #include "gpio.h"
-#include "boards/board.h"
+#include "config.h"
 
 #define LED_RED 0U
 #define LED_GREEN 1U
 #define LED_BLUE 2U
-
-extern board *current_board;
 
 static inline void led_set(uint8_t color, bool enabled) {
   if (color < 3U) {

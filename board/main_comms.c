@@ -31,6 +31,7 @@
 #endif
 
 extern bool controls_allowed;
+#include "safety/safety_declarations.h"
 
 int get_health_pkt(void *dat) {
   COMPILE_TIME_ASSERT(sizeof(struct health_t) <= USBPACKET_MAX_SIZE);
