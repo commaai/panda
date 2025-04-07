@@ -1,9 +1,9 @@
 //#include "fake_stm.h"
 #include "config.h"
+#include "can.c"
 #include "can_common.c"
 #include "can_comms.c"
 #include "main_definitions.c"
-#include "can.h"
 
 bool can_init(uint8_t can_number) { return true; }
 void process_can(uint8_t can_number) { }

@@ -40,10 +40,7 @@
 #include "jungle/main_comms.h"
 #include "libc.h"
 
-// TODO: Dedup this some day. Defined in opendbc.
-#ifndef SAFETY_ALLOUTPUT
-#define SAFETY_ALLOUTPUT 17U
-#endif
+#include "safety/safety_declarations.h"
 
 extern int set_safety_hooks(uint16_t mode, uint16_t param);
 

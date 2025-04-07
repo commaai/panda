@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -ex
+set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PANDA_DIR=$(realpath $DIR/../../)
@@ -45,13 +45,14 @@ cppcheck() {
   echo -e ""${@//$PANDA_DIR/}"\n\n" >> $CHECKLIST # (absolute path removed)
 
   $CPPCHECK_DIR/cppcheck --inline-suppr \
-        -I $PANDA_DIR/board/ \
-        -I $PANDA_DIR/board/drivers/ \
-        -I $PANDA_DIR/include/board/ \
-        -I $PANDA_DIR/include/board/boards/ \
-        -I $PANDA_DIR/include/board/drivers/ \
-        -I $PANDA_DIR/include/board/stm32f4/ \
-        -I $PANDA_DIR/include/board/stm32h7/ \
+          -I $PANDA_DIR/board/ \
+          -I $PANDA_DIR/board/drivers/ \
+          -I $PANDA_DIR/include/board/ \
+          -I $PANDA_DIR/include/board/boards/ \
+          -I $PANDA_DIR/include/board/drivers/ \
+          -I $PANDA_DIR/include/board/jungle/ \
+          -I $PANDA_DIR/include/board/stm32f4/ \
+          -I $PANDA_DIR/include/board/stm32h7/ \
           -I "$(arm-none-eabi-gcc -print-file-name=include)" \
           -I $PANDA_DIR/board/stm32f4/inc/ -I $PANDA_DIR/board/stm32h7/inc/ \
           -I $PANDA_DIR/../opendbc/safety/ \
@@ -76,20 +77,22 @@ cppcheck() {
 PANDA_OPTS="--enable=all --disable=unusedFunction -DPANDA --addon=misra \
   -I $PANDA_DIR/../opendbc \
   -I $PANDA_DIR/../opendbc/safety/ \
+  -I $PANDA_DIR/board/ \
+  -I $PANDA_DIR/board/drivers/ \
   -I $PANDA_DIR/include/board/ \
   -I $PANDA_DIR/include/board/drivers/ \
   -I $PANDA_DIR/include/board/boards/ \
   -I $PANDA_DIR/include/board/stm32f4/ \
   -I $PANDA_DIR/include/board/stm32h7/ \
-  -I $PANDA_DIR/board/stm32f4/inc/ -I $PANDA_DIR/board/stm32h7/inc/ \
+  -I $PANDA_DIR/include/board/jungle/ \
   -I $PANDA_DIR/board/stm32f4/inc/ -I $PANDA_DIR/board/stm32h7/inc/ \
 "
 
 printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
-cppcheck $PANDA_OPTS -DSTM32F4 -DSTM32F413xx $PANDA_DIR/board/main.c
+cppcheck $PANDA_OPTS -DSTM32F4 -DSTM32F413xx $PANDA_DIR/board/**/*.c
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx $PANDA_DIR/board/main.c
+cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx $PANDA_DIR/board/**/*.c
 
 # unused needs to run globally
 #printf "\n${GREEN}** UNUSED ALL CODE **${NC}\n"

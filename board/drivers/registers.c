@@ -3,7 +3,7 @@
 #include "faults.h"
 #include "interrupts.h"
 
-static reg register_map[REGISTER_MAP_SIZE];
+static reg_t register_map[REGISTER_MAP_SIZE];
 
 // Hash spread in first and second iterations seems to be reasonable.
 // See: tests/development/register_hashmap_spread.py

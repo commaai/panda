@@ -1,11 +1,12 @@
 #pragma once
 #include <stdint.h>
 
+// cppcheck-suppress misra-c2012-2.3
 typedef struct reg {
   volatile uint32_t *address;
   uint32_t value;
   uint32_t check_mask;
-} reg;
+} reg_t;
 
 // 10 bit hash with 23 as a prime
 #define REGISTER_MAP_SIZE 0x3FFU
