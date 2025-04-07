@@ -1,16 +1,25 @@
-#include "can_common_panda.h"
-#include "safety/board/drivers/can_common.h"
+#include "can_common.h"
 
 #include "boards/board.h"
-#include "can_panda.h"
 #include "can_comms.h"
 #include "config.h"
-#include "safety/safety_declarations.h"
+#include "utils.h"
 
 #ifndef LIBPANDA
 #include "critical.h"
 #endif
 
+#ifdef STM32H7
+// ITCM RAM and DTCM RAM are the fastest for Cortex-M7 core access
+__attribute__((section(".axisram"))) can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
+__attribute__((section(".itcmram"))) can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
+__attribute__((section(".itcmram"))) can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
+#else
+can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
+can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
+can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
+#endif
+can_buffer(tx3_q, CAN_TX_BUFFER_SIZE)
 
 uint32_t safety_tx_blocked = 0;
 uint32_t safety_rx_invalid = 0;
@@ -29,25 +38,6 @@ int can_silent = ALL_CAN_SILENT;
 bool can_loopback = false;
 
 // ********************* instantiate queues *********************
-#define can_buffer(x, size) \
-  static CANPacket_t elems_##x[size]; \
-  extern can_ring can_##x; \
-  can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = (size), .elems = (CANPacket_t *)&(elems_##x) };
-
-#define CAN_RX_BUFFER_SIZE 4096U
-#define CAN_TX_BUFFER_SIZE 416U
-
-#ifdef STM32H7
-// ITCM RAM and DTCM RAM are the fastest for Cortex-M7 core access
-__attribute__((section(".axisram"))) can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
-__attribute__((section(".itcmram"))) can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
-__attribute__((section(".itcmram"))) can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
-#else
-can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
-can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
-can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
-#endif
-can_buffer(tx3_q, CAN_TX_BUFFER_SIZE)
 
 // FIXME:
 // cppcheck-suppress misra-c2012-9.3
@@ -229,6 +219,23 @@ bool can_tx_check_min_slots_free(uint32_t min) {
     (can_slots_empty(&can_tx1_q) >= min) &&
     (can_slots_empty(&can_tx2_q) >= min) &&
     (can_slots_empty(&can_tx3_q) >= min);
+}
+
+uint8_t calculate_checksum(const uint8_t *dat, uint32_t len) {
+  uint8_t checksum = 0U;
+  for (uint32_t i = 0U; i < len; i++) {
+    checksum ^= dat[i];
+  }
+  return checksum;
+}
+
+void can_set_checksum(CANPacket_t *packet) {
+  packet->checksum = 0U;
+  packet->checksum = calculate_checksum((uint8_t *) packet, CANPACKET_HEAD_SIZE + GET_LEN(packet));
+}
+
+bool can_check_checksum(CANPacket_t *packet) {
+  return (calculate_checksum((uint8_t *) packet, CANPACKET_HEAD_SIZE + GET_LEN(packet)) == 0U);
 }
 
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {

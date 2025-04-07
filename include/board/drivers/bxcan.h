@@ -1,7 +1,8 @@
 #pragma once
 #include <stdbool.h>
 #include "platform_definitions.h"
-#include "can_common_panda.h"
+#include "can.h"
+#include "can_common.h"
 
 // IRQs: CAN1_TX, CAN1_RX0, CAN1_SCE
 //       CAN2_TX, CAN2_RX0, CAN2_SCE
@@ -22,3 +23,8 @@ void process_can(uint8_t can_number);
 // blink blue when we are receiving CAN messages
 void can_rx(uint8_t can_number);
 bool can_init(uint8_t can_number);
+
+extern bool can_check_checksum(CANPacket_t *packet);
+extern void can_set_checksum(CANPacket_t *packet);
+extern int safety_fwd_hook(int bus_num, int addr);
+extern bool safety_rx_hook(const CANPacket_t *to_push);

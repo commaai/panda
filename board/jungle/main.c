@@ -10,12 +10,10 @@
 #else
   // TODO: uncomment this, cppcheck complains
   // building for tests
-  //#include "fake_stm_panda.h"
+  //#include "fake_stm.h"
 #endif
 
-#include "safety/safety_declarations.h"
-
-#include "drivers/can_common_panda.h"
+#include "can_common.h"
 #include "drivers/led.h"
 #include "drivers/pwm.h"
 #include "drivers/timers.h"
@@ -37,11 +35,17 @@
 #include "obj/gitversion.h"
 
 #include "can_comms.h"
-#include "can_common_panda.h"
-#include "can_panda.h"
+#include "can_common.h"
+#include "can.h"
 #include "jungle/main_comms.h"
 #include "libc.h"
 
+// TODO: Dedup this some day. Defined in opendbc.
+#ifndef SAFETY_ALLOUTPUT
+#define SAFETY_ALLOUTPUT 17U
+#endif
+
+extern int set_safety_hooks(uint16_t mode, uint16_t param);
 
 // ********************* Serial debugging *********************
 

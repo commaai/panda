@@ -1,12 +1,11 @@
 #include "main_comms.h"
-#include "can_panda.h"
+#include "can.h"
 #include "comms_definitions.h"
 #include "config.h"
 #include "clock_source.h"
 #include "can_comms.h"
-#include "drivers/can_common_panda.h"
+#include "can_common.h"
 #include "health.h"
-#include "safety/safety_declarations.h"
 #include "power_saving.h"
 #include "provision.h"
 #include "harness.h"
@@ -14,9 +13,10 @@
 #include "drivers/interrupts.h"
 #include "drivers/spi.h"
 #include "drivers/timers.h"
-#include "faults_panda.h"
+#include "faults.h"
 #include "bootkick.h"
 #include "uart.h"
+#include "utils.h"
 #include "early_init.h"
 #include "obj/gitversion.h"
 
@@ -29,6 +29,8 @@
   #include "stm32f4/llbxcan.h"
   #include "stm32f4/lluart.h"
 #endif
+
+extern bool controls_allowed;
 
 int get_health_pkt(void *dat) {
   COMPILE_TIME_ASSERT(sizeof(struct health_t) <= USBPACKET_MAX_SIZE);

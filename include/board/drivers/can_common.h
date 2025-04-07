@@ -1,7 +1,7 @@
 #pragma once
-#include "safety/board/drivers/can_common_declarations.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include "can.h"
 #include "health.h"
 
 typedef struct {
@@ -10,6 +10,18 @@ typedef struct {
   uint32_t fifo_size;
   CANPacket_t *elems;
 } can_ring;
+
+#define can_buffer(x, size) \
+  static CANPacket_t elems_##x[size]; \
+  can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = (size), .elems = (CANPacket_t *)&(elems_##x) };
+
+#define CAN_RX_BUFFER_SIZE 4096U
+#define CAN_TX_BUFFER_SIZE 416U
+
+extern can_ring can_rx_q;
+extern can_ring can_tx1_q;
+extern can_ring can_tx2_q;
+extern can_ring can_tx3_q;
 
 typedef struct {
   uint8_t bus_lookup;
@@ -22,11 +34,6 @@ typedef struct {
   bool brs_enabled;
   bool canfd_non_iso;
 } bus_config_t;
-
-extern can_ring can_rx_q;
-extern can_ring can_tx1_q;
-extern can_ring can_tx2_q;
-extern can_ring can_tx3_q;
 
 extern uint32_t safety_tx_blocked;
 extern uint32_t safety_rx_invalid;
@@ -51,7 +58,6 @@ extern bool can_loopback;
 // ******************* functions prototypes *********************
 bool can_init(uint8_t can_number);
 void process_can(uint8_t can_number);
-extern void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg);
 
 // ********************* instantiate queues *********************
 #define CAN_QUEUES_ARRAY_SIZE 3
@@ -65,7 +71,6 @@ extern can_ring *can_queues[CAN_QUEUES_ARRAY_SIZE];
 bool can_pop(can_ring *q, CANPacket_t *elem);
 bool can_push(can_ring *q, const CANPacket_t *elem);
 uint32_t can_slots_empty(const can_ring *q);
-void can_clear(can_ring *q);
 
 // assign CAN numbering
 // bus num: CAN Bus numbers in panda, sent to/from USB
@@ -86,13 +91,17 @@ extern bus_config_t bus_config[BUS_CONFIG_ARRAY_SIZE];
 #define CAN_NUM_FROM_BUS_NUM(num) (bus_config[num].can_num_lookup)
 
 void can_init_all(void);
+void can_clear(can_ring *q);
 void can_set_orientation(bool flipped);
 #ifdef PANDA_JUNGLE
 void can_set_forwarding(uint8_t from, uint8_t to);
 #endif
 void ignition_can_hook(CANPacket_t *to_push);
 bool can_tx_check_min_slots_free(uint32_t min);
+extern uint8_t calculate_checksum(const uint8_t *dat, uint32_t len);
+extern void can_set_checksum(CANPacket_t *packet);
 bool can_check_checksum(CANPacket_t *packet);
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook);
 bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len);
-void refresh_can_tx_slots_available(void);
+
+extern bool safety_tx_hook(CANPacket_t *to_send);

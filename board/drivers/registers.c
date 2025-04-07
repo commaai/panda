@@ -1,6 +1,6 @@
 #include "registers.h"
 #include "critical.h"
-#include "faults_panda.h"
+#include "faults.h"
 #include "interrupts.h"
 
 static reg register_map[REGISTER_MAP_SIZE];

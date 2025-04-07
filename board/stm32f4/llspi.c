@@ -5,7 +5,7 @@
 #include "drivers/interrupts.h"
 #include "drivers/registers.h"
 #include "drivers/spi.h"
-#include "safety/board/utils.h"
+#include "utils.h"
 
 
 #if defined(ENABLE_SPI) || defined(BOOTSTUB)

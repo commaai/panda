@@ -1,5 +1,4 @@
 #pragma once
-#include "safety/board/utils.h"
 
 static void unused_init_bootloader(void) {
 }

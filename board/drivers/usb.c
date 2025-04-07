@@ -4,7 +4,7 @@
 #include "comms_definitions.h"
 #include "config.h"
 #include "critical.h"
-#include "safety/board/utils.h"
+#include "utils.h"
 
 #ifdef STM32H7
   #include "stm32h7/llusb.h"

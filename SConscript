@@ -130,7 +130,7 @@ def build_project(project_name, project, extra_flags):
       ("early_init", f"{panda_root}/board/early_init.c"),
       ("libc", f"{panda_root}/board/libc.c"),
       ("critical", f"{panda_root}/board/critical.c"),
-      ("faults", f"{panda_root}/board/faults_panda.c"),
+      ("faults", f"{panda_root}/board/faults.c"),
       ("drivers_clock_source", f"{panda_root}/board/drivers/clock_source.c"),
       ("drivers_gpio", f"{panda_root}/board/drivers/gpio.c"),
       ("drivers_interrupts", f"{panda_root}/board/drivers/interrupts.c"),
@@ -207,8 +207,9 @@ def build_project(project_name, project, extra_flags):
 
   # Needed for full build.
   sources.extend( [
+      ("can", f"{panda_root}/board/can.c"),
       ("can_comms", f"{panda_root}/board/can_comms.c"),
-      ("drivers_can_common", f"{panda_root}/board/drivers/can_common_panda.c"),
+      ("drivers_can_common", f"{panda_root}/board/drivers/can_common.c"),
       ("drivers_uart", f"{panda_root}/board/drivers/uart.c"),
       ("main_definitions", f"{panda_root}/board/main_definitions.c"),
   ])

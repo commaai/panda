@@ -2,7 +2,7 @@
 #include "comms_definitions.h"
 #include "config.h"
 #include "libc.h"
-#include "safety/board/utils.h"
+#include "utils.h"
 #include "platform_definitions.h"
 
 #ifdef STM32H7

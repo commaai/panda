@@ -1,8 +1,8 @@
 #include "jungle/main_comms.h"
 #include "boards/board.h"
 #include "config.h"
-#include "can_panda.h"
-#include "can_common_panda.h"
+#include "can.h"
+#include "can_common.h"
 #include "drivers/timers.h"
 #include "drivers/usb.h"
 #include "libc.h"
@@ -12,7 +12,7 @@
 #include "jungle_health.h"
 #include "early_init.h"
 #include "obj/gitversion.h"
-#include "safety/board/utils.h"
+#include "utils.h"
 
 #ifdef STM32H7
   #include "drivers/fdcan.h"

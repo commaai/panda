@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
+#include "can_common.h"
 #include "config.h"
-#include "can_common_panda.h"
 #include "drivers/spi.h"
 #include "drivers/usb.h"
 /*

@@ -9,7 +9,7 @@
 #else
   // TODO: uncomment this, cppcheck complains
   // building for tests
-  //#include "fake_stm_panda.h"
+  //#include "fake_stm.h"
 #endif
 
 #include "drivers/led.h"
@@ -25,11 +25,10 @@
 #include "early_init.h"
 #include "provision.h"
 
-#include "safety/safety_declarations.h"
 
 #include "health.h"
 
-#include "drivers/can_common_panda.h"
+#include "can_common.h"
 
 #ifdef STM32H7
   #include "drivers/fdcan.h"
@@ -43,6 +42,29 @@
 
 #include "can_comms.h"
 #include "main_comms.h"
+
+#include "safety/safety_declarations.h"
+
+//// TODO: Dedup these someday. Defined in opendbc.
+//#ifndef SAFETY_SILENT
+//#define SAFETY_SILENT 0U
+//#endif
+//#ifndef SAFETY_NOOUTPUT
+//#define SAFETY_NOOUTPUT 19U
+//#endif
+//#ifndef SAFETY_ELM327
+//#define SAFETY_ELM327 3U
+//#endif
+//#ifndef SAFETY_ALLOUTPUT
+//#define SAFETY_ALLOUTPUT 17U
+//#endif
+//
+//// Fwd decls from opendbc/safety.h
+//extern uint32_t heartbeat_engaged_mismatches;
+//extern int set_safety_hooks(uint16_t mode, uint16_t param);
+//extern uint32_t safety_mode_cnt;
+//void safety_tick(const safety_config *safety_config);
+
 
 
 // ********************* Serial debugging *********************

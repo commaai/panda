@@ -1,9 +1,10 @@
 #include "interrupts.h"
 #include "critical.h"
 #include "drivers/timers.h"
-#include "can_panda.h"
+#include "can.h"
+#include "faults.h"
 #include "config.h"
-#include "safety/safety_declarations.h"
+#include "utils.h"
 
 void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!

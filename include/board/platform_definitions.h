@@ -14,5 +14,5 @@
 #elif defined(STM32F4)
   #include "stm32f4/stm32f4_platform_definitions.h"
 #else
-  #include "fake_stm_panda.h"
+  #include "fake_stm.h"
 #endif

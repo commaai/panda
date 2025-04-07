@@ -1,7 +1,7 @@
 #include "lldac.h"
 #include "registers.h"
 #include "platform_definitions.h"
-#include "safety/board/utils.h"
+#include "utils.h"
 
 void dac_init(DAC_TypeDef *dac, uint8_t channel, bool dma) {
   register_set(&dac->CR, 0U, 0xFFFFU);

@@ -1,8 +1,9 @@
 #pragma once
 #include <stdint.h>
 #include <stdbool.h>
-#include "can_panda.h"
+#include "can.h"
 #include "platform_definitions.h"
+#include "utils.h"
 
 // IRQs: FDCAN1_IT0, FDCAN1_IT1
 //       FDCAN2_IT0, FDCAN2_IT1
@@ -29,3 +30,6 @@ void process_can(uint8_t can_number);
 // blink blue when we are receiving CAN messages
 void can_rx(uint8_t can_number);
 bool can_init(uint8_t can_number);
+
+extern int safety_fwd_hook(int bus_num, int addr);
+extern bool safety_rx_hook(const CANPacket_t *to_push);

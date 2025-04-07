@@ -1,14 +1,12 @@
 #include "bxcan.h"
-#include "can_common_panda.h"
+#include "can_common.h"
 #include "can_comms.h"
-#include "can_panda.h"
+#include "can.h"
 #include "critical.h"
 #include "drivers/led.h"
 #include "drivers/interrupts.h"
 #include "libc.h"
-#include "safety/safety_declarations.h"
 #include "stm32f4/llbxcan.h"
-
 
 // IRQs: CAN1_TX, CAN1_RX0, CAN1_SCE
 //       CAN2_TX, CAN2_RX0, CAN2_SCE

@@ -1,6 +1,6 @@
 #pragma once
 #include <stdbool.h>
-#include "faults_panda.h"
+#include "faults.h"
 #include "config.h"
 #include "platform_definitions.h"
 

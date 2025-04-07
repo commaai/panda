@@ -1,8 +1,12 @@
 #pragma once
-#include "safety/board/faults_declarations.h"
 #include <stdint.h>
 
+#define FAULT_STATUS_NONE 0U
+#define FAULT_STATUS_TEMPORARY 1U
+#define FAULT_STATUS_PERMANENT 2U
+
 // Fault types, matches cereal.log.PandaState.FaultType
+#define FAULT_RELAY_MALFUNCTION             (1UL << 0)
 #define FAULT_UNUSED_INTERRUPT_HANDLED      (1UL << 1)
 #define FAULT_INTERRUPT_RATE_CAN_1          (1UL << 2)
 #define FAULT_INTERRUPT_RATE_CAN_2          (1UL << 3)
@@ -30,3 +34,13 @@
 #define FAULT_SIREN_MALFUNCTION             (1UL << 25)
 #define FAULT_HEARTBEAT_LOOP_WATCHDOG       (1UL << 26)
 #define FAULT_INTERRUPT_RATE_SOUND_DMA      (1UL << 27)
+
+// Permanent faults
+#define PERMANENT_FAULTS 0U
+
+extern uint8_t fault_status;
+extern uint32_t faults;
+
+void fault_occurred(uint32_t fault);
+void fault_recovered(uint32_t fault);
+
