@@ -1,10 +1,11 @@
 #include "llspi.h"
+#include "config.h"
 #include "critical.h"
 #include "drivers/timers.h"
 #include "drivers/interrupts.h"
 #include "drivers/registers.h"
 #include "drivers/spi.h"
-#include "board/utils.h"
+#include "safety/board/utils.h"
 
 
 #if defined(ENABLE_SPI) || defined(BOOTSTUB)

@@ -49,8 +49,11 @@ extern const uint32_t speeds[SPEEDS_ARRAY_SIZE];
 #define DATA_SPEEDS_ARRAY_SIZE 10
 extern const uint32_t data_speeds[DATA_SPEEDS_ARRAY_SIZE];
 
+#ifndef LLCAN_IRQ_ENABLE_DEFINED
+#define LLCAN_IRQ_ENABLE_DEFINED
 bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_t data_speed, bool non_iso, bool loopback, bool silent);
 void llcan_irq_disable(const FDCAN_GlobalTypeDef *FDCANx);
 void llcan_irq_enable(const FDCAN_GlobalTypeDef *FDCANx);
 bool llcan_init(FDCAN_GlobalTypeDef *FDCANx);
 void llcan_clear_send(FDCAN_GlobalTypeDef *FDCANx);
+#endif

@@ -2,7 +2,7 @@
 #include "config.h"
 #include "drivers/timers.h"
 #include "faults_panda.h"
-#include "safety_declarations.h"
+#include "safety/safety_declarations.h"
 
 static simple_watchdog_state_t wd_state;
 

@@ -9,9 +9,9 @@
 #endif
 
 #ifdef PANDA_JUNGLE
-  #include "board/jungle/stm32h7/board.h"
+  #include "jungle/stm32h7/board.h"
 #else
-  #include "board/stm32h7/board.h"
+  #include "stm32h7/board.h"
 #endif
 
 #include "stm32h7/clock.h"

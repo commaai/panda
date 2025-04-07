@@ -4,15 +4,16 @@
 #include <stdbool.h>
 #include "platform_definitions.h"
 
+#ifdef PANDA_JUNGLE
+#include "jungle/boards/board.h"
+#else
+
 typedef enum {
   BOOT_STANDBY,
   BOOT_BOOTKICK,
   BOOT_RESET,
 } BootState;
 
-#ifdef PANDA_JUNGLE
-    #include "jungle/boards/board.h"
-#else
 // ******************** Prototypes ********************
 
 typedef void (*board_init)(void);

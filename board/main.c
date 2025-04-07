@@ -9,7 +9,7 @@
 #else
   // TODO: uncomment this, cppcheck complains
   // building for tests
-  //#include "fake_stm.h"
+  //#include "fake_stm_panda.h"
 #endif
 
 #include "drivers/led.h"
@@ -25,7 +25,7 @@
 #include "early_init.h"
 #include "provision.h"
 
-#include "safety/safety.h"
+#include "safety/safety_declarations.h"
 
 #include "health.h"
 

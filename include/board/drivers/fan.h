@@ -1,6 +1,6 @@
 #pragma once
 #include <stdint.h>
-#include "board/boards/board.h"
+#include "boards/board.h"
 
 extern board *current_board;
 

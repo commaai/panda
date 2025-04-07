@@ -12,7 +12,7 @@ extern void detect_board_type(void);
 extern void *g_pfnVectors;
 extern uint32_t enter_bootloader_mode;
 
-typedef void (*bootloader_fcn)(void);
+typedef void bootloader_fcn(void);
 typedef bootloader_fcn *bootloader_fcn_ptr;
 
 void jump_to_bootloader(void); // TODO: Should this be static?

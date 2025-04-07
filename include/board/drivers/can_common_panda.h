@@ -4,9 +4,6 @@
 #include <stdint.h>
 #include "health.h"
 
-#include "board/can.h"
-#include "drivers/usb.h"
-
 typedef struct {
   volatile uint32_t w_ptr;
   volatile uint32_t r_ptr;
@@ -98,3 +95,4 @@ bool can_tx_check_min_slots_free(uint32_t min);
 bool can_check_checksum(CANPacket_t *packet);
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook);
 bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len);
+void refresh_can_tx_slots_available(void);

@@ -2,6 +2,7 @@
 // manufacturing. aside from this, there's a UID for the MCU
 #pragma once
 #include "libc.h"
+#include "platform_definitions.h"
 
 #define PROVISION_CHUNK_LEN 0x20
 

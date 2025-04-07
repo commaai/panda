@@ -1,13 +1,14 @@
 #include "fdcan.h"
-#include "board/can_panda.h"
+#include "can_panda.h"
 #include "can_common_panda.h"
+#include "can_comms.h"
 #include "drivers/interrupts.h"
 #include "drivers/led.h"
 #include "drivers/timers.h"
 #include "libc.h"
-#include "llfdcan.h"
+#include "stm32h7/llfdcan.h"
 #include "critical.h"
-#include "safety_declarations.h"
+#include "safety/safety_declarations.h"
 
 FDCAN_GlobalTypeDef *cans[CANS_ARRAY_SIZE] = {FDCAN1, FDCAN2, FDCAN3};
 

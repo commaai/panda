@@ -1,9 +1,9 @@
 #include "interrupts.h"
 #include "critical.h"
 #include "drivers/timers.h"
-#include "board/can_panda.h"
+#include "can_panda.h"
 #include "config.h"
-#include "safety_declarations.h"
+#include "safety/safety_declarations.h"
 
 void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!

@@ -4,6 +4,7 @@
 // ********************* Includes *********************
 #include "flasher.h"
 
+#include "boards/board.h"
 #include "config.h"
 #include "critical.h"
 // platform includes
@@ -23,6 +24,7 @@
 #include "crypto/sha.h"
 
 #include "obj/cert.h"
+#include "obj/gitversion.h"
 #include "early_init.h"
 
 

@@ -1,5 +1,10 @@
 #pragma once
-#include "boards/board.h"
+#include <stdint.h>
+#include <stdbool.h>
+
+#ifdef BOOTSTUB
+
+typedef struct board board; // Forward decl.
 
 // No UART support in bootloader
 typedef struct uart_ring {} uart_ring;
@@ -32,3 +37,6 @@ extern bool siren_enabled;
 extern bool ignition_can;
 extern bool bootkick_reset_triggered;
 
+extern void refresh_can_tx_slots_available(void);
+
+#endif

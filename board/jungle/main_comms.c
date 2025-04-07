@@ -1,4 +1,5 @@
 #include "jungle/main_comms.h"
+#include "boards/board.h"
 #include "config.h"
 #include "can_panda.h"
 #include "can_common_panda.h"
@@ -7,20 +8,20 @@
 #include "libc.h"
 #include "uart.h"
 #include "provision.h"
-#include "board/health.h"
+#include "health.h"
 #include "jungle_health.h"
 #include "early_init.h"
 #include "obj/gitversion.h"
-#include "board/utils.h"
+#include "safety/board/utils.h"
 
 #ifdef STM32H7
   #include "drivers/fdcan.h"
-  #include "board/stm32h7/llfdcan.h"
-  #include "board/stm32h7/lluart.h"
+  #include "stm32h7/llfdcan.h"
+  #include "stm32h7/lluart.h"
 #else
   #include "drivers/bxcan.h"
-  #include "board/stm32f4/llbxcan.h"
-  #include "board/stm32f4/lluart.h"
+  #include "stm32f4/llbxcan.h"
+  #include "stm32f4/lluart.h"
 #endif
 
 bool generated_can_traffic = false;

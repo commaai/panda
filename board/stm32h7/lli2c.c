@@ -1,6 +1,6 @@
 #include "lli2c.h"
 #include "registers.h"
-#include "board/utils.h"
+#include "safety/board/utils.h"
 #include "drivers/timers.h"
 // TODO: this driver relies heavily on polling,
 // if we want it to be more async, we should use interrupts

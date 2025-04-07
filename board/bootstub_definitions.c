@@ -1,4 +1,5 @@
 #include "bootstub_definitions.h"
+#include "safety/board/utils.h"
 
 void print(const char *a){ UNUSED(a); }
 void puth(uint8_t i){ UNUSED(i); }
@@ -21,3 +22,5 @@ uint32_t uptime_cnt;
 bool ignition_can;
 bool heartbeat_lost;
 bool bootkick_reset_triggered;
+
+void refresh_can_tx_slots_available(void);

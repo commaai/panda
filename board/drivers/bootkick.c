@@ -1,6 +1,6 @@
 #include "bootkick.h"
 #include <stdint.h>
-#include "board/config.h"
+#include "config.h"
 #include "drivers/harness.h"
 #include "drivers/uart.h"
 

@@ -1,4 +1,4 @@
-#include "include/board/main_definitions.h"
+#include "main_definitions.h"
 
 uint8_t hw_type = 0;
 board *current_board;

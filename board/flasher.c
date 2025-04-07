@@ -8,7 +8,7 @@
 #include "drivers/usb.h"
 #include "provision.h"
 #include "peripherals.h"
-#include "board/utils.h"
+#include "safety/board/utils.h"
 #include "obj/gitversion.h"
 // from the linker script
 #ifdef STM32H7

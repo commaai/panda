@@ -1,11 +1,16 @@
 #include "can_common_panda.h"
-#include "can_panda.h"
 #include "safety/board/drivers/can_common.h"
+
+#include "boards/board.h"
+#include "can_panda.h"
+#include "can_comms.h"
 #include "config.h"
+#include "safety/safety_declarations.h"
+
+#ifndef LIBPANDA
 #include "critical.h"
-#include "drivers/timers.h"
-#include "faults_panda.h"
-#include "safety_declarations.h"
+#endif
+
 
 uint32_t safety_tx_blocked = 0;
 uint32_t safety_rx_invalid = 0;

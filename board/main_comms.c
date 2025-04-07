@@ -1,11 +1,12 @@
 #include "main_comms.h"
+#include "can_panda.h"
 #include "comms_definitions.h"
 #include "config.h"
 #include "clock_source.h"
-#include "board/can_comms.h"
+#include "can_comms.h"
 #include "drivers/can_common_panda.h"
 #include "health.h"
-#include "safety_declarations.h"
+#include "safety/safety_declarations.h"
 #include "power_saving.h"
 #include "provision.h"
 #include "harness.h"
@@ -21,12 +22,12 @@
 
 #ifdef STM32H7
   #include "drivers/fdcan.h"
-  #include "board/stm32h7/llfdcan.h"
-  #include "board/stm32h7/lluart.h"
+  #include "stm32h7/llfdcan.h"
+  #include "stm32h7/lluart.h"
 #else
   #include "drivers/bxcan.h"
-  #include "board/stm32f4/llbxcan.h"
-  #include "board/stm32f4/lluart.h"
+  #include "stm32f4/llbxcan.h"
+  #include "stm32f4/lluart.h"
 #endif
 
 int get_health_pkt(void *dat) {

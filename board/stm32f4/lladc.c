@@ -1,7 +1,8 @@
 #include "lladc.h"
+#include "boards/board.h"
+#include "config.h"
 #include "registers.h"
 #include "platform_definitions.h"
-#include "config.h"
 
 void adc_init(void) {
   register_set(&(ADC->CCR), ADC_CCR_TSVREFE | ADC_CCR_VBATE, 0xC30000U);

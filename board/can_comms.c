@@ -1,10 +1,7 @@
-#include "board/can_panda.h"
+#include "can_panda.h"
 #include "can_comms.h"
-#include "can_common_panda.h"
-#include "config.h"
 #include "libc.h"
-#include "drivers/spi.h"
-#include "board/utils.h"
+#include "safety/board/utils.h"
 
 typedef struct {
   uint32_t ptr;

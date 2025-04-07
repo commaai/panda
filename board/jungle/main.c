@@ -1,5 +1,6 @@
 // ********************* Includes *********************
-#include "board/config.h"
+#include "config.h"
+#include "boards/board.h"
 #include "critical.h"
 // platform includes
 #ifdef STM32H7
@@ -9,33 +10,35 @@
 #else
   // TODO: uncomment this, cppcheck complains
   // building for tests
-  //#include "fake_stm.h"
+  //#include "fake_stm_panda.h"
 #endif
 
-#include "safety/safety.h"
+#include "safety/safety_declarations.h"
 
-#include "board/drivers/can_common_panda.h"
-#include "board/drivers/led.h"
-#include "board/drivers/pwm.h"
-#include "board/drivers/timers.h"
-#include "board/drivers/uart.h"
-#include "board/drivers/usb.h"
+#include "drivers/can_common_panda.h"
+#include "drivers/led.h"
+#include "drivers/pwm.h"
+#include "drivers/timers.h"
+#include "drivers/uart.h"
+#include "drivers/usb.h"
 
-#include "board/early_init.h"
-#include "board/provision.h"
+#include "early_init.h"
+#include "provision.h"
 
-#include "board/health.h"
+#include "health.h"
 #include "jungle_health.h"
 
 #ifdef STM32H7
-  #include "board/drivers/fdcan.h"
+  #include "drivers/fdcan.h"
 #else
-  #include "board/drivers/bxcan.h"
+  #include "drivers/bxcan.h"
 #endif
 
-#include "board/obj/gitversion.h"
+#include "obj/gitversion.h"
 
-#include "board/can_comms.h"
+#include "can_comms.h"
+#include "can_common_panda.h"
+#include "can_panda.h"
 #include "jungle/main_comms.h"
 #include "libc.h"
 

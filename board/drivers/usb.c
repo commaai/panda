@@ -1,8 +1,10 @@
 #include "usb.h"
 #include <stdbool.h>
+#include "can_comms.h"
 #include "comms_definitions.h"
+#include "config.h"
 #include "critical.h"
-#include "board/utils.h"
+#include "safety/board/utils.h"
 
 #ifdef STM32H7
   #include "stm32h7/llusb.h"

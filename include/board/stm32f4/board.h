@@ -3,7 +3,7 @@
 // ///////////////////////////////////////////////////////////// //
 #pragma once
 
-#include "board/boards/board.h"
+#include "boards/board.h"
 #include "boards/unused_funcs.h"
 
 // ///// Board definition and detection ///// //

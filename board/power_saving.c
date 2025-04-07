@@ -6,10 +6,10 @@
 
 #ifdef STM32H7
   #include "drivers/fdcan.h"
-  #include "board/stm32h7/llfdcan.h"
+  #include "stm32h7/llfdcan.h"
 #else
   #include "drivers/bxcan.h"
-  #include "board/stm32f4/llbxcan.h"
+  #include "stm32f4/llbxcan.h"
 #endif
 
 // WARNING: To stay in compliance with the SIL2 rules laid out in STM UM1840, we should never implement any of the available hardware low power modes.
