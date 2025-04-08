@@ -125,7 +125,7 @@ def build_project(project_name, project, extra_flags):
 
   # Sources shared by all Panda variants
   sources = [
-      #  bootstub_definitions, flasher,
+      ("can", f"{panda_root}/board/can.c"),
       ("critical", f"{panda_root}/board/critical.c"),
       ("drivers_clock_source", f"{panda_root}/board/drivers/clock_source.c"),
       ("drivers_gpio", f"{panda_root}/board/drivers/gpio.c"),
@@ -208,7 +208,6 @@ def build_project(project_name, project, extra_flags):
 
   # Needed for full build.
   sources.extend( [
-      ("can", f"{panda_root}/board/can.c"),
       ("can_comms", f"{panda_root}/board/can_comms.c"),
       ("drivers_can_common", f"{panda_root}/board/drivers/can_common.c"),
       ("drivers_uart", f"{panda_root}/board/drivers/uart.c"),

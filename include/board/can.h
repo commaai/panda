@@ -2,7 +2,6 @@
 #define CAN_DEFINITION_H
 #include <stdint.h>
 
-
 #define PANDA_CAN_CNT 3U
 #define PANDA_BUS_CNT 3U
 
