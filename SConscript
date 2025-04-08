@@ -137,7 +137,7 @@ def build_project(project_name, project, extra_flags):
       ("early_init", f"{panda_root}/board/early_init.c"),
       ("faults", f"{panda_root}/board/faults.c"),
       ("libc", f"{panda_root}/board/libc.c"),
-      ("safety", f"{panda_root}/../opendbc/safety/main.c"),
+      ("safety", f"{panda_root}/board/safety.c"),
   ]
 
   _is_panda_jungle = "PANDA_JUNGLE" in " ".join(extra_flags)
