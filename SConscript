@@ -192,11 +192,10 @@ def build_project(project_name, project, extra_flags):
   bootstub_env.Append(ASFLAGS=["-DBOOTSTUB"])
   bootstub_env.Append(LINKFLAGS=["-DBOOTSTUB"])
 
-  # Use bootstub_env for all bootstub-related objects
+
+  # Recompile all sources with the bootstub_env for bootstub use
   bootstub_definitions = (f"bootstub_definitions", f"{panda_root}/board/bootstub_definitions.c")
   flasher = (f"flasher", f"{panda_root}/board/flasher.c")
-
-  # Recompile all sources with the bootstub environment for bootstub use
   bootstub_sources = [
     make_object(bootstub_env, f"bootstub-{name}", path)
     for name, path in sources + [bootstub_definitions, flasher]]
