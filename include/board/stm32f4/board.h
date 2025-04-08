@@ -2,7 +2,6 @@
 // Hardware abstraction layer for all different supported boards //
 // ///////////////////////////////////////////////////////////// //
 #pragma once
-
 #include "boards/board.h"
 #include "boards/unused_funcs.h"
 
