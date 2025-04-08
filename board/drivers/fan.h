@@ -1,4 +1,5 @@
 #include "fan_declarations.h"
+#include "utils.h"
 
 struct fan_state_t fan_state;
 

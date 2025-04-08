@@ -1,10 +1,12 @@
 #define BOOTSTUB
 
 #define VERS_TAG 0x53524556
-#define MIN_VERSION 2
+#define MIN_VERSION    2
 
 // ********************* Includes *********************
+#include "platform_definitions.h"
 #include "config.h"
+#include "stm_config.h"
 
 #include "drivers/led.h"
 #include "drivers/pwm.h"

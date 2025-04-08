@@ -1,4 +1,5 @@
 #include "llfdcan_declarations.h"
+#include "libc.h"
 
 // kbps multiplied by 10
 const uint32_t speeds[SPEEDS_ARRAY_SIZE] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};

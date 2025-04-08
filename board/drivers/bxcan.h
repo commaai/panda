@@ -1,4 +1,5 @@
 #include "bxcan_declarations.h"
+#include "drivers/can_common_declarations.h"
 
 // IRQs: CAN1_TX, CAN1_RX0, CAN1_SCE
 //       CAN2_TX, CAN2_RX0, CAN2_SCE

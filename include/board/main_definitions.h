@@ -1,3 +1,4 @@
+#pragma once
 #include "main_declarations.h"
 
 // ********************* Globals **********************

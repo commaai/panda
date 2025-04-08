@@ -1,4 +1,6 @@
 #include "fdcan_declarations.h"
+#include "can_common_declarations.h"
+#include "libc.h"
 
 FDCAN_GlobalTypeDef *cans[CANS_ARRAY_SIZE] = {FDCAN1, FDCAN2, FDCAN3};
 

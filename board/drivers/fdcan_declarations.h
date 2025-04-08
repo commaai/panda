@@ -1,4 +1,5 @@
 #pragma once
+#include "can_declarations.h"
 
 // IRQs: FDCAN1_IT0, FDCAN1_IT1
 //       FDCAN2_IT0, FDCAN2_IT1

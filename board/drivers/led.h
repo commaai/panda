@@ -1,3 +1,4 @@
+#include "usb_declarations.h"
 
 #define LED_RED 0U
 #define LED_GREEN 1U

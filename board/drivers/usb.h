@@ -1,5 +1,18 @@
 #include "usb_declarations.h"
 
+#include <stddef.h>
+
+#include "comms_definitions.h"
+#include "critical_declarations.h"
+
+#ifdef STM32H7
+  #include "stm32h7/llusb_declarations.h"
+#elif defined(STM32F4)
+  #include "stm32f4/llusb_declarations.h"
+#endif
+
+#include "utils.h"
+
 static uint8_t response[USBPACKET_MAX_SIZE];
 
 // current packet

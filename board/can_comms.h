@@ -11,6 +11,7 @@
   * the overflow buffers are reset by a dedicated control transfer handler,
     which is sent by the host on each start of a connection.
 */
+#include "drivers/spi_declarations.h"
 
 typedef struct {
   uint32_t ptr;

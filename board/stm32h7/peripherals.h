@@ -1,3 +1,5 @@
+#include "drivers/gpio_declarations.h"
+#include "drivers/registers_declarations.h"
 #ifdef BOOTSTUB
 void gpio_usb_init(void) {
 #else

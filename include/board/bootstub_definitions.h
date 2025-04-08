@@ -1,3 +1,5 @@
+#include <stdint.h>
+#include "utils.h"
 // ******************** Prototypes ********************
 void print(const char *a){ UNUSED(a); }
 void puth(uint8_t i){ UNUSED(i); }
