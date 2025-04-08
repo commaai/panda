@@ -112,16 +112,17 @@ def build_project(project_name, project, extra_flags):
     tools=["default", "compilation_db"],
   )
 
-  startup = env.Object(f"obj/startup_{project_name}", project["STARTUP_FILE"])
+  def make_object(_env, name, path):
+      return _env.Object(f"{name}-{project_name}", path)
+
+  startup = make_object(env, 'obj/startup', project["STARTUP_FILE"])
 
   # Bootstub
   crypto_obj = [
-    env.Object(f"rsa-{project_name}", f"{panda_root}/crypto/rsa.c"),
-    env.Object(f"sha-{project_name}", f"{panda_root}/crypto/sha.c")
+    make_object(env, 'rsa', f"{panda_root}/crypto/rsa.c"),
+    make_object(env, 'sha', f"{panda_root}/crypto/sha.c")
   ]
 
-  def make_object(_env, name, path):
-      return _env.Object(f"{name}-{project_name}", path)
 
   # Sources shared by all Panda variants
   sources = [
@@ -197,17 +198,17 @@ def build_project(project_name, project, extra_flags):
 
   # Recompile all sources with the bootstub environment for bootstub use
   bootstub_sources = [
-    make_object(bootstub_env, f"bootstubx-{name}", path)
+    make_object(bootstub_env, f"bootstub-{name}", path)
     for name, path in sources + [bootstub_definitions, flasher]]
 
-  # Compile bootstub.c with bootstub environment
-  bootstub_obj = bootstub_env.Object(f"bootstub-{project_name}", File(project.get("BOOTSTUB", f"{panda_root}/board/bootstub.c")))
+  # Compile bootstub.c
+  bootstub_obj = make_object(bootstub_env, "bootstub", f"{panda_root}/board/bootstub.c")
   bootstub_elf = bootstub_env.Program(f"obj/bootstub.{project_name}.elf",
                                    [startup] + bootstub_sources + crypto_obj + [bootstub_obj])
   bootstub_env.Objcopy(f"obj/bootstub.{project_name}.bin", bootstub_elf)
 
   # Needed for full build.
-  sources.extend( [
+  sources.extend([
       ("can_comms", f"{panda_root}/board/can_comms.c"),
       ("drivers_can_common", f"{panda_root}/board/drivers/can_common.c"),
       ("drivers_uart", f"{panda_root}/board/drivers/uart.c"),
