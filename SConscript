@@ -123,7 +123,6 @@ def build_project(project_name, project, extra_flags):
     make_object(env, 'sha', f"{panda_root}/crypto/sha.c")
   ]
 
-
   # Sources shared by all Panda variants
   sources = [
       ("can", f"{panda_root}/board/can.c"),
@@ -171,7 +170,6 @@ def build_project(project_name, project, extra_flags):
             ("stm32h7_sound", f"{panda_root}/board/stm32h7/sound.c"),
           ])
 
-
   if _is_stm32f4:
       sources.extend([
         ("stm32f4_clock", f"{panda_root}/board/stm32f4/clock.c"),
@@ -191,7 +189,6 @@ def build_project(project_name, project, extra_flags):
   bootstub_env.Append(CFLAGS=["-DBOOTSTUB"])
   bootstub_env.Append(ASFLAGS=["-DBOOTSTUB"])
   bootstub_env.Append(LINKFLAGS=["-DBOOTSTUB"])
-
 
   # Recompile all sources with the bootstub_env for bootstub use
   bootstub_definitions = (f"bootstub_definitions", f"{panda_root}/board/bootstub_definitions.c")
