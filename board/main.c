@@ -1,20 +1,34 @@
 // ********************* Includes *********************
 #include "config.h"
+#include "critical.h"
+// platform includes
+#ifdef STM32H7
+  #include "stm32h7/stm32h7_config.h"
+#elif defined(STM32F4)
+  #include "stm32f4/stm32f4_config.h"
+#else
+  // TODO: uncomment this, cppcheck complains
+  // building for tests
+  //#include "fake_stm.h"
+#endif
 
 #include "drivers/led.h"
+#include "drivers/interrupts.h"
 #include "drivers/pwm.h"
+#include "drivers/timers.h"
+#include "drivers/uart.h"
 #include "drivers/usb.h"
 #include "drivers/simple_watchdog.h"
+#include "drivers/spi.h"
 #include "drivers/bootkick.h"
 
 #include "early_init.h"
 #include "provision.h"
 
-#include "safety.h"
 
 #include "health.h"
 
-#include "drivers/can_common.h"
+#include "can_common.h"
 
 #ifdef STM32H7
   #include "drivers/fdcan.h"
@@ -29,6 +43,7 @@
 #include "can_comms.h"
 #include "main_comms.h"
 
+#include "safety/safety_declarations.h"
 
 // ********************* Serial debugging *********************
 

@@ -1,31 +1,46 @@
 // ********************* Includes *********************
-#include "board/config.h"
-
-#include "safety.h"
-
-#include "board/drivers/led.h"
-#include "board/drivers/pwm.h"
-#include "board/drivers/usb.h"
-
-#include "board/early_init.h"
-#include "board/provision.h"
-
-#include "board/health.h"
-#include "jungle_health.h"
-
-#include "board/drivers/can_common.h"
-
+#include "config.h"
+#include "boards/board.h"
+#include "critical.h"
+// platform includes
 #ifdef STM32H7
-  #include "board/drivers/fdcan.h"
+  #include "stm32h7/stm32h7_config.h"
+#elif defined(STM32F4)
+  #include "stm32f4/stm32f4_config.h"
 #else
-  #include "board/drivers/bxcan.h"
+  // TODO: uncomment this, cppcheck complains
+  // building for tests
+  //#include "fake_stm.h"
 #endif
 
-#include "board/obj/gitversion.h"
+#include "can_common.h"
+#include "drivers/led.h"
+#include "drivers/pwm.h"
+#include "drivers/timers.h"
+#include "drivers/uart.h"
+#include "drivers/usb.h"
 
-#include "board/can_comms.h"
-#include "main_comms.h"
+#include "early_init.h"
+#include "provision.h"
 
+#include "health.h"
+#include "jungle_health.h"
+
+#ifdef STM32H7
+  #include "drivers/fdcan.h"
+#else
+  #include "drivers/bxcan.h"
+#endif
+
+#include "obj/gitversion.h"
+
+#include "can_comms.h"
+#include "can_common.h"
+#include "can.h"
+#include "jungle/main_comms.h"
+#include "libc.h"
+
+#include "safety/safety_declarations.h"
 
 // ********************* Serial debugging *********************
 
