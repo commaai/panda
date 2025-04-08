@@ -155,17 +155,21 @@ def build_project(project_name, project, extra_flags):
   if _is_stm32h7:
       sources.extend([
         ("drivers_fake_siren", f"{panda_root}/board/drivers/fake_siren.c"),
-        ("stm32h7_peripherals", f"{panda_root}/board/stm32h7/peripherals.c"),
-        ("stm32h7_llusb", f"{panda_root}/board/stm32h7/llusb.c"),
         ("stm32h7_clock", f"{panda_root}/board/stm32h7/clock.c"),
-        ("stm32h7_lladc", f"{panda_root}/board/stm32h7/lladc.c"),
         ("stm32h7_lldac", f"{panda_root}/board/stm32h7/lldac.c"),
         ("stm32h7_llflash", f"{panda_root}/board/stm32h7/llflash.c"),
         ("stm32h7_lli2c", f"{panda_root}/board/stm32h7/lli2c.c"),
         ("stm32h7_llspi", f"{panda_root}/board/stm32h7/llspi.c"),
+        ("stm32h7_llusb", f"{panda_root}/board/stm32h7/llusb.c"),
+        ("stm32h7_peripherals", f"{panda_root}/board/stm32h7/peripherals.c"),
       ])
-      if not _is_panda_jungle:
+      if _is_panda_jungle:
           sources.extend([
+            ("stm32h7_jungle_lladc", f"{panda_root}/board/jungle/stm32h7/lladc.c"),
+          ])
+      else:
+          sources.extend([
+            ("stm32h7_lladc", f"{panda_root}/board/stm32h7/lladc.c"),
             ("stm32h7_llfan", f"{panda_root}/board/stm32h7/llfan.c"),
             ("stm32h7_sound", f"{panda_root}/board/stm32h7/sound.c"),
           ])

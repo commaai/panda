@@ -3,11 +3,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "platform_definitions.h"
-#include "drivers/harness_configuration.h"
 
 #ifdef PANDA_JUNGLE
 #include "jungle/boards/board.h"
 #else
+
+#include "drivers/harness.h"
 
 typedef enum {
   BOOT_STANDBY,
@@ -31,7 +32,7 @@ typedef void (*board_set_bootkick)(BootState state);
 typedef bool (*board_read_som_gpio)(void);
 typedef void (*board_set_amp_enabled)(bool enabled);
 
-typedef struct board {
+typedef struct board_t {
   harness_configuration *harness_config;
   GPIO_TypeDef * const led_GPIO[3];
   const uint8_t led_pin[3];
@@ -81,12 +82,12 @@ typedef struct board {
 #define CAN_MODE_NORMAL 0U
 #define CAN_MODE_OBD_CAN2 1U
 
-extern struct board board_black;
-extern struct board board_dos;
-extern struct board board_uno;
-extern struct board board_tres;
-extern struct board board_grey;
-extern struct board board_white;
-extern struct board board_cuatro;
-extern struct board board_red;
+extern board board_black;
+extern board board_dos;
+extern board board_uno;
+extern board board_tres;
+extern board board_grey;
+extern board board_white;
+extern board board_cuatro;
+extern board board_red;
 #endif

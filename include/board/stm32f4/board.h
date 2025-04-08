@@ -7,7 +7,6 @@
 
 // ///// Board definition and detection ///// //
 #include "stm32f4/lladc.h"
-#include "drivers/harness.h"
 #include "drivers/fan.h"
 #include "stm32f4/llfan.h"
 #include "drivers/clock_source.h"
