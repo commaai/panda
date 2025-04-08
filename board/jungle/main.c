@@ -42,8 +42,6 @@
 
 #include "safety/safety_declarations.h"
 
-extern int set_safety_hooks(uint16_t mode, uint16_t param);
-
 // ********************* Serial debugging *********************
 
 void debug_ring_callback(uart_ring *ring) {

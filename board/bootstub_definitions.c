@@ -7,7 +7,6 @@ void puth2(uint8_t i){ UNUSED(i); }
 void puth4(uint8_t i){ UNUSED(i); }
 void hexdump(const void *a, int l){ UNUSED(a); UNUSED(l); }
 // No UART support in bootloader
-//typedef struct uart_ring {} uart_ring;
 uart_ring uart_ring_som_debug;
 uart_ring uart_ring_debug;
 uart_ring *get_ring_by_number(int a);

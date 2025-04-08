@@ -18,6 +18,7 @@
 #include "drivers/pwm.h"
 #include "drivers/usb.h"
 
+#include "early_init.h"
 #include "provision.h"
 
 #include "crypto/rsa.h"
@@ -25,7 +26,6 @@
 
 #include "obj/cert.h"
 #include "obj/gitversion.h"
-#include "early_init.h"
 
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
@@ -39,8 +39,6 @@ void fail(void) {
 
 // know where to sig check
 extern void *_app_start[];
-
-extern void clock_init(void);
 
 // FIXME: sometimes your panda will fail flashing and will quickly blink a single Green LED
 // BOUNTY: $200 coupon on shop.comma.ai or $100 check.

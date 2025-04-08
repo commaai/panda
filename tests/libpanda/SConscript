@@ -51,13 +51,8 @@ if GetOption('ubsan'):
   env['CFLAGS'] += flags
   env['LINKFLAGS'] += flags
 
-sos = [
-#      env.SharedObject("can_comms.os", "../../board/can_comms.c"),
-#      env.SharedObject("can_common_panda.os", "../../board/drivers/can_common_panda.c"),
-#      env.SharedObject("bootstub_definitions.os", "../../board/bootstub_definitions.c"),
-     env.SharedObject("panda.os", "panda.c"),
-]
-libpanda = env.SharedLibrary("libpanda.so", sos)
+panda = env.SharedObject("panda.os", "panda.c")
+libpanda = env.SharedLibrary("libpanda.so", [panda])
 
 if GetOption('coverage'):
   env.Append(
