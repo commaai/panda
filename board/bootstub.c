@@ -4,7 +4,8 @@
 #define MIN_VERSION 2
 
 // ********************* Includes *********************
-#include "config.h"
+#include "board_config.h"
+#include "stm_config.h"
 
 #include "drivers/led.h"
 #include "drivers/pwm.h"

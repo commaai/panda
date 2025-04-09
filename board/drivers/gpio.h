@@ -1,19 +1,6 @@
-#define MODE_INPUT 0
-#define MODE_OUTPUT 1
-#define MODE_ALTERNATE 2
-#define MODE_ANALOG 3
-
-#define PULL_NONE 0
-#define PULL_UP 1
-#define PULL_DOWN 2
-
-#define OUTPUT_TYPE_PUSH_PULL 0U
-#define OUTPUT_TYPE_OPEN_DRAIN 1U
-
-typedef struct {
-  GPIO_TypeDef * const bank;
-  uint8_t pin;
-} gpio_t;
+#include "drivers/gpio_declarations.h"
+#include "critical_declarations.h"
+#include "drivers/registers.h"
 
 void set_gpio_mode(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
   ENTER_CRITICAL();
@@ -68,12 +55,14 @@ int get_gpio_input(const GPIO_TypeDef *GPIO, unsigned int pin) {
   return (GPIO->IDR & (1UL << pin)) == (1UL << pin);
 }
 
+// cppcheck-suppress[misra-c2012-9.3,misra-c2012-8.7]
 void gpio_set_all_output(gpio_t *pins, uint8_t num_pins, bool enabled) {
   for (uint8_t i = 0; i < num_pins; i++) {
     set_gpio_output(pins[i].bank, pins[i].pin, enabled);
   }
 }
 
+// cppcheck-suppress[misra-c2012-9.3,misra-c2012-8.7]
 void gpio_set_bitmask(gpio_t *pins, uint8_t num_pins, uint32_t bitmask) {
   for (uint8_t i = 0; i < num_pins; i++) {
     set_gpio_output(pins[i].bank, pins[i].pin, (bitmask >> i) & 1U);

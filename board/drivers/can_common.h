@@ -17,14 +17,6 @@ int can_silent = ALL_CAN_SILENT;
 bool can_loopback = false;
 
 // ********************* instantiate queues *********************
-#define can_buffer(x, size) \
-  static CANPacket_t elems_##x[size]; \
-  extern can_ring can_##x; \
-  can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = (size), .elems = (CANPacket_t *)&(elems_##x) };
-
-#define CAN_RX_BUFFER_SIZE 4096U
-#define CAN_TX_BUFFER_SIZE 416U
-
 #ifdef STM32H7
 // ITCM RAM and DTCM RAM are the fastest for Cortex-M7 core access
 __attribute__((section(".axisram"))) can_buffer(rx_q, CAN_RX_BUFFER_SIZE)

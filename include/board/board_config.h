@@ -32,13 +32,8 @@
   #endif
 #endif
 
-// platform includes
-#ifdef STM32H7
-  #include "stm32h7/stm32h7_config.h"
-#elif defined(STM32F4)
-  #include "stm32f4/stm32f4_config.h"
+#ifndef BOOTSTUB
+  #include "main_definitions.h"
 #else
-  // TODO: uncomment this, cppcheck complains
-  // building for tests
-  //#include "fake_stm.h"
+  #include "bootstub_definitions.h"
 #endif
