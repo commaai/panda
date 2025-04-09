@@ -1,6 +1,4 @@
 #include "interrupts_declarations.h"
-#include "critical_declarations.h"
-#include "faults_declarations.h"
 
 void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!

@@ -4,7 +4,6 @@
 #define MIN_VERSION 2
 
 // ********************* Includes *********************
-#include "platform_definitions.h"
 #include "board_config.h"
 #include "stm_config.h"
 

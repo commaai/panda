@@ -1,10 +1,5 @@
 #include "usb_declarations.h"
 
-#include <stddef.h>
-
-#include "comms_definitions.h"
-#include "critical_declarations.h"
-
 static uint8_t response[USBPACKET_MAX_SIZE];
 
 // current packet
