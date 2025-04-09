@@ -9,7 +9,7 @@ jobs:
   build_socketcan:
     name: socketcan build
     runs-on: ubuntu-latest
-    timeout-minutes: 1
+    timeout-minutes: 2
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
