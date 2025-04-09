@@ -1,5 +1,5 @@
 // ********************* Includes *********************
-#include "board/config.h"
+#include "board_config.h"
 #include "board/stm_config.h"
 
 #include "safety.h"

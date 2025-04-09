@@ -1,8 +1,4 @@
 // ***************************** Interrupt handlers *****************************
-#include <stddef.h>
-#include "critical_declarations.h"
-#include "faults.h"
-
 void uart_tx_ring(uart_ring *q){
   ENTER_CRITICAL();
   // Send out next byte of TX buffer

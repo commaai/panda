@@ -1,6 +1,4 @@
 #include "llusb_declarations.h"
-#include "drivers/interrupts_declarations.h"
-#include "faults_declarations.h"
 
 USB_OTG_GlobalTypeDef *USBx = USB_OTG_FS;
 

@@ -1,4 +1,4 @@
-/* Platform includes that provide things that a lot drivers need, e.g.:
+/* Platform includes that provide definitions that a lot drivers need, e.g.:
   __enable_irq
   __disable_irq
   GPIO_TypeDef
@@ -8,7 +8,6 @@
   CAN_TypeDef
 */
 #pragma once
-#define CAN_INIT_TIMEOUT_MS 500U
 #ifdef STM32H7
   #include "stm32h7/stm32h7_platform_definitions.h"
 #elif defined(STM32F4)

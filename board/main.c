@@ -1,5 +1,5 @@
 // ********************* Includes *********************
-#include "config.h"
+#include "board_config.h"
 #include "stm_config.h"
 
 #include "drivers/led.h"

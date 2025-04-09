@@ -1,4 +1,3 @@
-#include "libc.h"
 // this is where we manage the dongle ID assigned during our
 // manufacturing. aside from this, there's a UID for the MCU
 
