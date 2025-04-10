@@ -10,8 +10,6 @@
 #include "early_init.h"
 #include "provision.h"
 
-#include "safety.h"
-
 #include "health.h"
 
 #include "drivers/can_common.h"
@@ -29,6 +27,7 @@
 #include "can_comms.h"
 #include "main_comms.h"
 
+#include "safety/safety_declarations.h"
 
 // ********************* Serial debugging *********************
 
