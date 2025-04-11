@@ -1,4 +1,9 @@
 #pragma once
+#include <stdint.h>
+#include <stdbool.h>
+
+static void __enable_irq(void);
+static void __disable_irq(void);
 
 // ********************* Critical section helpers *********************
 void enable_interrupts(void);
