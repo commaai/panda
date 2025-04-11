@@ -1,4 +1,4 @@
-#include "fake_siren_declarations.h"
+#include "drivers/fake_siren_declarations.h"
 
 void fake_siren_codec_enable(bool enabled) {
   if (enabled) {
