@@ -1,4 +1,5 @@
 // ***************************** Interrupt handlers *****************************
+#include "stm32f4/lluart_declarations.h"
 
 void uart_tx_ring(uart_ring *q){
   ENTER_CRITICAL();

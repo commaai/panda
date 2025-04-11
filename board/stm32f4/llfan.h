@@ -1,3 +1,4 @@
+#include "stm32f4/llfan_declarations.h"
 // TACH interrupt handler
 static void EXTI2_IRQ_Handler(void) {
   volatile unsigned int pr = EXTI->PR & (1U << 2);

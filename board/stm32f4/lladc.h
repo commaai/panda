@@ -1,3 +1,4 @@
+#include "stm32f4/lladc_declarations.h"
 
 void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask);
 

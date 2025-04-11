@@ -44,7 +44,9 @@ cppcheck() {
   echo -e "\n\n\n\n\nTEST variant options:" >> $CHECKLIST
   echo -e ""${@//$PANDA_DIR/}"\n\n" >> $CHECKLIST # (absolute path removed)
 
-  $CPPCHECK_DIR/cppcheck --inline-suppr -I $PANDA_DIR/board/ \
+  $CPPCHECK_DIR/cppcheck --inline-suppr \
+          -I $PANDA_DIR/board/ \
+          -I $PANDA_DIR/include/board/ \
           -I "$(arm-none-eabi-gcc -print-file-name=include)" \
           -I $PANDA_DIR/board/stm32f4/inc/ -I $PANDA_DIR/board/stm32h7/inc/ \
           -I $PANDA_DIR/../opendbc/safety/ \
