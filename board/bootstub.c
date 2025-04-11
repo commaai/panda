@@ -1,5 +1,3 @@
-#define BOOTSTUB
-
 #define VERS_TAG 0x53524556
 #define MIN_VERSION 2
 

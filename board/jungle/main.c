@@ -1,7 +1,7 @@
 // ********************* Includes *********************
 #include "board/config.h"
 
-#include "safety.h"
+#include "safety/safety_declarations.h"
 
 #include "board/drivers/led.h"
 #include "board/drivers/pwm.h"
@@ -11,9 +11,9 @@
 #include "board/provision.h"
 
 #include "board/health.h"
-#include "jungle_health.h"
+#include "jungle/jungle_health.h"
 
-#include "board/drivers/can_common.h"
+#include "board/drivers/can_common_panda.h"
 
 #ifdef STM32H7
   #include "board/drivers/fdcan.h"
@@ -24,7 +24,7 @@
 #include "board/obj/gitversion.h"
 
 #include "board/can_comms.h"
-#include "main_comms.h"
+#include "jungle/main_comms.h"
 
 
 // ********************* Serial debugging *********************
