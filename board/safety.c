@@ -2,7 +2,7 @@
 #include <stdbool.h>
 
 extern void print(const char *a);
-void puth(unsigned int i);
+extern void puth(unsigned int i);
 extern uint32_t microsecond_timer_get(void);
 
 #include "safety/board/utils.h"
