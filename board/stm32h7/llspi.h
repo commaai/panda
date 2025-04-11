@@ -1,4 +1,5 @@
 #if defined(ENABLE_SPI) || defined(BOOTSTUB)
+#include "stm32h7/llspi_declarations.h"
 // master -> panda DMA start
 void llspi_mosi_dma(uint8_t *addr, int len) {
   // disable DMA + SPI
