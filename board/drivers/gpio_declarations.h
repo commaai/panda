@@ -25,6 +25,4 @@ void set_gpio_output_type(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int out
 void set_gpio_alternate(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode);
 void set_gpio_pullup(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode);
 int get_gpio_input(const GPIO_TypeDef *GPIO, unsigned int pin);
-void gpio_set_all_output(gpio_t *pins, uint8_t num_pins, bool enabled);
-void gpio_set_bitmask(gpio_t *pins, uint8_t num_pins, uint32_t bitmask);
 bool detect_with_pull(GPIO_TypeDef *GPIO, int pin, int mode);
