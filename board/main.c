@@ -10,8 +10,7 @@
 #include "early_init.h"
 #include "provision.h"
 
-#include "safety.h"
-
+#include "safety/safety_declarations.h"
 #include "health.h"
 
 #include "drivers/can_common.h"
