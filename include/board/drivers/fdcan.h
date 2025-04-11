@@ -2,7 +2,7 @@
 #include <stdbool.h>
 
 #include "platform_definitions.h"
-#include "can.h"
+#include "safety/board/can.h"
 
 // IRQs: FDCAN1_IT0, FDCAN1_IT1
 //       FDCAN2_IT0, FDCAN2_IT1

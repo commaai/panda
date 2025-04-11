@@ -110,6 +110,15 @@ def build_project(project_name, project, extra_flags):
   def make_object(_env, name, path):
       return _env.Object(f"{name}-{project_name}", path)
 
+  safety_env = env.Clone()
+  safety_env["CPPPATH"] = [
+    f"{panda_root}/../opendbc",
+    f"{panda_root}/../opendbc/safety",
+    f"{panda_root}/../opendbc/safety/board",
+  ]
+
+  safety_obj = make_object(safety_env, "safety", f"{panda_root}/board/safety.c"),
+
   startup = make_object(env, 'obj/startup', project["STARTUP_FILE"])
 
   # Bootstub
@@ -120,7 +129,6 @@ def build_project(project_name, project, extra_flags):
 
   # Sources shared by all Panda variants
   sources = [
-      ("can", f"{panda_root}/board/can.c"),
       ("critical", f"{panda_root}/board/critical.c"),
       ("drivers_clock_source", f"{panda_root}/board/drivers/clock_source.c"),
       ("drivers_gpio", f"{panda_root}/board/drivers/gpio.c"),
@@ -132,7 +140,6 @@ def build_project(project_name, project, extra_flags):
       ("early_init", f"{panda_root}/board/early_init.c"),
       ("faults", f"{panda_root}/board/faults.c"),
       ("libc", f"{panda_root}/board/libc.c"),
-      ("safety", f"{panda_root}/board/safety.c"),
   ]
 
   _is_panda_jungle = "PANDA_JUNGLE" in " ".join(extra_flags)
@@ -215,7 +222,7 @@ def build_project(project_name, project, extra_flags):
   # Compile bootstub.c
   bootstub_obj = make_object(bootstub_env, "bootstub", f"{panda_root}/board/bootstub.c")
   bootstub_elf = bootstub_env.Program(f"obj/bootstub.{project_name}.elf",
-                                   [startup] + bootstub_sources + crypto_obj + [bootstub_obj])
+                                   [startup] + bootstub_sources + crypto_obj + [bootstub_obj, safety_obj])
   bootstub_env.Objcopy(f"obj/bootstub.{project_name}.bin", bootstub_elf)
 
   # Needed for full build.
@@ -251,7 +258,7 @@ def build_project(project_name, project, extra_flags):
   # Build main
   main_sources = [make_object(env, name, path) for  name, path in sources]
   main_obj = env.Object(f"main-{project_name}", project["MAIN"])
-  main_elf = env.Program(f"obj/{project_name}.elf", [startup, main_obj] + main_sources,
+  main_elf = env.Program(f"obj/{project_name}.elf", [startup, main_obj, safety_obj] + main_sources,
     LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"obj/{project_name}.bin", main_elf)
 

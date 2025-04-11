@@ -1,6 +1,6 @@
 #include "fake_stm.h"
 #include "config.h"
-#include "can.c"
+#include "safety/board/can.h"
 #include "main_definitions.c"
 
 bool can_init(uint8_t can_number) { return true; }

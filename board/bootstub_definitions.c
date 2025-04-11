@@ -1,5 +1,5 @@
 #include "bootstub_definitions.h"
-#include "utils.h"
+#include "safety/board/utils.h"
 // ******************** Prototypes ********************
 void print(const char *a){ UNUSED(a); }
 void puth(uint8_t i){ UNUSED(i); }

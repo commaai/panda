@@ -1,7 +1,8 @@
 #pragma once
 #include <stdbool.h>
 #include <stdint.h>
-#include "can.h"
+#include "safety/board/can.h"
+#include "safety/safety_declarations.h"
 #include "health.h"
 
 typedef struct {

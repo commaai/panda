@@ -1,6 +1,6 @@
 #pragma once
 #include "platform_definitions.h"
-#include "can.h"
+#include "safety/board/can.h"
 #include "comms_definitions.h"
 
 #ifdef PANDA_JUNGLE
@@ -18,7 +18,7 @@
 #include "libc.h"
 #include "critical.h"
 #include "faults.h"
-#include "utils.h"
+#include "safety/board/utils.h"
 
 #include "drivers/registers.h"
 #include "drivers/gpio.h"
