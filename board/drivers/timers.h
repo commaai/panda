@@ -1,4 +1,4 @@
-#include "timers_declarations.h"
+#include "drivers/timers_declarations.h"
 
 static void timer_init(TIM_TypeDef *TIM, int psc) {
   register_set(&(TIM->PSC), (psc-1), 0xFFFFU);

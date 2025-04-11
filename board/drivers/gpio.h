@@ -1,4 +1,4 @@
-#include "gpio_declarations.h"
+#include "drivers/gpio_declarations.h"
 
 void set_gpio_mode(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
   ENTER_CRITICAL();
