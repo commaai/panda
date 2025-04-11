@@ -1,3 +1,5 @@
+#include "stm32f4/clock_declarations.h"
+
 void clock_init(void) {
   // enable external oscillator
   register_set_bits(&(RCC->CR), RCC_CR_HSEON);
