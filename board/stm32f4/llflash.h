@@ -1,3 +1,4 @@
+#include "stm32f4/llflash_declarations.h"
 bool flash_is_locked(void) {
   return (FLASH->CR & FLASH_CR_LOCK);
 }

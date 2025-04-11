@@ -1,4 +1,5 @@
 #if defined(ENABLE_SPI) || defined(BOOTSTUB)
+#include "stm32f4/llflash_declarations.h"
 void llspi_miso_dma(uint8_t *addr, int len) {
   // disable DMA
   DMA2_Stream3->CR &= ~DMA_SxCR_EN;
