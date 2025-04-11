@@ -55,7 +55,7 @@ separate IRQs for RX and TX.
 #include "libc.h"
 #include "critical.h"
 #include "faults.h"
-#include "utils.h"
+#include "safety/board/utils.h"
 
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"

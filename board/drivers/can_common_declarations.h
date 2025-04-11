@@ -86,3 +86,6 @@ void can_set_checksum(CANPacket_t *packet);
 bool can_check_checksum(CANPacket_t *packet);
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook);
 bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len);
+
+// From opendbc/safety
+extern bool safety_tx_hook(CANPacket_t *to_send);
