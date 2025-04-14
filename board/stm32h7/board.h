@@ -9,7 +9,6 @@
 #include "drivers/harness.h"
 #include "drivers/fan.h"
 #include "stm32h7/llfan.h"
-#include "stm32h7/lldac.h"
 #include "drivers/fake_siren.h"
 #include "stm32h7/sound.h"
 #include "drivers/clock_source.h"
