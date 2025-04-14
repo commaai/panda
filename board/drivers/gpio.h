@@ -64,7 +64,7 @@ int get_gpio_input(const GPIO_TypeDef *GPIO, unsigned int pin) {
 }
 
 #ifdef PANDA_JUNGLE
-typedef struct gpio_tag {
+typedef struct {
   GPIO_TypeDef * const bank;
   uint8_t pin;
 } gpio_t;
