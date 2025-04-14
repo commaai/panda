@@ -1,7 +1,9 @@
 #include "fake_stm.h"
 #include "config.h"
+#include "faults.h"
 #include "safety/board/can.h"
 #include "safety/board/drivers/can_common.h"
+#include "safety/safety_declarations.h"
 
 bool can_init(uint8_t can_number) { return true; }
 void process_can(uint8_t can_number) { }
@@ -13,7 +15,6 @@ void can_tx_comms_resume_usb(void) { };
 void can_tx_comms_resume_spi(void) { };
 
 #include "health.h"
-#include "faults.h"
 #include "libc.h"
 #include "boards/board_declarations.h"
 #include "main_definitions.h"

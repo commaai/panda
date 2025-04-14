@@ -20,6 +20,8 @@ env = Environment(
     ".",
     "../../board/",
     "../../../opendbc/",
+    "../../../opendbc/safety/",
+    "../../../opendbc/safety/board/",
   ],
 )
 if system == "Darwin":
