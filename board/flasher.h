@@ -128,20 +128,25 @@ void soft_flasher_start(void) {
 
   enter_bootloader_mode = 0;
 
+#ifdef BOOTSTUB
   flasher_peripherals_init();
-
+#ifdef ENABLE_SPI
   gpio_usart2_init();
+#endif
+#endif
   gpio_usb_init();
   led_init();
 
   // enable USB
   usb_init();
 
+#if defined(ENABLE_SPI) || defined(BOOTSTUB)
   // enable SPI
   if (current_board->has_spi) {
     gpio_spi_init();
     spi_init();
   }
+#endif
 
   // green LED on for flashing
   led_set(LED_GREEN, 1);
