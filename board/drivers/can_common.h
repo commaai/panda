@@ -162,31 +162,18 @@ void can_set_forwarding(uint8_t from, uint8_t to) {
 
 void ignition_can_hook(CANPacket_t *to_push) {
   int bus = GET_BUS(to_push);
-  if (bus == 0) {
-    int addr = GET_ADDR(to_push);
-    int len = GET_LEN(to_push);
+  int addr = GET_ADDR(to_push);
+  int len = GET_LEN(to_push);
+  // Check counter position on cars with overlap
+  static int prev_counter = -1;
 
-    // Check counter position on cars with overlap
-    static int prev_counter = -1;
+  if (bus == 0) {
 
     // GM exception
     if ((addr == 0x1F1) && (len == 8)) {
       // SystemPowerMode (2=Run, 3=Crank Request)
       ignition_can = (GET_BYTE(to_push, 0) & 0x2U) != 0U;
       ignition_can_cnt = 0U;
-    }
-
-    // Rivian R1S/T GEN1 exception
-    if ((addr == 0x152) && (len == 8)) {
-      // 0x152 overlaps with Subaru pre-global which has this bit as the high beam
-      int counter = GET_BYTE(to_push, 1) & 0xFU;  // max is only 14
-
-      if ((counter == ((prev_counter + 1) % 15)) && (prev_counter != -1)) {
-        // VDM_OutputSignals->VDM_EpasPowerMode
-        ignition_can = ((GET_BYTE(to_push, 7) >> 4U) & 0x3U) == 1U;  // VDM_EpasPowerMode_Drive_On=1
-        ignition_can_cnt = 0U;
-      }
-      prev_counter = counter;
     }
 
     // Tesla Model 3/Y exception
@@ -209,6 +196,20 @@ void ignition_can_hook(CANPacket_t *to_push) {
       ignition_can_cnt = 0U;
     }
 
+  }
+
+  if (bus == 1) {
+    // Rivian R1S/T GEN1 exception
+    if ((addr == 0x235) && (len == 8)) {
+      int counter = GET_BYTE(to_push, 1) & 0xFU;  // max is only 14
+
+      if ((counter == ((prev_counter + 1) % 15)) && (prev_counter != -1)) {
+        // IndicatorLights->IgnitionOn
+        ignition_can = (GET_BYTE(to_push, 6) & 0x1U) == 1U;
+        ignition_can_cnt = 0U;
+      }
+      prev_counter = counter;
+    }
   }
 }
 
