@@ -130,6 +130,7 @@ void soft_flasher_start(void) {
   enter_bootloader_mode = 0;
 
   flasher_peripherals_init();
+  
   gpio_usart2_init();
   gpio_usb_init();
   led_init();
