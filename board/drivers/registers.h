@@ -1,4 +1,5 @@
 #include "registers_declarations.h"
+#include "safety/board/faults_declarations.h"
 
 static reg register_map[REGISTER_MAP_SIZE];
 

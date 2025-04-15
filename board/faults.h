@@ -36,9 +36,3 @@
 
 // Permanent faults
 #define PERMANENT_FAULTS 0U
-
-extern uint8_t fault_status;
-extern uint32_t faults;
-
-extern void fault_occurred(uint32_t fault);
-extern void fault_recovered(uint32_t fault);
