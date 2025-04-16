@@ -1,4 +1,3 @@
-#ifdef BOOTSTUB
 // from the linker script
 #ifdef STM32H7
   #define APP_START_ADDRESS 0x8020000U
@@ -158,5 +157,3 @@ void soft_flasher_start(void) {
     delay(500000);
   }
 }
-
-#endif // BOOTSTUB
