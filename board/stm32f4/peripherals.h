@@ -9,7 +9,7 @@ static void gpio_usb_init(void) {
   GPIOA->OSPEEDR = GPIO_OSPEEDER_OSPEEDR11 | GPIO_OSPEEDER_OSPEEDR12;
 }
 
-#if defined(ENABLE_SPI)
+#ifdef ENABLE_SPI
 void gpio_spi_init(void) {
   // A4-A7: SPI
   set_gpio_alternate(GPIOA, 4, GPIO_AF5_SPI1);
