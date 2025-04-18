@@ -183,7 +183,10 @@ int main(void) {
   enable_interrupts();
 
   can_silent = ALL_CAN_LIVE;
-  set_safety_hooks(SAFETY_ALLOUTPUT, 0U);
+  int err = set_safety_hooks(SAFETY_ALLOUTPUT, 0U);
+  if (err == -1) {
+    print("Error: Failed to set safet_mode to SAFETY_ALLOUTPUT. Hanging\n");
+  }
 
   can_init_all();
   current_board->set_harness_orientation(HARNESS_ORIENTATION_1);
