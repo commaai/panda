@@ -1,4 +1,5 @@
 #pragma once
+#include <stdbool.h>
 
 #include "crc.h"
 

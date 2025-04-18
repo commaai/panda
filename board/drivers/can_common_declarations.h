@@ -1,4 +1,8 @@
 #pragma once
+#include <stdbool.h>
+#include <stdint.h>
+#include "can.h"
+#include "health.h"
 
 typedef struct {
   volatile uint32_t w_ptr;

@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 struct fan_state_t {
   uint16_t tach_counter;
