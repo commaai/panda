@@ -234,8 +234,10 @@ static void tick_handler(void) {
       }
 
       if (!heartbeat_disabled) {
-        // Check ignition state before enabling siren
-        if (check_started() && heartbeat_counter >= (check_started() ? HEARTBEAT_IGNITION_CNT_ON : HEARTBEAT_IGNITION_CNT_OFF)) {
+        // Store the result of check_started() to avoid redundant calls
+        const bool ignition_on = check_started();
+
+        if (ignition_on && heartbeat_counter >= (ignition_on ? HEARTBEAT_IGNITION_CNT_ON : HEARTBEAT_IGNITION_CNT_OFF)) {
           print("device hasn't sent a heartbeat for 0x");
           puth(heartbeat_counter);
           print(" seconds. Safety is set to SILENT mode.\n");
