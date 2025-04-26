@@ -7,9 +7,6 @@ uint32_t rx_buffer_overflow = 0;
 
 can_health_t can_health[CAN_HEALTH_ARRAY_SIZE] = {{0}, {0}, {0}};
 
-// Ignition detected from CAN meessages
-uint32_t ignition_can_cnt = 0U;
-
 int can_live = 0;
 int pending_can_live = 0;
 int can_silent = ALL_CAN_SILENT;
