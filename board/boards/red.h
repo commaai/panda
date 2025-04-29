@@ -73,7 +73,7 @@ static bool red_check_ignition(void) {
 }
 
 static uint32_t red_read_voltage_mV(void){
-  return adc_get_mV(2) * 11U; // TODO: is this correct?
+  return ADC_RAW_TO_mV(cadc_state.voltage_raw) * 11U;
 }
 
 static void red_init(void) {
@@ -140,5 +140,7 @@ board board_red = {
   .set_ir_power = unused_set_ir_power,
   .set_siren = unused_set_siren,
   .read_som_gpio = unused_read_som_gpio,
-  .set_amp_enabled = unused_set_amp_enabled
+  .set_amp_enabled = unused_set_amp_enabled,
+  .voltage_cadc_channel = 2U,
+  .current_cadc_channel = CADC_CHANNEL_NONE
 };
