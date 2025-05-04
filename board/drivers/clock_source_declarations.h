@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 #define CLOCK_SOURCE_PERIOD_MS           50U
 #define CLOCK_SOURCE_PULSE_LEN_MS        2U

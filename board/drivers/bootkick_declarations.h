@@ -1,4 +1,5 @@
 #pragma once
+#include <stdbool.h>
 
 extern bool bootkick_reset_triggered;
 
