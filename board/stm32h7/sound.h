@@ -155,7 +155,7 @@ void sound_init(void) {
 
   // init DFSDM for PDM mic
   register_set(&DFSDM1_Channel0->CHCFGR1, (76UL << DFSDM_CHCFGR1_CKOUTDIV_Pos) | DFSDM_CHCFGR1_CHEN, 0xC0FFF1EFU); // CH0 controls the clock
-  register_set(&DFSDM1_Channel3->CHCFGR1, (0b01UL << DFSDM_CHCFGR1_SPICKSEL_Pos) | (0b00U << DFSDM_CHCFGR1_SITP_Pos) | DFSDM_CHCFGR1_CHEN, 0x0000F1EFU); // SITP determines sample edge
+  register_set(&DFSDM1_Channel3->CHCFGR1, (0b01UL << DFSDM_CHCFGR1_SPICKSEL_Pos) | (0b00U << DFSDM_CHCFGR1_SITP_Pos), 0x0000F1EFU); // SITP determines sample edge
   register_set(&DFSDM1_Channel3->CHCFGR2, (2U << DFSDM_CHCFGR2_DTRBS_Pos), 0xFFFFFFF8U);
   register_set_bits(&DFSDM1_Channel3->CHCFGR1, DFSDM_CHCFGR1_CHEN);
   register_set(&DFSDM1_Filter0->FLTFCR, (0U << DFSDM_FLTFCR_IOSR_Pos) | (64UL << DFSDM_FLTFCR_FOSR_Pos) | (4UL << DFSDM_FLTFCR_FORD_Pos), 0xE3FF00FFU);
