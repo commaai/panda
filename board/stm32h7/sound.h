@@ -84,7 +84,7 @@ static void BDMA_Channel0_IRQ_Handler(void) {
         sound_tx_buf[1U - playback_buf][i] = (1UL << 11);
       }
       register_clear_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
-      register_set(&DMA1_Stream1->CR, (1UL - playback_buf) << DMA_SxCR_CT_Pos, DMA_SxCR_CT_Msk);
+      DMA1_Stream1->CR = (DMA1_Stream1->CR & ~DMA_SxCR_CT_Msk) | ((1UL - playback_buf) << DMA_SxCR_CT_Pos);
       register_set_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
     }
     sound_idle_count = SOUND_IDLE_TIMEOUT;
@@ -164,7 +164,7 @@ void sound_init(void) {
   register_set(&DMA1_Stream0->M0AR, (uint32_t)mic_rx_buf[0], 0xFFFFFFFFU);
   register_set(&DMA1_Stream0->M1AR, (uint32_t)mic_rx_buf[1], 0xFFFFFFFFU);
   DMA1_Stream0->NDTR = MIC_RX_BUF_SIZE;
-  register_set(&DMA1_Stream0->CR, DMA_SxCR_DBM | (0b10UL << DMA_SxCR_MSIZE_Pos) | (0b10UL << DMA_SxCR_PSIZE_Pos) | DMA_SxCR_MINC | DMA_SxCR_CIRC | DMA_SxCR_TCIE, 0x01FFFFFFU);
+  register_set(&DMA1_Stream0->CR, DMA_SxCR_DBM | (0b10UL << DMA_SxCR_MSIZE_Pos) | (0b10UL << DMA_SxCR_PSIZE_Pos) | DMA_SxCR_MINC | DMA_SxCR_CIRC | DMA_SxCR_TCIE, 0x01F7FFFFU);
   register_set(&DMAMUX1_Channel0->CCR, 101U, DMAMUX_CxCR_DMAREQ_ID_Msk); // DFSDM1_DMA0
   register_set_bits(&DMA1_Stream0->CR, DMA_SxCR_EN);
   DMA1->LIFCR |= 0x7D; // clear flags
