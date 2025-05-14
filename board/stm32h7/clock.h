@@ -16,12 +16,7 @@ AHB4 per: 120MHz
 APB4 per: 60MHz
 PCLK1: 60MHz (for USART2,3,4,5,7,8)
 */
-
-typedef enum {
-  PACKAGE_UNKNOWN = 0,
-  PACKAGE_WITH_SMPS = 1,
-  PACKAGE_WITHOUT_SMPS = 2,
-} PackageSMPSType;
+#include "stm32h7/clock_declarations.h"
 
 // TODO: find a better way to distinguish between H725 (using SMPS) and H723 (lacking SMPS)
 // The package will do for now, since we have only used TFBGA100 for H723
