@@ -52,6 +52,7 @@ cppcheck() {
           -I $PANDA_DIR/board/stm32h7/inc/ \
           -I $PANDA_DIR/../opendbc/ \
           -I $PANDA_DIR/../opendbc/safety/ \
+          -I $PANDA_DIR/../opendbc/safety/board/ \
           --suppressions-list=$DIR/suppressions.txt \
           --suppress=*:*inc/* \
           --suppress=*:*include/* \
