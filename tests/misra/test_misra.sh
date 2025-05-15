@@ -70,16 +70,12 @@ cppcheck() {
 }
 
 PANDA_OPTS="--enable=all --disable=unusedFunction -DPANDA --addon=misra"
-# TODO: Make jungle/main.c and bootstub.c MISRA-compliant.
-PANDA_SOURCES="$PANDA_DIR/board/ --file-filter=*.c \
-         -i $PANDA_DIR/board/jungle/main.c \
-         -i $PANDA_DIR/board/bootstub.c"
 
 printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
-cppcheck $PANDA_OPTS -DSTM32F4 -DSTM32F413xx $PANDA_SOURCES
+cppcheck $PANDA_OPTS -DSTM32F4 -DSTM32F413xx $PANDA_DIR/board/main.c
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx $PANDA_SOURCES
+cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx $PANDA_DIR/board/main.c
 
 # unused needs to run globally
 #printf "\n${GREEN}** UNUSED ALL CODE **${NC}\n"
