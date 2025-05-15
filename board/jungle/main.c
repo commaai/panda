@@ -183,6 +183,7 @@ int main(void) {
   enable_interrupts();
 
   can_silent = ALL_CAN_LIVE;
+  set_safety_hooks(SAFETY_ALLOUTPUT, 0U);
 
   can_init_all();
   current_board->set_harness_orientation(HARNESS_ORIENTATION_1);
