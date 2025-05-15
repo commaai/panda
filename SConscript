@@ -85,8 +85,8 @@ def build_project(project_name, project, extra_flags):
     panda_root,
     f"{panda_root}/../opendbc",
     f"{panda_root}/board/",
-    f"{panda_root}/include/",
-    f"{panda_root}/include/board/",
+    f"{panda_root}/../opendbc/",
+    f"{panda_root}/../opendbc/safety/",
   ]
 
   env = Environment(
@@ -106,34 +106,22 @@ def build_project(project_name, project, extra_flags):
     tools=["default", "compilation_db"],
   )
 
-  def make_object(_env, name, path):
-      return _env.Object(f"{name}-{project_name}", path)
-
-  safety_env = env.Clone()
-  safety_env["CPPPATH"] = [
-    f"{panda_root}/../opendbc",
-    f"{panda_root}/../opendbc/safety",
-    f"{panda_root}/../opendbc/safety/board",
-  ]
-
-  safety_obj = make_object(safety_env, "safety", f"{panda_root}/board/safety.c"),
-
-  startup = make_object(env, 'obj/startup', project["STARTUP_FILE"])
+  startup = env.Object(f"obj/startup_{project_name}", project["STARTUP_FILE"])
 
   # Bootstub
   crypto_obj = [
-    make_object(env, "rsa", f"{panda_root}/crypto/rsa.c"),
-    make_object(env, "sha", f"{panda_root}/crypto/sha.c")
+    env.Object(f"rsa-{project_name}", f"{panda_root}/crypto/rsa.c"),
+    env.Object(f"sha-{project_name}", f"{panda_root}/crypto/sha.c")
   ]
 
   bootstub_obj = env.Object(f"bootstub-{project_name}", File(project.get("BOOTSTUB", f"{panda_root}/board/bootstub.c")))
   bootstub_elf = env.Program(f"obj/bootstub.{project_name}.elf",
-                                     [startup] + crypto_obj + [bootstub_obj, safety_obj])
+                                     [startup] + crypto_obj + [bootstub_obj])
   env.Objcopy(f"obj/bootstub.{project_name}.bin", bootstub_elf)
 
   # Build main
   main_obj = env.Object(f"main-{project_name}", project["MAIN"])
-  main_elf = env.Program(f"obj/{project_name}.elf", [startup, main_obj, safety_obj],
+  main_elf = env.Program(f"obj/{project_name}.elf", [startup, main_obj],
     LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"obj/{project_name}.bin", main_elf)
 

@@ -41,7 +41,7 @@
 
 #include "libc.h"
 #include "critical.h"
-#include "faults.h"
+#include "faults_declarations.h"
 #include "safety/board/utils.h"
 
 #include "drivers/registers.h"

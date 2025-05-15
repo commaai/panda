@@ -1,4 +1,5 @@
 #include "can_common_declarations.h"
+#include "safety/board/drivers/can_common.h"
 #include "safety/safety_declarations.h"
 
 uint32_t safety_tx_blocked = 0;

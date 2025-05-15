@@ -1,7 +1,7 @@
 // ********************* Includes *********************
 #include "board/config.h"
 
-#include "safety/safety_declarations.h"
+#include "safety/safety.h"
 #include "board/drivers/led.h"
 #include "board/drivers/pwm.h"
 #include "board/drivers/usb.h"
