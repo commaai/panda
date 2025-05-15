@@ -15,7 +15,6 @@ void can_tx_comms_resume_spi(void) { };
 #include "faults_declarations.h"
 #include "libc.h"
 #include "boards/board_declarations.h"
-#include "safety/board/drivers/can_common.h"
 #include "safety/board/faults.h"
 #include "safety/safety.h"
 #include "main_definitions.h"
