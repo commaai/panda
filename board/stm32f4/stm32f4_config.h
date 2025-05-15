@@ -30,7 +30,6 @@
 #define PROVISION_CHUNK_ADDRESS 0x1FFF79E0U
 #define DEVICE_SERIAL_NUMBER_ADDRESS 0x1FFF79C0U
 
-#include "can.h"
 #include "comms_definitions.h"
 
 #ifndef BOOTSTUB
@@ -41,8 +40,8 @@
 
 #include "libc.h"
 #include "critical.h"
-#include "faults.h"
-#include "utils.h"
+#include "faults_declarations.h"
+#include "safety/board/utils.h"
 
 #include "drivers/registers.h"
 #include "drivers/interrupts.h"

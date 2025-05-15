@@ -12,10 +12,11 @@ void can_tx_comms_resume_usb(void) { };
 void can_tx_comms_resume_spi(void) { };
 
 #include "health.h"
-#include "faults.h"
+#include "faults_declarations.h"
 #include "libc.h"
 #include "boards/board_declarations.h"
-#include "safety.h"
+#include "safety/board/faults.h"
+#include "safety/safety.h"
 #include "main_definitions.h"
 #include "drivers/can_common.h"
 
