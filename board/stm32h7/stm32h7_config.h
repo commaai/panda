@@ -43,7 +43,6 @@ separate IRQs for RX and TX.
 #define PROVISION_CHUNK_ADDRESS 0x080FFFE0U
 #define DEVICE_SERIAL_NUMBER_ADDRESS 0x080FFFC0U
 
-#include "safety/board/can.h"
 #include "comms_definitions.h"
 
 #ifndef BOOTSTUB

@@ -30,7 +30,6 @@
 #define PROVISION_CHUNK_ADDRESS 0x1FFF79E0U
 #define DEVICE_SERIAL_NUMBER_ADDRESS 0x1FFF79C0U
 
-#include "safety/board/can.h"
 #include "comms_definitions.h"
 
 #ifndef BOOTSTUB

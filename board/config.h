@@ -10,12 +10,6 @@
 //#define DEBUG_COMMS
 //#define DEBUG_FAN
 
-#define PANDA_CAN_CNT 3U
-#define PANDA_BUS_CNT 3U
-
-// bump this when changing the CAN packet
-#define CAN_PACKET_VERSION 4
-
 #define CAN_INIT_TIMEOUT_MS 500U
 #define USBPACKET_MAX_SIZE 0x40U
 #define MAX_CAN_MSGS_PER_USB_BULK_TRANSFER 51U
