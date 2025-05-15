@@ -1,5 +1,9 @@
 #pragma once
 
+// Defined in safety/board/faults.h
+extern uint8_t fault_status;
+extern uint32_t faults;
+
 #define FAULT_STATUS_NONE 0U
 #define FAULT_STATUS_TEMPORARY 1U
 #define FAULT_STATUS_PERMANENT 2U
