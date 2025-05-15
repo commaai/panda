@@ -234,8 +234,7 @@ static void tick_handler(void) {
       }
 
       if (!heartbeat_disabled) {
-        // if the heartbeat has been gone for a while, go to SILENT safety mode and enter power save
-        if (heartbeat_counter >= (check_started() ? HEARTBEAT_IGNITION_CNT_ON : HEARTBEAT_IGNITION_CNT_OFF)) {
+        if (check_started() && (heartbeat_counter >= HEARTBEAT_IGNITION_CNT_ON)) {
           print("device hasn't sent a heartbeat for 0x");
           puth(heartbeat_counter);
           print(" seconds. Safety is set to SILENT mode.\n");
