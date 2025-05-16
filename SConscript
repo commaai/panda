@@ -117,8 +117,11 @@ def build_project(project_name, project, extra_flags):
   env.Objcopy(f"obj/bootstub.{project_name}.bin", bootstub_elf)
 
   # Build main
-  main_obj = env.Object(f"main-{project_name}", project["MAIN"])
-  main_elf = env.Program(f"obj/{project_name}.elf", [startup, main_obj],
+  main_sources = project["MAIN"]
+  if isinstance(main_sources, str):
+    main_sources = [main_sources]
+  main_objs = [env.Object(f"{os.path.splitext(os.path.basename(src))[0]}-{project_name}", src) for src in main_sources]
+  main_elf = env.Program(f"obj/{project_name}.elf", [startup] + main_objs,
     LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"obj/{project_name}.bin", main_elf)
 
@@ -128,7 +131,7 @@ def build_project(project_name, project, extra_flags):
 
 
 base_project_f4 = {
-  "MAIN": "main.c",
+  "MAIN": ["main.c", "drivers/uart.c"],
   "STARTUP_FILE": File("./board/stm32f4/startup_stm32f413xx.s"),
   "LINKER_SCRIPT": File("./board/stm32f4/stm32f4_flash.ld"),
   "APP_START_ADDRESS": "0x8004000",
@@ -146,7 +149,7 @@ base_project_f4 = {
 }
 
 base_project_h7 = {
-  "MAIN": "main.c",
+  "MAIN": ["main.c", "drivers/uart.c"],
   "STARTUP_FILE": File("./board/stm32h7/startup_stm32h7x5xx.s"),
   "LINKER_SCRIPT": File("./board/stm32h7/stm32h7x5_flash.ld"),
   "APP_START_ADDRESS": "0x8020000",
