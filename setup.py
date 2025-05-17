@@ -61,6 +61,7 @@ setup(
       "pre-commit",
       "numpy",
       "ruff",
+      "ty",
       "spidev",
       "setuptools", # for setup.py
     ],

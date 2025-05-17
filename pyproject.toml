@@ -13,3 +13,6 @@ flake8-implicit-str-concat.allow-multiline=false
 
 [tool.pytest.ini_options]
 addopts = "-n auto --ignore-glob='*.sh'"
+
+[tool.ty.rules]
+unresolved-import = "ignore"
