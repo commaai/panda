@@ -46,7 +46,7 @@ setup(
   python_requires='>=3.11,<3.13',
   install_requires=[
     'libusb1',
-    'opendbc @ git+https://github.com/commaai/opendbc.git@da0a5e3d2b3984b56ebf5e25d9769f5c77807e4d#egg=opendbc',
+    'opendbc @ git+https://github.com/commaai/opendbc.git@e94ccf66be66a5becdf6a179e910216bf86bde4f#egg=opendbc',
   ],
   extras_require = {
     'dev': [
