@@ -3,7 +3,7 @@ set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PANDA_DIR=$(realpath $DIR/../../)
-OPENDBC_ROOT=$(python -c "import opendbc; print(opendbc.INCLUDE_PATH)")
+OPENDBC_ROOT=$(python3 -c "import opendbc; print(opendbc.INCLUDE_PATH)")
 
 GREEN="\e[1;32m"
 YELLOW="\e[1;33m"
