@@ -43,8 +43,10 @@ setup(
   package_dir={'panda': 'python'},
   platforms='any',
   license='MIT',
+  python_requires='>=3.11,<3.13',
   install_requires=[
     'libusb1',
+    'opendbc @ git+https://github.com/commaai/opendbc.git@45bf6c8f548473dece52f780f60bd8e20c32bd65#egg=opendbc',
   ],
   extras_require = {
     'dev': [

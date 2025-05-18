@@ -11,7 +11,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     libffi-dev \
     libusb-1.0-0 \
-    python3 \
     python3-dev \
     python3-pip \
  && rm -rf /var/lib/apt/lists/* && \
@@ -35,15 +34,7 @@ COPY setup.py __init__.py $PYTHONPATH/panda/
 COPY python/__init__.py $PYTHONPATH/panda/python/
 RUN pip3 install --break-system-packages --no-cache-dir $PYTHONPATH/panda/[dev]
 
-# TODO: this should be a "pip install" or not even in this repo at all
 RUN git config --global --add safe.directory $PYTHONPATH/panda
-ENV OPENDBC_REF="da0a5e3d2b3984b56ebf5e25d9769f5c77807e4d"
-RUN cd /tmp/ && \
-    git clone --depth 1 https://github.com/commaai/opendbc opendbc_repo && \
-    cd opendbc_repo && git fetch origin $OPENDBC_REF && git checkout FETCH_HEAD && rm -rf .git/ && \
-    pip3 install --break-system-packages --no-cache-dir Cython numpy pycapnp  && \
-    ln -s $PWD/opendbc $PYTHONPATH/opendbc && \
-    scons -j8 --minimal opendbc/
 
 # for Jenkins
 COPY README.md panda.tar.* /tmp/

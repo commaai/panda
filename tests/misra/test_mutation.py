@@ -68,7 +68,6 @@ for p in patterns:
 def test_misra_mutation(fn, patch, should_fail):
   with tempfile.TemporaryDirectory() as tmp:
     shutil.copytree(ROOT, tmp + "/panda", dirs_exist_ok=True)
-    shutil.copytree(ROOT + "../opendbc", tmp + "/opendbc", dirs_exist_ok=True)
 
     # apply patch
     if fn is not None:
