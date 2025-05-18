@@ -43,26 +43,11 @@ In addition, we run the [ruff linter](https://github.com/astral-sh/ruff) and [my
 
 ## Usage
 
-Setup dependencies:
 ```bash
-# Ubuntu
-sudo apt-get install dfu-util gcc-arm-none-eabi python3-pip libffi-dev git clang-17
-
-# macOS
-brew install --cask gcc-arm-embedded
-brew install python3 dfu-util gcc@13
-```
-
-Clone panda repository and install:
-``` bash
 git clone https://github.com/commaai/panda.git
 cd panda
 
-# install dependencies
-pip install -e .[dev]
-
-# install panda
-python setup.py install
+./setup.sh
 ```
 
 See [the Panda class](https://github.com/commaai/panda/blob/master/python/__init__.py) for how to interact with the panda.
