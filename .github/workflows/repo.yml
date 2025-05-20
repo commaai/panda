@@ -12,13 +12,13 @@ jobs:
     container:
       image: ghcr.io/commaai/panda:latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: pre-commit autoupdate
       run: |
         git config --global --add safe.directory '*'
         pre-commit autoupdate
     - name: Create Pull Request
-      uses: peter-evans/create-pull-request@5b4a9f6a9e2af26e5f02351490b90d01eb8ec1e5
+      uses: peter-evans/create-pull-request@f689536846d983d7c4f399cd9b789c38c963aaca
       with:
         token: ${{ secrets.ACTIONS_CREATE_PR_PAT }}
         commit-message: Update pre-commit hook versions
