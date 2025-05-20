@@ -55,6 +55,12 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Cache cppcheck
+        id: cppcheck-cache
+        uses: actions/cache@v4
+        with:
+          path: tests/misra/cppcheck
+          key: cppcheck-${{ hashFiles('tests/misra/*') }}
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Build FW
@@ -69,6 +75,12 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Cache cppcheck
+        id: cppcheck-cache
+        uses: actions/cache@v4
+        with:
+          path: tests/misra/cppcheck
+          key: cppcheck-${{ hashFiles('tests/misra/*') }}
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Build FW
