@@ -13,3 +13,16 @@ flake8-implicit-str-concat.allow-multiline=false
 
 [tool.pytest.ini_options]
 addopts = "-n auto --ignore-glob='*.sh'"
+
+
+[tool.mypy]
+# third-party packages
+ignore_missing_imports = true
+
+# helpful warnings
+warn_redundant_casts = true
+warn_unreachable = true
+warn_unused_ignores = true
+
+# restrict dynamic typing
+warn_return_any = true
