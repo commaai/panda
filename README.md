@@ -83,11 +83,8 @@ The panda jungle uses different udev rules. See [the repo](https://github.com/co
 
 ## Software interface support
 
-As a universal car interface, it should support every reasonable software interface.
-
 - [Python library](https://github.com/commaai/panda/tree/master/python)
 - [C++ library](https://github.com/commaai/openpilot/tree/master/selfdrive/pandad)
-- [socketcan in kernel](https://github.com/commaai/panda/tree/master/drivers/linux) (alpha)
 
 ## Licensing
 
