@@ -12,6 +12,7 @@ if [[ $PLATFORM == "Darwin" ]]; then
   brew install python3 gcc@13
 elif [[ $PLATFORM == "Linux" ]]; then
   sudo apt-get install -y --no-install-recommends \
+    curl \
     make g++ git libnewlib-arm-none-eabi \
     libusb-1.0-0 \
     gcc-arm-none-eabi python3-pip python3-venv python3-dev
