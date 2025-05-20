@@ -31,7 +31,6 @@ if GetOption('mutation'):
   flags = [
     '-fprofile-instr-generate',
     '-fcoverage-mapping',
-    '-fpass-plugin=/usr/lib/mull-ir-frontend-17',
     '-g',
     '-grecord-command-line',
   ]
