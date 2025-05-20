@@ -13,7 +13,8 @@ if [[ $PLATFORM == "Darwin" ]]; then
 elif [[ $PLATFORM == "Linux" ]]; then
   sudo apt-get install -y --no-install-recommends \
     make g++ git libnewlib-arm-none-eabi \
-    gcc-arm-none-eabi python3-pip
+    libusb-1.0-0 \
+    gcc-arm-none-eabi python3-pip python3-venv python3-dev
 else
   echo "WARNING: unsupported platform. skipping apt/brew install."
 fi
