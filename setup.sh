@@ -19,7 +19,16 @@ else
   echo "WARNING: unsupported platform. skipping apt/brew install."
 fi
 
-python3 -m venv .venv
-source .venv/bin/activate
+# TODO: why doesn't uv do this?
+export PYTHONPATH=$DIR
 
-pip install -e .[dev]
+# *** dependencies install ***
+if ! command -v uv &>/dev/null; then
+  echo "'uv' is not installed. Installing 'uv'..."
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+fi
+
+
+export UV_PROJECT_ENVIRONMENT="$DIR/.venv"
+uv sync --all-extras
+source "$PYTHONPATH/.venv/bin/activate"

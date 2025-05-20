@@ -34,8 +34,8 @@ jobs:
       - name: Build panda in release mode
         run: ${{ env.RUN }} "CERT=certs/debug RELEASE=1 scons -j4"
 
-  unit_tests:
-    name: unit tests
+  test:
+    name: ./test.sh
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -83,14 +83,3 @@ jobs:
       - name: MISRA mutation tests
         timeout-minutes: 5
         run: ${{ env.RUN }} "cd tests/misra && pytest -n8 test_mutation.py"
-
-  static_analysis:
-    name: static analysis
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - run: ./setup.sh
-      - name: Run static analysis
-        timeout-minutes: 3
-        run: ${{ env.RUN }} "pre-commit run --all"
