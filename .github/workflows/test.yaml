@@ -25,8 +25,6 @@ jobs:
         run: ${{ env.RUN }} "pip install --break-system-packages .[dev]"
       - name: Build panda images and bootstub
         run: ${{ env.RUN }} "scons -j4"
-      - name: Build panda with SPI support
-        run: ${{ env.RUN }} "ENABLE_SPI=1 scons -j4"
       - name: Build with UBSan
         run: ${{ env.RUN }} "scons -j4 --ubsan"
       - name: Build jungle firmware with FINAL_PROVISIONING support
@@ -34,17 +32,13 @@ jobs:
       - name: Build panda in release mode
         run: ${{ env.RUN }} "CERT=certs/debug RELEASE=1 scons -j4"
 
-  unit_tests:
-    name: unit tests
+  test:
+    name: ./test.sh
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - run: ./setup.sh
-      - name: Build panda
-        run: $RUN "scons -j4"
-      - name: Test communication protocols
-        run: $RUN "cd tests/usbprotocol && ./test.sh"
+      - run: ./test.sh
 
   misra_linter:
     name: MISRA C:2012 Linter
@@ -62,7 +56,6 @@ jobs:
       - name: Build FW
         run: ${{ env.RUN }} "scons -j$(nproc)"
       - name: Run MISRA C:2012 analysis
-        timeout-minutes: 4
         run: ${{ env.RUN }} "cd tests/misra && ./test_misra.sh"
 
   misra_mutation:
@@ -81,16 +74,4 @@ jobs:
       - name: Build FW
         run: ${{ env.RUN }} "scons -j$(nproc)"
       - name: MISRA mutation tests
-        timeout-minutes: 5
         run: ${{ env.RUN }} "cd tests/misra && pytest -n8 test_mutation.py"
-
-  static_analysis:
-    name: static analysis
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - run: ./setup.sh
-      - name: Run static analysis
-        timeout-minutes: 3
-        run: ${{ env.RUN }} "pre-commit run --all"

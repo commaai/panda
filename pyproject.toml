@@ -13,7 +13,6 @@ classifiers = [
 ]
 dependencies = [
   "libusb1",
-  "opendbc @ git+https://github.com/commaai/opendbc.git@45bf6c8f548473dece52f780f60bd8e20c32bd65#egg=opendbc",
 ]
 
 [project.optional-dependencies]
@@ -27,10 +26,11 @@ dev = [
   "pytest-xdist",
   "pytest-timeout",
   "pytest-randomly",
-  "pre-commit",
   "ruff",
+  "mypy",
   "spidev",
   "setuptools",
+  "opendbc @ git+https://github.com/commaai/opendbc.git@45bf6c8f548473dece52f780f60bd8e20c32bd65#egg=opendbc",
 ]
 
 [build-system]
@@ -41,7 +41,7 @@ build-backend = "setuptools.build_meta"
 packages = ["panda"]
 
 [tool.setuptools.package-dir]
-panda = "python"
+panda = "."
 
 [tool.mypy]
 # third-party packages
@@ -69,4 +69,8 @@ flake8-implicit-str-concat.allow-multiline=false
 "pytest.main".msg = "pytest.main requires special handling that is easy to mess up!"
 
 [tool.pytest.ini_options]
-addopts = "-n auto --ignore-glob='*.sh'"
+addopts = "-n0 -Werror --strict-config --strict-markers --durations=10 --ignore-glob='*.sh' --ignore=tests/misra --ignore=tests/som --ignore=tests/hitl"
+python_files = "test_*.py"
+testpaths = [
+  "tests/"
+]

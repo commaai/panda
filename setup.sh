@@ -12,6 +12,7 @@ if [[ $PLATFORM == "Darwin" ]]; then
   brew install python3 gcc@13
 elif [[ $PLATFORM == "Linux" ]]; then
   sudo apt-get install -y --no-install-recommends \
+    curl \
     make g++ git libnewlib-arm-none-eabi \
     libusb-1.0-0 \
     gcc-arm-none-eabi python3-pip python3-venv python3-dev
@@ -19,7 +20,12 @@ else
   echo "WARNING: unsupported platform. skipping apt/brew install."
 fi
 
-python3 -m venv .venv
-source .venv/bin/activate
+if ! command -v uv &>/dev/null; then
+  echo "'uv' is not installed. Installing 'uv'..."
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  source $HOME/.local/bin/env || true
+fi
 
-pip install -e .[dev]
+export UV_PROJECT_ENVIRONMENT="$DIR/.venv"
+uv sync --all-extras
+source "$DIR/.venv/bin/activate"

@@ -46,7 +46,11 @@ In addition, we run the [ruff linter](https://github.com/astral-sh/ruff) and [my
 git clone https://github.com/commaai/panda.git
 cd panda
 
+# setup your environment
 ./setup.sh
+
+# build fw + run the tests
+./test.sh
 ```
 
 See [the Panda class](https://github.com/commaai/panda/blob/master/python/__init__.py) for how to interact with the panda.
