@@ -8,6 +8,8 @@ build_projects = {
   "panda_jungle_h7": base_project_h7,
 }
 
+faults_src = File('#/board/faults.c')
+
 for project_name, project in build_projects.items():
   flags = [
     "-DPANDA_JUNGLE",
@@ -15,4 +17,4 @@ for project_name, project in build_projects.items():
   if os.getenv("FINAL_PROVISIONING"):
     flags += ["-DFINAL_PROVISIONING"]
 
-  build_project(project_name, project, flags)
+  build_project(project_name, project, flags, extra_sources=[faults_src])
