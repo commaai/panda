@@ -8,14 +8,15 @@ on:
 jobs:
   pre-commit-autoupdate:
     name: pre-commit autoupdate
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/commaai/panda:latest
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
+    - name: Setup
+      run: ./setup.sh
     - name: pre-commit autoupdate
       run: |
         git config --global --add safe.directory '*'
+        source .venv/bin/activate
         pre-commit autoupdate
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@f689536846d983d7c4f399cd9b789c38c963aaca
