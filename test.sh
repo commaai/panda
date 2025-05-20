@@ -16,4 +16,4 @@ mypy python/
 
 
 # *** test ***
-pytest -n4 tests/
+pytest -n0 tests/
