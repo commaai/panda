@@ -12,7 +12,6 @@ concurrency:
 
 env:
   RUN: source .venv/bin/activate && /bin/bash -c
-  BUILD: ./setup.sh
 
 jobs:
   build:
@@ -21,8 +20,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Build Docker image
-        run: eval "$BUILD"
+      - run: ./setup.sh
       - name: Test python package installer
         run: ${{ env.RUN }} "pip install --break-system-packages .[dev]"
       - name: Build panda images and bootstub
@@ -42,12 +40,11 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Build Docker image
-        run: eval "$BUILD"
+      - run: ./setup.sh
       - name: Build panda
         run: $RUN "scons -j4"
       - name: Test communication protocols
-        run: $RUN "cd tests/usbprotocol && ./test.sh"
+        run: $RUN "cd tests/usbprotocol && ./test.sh
 
   misra_linter:
     name: MISRA C:2012 Linter
@@ -61,13 +58,12 @@ jobs:
         with:
           path: tests/misra/cppcheck
           key: cppcheck-${{ hashFiles('tests/misra/*') }}
-      - name: Build Docker image
-        run: eval "$BUILD"
+      - run: ./setup.sh
       - name: Build FW
         run: ${{ env.RUN }} "scons -j$(nproc)"
       - name: Run MISRA C:2012 analysis
         timeout-minutes: 2
-        run: ${{ env.RUN }} "cd tests/misra && ./test_misra.sh"
+        run: ${{ env.RUN }} "cd tests/misra && ./test_misra.sh
 
   misra_mutation:
     name: MISRA C:2012 Mutation
@@ -81,8 +77,7 @@ jobs:
         with:
           path: tests/misra/cppcheck
           key: cppcheck-${{ hashFiles('tests/misra/*') }}
-      - name: Build Docker image
-        run: eval "$BUILD"
+      - run: ./setup.sh
       - name: Build FW
         run: ${{ env.RUN }} "scons -j$(nproc)"
       - name: MISRA mutation tests
@@ -95,8 +90,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Build Docker image
-        run: eval "$BUILD"
+      - run: ./setup.sh
       - name: Run static analysis
         timeout-minutes: 3
         run: ${{ env.RUN }} "pre-commit run --all"
