@@ -25,7 +25,7 @@ dev = [
   "pytest-mock",
   "pytest-xdist",
   "pytest-timeout",
-  #"pytest-randomly",
+  "pytest-randomly",
   "ruff",
   "mypy",
   "spidev",
@@ -74,8 +74,3 @@ python_files = "test_*.py"
 testpaths = [
   "tests/"
 ]
-#ignore = [
-#  "tests/som",  # too slow atm, we run this separately
-#  "tests/hitl",  # too slow atm, we run this separately
-#  "tests/misra",  # too slow atm, we run this separately
-#]
