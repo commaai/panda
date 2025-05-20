@@ -7,10 +7,8 @@
 
 #if !defined(STM32F4)
   #define CANFD
-  #define CANPACKET_DATA_SIZE_MAX 64U
-#else
-  #define CANPACKET_DATA_SIZE_MAX 8U
 #endif
+#define CANPACKET_DATA_SIZE_MAX 64U
 
 typedef struct {
   unsigned char fd : 1;
