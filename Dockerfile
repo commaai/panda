@@ -30,7 +30,7 @@ COPY tests/misra/install.sh /tmp/
 RUN /tmp/install.sh && rm -rf $CPPCHECK_DIR/.git/
 ENV SKIP_CPPCHECK_INSTALL=1
 
-COPY setup.py __init__.py $PYTHONPATH/panda/
+COPY pyproject.toml __init__.py $PYTHONPATH/panda/
 COPY python/__init__.py $PYTHONPATH/panda/python/
 RUN pip3 install --break-system-packages --no-cache-dir $PYTHONPATH/panda/[dev]
 

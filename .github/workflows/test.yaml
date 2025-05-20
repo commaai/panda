@@ -45,7 +45,7 @@ jobs:
       - name: Build Docker image
         run: eval "$BUILD"
       - name: Test python package installer
-        run: ${{ env.RUN }} "python3 setup.py install"
+        run: ${{ env.RUN }} "pip install --break-system-packages .[dev]"
       - name: Build panda images and bootstub
         run: ${{ env.RUN }} "scons -j4"
       - name: Build panda with SPI support
