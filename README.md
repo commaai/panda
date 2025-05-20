@@ -11,7 +11,8 @@ panda speaks CAN and CAN FD, and it runs on [STM32F413](https://www.st.com/resou
 ├── board           # Code that runs on the STM32
 ├── drivers         # Drivers (not needed for use with Python)
 ├── python          # Python userspace library for interfacing with the panda
-├── tests           # Tests and helper programs for panda
+├── tests           # Tests for panda
+├── scripts         # Miscellaneous used for panda development and debugging
 ```
 
 ## Safety Model
