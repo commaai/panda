@@ -73,5 +73,7 @@ jobs:
       - run: ./setup.sh
       - name: Build FW
         run: ${{ env.RUN }} "scons -j$(nproc)"
+      - name: tests/misra/install.sh
+        run: ${{ env.RUN }} "cd tests/misra && ./install.sh"
       - name: MISRA mutation tests
-        run: ${{ env.RUN }} "cd tests/misra && pytest -n8 test_mutation.py"
+        run: ${{ env.RUN }} "cd tests/misra && pytest -n2 test_mutation.py"

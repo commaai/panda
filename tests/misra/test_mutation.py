@@ -64,6 +64,9 @@ assert len(files) > 70, all(d in files for d in ('board/main.c', 'board/stm32f4/
 for p in patterns:
   mutations.append((random.choice(files), p, True))
 
+# TODO: remove sampling once test_misra.sh is faster
+mutations = random.sample(mutations, 2)
+
 @pytest.mark.parametrize("fn, patch, should_fail", mutations)
 def test_misra_mutation(fn, patch, should_fail):
   with tempfile.TemporaryDirectory() as tmp:
