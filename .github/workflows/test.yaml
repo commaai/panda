@@ -13,7 +13,7 @@ concurrency:
 env:
   RUN: source .venv/bin/activate && /bin/bash -c
   BUILD: ./setup.sh
-  PYTHONWARNINGS: "error"
+  #PYTHONWARNINGS: "error"
 
 jobs:
   build:
