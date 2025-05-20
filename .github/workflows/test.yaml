@@ -44,7 +44,7 @@ jobs:
       - name: Build panda
         run: $RUN "scons -j4"
       - name: Test communication protocols
-        run: $RUN "cd tests/usbprotocol && ./test.sh
+        run: $RUN "cd tests/usbprotocol && ./test.sh"
 
   misra_linter:
     name: MISRA C:2012 Linter
