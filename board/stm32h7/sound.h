@@ -105,6 +105,7 @@ void sound_init(void) {
   REGISTER_INTERRUPT(DMA1_Stream0_IRQn, DMA1_Stream0_IRQ_Handler, 128U, FAULT_INTERRUPT_RATE_SOUND_DMA)
 
   // Init DAC
+  DAC1->DHR12R1 = (1UL << 11);
   register_set(&DAC1->MCR, 0U, 0xFFFFFFFFU);
   register_set(&DAC1->CR, DAC_CR_TEN1 | (4U << DAC_CR_TSEL1_Pos) | DAC_CR_DMAEN1, 0xFFFFFFFFU);
   register_set_bits(&DAC1->CR, DAC_CR_EN1);
