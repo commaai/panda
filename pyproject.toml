@@ -69,4 +69,13 @@ flake8-implicit-str-concat.allow-multiline=false
 "pytest.main".msg = "pytest.main requires special handling that is easy to mess up!"
 
 [tool.pytest.ini_options]
-addopts = "-n auto --ignore-glob='*.sh'"
+addopts = "-Werror --strict-config --strict-markers --durations=10 -n4 --ignore-glob='*.sh' --ignore=tests/misra --ignore=tests/som --ignore=tests/hitl"
+python_files = "test_*.py"
+testpaths = [
+  "tests/"
+]
+#ignore = [
+#  "tests/som",  # too slow atm, we run this separately
+#  "tests/hitl",  # too slow atm, we run this separately
+#  "tests/misra",  # too slow atm, we run this separately
+#]

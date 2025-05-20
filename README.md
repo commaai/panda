@@ -49,7 +49,7 @@ cd panda
 # setup your environment
 ./setup.sh
 
-# run all the tests
+# build fw + run the tests
 ./test.sh
 ```
 

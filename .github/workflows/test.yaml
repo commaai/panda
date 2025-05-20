@@ -40,11 +40,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - run: ./setup.sh
-      - name: Build panda
-        run: $RUN "scons -j4"
-      - name: Test communication protocols
-        run: $RUN "cd tests/usbprotocol && ./test.sh"
+      - run: ./test.sh
 
   misra_linter:
     name: MISRA C:2012 Linter
