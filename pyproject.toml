@@ -7,33 +7,31 @@ requires-python = ">=3.11,<3.13"
 license = {text = "MIT"}
 authors = [{name = "comma.ai"}]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
-    "Natural Language :: English",
-    "Programming Language :: Python :: 3",
-    "Topic :: System :: Hardware",
+  "Development Status :: 2 - Pre-Alpha",
+  "Natural Language :: English",
+  "Programming Language :: Python :: 3",
+  "Topic :: System :: Hardware",
 ]
 dependencies = [
-    "libusb1",
-    "opendbc @ git+https://github.com/commaai/opendbc.git@45bf6c8f548473dece52f780f60bd8e20c32bd65#egg=opendbc",
+  "libusb1",
+  "opendbc @ git+https://github.com/commaai/opendbc.git@45bf6c8f548473dece52f780f60bd8e20c32bd65#egg=opendbc",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "scons",
-    "pycryptodome >= 3.9.8",
-    "cffi",
-    "flaky",
-    "pytest",
-    "pytest-mock",
-    "pytest-xdist",
-    "pytest-timeout",
-    "pytest-randomly",
-    "parameterized",
-    "pre-commit",
-    "numpy",
-    "ruff",
-    "spidev",
-    "setuptools",
+  "scons",
+  "pycryptodome >= 3.9.8",
+  "cffi",
+  "flaky",
+  "pytest",
+  "pytest-mock",
+  "pytest-xdist",
+  "pytest-timeout",
+  "pytest-randomly",
+  "pre-commit",
+  "ruff",
+  "spidev",
+  "setuptools",
 ]
 
 [build-system]
