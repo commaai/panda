@@ -14,16 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-dev \
     python3-pip \
  && rm -rf /var/lib/apt/lists/* && \
-    apt clean && \
-    cd /usr/lib/gcc/arm-none-eabi/* && \
-    rm -rf arm/ && \
-    rm -rf thumb/nofp thumb/v6* thumb/v8* thumb/v7+fp thumb/v7-r+fp.sp && \
-    apt-get update && apt-get install -y clang-17 && \
-    ln -s $(which clang-17) /usr/bin/clang
-
-RUN apt-get update && apt-get install -y curl && \
-    curl -1sLf 'https://dl.cloudsmith.io/public/mull-project/mull-stable/setup.deb.sh' | bash && \
-    apt-get update && apt-get install -y mull-17
+    apt clean
 
 ENV CPPCHECK_DIR=/tmp/cppcheck
 COPY tests/misra/install.sh /tmp/

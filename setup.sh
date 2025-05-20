@@ -9,11 +9,11 @@ PLATFORM=$(uname -s)
 echo "installing dependencies"
 if [[ $PLATFORM == "Darwin" ]]; then
   brew install --cask gcc-arm-embedded
-  brew install python3 dfu-util gcc@13
+  brew install python3 gcc@13
 elif [[ $PLATFORM == "Linux" ]]; then
   sudo apt-get install -y --no-install-recommends \
     make g++ git libnewlib-arm-none-eabi \
-    dfu-util gcc-arm-none-eabi python3-pip libffi-dev clang-17 python3
+    gcc-arm-none-eabi python3-pip
 else
   echo "WARNING: unsupported platform. skipping apt/brew install."
 fi
