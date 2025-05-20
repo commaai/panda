@@ -17,7 +17,7 @@ jobs:
   build:
     name: build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - run: ./setup.sh
@@ -37,7 +37,7 @@ jobs:
   unit_tests:
     name: unit tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - run: ./setup.sh
@@ -49,7 +49,7 @@ jobs:
   misra_linter:
     name: MISRA C:2012 Linter
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Cache cppcheck
@@ -63,12 +63,12 @@ jobs:
         run: ${{ env.RUN }} "scons -j$(nproc)"
       - name: Run MISRA C:2012 analysis
         timeout-minutes: 2
-        run: ${{ env.RUN }} "cd tests/misra && ./test_misra.sh
+        run: ${{ env.RUN }} "cd tests/misra && ./test_misra.sh"
 
   misra_mutation:
     name: MISRA C:2012 Mutation
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Cache cppcheck
@@ -87,7 +87,7 @@ jobs:
   static_analysis:
     name: static analysis
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - run: ./setup.sh
