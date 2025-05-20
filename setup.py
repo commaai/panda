@@ -36,17 +36,16 @@ setup(
   version=find_version("python", "__init__.py"),
   url='https://github.com/commaai/panda',
   author='comma.ai',
-  author_email='',
+  author_email='user@comma.ai',
   packages=[
     'panda',
   ],
   package_dir={'panda': 'python'},
   platforms='any',
   license='MIT',
-  python_requires='>=3.11,<3.13',
+  python_requires='>=3.11,<3.14',
   install_requires=[
     'libusb1',
-    'opendbc @ git+https://github.com/commaai/opendbc.git@45bf6c8f548473dece52f780f60bd8e20c32bd65#egg=opendbc',
   ],
   extras_require = {
     'dev': [
@@ -59,21 +58,18 @@ setup(
       "pytest-xdist",
       "pytest-timeout",
       "pytest-randomly",
-      "parameterized",
       "pre-commit",
-      "numpy",
       "ruff",
       "spidev",
       "setuptools", # for setup.py
+      "opendbc @ git+https://github.com/commaai/opendbc.git@45bf6c8f548473dece52f780f60bd8e20c32bd65#egg=opendbc",
     ],
   },
   ext_modules=[],
   description="Code powering the comma.ai panda",
   long_description='See https://github.com/commaai/panda',
   classifiers=[
-    'Development Status :: 2 - Pre-Alpha',
     "Natural Language :: English",
-    "Programming Language :: Python :: 2",
     "Programming Language :: Python :: 3",
     "Topic :: System :: Hardware",
   ],
