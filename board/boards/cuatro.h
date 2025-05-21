@@ -85,10 +85,13 @@ static void cuatro_init(void) {
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
   register_set_bits(&(GPIOC->OTYPER), GPIO_OTYPER_OT8); // open drain
 
-  // Initialize IR PWM and set to 0%
-  set_gpio_alternate(GPIOC, 9, GPIO_AF2_TIM3);
+  // Tri-color LED PWM setup
+  set_gpio_alternate(GPIOC, 6, GPIO_AF2_TIM3);  // TIM3_CH1
+  set_gpio_alternate(GPIOC, 7, GPIO_AF2_TIM3);  // TIM3_CH2
+  set_gpio_alternate(GPIOC, 9, GPIO_AF2_TIM3);  // TIM3_CH4
+  pwm_init(TIM3, 1);
+  pwm_init(TIM3, 2);
   pwm_init(TIM3, 4);
-  tres_set_ir_power(0U);
 
   // Clock source
   clock_source_init(true);
