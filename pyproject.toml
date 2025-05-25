@@ -28,8 +28,8 @@ dev = [
   "pytest-randomly",
   "ruff",
   "mypy",
-  "spidev",
   "setuptools",
+  "spidev; platform_system == 'Linux'",
   "opendbc @ git+https://github.com/commaai/opendbc.git@45bf6c8f548473dece52f780f60bd8e20c32bd65#egg=opendbc",
 ]
 

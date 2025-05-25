@@ -17,6 +17,10 @@ jobs:
   build:
     name: build
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['macos-latest', 'ubuntu-latest']
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +38,11 @@ jobs:
 
   test:
     name: ./test.sh
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['macos-latest', 'ubuntu-latest']
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
