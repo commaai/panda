@@ -17,10 +17,6 @@ jobs:
   build:
     name: build
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        os: ['macos-latest', 'ubuntu-latest']
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
