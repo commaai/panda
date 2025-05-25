@@ -8,6 +8,7 @@ PLATFORM=$(uname -s)
 
 echo "installing dependencies"
 if [[ $PLATFORM == "Darwin" ]]; then
+  export HOMEBREW_NO_AUTO_UPDATE=1
   brew install --cask gcc-arm-embedded
   brew install python3 gcc@13
 elif [[ $PLATFORM == "Linux" ]]; then
