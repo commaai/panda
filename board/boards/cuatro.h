@@ -44,6 +44,7 @@ static void cuatro_set_bootkick(BootState state) {
 }
 
 static void cuatro_set_amp_enabled(bool enabled){
+  set_gpio_output(GPIOA, 5, enabled);
   set_gpio_output(GPIOB, 0, enabled);
 }
 
