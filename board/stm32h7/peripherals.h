@@ -73,6 +73,9 @@ void flasher_peripherals_init(void) {
   // SPI + DMA
   RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
+
+  // LED PWM
+  RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;
 }
 #endif
 
@@ -116,7 +119,7 @@ void peripherals_init(void) {
   // Timers
   RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;  // clock source timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;  // main counter
-  RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;  // fan pwm
+  RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;  // fan + led pwm
   RCC->APB1LENR |= RCC_APB1LENR_TIM6EN;  // interrupt timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM7EN;  // DMA trigger timer
   RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;  // tick timer
