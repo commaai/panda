@@ -62,7 +62,7 @@ def to_c_uint32(x):
   return "{" + 'U,'.join(map(str, nums)) + "U}"
 
 
-def build_project(project_name, project, extra_flags):
+def build_project(project_name, project, extra_flags, extra_sources=None):
   linkerscript_fn = File(project["LINKER_SCRIPT"]).srcnode().relpath
 
   flags = project["PROJECT_FLAGS"] + extra_flags + common_flags + [
@@ -112,13 +112,22 @@ def build_project(project_name, project, extra_flags):
     env.Object(f"sha-{project_name}", f"{panda_root}/crypto/sha.c")
   ]
   bootstub_obj = env.Object(f"bootstub-{project_name}", File(project.get("BOOTSTUB", f"{panda_root}/board/bootstub.c")))
+  bootstub_objs = [bootstub_obj]
+  if extra_sources:
+    for src in extra_sources:
+      name = os.path.splitext(os.path.basename(str(src)))[0]
+      bootstub_objs.append(env.Object(f"bootstub-{name}-{project_name}", src))
   bootstub_elf = env.Program(f"obj/bootstub.{project_name}.elf",
-                                     [startup] + crypto_obj + [bootstub_obj])
+                                     [startup] + crypto_obj + bootstub_objs)
   env.Objcopy(f"obj/bootstub.{project_name}.bin", bootstub_elf)
 
   # Build main
-  main_obj = env.Object(f"main-{project_name}", project["MAIN"])
-  main_elf = env.Program(f"obj/{project_name}.elf", [startup, main_obj],
+  objs = [env.Object(f"main-{project_name}", project["MAIN"])]
+  if extra_sources:
+    for src in extra_sources:
+      name = os.path.splitext(os.path.basename(str(src)))[0]
+      objs.append(env.Object(f"{name}-{project_name}", src))
+  main_elf = env.Program(f"obj/{project_name}.elf", [startup] + objs,
     LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"obj/{project_name}.bin", main_elf)
 
