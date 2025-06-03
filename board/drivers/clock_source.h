@@ -1,7 +1,12 @@
 #include "clock_source_declarations.h"
 
-void clock_source_set_period(uint8_t period) {
-  register_set(&(TIM1->ARR), ((period*10U) - 1U), 0xFFFFU);
+void clock_source_set_timer_params(uint16_t param1, uint16_t param2) {
+  // Pulse length of each channel
+  register_set(&(TIM1->CCR1), (((param1 & 0xFF00U) >> 8U)*10U), 0xFFFFU);
+  register_set(&(TIM1->CCR2), ((param1 & 0x00FFU)*10U), 0xFFFFU);
+  register_set(&(TIM1->CCR3), (((param2 & 0xFF00U) >> 8U)*10U), 0xFFFFU);
+  // Timer period
+  register_set(&(TIM1->ARR),  (((param2 & 0x00FFU)*10U) - 1U), 0xFFFFU);
 }
 
 void clock_source_init(bool enable_channel1) {
