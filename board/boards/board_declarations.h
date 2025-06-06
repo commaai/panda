@@ -78,7 +78,6 @@ struct board {
 extern struct board board_black;
 extern struct board board_dos;
 extern struct board board_tres;
-extern struct board board_grey;
 extern struct board board_white;
 extern struct board board_cuatro;
 extern struct board board_red;
