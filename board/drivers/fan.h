@@ -33,7 +33,7 @@ void fan_tick(void) {
     if (current_board->fan_stall_recovery) {
       if (fan_state.target_rpm > 0U) {
         if (fan_rpm_fast == 0U) {
-          fan_state.stall_counter = MIN(fan_state.stall_counter + 1U, 254U);
+          fan_state.stall_counter = MIN(fan_state.stall_counter + 1U, 255U);
         } else {
           fan_state.stall_counter = 0U;
         }
@@ -77,8 +77,7 @@ void fan_tick(void) {
       float error = (fan_state.target_rpm - fan_rpm_fast) / ((float) current_board->fan_max_rpm);
       fan_state.error_integral += FAN_I * error;
     }
-    fan_state.error_integral = CLAMP(fan_state.error_integral, 0U, current_board->fan_max_pwm);
-    fan_state.power = fan_state.error_integral;
+    fan_state.power = CLAMP(fan_state.error_integral, 0U, current_board->fan_max_pwm);
 
     // Set PWM and enable line
     pwm_set(TIM3, 3, fan_state.power);
