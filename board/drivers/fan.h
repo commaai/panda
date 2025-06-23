@@ -5,8 +5,10 @@ struct fan_state_t fan_state;
 static const uint8_t FAN_TICK_FREQ = 8U;
 static const uint8_t FAN_STALL_THRESHOLD_MIN = 3U;
 
+uint8_t fan_setting = 0;
 
 void fan_set_power(uint8_t percentage) {
+  fan_setting = percentage;
   fan_state.target_rpm = ((current_board->fan_max_rpm * CLAMP(percentage, 0U, 100U)) / 100U);
 }
 
@@ -19,7 +21,7 @@ void fan_init(void) {
 
 // Call this at FAN_TICK_FREQ
 void fan_tick(void) {
-  const float FAN_I = 6.5f;
+  const float FAN_I = 1.0f;
   const uint8_t FAN_STALL_THRESHOLD_MAX = 8U;
 
   if (current_board->fan_max_rpm > 0U) {
@@ -81,7 +83,15 @@ void fan_tick(void) {
     fan_state.power = fan_state.error_integral;
 
     // Set PWM and enable line
-    pwm_set(TIM3, 3, fan_state.power);
+    if (true) {
+      if (fan_setting == 100U) {
+        pwm_set(TIM3, 3, 100U);
+      } else {
+        pwm_set(TIM3, 3, CLAMP(fan_state.power, 0U, 99U));
+      }
+    } else {
+      pwm_set(TIM3, 3, fan_setting);
+    }
     current_board->set_fan_enabled(!fan_stalled && ((fan_state.target_rpm > 0U) || (fan_state.cooldown_counter > 0U)));
   }
 }
