@@ -1,7 +1,7 @@
 // ********************* Includes *********************
 #include "board/config.h"
 
-#include "safety.h"
+#include "opendbc/safety/safety.h"
 
 #include "board/drivers/led.h"
 #include "board/drivers/pwm.h"

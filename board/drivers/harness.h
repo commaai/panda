@@ -100,13 +100,8 @@ void harness_init(void) {
   set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, 1);
   set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, 1);
 
-  // try to detect orientation
+  // detect initial orientation
   harness.status = harness_detect_orientation();
-  if (harness.status != HARNESS_STATUS_NC) {
-    print("detected car harness with orientation "); puth2(harness.status); print("\n");
-  } else {
-    print("failed to detect car harness!\n");
-  }
 
   // keep buses connected by default
   set_intercept_relay(false, false);

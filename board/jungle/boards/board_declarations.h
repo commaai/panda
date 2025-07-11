@@ -16,6 +16,7 @@ typedef uint16_t (*board_get_sbu_mV)(uint8_t channel, uint8_t sbu);
 struct board {
   GPIO_TypeDef * const led_GPIO[3];
   const uint8_t led_pin[3];
+  const uint8_t led_pwm_channels[3]; // leave at 0 to disable PWM
   const bool has_canfd;
   const bool has_sbu_sense;
   const uint16_t avdd_mV;

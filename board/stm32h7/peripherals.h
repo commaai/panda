@@ -9,6 +9,7 @@ static void gpio_usb_init(void) {
   GPIOA->OSPEEDR = GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12;
 }
 
+#ifdef ENABLE_SPI
 void gpio_spi_init(void) {
   set_gpio_alternate(GPIOE, 11, GPIO_AF5_SPI4);
   set_gpio_alternate(GPIOE, 12, GPIO_AF5_SPI4);
@@ -16,12 +17,15 @@ void gpio_spi_init(void) {
   set_gpio_alternate(GPIOE, 14, GPIO_AF5_SPI4);
   register_set_bits(&(GPIOE->OSPEEDR), GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12 | GPIO_OSPEEDR_OSPEED13 | GPIO_OSPEEDR_OSPEED14);
 }
+#endif
 
+#ifdef BOOTSTUB
 void gpio_usart2_init(void) {
   // A2,A3: USART 2 for debugging
   set_gpio_alternate(GPIOA, 2, GPIO_AF7_USART2);
   set_gpio_alternate(GPIOA, 3, GPIO_AF7_USART2);
 }
+#endif
 
 void gpio_uart7_init(void) {
   // E7,E8: UART 7 for debugging
@@ -62,13 +66,18 @@ void common_init_gpio(void) {
   set_gpio_alternate(GPIOG, 10, GPIO_AF2_FDCAN3);
 }
 
+#ifdef BOOTSTUB
 void flasher_peripherals_init(void) {
   RCC->AHB1ENR |= RCC_AHB1ENR_USB1OTGHSEN;
 
   // SPI + DMA
   RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
+
+  // LED PWM
+  RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;
 }
+#endif
 
 // Peripheral initialization
 void peripherals_init(void) {
@@ -110,7 +119,7 @@ void peripherals_init(void) {
   // Timers
   RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;  // clock source timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM2EN;  // main counter
-  RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;  // fan pwm
+  RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;  // fan + led pwm
   RCC->APB1LENR |= RCC_APB1LENR_TIM6EN;  // interrupt timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM7EN;  // DMA trigger timer
   RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;  // tick timer
