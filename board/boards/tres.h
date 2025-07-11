@@ -169,5 +169,7 @@ board board_tres = {
   .set_siren = fake_siren_set,
   .set_bootkick = tres_set_bootkick,
   .read_som_gpio = tres_read_som_gpio,
-  .set_amp_enabled = unused_set_amp_enabled
+  .set_amp_enabled = unused_set_amp_enabled,
+  .voltage_cadc_channel = 2U,
+  .current_cadc_channel = CADC_CHANNEL_NONE
 };
