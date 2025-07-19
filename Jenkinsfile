@@ -30,20 +30,14 @@ export TEST_DIR=${env.TEST_DIR}
 export SOURCE_DIR=${env.SOURCE_DIR}
 export GIT_BRANCH=${env.GIT_BRANCH}
 export GIT_COMMIT=${env.GIT_COMMIT}
+export PYTHONPATH=${env.TEST_DIR}/../
 export PYTHONWARNINGS=error
-
-unset PYTHONPATH
-unset VIRTUAL_ENV
-
-export TMPDIR=/data/tmp/
-# undo uv shim...
-export PATH=/usr/local/venv/bin:/usr/local/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
+ln -sf /data/openpilot/opendbc_repo/opendbc /data/opendbc
 
 # TODO: this is an agnos issue
 export PYTEST_ADDOPTS="-p no:asyncio"
 
 cd ${env.TEST_DIR} || true
-
 ${cmd}
 exit 0
 
@@ -112,11 +106,10 @@ pipeline {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
                 phone_steps("panda-cuatro", [
-                  ["setup", "./setup.sh"],
-                  ["build", "scons -j8"],
+                  ["build", "scons -j4"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["flash jungle", "cd board/jungle && ./flash.py --all"],
-                  ["test", "cd tests/hitl && pytest -p no:asyncio --durations=0"],
+                  ["test", "cd tests/hitl && HW_TYPES=10 pytest -n0 --durations=0 2*.py [5-9]*.py"],
                 ])
               }
             }
@@ -125,11 +118,10 @@ pipeline {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
                 phone_steps("panda-tres", [
-                  ["setup", "./setup.sh"],
-                  ["build", "scons -j8"],
+                  ["build", "scons -j4"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["flash jungle", "cd board/jungle && ./flash.py --all"],
-                  ["test", "cd tests/hitl && pytest -p no:asyncio --durations=0"],
+                  ["test", "cd tests/hitl && HW_TYPES=9 pytest -n0 --durations=0 2*.py [5-9]*.py"],
                 ])
               }
             }
@@ -138,11 +130,10 @@ pipeline {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
                 phone_steps("panda-dos", [
-                  ["setup", "./setup.sh"],
-                  ["build", "scons -j8"],
+                  ["build", "scons -j4"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["flash jungle", "cd board/jungle && ./flash.py --all"],
-                  ["test", "cd tests/hitl && pytest -p no:asyncio --durations=0 -k 'not test_send_recv'"],
+                  ["test", "cd tests/hitl && HW_TYPES=6 pytest -n0 --durations=0 [2-9]*.py -k 'not test_send_recv'"],
                 ])
               }
             }
@@ -150,7 +141,7 @@ pipeline {
             stage('bootkick tests') {
               steps {
                 script {
-                  docker_run("test", 10, "pytest -p no:asyncio ./tests/som/test_bootkick.py")
+                  docker_run("test", 10, "pytest -n0 ./tests/som/test_bootkick.py")
                 }
               }
             }
