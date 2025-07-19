@@ -1,15 +1,15 @@
 FROM ubuntu:24.04
 
+ENV WORKDIR=/tmp/panda/
 ENV PYTHONUNBUFFERED=1
-ENV VIRTUAL_ENV=/tmp/.venv
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV PATH="$WORKDIR/.venv/bin:$PATH"
+
+WORKDIR $WORKDIR
 
 # deps install
-COPY pyproject.toml __init__.py setup.sh /tmp/
-RUN mkdir -p /tmp/python && touch /tmp/python/__init__.py
-RUN apt-get update && apt-get install -y --no-install-recommends sudo && DEBIAN_FRONTEND=noninteractive /tmp/setup.sh
+COPY pyproject.toml __init__.py setup.sh $WORKDIR
+RUN mkdir -p $WORKDIR/python/ && touch $WORKDIR/__init__.py
+RUN apt-get update && apt-get install -y --no-install-recommends sudo && DEBIAN_FRONTEND=noninteractive $WORKDIR/setup.sh
 
-ENV WORKDIR=/tmp/panda/
 RUN git config --global --add safe.directory $WORKDIR/panda
 COPY . $WORKDIR
-WORKDIR $WORKDIR
