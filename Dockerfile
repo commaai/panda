@@ -10,7 +10,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends sudo && /tmp/setup.sh
 
 COPY pyproject.toml __init__.py $PYTHONPATH/panda/
-COPY python/__init__.py $PYTHONPATH/panda/python/
+#COPY python/__init__.py $PYTHONPATH/panda/python/
+RUN touch $PYTHONPATH/panda/python/__init__.py
 RUN pip3 install --break-system-packages --no-cache-dir $PYTHONPATH/panda/[dev]
 
 RUN git config --global --add safe.directory $PYTHONPATH/panda

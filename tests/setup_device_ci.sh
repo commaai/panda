@@ -69,6 +69,7 @@ git clean -xdff
 echo "git checkout done, t=$SECONDS"
 du -hs $SOURCE_DIR $SOURCE_DIR/.git
 
+sudo chown -R $USER:$USER $TEST_DIR
 rsync -a --delete $SOURCE_DIR $TEST_DIR
 
 echo "$TEST_DIR synced with $GIT_COMMIT, t=$SECONDS"
