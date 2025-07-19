@@ -21,6 +21,8 @@ def init_devices():
     _panda_jungle.set_panda_power(True)
 
   with Panda(serial=None, claim=False) as p:
+    global _panda_type
+    global _panda_serial
     _panda_serial = p.get_usb_serial()
     _panda_type = bytes(p.get_type())
   assert _panda_serial is not None, "No panda found!"
