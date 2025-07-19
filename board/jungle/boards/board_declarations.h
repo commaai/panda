@@ -40,7 +40,7 @@ struct board {
 
 // ******************* Definitions ********************
 #define HW_TYPE_UNKNOWN 0U
-#define HW_TYPE_V1 1U
+//#define HW_TYPE_V1 1U
 #define HW_TYPE_V2 2U
 
 // CAN modes

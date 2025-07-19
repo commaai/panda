@@ -1,10 +1,9 @@
 import os
 import copy
 
-Import('build_project', 'base_project_f4', 'base_project_h7')
+Import('build_project', 'base_project_h7')
 
 build_projects = {
-  "panda_jungle": base_project_f4,
   "panda_jungle_h7": base_project_h7,
 }
 
