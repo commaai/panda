@@ -28,7 +28,7 @@ dev = [
   "pytest-timeout",
   "pytest-randomly",
   "ruff",
-  "mypy",
+  "ty",
   "setuptools",
   "spidev; platform_system == 'Linux'",
 ]
@@ -43,17 +43,10 @@ packages = ["panda"]
 [tool.setuptools.package-dir]
 panda = "."
 
-[tool.mypy]
-# third-party packages
-ignore_missing_imports = true
 
-# helpful warnings
-warn_redundant_casts = true
-warn_unreachable = true
-warn_unused_ignores = true
-
-# restrict dynamic typing
-warn_return_any = true
+[tool.ty.rules]
+unresolved-import = "ignore"
+unresolved-attribute = "ignore"
 
 # https://beta.ruff.rs/docs/configuration/#using-pyprojecttoml
 [tool.ruff]
