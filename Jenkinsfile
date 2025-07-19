@@ -35,6 +35,9 @@ export PYTHONPATH=${env.TEST_DIR}/../
 export PYTHONWARNINGS=error
 ln -sf /data/openpilot/opendbc_repo/opendbc /data/opendbc
 
+# TODO: this is an agnos issue
+export PYTEST_ADDOPTS="-p no:asyncio"
+
 cd ${env.TEST_DIR} || true
 ${cmd}
 exit 0
