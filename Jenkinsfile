@@ -4,7 +4,6 @@ def docker_run(String step_label, int timeout_mins, String cmd) {
           --env PYTHONWARNINGS=error \
           --volume /dev/bus/usb:/dev/bus/usb \
           --volume /var/run/dbus:/var/run/dbus \
-          --workdir /tmp/pythonpath/panda \
           --net host \
           ${env.DOCKER_IMAGE_TAG} \
           bash -c 'scons -j8 && ${cmd}'", \
@@ -34,6 +33,9 @@ export GIT_COMMIT=${env.GIT_COMMIT}
 export PYTHONPATH=${env.TEST_DIR}/../
 export PYTHONWARNINGS=error
 ln -sf /data/openpilot/opendbc_repo/opendbc /data/opendbc
+
+# TODO: this is an agnos issue
+export PYTEST_ADDOPTS="-p no:asyncio"
 
 cd ${env.TEST_DIR} || true
 ${cmd}
@@ -83,7 +85,6 @@ pipeline {
           steps {
             timeout(time: 20, unit: 'MINUTES') {
               script {
-                sh 'git archive -v -o panda.tar.gz --format=tar.gz HEAD'
                 dockerImage = docker.build("${env.DOCKER_IMAGE_TAG}")
               }
             }
