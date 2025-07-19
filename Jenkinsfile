@@ -86,7 +86,6 @@ pipeline {
           steps {
             timeout(time: 20, unit: 'MINUTES') {
               script {
-                sh 'git archive -v -o panda.tar.gz --format=tar.gz HEAD'
                 dockerImage = docker.build("${env.DOCKER_IMAGE_TAG}")
               }
             }
