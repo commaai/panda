@@ -59,7 +59,7 @@ def test_harness_status(p, panda_jungle):
       assert buses[2] == (0 if flipped else 2)
 
     # SBU voltages
-    supply_voltage_mV = 1800 if p.get_type() in [Panda.HW_TYPE_TRES, ] else 3300
+    supply_voltage_mV = 1800 if p.get_type() in [Panda.HW_TYPE_TRES, Panda.HW_TYPE_CUATRO] else 3300
 
     if orientation == Panda.HARNESS_STATUS_NC:
       assert health['sbu1_voltage_mV'] > 0.9 * supply_voltage_mV
