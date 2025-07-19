@@ -522,16 +522,16 @@ class Panda:
       dfu_list = PandaDFU.list()
     return True
 
-  @staticmethod
-  def wait_for_panda(serial: str | None, timeout: int) -> bool:
+  @classmethod
+  def wait_for_panda(cls, serial: str | None, timeout: int) -> bool:
     t_start = time.monotonic()
-    serials = Panda.list()
+    serials = cls.list()
     while (serial is None and len(serials) == 0) or (serial is not None and serial not in serials):
       logger.debug("waiting for panda...")
       time.sleep(0.1)
       if timeout is not None and (time.monotonic() - t_start) > timeout:
         return False
-      serials = Panda.list()
+      serials = cls.list()
     return True
 
   def up_to_date(self, fn=None) -> bool:
