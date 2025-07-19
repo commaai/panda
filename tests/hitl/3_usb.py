@@ -1,9 +1,14 @@
 import time
+import pytest
 from flaky import flaky
 
 from opendbc.car.structs import CarParams
 from panda import Panda
 from panda.tests.hitl.helpers import time_many_sends
+
+pytestmark = [
+  pytest.mark.test_panda_types((Panda.HW_TYPE_DOS, Panda.HW_TYPE_RED_PANDA))
+]
 
 def test_can_loopback(p):
   p.set_safety_mode(CarParams.SafetyModel.allOutput)

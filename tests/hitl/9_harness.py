@@ -4,12 +4,10 @@ import itertools
 
 from opendbc.car.structs import CarParams
 from panda import Panda
-from panda.tests.hitl.conftest import PandaGroup
 
 # TODO: test relay
 
 @pytest.mark.panda_expect_can_error
-@pytest.mark.test_panda_types(PandaGroup.GEN2)
 def test_harness_status(p, panda_jungle):
   # map from jungle orientations to panda orientations
   orientation_map = {
