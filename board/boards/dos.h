@@ -79,6 +79,10 @@ static void dos_set_siren(bool enabled){
   set_gpio_output(GPIOC, 12, enabled);
 }
 
+static uint32_t dos_read_voltage_mV(void){
+  return adc_get_mV(12) * 11U;
+}
+
 static bool dos_read_som_gpio (void){
   return (get_gpio_input(GPIOC, 2) != 0);
 }
@@ -143,7 +147,7 @@ board board_dos = {
   .led_pin = {9, 7, 6},
   .set_can_mode = dos_set_can_mode,
   .check_ignition = dos_check_ignition,
-  .read_voltage_mV = white_read_voltage_mV,
+  .read_voltage_mV = dos_read_voltage_mV,
   .read_current_mA = unused_read_current,
   .set_fan_enabled = dos_set_fan_enabled,
   .set_ir_power = dos_set_ir_power,
