@@ -80,4 +80,4 @@ jobs:
       - name: tests/misra/install.sh
         run: ${{ env.RUN }} "cd tests/misra && ./install.sh"
       - name: MISRA mutation tests
-        run: ${{ env.RUN }} "cd tests/misra && pytest -n2 test_mutation.py"
+        run: ${{ env.RUN }} "cd tests/misra && pytest test_mutation.py"
