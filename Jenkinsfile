@@ -4,7 +4,6 @@ def docker_run(String step_label, int timeout_mins, String cmd) {
           --env PYTHONWARNINGS=error \
           --volume /dev/bus/usb:/dev/bus/usb \
           --volume /var/run/dbus:/var/run/dbus \
-          --workdir /tmp/pythonpath/panda \
           --net host \
           ${env.DOCKER_IMAGE_TAG} \
           bash -c 'scons -j8 && ${cmd}'", \
