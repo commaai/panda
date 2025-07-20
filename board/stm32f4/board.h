@@ -12,9 +12,6 @@
 #include "drivers/clock_source.h"
 #include "boards/dos.h"
 
-// Unused functions on F4
-void sound_tick(void) {}
-
 void detect_board_type(void) {
   set_gpio_output(GPIOC, 14, 1);
   set_gpio_output(GPIOC, 5, 1);

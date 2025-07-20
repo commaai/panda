@@ -1,4 +1,4 @@
 Import('build_project', 'base_project_f4', 'base_project_h7')
 
 build_project("panda", base_project_f4, [])
-build_project("panda_h7", base_project_h7, ["-DENABLE_SPI", ])
+build_project("panda_h7", base_project_h7, [])
