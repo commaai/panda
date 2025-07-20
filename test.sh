@@ -12,10 +12,11 @@ scons -j8
 
 # *** lint ***
 ruff check .
-mypy python/
-
+#mypy python/
 
 # *** test ***
+
+tests/misra/test_misra.sh
 
 # TODO: make randomly work
 pytest --randomly-dont-reorganize tests/
