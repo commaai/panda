@@ -62,9 +62,8 @@ def to_c_uint32(x):
 
 def build_project(project_name, project, main, extra_flags):
   project_dir = f'#board/obj/{project_name}/'
-  linkerscript_fn = File(project["LINKER_SCRIPT"]).srcnode().relpath
 
-  flags = project["PROJECT_FLAGS"] + extra_flags + common_flags + [
+  flags = project["FLAGS"] + extra_flags + common_flags + [
     "-Wall",
     "-Wextra",
     "-Wstrict-prototypes",
@@ -75,15 +74,10 @@ def build_project(project_name, project, main, extra_flags):
     "-fno-builtin",
     "-std=gnu11",
     "-fmax-errors=1",
-    f"-T{linkerscript_fn}",
+    f"-T{File(project['LINKER_SCRIPT'])}",
     "-fsingle-precision-constant",
     "-Os",
     "-g",
-  ]
-
-  includes = [
-    '#',
-    opendbc.INCLUDE_PATH,
   ]
 
   env = Environment(
@@ -96,7 +90,7 @@ def build_project(project_name, project, main, extra_flags):
     CFLAGS=flags,
     ASFLAGS=flags,
     LINKFLAGS=flags,
-    CPPPATH=includes,
+    CPPPATH=["#", opendbc.INCLUDE_PATH],
     ASCOM="$AS $ASFLAGS -o $TARGET -c $SOURCES",
     BUILDERS={
       'Objcopy': Builder(generator=objcopy, suffix='.bin', src_suffix='.elf')
@@ -106,7 +100,7 @@ def build_project(project_name, project, main, extra_flags):
 
   startup = env.Object(project["STARTUP_FILE"])
 
-  # Bootstub
+  # Build bootstub
   bs_elf = env.Program(f"{project_dir}/bootstub.elf", [
     startup,
     "#crypto/rsa.c",
@@ -115,20 +109,20 @@ def build_project(project_name, project, main, extra_flags):
   ])
   env.Objcopy(f"#board/obj/bootstub.{project_name}.bin", bs_elf)
 
-  # Build + sign main
-  main_obj = env.Object(f"main-{project_name}", main)
-  main_elf = env.Program(f"obj/{project_name}.elf", [
-    startup, main_obj
+  # Build + sign main (aka app)
+  main_elf = env.Program(f"{project_dir}/main.elf", [
+    startup,
+    main
   ], LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
   env.Command(f"#board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 crypto/sign.py $SOURCE $TARGET {cert_fn}")
 
 
 base_project_f4 = {
-  "STARTUP_FILE": File("./board/stm32f4/startup_stm32f413xx.s"),
-  "LINKER_SCRIPT": File("./board/stm32f4/stm32f4_flash.ld"),
+  "STARTUP_FILE": "#board/stm32f4/startup_stm32f413xx.s",
+  "LINKER_SCRIPT": "#board/stm32f4/stm32f4_flash.ld",
   "APP_START_ADDRESS": "0x8004000",
-  "PROJECT_FLAGS": [
+  "FLAGS": [
     "-mcpu=cortex-m4",
     "-mhard-float",
     "-DSTM32F4",
@@ -139,10 +133,10 @@ base_project_f4 = {
 }
 
 base_project_h7 = {
-  "STARTUP_FILE": File("./board/stm32h7/startup_stm32h7x5xx.s"),
-  "LINKER_SCRIPT": File("./board/stm32h7/stm32h7x5_flash.ld"),
+  "STARTUP_FILE": "#board/stm32h7/startup_stm32h7x5xx.s",
+  "LINKER_SCRIPT": "#board/stm32h7/stm32h7x5_flash.ld",
   "APP_START_ADDRESS": "0x8020000",
-  "PROJECT_FLAGS": [
+  "FLAGS": [
     "-mcpu=cortex-m7",
     "-mhard-float",
     "-DSTM32H7",
