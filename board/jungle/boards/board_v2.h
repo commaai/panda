@@ -2,7 +2,6 @@
 // Jungle board v2 (STM32H7) //
 // ///////////////////////// //
 
-
 gpio_t power_pins[] = {
   {.bank = GPIOA, .pin = 0},
   {.bank = GPIOA, .pin = 1},
