@@ -96,7 +96,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       resp[1] = ((fan_state.rpm & 0xFF00U) >> 8U);
       resp_len = 2;
       break;
-    // **** 0xc0: reset communications
+    // **** 0xc0: reset communications state
     case 0xc0:
       comms_can_reset();
       break;
@@ -219,7 +219,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         current_board->set_can_mode(CAN_MODE_NORMAL);
       }
       break;
-
     // **** 0xdc: set safety mode
     case 0xdc:
       set_safety_mode(req->param1, (uint16_t)req->param2);
