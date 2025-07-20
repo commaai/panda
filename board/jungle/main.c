@@ -102,17 +102,15 @@ void tick_handler(void) {
     current_board->set_individual_ignition(ignition_bitmask);
 
     // SBU voltage reporting
-    if (current_board->has_sbu_sense) {
-      for (uint8_t i = 0U; i < 6U; i++) {
-        CANPacket_t pkt = { 0 };
-        pkt.data_len_code = 8U;
-        pkt.addr = 0x100U + i;
-        *(uint16_t *) &pkt.data[0] = current_board->get_sbu_mV(i + 1U, SBU1);
-        *(uint16_t *) &pkt.data[2] = current_board->get_sbu_mV(i + 1U, SBU2);
-        pkt.data[4] = (ignition_bitmask >> i) & 1U;
-        can_set_checksum(&pkt);
-        can_send(&pkt, 0U, false);
-      }
+    for (uint8_t i = 0U; i < 6U; i++) {
+      CANPacket_t pkt = { 0 };
+      pkt.data_len_code = 8U;
+      pkt.addr = 0x100U + i;
+      *(uint16_t *) &pkt.data[0] = current_board->get_sbu_mV(i + 1U, SBU1);
+      *(uint16_t *) &pkt.data[2] = current_board->get_sbu_mV(i + 1U, SBU2);
+      pkt.data[4] = (ignition_bitmask >> i) & 1U;
+      can_set_checksum(&pkt);
+      can_send(&pkt, 0U, false);
     }
 #else
     // toggle ignition on button press
