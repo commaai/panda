@@ -2,7 +2,7 @@
 #ifndef BOOTSTUB
 #include "board/main_declarations.h"
 #endif
-#include "board/drivers/led.h"
+#include "board/drivers/drivers.h"
 
 void led_set(uint8_t color, bool enabled) {
   if (color < 3U) {

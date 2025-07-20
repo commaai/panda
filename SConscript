@@ -65,7 +65,7 @@ def to_c_uint32(x):
 def build_project(project_name, project, extra_flags):
   linkerscript_fn = File(project["LINKER_SCRIPT"]).srcnode().relpath
 
-  flags = project["PROJECT_FLAGS"] + extra_flags + common_flags + [
+  base_flags = project["PROJECT_FLAGS"] + common_flags + [
     "-Wall",
     "-Wextra",
     "-Wstrict-prototypes",
@@ -78,6 +78,8 @@ def build_project(project_name, project, extra_flags):
     "-fmax-errors=1",
     f"-T{linkerscript_fn}",
   ]
+
+  flags = base_flags + extra_flags
 
   includes = [
     '#',
@@ -101,15 +103,20 @@ def build_project(project_name, project, extra_flags):
     tools=["default", "compilation_db"],
   )
 
+  crypto_env = env.Clone()
+  crypto_env.Replace(CFLAGS=base_flags, ASFLAGS=base_flags, LINKFLAGS=base_flags)
+
   startup = env.Object(f"obj/startup_{project_name}", project["STARTUP_FILE"])
 
   # Bootstub
   crypto_obj = [
-    env.Object(f"rsa-{project_name}", f"{panda_root}/crypto/rsa.c"),
-    env.Object(f"sha-{project_name}", f"{panda_root}/crypto/sha.c")
+    crypto_env.Object(f"rsa-{project_name}", f"{panda_root}/crypto/rsa.c"),
+    crypto_env.Object(f"sha-{project_name}", f"{panda_root}/crypto/sha.c")
   ]
-  bootstub_obj = env.Object(f"bootstub-{project_name}", File(project.get("BOOTSTUB", f"{panda_root}/board/bootstub.c")))
-  bootstub_elf = env.Program(f"obj/bootstub.{project_name}.elf",
+  bootstub_env = env.Clone()
+  bootstub_env.Append(CFLAGS=['-DBOOTSTUB'])
+  bootstub_obj = bootstub_env.Object(f"bootstub-{project_name}", File(project.get("BOOTSTUB", f"{panda_root}/board/bootstub.c")))
+  bootstub_elf = bootstub_env.Program(f"obj/bootstub.{project_name}.elf",
                                      [startup] + crypto_obj + [bootstub_obj])
   env.Objcopy(f"obj/bootstub.{project_name}.bin", bootstub_elf)
 

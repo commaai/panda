@@ -8,4 +8,4 @@ flags = [
 if os.getenv("FINAL_PROVISIONING"):
   flags += ["-DFINAL_PROVISIONING"]
 
-build_project("panda_jungle_h7", base_project_h7, flags)
+build_project("panda_jungle_h7", base_project_h7, flags + ["-include", "board/drivers/led.c"])
