@@ -7,8 +7,6 @@ BUILDER = "DEV"
 
 common_flags = []
 
-panda_root = Dir('.')
-
 if os.getenv("RELEASE"):
   BUILD_TYPE = "RELEASE"
   cert_fn = os.getenv("CERT")
@@ -63,6 +61,7 @@ def to_c_uint32(x):
 
 
 def build_project(project_name, project, extra_flags):
+  project_dir = f'#board/obj/{project_name}/'
   linkerscript_fn = File(project["LINKER_SCRIPT"]).srcnode().relpath
 
   flags = project["PROJECT_FLAGS"] + extra_flags + common_flags + [
@@ -77,6 +76,9 @@ def build_project(project_name, project, extra_flags):
     "-std=gnu11",
     "-fmax-errors=1",
     f"-T{linkerscript_fn}",
+    "-fsingle-precision-constant",
+    "-Os",
+    "-g",
   ]
 
   includes = [
@@ -90,6 +92,7 @@ def build_project(project_name, project, extra_flags):
     AS=PREFIX + 'gcc',
     OBJCOPY=PREFIX + 'objcopy',
     OBJDUMP=PREFIX + 'objdump',
+    OBJPREFIX=project_dir,
     CFLAGS=flags,
     ASFLAGS=flags,
     LINKFLAGS=flags,
@@ -101,26 +104,24 @@ def build_project(project_name, project, extra_flags):
     tools=["default", "compilation_db"],
   )
 
-  startup = env.Object(f"obj/startup_{project_name}", project["STARTUP_FILE"])
+  startup = env.Object(project["STARTUP_FILE"])
 
   # Bootstub
-  bs_elf = env.Program(f"obj/bootstub.{project_name}.elf", [
+  bs_elf = env.Program(f"{project_dir}/bootstub.elf", [
     startup,
-    env.Object(f"rsa-{project_name}", "#crypto/rsa.c"),
-    env.Object(f"sha-{project_name}", "#crypto/sha.c"),
-    env.Object(f"bootstub-{project_name}", "#board/bootstub.c"),
+    "#crypto/rsa.c",
+    "#crypto/sha.c",
+    "#board/bootstub.c",
   ])
-  env.Objcopy(f"obj/bootstub.{project_name}.bin", bs_elf)
+  env.Objcopy(f"#board/obj/bootstub.{project_name}.bin", bs_elf)
 
-  # Build main
+  # Build + sign main
   main_obj = env.Object(f"main-{project_name}", project["MAIN"])
-  main_elf = env.Program(f"obj/{project_name}.elf", [startup, main_obj],
-    LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
-  main_bin = env.Objcopy(f"obj/{project_name}.bin", main_elf)
-
-  # Sign main
-  sign_py = File(f"{panda_root}/crypto/sign.py").srcnode().relpath
-  env.Command(f"obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
+  main_elf = env.Program(f"obj/{project_name}.elf", [
+    startup, main_obj
+  ], LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
+  main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
+  env.Command(f"#board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 crypto/sign.py $SOURCE $TARGET {cert_fn}")
 
 
 base_project_f4 = {
@@ -135,9 +136,6 @@ base_project_f4 = {
     "-DSTM32F413xx",
     "-Iboard/stm32f4/inc",
     "-mfpu=fpv4-sp-d16",
-    "-fsingle-precision-constant",
-    "-Os",
-    "-g",
   ],
 }
 
@@ -153,9 +151,6 @@ base_project_h7 = {
     "-DSTM32H725xx",
     "-Iboard/stm32h7/inc",
     "-mfpu=fpv5-d16",
-    "-fsingle-precision-constant",
-    "-Os",
-    "-g",
   ],
 }
 
