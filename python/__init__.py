@@ -105,9 +105,6 @@ ensure_health_packet_version = partial(ensure_version, "health", "HEALTH_PACKET_
 class Panda:
 
   SERIAL_DEBUG = 0
-  SERIAL_ESP = 1
-  SERIAL_LIN1 = 2
-  SERIAL_LIN2 = 3
   SERIAL_SOM_DEBUG = 4
 
   USB_VIDS = (0xbbaa, 0x3801)  # 0x3801 is comma's registered VID
@@ -115,15 +112,10 @@ class Panda:
   REQUEST_IN = usb1.ENDPOINT_IN | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
   REQUEST_OUT = usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
 
+  # from https://github.com/commaai/openpilot/blob/103b4df18cbc38f4129555ab8b15824d1a672bdf/cereal/log.capnp#L648
   HW_TYPE_UNKNOWN = b'\x00'
-  HW_TYPE_WHITE_PANDA = b'\x01'
-  HW_TYPE_GREY_PANDA = b'\x02'
-  HW_TYPE_BLACK_PANDA = b'\x03'
-  HW_TYPE_PEDAL = b'\x04'
-  HW_TYPE_UNO = b'\x05'
   HW_TYPE_DOS = b'\x06'
   HW_TYPE_RED_PANDA = b'\x07'
-  HW_TYPE_RED_PANDA_V2 = b'\x08'
   HW_TYPE_TRES = b'\x09'
   HW_TYPE_CUATRO = b'\x0a'
 
@@ -133,11 +125,10 @@ class Panda:
   HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBHBBBHfBBHBHHB")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
 
-  F4_DEVICES = [HW_TYPE_WHITE_PANDA, HW_TYPE_GREY_PANDA, HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS]
-  H7_DEVICES = [HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES, HW_TYPE_CUATRO]
+  F4_DEVICES = [HW_TYPE_DOS, ]
+  H7_DEVICES = [HW_TYPE_RED_PANDA, HW_TYPE_TRES, HW_TYPE_CUATRO]
 
-  INTERNAL_DEVICES = (HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_TRES, HW_TYPE_CUATRO)
-  HAS_OBD = (HW_TYPE_BLACK_PANDA, HW_TYPE_UNO, HW_TYPE_DOS, HW_TYPE_RED_PANDA, HW_TYPE_RED_PANDA_V2, HW_TYPE_TRES, HW_TYPE_CUATRO)
+  INTERNAL_DEVICES = (HW_TYPE_DOS, HW_TYPE_TRES, HW_TYPE_CUATRO)
 
   MAX_FAN_RPMs = {
     HW_TYPE_DOS: 6500,
@@ -667,9 +658,6 @@ class Panda:
         return McuType.F4
 
     raise ValueError(f"unknown HW type: {hw_type}")
-
-  def has_obd(self):
-    return self.get_type() in Panda.HAS_OBD
 
   def is_internal(self):
     return self.get_type() in Panda.INTERNAL_DEVICES

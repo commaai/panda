@@ -41,20 +41,6 @@ void debug_ring_callback(uart_ring *ring) {
   char rcv;
   while (get_char(ring, &rcv)) {
     (void)put_char(ring, rcv);  // misra-c2012-17.7: cast to void is ok: debug function
-
-    // only allow bootloader entry on debug builds
-    #ifdef ALLOW_DEBUG
-      // jump to DFU flash
-      if (rcv == 'z') {
-        enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-        NVIC_SystemReset();
-      }
-    #endif
-
-    // normal reset
-    if (rcv == 'x') {
-      NVIC_SystemReset();
-    }
   }
 }
 

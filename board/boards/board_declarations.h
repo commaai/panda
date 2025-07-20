@@ -52,11 +52,6 @@ struct board {
 // ******************* Definitions ********************
 // These should match the enums in cereal/log.capnp and __init__.py
 #define HW_TYPE_UNKNOWN 0U
-//#define HW_TYPE_WHITE_PANDA 1U
-//#define HW_TYPE_GREY_PANDA 2U
-//#define HW_TYPE_BLACK_PANDA 3U
-//#define HW_TYPE_PEDAL 4U
-//#define HW_TYPE_UNO 5U
 #define HW_TYPE_DOS 6U
 #define HW_TYPE_RED_PANDA 7U
 #define HW_TYPE_RED_PANDA_V2 8U
