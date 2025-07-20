@@ -32,11 +32,6 @@
 
 // ********************* Serial debugging *********************
 
-static bool check_started(void) {
-  bool started = harness_check_ignition() || ignition_can;
-  return started;
-}
-
 void debug_ring_callback(uart_ring *ring) {
   char rcv;
   while (get_char(ring, &rcv)) {
@@ -185,7 +180,8 @@ static void tick_handler(void) {
       const bool recent_heartbeat = heartbeat_counter == 0U;
 
       // tick drivers at 1Hz
-      bootkick_tick(check_started(), recent_heartbeat);
+      bool started = harness_check_ignition() || ignition_can;
+      bootkick_tick(started, recent_heartbeat);
 
       // increase heartbeat counter and cap it at the uint32 limit
       if (heartbeat_counter < UINT32_MAX) {
@@ -221,7 +217,7 @@ static void tick_handler(void) {
 
       if (!heartbeat_disabled) {
         // if the heartbeat has been gone for a while, go to SILENT safety mode and enter power save
-        if (heartbeat_counter >= (check_started() ? HEARTBEAT_IGNITION_CNT_ON : HEARTBEAT_IGNITION_CNT_OFF)) {
+        if (heartbeat_counter >= (started ? HEARTBEAT_IGNITION_CNT_ON : HEARTBEAT_IGNITION_CNT_OFF)) {
           print("device hasn't sent a heartbeat for 0x");
           puth(heartbeat_counter);
           print(" seconds. Safety is set to SILENT mode.\n");
