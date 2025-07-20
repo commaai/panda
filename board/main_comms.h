@@ -262,47 +262,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         ++resp_len;
       }
       break;
-    // **** 0xe1: uart set baud rate
-    case 0xe1:
-      ur = get_ring_by_number(req->param1);
-      if (!ur) {
-        break;
-      }
-      uart_set_baud(ur->uart, req->param2);
-      break;
-    // **** 0xe2: uart set parity
-    case 0xe2:
-      ur = get_ring_by_number(req->param1);
-      if (!ur) {
-        break;
-      }
-      switch (req->param2) {
-        case 0:
-          // disable parity, 8-bit
-          ur->uart->CR1 &= ~(USART_CR1_PCE | USART_CR1_M);
-          break;
-        case 1:
-          // even parity, 9-bit
-          ur->uart->CR1 &= ~USART_CR1_PS;
-          ur->uart->CR1 |= USART_CR1_PCE | USART_CR1_M;
-          break;
-        case 2:
-          // odd parity, 9-bit
-          ur->uart->CR1 |= USART_CR1_PS;
-          ur->uart->CR1 |= USART_CR1_PCE | USART_CR1_M;
-          break;
-        default:
-          break;
-      }
-      break;
-    // **** 0xe4: uart set baud rate extended
-    case 0xe4:
-      ur = get_ring_by_number(req->param1);
-      if (!ur) {
-        break;
-      }
-      uart_set_baud(ur->uart, (int)req->param2*300);
-      break;
     // **** 0xe5: set CAN loopback (for testing)
     case 0xe5:
       can_loopback = req->param1 > 0U;
