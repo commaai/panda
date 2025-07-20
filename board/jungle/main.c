@@ -11,20 +11,16 @@
 #include "board/provision.h"
 
 #include "board/health.h"
-#include "jungle_health.h"
+#include "board/jungle/jungle_health.h"
 
 #include "board/drivers/can_common.h"
 
-#ifdef STM32H7
-  #include "board/drivers/fdcan.h"
-#else
-  #include "board/drivers/bxcan.h"
-#endif
+#include "board/drivers/fdcan.h"
 
 #include "board/obj/gitversion.h"
 
 #include "board/can_comms.h"
-#include "main_comms.h"
+#include "board/jungle/main_comms.h"
 
 
 // ********************* Serial debugging *********************
