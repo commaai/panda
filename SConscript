@@ -101,13 +101,15 @@ def build_project(project_name, project, main, extra_flags):
   startup = env.Object(project["STARTUP_FILE"])
 
   # Build bootstub
-  bs_elf = env.Program(f"{project_dir}/bootstub.elf", [
+  bs_env = env.Clone()
+  bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
+  bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", [
     startup,
     "#crypto/rsa.c",
     "#crypto/sha.c",
     "#board/bootstub.c",
   ])
-  env.Objcopy(f"#board/obj/bootstub.{project_name}.bin", bs_elf)
+  bs_env.Objcopy(f"#board/obj/bootstub.{project_name}.bin", bs_elf)
 
   # Build + sign main (aka app)
   main_elf = env.Program(f"{project_dir}/main.elf", [
