@@ -1,16 +1,16 @@
 // ///////////////////////////////////////////////////////////// //
 // Hardware abstraction layer for all different supported boards //
 // ///////////////////////////////////////////////////////////// //
-#include "boards/board_declarations.h"
-#include "boards/unused_funcs.h"
+#include "board/boards/board_declarations.h"
+#include "board/boards/unused_funcs.h"
 
 // ///// Board definition and detection ///// //
-#include "stm32f4/lladc.h"
-#include "drivers/harness.h"
-#include "drivers/fan.h"
-#include "stm32f4/llfan.h"
-#include "drivers/clock_source.h"
-#include "boards/dos.h"
+#include "board/stm32f4/lladc.h"
+#include "board/drivers/harness.h"
+#include "board/drivers/fan.h"
+#include "board/stm32f4/llfan.h"
+#include "board/drivers/clock_source.h"
+#include "board/boards/dos.h"
 
 void detect_board_type(void) {
   set_gpio_output(GPIOC, 14, 1);

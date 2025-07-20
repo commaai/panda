@@ -1,6 +1,6 @@
 #pragma once
 
-#include "crc.h"
+#include "board/crc.h"
 
 #define SPI_TIMEOUT_US 10000U
 

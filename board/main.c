@@ -1,33 +1,33 @@
 // ********************* Includes *********************
-#include "config.h"
+#include "board/config.h"
 
-#include "drivers/led.h"
-#include "drivers/pwm.h"
-#include "drivers/usb.h"
-#include "drivers/simple_watchdog.h"
-#include "drivers/bootkick.h"
+#include "board/drivers/led.h"
+#include "board/drivers/pwm.h"
+#include "board/drivers/usb.h"
+#include "board/drivers/simple_watchdog.h"
+#include "board/drivers/bootkick.h"
 
-#include "early_init.h"
-#include "provision.h"
+#include "board/early_init.h"
+#include "board/provision.h"
 
 #include "opendbc/safety/safety.h"
 
-#include "health.h"
+#include "board/health.h"
 
-#include "drivers/can_common.h"
+#include "board/drivers/can_common.h"
 
 #ifdef STM32H7
-  #include "drivers/fdcan.h"
+  #include "board/drivers/fdcan.h"
 #else
-  #include "drivers/bxcan.h"
+  #include "board/drivers/bxcan.h"
 #endif
 
-#include "power_saving.h"
+#include "board/power_saving.h"
 
-#include "obj/gitversion.h"
+#include "board/obj/gitversion.h"
 
-#include "can_comms.h"
-#include "main_comms.h"
+#include "board/can_comms.h"
+#include "board/main_comms.h"
 
 
 // ********************* Serial debugging *********************
