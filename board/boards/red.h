@@ -99,7 +99,6 @@ static void red_init(void) {
 }
 
 static harness_configuration red_harness_config = {
-  .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
   .GPIO_relay_SBU1 = GPIOC,

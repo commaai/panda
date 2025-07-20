@@ -58,31 +58,26 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
   switch (mode_copy) {
     case SAFETY_SILENT:
       set_intercept_relay(false, false);
-      if (current_board->harness_config->has_harness) {
-        current_board->set_can_mode(CAN_MODE_NORMAL);
-      }
+      current_board->set_can_mode(CAN_MODE_NORMAL);
       can_silent = ALL_CAN_SILENT;
       break;
     case SAFETY_NOOUTPUT:
       set_intercept_relay(false, false);
-      if (current_board->harness_config->has_harness) {
-        current_board->set_can_mode(CAN_MODE_NORMAL);
-      }
+      current_board->set_can_mode(CAN_MODE_NORMAL);
       can_silent = ALL_CAN_LIVE;
       break;
     case SAFETY_ELM327:
       set_intercept_relay(false, false);
       heartbeat_counter = 0U;
       heartbeat_lost = false;
-      if (current_board->harness_config->has_harness) {
-        // Clear any pending messages in the can core (i.e. sending while comma power is unplugged)
-        // TODO: rewrite using hardware queues rather than fifo to cancel specific messages
-        can_clear_send(CANIF_FROM_CAN_NUM(1), 1);
-        if (param == 0U) {
-          current_board->set_can_mode(CAN_MODE_OBD_CAN2);
-        } else {
-          current_board->set_can_mode(CAN_MODE_NORMAL);
-        }
+
+      // Clear any pending messages in the can core (i.e. sending while comma power is unplugged)
+      // TODO: rewrite using hardware queues rather than fifo to cancel specific messages
+      can_clear_send(CANIF_FROM_CAN_NUM(1), 1);
+      if (param == 0U) {
+        current_board->set_can_mode(CAN_MODE_OBD_CAN2);
+      } else {
+        current_board->set_can_mode(CAN_MODE_NORMAL);
       }
       can_silent = ALL_CAN_LIVE;
       break;
@@ -90,9 +85,7 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
       set_intercept_relay(true, false);
       heartbeat_counter = 0U;
       heartbeat_lost = false;
-      if (current_board->harness_config->has_harness) {
-        current_board->set_can_mode(CAN_MODE_NORMAL);
-      }
+      current_board->set_can_mode(CAN_MODE_NORMAL);
       can_silent = ALL_CAN_LIVE;
       break;
   }
@@ -304,9 +297,7 @@ int main(void) {
   // init board
   current_board->init();
   current_board->set_can_mode(CAN_MODE_NORMAL);
-  if (current_board->harness_config->has_harness) {
-    harness_init();
-  }
+  harness_init();
 
   // panda has an FPU, let's use it!
   enable_fpu();

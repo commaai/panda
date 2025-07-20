@@ -219,11 +219,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         print("Clearing CAN CAN ring buffer failed: wrong bus number\n");
       }
       break;
-    // **** 0xf2: Clear debug ring buffer.
-    case 0xf2:
-      print("Clearing debug queue.\n");
-      clear_uart_buff(get_ring_by_number(0));
-      break;
     // **** 0xf4: Set CAN transceiver enable pin
     case 0xf4:
       current_board->enable_can_transceiver(req->param1, req->param2 > 0U);

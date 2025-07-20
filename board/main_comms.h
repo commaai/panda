@@ -211,14 +211,12 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xdb: set OBD CAN multiplexing mode
     case 0xdb:
-      if (current_board->harness_config->has_harness) {
-        if (req->param1 == 1U) {
-          // Enable OBD CAN
-          current_board->set_can_mode(CAN_MODE_OBD_CAN2);
-        } else {
-          // Disable OBD CAN
-          current_board->set_can_mode(CAN_MODE_NORMAL);
-        }
+      if (req->param1 == 1U) {
+        // Enable OBD CAN
+        current_board->set_can_mode(CAN_MODE_OBD_CAN2);
+      } else {
+        // Disable OBD CAN
+        current_board->set_can_mode(CAN_MODE_NORMAL);
       }
       break;
 
@@ -291,16 +289,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         print("Clearing CAN CAN ring buffer failed: wrong bus number\n");
       }
       break;
-    // **** 0xf2: Clear UART ring buffer.
-    case 0xf2:
-      {
-        uart_ring * rb = get_ring_by_number(req->param1);
-        if (rb != NULL) {
-          print("Clearing UART queue.\n");
-          clear_uart_buff(rb);
-        }
-        break;
-      }
     // **** 0xf3: Heartbeat. Resets heartbeat counter.
     case 0xf3:
       {

@@ -803,16 +803,6 @@ class Panda:
       ret += self._handle.bulkWrite(2, struct.pack("B", port_number) + ln[i:i + 0x20])
     return ret
 
-  def serial_clear(self, port_number):
-    """Clears all messages (tx and rx) from the specified internal uart
-    ringbuffer as though it were drained.
-
-    Args:
-      port_number (int): port number of the uart to clear.
-
-    """
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf2, port_number, 0, b'')
-
   def send_heartbeat(self, engaged=True):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf3, engaged, 0, b'')
 

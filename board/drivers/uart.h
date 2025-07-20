@@ -1,7 +1,5 @@
 #include "uart_declarations.h"
 
-// IRQs: USART2, USART3, UART5
-
 // ***************************** Definitions *****************************
 
 #define UART_BUFFER(x, size_rx, size_tx, uart_ptr, callback_ptr, overwrite_mode) \
@@ -110,15 +108,6 @@ bool put_char(uart_ring *q, char elem) {
   uart_tx_ring(q);
 
   return ret;
-}
-
-void clear_uart_buff(uart_ring *q) {
-  ENTER_CRITICAL();
-  q->w_ptr_tx = 0;
-  q->r_ptr_tx = 0;
-  q->w_ptr_rx = 0;
-  q->r_ptr_rx = 0;
-  EXIT_CRITICAL();
 }
 
 // ************************ High-level debug functions **********************

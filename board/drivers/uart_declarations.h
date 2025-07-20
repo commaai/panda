@@ -1,7 +1,5 @@
 #pragma once
 
-// IRQs: USART2, USART3, UART5
-
 // ***************************** Definitions *****************************
 #define FIFO_SIZE_INT 0x400U
 
