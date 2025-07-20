@@ -33,7 +33,7 @@
 // ********************* Serial debugging *********************
 
 static bool check_started(void) {
-  bool started = current_board->check_ignition() || ignition_can;
+  bool started = harness_check_ignition() || ignition_can;
   return started;
 }
 

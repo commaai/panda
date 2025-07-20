@@ -161,7 +161,6 @@ board board_tres = {
   .led_GPIO = {GPIOE, GPIOE, GPIOE},
   .led_pin = {4, 3, 2},
   .set_can_mode = tres_set_can_mode,
-  .check_ignition = red_check_ignition,
   .read_voltage_mV = red_read_voltage_mV,
   .read_current_mA = unused_read_current,
   .set_fan_enabled = tres_set_fan_enabled,
