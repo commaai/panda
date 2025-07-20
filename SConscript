@@ -80,10 +80,9 @@ def build_project(project_name, project, extra_flags):
   ]
 
   includes = [
-    '.',
-    '..',
-    panda_root,
-    f"{panda_root}/board/",
+    '#',
+    #panda_root,
+    #f"{panda_root}/board/",
     opendbc.INCLUDE_PATH,
   ]
 
