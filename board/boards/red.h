@@ -116,7 +116,6 @@ board board_red = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &red_harness_config,
   .has_spi = false,
-  .has_canfd = true,
   .fan_max_rpm = 0U,
   .fan_max_pwm = 100U,
   .avdd_mV = 3300U,

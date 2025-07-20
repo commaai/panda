@@ -118,7 +118,6 @@ static harness_configuration cuatro_harness_config = {
 board board_cuatro = {
   .harness_config = &cuatro_harness_config,
   .has_spi = true,
-  .has_canfd = true,
   .fan_max_rpm = 12500U,
   .fan_max_pwm = 99U, // it can go up to 14k RPM, but 99% -> 100% is very non-linear
   .avdd_mV = 1800U,

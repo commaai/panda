@@ -149,7 +149,6 @@ static harness_configuration tres_harness_config = {
 board board_tres = {
   .harness_config = &tres_harness_config,
   .has_spi = true,
-  .has_canfd = true,
   .fan_max_rpm = 6600U,
   .fan_max_pwm = 100U,
   .avdd_mV = 1800U,

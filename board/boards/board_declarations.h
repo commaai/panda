@@ -29,7 +29,6 @@ struct board {
   const uint8_t led_pin[3];
   const uint8_t led_pwm_channels[3]; // leave at 0 to disable PWM
   const bool has_spi;
-  const bool has_canfd;
   const uint16_t fan_max_rpm;
   const uint16_t avdd_mV;
   const bool fan_stall_recovery;

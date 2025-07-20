@@ -124,12 +124,7 @@ static harness_configuration dos_harness_config = {
 
 board board_dos = {
   .harness_config = &dos_harness_config,
-#ifdef ENABLE_SPI
-  .has_spi = true,
-#else
   .has_spi = false,
-#endif
-  .has_canfd = false,
   .fan_max_rpm = 6500U,
   .fan_max_pwm = 100U,
   .avdd_mV = 3300U,
