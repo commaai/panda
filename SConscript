@@ -104,14 +104,13 @@ def build_project(project_name, project, extra_flags):
   startup = env.Object(f"obj/startup_{project_name}", project["STARTUP_FILE"])
 
   # Bootstub
-  crypto_obj = [
-    env.Object(f"rsa-{project_name}", f"{panda_root}/crypto/rsa.c"),
-    env.Object(f"sha-{project_name}", f"{panda_root}/crypto/sha.c")
-  ]
-  bootstub_obj = env.Object(f"bootstub-{project_name}", File(project.get("BOOTSTUB", f"{panda_root}/board/bootstub.c")))
-  bootstub_elf = env.Program(f"obj/bootstub.{project_name}.elf",
-                                     [startup] + crypto_obj + [bootstub_obj])
-  env.Objcopy(f"obj/bootstub.{project_name}.bin", bootstub_elf)
+  bs_elf = env.Program(f"obj/bootstub.{project_name}.elf", [
+    startup,
+    env.Object(f"rsa-{project_name}", "#crypto/rsa.c"),
+    env.Object(f"sha-{project_name}", "#crypto/sha.c"),
+    env.Object(f"bootstub-{project_name}", "#board/bootstub.c"),
+  ])
+  env.Objcopy(f"obj/bootstub.{project_name}.bin", bs_elf)
 
   # Build main
   main_obj = env.Object(f"main-{project_name}", project["MAIN"])
