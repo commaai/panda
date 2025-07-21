@@ -2,7 +2,7 @@
 
 #include "llusb_declarations.h"
 
-extern USB_OTG_GlobalTypeDef *USBx;
+// USBx declaration is in llusb_declarations.h
 
 #ifndef BOOTSTUB
 static void OTG_HS_IRQ_Handler(void) {
