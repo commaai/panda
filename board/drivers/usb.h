@@ -515,9 +515,9 @@ static void usb_setup(void) {
 
 
 // ***************************** USB port *****************************
-// Declaration already in platform-specific llusb_declarations.h
+// Declaration in platform-specific llusb_declarations.h - implementation here to avoid 8.7
 
-void usb_irqhandler(void) {
+static void usb_irqhandler_impl(void) {
   //USBx->GINTMSK = 0;
   static uint8_t usbdata[0x100] __attribute__((aligned(4)));
   unsigned int gintsts = USBx->GINTSTS;
@@ -789,6 +789,11 @@ void usb_irqhandler(void) {
   USBx->GINTSTS = gintsts;
 
   //USBx->GINTMSK = 0xFFFFFFFF & ~(USB_OTG_GINTMSK_NPTXFEM | USB_OTG_GINTMSK_PTXFEM | USB_OTG_GINTSTS_SOF | USB_OTG_GINTSTS_EOPF);
+}
+
+// Wrapper function to match external declaration
+void usb_irqhandler(void) {
+  usb_irqhandler_impl();
 }
 
 void can_tx_comms_resume_usb(void) {

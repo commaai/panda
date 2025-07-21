@@ -3,7 +3,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef struct reg {
+// Register monitoring structure - used by registers.c
+typedef struct panda_register_monitor {
   volatile uint32_t *address;
   uint32_t value;
   uint32_t check_mask;

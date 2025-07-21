@@ -14,10 +14,6 @@ typedef unsigned int uint32_t;
 typedef long long int int64_t;
 typedef unsigned long long int uint64_t;
 
-// These typedefs are used in the project
-typedef int32_t intptr_t;
-typedef uint32_t uintptr_t;
-
 // Limits
 #define INT8_MIN (-128)
 #define INT8_MAX (127)
