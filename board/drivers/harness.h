@@ -2,7 +2,7 @@
 
 #include "harness_declarations.h"
 
-extern struct harness_t harness;
+// harness extern declaration is in harness_declarations.h
 
 // The ignition relay is only used for testing purposes
 static inline void set_intercept_relay(bool intercept, bool ignition_relay) {

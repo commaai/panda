@@ -2,7 +2,7 @@
 
 #include "fan_declarations.h"
 
-extern struct fan_state_t fan_state;
+// fan_state extern declaration is in fan_declarations.h
 
 static const uint8_t FAN_TICK_FREQ = 8U;
 static const uint8_t FAN_STALL_THRESHOLD_MIN = 3U;

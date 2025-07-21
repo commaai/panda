@@ -1,7 +1,6 @@
 #include "llusb_declarations.h"
 
-// External declarations
-extern USB_OTG_GlobalTypeDef *USBx;
+// USBx extern declaration is in llusb_declarations.h
 
 // Function declarations
 void usb_init(void);
