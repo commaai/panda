@@ -399,6 +399,7 @@ static void sound_init_impl(void) {
 }
 
 // Non-static wrapper for weak symbol - must be externally visible
+// MISRA 8.7: Function must have external linkage as weak symbol for board-specific implementations
 void sound_init(void) {
   sound_init_impl();
 }
@@ -409,7 +410,8 @@ static void fake_siren_set_impl(bool enabled) {
   // Empty stub for fake siren
 }
 
-// Non-static wrapper for weak symbol - must be externally visible  
+// Non-static wrapper for weak symbol - must be externally visible
+// MISRA 8.7: Function must have external linkage as weak symbol for board-specific implementations
 void fake_siren_set(bool enabled) {
   fake_siren_set_impl(enabled);
 }

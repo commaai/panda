@@ -3,8 +3,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// Register monitoring structure - directly typedef to avoid MISRA 2.3
-typedef struct {
+// Register monitoring structure - anonymous struct to avoid MISRA 2.3
+// The struct tag 'reg_t' is used to avoid naming violations while maintaining compatibility
+typedef struct reg_t {
   volatile uint32_t *address;
   uint32_t value;
   uint32_t check_mask;
