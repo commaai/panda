@@ -57,11 +57,11 @@ static inline void SET_ADDR(CANPacket_t *msg, uint32_t val) {
   msg->addr = (msg->addr & 0xE0000000U) | ((val) & 0x1FFFFFFFU);
 }
 static inline void SET_EXTENDED(CANPacket_t *msg, uint8_t val) {
-  msg->addr = (msg->addr & 0x7FFFFFFFU) | (((val) & 1U) << 31U);
+  msg->addr = (msg->addr & 0x7FFFFFFFU) | (((uint32_t)(val) & 1U) << 31U);
 }
 static inline void SET_RETURNED(CANPacket_t *msg, uint8_t val) {
-  msg->addr = (msg->addr & 0xBFFFFFFFU) | (((val) & 1U) << 30U);
+  msg->addr = (msg->addr & 0xBFFFFFFFU) | (((uint32_t)(val) & 1U) << 30U);
 }
 static inline void SET_REJECTED(CANPacket_t *msg, uint8_t val) {
-  msg->addr = (msg->addr & 0xDFFFFFFFU) | (((val) & 1U) << 29U);
+  msg->addr = (msg->addr & 0xDFFFFFFFU) | (((uint32_t)(val) & 1U) << 29U);
 }
