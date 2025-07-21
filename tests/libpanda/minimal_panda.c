@@ -24,20 +24,16 @@ typedef struct {
     bool overwrite;
 } uart_ring;
 
-// CAN packet structure matching the libpanda_py CFFI expectations exactly
+// CAN packet structure matching the new portable format
 typedef struct __attribute__((packed)) {
-    unsigned char fd : 1;
-    unsigned char bus : 3;
-    unsigned char data_len_code : 4;
-    unsigned char rejected : 1;
-    unsigned char returned : 1;
-    unsigned char extended : 1;
-    unsigned int addr : 29;
-    unsigned char checksum;
-    unsigned char data[64];
+    uint8_t flags;        // DDDD_BBB_F (D=dlc, B=bus, F=fd)  
+    uint32_t addr;        // Address with status bits in high bits
+    uint8_t checksum;
+    uint8_t data[64];
 } CANPacket_t;
 
-#define CAN_QUEUE_SIZE 64  // Reduced size to prevent memory issues
+#define CAN_TX_QUEUE_SIZE 416U  // Match production TX buffer size
+#define CAN_RX_QUEUE_SIZE 1024U // Reduced from 4096 to manage memory in tests
 
 typedef struct {
     uint32_t w_ptr, r_ptr;
@@ -46,17 +42,17 @@ typedef struct {
 } can_ring;
 
 // Static storage for CAN queues to avoid dynamic allocation
-static CANPacket_t rx_queue_storage[CAN_QUEUE_SIZE];
-static CANPacket_t tx1_queue_storage[CAN_QUEUE_SIZE];
-static CANPacket_t tx2_queue_storage[CAN_QUEUE_SIZE];
-static CANPacket_t tx3_queue_storage[CAN_QUEUE_SIZE];
+static CANPacket_t rx_queue_storage[CAN_RX_QUEUE_SIZE];
+static CANPacket_t tx1_queue_storage[CAN_TX_QUEUE_SIZE];
+static CANPacket_t tx2_queue_storage[CAN_TX_QUEUE_SIZE];
+static CANPacket_t tx3_queue_storage[CAN_TX_QUEUE_SIZE];
 
 // Minimal global variables for tests
 extern can_ring can_rx_q, can_tx1_q, can_tx2_q, can_tx3_q;
-can_ring can_rx_q = {.w_ptr = 0, .r_ptr = 0, .elems = rx_queue_storage, .fifo_size = CAN_QUEUE_SIZE};
-can_ring can_tx1_q = {.w_ptr = 0, .r_ptr = 0, .elems = tx1_queue_storage, .fifo_size = CAN_QUEUE_SIZE}; 
-can_ring can_tx2_q = {.w_ptr = 0, .r_ptr = 0, .elems = tx2_queue_storage, .fifo_size = CAN_QUEUE_SIZE};
-can_ring can_tx3_q = {.w_ptr = 0, .r_ptr = 0, .elems = tx3_queue_storage, .fifo_size = CAN_QUEUE_SIZE};
+can_ring can_rx_q = {.w_ptr = 0, .r_ptr = 0, .elems = rx_queue_storage, .fifo_size = CAN_RX_QUEUE_SIZE};
+can_ring can_tx1_q = {.w_ptr = 0, .r_ptr = 0, .elems = tx1_queue_storage, .fifo_size = CAN_TX_QUEUE_SIZE}; 
+can_ring can_tx2_q = {.w_ptr = 0, .r_ptr = 0, .elems = tx2_queue_storage, .fifo_size = CAN_TX_QUEUE_SIZE};
+can_ring can_tx3_q = {.w_ptr = 0, .r_ptr = 0, .elems = tx3_queue_storage, .fifo_size = CAN_TX_QUEUE_SIZE};
 
 can_ring *rx_q = &can_rx_q;
 can_ring *tx1_q = &can_tx1_q;
@@ -184,13 +180,11 @@ void comms_can_write(const uint8_t *data, uint32_t len) {
         
         // Create packet for queue
         CANPacket_t pkt = {0};
-        pkt.addr = address;
-        pkt.bus = bus;
-        pkt.data_len_code = data_len_code;
-        pkt.extended = (address >= 0x800U) ? 1 : 0;
-        pkt.fd = 0;
-        pkt.rejected = 0;
-        pkt.returned = 0;
+        // Build flags: DDDD_BBB_F (D=dlc, B=bus, F=fd)
+        pkt.flags = (data_len_code << 4) | (bus << 1) | 0; // fd=0
+        // Address with status bits: [extended][returned][rejected][addr_29bits]
+        uint32_t extended = (address >= 0x800U) ? 1U : 0U;
+        pkt.addr = (extended << 31) | (0U << 30) | (0U << 29) | (address & 0x1FFFFFFFU);
         pkt.checksum = 0;
         for(uint32_t i = 0; i < data_len && i < 64; i++) {
             pkt.data[i] = data[offset + 6 + i];
@@ -240,16 +234,19 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
     CANPacket_t pkt;
     while (can_pop(&can_rx_q, &pkt)) {
         const uint8_t dlc_to_len[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64};
-        uint8_t data_len = (pkt.data_len_code < 16) ? dlc_to_len[pkt.data_len_code] : 8;
+        uint8_t dlc = (pkt.flags >> 4) & 0xF;
+        uint8_t data_len = (dlc < 16) ? dlc_to_len[dlc] : 8;
+        uint8_t bus = (pkt.flags >> 1) & 0x7;
+        uint32_t address = pkt.addr & 0x1FFFFFFFU;
         uint32_t packet_size = 6 + data_len;
         
         if (bytes_written + packet_size <= max_len) {
             // Packet fits completely
-            pack_can_packet(data + bytes_written, pkt.addr, pkt.data, data_len, pkt.bus);
+            pack_can_packet(data + bytes_written, address, pkt.data, data_len, bus);
             bytes_written += packet_size;
         } else {
             // Packet doesn't fit - store in partial buffer
-            pack_can_packet(partial_packet_buffer, pkt.addr, pkt.data, data_len, pkt.bus);
+            pack_can_packet(partial_packet_buffer, address, pkt.data, data_len, bus);
             partial_packet_len = packet_size;
             partial_packet_pos = 0;
             
@@ -335,8 +332,10 @@ void can_set_checksum(CANPacket_t *packet) {
     
     // Create temporary header bytes for checksum calculation
     uint8_t header[5];
-    uint32_t word_4b = (packet->addr << 3) | (packet->extended << 2);
-    header[0] = (packet->data_len_code << 4) | (packet->bus << 1) | (packet->fd ? 1 : 0);
+    uint32_t address = packet->addr & 0x1FFFFFFFU;
+    uint32_t extended = (packet->addr >> 31) & 1U;
+    uint32_t word_4b = (address << 3) | (extended << 2);
+    header[0] = packet->flags;
     header[1] = word_4b & 0xFFU;
     header[2] = (word_4b >> 8) & 0xFFU;
     header[3] = (word_4b >> 16) & 0xFFU;
@@ -349,7 +348,8 @@ void can_set_checksum(CANPacket_t *packet) {
     
     // Add data to checksum  
     const uint8_t dlc_to_len[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64};
-    uint8_t data_len = (packet->data_len_code < 16) ? dlc_to_len[packet->data_len_code] : 8;
+    uint8_t dlc = (packet->flags >> 4) & 0xF;
+    uint8_t data_len = (dlc < 16) ? dlc_to_len[dlc] : 8;
     for (uint8_t i = 0; i < data_len && i < 64; i++) {
         checksum ^= packet->data[i];
     }

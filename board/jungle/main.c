@@ -110,8 +110,8 @@ void tick_handler(void) {
     // SBU voltage reporting
     for (uint8_t i = 0U; i < 6U; i++) {
       CANPacket_t pkt = { 0 };
-      pkt.data_len_code = 8U;
-      pkt.addr = 0x100U + i;
+      SET_DLC(&pkt, 8U);
+      SET_ADDR(&pkt, 0x100U + i);
       *(uint16_t *) &pkt.data[0] = current_board->get_sbu_mV(i + 1U, SBU1);
       *(uint16_t *) &pkt.data[2] = current_board->get_sbu_mV(i + 1U, SBU2);
       pkt.data[4] = (ignition_bitmask >> i) & 1U;
@@ -204,17 +204,17 @@ int main(void) {
       for (int j = 0; j < 3; j++) {
         for (uint16_t n = 0U; n < can_slots_empty(qs[j]); n++) {
           uint16_t i = cnt % 100U;
-          CANPacket_t to_send;
-          to_send.returned = 0U;
-          to_send.rejected = 0U;
-          to_send.extended = 0U;
-          to_send.addr = 0x200U + i;
-          to_send.bus = i % 3U;
-          to_send.data_len_code = i % 8U;
-          (void)memcpy(to_send.data, "\xff\xff\xff\xff\xff\xff\xff\xff", dlc_to_len[to_send.data_len_code]);
+          CANPacket_t to_send = {0};
+          SET_RETURNED(&to_send, 0U);
+          SET_REJECTED(&to_send, 0U);
+          SET_EXTENDED(&to_send, 0U);
+          SET_ADDR(&to_send, 0x200U + i);
+          SET_BUS(&to_send, i % 3U);
+          SET_DLC(&to_send, i % 8U);
+          (void)memcpy(to_send.data, "\xff\xff\xff\xff\xff\xff\xff\xff", dlc_to_len[GET_DLC(&to_send)]);
           can_set_checksum(&to_send);
 
-          can_send(&to_send, to_send.bus, true);
+          can_send(&to_send, GET_BUS(&to_send), true);
         }
       }
 

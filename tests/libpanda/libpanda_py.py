@@ -19,15 +19,10 @@ ffi = FFI()
 
 ffi.cdef("""
 typedef struct {
-  unsigned char fd : 1;
-  unsigned char bus : 3;
-  unsigned char data_len_code : 4;
-  unsigned char rejected : 1;
-  unsigned char returned : 1;
-  unsigned char extended : 1;
-  unsigned int addr : 29;
-  unsigned char checksum;
-  unsigned char data[64];
+  uint8_t flags;
+  uint32_t addr;
+  uint8_t checksum;
+  uint8_t data[64];
 } CANPacket_t;
 """, packed=True)
 
@@ -85,10 +80,15 @@ libpanda: Panda = ffi.dlopen(libpanda_fn)
 
 def make_CANPacket(addr: int, bus: int, dat):
   ret = ffi.new('CANPacket_t *')
-  ret[0].extended = 1 if addr >= 0x800 else 0
-  ret[0].addr = addr
-  ret[0].data_len_code = LEN_TO_DLC[len(dat)]
-  ret[0].bus = bus
+  
+  # Build flags byte: DDDD_BBB_F (D=dlc, B=bus, F=fd)
+  dlc = LEN_TO_DLC[len(dat)]
+  ret[0].flags = (dlc << 4) | (bus << 1) | 0  # fd=0 for now
+  
+  # Set address and extended bit in high bits
+  extended = 1 if addr >= 0x800 else 0
+  ret[0].addr = (extended << 31) | (addr & 0x1FFFFFFF)
+  
   ret[0].data = bytes(dat)
   libpanda.can_set_checksum(ret)
 
