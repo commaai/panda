@@ -24,15 +24,16 @@ typedef struct {
     bool overwrite;
 } uart_ring;
 
-// CAN packet structure matching the actual protocol
-// This should match the binary format expected by the Python code
+// CAN packet structure matching the libpanda_py expectations
 typedef struct __attribute__((packed)) {
+    uint32_t reserved[4];
     uint32_t addr;
+    uint8_t extended;
+    uint8_t data_len_code; 
     uint8_t bus;
-    uint8_t data_len_code;
-    uint8_t reserved[2];
-    uint8_t data[64]; // Max CAN-FD data length
-    uint8_t reserved2[8];
+    uint8_t reserved2;
+    uint8_t data[64]; // Max CAN-FD data length  
+    uint8_t reserved3[8];
 } CANPacket_t;
 
 #define CAN_QUEUE_SIZE 1024
@@ -253,6 +254,18 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
     (void)to_push;
     (void)bus_number;
     (void)skip_tx_hook;
+}
+
+void can_set_checksum(CANPacket_t *packet) {
+    // Set checksum for CAN packet - stub for tests
+    // In real implementation this would calculate and set checksum
+    (void)packet;
+}
+
+bool can_check_checksum(CANPacket_t *packet) {
+    // Check CAN packet checksum - stub for tests
+    (void)packet;
+    return true;
 }
 
 // Safety functions for tests - variable returns to avoid MISRA violations
