@@ -1,9 +1,11 @@
+#pragma once
+
 #include "harness_declarations.h"
 
-struct harness_t harness;
+extern struct harness_t harness;
 
 // The ignition relay is only used for testing purposes
-void set_intercept_relay(bool intercept, bool ignition_relay) {
+static inline void set_intercept_relay(bool intercept, bool ignition_relay) {
   bool drive_relay = intercept;
   if (harness.status == HARNESS_STATUS_NC) {
     // no harness, no relay to drive
@@ -30,7 +32,7 @@ void set_intercept_relay(bool intercept, bool ignition_relay) {
   }
 }
 
-bool harness_check_ignition(void) {
+static inline bool harness_check_ignition(void) {
   bool ret = false;
 
   // wait until we're not reading the analog voltages anymore
@@ -87,11 +89,11 @@ static uint8_t harness_detect_orientation(void) {
   return ret;
 }
 
-void harness_tick(void) {
+static inline void harness_tick(void) {
   harness.status = harness_detect_orientation();
 }
 
-void harness_init(void) {
+static inline void harness_init(void) {
   // init OBD_SBUx_RELAY
   set_gpio_output_type(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, OUTPUT_TYPE_OPEN_DRAIN);
   set_gpio_output_type(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, OUTPUT_TYPE_OPEN_DRAIN);

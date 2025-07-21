@@ -1,23 +1,14 @@
-// TACH interrupt handler
-static void EXTI2_IRQ_Handler(void) {
-  volatile unsigned int pr = EXTI->PR & (1U << 2);
-  if ((pr & (1U << 2)) != 0U) {
-    fan_state.tach_counter++;
-  }
-  EXTI->PR = (1U << 2);
-}
+#pragma once
 
-void llfan_init(void) {
-  // 5000RPM * 4 tach edges / 60 seconds
-  REGISTER_INTERRUPT(EXTI2_IRQn, EXTI2_IRQ_Handler, 700U, FAULT_INTERRUPT_RATE_TACH)
+#include "stm32f4xx.h"
+#include <stdint.h>
 
-  // Init PWM speed control
-  pwm_init(TIM3, 3);
+// Forward declarations to avoid circular inclusion
+struct fan_state_t;
+extern struct fan_state_t fan_state;
+extern void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask);
+extern void register_set_bits(volatile uint32_t *addr, uint32_t val);
+extern void pwm_init(TIM_TypeDef *TIM, uint8_t channel);
 
-  // Init TACH interrupt
-  register_set(&(SYSCFG->EXTICR[0]), SYSCFG_EXTICR1_EXTI2_PD, 0xF00U);
-  register_set_bits(&(EXTI->IMR), (1U << 2));
-  register_set_bits(&(EXTI->RTSR), (1U << 2));
-  register_set_bits(&(EXTI->FTSR), (1U << 2));
-  NVIC_EnableIRQ(EXTI2_IRQn);
-}
+// Function declarations
+void llfan_init(void);

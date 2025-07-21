@@ -1,8 +1,9 @@
 #include "llfdcan_declarations.h"
+#include "../config.h"
 
 // kbps multiplied by 10
-const uint32_t speeds[SPEEDS_ARRAY_SIZE] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};
-const uint32_t data_speeds[DATA_SPEEDS_ARRAY_SIZE] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U, 20000U, 50000U};
+__attribute__((weak)) const uint32_t speeds[SPEEDS_ARRAY_SIZE] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};
+__attribute__((weak)) const uint32_t data_speeds[DATA_SPEEDS_ARRAY_SIZE] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U, 20000U, 50000U};
 
 static bool fdcan_request_init(FDCAN_GlobalTypeDef *FDCANx) {
   bool ret = true;
@@ -44,7 +45,7 @@ static bool fdcan_exit_init(FDCAN_GlobalTypeDef *FDCANx) {
   return ret;
 }
 
-bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_t data_speed, bool non_iso, bool loopback, bool silent) {
+__attribute__((weak)) bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_t data_speed, bool non_iso, bool loopback, bool silent) {
   UNUSED(speed);
   bool ret = fdcan_request_init(FDCANx);
 
@@ -116,7 +117,7 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_t data_
   return ret;
 }
 
-void llcan_irq_disable(const FDCAN_GlobalTypeDef *FDCANx) {
+__attribute__((weak)) void llcan_irq_disable(const FDCAN_GlobalTypeDef *FDCANx) {
   if (FDCANx == FDCAN1) {
     NVIC_DisableIRQ(FDCAN1_IT0_IRQn);
     NVIC_DisableIRQ(FDCAN1_IT1_IRQn);
@@ -130,7 +131,7 @@ void llcan_irq_disable(const FDCAN_GlobalTypeDef *FDCANx) {
   }
 }
 
-void llcan_irq_enable(const FDCAN_GlobalTypeDef *FDCANx) {
+__attribute__((weak)) void llcan_irq_enable(const FDCAN_GlobalTypeDef *FDCANx) {
   if (FDCANx == FDCAN1) {
     NVIC_EnableIRQ(FDCAN1_IT0_IRQn);
     NVIC_EnableIRQ(FDCAN1_IT1_IRQn);
@@ -144,7 +145,7 @@ void llcan_irq_enable(const FDCAN_GlobalTypeDef *FDCANx) {
   }
 }
 
-bool llcan_init(FDCAN_GlobalTypeDef *FDCANx) {
+__attribute__((weak)) bool llcan_init(FDCAN_GlobalTypeDef *FDCANx) {
   uint32_t can_number = CAN_NUM_FROM_CANIF(FDCANx);
   bool ret = fdcan_request_init(FDCANx);
 
@@ -218,7 +219,7 @@ bool llcan_init(FDCAN_GlobalTypeDef *FDCANx) {
   return ret;
 }
 
-void llcan_clear_send(FDCAN_GlobalTypeDef *FDCANx) {
+__attribute__((weak)) void llcan_clear_send(FDCAN_GlobalTypeDef *FDCANx) {
   // from datasheet: "Transmit cancellation is not intended for Tx FIFO operation."
   // so we need to clear pending transmission manually by resetting FDCAN core
   FDCANx->IR |= 0x3FCFFFFFU; // clear all interrupts

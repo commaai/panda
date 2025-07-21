@@ -2,6 +2,7 @@
 
 #include "board_declarations.h"
 
+#ifndef BOOTSTUB
 // /////////////////////// //
 // Dos (STM32F4) + Harness //
 // /////////////////////// //
@@ -120,8 +121,7 @@ static harness_configuration dos_harness_config = {
   .adc_channel_SBU1 = 10,
   .adc_channel_SBU2 = 13
 };
-
-board board_dos = {
+__attribute__((weak)) board board_dos = {
   .harness_config = &dos_harness_config,
   .has_spi = false,
   .fan_max_rpm = 6500U,
@@ -144,3 +144,4 @@ board board_dos = {
   .read_som_gpio = dos_read_som_gpio,
   .set_amp_enabled = unused_set_amp_enabled
 };
+#endif // BOOTSTUB

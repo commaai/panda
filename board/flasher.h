@@ -136,10 +136,12 @@ void soft_flasher_start(void) {
 
   // enable comms
   usb_init();
+#ifndef BOOTSTUB
   if (current_board->has_spi) {
     gpio_spi_init();
     spi_init();
   }
+#endif
 
   // green LED on for flashing
   led_set(LED_GREEN, 1);

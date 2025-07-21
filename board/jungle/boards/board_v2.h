@@ -2,7 +2,7 @@
 // Jungle board v2 (STM32H7) //
 // ///////////////////////// //
 
-gpio_t power_pins[] = {
+static gpio_t power_pins[] = {
   {.bank = GPIOA, .pin = 0},
   {.bank = GPIOA, .pin = 1},
   {.bank = GPIOF, .pin = 12},
@@ -11,7 +11,7 @@ gpio_t power_pins[] = {
   {.bank = GPIOB, .pin = 2},
 };
 
-gpio_t sbu1_ignition_pins[] = {
+static gpio_t sbu1_ignition_pins[] = {
   {.bank = GPIOD, .pin = 0},
   {.bank = GPIOD, .pin = 5},
   {.bank = GPIOD, .pin = 12},
@@ -20,7 +20,7 @@ gpio_t sbu1_ignition_pins[] = {
   {.bank = GPIOE, .pin = 9},
 };
 
-gpio_t sbu1_relay_pins[] = {
+static gpio_t sbu1_relay_pins[] = {
   {.bank = GPIOD, .pin = 1},
   {.bank = GPIOD, .pin = 6},
   {.bank = GPIOD, .pin = 11},
@@ -29,7 +29,7 @@ gpio_t sbu1_relay_pins[] = {
   {.bank = GPIOE, .pin = 10},
 };
 
-gpio_t sbu2_ignition_pins[] = {
+static gpio_t sbu2_ignition_pins[] = {
   {.bank = GPIOD, .pin = 3},
   {.bank = GPIOD, .pin = 8},
   {.bank = GPIOD, .pin = 9},
@@ -38,7 +38,7 @@ gpio_t sbu2_ignition_pins[] = {
   {.bank = GPIOE, .pin = 11},
 };
 
-gpio_t sbu2_relay_pins[] = {
+static gpio_t sbu2_relay_pins[] = {
   {.bank = GPIOD, .pin = 4},
   {.bank = GPIOD, .pin = 10},
   {.bank = GPIOD, .pin = 13},
@@ -47,7 +47,7 @@ gpio_t sbu2_relay_pins[] = {
   {.bank = GPIOE, .pin = 12},
 };
 
-adc_channel_t sbu1_channels[] = {
+static adc_channel_t sbu1_channels[] = {
   {.adc = ADC3, .channel = 12},
   {.adc = ADC3, .channel = 2},
   {.adc = ADC3, .channel = 4},
@@ -56,7 +56,7 @@ adc_channel_t sbu1_channels[] = {
   {.adc = ADC3, .channel = 10},
 };
 
-adc_channel_t sbu2_channels[] = {
+static adc_channel_t sbu2_channels[] = {
   {.adc = ADC1, .channel = 13},
   {.adc = ADC3, .channel = 3},
   {.adc = ADC3, .channel = 5},
@@ -65,7 +65,7 @@ adc_channel_t sbu2_channels[] = {
   {.adc = ADC3, .channel = 11},
 };
 
-void board_v2_set_harness_orientation(uint8_t orientation) {
+static inline void board_v2_set_harness_orientation(uint8_t orientation) {
   switch (orientation) {
     case HARNESS_ORIENTATION_NONE:
       gpio_set_all_output(sbu1_ignition_pins, sizeof(sbu1_ignition_pins) / sizeof(gpio_t), false);
@@ -94,7 +94,7 @@ void board_v2_set_harness_orientation(uint8_t orientation) {
   }
 }
 
-void board_v2_enable_can_transceiver(uint8_t transceiver, bool enabled) {
+static inline void board_v2_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver) {
     case 1U:
       set_gpio_output(GPIOG, 11, !enabled);
@@ -114,7 +114,7 @@ void board_v2_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
-void board_v2_enable_header_pin(uint8_t pin_num, bool enabled) {
+static inline void board_v2_enable_header_pin(uint8_t pin_num, bool enabled) {
   if (pin_num < 8U) {
     set_gpio_output(GPIOG, pin_num, enabled);
   } else {
@@ -122,7 +122,7 @@ void board_v2_enable_header_pin(uint8_t pin_num, bool enabled) {
   }
 }
 
-void board_v2_set_can_mode(uint8_t mode) {
+static inline void board_v2_set_can_mode(uint8_t mode) {
   board_v2_enable_can_transceiver(2U, false);
   board_v2_enable_can_transceiver(4U, false);
   switch (mode) {
@@ -164,9 +164,9 @@ void board_v2_set_can_mode(uint8_t mode) {
   }
 }
 
-bool panda_power = false;
-uint8_t panda_power_bitmask = 0U;
-void board_v2_set_panda_power(bool enable) {
+static bool panda_power = false;
+static uint8_t panda_power_bitmask = 0U;
+static inline void board_v2_set_panda_power(bool enable) {
   panda_power = enable;
   gpio_set_all_output(power_pins, sizeof(power_pins) / sizeof(gpio_t), enable);
   if (enable) {
@@ -176,7 +176,7 @@ void board_v2_set_panda_power(bool enable) {
   }
 }
 
-void board_v2_set_panda_individual_power(uint8_t port_num, bool enable) {
+static inline void board_v2_set_panda_individual_power(uint8_t port_num, bool enable) {
   port_num -= 1U;
   if (port_num < 6U) {
     panda_power_bitmask &= ~(1U << port_num);
@@ -187,21 +187,21 @@ void board_v2_set_panda_individual_power(uint8_t port_num, bool enable) {
   gpio_set_bitmask(power_pins, sizeof(power_pins) / sizeof(gpio_t), (uint32_t)panda_power_bitmask);
 }
 
-bool board_v2_get_button(void) {
+static inline bool board_v2_get_button(void) {
   return get_gpio_input(GPIOG, 15);
 }
 
-void board_v2_set_ignition(bool enabled) {
+static inline void board_v2_set_ignition(bool enabled) {
   ignition = enabled ? 0xFFU : 0U;
   board_v2_set_harness_orientation(harness_orientation);
 }
 
-void board_v2_set_individual_ignition(uint8_t bitmask) {
+static inline void board_v2_set_individual_ignition(uint8_t bitmask) {
   ignition = bitmask;
   board_v2_set_harness_orientation(harness_orientation);
 }
 
-float board_v2_get_channel_power(uint8_t channel) {
+static inline float board_v2_get_channel_power(uint8_t channel) {
   float ret = 0.0f;
   if ((channel >= 1U) && (channel <= 6U)) {
     uint16_t readout = adc_get_mV(ADC1, channel - 1U); // these are mapped nicely in hardware
@@ -213,7 +213,7 @@ float board_v2_get_channel_power(uint8_t channel) {
   return ret;
 }
 
-uint16_t board_v2_get_sbu_mV(uint8_t channel, uint8_t sbu) {
+static inline uint16_t board_v2_get_sbu_mV(uint8_t channel, uint8_t sbu) {
   uint16_t ret = 0U;
   if ((channel >= 1U) && (channel <= 6U)) {
     switch(sbu){
@@ -233,7 +233,7 @@ uint16_t board_v2_get_sbu_mV(uint8_t channel, uint8_t sbu) {
   return ret;
 }
 
-void board_v2_init(void) {
+static inline void board_v2_init(void) {
   common_init_gpio();
 
   // Normal CAN mode
@@ -284,9 +284,9 @@ void board_v2_init(void) {
   set_gpio_mode(GPIOG, 7, MODE_OUTPUT);
 }
 
-void board_v2_tick(void) {}
+static inline void board_v2_tick(void) {}
 
-board board_v2 = {
+static board board_v2 = {
   .avdd_mV = 3300U,
   .init = &board_v2_init,
   .init_bootloader = &board_v2_tick,

@@ -1,10 +1,13 @@
+#pragma once
+
 #include "llbxcan_declarations.h"
+#include "board/config.h"
 
 // kbps multiplied by 10
-const uint32_t speeds[SPEEDS_ARRAY_SIZE] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};
-const uint32_t data_speeds[DATA_SPEEDS_ARRAY_SIZE] = {0U}; // No separate data speed, dummy
+__attribute__((weak)) const uint32_t speeds[SPEEDS_ARRAY_SIZE] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};
+__attribute__((weak)) const uint32_t data_speeds[DATA_SPEEDS_ARRAY_SIZE] = {0U}; // No separate data speed, dummy
 
-bool llcan_set_speed(CAN_TypeDef *CANx, uint32_t speed, bool loopback, bool silent) {
+__attribute__((weak)) bool llcan_set_speed(CAN_TypeDef *CANx, uint32_t speed, bool loopback, bool silent) {
   bool ret = true;
 
   // initialization mode
@@ -57,7 +60,7 @@ bool llcan_set_speed(CAN_TypeDef *CANx, uint32_t speed, bool loopback, bool sile
   return ret;
 }
 
-void llcan_irq_disable(const CAN_TypeDef *CANx) {
+__attribute__((weak)) void llcan_irq_disable(const CAN_TypeDef *CANx) {
   if (CANx == CAN1) {
     NVIC_DisableIRQ(CAN1_TX_IRQn);
     NVIC_DisableIRQ(CAN1_RX0_IRQn);
@@ -74,7 +77,7 @@ void llcan_irq_disable(const CAN_TypeDef *CANx) {
   }
 }
 
-void llcan_irq_enable(const CAN_TypeDef *CANx) {
+__attribute__((weak)) void llcan_irq_enable(const CAN_TypeDef *CANx) {
   if (CANx == CAN1) {
     NVIC_EnableIRQ(CAN1_TX_IRQn);
     NVIC_EnableIRQ(CAN1_RX0_IRQn);
@@ -91,7 +94,7 @@ void llcan_irq_enable(const CAN_TypeDef *CANx) {
   }
 }
 
-bool llcan_init(CAN_TypeDef *CANx) {
+__attribute__((weak)) bool llcan_init(CAN_TypeDef *CANx) {
   bool ret = true;
 
   // Enter init mode
@@ -134,7 +137,7 @@ bool llcan_init(CAN_TypeDef *CANx) {
   return ret;
 }
 
-void llcan_clear_send(CAN_TypeDef *CANx) {
+__attribute__((weak)) void llcan_clear_send(CAN_TypeDef *CANx) {
   CANx->TSR |= CAN_TSR_ABRQ0; // Abort message transmission on error interrupt
   CANx->MSR |= CAN_MSR_ERRI; // Clear error interrupt
 }

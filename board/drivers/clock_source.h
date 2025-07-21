@@ -1,6 +1,8 @@
+#pragma once
+
 #include "clock_source_declarations.h"
 
-void clock_source_set_timer_params(uint16_t param1, uint16_t param2) {
+static inline void clock_source_set_timer_params(uint16_t param1, uint16_t param2) {
   // Pulse length of each channel
   register_set(&(TIM1->CCR1), (((param1 & 0xFF00U) >> 8U)*10U), 0xFFFFU);
   register_set(&(TIM1->CCR2), ((param1 & 0x00FFU)*10U), 0xFFFFU);
@@ -9,7 +11,7 @@ void clock_source_set_timer_params(uint16_t param1, uint16_t param2) {
   register_set(&(TIM1->ARR),  (((param2 & 0x00FFU)*10U) - 1U), 0xFFFFU);
 }
 
-void clock_source_init(bool enable_channel1) {
+static inline void clock_source_init(bool enable_channel1) {
   // Setup timer
   register_set(&(TIM1->PSC), ((APB2_TIMER_FREQ*100U)-1U), 0xFFFFU);           // Tick on 0.1 ms
   register_set(&(TIM1->ARR), ((CLOCK_SOURCE_PERIOD_MS*10U) - 1U), 0xFFFFU);   // Period

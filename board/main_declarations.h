@@ -1,5 +1,14 @@
 #pragma once
 
+#include <stdint.h>
+#include <stdbool.h>
+
+#ifdef STM32H7
+  #include "stm32h7xx.h"
+#elif defined(STM32F4)
+  #include "stm32f4xx.h"
+#endif
+
 // ******************** Prototypes ********************
 void print(const char *a);
 void puth(unsigned int i);

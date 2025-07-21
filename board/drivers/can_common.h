@@ -1,4 +1,10 @@
+#pragma once
+
+#include "../can_declarations.h"
 #include "can_common_declarations.h"
+
+// Macro to get byte from CAN data array
+#define GET_BYTE(msg, index) ((msg)->data[(index)])
 
 uint32_t safety_tx_blocked = 0;
 uint32_t safety_rx_invalid = 0;

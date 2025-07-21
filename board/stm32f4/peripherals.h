@@ -1,27 +1,25 @@
-#ifdef BOOTSTUB
-void gpio_usb_init(void) {
-#else
-static void gpio_usb_init(void) {
-#endif
+#pragma once
+
+static inline void gpio_usb_init(void) {
   // A11,A12: USB
   set_gpio_alternate(GPIOA, 11, GPIO_AF10_OTG_FS);
   set_gpio_alternate(GPIOA, 12, GPIO_AF10_OTG_FS);
   GPIOA->OSPEEDR = GPIO_OSPEEDER_OSPEEDR11 | GPIO_OSPEEDER_OSPEEDR12;
 }
 
-void gpio_spi_init(void) {
+static inline void gpio_spi_init(void) {
 }
 
+static inline void gpio_usart2_init(void) {
 #ifdef BOOTSTUB
-void gpio_usart2_init(void) {
   // A2,A3: USART 2 for debugging
   set_gpio_alternate(GPIOA, 2, GPIO_AF7_USART2);
   set_gpio_alternate(GPIOA, 3, GPIO_AF7_USART2);
-}
 #endif
+}
 
 // Common GPIO initialization
-void common_init_gpio(void) {
+static inline void common_init_gpio(void) {
   // TODO: Is this block actually doing something???
   // pull low to hold ESP in reset??
   // enable OTG out tied to ground
@@ -42,7 +40,7 @@ void common_init_gpio(void) {
 }
 
 #ifdef BOOTSTUB
-void flasher_peripherals_init(void) {
+static inline void flasher_peripherals_init(void) {
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
   RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
   RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
@@ -51,7 +49,7 @@ void flasher_peripherals_init(void) {
 #endif
 
 // Peripheral initialization
-void peripherals_init(void) {
+static inline void peripherals_init(void) {
   // enable GPIO(A,B,C,D)
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
@@ -87,6 +85,6 @@ void peripherals_init(void) {
   RCC->APB2ENR |= RCC_APB2ENR_TIM9EN;  // slow loop
 }
 
-void enable_interrupt_timer(void) {
+static inline void enable_interrupt_timer(void) {
   register_set_bits(&(RCC->APB1ENR), RCC_APB1ENR_TIM6EN);  // Enable interrupt timer peripheral
 }

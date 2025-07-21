@@ -1,6 +1,12 @@
 // ********************* Includes *********************
 #include "board/config.h"
 
+// ********************* Globals **********************
+uint8_t hw_type = 0;
+board *current_board;
+uint32_t uptime_cnt = 0;
+bool green_led_enabled = false;
+
 #include "opendbc/safety/safety.h"
 
 #include "board/drivers/led.h"
@@ -234,3 +240,39 @@ int main(void) {
 
   return 0;
 }
+
+// ********************* Stub symbols *********************
+// These provide definitions for symbols that might be referenced
+// but are not always needed depending on board configuration
+
+// Additional stub functions for linking
+#pragma weak safety_tx_hook
+int safety_tx_hook(CANPacket_t *to_send) {
+  (void)to_send;
+  return true;
+}
+
+#pragma weak safety_rx_hook
+int safety_rx_hook(CANPacket_t *to_push) {
+  (void)to_push;
+  return true;
+}
+
+#pragma weak safety_fwd_hook
+int safety_fwd_hook(int bus_number, int addr) {
+  (void)bus_number;
+  (void)addr;
+  return -1;
+}
+
+#pragma weak set_safety_hooks
+int set_safety_hooks(uint16_t mode, uint16_t param) {
+  (void)mode;
+  (void)param;
+  return 0;
+}
+
+#pragma weak USBx
+USB_OTG_GlobalTypeDef *USBx = NULL;
+
+// memset and memcpy are handled by libc.h - no weak implementations needed

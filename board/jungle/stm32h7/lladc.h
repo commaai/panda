@@ -4,7 +4,7 @@ typedef struct {
   uint8_t channel;
 } adc_channel_t;
 
-void adc_init(ADC_TypeDef *adc) {
+static inline void adc_init(ADC_TypeDef *adc) {
   adc->CR &= ~(ADC_CR_DEEPPWD); // Reset deep-power-down mode
   adc->CR |= ADC_CR_ADVREGEN; // Enable ADC regulator
   while(!(adc->ISR & ADC_ISR_LDORDY) && (adc != ADC3));
@@ -21,7 +21,7 @@ void adc_init(ADC_TypeDef *adc) {
   while(!(adc->ISR & ADC_ISR_ADRDY));
 }
 
-uint16_t adc_get_raw(ADC_TypeDef *adc, uint8_t channel) {
+static inline uint16_t adc_get_raw(ADC_TypeDef *adc, uint8_t channel) {
   adc->SQR1 &= ~(ADC_SQR1_L);
   adc->SQR1 = ((uint32_t) channel << 6U);
 
@@ -43,7 +43,7 @@ uint16_t adc_get_raw(ADC_TypeDef *adc, uint8_t channel) {
   return res;
 }
 
-uint16_t adc_get_mV(ADC_TypeDef *adc, uint8_t channel) {
+static inline uint16_t adc_get_mV(ADC_TypeDef *adc, uint8_t channel) {
   uint16_t ret = 0;
   if ((adc == ADC1) || (adc == ADC2)) {
     ret = (adc_get_raw(adc, channel) * current_board->avdd_mV) / 65535U;

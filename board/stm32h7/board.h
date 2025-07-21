@@ -1,3 +1,5 @@
+#pragma once
+
 // ///////////////////////////////////////////////////////////// //
 // Hardware abstraction layer for all different supported boards //
 // ///////////////////////////////////////////////////////////// //
@@ -17,7 +19,8 @@
 #include "board/boards/cuatro.h"
 
 
-void detect_board_type(void) {
+static inline void detect_board_type(void) {
+#ifndef BOOTSTUB
   // On STM32H7 pandas, we use two different sets of pins.
   const uint8_t id1 = detect_with_pull(GPIOF, 7, PULL_UP) |
                      (detect_with_pull(GPIOF, 8, PULL_UP) << 1U) |
@@ -46,4 +49,5 @@ void detect_board_type(void) {
     hw_type = HW_TYPE_UNKNOWN;
     print("Hardware type is UNKNOWN!\n");
   }
+#endif
 }

@@ -45,7 +45,7 @@ static PackageSMPSType get_package_smps_type(void) {
   return ret;
 }
 
-void clock_init(void) {
+static inline void clock_init(void) {
   /*
     WARNING: PWR->CR3's lower byte can only be written once
     * subsequent writes will silently fail

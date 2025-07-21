@@ -6,29 +6,38 @@
 // Tres (STM32H7) + Harness //
 // ///////////////////////////
 
+#ifndef BOOTSTUB
 static bool tres_ir_enabled;
 static bool tres_fan_enabled;
 static void tres_update_fan_ir_power(void) {
   set_gpio_output(GPIOD, 3, tres_ir_enabled || tres_fan_enabled);
 }
+#endif
 
+#ifndef BOOTSTUB
 static void tres_set_ir_power(uint8_t percentage){
   tres_ir_enabled = (percentage > 0U);
   tres_update_fan_ir_power();
   pwm_set(TIM3, 4, percentage);
 }
+#endif
 
+#ifndef BOOTSTUB
 static void tres_set_bootkick(BootState state) {
   set_gpio_output(GPIOA, 0, state != BOOT_BOOTKICK);
   set_gpio_output(GPIOC, 12, state != BOOT_RESET);
 }
+#endif
 
+#ifndef BOOTSTUB
 static void tres_set_fan_enabled(bool enabled) {
   // NOTE: fan controller reset doesn't work on a tres if IR is enabled
   tres_fan_enabled = enabled;
   tres_update_fan_ir_power();
 }
+#endif
 
+#ifndef BOOTSTUB
 static void tres_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver) {
     case 1U:
@@ -47,7 +56,9 @@ static void tres_enable_can_transceiver(uint8_t transceiver, bool enabled) {
       break;
   }
 }
+#endif
 
+#ifndef BOOTSTUB
 static void tres_set_can_mode(uint8_t mode) {
   current_board->enable_can_transceiver(2U, false);
   current_board->enable_can_transceiver(4U, false);
@@ -89,11 +100,15 @@ static void tres_set_can_mode(uint8_t mode) {
       break;
   }
 }
+#endif
 
+#ifndef BOOTSTUB
 static bool tres_read_som_gpio (void) {
   return (get_gpio_input(GPIOC, 2) != 0);
 }
+#endif
 
+#ifndef BOOTSTUB
 static void tres_init(void) {
   // Enable USB 3.3V LDO for USB block
   register_set_bits(&(PWR->CR3), PWR_CR3_USBREGEN);
@@ -131,7 +146,9 @@ static void tres_init(void) {
   // Clock source
   clock_source_init(false);
 }
+#endif
 
+#ifndef BOOTSTUB
 static harness_configuration tres_harness_config = {
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
@@ -144,8 +161,10 @@ static harness_configuration tres_harness_config = {
   .adc_channel_SBU1 = 4, // ADC12_INP4
   .adc_channel_SBU2 = 17 // ADC1_INP17
 };
+#endif
 
-board board_tres = {
+#ifndef BOOTSTUB
+__attribute__((weak)) board board_tres = {
   .harness_config = &tres_harness_config,
   .has_spi = true,
   .fan_max_rpm = 6600U,
@@ -168,3 +187,4 @@ board board_tres = {
   .read_som_gpio = tres_read_som_gpio,
   .set_amp_enabled = unused_set_amp_enabled
 };
+#endif

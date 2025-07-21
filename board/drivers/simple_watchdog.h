@@ -1,3 +1,5 @@
+#pragma once
+
 #include "simple_watchdog_declarations.h"
 
 static simple_watchdog_state_t wd_state;

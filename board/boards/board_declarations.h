@@ -61,7 +61,9 @@ struct board {
 #define CAN_MODE_NORMAL 0U
 #define CAN_MODE_OBD_CAN2 1U
 
+#ifndef BOOTSTUB
 extern struct board board_dos;
 extern struct board board_tres;
 extern struct board board_cuatro;
 extern struct board board_red;
+#endif

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "board/can_declarations.h"
+
 typedef struct {
   volatile uint32_t w_ptr;
   volatile uint32_t r_ptr;

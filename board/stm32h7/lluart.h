@@ -1,3 +1,7 @@
+#pragma once
+
+#include "board/drivers/interrupts_declarations.h"
+
 static void uart_rx_ring(uart_ring *q){
   // Do not read out directly if DMA enabled
   ENTER_CRITICAL();
@@ -24,7 +28,7 @@ static void uart_rx_ring(uart_ring *q){
   EXIT_CRITICAL();
 }
 
-void uart_tx_ring(uart_ring *q){
+__attribute__((weak)) void uart_tx_ring(uart_ring *q){
   ENTER_CRITICAL();
   // Send out next byte of TX buffer
   if (q->w_ptr_tx != q->r_ptr_tx) {
@@ -85,7 +89,7 @@ static void uart_interrupt_handler(uart_ring *q) {
 
 static void UART7_IRQ_Handler(void) { uart_interrupt_handler(&uart_ring_som_debug); }
 
-void uart_init(uart_ring *q, unsigned int baud) {
+__attribute__((weak)) void uart_init(uart_ring *q, unsigned int baud) {
   if (q->uart == UART7) {
     REGISTER_INTERRUPT(UART7_IRQn, UART7_IRQ_Handler, 150000U, FAULT_INTERRUPT_RATE_UART_7)
 

@@ -1,5 +1,18 @@
 #pragma once
 
+#include <stdint.h>
+#include <stdbool.h>
+
+#ifdef STM32H7
+  #include "stm32h7xx.h"
+  #define NUM_INTERRUPTS 163U
+#elif defined(STM32F4)
+  #include "stm32f4xx.h"
+  #define NUM_INTERRUPTS 102U
+#endif
+
+#ifndef INTERRUPT_STRUCT_DEFINED
+#define INTERRUPT_STRUCT_DEFINED
 typedef struct interrupt {
   IRQn_Type irq_type;
   void (*handler)(void);
@@ -8,6 +21,7 @@ typedef struct interrupt {
   uint32_t max_call_rate;   // Call rate is defined as the amount of calls each second
   uint32_t call_rate_fault;
 } interrupt;
+#endif
 
 void interrupt_timer_init(void);
 uint32_t microsecond_timer_get(void);

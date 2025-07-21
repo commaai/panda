@@ -1,3 +1,5 @@
+#pragma once
+
 #include "bootkick_declarations.h"
 
 bool bootkick_reset_triggered = false;

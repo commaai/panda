@@ -1,6 +1,20 @@
 // ********************* Includes *********************
 #include "board/config.h"
 
+// ********************* Globals **********************
+uint8_t hw_type = 0;
+board *current_board;
+uint32_t uptime_cnt = 0;
+bool green_led_enabled = false;
+
+// heartbeat state
+uint32_t heartbeat_counter = 0;
+bool heartbeat_lost = false;
+bool heartbeat_disabled = false;            // set over USB
+
+// siren state
+bool siren_enabled = false;
+
 #include "board/drivers/led.h"
 #include "board/drivers/pwm.h"
 #include "board/drivers/usb.h"
@@ -377,3 +391,102 @@ int main(void) {
 
   return 0;
 }
+
+// ********************* Stub symbols *********************
+// These provide definitions for symbols that might be referenced
+// but are not always needed depending on board configuration
+
+#pragma weak sound_init
+void sound_init(void) {
+  // Empty stub for sound initialization
+}
+
+#pragma weak fake_siren_set
+void fake_siren_set(bool enabled) {
+  (void)enabled; // Unused parameter
+  // Empty stub for fake siren
+}
+
+#pragma weak harness
+struct harness_t harness = {0};
+
+// Additional stub functions for linking
+#pragma weak safety_tx_hook
+int safety_tx_hook(CANPacket_t *to_send) {
+  (void)to_send;
+  return true;
+}
+
+#pragma weak safety_rx_hook
+int safety_rx_hook(CANPacket_t *to_push) {
+  (void)to_push;
+  return true;
+}
+
+#pragma weak safety_fwd_hook
+int safety_fwd_hook(int bus_number, int addr) {
+  (void)bus_number;
+  (void)addr;
+  return -1;
+}
+
+#pragma weak safety_tick
+void safety_tick(safety_config_t *config) {
+  (void)config;
+  // Empty stub
+}
+
+#pragma weak set_safety_hooks
+int set_safety_hooks(uint16_t mode, uint16_t param) {
+  (void)mode;
+  (void)param;
+  return 0;
+}
+
+// usb_init is defined as static inline in platform headers
+
+#pragma weak llfan_init
+void llfan_init(void) {
+  // Empty stub
+}
+
+#pragma weak fan_state
+struct fan_state_t fan_state = {0};
+
+#pragma weak safety_mode_cnt
+uint32_t safety_mode_cnt = 0;
+
+#pragma weak current_safety_config
+safety_config_t current_safety_config = {0};
+
+#pragma weak current_safety_mode
+uint32_t current_safety_mode = 0;
+
+#pragma weak current_safety_param
+uint16_t current_safety_param = 0;
+
+#pragma weak controls_allowed
+bool controls_allowed = false;
+
+#pragma weak heartbeat_engaged
+bool heartbeat_engaged = false;
+
+#pragma weak heartbeat_engaged_mismatches
+uint32_t heartbeat_engaged_mismatches = 0;
+
+#pragma weak USBx
+USB_OTG_GlobalTypeDef *USBx = NULL;
+
+// memset and memcpy are defined in libc.h
+
+// Note: usb_init is static inline in platform headers, can't use weak attribute
+
+// memset and memcpy are handled by libc.h - no weak implementations needed
+
+// usb_init is static inline in platform headers - cannot override with weak symbols
+
+#pragma weak alternative_experience
+uint32_t alternative_experience = 0;
+
+#pragma weak safety_rx_checks_invalid
+uint32_t safety_rx_checks_invalid = 0;

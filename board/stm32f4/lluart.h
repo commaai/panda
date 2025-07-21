@@ -1,6 +1,8 @@
+#pragma once
+
 // ***************************** Interrupt handlers *****************************
 
-void uart_tx_ring(uart_ring *q){
+__attribute__((weak)) void uart_tx_ring(uart_ring *q){
   ENTER_CRITICAL();
   // Send out next byte of TX buffer
   if (q->w_ptr_tx != q->r_ptr_tx) {

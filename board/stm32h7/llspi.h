@@ -1,5 +1,7 @@
 // master -> panda DMA start
-void llspi_mosi_dma(uint8_t *addr, int len) {
+#pragma once
+
+static inline void llspi_mosi_dma(uint8_t *addr, int len) {
   // disable DMA + SPI
   register_clear_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN);
   DMA2_Stream2->CR &= ~DMA_SxCR_EN;
@@ -26,7 +28,7 @@ void llspi_mosi_dma(uint8_t *addr, int len) {
 }
 
 // panda -> master DMA start
-void llspi_miso_dma(uint8_t *addr, int len) {
+static inline void llspi_miso_dma(uint8_t *addr, int len) {
   // disable DMA + SPI
   DMA2_Stream3->CR &= ~DMA_SxCR_EN;
   register_clear_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
@@ -48,6 +50,7 @@ void llspi_miso_dma(uint8_t *addr, int len) {
   register_set_bits(&(SPI4->CR1), SPI_CR1_SPE);
 }
 
+#ifndef BOOTSTUB
 static bool spi_tx_dma_done = false;
 // master -> panda DMA finished
 static void DMA2_Stream2_IRQ_Handler(void) {
@@ -77,12 +80,15 @@ static void SPI4_IRQ_Handler(void) {
     spi_tx_done(false);
   }
 }
+#endif
 
 
-void llspi_init(void) {
+static inline void llspi_init(void) {
+#ifndef BOOTSTUB
   REGISTER_INTERRUPT(SPI4_IRQn, SPI4_IRQ_Handler, (SPI_IRQ_RATE * 2U), FAULT_INTERRUPT_RATE_SPI)
   REGISTER_INTERRUPT(DMA2_Stream2_IRQn, DMA2_Stream2_IRQ_Handler, SPI_IRQ_RATE, FAULT_INTERRUPT_RATE_SPI_DMA)
   REGISTER_INTERRUPT(DMA2_Stream3_IRQn, DMA2_Stream3_IRQ_Handler, SPI_IRQ_RATE, FAULT_INTERRUPT_RATE_SPI_DMA)
+#endif
 
   // Setup MOSI DMA
   register_set(&(DMAMUX1_Channel10->CCR), 83U, 0xFFFFFFFFU);

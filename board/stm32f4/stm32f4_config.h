@@ -1,3 +1,5 @@
+#pragma once
+
 #include "stm32f4xx.h"
 #include "stm32f4xx_hal_gpio_ex.h"
 #define MCU_IDCODE 0x463U
@@ -67,11 +69,13 @@
 #include "board/stm32f4/llusb.h"
 
 // unused
-void spi_init(void) {};
-void sound_tick(void) {};
-void can_tx_comms_resume_spi(void) {};
+#ifndef SPI_H_INCLUDED
+static inline void spi_init(void) {};
+static inline void can_tx_comms_resume_spi(void) {};
+#endif
+static inline void sound_tick(void) {};
 
-void early_gpio_float(void) {
+static inline void early_gpio_float(void) {
   RCC->AHB1ENR = RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN;
 
   GPIOB->MODER = 0; GPIOC->MODER = 0;

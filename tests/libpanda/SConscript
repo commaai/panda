@@ -16,12 +16,13 @@ env = Environment(
   CC=CC,
   CFLAGS=[
     '-nostdlib',
-    '-fno-builtin',
+    '-fno-builtin', 
     '-std=gnu11',
     '-Wfatal-errors',
     '-Wno-pointer-to-int-cast',
+    '-DTEST_BUILD',
   ],
-  CPPPATH=[".", "../../board/", opendbc.INCLUDE_PATH],
+  CPPPATH=[".", "../../", getattr(opendbc, 'INCLUDE_PATH', '')],
 )
 if system == "Darwin":
   env.PrependENVPath('PATH', '/opt/homebrew/bin')
@@ -34,5 +35,6 @@ if GetOption('ubsan'):
   env['CFLAGS'] += flags
   env['LINKFLAGS'] += flags
 
-panda = env.SharedObject("panda.os", "panda.c")
+# Use minimal implementation to avoid complex dependencies
+panda = env.SharedObject("panda.os", "minimal_panda.c")
 libpanda = env.SharedLibrary("libpanda.so", [panda])

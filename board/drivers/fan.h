@@ -1,24 +1,28 @@
+#pragma once
+
 #include "fan_declarations.h"
 
-struct fan_state_t fan_state;
+extern struct fan_state_t fan_state;
 
 static const uint8_t FAN_TICK_FREQ = 8U;
 static const uint8_t FAN_STALL_THRESHOLD_MIN = 3U;
 
 
-void fan_set_power(uint8_t percentage) {
+static inline void fan_set_power(uint8_t percentage) {
   fan_state.target_rpm = ((current_board->fan_max_rpm * CLAMP(percentage, 0U, 100U)) / 100U);
 }
 
 void llfan_init(void);
-void fan_init(void) {
+static inline void fan_init(void) {
   fan_state.stall_threshold = FAN_STALL_THRESHOLD_MIN;
   fan_state.cooldown_counter = current_board->fan_enable_cooldown_time * FAN_TICK_FREQ;
+#ifndef BOOTSTUB
   llfan_init();
+#endif
 }
 
 // Call this at FAN_TICK_FREQ
-void fan_tick(void) {
+static inline void fan_tick(void) {
   const float FAN_I = 6.5f;
   const uint8_t FAN_STALL_THRESHOLD_MAX = 8U;
 

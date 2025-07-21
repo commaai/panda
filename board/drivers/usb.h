@@ -1,3 +1,5 @@
+#pragma once
+
 #include "usb_declarations.h"
 
 static uint8_t response[USBPACKET_MAX_SIZE];

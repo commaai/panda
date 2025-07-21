@@ -13,8 +13,6 @@ struct fan_state_t {
 };
 extern struct fan_state_t fan_state;
 
-void fan_set_power(uint8_t percentage);
+// llfan_init keeps separate declaration as it's platform-specific
 void llfan_init(void);
-void fan_init(void);
-// Call this at FAN_TICK_FREQ
-void fan_tick(void);
+// Other function declarations removed - now static inline in fan.h

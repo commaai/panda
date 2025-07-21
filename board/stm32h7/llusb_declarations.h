@@ -13,4 +13,4 @@ extern USB_OTG_GlobalTypeDef *USBx;
 #define DCFG_FRAME_INTERVAL_80    0U
 
 void usb_irqhandler(void);
-void usb_init(void);
+// usb_init declaration removed - implemented differently for BOOTSTUB vs main

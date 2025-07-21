@@ -1,3 +1,5 @@
+#pragma once
+
 #include "uart_declarations.h"
 
 // ***************************** Definitions *****************************
@@ -6,7 +8,7 @@
   static uint8_t elems_rx_##x[size_rx]; \
   static uint8_t elems_tx_##x[size_tx]; \
   extern uart_ring uart_ring_##x; \
-  uart_ring uart_ring_##x = {  \
+  __attribute__((weak)) uart_ring uart_ring_##x = {  \
     .w_ptr_tx = 0, \
     .r_ptr_tx = 0, \
     .elems_tx = ((uint8_t *)&(elems_tx_##x)), \
@@ -33,7 +35,7 @@ UART_BUFFER(debug, FIFO_SIZE_INT, FIFO_SIZE_INT, USART2, debug_ring_callback, tr
   UART_BUFFER(som_debug, 1U, 1U, NULL, NULL, true)
 #endif
 
-uart_ring *get_ring_by_number(int a) {
+__attribute__((weak)) uart_ring *get_ring_by_number(int a) {
   uart_ring *ring = NULL;
   switch(a) {
     case 0:
@@ -50,7 +52,7 @@ uart_ring *get_ring_by_number(int a) {
 }
 
 // ************************* Low-level buffer functions *************************
-bool get_char(uart_ring *q, char *elem) {
+__attribute__((weak)) bool get_char(uart_ring *q, char *elem) {
   bool ret = false;
 
   ENTER_CRITICAL();
@@ -64,7 +66,7 @@ bool get_char(uart_ring *q, char *elem) {
   return ret;
 }
 
-bool injectc(uart_ring *q, char elem) {
+__attribute__((weak)) bool injectc(uart_ring *q, char elem) {
   int ret = false;
   uint16_t next_w_ptr;
 
@@ -86,7 +88,7 @@ bool injectc(uart_ring *q, char elem) {
   return ret;
 }
 
-bool put_char(uart_ring *q, char elem) {
+__attribute__((weak)) bool put_char(uart_ring *q, char elem) {
   bool ret = false;
   uint16_t next_w_ptr;
 
@@ -111,26 +113,26 @@ bool put_char(uart_ring *q, char elem) {
 }
 
 // ************************ High-level debug functions **********************
-void putch(const char a) {
+__attribute__((weak)) void putch(const char a) {
   // misra-c2012-17.7: serial debug function, ok to ignore output
   (void)injectc(&uart_ring_debug, a);
 }
 
-void print(const char *a) {
+__attribute__((weak)) void print(const char *a) {
   for (const char *in = a; *in; in++) {
     if (*in == '\n') putch('\r');
     putch(*in);
   }
 }
 
-void puthx(uint32_t i, uint8_t len) {
+__attribute__((weak)) void puthx(uint32_t i, uint8_t len) {
   const char c[] = "0123456789abcdef";
   for (int pos = ((int)len * 4) - 4; pos > -4; pos -= 4) {
     putch(c[(i >> (unsigned int)(pos)) & 0xFU]);
   }
 }
 
-void puth(unsigned int i) {
+__attribute__((weak)) void puth(unsigned int i) {
   puthx(i, 8U);
 }
 

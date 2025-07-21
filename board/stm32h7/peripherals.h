@@ -1,15 +1,13 @@
-#ifdef BOOTSTUB
-void gpio_usb_init(void) {
-#else
-static void gpio_usb_init(void) {
-#endif
+#pragma once
+
+static inline void gpio_usb_init(void) {
   // A11,A12: USB
   set_gpio_alternate(GPIOA, 11, GPIO_AF10_OTG1_FS);
   set_gpio_alternate(GPIOA, 12, GPIO_AF10_OTG1_FS);
   GPIOA->OSPEEDR = GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12;
 }
 
-void gpio_spi_init(void) {
+static inline void gpio_spi_init(void) {
   set_gpio_alternate(GPIOE, 11, GPIO_AF5_SPI4);
   set_gpio_alternate(GPIOE, 12, GPIO_AF5_SPI4);
   set_gpio_alternate(GPIOE, 13, GPIO_AF5_SPI4);
@@ -17,22 +15,22 @@ void gpio_spi_init(void) {
   register_set_bits(&(GPIOE->OSPEEDR), GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12 | GPIO_OSPEEDR_OSPEED13 | GPIO_OSPEEDR_OSPEED14);
 }
 
+static inline void gpio_usart2_init(void) {
 #ifdef BOOTSTUB
-void gpio_usart2_init(void) {
   // A2,A3: USART 2 for debugging
   set_gpio_alternate(GPIOA, 2, GPIO_AF7_USART2);
   set_gpio_alternate(GPIOA, 3, GPIO_AF7_USART2);
-}
 #endif
+}
 
-void gpio_uart7_init(void) {
+static inline void gpio_uart7_init(void) {
   // E7,E8: UART 7 for debugging
   set_gpio_alternate(GPIOE, 7, GPIO_AF7_UART7);
   set_gpio_alternate(GPIOE, 8, GPIO_AF7_UART7);
 }
 
 // Common GPIO initialization
-void common_init_gpio(void) {
+static inline void common_init_gpio(void) {
   //F11: VOLT_S
   set_gpio_pullup(GPIOF, 11, PULL_NONE);
   set_gpio_mode(GPIOF, 11, MODE_ANALOG);
@@ -64,8 +62,8 @@ void common_init_gpio(void) {
   set_gpio_alternate(GPIOG, 10, GPIO_AF2_FDCAN3);
 }
 
+static inline void flasher_peripherals_init(void) {
 #ifdef BOOTSTUB
-void flasher_peripherals_init(void) {
   RCC->AHB1ENR |= RCC_AHB1ENR_USB1OTGHSEN;
 
   // SPI + DMA
@@ -74,11 +72,11 @@ void flasher_peripherals_init(void) {
 
   // LED PWM
   RCC->APB1LENR |= RCC_APB1LENR_TIM3EN;
-}
 #endif
+}
 
 // Peripheral initialization
-void peripherals_init(void) {
+static inline void peripherals_init(void) {
   // enable GPIO(A,B,C,D,E,F,G,H)
   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;
   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;
@@ -130,6 +128,6 @@ void peripherals_init(void) {
 #endif
 }
 
-void enable_interrupt_timer(void) {
+static inline void enable_interrupt_timer(void) {
   register_set_bits(&(RCC->APB1LENR), RCC_APB1LENR_TIM6EN); // Enable interrupt timer peripheral
 }

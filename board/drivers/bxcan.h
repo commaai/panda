@@ -1,3 +1,5 @@
+#pragma once
+
 #include "bxcan_declarations.h"
 
 // IRQs: CAN1_TX, CAN1_RX0, CAN1_SCE

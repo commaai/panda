@@ -6,6 +6,7 @@
 // Red Panda (STM32H7) + Harness //
 // ///////////////////////////// //
 
+#ifndef BOOTSTUB
 static void red_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver) {
     case 1U:
@@ -24,7 +25,9 @@ static void red_enable_can_transceiver(uint8_t transceiver, bool enabled) {
       break;
   }
 }
+#endif
 
+#ifndef BOOTSTUB
 static void red_set_can_mode(uint8_t mode) {
   red_enable_can_transceiver(2U, false);
   red_enable_can_transceiver(4U, false);
@@ -66,11 +69,15 @@ static void red_set_can_mode(uint8_t mode) {
       break;
   }
 }
+#endif
 
+#ifndef BOOTSTUB
 static uint32_t red_read_voltage_mV(void){
   return adc_get_mV(2) * 11U; // TODO: is this correct?
 }
+#endif
 
+#ifndef BOOTSTUB
 static void red_init(void) {
   common_init_gpio();
 
@@ -97,7 +104,9 @@ static void red_init(void) {
   set_gpio_mode(GPIOB, 14, MODE_OUTPUT);
   set_gpio_output(GPIOB, 14, 1);
 }
+#endif
 
+#ifndef BOOTSTUB
 static harness_configuration red_harness_config = {
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
@@ -110,8 +119,10 @@ static harness_configuration red_harness_config = {
   .adc_channel_SBU1 = 4, //ADC12_INP4
   .adc_channel_SBU2 = 17 //ADC1_INP17
 };
+#endif
 
-board board_red = {
+#ifndef BOOTSTUB
+__attribute__((weak)) board board_red = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &red_harness_config,
   .has_spi = false,
@@ -134,3 +145,4 @@ board board_red = {
   .read_som_gpio = unused_read_som_gpio,
   .set_amp_enabled = unused_set_amp_enabled
 };
+#endif

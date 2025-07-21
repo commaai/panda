@@ -6,6 +6,7 @@
 // Cuatro (STM32H7) + Harness //
 // ////////////////////////// //
 
+#ifndef BOOTSTUB
 static void cuatro_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver) {
     case 1U:
@@ -24,30 +25,42 @@ static void cuatro_enable_can_transceiver(uint8_t transceiver, bool enabled) {
       break;
   }
 }
+#endif
 
+#ifndef BOOTSTUB
 static uint32_t cuatro_read_voltage_mV(void) {
   return adc_get_mV(8) * 11U;
 }
+#endif
 
+#ifndef BOOTSTUB
 static uint32_t cuatro_read_current_mA(void) {
   return adc_get_mV(3) * 2U;
 }
+#endif
 
+#ifndef BOOTSTUB
 static void cuatro_set_fan_enabled(bool enabled) {
   set_gpio_output(GPIOD, 3, !enabled);
 }
+#endif
 
+#ifndef BOOTSTUB
 static void cuatro_set_bootkick(BootState state) {
   set_gpio_output(GPIOA, 0, state != BOOT_BOOTKICK);
   // TODO: confirm we need this
   //set_gpio_output(GPIOC, 12, state != BOOT_RESET);
 }
+#endif
 
+#ifndef BOOTSTUB
 static void cuatro_set_amp_enabled(bool enabled){
   set_gpio_output(GPIOA, 5, enabled);
   set_gpio_output(GPIOB, 0, enabled);
 }
+#endif
 
+#ifndef BOOTSTUB
 static void cuatro_init(void) {
   common_init_gpio();
 
@@ -100,7 +113,9 @@ static void cuatro_init(void) {
   set_gpio_alternate(GPIOE, 6, GPIO_AF10_SAI4);   // SAI4_MCLK_B
   sound_init();
 }
+#endif
 
+#ifndef BOOTSTUB
 static harness_configuration cuatro_harness_config = {
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
@@ -113,8 +128,10 @@ static harness_configuration cuatro_harness_config = {
   .adc_channel_SBU1 = 4, // ADC12_INP4
   .adc_channel_SBU2 = 17 // ADC1_INP17
 };
+#endif
 
-board board_cuatro = {
+#ifndef BOOTSTUB
+__attribute__((weak)) board board_cuatro = {
   .harness_config = &cuatro_harness_config,
   .has_spi = true,
   .fan_max_rpm = 12500U,
@@ -138,3 +155,4 @@ board board_cuatro = {
   .read_som_gpio = tres_read_som_gpio,
   .set_amp_enabled = cuatro_set_amp_enabled
 };
+#endif

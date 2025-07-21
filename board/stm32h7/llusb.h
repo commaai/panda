@@ -1,15 +1,21 @@
+#pragma once
+
 #include "llusb_declarations.h"
 
-USB_OTG_GlobalTypeDef *USBx = USB_OTG_HS;
+extern USB_OTG_GlobalTypeDef *USBx;
 
+#ifndef BOOTSTUB
 static void OTG_HS_IRQ_Handler(void) {
   NVIC_DisableIRQ(OTG_HS_IRQn);
   usb_irqhandler();
   NVIC_EnableIRQ(OTG_HS_IRQn);
 }
+#endif
 
-void usb_init(void) {
+static inline void usb_init(void) {
+#ifndef BOOTSTUB
   REGISTER_INTERRUPT(OTG_HS_IRQn, OTG_HS_IRQ_Handler, 1500000U, FAULT_INTERRUPT_RATE_USB) // TODO: Find out a better rate limit for USB. Now it's the 1.5MB/s rate
+#endif
 
   // Disable global interrupt
   USBx->GAHBCFG &= ~(USB_OTG_GAHBCFG_GINT);

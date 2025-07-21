@@ -1,3 +1,5 @@
+#pragma once
+
 // ///////////////////////////////////////////////////////////// //
 // Hardware abstraction layer for all different supported boards //
 // ///////////////////////////////////////////////////////////// //
@@ -12,13 +14,15 @@
 #include "board/drivers/clock_source.h"
 #include "board/boards/dos.h"
 
-void detect_board_type(void) {
+static inline void detect_board_type(void) {
   set_gpio_output(GPIOC, 14, 1);
   set_gpio_output(GPIOC, 5, 1);
+#ifndef BOOTSTUB
   if (!detect_with_pull(GPIOB, 1, PULL_UP) && !detect_with_pull(GPIOB, 7, PULL_UP)) {
     hw_type = HW_TYPE_DOS;
     current_board = &board_dos;
   }
+#endif
 
   // Return A13 to the alt mode to fix SWD
   set_gpio_alternate(GPIOA, 13, GPIO_AF0_SWJ);
