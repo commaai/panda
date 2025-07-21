@@ -32,6 +32,37 @@ typedef struct __attribute__((packed)) {
     uint8_t data[64];
 } CANPacket_t;
 
+// Accessor functions for CFFI compatibility - these provide the bit field interface
+uint8_t can_get_fd(CANPacket_t *pkt) { return pkt->flags & 0x01; }
+uint8_t can_get_bus(CANPacket_t *pkt) { return (pkt->flags >> 1) & 0x07; }
+uint8_t can_get_data_len_code(CANPacket_t *pkt) { return (pkt->flags >> 4) & 0x0F; }
+uint32_t can_get_addr(CANPacket_t *pkt) { return pkt->addr & 0x1FFFFFFF; }
+uint8_t can_get_extended(CANPacket_t *pkt) { return (pkt->addr >> 29) & 0x01; }
+uint8_t can_get_returned(CANPacket_t *pkt) { return (pkt->addr >> 30) & 0x01; }
+uint8_t can_get_rejected(CANPacket_t *pkt) { return (pkt->addr >> 31) & 0x01; }
+
+void can_set_fd(CANPacket_t *pkt, uint8_t val) { 
+    pkt->flags = (pkt->flags & 0xFE) | (val & 0x01); 
+}
+void can_set_bus(CANPacket_t *pkt, uint8_t val) { 
+    pkt->flags = (pkt->flags & 0xF1) | ((val & 0x07) << 1); 
+}
+void can_set_data_len_code(CANPacket_t *pkt, uint8_t val) { 
+    pkt->flags = (pkt->flags & 0x0F) | ((val & 0x0F) << 4); 
+}
+void can_set_addr(CANPacket_t *pkt, uint32_t val) { 
+    pkt->addr = (pkt->addr & 0xE0000000) | (val & 0x1FFFFFFF); 
+}
+void can_set_extended(CANPacket_t *pkt, uint8_t val) { 
+    pkt->addr = (pkt->addr & 0xDFFFFFFF) | ((val & 0x01) << 29); 
+}
+void can_set_returned(CANPacket_t *pkt, uint8_t val) { 
+    pkt->addr = (pkt->addr & 0xBFFFFFFF) | ((val & 0x01) << 30); 
+}
+void can_set_rejected(CANPacket_t *pkt, uint8_t val) { 
+    pkt->addr = (pkt->addr & 0x7FFFFFFF) | ((val & 0x01) << 31); 
+}
+
 #define CAN_TX_QUEUE_SIZE 416U  // Match production TX buffer size
 #define CAN_RX_QUEUE_SIZE 1024U // Reduced from 4096 to manage memory in tests
 
