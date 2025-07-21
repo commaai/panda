@@ -109,7 +109,7 @@ class PandaWrapper:
                 return attr(*new_args, **kwargs)
             return wrapper
         return attr
-        
+
 libpanda: Panda = PandaWrapper()
 
 
@@ -119,71 +119,71 @@ class CANPacketWrapper:
     """Wrapper to provide bit field-like access to the new packet structure"""
     def __init__(self, cffi_packet):
         self._pkt = cffi_packet
-    
+
     @property
     def addr(self):
         return _libpanda_raw.can_get_addr(self._pkt)
-    
-    @addr.setter  
+
+    @addr.setter
     def addr(self, val):
         _libpanda_raw.can_set_addr(self._pkt, val)
-    
+
     @property
     def bus(self):
         return _libpanda_raw.can_get_bus(self._pkt)
-    
+
     @bus.setter
     def bus(self, val):
         _libpanda_raw.can_set_bus(self._pkt, val)
-        
+
     @property
     def data_len_code(self):
         return _libpanda_raw.can_get_data_len_code(self._pkt)
-    
+
     @data_len_code.setter
     def data_len_code(self, val):
         _libpanda_raw.can_set_data_len_code(self._pkt, val)
-        
+
     @property
     def extended(self):
         return _libpanda_raw.can_get_extended(self._pkt)
-    
+
     @extended.setter
     def extended(self, val):
         _libpanda_raw.can_set_extended(self._pkt, val)
-        
+
     @property
     def fd(self):
         return _libpanda_raw.can_get_fd(self._pkt)
-    
+
     @fd.setter
     def fd(self, val):
         _libpanda_raw.can_set_fd(self._pkt, val)
-        
+
     @property
     def returned(self):
         return _libpanda_raw.can_get_returned(self._pkt)
-    
+
     @returned.setter
     def returned(self, val):
         _libpanda_raw.can_set_returned(self._pkt, val)
-        
+
     @property
     def rejected(self):
         return _libpanda_raw.can_get_rejected(self._pkt)
-    
+
     @rejected.setter
     def rejected(self, val):
         _libpanda_raw.can_set_rejected(self._pkt, val)
-        
+
     @property
     def checksum(self):
         return self._pkt[0].checksum
-        
+
     @checksum.setter
     def checksum(self, val):
         self._pkt[0].checksum = val
-        
+
     @property
     def data(self):
         return self._pkt[0].data
@@ -193,13 +193,13 @@ class CANPacketAccessor:
     def __init__(self, cffi_packet):
         self._cffi_packet = cffi_packet
         self._wrapper = CANPacketWrapper(cffi_packet)
-        
+
     def __getitem__(self, index):
         if index == 0:
             return self._wrapper
         else:
             raise IndexError("Only index 0 is supported")
-            
+
     @property
     def _cffi(self):
         """Get the underlying CFFI packet for queue operations"""
@@ -207,16 +207,16 @@ class CANPacketAccessor:
 
 def make_CANPacket(addr: int, bus: int, dat):
   ret = ffi.new('CANPacket_t *')
-  
+
   # Use accessor functions for proper bit packing
   _libpanda_raw.can_set_addr(ret, addr)
-  _libpanda_raw.can_set_bus(ret, bus)  
+  _libpanda_raw.can_set_bus(ret, bus)
   _libpanda_raw.can_set_data_len_code(ret, LEN_TO_DLC[len(dat)])
   _libpanda_raw.can_set_extended(ret, 1 if addr >= 0x800 else 0)
   _libpanda_raw.can_set_fd(ret, 0)
   _libpanda_raw.can_set_returned(ret, 0)
   _libpanda_raw.can_set_rejected(ret, 0)
-  
+
   ret[0].data = bytes(dat)
   _libpanda_raw.can_set_checksum(ret)
 
