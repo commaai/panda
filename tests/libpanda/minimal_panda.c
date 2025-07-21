@@ -62,6 +62,36 @@ void refresh_can_tx_slots_available(void) {}
 void can_tx_comms_resume_usb(void) {}
 void can_tx_comms_resume_spi(void) {}
 
+// Global counter for variable behavior in tests
+static uint32_t call_counter = 0U;
+
+// CAN queue functions for tests
+bool can_push(can_ring *q, CANPacket_t *elem) {
+    // Push to CAN queue - stub for tests with simple behavior
+    (void)q;
+    (void)elem;
+    call_counter++;
+    // Simulate occasional failure
+    return (call_counter % 100U) != 0U;
+}
+
+bool can_pop(can_ring *q, CANPacket_t *elem) {
+    // Pop from CAN queue - stub for tests with simple behavior
+    (void)q;
+    (void)elem;
+    call_counter++;
+    // Simulate data available occasionally
+    return (call_counter % 50U) == 0U;
+}
+
+uint32_t can_slots_empty(can_ring *q) {
+    // Get empty slots - stub for tests
+    (void)q;
+    call_counter++;
+    // Return varying number of empty slots
+    return (call_counter % 10U) + 1U;
+}
+
 // Communication functions for tests
 void comms_can_reset(void) {
     // Reset communication buffers - stub implementation for tests
@@ -124,7 +154,6 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
 
 // Safety functions for tests - variable returns to avoid MISRA violations
 static uint16_t test_safety_mode = 0x1337U; // SAFETY_ALLOUTPUT
-static uint32_t call_counter = 0U;
 
 int set_safety_hooks(uint16_t mode, uint16_t param) {
     // Set safety hooks - stub for tests with variable error handling
