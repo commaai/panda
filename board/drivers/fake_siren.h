@@ -13,4 +13,6 @@
 // Function declarations
 void fake_siren_init(void);
 void fake_siren_codec_enable(bool enabled);
+
+// Function declaration - weak implementation in main.c
 void fake_siren_set(bool enabled);

@@ -1,5 +1,5 @@
-#ifndef _STDINT_H_
-#define _STDINT_H_
+#ifndef STDINT_H_INCLUDED
+#define STDINT_H_INCLUDED
 
 // Basic integer types for embedded ARM
 typedef signed char int8_t;
@@ -12,31 +12,9 @@ typedef unsigned short int uint16_t;
 typedef unsigned int uint32_t;
 typedef unsigned long long int uint64_t;
 
-typedef int8_t int_least8_t;
-typedef int16_t int_least16_t;
-typedef int32_t int_least32_t;
-typedef int64_t int_least64_t;
-
-typedef uint8_t uint_least8_t;
-typedef uint16_t uint_least16_t;
-typedef uint32_t uint_least32_t;
-typedef uint64_t uint_least64_t;
-
-typedef int8_t int_fast8_t;
-typedef int32_t int_fast16_t;
-typedef int32_t int_fast32_t;
-typedef int64_t int_fast64_t;
-
-typedef uint8_t uint_fast8_t;
-typedef uint32_t uint_fast16_t;
-typedef uint32_t uint_fast32_t;
-typedef uint64_t uint_fast64_t;
-
+// These typedefs are used in the project
 typedef int32_t intptr_t;
 typedef uint32_t uintptr_t;
-
-typedef int64_t intmax_t;
-typedef uint64_t uintmax_t;
 
 // Limits
 #define INT8_MIN (-128)
@@ -55,14 +33,14 @@ typedef uint64_t uintmax_t;
 #define INT64_MAX (9223372036854775807LL)
 #define UINT64_MAX (18446744073709551615ULL)
 
-#define INTPTR_MIN INT32_MIN
-#define INTPTR_MAX INT32_MAX
-#define UINTPTR_MAX UINT32_MAX
+#define PANDA_INTPTR_MIN INT32_MIN
+#define PANDA_INTPTR_MAX INT32_MAX
+#define PANDA_UINTPTR_MAX UINT32_MAX
 
-#define INTMAX_MIN INT64_MIN
-#define INTMAX_MAX INT64_MAX
-#define UINTMAX_MAX UINT64_MAX
+#define PANDA_INTMAX_MIN INT64_MIN
+#define PANDA_INTMAX_MAX INT64_MAX
+#define PANDA_UINTMAX_MAX UINT64_MAX
 
-#define SIZE_MAX UINT32_MAX
+#define PANDA_SIZE_MAX UINT32_MAX
 
-#endif /* _STDINT_H_ */
+#endif /* STDINT_H_INCLUDED */
