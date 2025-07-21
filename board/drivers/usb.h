@@ -792,7 +792,7 @@ static void usb_irqhandler_impl(void) {
 }
 
 // Wrapper function to match external declaration - must be non-static for IRQ vector
-// MISRA 8.7: Function must have external linkage as it's referenced by interrupt vector table in startup code
+// cppcheck-suppress misra-c2012-8.7 ; Function referenced by interrupt vector table in startup code
 void usb_irqhandler(void) {
   usb_irqhandler_impl();
 }
