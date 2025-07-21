@@ -1,8 +1,16 @@
 import os
+import sys
 from cffi import FFI
 from typing import Any, Protocol
 
-from panda import LEN_TO_DLC
+# Add python directory to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'python'))
+
+try:
+    from __init__ import LEN_TO_DLC
+except ImportError:
+    # Fallback for local testing
+    LEN_TO_DLC = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 12: 9, 16: 10, 20: 11, 24: 12, 32: 13, 48: 14, 64: 15}
 
 libpanda_dir = os.path.dirname(os.path.abspath(__file__))
 libpanda_fn = os.path.join(libpanda_dir, "libpanda.so")
