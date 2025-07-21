@@ -327,9 +327,34 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
 }
 
 void can_set_checksum(CANPacket_t *packet) {
-    // Set checksum for CAN packet - stub for tests
-    // In real implementation this would calculate and set checksum
-    (void)packet;
+    if (packet == NULL) return;
+    
+    // Calculate checksum based on packet contents
+    // The checksum should be calculated from header and data
+    uint8_t checksum = 0;
+    
+    // Create temporary header bytes for checksum calculation
+    uint8_t header[5];
+    uint32_t word_4b = (packet->addr << 3) | (packet->extended << 2);
+    header[0] = (packet->data_len_code << 4) | (packet->bus << 1) | (packet->fd ? 1 : 0);
+    header[1] = word_4b & 0xFFU;
+    header[2] = (word_4b >> 8) & 0xFFU;
+    header[3] = (word_4b >> 16) & 0xFFU;
+    header[4] = (word_4b >> 24) & 0xFFU;
+    
+    // Calculate checksum of header
+    for (int i = 0; i < 5; i++) {
+        checksum ^= header[i];
+    }
+    
+    // Add data to checksum  
+    const uint8_t dlc_to_len[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64};
+    uint8_t data_len = (packet->data_len_code < 16) ? dlc_to_len[packet->data_len_code] : 8;
+    for (uint8_t i = 0; i < data_len && i < 64; i++) {
+        checksum ^= packet->data[i];
+    }
+    
+    packet->checksum = checksum;
 }
 
 bool can_check_checksum(CANPacket_t *packet) {
