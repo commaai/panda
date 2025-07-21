@@ -90,14 +90,16 @@ void process_can(uint8_t can_number) {
       // add successfully transmitted message to my fifo
       if ((CANx->TSR & CAN_TSR_RQCP0) == CAN_TSR_RQCP0) {
         if ((CANx->TSR & CAN_TSR_TXOK0) == CAN_TSR_TXOK0) {
-          CANPacket_t to_push;
-          to_push.fd = 0U;
-          to_push.returned = 1U;
-          to_push.rejected = 0U;
-          to_push.extended = (CANx->sTxMailBox[0].TIR >> 2) & 0x1U;
-          to_push.addr = (to_push.extended != 0U) ? (CANx->sTxMailBox[0].TIR >> 3) : (CANx->sTxMailBox[0].TIR >> 21);
-          to_push.data_len_code = CANx->sTxMailBox[0].TDTR & 0xFU;
-          to_push.bus = bus_number;
+          CANPacket_t to_push = {0};
+          SET_FD(&to_push, 0U);
+          SET_RETURNED(&to_push, 1U);
+          SET_REJECTED(&to_push, 0U);
+          uint8_t extended = (CANx->sTxMailBox[0].TIR >> 2) & 0x1U;
+          SET_EXTENDED(&to_push, extended);
+          uint32_t addr = (extended != 0U) ? (CANx->sTxMailBox[0].TIR >> 3) : (CANx->sTxMailBox[0].TIR >> 21);
+          SET_ADDR(&to_push, addr);
+          SET_DLC(&to_push, CANx->sTxMailBox[0].TDTR & 0xFU);
+          SET_BUS(&to_push, bus_number);
           WORD_TO_BYTE_ARRAY(&to_push.data[0], CANx->sTxMailBox[0].TDLR);
           WORD_TO_BYTE_ARRAY(&to_push.data[4], CANx->sTxMailBox[0].TDHR);
           can_set_checksum(&to_push);
@@ -114,8 +116,10 @@ void process_can(uint8_t can_number) {
         if (can_check_checksum(&to_send)) {
           can_health[can_number].total_tx_cnt += 1U;
           // only send if we have received a packet
-          CANx->sTxMailBox[0].TIR = ((to_send.extended != 0U) ? (to_send.addr << 3) : (to_send.addr << 21)) | (to_send.extended << 2);
-          CANx->sTxMailBox[0].TDTR = to_send.data_len_code;
+          uint8_t extended = GET_EXTENDED(&to_send);
+          uint32_t addr = GET_ADDR(&to_send);
+          CANx->sTxMailBox[0].TIR = ((extended != 0U) ? (addr << 3) : (addr << 21)) | (extended << 2);
+          CANx->sTxMailBox[0].TDTR = GET_DLC(&to_send);
           BYTE_ARRAY_TO_WORD(CANx->sTxMailBox[0].TDLR, &to_send.data[0]);
           BYTE_ARRAY_TO_WORD(CANx->sTxMailBox[0].TDHR, &to_send.data[4]);
           // Send request TXRQ
@@ -145,32 +149,34 @@ void can_rx(uint8_t can_number) {
     pending_can_live = 1;
 
     // add to my fifo
-    CANPacket_t to_push;
+    CANPacket_t to_push = {0};
 
-    to_push.fd = 0U;
-    to_push.returned = 0U;
-    to_push.rejected = 0U;
-    to_push.extended = (CANx->sFIFOMailBox[0].RIR >> 2) & 0x1U;
-    to_push.addr = (to_push.extended != 0U) ? (CANx->sFIFOMailBox[0].RIR >> 3) : (CANx->sFIFOMailBox[0].RIR >> 21);
-    to_push.data_len_code = CANx->sFIFOMailBox[0].RDTR & 0xFU;
-    to_push.bus = bus_number;
+    SET_FD(&to_push, 0U);
+    SET_RETURNED(&to_push, 0U);
+    SET_REJECTED(&to_push, 0U);
+    uint8_t extended = (CANx->sFIFOMailBox[0].RIR >> 2) & 0x1U;
+    SET_EXTENDED(&to_push, extended);
+    uint32_t addr = (extended != 0U) ? (CANx->sFIFOMailBox[0].RIR >> 3) : (CANx->sFIFOMailBox[0].RIR >> 21);
+    SET_ADDR(&to_push, addr);
+    SET_DLC(&to_push, CANx->sFIFOMailBox[0].RDTR & 0xFU);
+    SET_BUS(&to_push, bus_number);
     WORD_TO_BYTE_ARRAY(&to_push.data[0], CANx->sFIFOMailBox[0].RDLR);
     WORD_TO_BYTE_ARRAY(&to_push.data[4], CANx->sFIFOMailBox[0].RDHR);
     can_set_checksum(&to_push);
 
     // forwarding (panda only)
-    int bus_fwd_num = safety_fwd_hook(bus_number, to_push.addr);
+    int bus_fwd_num = safety_fwd_hook(bus_number, GET_ADDR(&to_push));
     if (bus_fwd_num != -1) {
-      CANPacket_t to_send;
+      CANPacket_t to_send = {0};
 
-      to_send.fd = 0U;
-      to_send.returned = 0U;
-      to_send.rejected = 0U;
-      to_send.extended = to_push.extended; // TXRQ
-      to_send.addr = to_push.addr;
-      to_send.bus = to_push.bus;
-      to_send.data_len_code = to_push.data_len_code;
-      (void)memcpy(to_send.data, to_push.data, dlc_to_len[to_push.data_len_code]);
+      SET_FD(&to_send, 0U);
+      SET_RETURNED(&to_send, 0U);
+      SET_REJECTED(&to_send, 0U);
+      SET_EXTENDED(&to_send, GET_EXTENDED(&to_push)); // TXRQ
+      SET_ADDR(&to_send, GET_ADDR(&to_push));
+      SET_BUS(&to_send, GET_BUS(&to_push));
+      SET_DLC(&to_send, GET_DLC(&to_push));
+      (void)memcpy(to_send.data, to_push.data, dlc_to_len[GET_DLC(&to_push)]);
       can_set_checksum(&to_send);
 
       can_send(&to_send, bus_fwd_num, true);

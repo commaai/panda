@@ -36,7 +36,7 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
     // Fill rest of buffer with new data
     CANPacket_t can_packet;
     while ((pos < max_len) && can_pop(&can_rx_q, &can_packet)) {
-      uint32_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[can_packet.data_len_code];
+      uint32_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[GET_DLC(&can_packet)];
       if ((pos + pckt_len) <= max_len) {
         (void)memcpy(&data[pos], (uint8_t*)&can_packet, pckt_len);
         pos += pckt_len;
@@ -70,7 +70,7 @@ void comms_can_write(const uint8_t *data, uint32_t len) {
 
       // send out
       (void)memcpy((uint8_t*)&to_push, can_write_buffer.data, can_write_buffer.ptr);
-      can_send(&to_push, to_push.bus, false);
+      can_send(&to_push, GET_BUS(&to_push), false);
 
       // reset overflow buffer
       can_write_buffer.ptr = 0U;
@@ -91,7 +91,7 @@ void comms_can_write(const uint8_t *data, uint32_t len) {
     if ((pos + pckt_len) <= len) {
       CANPacket_t to_push = {0};
       (void)memcpy((uint8_t*)&to_push, &data[pos], pckt_len);
-      can_send(&to_push, to_push.bus, false);
+      can_send(&to_push, GET_BUS(&to_push), false);
       pos += pckt_len;
     } else {
       (void)memcpy(can_write_buffer.data, &data[pos], len - pos);

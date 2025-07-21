@@ -250,8 +250,8 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
     }
   } else {
     safety_tx_blocked += 1U;
-    to_push->returned = 0U;
-    to_push->rejected = 1U;
+    SET_RETURNED(to_push, 0U);
+    SET_REJECTED(to_push, 1U);
 
     // data changed
     can_set_checksum(to_push);

@@ -108,17 +108,20 @@ void process_can(uint8_t can_number) {
           canfd_fifo *fifo;
           fifo = (canfd_fifo *)(TxFIFOSA + (tx_index * FDCAN_TX_FIFO_EL_SIZE));
 
-          fifo->header[0] = (to_send.extended << 30) | ((to_send.extended != 0U) ? (to_send.addr) : (to_send.addr << 18));
+          uint8_t extended = GET_EXTENDED(&to_send);
+          uint32_t addr = GET_ADDR(&to_send);
+          fifo->header[0] = (extended << 30) | ((extended != 0U) ? (addr) : (addr << 18));
 
           // If canfd_auto is set, outgoing packets will be automatically sent as CAN-FD if an incoming CAN-FD packet was seen
-          bool fd = bus_config[can_number].canfd_auto ? bus_config[can_number].canfd_enabled : (bool)(to_send.fd > 0U);
+          bool fd = bus_config[can_number].canfd_auto ? bus_config[can_number].canfd_enabled : (bool)(GET_FD(&to_send) > 0U);
           uint32_t canfd_enabled_header = fd ? (1UL << 21) : 0UL;
 
           uint32_t brs_enabled_header = bus_config[can_number].brs_enabled ? (1UL << 20) : 0UL;
-          fifo->header[1] = (to_send.data_len_code << 16) | canfd_enabled_header | brs_enabled_header;
+          fifo->header[1] = (GET_DLC(&to_send) << 16) | canfd_enabled_header | brs_enabled_header;
 
-          uint8_t data_len_w = (dlc_to_len[to_send.data_len_code] / 4U);
-          data_len_w += ((dlc_to_len[to_send.data_len_code] % 4U) > 0U) ? 1U : 0U;
+          uint8_t dlc = GET_DLC(&to_send);
+          uint8_t data_len_w = (dlc_to_len[dlc] / 4U);
+          data_len_w += ((dlc_to_len[dlc] % 4U) > 0U) ? 1U : 0U;
           for (unsigned int i = 0; i < data_len_w; i++) {
             BYTE_ARRAY_TO_WORD(fifo->data_word[i], &to_send.data[i*4U]);
           }
@@ -126,16 +129,16 @@ void process_can(uint8_t can_number) {
           FDCANx->TXBAR = (1UL << tx_index);
 
           // Send back to USB
-          CANPacket_t to_push;
+          CANPacket_t to_push = {0};
 
-          to_push.fd = fd;
-          to_push.returned = 1U;
-          to_push.rejected = 0U;
-          to_push.extended = to_send.extended;
-          to_push.addr = to_send.addr;
-          to_push.bus = bus_number;
-          to_push.data_len_code = to_send.data_len_code;
-          (void)memcpy(to_push.data, to_send.data, dlc_to_len[to_push.data_len_code]);
+          SET_FD(&to_push, fd);
+          SET_RETURNED(&to_push, 1U);
+          SET_REJECTED(&to_push, 0U);
+          SET_EXTENDED(&to_push, GET_EXTENDED(&to_send));
+          SET_ADDR(&to_push, GET_ADDR(&to_send));
+          SET_BUS(&to_push, bus_number);
+          SET_DLC(&to_push, GET_DLC(&to_send));
+          (void)memcpy(to_push.data, to_send.data, dlc_to_len[GET_DLC(&to_push)]);
           can_set_checksum(&to_push);
 
           rx_buffer_overflow += can_push(&can_rx_q, &to_push) ? 0U : 1U;
@@ -176,7 +179,7 @@ void can_rx(uint8_t can_number) {
     }
 
     uint32_t RxFIFO0SA = FDCAN_START_ADDRESS + (can_number * FDCAN_OFFSET);
-    CANPacket_t to_push;
+    CANPacket_t to_push = {0};
     canfd_fifo *fifo;
 
     // getting address
@@ -185,37 +188,40 @@ void can_rx(uint8_t can_number) {
     bool canfd_frame = ((fifo->header[1] >> 21) & 0x1U);
     bool brs_frame = ((fifo->header[1] >> 20) & 0x1U);
 
-    to_push.fd = canfd_frame;
-    to_push.returned = 0U;
-    to_push.rejected = 0U;
-    to_push.extended = (fifo->header[0] >> 30) & 0x1U;
-    to_push.addr = ((to_push.extended != 0U) ? (fifo->header[0] & 0x1FFFFFFFU) : ((fifo->header[0] >> 18) & 0x7FFU));
-    to_push.bus = bus_number;
-    to_push.data_len_code = ((fifo->header[1] >> 16) & 0xFU);
+    SET_FD(&to_push, canfd_frame);
+    SET_RETURNED(&to_push, 0U);
+    SET_REJECTED(&to_push, 0U);
+    uint8_t extended = (fifo->header[0] >> 30) & 0x1U;
+    SET_EXTENDED(&to_push, extended);
+    uint32_t addr = ((extended != 0U) ? (fifo->header[0] & 0x1FFFFFFFU) : ((fifo->header[0] >> 18) & 0x7FFU));
+    SET_ADDR(&to_push, addr);
+    SET_BUS(&to_push, bus_number);
+    SET_DLC(&to_push, ((fifo->header[1] >> 16) & 0xFU));
 
-    uint8_t data_len_w = (dlc_to_len[to_push.data_len_code] / 4U);
-    data_len_w += ((dlc_to_len[to_push.data_len_code] % 4U) > 0U) ? 1U : 0U;
+    uint8_t dlc = GET_DLC(&to_push);
+    uint8_t data_len_w = (dlc_to_len[dlc] / 4U);
+    data_len_w += ((dlc_to_len[dlc] % 4U) > 0U) ? 1U : 0U;
     for (unsigned int i = 0; i < data_len_w; i++) {
       WORD_TO_BYTE_ARRAY(&to_push.data[i*4U], fifo->data_word[i]);
     }
     can_set_checksum(&to_push);
 
     // forwarding (panda only)
-    int bus_fwd_num = safety_fwd_hook(bus_number, to_push.addr);
+    int bus_fwd_num = safety_fwd_hook(bus_number, GET_ADDR(&to_push));
     if (bus_fwd_num < 0) {
       bus_fwd_num = bus_config[can_number].forwarding_bus;
     }
     if (bus_fwd_num != -1) {
-      CANPacket_t to_send;
+      CANPacket_t to_send = {0};
 
-      to_send.fd = to_push.fd;
-      to_send.returned = 0U;
-      to_send.rejected = 0U;
-      to_send.extended = to_push.extended;
-      to_send.addr = to_push.addr;
-      to_send.bus = to_push.bus;
-      to_send.data_len_code = to_push.data_len_code;
-      (void)memcpy(to_send.data, to_push.data, dlc_to_len[to_push.data_len_code]);
+      SET_FD(&to_send, GET_FD(&to_push));
+      SET_RETURNED(&to_send, 0U);
+      SET_REJECTED(&to_send, 0U);
+      SET_EXTENDED(&to_send, GET_EXTENDED(&to_push));
+      SET_ADDR(&to_send, GET_ADDR(&to_push));
+      SET_BUS(&to_send, GET_BUS(&to_push));
+      SET_DLC(&to_send, GET_DLC(&to_push));
+      (void)memcpy(to_send.data, to_push.data, dlc_to_len[GET_DLC(&to_push)]);
       can_set_checksum(&to_send);
 
       can_send(&to_send, bus_fwd_num, true);
