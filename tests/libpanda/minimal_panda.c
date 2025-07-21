@@ -36,20 +36,26 @@ typedef struct __attribute__((packed)) {
     uint8_t reserved3[8];
 } CANPacket_t;
 
-#define CAN_QUEUE_SIZE 1024
+#define CAN_QUEUE_SIZE 64  // Reduced size to prevent memory issues
 
 typedef struct {
     uint32_t w_ptr, r_ptr;
-    CANPacket_t elems[CAN_QUEUE_SIZE];
+    CANPacket_t *elems;  // Use pointer instead of fixed array
     uint32_t fifo_size;
 } can_ring;
 
+// Static storage for CAN queues to avoid dynamic allocation
+static CANPacket_t rx_queue_storage[CAN_QUEUE_SIZE];
+static CANPacket_t tx1_queue_storage[CAN_QUEUE_SIZE];
+static CANPacket_t tx2_queue_storage[CAN_QUEUE_SIZE];
+static CANPacket_t tx3_queue_storage[CAN_QUEUE_SIZE];
+
 // Minimal global variables for tests
 extern can_ring can_rx_q, can_tx1_q, can_tx2_q, can_tx3_q;
-can_ring can_rx_q = {.w_ptr = 0, .r_ptr = 0, .fifo_size = CAN_QUEUE_SIZE};
-can_ring can_tx1_q = {.w_ptr = 0, .r_ptr = 0, .fifo_size = CAN_QUEUE_SIZE}; 
-can_ring can_tx2_q = {.w_ptr = 0, .r_ptr = 0, .fifo_size = CAN_QUEUE_SIZE};
-can_ring can_tx3_q = {.w_ptr = 0, .r_ptr = 0, .fifo_size = CAN_QUEUE_SIZE};
+can_ring can_rx_q = {.w_ptr = 0, .r_ptr = 0, .elems = rx_queue_storage, .fifo_size = CAN_QUEUE_SIZE};
+can_ring can_tx1_q = {.w_ptr = 0, .r_ptr = 0, .elems = tx1_queue_storage, .fifo_size = CAN_QUEUE_SIZE}; 
+can_ring can_tx2_q = {.w_ptr = 0, .r_ptr = 0, .elems = tx2_queue_storage, .fifo_size = CAN_QUEUE_SIZE};
+can_ring can_tx3_q = {.w_ptr = 0, .r_ptr = 0, .elems = tx3_queue_storage, .fifo_size = CAN_QUEUE_SIZE};
 
 can_ring *rx_q = &can_rx_q;
 can_ring *tx1_q = &can_tx1_q;
@@ -80,9 +86,10 @@ void pack_can_packet(uint8_t *buffer, uint32_t address, const uint8_t *data, uin
 // Global counter for variable behavior in tests
 static uint32_t call_counter = 0U;
 
-// CAN queue functions for tests - actual working implementations
+// CAN queue functions for tests - safe implementations with bounds checking
 bool can_push(can_ring *q, CANPacket_t *elem) {
-    if (q == NULL || elem == NULL) return false;
+    if (q == NULL || elem == NULL || q->elems == NULL) return false;
+    if (q->fifo_size == 0) return false;
     
     uint32_t next_w_ptr = (q->w_ptr + 1U) % q->fifo_size;
     if (next_w_ptr == q->r_ptr) {
@@ -90,28 +97,59 @@ bool can_push(can_ring *q, CANPacket_t *elem) {
         return false;
     }
     
-    // Copy packet to queue
-    memcpy(&q->elems[q->w_ptr], elem, sizeof(CANPacket_t));
+    // Bounds check
+    if (q->w_ptr >= q->fifo_size) {
+        q->w_ptr = 0; // Reset on overflow
+    }
+    
+    // Copy packet to queue with size limiting
+    memset(&q->elems[q->w_ptr], 0, sizeof(CANPacket_t));
+    q->elems[q->w_ptr].addr = elem->addr;
+    q->elems[q->w_ptr].extended = elem->extended;
+    q->elems[q->w_ptr].data_len_code = elem->data_len_code;
+    q->elems[q->w_ptr].bus = elem->bus;
+    
+    // Copy data with bounds checking
+    for (uint32_t i = 0; i < 64 && i < sizeof(elem->data); i++) {
+        q->elems[q->w_ptr].data[i] = elem->data[i];
+    }
+    
     q->w_ptr = next_w_ptr;
     return true;
 }
 
 bool can_pop(can_ring *q, CANPacket_t *elem) {
-    if (q == NULL || elem == NULL) return false;
+    if (q == NULL || elem == NULL || q->elems == NULL) return false;
+    if (q->fifo_size == 0) return false;
     
     if (q->r_ptr == q->w_ptr) {
         // Queue empty
         return false;
     }
     
-    // Copy packet from queue
-    memcpy(elem, &q->elems[q->r_ptr], sizeof(CANPacket_t));
+    // Bounds check
+    if (q->r_ptr >= q->fifo_size) {
+        q->r_ptr = 0; // Reset on overflow
+    }
+    
+    // Copy packet from queue with size limiting
+    memset(elem, 0, sizeof(CANPacket_t));
+    elem->addr = q->elems[q->r_ptr].addr;
+    elem->extended = q->elems[q->r_ptr].extended;
+    elem->data_len_code = q->elems[q->r_ptr].data_len_code;
+    elem->bus = q->elems[q->r_ptr].bus;
+    
+    // Copy data with bounds checking
+    for (uint32_t i = 0; i < 64 && i < sizeof(elem->data); i++) {
+        elem->data[i] = q->elems[q->r_ptr].data[i];
+    }
+    
     q->r_ptr = (q->r_ptr + 1U) % q->fifo_size;
     return true;
 }
 
 uint32_t can_slots_empty(can_ring *q) {
-    if (q == NULL) return 0U;
+    if (q == NULL || q->elems == NULL || q->fifo_size == 0) return 0U;
     
     uint32_t used_slots;
     if (q->w_ptr >= q->r_ptr) {
@@ -120,7 +158,8 @@ uint32_t can_slots_empty(can_ring *q) {
         used_slots = (q->fifo_size - q->r_ptr) + q->w_ptr;
     }
     
-    return q->fifo_size - used_slots - 1U; // -1 to prevent full condition
+    uint32_t empty_slots = (q->fifo_size > used_slots + 1U) ? (q->fifo_size - used_slots - 1U) : 0U;
+    return empty_slots;
 }
 
 // Communication functions for tests
