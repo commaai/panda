@@ -12,7 +12,7 @@ scons -j8
 
 # *** lint ***
 ruff check .
-mypy python/
+uvx ty check python/ --ignore unresolved-attribute --ignore unresolved-import
 
 
 # *** test ***
