@@ -5,8 +5,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// Define size_t for nostdlib build
+// Define size_t and NULL for nostdlib build
 typedef unsigned long size_t;
+#ifndef NULL
+#define NULL ((void*)0)
+#endif
 
 // Forward declarations to avoid complex includes
 typedef struct {
@@ -22,12 +25,6 @@ typedef struct {
 } uart_ring;
 
 typedef struct {
-    uint32_t w_ptr, r_ptr;
-    void *elems;
-    uint32_t fifo_size;
-} can_ring;
-
-typedef struct {
     uint32_t reserved[4];
     uint32_t addr;
     uint8_t reserved2[3];
@@ -36,12 +33,20 @@ typedef struct {
     uint8_t reserved3[8];
 } CANPacket_t;
 
+#define CAN_QUEUE_SIZE 1024
+
+typedef struct {
+    uint32_t w_ptr, r_ptr;
+    CANPacket_t elems[CAN_QUEUE_SIZE];
+    uint32_t fifo_size;
+} can_ring;
+
 // Minimal global variables for tests
 extern can_ring can_rx_q, can_tx1_q, can_tx2_q, can_tx3_q;
-can_ring can_rx_q = {0};
-can_ring can_tx1_q = {0}; 
-can_ring can_tx2_q = {0};
-can_ring can_tx3_q = {0};
+can_ring can_rx_q = {.w_ptr = 0, .r_ptr = 0, .fifo_size = CAN_QUEUE_SIZE};
+can_ring can_tx1_q = {.w_ptr = 0, .r_ptr = 0, .fifo_size = CAN_QUEUE_SIZE}; 
+can_ring can_tx2_q = {.w_ptr = 0, .r_ptr = 0, .fifo_size = CAN_QUEUE_SIZE};
+can_ring can_tx3_q = {.w_ptr = 0, .r_ptr = 0, .fifo_size = CAN_QUEUE_SIZE};
 
 can_ring *rx_q = &can_rx_q;
 can_ring *tx1_q = &can_tx1_q;
@@ -62,34 +67,54 @@ void refresh_can_tx_slots_available(void) {}
 void can_tx_comms_resume_usb(void) {}
 void can_tx_comms_resume_spi(void) {}
 
+// Memory functions - forward declarations
+void *memset(void *s, int c, size_t n);
+void *memcpy(void *dest, const void *src, size_t n);
+
 // Global counter for variable behavior in tests
 static uint32_t call_counter = 0U;
 
-// CAN queue functions for tests
+// CAN queue functions for tests - actual working implementations
 bool can_push(can_ring *q, CANPacket_t *elem) {
-    // Push to CAN queue - stub for tests with simple behavior
-    (void)q;
-    (void)elem;
-    call_counter++;
-    // Simulate occasional failure
-    return (call_counter % 100U) != 0U;
+    if (q == NULL || elem == NULL) return false;
+    
+    uint32_t next_w_ptr = (q->w_ptr + 1U) % q->fifo_size;
+    if (next_w_ptr == q->r_ptr) {
+        // Queue full
+        return false;
+    }
+    
+    // Copy packet to queue
+    memcpy(&q->elems[q->w_ptr], elem, sizeof(CANPacket_t));
+    q->w_ptr = next_w_ptr;
+    return true;
 }
 
 bool can_pop(can_ring *q, CANPacket_t *elem) {
-    // Pop from CAN queue - stub for tests with simple behavior
-    (void)q;
-    (void)elem;
-    call_counter++;
-    // Simulate data available occasionally
-    return (call_counter % 50U) == 0U;
+    if (q == NULL || elem == NULL) return false;
+    
+    if (q->r_ptr == q->w_ptr) {
+        // Queue empty
+        return false;
+    }
+    
+    // Copy packet from queue
+    memcpy(elem, &q->elems[q->r_ptr], sizeof(CANPacket_t));
+    q->r_ptr = (q->r_ptr + 1U) % q->fifo_size;
+    return true;
 }
 
 uint32_t can_slots_empty(can_ring *q) {
-    // Get empty slots - stub for tests
-    (void)q;
-    call_counter++;
-    // Return varying number of empty slots
-    return (call_counter % 10U) + 1U;
+    if (q == NULL) return 0U;
+    
+    uint32_t used_slots;
+    if (q->w_ptr >= q->r_ptr) {
+        used_slots = q->w_ptr - q->r_ptr;
+    } else {
+        used_slots = (q->fifo_size - q->r_ptr) + q->w_ptr;
+    }
+    
+    return q->fifo_size - used_slots - 1U; // -1 to prevent full condition
 }
 
 // Communication functions for tests
@@ -97,17 +122,47 @@ void comms_can_reset(void) {
     // Reset communication buffers - stub implementation for tests
 }
 
+// Communication buffer for testing
+static uint8_t comm_buffer[4096];
+static uint32_t comm_buffer_len = 0;
+static uint32_t comm_read_ptr = 0;
+
 void comms_can_write(const uint8_t *data, uint32_t len) {
-    // Write CAN data - stub implementation for tests
-    (void)data;
-    (void)len;
+    // Simple implementation that processes CAN packets and puts them in queues
+    if (data == NULL || len == 0) return;
+    
+    // For testing, we'll parse the data as CAN packets and put them in tx queues
+    // This is a simplified version - real implementation would be more complex
+    while (len >= sizeof(CANPacket_t)) {
+        CANPacket_t *pkt = (CANPacket_t *)data;
+        
+        // Determine which queue to use based on packet address (simplified)
+        can_ring *target_queue = &can_tx1_q;
+        if ((pkt->addr & 0x700U) == 0x200U) {
+            target_queue = &can_tx2_q;
+        } else if ((pkt->addr & 0x700U) == 0x300U) {
+            target_queue = &can_tx3_q;
+        }
+        
+        can_push(target_queue, pkt);
+        data += sizeof(CANPacket_t);
+        len -= sizeof(CANPacket_t);
+    }
 }
 
 int comms_can_read(uint8_t *data, uint32_t max_len) {
-    // Read CAN data - stub implementation for tests
-    (void)data;
-    (void)max_len;
-    return 0;
+    if (data == NULL || max_len == 0) return 0;
+    
+    uint32_t bytes_read = 0;
+    CANPacket_t pkt;
+    
+    // Read packets from rx queue and serialize them
+    while (bytes_read + sizeof(CANPacket_t) <= max_len && can_pop(&can_rx_q, &pkt)) {
+        memcpy(data + bytes_read, &pkt, sizeof(CANPacket_t));
+        bytes_read += sizeof(CANPacket_t);
+    }
+    
+    return (int)bytes_read;
 }
 
 // Memory functions
