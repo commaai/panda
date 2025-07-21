@@ -515,6 +515,7 @@ static void usb_setup(void) {
 
 
 // ***************************** USB port *****************************
+// Declaration already in platform-specific llusb_declarations.h
 
 void usb_irqhandler(void) {
   //USBx->GINTMSK = 0;

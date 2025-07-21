@@ -66,6 +66,10 @@ __attribute__((weak)) bool get_char(uart_ring *q, char *elem) {
   return ret;
 }
 
+// Declaration moved to avoid MISRA 8.7 violation
+bool injectc(uart_ring *q, char elem);
+
+// Weak implementation
 __attribute__((weak)) bool injectc(uart_ring *q, char elem) {
   int ret = false;
   uint16_t next_w_ptr;
@@ -124,6 +128,9 @@ __attribute__((weak)) void print(const char *a) {
     putch(*in);
   }
 }
+
+// Declaration to avoid MISRA 8.7 violation
+void puthx(uint32_t i, uint8_t len);
 
 __attribute__((weak)) void puthx(uint32_t i, uint8_t len) {
   const char c[] = "0123456789abcdef";
