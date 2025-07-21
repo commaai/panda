@@ -43,11 +43,25 @@ typedef struct {
 #define GET_REJECTED(msg)    (((msg)->addr >> 29U) & 1U)
 #define GET_DLC(msg)         (((msg)->flags & CAN_FLAGS_DLC_MASK) >> CAN_FLAGS_DLC_SHIFT)
 
-// Setter macros
-#define SET_BUS(msg, val)    do { (msg)->flags = ((msg)->flags & ~CAN_FLAGS_BUS_MASK) | (((val) << CAN_FLAGS_BUS_SHIFT) & CAN_FLAGS_BUS_MASK); } while(0)
-#define SET_DLC(msg, val)    do { (msg)->flags = ((msg)->flags & ~CAN_FLAGS_DLC_MASK) | (((val) << CAN_FLAGS_DLC_SHIFT) & CAN_FLAGS_DLC_MASK); } while(0)
-#define SET_FD(msg, val)     do { (msg)->flags = ((msg)->flags & ~CAN_FLAGS_FD_MASK) | ((val) & CAN_FLAGS_FD_MASK); } while(0)
-#define SET_ADDR(msg, val)   do { (msg)->addr = ((msg)->addr & 0xE0000000U) | ((val) & 0x1FFFFFFFU); } while(0)
-#define SET_EXTENDED(msg, val) do { (msg)->addr = ((msg)->addr & 0x7FFFFFFFU) | (((val) & 1U) << 31U); } while(0)
-#define SET_RETURNED(msg, val) do { (msg)->addr = ((msg)->addr & 0xBFFFFFFFU) | (((val) & 1U) << 30U); } while(0)
-#define SET_REJECTED(msg, val) do { (msg)->addr = ((msg)->addr & 0xDFFFFFFFU) | (((val) & 1U) << 29U); } while(0)
+// MISRA-compliant setter functions
+static inline void SET_BUS(CANPacket_t *msg, uint8_t val) {
+  msg->flags = (msg->flags & ~CAN_FLAGS_BUS_MASK) | (((val) << CAN_FLAGS_BUS_SHIFT) & CAN_FLAGS_BUS_MASK);
+}
+static inline void SET_DLC(CANPacket_t *msg, uint8_t val) {
+  msg->flags = (msg->flags & ~CAN_FLAGS_DLC_MASK) | (((val) << CAN_FLAGS_DLC_SHIFT) & CAN_FLAGS_DLC_MASK);
+}
+static inline void SET_FD(CANPacket_t *msg, uint8_t val) {
+  msg->flags = (msg->flags & ~CAN_FLAGS_FD_MASK) | ((val) & CAN_FLAGS_FD_MASK);
+}
+static inline void SET_ADDR(CANPacket_t *msg, uint32_t val) {
+  msg->addr = (msg->addr & 0xE0000000U) | ((val) & 0x1FFFFFFFU);
+}
+static inline void SET_EXTENDED(CANPacket_t *msg, uint8_t val) {
+  msg->addr = (msg->addr & 0x7FFFFFFFU) | (((val) & 1U) << 31U);
+}
+static inline void SET_RETURNED(CANPacket_t *msg, uint8_t val) {
+  msg->addr = (msg->addr & 0xBFFFFFFFU) | (((val) & 1U) << 30U);
+}
+static inline void SET_REJECTED(CANPacket_t *msg, uint8_t val) {
+  msg->addr = (msg->addr & 0xDFFFFFFFU) | (((val) & 1U) << 29U);
+}
