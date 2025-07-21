@@ -110,7 +110,7 @@ void process_can(uint8_t can_number) {
 
           uint8_t extended = GET_EXTENDED(&to_send);
           uint32_t addr = GET_ADDR(&to_send);
-          fifo->header[0] = (extended << 30) | ((extended != 0U) ? (addr) : (addr << 18));
+          fifo->header[0] = ((uint32_t)extended << 30) | ((extended != 0U) ? (addr) : (addr << 18));
 
           // If canfd_auto is set, outgoing packets will be automatically sent as CAN-FD if an incoming CAN-FD packet was seen
           bool fd = bus_config[can_number].canfd_auto ? bus_config[can_number].canfd_enabled : (bool)(GET_FD(&to_send) > 0U);
