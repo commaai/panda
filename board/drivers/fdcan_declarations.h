@@ -12,6 +12,7 @@ typedef struct {
 } canfd_fifo;
 
 #define CANS_ARRAY_SIZE 3
+#define CAN_ARRAY_SIZE CANS_ARRAY_SIZE
 extern FDCAN_GlobalTypeDef *cans[CANS_ARRAY_SIZE];
 
 #define CAN_ACK_ERROR 3U
