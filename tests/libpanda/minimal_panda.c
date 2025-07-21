@@ -24,13 +24,15 @@ typedef struct {
     bool overwrite;
 } uart_ring;
 
-typedef struct {
-    uint32_t reserved[4];
+// CAN packet structure matching the actual protocol
+// This should match the binary format expected by the Python code
+typedef struct __attribute__((packed)) {
     uint32_t addr;
-    uint8_t reserved2[3];
+    uint8_t bus;
     uint8_t data_len_code;
-    uint8_t data[8];
-    uint8_t reserved3[8];
+    uint8_t reserved[2];
+    uint8_t data[64]; // Max CAN-FD data length
+    uint8_t reserved2[8];
 } CANPacket_t;
 
 #define CAN_QUEUE_SIZE 1024
@@ -70,6 +72,9 @@ void can_tx_comms_resume_spi(void) {}
 // Memory functions - forward declarations
 void *memset(void *s, int c, size_t n);
 void *memcpy(void *dest, const void *src, size_t n);
+
+// CAN packet functions - forward declarations
+void pack_can_packet(uint8_t *buffer, uint32_t address, const uint8_t *data, uint8_t data_len, uint8_t bus);
 
 // Global counter for variable behavior in tests
 static uint32_t call_counter = 0U;
@@ -128,41 +133,67 @@ static uint32_t comm_buffer_len = 0;
 static uint32_t comm_read_ptr = 0;
 
 void comms_can_write(const uint8_t *data, uint32_t len) {
-    // Simple implementation that processes CAN packets and puts them in queues
     if (data == NULL || len == 0) return;
     
-    // For testing, we'll parse the data as CAN packets and put them in tx queues
-    // This is a simplified version - real implementation would be more complex
-    while (len >= sizeof(CANPacket_t)) {
-        CANPacket_t *pkt = (CANPacket_t *)data;
+    // Process CAN packets from the buffer
+    const uint8_t dlc_to_len[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64};
+    
+    uint32_t offset = 0;
+    while (offset + 6 <= len) { // At least header size
+        const uint8_t *header = data + offset;
+        uint8_t data_len_code = header[0] >> 4;
+        uint8_t bus = (header[0] >> 1) & 0x7;
+        uint8_t data_len = (data_len_code < 16) ? dlc_to_len[data_len_code] : 8;
         
-        // Determine which queue to use based on packet address (simplified)
-        can_ring *target_queue = &can_tx1_q;
-        if ((pkt->addr & 0x700U) == 0x200U) {
-            target_queue = &can_tx2_q;
-        } else if ((pkt->addr & 0x700U) == 0x300U) {
-            target_queue = &can_tx3_q;
+        if (offset + 6 + data_len > len) break; // Not enough data
+        
+        // Extract address
+        uint32_t word_4b = header[1] | (header[2] << 8) | (header[3] << 16) | (header[4] << 24);
+        uint32_t address = word_4b >> 3;
+        
+        // Create packet for queue
+        CANPacket_t pkt = {0};
+        pkt.addr = address;
+        pkt.bus = bus;
+        pkt.data_len_code = data_len_code;
+        for(uint32_t i = 0; i < data_len && i < 64; i++) {
+            pkt.data[i] = data[offset + 6 + i];
         }
         
-        can_push(target_queue, pkt);
-        data += sizeof(CANPacket_t);
-        len -= sizeof(CANPacket_t);
+        // Choose target queue based on bus
+        can_ring *target_queue = &can_tx1_q;
+        if (bus == 1) target_queue = &can_tx2_q;
+        else if (bus == 2) target_queue = &can_tx3_q;
+        
+        can_push(target_queue, &pkt);
+        
+        offset += 6 + data_len;
     }
 }
 
 int comms_can_read(uint8_t *data, uint32_t max_len) {
     if (data == NULL || max_len == 0) return 0;
     
-    uint32_t bytes_read = 0;
+    uint32_t bytes_written = 0;
     CANPacket_t pkt;
     
-    // Read packets from rx queue and serialize them
-    while (bytes_read + sizeof(CANPacket_t) <= max_len && can_pop(&can_rx_q, &pkt)) {
-        memcpy(data + bytes_read, &pkt, sizeof(CANPacket_t));
-        bytes_read += sizeof(CANPacket_t);
+    // Read packets from rx queue and serialize them in the expected format
+    while (can_pop(&can_rx_q, &pkt)) {
+        const uint8_t dlc_to_len[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64};
+        uint8_t data_len = (pkt.data_len_code < 16) ? dlc_to_len[pkt.data_len_code] : 8;
+        uint32_t packet_size = 6 + data_len;
+        
+        if (bytes_written + packet_size > max_len) {
+            // Put packet back in queue - can't fit
+            // Note: This is simplified - real implementation would handle partial reads
+            break;
+        }
+        
+        pack_can_packet(data + bytes_written, pkt.addr, pkt.data, data_len, pkt.bus);
+        bytes_written += packet_size;
     }
     
-    return (int)bytes_read;
+    return (int)bytes_written;
 }
 
 // Memory functions
@@ -180,8 +211,8 @@ void *memcpy(void *dest, const void *src, size_t n) {
 }
 
 // CAN utility functions for tests
+// Checksum calculation matching Python implementation
 uint8_t calculate_checksum(const uint8_t *dat, uint32_t len) {
-    // Simple checksum calculation - stub for tests
     uint8_t checksum = 0;
     for(uint32_t i = 0; i < len; i++) {
         checksum ^= dat[i];
@@ -189,15 +220,32 @@ uint8_t calculate_checksum(const uint8_t *dat, uint32_t len) {
     return checksum;
 }
 
-void can_set_checksum(CANPacket_t *packet) {
-    // Set CAN packet checksum - stub for tests
-    (void)packet;
-}
-
-bool can_check_checksum(CANPacket_t *packet) {
-    // Check CAN packet checksum - stub for tests
-    (void)packet;
-    return true;
+// CAN packet format conversion functions
+void pack_can_packet(uint8_t *buffer, uint32_t address, const uint8_t *data, uint8_t data_len, uint8_t bus) {
+    // Pack CAN packet according to Python format
+    // Header format: [DLC_bus_fd][addr_low][addr_mid][addr_high][addr_top][checksum]
+    uint8_t data_len_code = 0;
+    // Convert data length to DLC
+    const uint8_t len_to_dlc[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}; // Simplified
+    if (data_len <= 8) data_len_code = data_len;
+    else if (data_len <= 12) data_len_code = 9;
+    else if (data_len <= 16) data_len_code = 10;
+    else data_len_code = 8; // Fallback
+    
+    uint32_t word_4b = (address << 3) | (address >= 0x800U ? 4U : 0U); // extended bit at bit 2
+    buffer[0] = (data_len_code << 4) | (bus << 1) | 0; // fd=0
+    buffer[1] = word_4b & 0xFFU;
+    buffer[2] = (word_4b >> 8) & 0xFFU;
+    buffer[3] = (word_4b >> 16) & 0xFFU;
+    buffer[4] = (word_4b >> 24) & 0xFFU;
+    
+    // Copy data
+    for(uint32_t i = 0; i < data_len && i < 64; i++) {
+        buffer[6 + i] = data[i];
+    }
+    
+    // Calculate checksum (header[0:5] + data)
+    buffer[5] = calculate_checksum(buffer, 5) ^ calculate_checksum(data, data_len);
 }
 
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
