@@ -791,7 +791,7 @@ static void usb_irqhandler_impl(void) {
   //USBx->GINTMSK = 0xFFFFFFFF & ~(USB_OTG_GINTMSK_NPTXFEM | USB_OTG_GINTMSK_PTXFEM | USB_OTG_GINTSTS_SOF | USB_OTG_GINTSTS_EOPF);
 }
 
-// Wrapper function to match external declaration
+// Wrapper function to match external declaration - must be non-static for IRQ vector
 void usb_irqhandler(void) {
   usb_irqhandler_impl();
 }

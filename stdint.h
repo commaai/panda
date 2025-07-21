@@ -10,9 +10,11 @@ typedef unsigned char uint8_t;
 typedef unsigned short int uint16_t;
 typedef unsigned int uint32_t;
 
-// 64-bit types needed by crypto and CMSIS functions
+// 64-bit types only defined when actually used
+#if defined(__GNUC__) && (defined(CRYPTO_BUILD) || defined(__ARM_NEON) || defined(__ARM_FEATURE_DSP))
 typedef long long int int64_t;
 typedef unsigned long long int uint64_t;
+#endif
 
 // Limits
 #define INT8_MIN (-128)

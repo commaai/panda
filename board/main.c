@@ -398,6 +398,7 @@ static void sound_init_impl(void) {
   // Empty stub for sound initialization
 }
 
+// Non-static wrapper for weak symbol - must be externally visible
 void sound_init(void) {
   sound_init_impl();
 }
@@ -408,6 +409,7 @@ static void fake_siren_set_impl(bool enabled) {
   // Empty stub for fake siren
 }
 
+// Non-static wrapper for weak symbol - must be externally visible  
 void fake_siren_set(bool enabled) {
   fake_siren_set_impl(enabled);
 }

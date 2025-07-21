@@ -3,8 +3,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// Register monitoring structure - used by registers.c
-typedef struct panda_register_monitor {
+// Register monitoring structure - directly typedef to avoid MISRA 2.3
+typedef struct {
   volatile uint32_t *address;
   uint32_t value;
   uint32_t check_mask;
