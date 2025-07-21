@@ -5,7 +5,8 @@
 
 // Register monitoring structure
 // cppcheck-suppress misra-c2012-2.3 ; typedef is used in registers.c for register_map array
-typedef struct {
+// cppcheck-suppress misra-c2012-2.4 ; struct tag is required for forward declarations
+typedef struct reg_struct {
   volatile uint32_t *address;
   uint32_t value;
   uint32_t check_mask;
