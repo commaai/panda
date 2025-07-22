@@ -61,7 +61,7 @@ def to_c_uint32(x):
 
 
 def build_project(project_name, project, main, extra_flags):
-  project_dir = f'#board/obj/{project_name}/'
+  project_dir = Dir(f'./board/obj/{project_name}/')
 
   flags = project["FLAGS"] + extra_flags + common_flags + [
     "-Wall",
@@ -74,7 +74,7 @@ def build_project(project_name, project, main, extra_flags):
     "-fno-builtin",
     "-std=gnu11",
     "-fmax-errors=1",
-    f"-T{File(project['LINKER_SCRIPT'])}",
+    f"-T{File(project['LINKER_SCRIPT']).srcnode().relpath}",
     "-fsingle-precision-constant",
     "-Os",
     "-g",
@@ -90,7 +90,7 @@ def build_project(project_name, project, main, extra_flags):
     CFLAGS=flags,
     ASFLAGS=flags,
     LINKFLAGS=flags,
-    CPPPATH=["#", opendbc.INCLUDE_PATH],
+    CPPPATH=[Dir("./"), "./board/stm32f4/inc", "./board/stm32h7/inc", opendbc.INCLUDE_PATH],
     ASCOM="$AS $ASFLAGS -o $TARGET -c $SOURCES",
     BUILDERS={
       'Objcopy': Builder(generator=objcopy, suffix='.bin', src_suffix='.elf')
@@ -105,11 +105,11 @@ def build_project(project_name, project, main, extra_flags):
   bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
   bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", [
     startup,
-    "#crypto/rsa.c",
-    "#crypto/sha.c",
-    "#board/bootstub.c",
+    "./crypto/rsa.c",
+    "./crypto/sha.c",
+    "./board/bootstub.c",
   ])
-  bs_env.Objcopy(f"#board/obj/bootstub.{project_name}.bin", bs_elf)
+  bs_env.Objcopy(f"./board/obj/bootstub.{project_name}.bin", bs_elf)
 
   # Build + sign main (aka app)
   main_elf = env.Program(f"{project_dir}/main.elf", [
@@ -117,12 +117,13 @@ def build_project(project_name, project, main, extra_flags):
     main
   ], LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
-  env.Command(f"#board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 crypto/sign.py $SOURCE $TARGET {cert_fn}")
+  sign_py = File(f"./crypto/sign.py").srcnode().relpath
+  env.Command(f"./board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
 
 
 base_project_f4 = {
-  "STARTUP_FILE": "#board/stm32f4/startup_stm32f413xx.s",
-  "LINKER_SCRIPT": "#board/stm32f4/stm32f4_flash.ld",
+  "STARTUP_FILE": "./board/stm32f4/startup_stm32f413xx.s",
+  "LINKER_SCRIPT": "./board/stm32f4/stm32f4_flash.ld",
   "APP_START_ADDRESS": "0x8004000",
   "FLAGS": [
     "-mcpu=cortex-m4",
@@ -135,8 +136,8 @@ base_project_f4 = {
 }
 
 base_project_h7 = {
-  "STARTUP_FILE": "#board/stm32h7/startup_stm32h7x5xx.s",
-  "LINKER_SCRIPT": "#board/stm32h7/stm32h7x5_flash.ld",
+  "STARTUP_FILE": "./board/stm32h7/startup_stm32h7x5xx.s",
+  "LINKER_SCRIPT": "./board/stm32h7/stm32h7x5_flash.ld",
   "APP_START_ADDRESS": "0x8020000",
   "FLAGS": [
     "-mcpu=cortex-m7",
@@ -163,8 +164,8 @@ with open("board/obj/cert.h", "w") as f:
     f.write("\n".join(cert) + "\n")
 
 # panda fw
-build_project("panda", base_project_f4, "#board/main.c", [])
-build_project("panda_h7", base_project_h7, "#board/main.c", [])
+build_project("panda", base_project_f4, "./board/main.c", [])
+build_project("panda_h7", base_project_h7, "./board/main.c", [])
 
 # panda jungle fw
 flags = [
@@ -172,7 +173,7 @@ flags = [
 ]
 if os.getenv("FINAL_PROVISIONING"):
   flags += ["-DFINAL_PROVISIONING"]
-build_project("panda_jungle_h7", base_project_h7, "#board/jungle/main.c", flags)
+build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", flags)
 
 # test files
 if GetOption('extras'):
