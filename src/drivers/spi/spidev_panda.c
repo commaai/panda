@@ -354,7 +354,7 @@ spidev_get_ioc_message(unsigned int cmd, struct spi_ioc_transfer __user *u_ioc,
 }
 
 
-#include "spi_panda.h"
+#include "drivers/spi/spi_panda.h"
 
 static long
 spidev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)

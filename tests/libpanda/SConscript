@@ -21,7 +21,7 @@ env = Environment(
     '-Wfatal-errors',
     '-Wno-pointer-to-int-cast',
   ],
-  CPPPATH=[".", "../../board/", opendbc.INCLUDE_PATH],
+  CPPPATH=[".", "../../include/board/", opendbc.INCLUDE_PATH],
 )
 if system == "Darwin":
   env.PrependENVPath('PATH', '/opt/homebrew/bin')
@@ -34,5 +34,5 @@ if GetOption('ubsan'):
   env['CFLAGS'] += flags
   env['LINKFLAGS'] += flags
 
-panda = env.SharedObject("panda.os", "panda.c")
+panda = env.SharedObject("panda.os", "../../src/tests/libpanda/panda.c")
 libpanda = env.SharedLibrary("libpanda.so", [panda])

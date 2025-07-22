@@ -40,5 +40,5 @@
 #else
   // TODO: uncomment this, cppcheck complains
   // building for tests
-  //#include "fake_stm.h"
+  //#include "board/fake_stm.h"
 #endif

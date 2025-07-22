@@ -25,8 +25,8 @@
 ** ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "rsa.h"
-#include "sha.h"
+#include "crypto/rsa.h"
+#include "crypto/sha.h"
 
 // a[] -= mod
 static void subM(const RSAPublicKey* key,

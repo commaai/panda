@@ -29,7 +29,7 @@
 
 void *memcpy(void *str1, const void *str2, unsigned int n);
 
-#include "sha.h"
+#include "crypto/sha.h"
 
 #define rol(bits, value) (((value) << (bits)) | ((value) >> (32 - (bits))))
 

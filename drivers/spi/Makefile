@@ -9,6 +9,8 @@ ccflags-y := -Wno-missing-attributes
 
 default:
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
+	vpath %.c ../../src/drivers/spi
+	ccflags-y += -I$(PWD)/../../../include/drivers/spi
 
 clean:
 	$(MAKE) -C $(KDIR) M=$(PWD) clean

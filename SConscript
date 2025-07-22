@@ -90,7 +90,7 @@ def build_project(project_name, project, main, extra_flags):
     CFLAGS=flags,
     ASFLAGS=flags,
     LINKFLAGS=flags,
-    CPPPATH=[Dir("./"), "./board/stm32f4/inc", "./board/stm32h7/inc", opendbc.INCLUDE_PATH],
+    CPPPATH=[Dir("./"), Dir("include"), "include/board/stm32f4/inc", "include/board/stm32h7/inc", opendbc.INCLUDE_PATH],
     ASCOM="$AS $ASFLAGS -o $TARGET -c $SOURCES",
     BUILDERS={
       'Objcopy': Builder(generator=objcopy, suffix='.bin', src_suffix='.elf')
@@ -105,9 +105,9 @@ def build_project(project_name, project, main, extra_flags):
   bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
   bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", [
     startup,
-    "./crypto/rsa.c",
-    "./crypto/sha.c",
-    "./board/bootstub.c",
+    "src/crypto/rsa.c",
+    "src/crypto/sha.c",
+    "src/board/bootstub.c",
   ])
   bs_env.Objcopy(f"./board/obj/bootstub.{project_name}.bin", bs_elf)
 
@@ -122,22 +122,22 @@ def build_project(project_name, project, main, extra_flags):
 
 
 base_project_f4 = {
-  "STARTUP_FILE": "./board/stm32f4/startup_stm32f413xx.s",
-  "LINKER_SCRIPT": "./board/stm32f4/stm32f4_flash.ld",
+  "STARTUP_FILE": "src/board/stm32f4/startup_stm32f413xx.s",
+  "LINKER_SCRIPT": "src/board/stm32f4/stm32f4_flash.ld",
   "APP_START_ADDRESS": "0x8004000",
   "FLAGS": [
     "-mcpu=cortex-m4",
     "-mhard-float",
     "-DSTM32F4",
     "-DSTM32F413xx",
-    "-Iboard/stm32f4/inc",
+    "-Iinclude/board/stm32f4/inc",
     "-mfpu=fpv4-sp-d16",
   ],
 }
 
 base_project_h7 = {
-  "STARTUP_FILE": "./board/stm32h7/startup_stm32h7x5xx.s",
-  "LINKER_SCRIPT": "./board/stm32h7/stm32h7x5_flash.ld",
+  "STARTUP_FILE": "src/board/stm32h7/startup_stm32h7x5xx.s",
+  "LINKER_SCRIPT": "src/board/stm32h7/stm32h7x5_flash.ld",
   "APP_START_ADDRESS": "0x8020000",
   "FLAGS": [
     "-mcpu=cortex-m7",
@@ -164,8 +164,8 @@ with open("board/obj/cert.h", "w") as f:
     f.write("\n".join(cert) + "\n")
 
 # panda fw
-build_project("panda", base_project_f4, "./board/main.c", [])
-build_project("panda_h7", base_project_h7, "./board/main.c", [])
+build_project("panda", base_project_f4, "src/board/main.c", [])
+build_project("panda_h7", base_project_h7, "src/board/main.c", [])
 
 # panda jungle fw
 flags = [
@@ -173,7 +173,7 @@ flags = [
 ]
 if os.getenv("FINAL_PROVISIONING"):
   flags += ["-DFINAL_PROVISIONING"]
-build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", flags)
+build_project("panda_jungle_h7", base_project_h7, "src/board/jungle/main.c", flags)
 
 # test files
 if GetOption('extras'):
