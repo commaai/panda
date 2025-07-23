@@ -68,7 +68,7 @@ flake8-implicit-str-concat.allow-multiline=false
 "pytest.main".msg = "pytest.main requires special handling that is easy to mess up!"
 
 [tool.pytest.ini_options]
-addopts = "-Werror --strict-config --strict-markers --durations=10 --ignore-glob='*.sh' --ignore=tests/misra --ignore=tests/som --ignore=tests/hitl"
+addopts = "-Werror --strict-config --strict-markers --durations=10 --ignore-glob='*.sh' --ignore=tests/misra/cppcheck/ --ignore=tests/som --ignore=tests/hitl"
 python_files = "test_*.py"
 testpaths = [
   "tests/"
