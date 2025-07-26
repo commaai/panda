@@ -600,7 +600,7 @@ static int spidev_open(struct inode *inode, struct file *filp)
 		}
 	}
 
-	if (status) {
+	if (status != 0) {{
 		pr_debug("spidev: nothing for minor %d\n", iminor(inode));
 		goto err_find_dev;
 	}
