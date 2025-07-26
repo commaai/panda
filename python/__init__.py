@@ -13,7 +13,7 @@ try:
   from opendbc.car.structs import CarParams
 except ImportError:
   # Create a minimal CarParams mock if opendbc is not available
-  class CarParams:
+  class CarParams:  # type: ignore[no-redef]
     class SafetyModel:
       silent = 0
       honda = 1
