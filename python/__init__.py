@@ -9,7 +9,17 @@ import binascii
 from functools import wraps, partial
 from itertools import accumulate
 
-from opendbc.car.structs import CarParams
+try:
+  from opendbc.car.structs import CarParams
+except ImportError:
+  # Create a minimal CarParams mock if opendbc is not available
+  class CarParams:
+    class SafetyModel:
+      silent = 0
+      honda = 1
+      toyota = 2
+      # Add other commonly used safety models as needed
+      allOutput = 17
 
 from .base import BaseHandle
 from .constants import FW_PATH, McuType

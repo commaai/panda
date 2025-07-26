@@ -13,10 +13,12 @@ classifiers = [
 ]
 dependencies = [
   "libusb1",
-  "opendbc @ git+https://github.com/commaai/opendbc.git@45bf6c8f548473dece52f780f60bd8e20c32bd65#egg=opendbc",
 ]
 
 [project.optional-dependencies]
+full = [
+  "opendbc @ git+https://github.com/commaai/opendbc.git@45bf6c8f548473dece52f780f60bd8e20c32bd65#egg=opendbc",
+]
 dev = [
   "scons",
   "pycryptodome >= 3.9.8",
@@ -31,16 +33,55 @@ dev = [
   "setuptools",
   "spidev; platform_system == 'Linux'",
 ]
+firmware = [
+  "scons",
+  "pycryptodome >= 3.9.8",
+]
 
 [build-system]
 requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[project.scripts]
+panda-flash = "panda.scripts.flash_panda:main"
+panda-recover = "panda.scripts.recover_panda:main"
+
 [tool.setuptools]
 packages = ["panda"]
+include-package-data = true
 
 [tool.setuptools.package-dir]
 panda = "."
+
+[tool.setuptools.package-data]
+panda = [
+    "python/**/*.py",
+    "board/**/*.bin",
+    "board/**/*.signed", 
+    "board/**/*.h",
+    "board/**/*.c",
+    "board/**/*.s",
+    "board/**/*.ld",
+    "board/**/*.py",
+    "certs/*",
+    "crypto/**/*.py",
+    "crypto/**/*.h", 
+    "crypto/**/*.c",
+    "drivers/**/*",
+    "examples/**/*.py",
+    "examples/**/*.md",
+    "scripts/**/*.py",
+    "scripts/**/*.sh",
+    "tests/**/*.py",
+    "tests/**/*.bin",
+    "tests/**/*.txt",
+    "tests/misra/install.sh",
+    "tests/misra/test_misra.sh",
+    "*.md",
+    "LICENSE",
+    "SConscript",
+    "SConstruct",
+]
 
 [tool.mypy]
 # third-party packages
