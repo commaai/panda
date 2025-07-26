@@ -74,7 +74,7 @@ def recover():
     # Flash all devices in DFU mode
     dfu_serials = PandaDFU.list()
     print(f"Found {len(dfu_serials)} panda(s) in DFU - {dfu_serials}")
-    
+
     for s in dfu_serials:
         try:
             print(f"Flashing {s}")

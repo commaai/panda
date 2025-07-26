@@ -9,4 +9,4 @@ from .python import (Panda, PandaDFU, # noqa: F401
 # panda jungle
 from .board.jungle import PandaJungle, PandaJungleDFU # noqa: F401
 
-__version__ = __version__  # noqa: F401
+__version__ = __version__
