@@ -1,0 +1,26 @@
+include LICENSE
+include README.md
+include SConstruct
+include SConscript
+include pyproject.toml
+include setup.sh
+include test.sh
+
+recursive-include board *
+recursive-include certs *
+recursive-include crypto *
+recursive-include drivers *
+recursive-include docs *
+recursive-include examples *
+recursive-include scripts *
+recursive-include tests *
+recursive-include python *
+
+global-exclude *.pyc
+global-exclude __pycache__
+global-exclude .DS_Store
+global-exclude *.o
+global-exclude *.so
+global-exclude *.bin
+global-exclude *.elf
+global-exclude obj/

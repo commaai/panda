@@ -13,10 +13,16 @@ classifiers = [
 ]
 dependencies = [
   "libusb1",
-  "opendbc @ git+https://github.com/commaai/opendbc.git@45bf6c8f548473dece52f780f60bd8e20c32bd65#egg=opendbc",
 ]
 
+[project.scripts]
+panda-flash = "panda.cli:flash"
+panda-recover = "panda.cli:recover"
+
 [project.optional-dependencies]
+opendbc = [
+  "opendbc @ git+https://github.com/commaai/opendbc.git@45bf6c8f548473dece52f780f60bd8e20c32bd65#egg=opendbc",
+]
 dev = [
   "scons",
   "pycryptodome >= 3.9.8",
@@ -38,9 +44,25 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = ["panda"]
+include-package-data = true
 
 [tool.setuptools.package-dir]
 panda = "."
+
+[tool.setuptools.package-data]
+panda = [
+  "board/**/*",
+  "certs/*",
+  "crypto/*",
+  "drivers/**/*",
+  "python/**/*",
+  "scripts/**/*",
+  "tests/**/*",
+  "*.h",
+  "*.sh",
+  "SConstruct",
+  "SConscript",
+]
 
 [tool.mypy]
 # third-party packages
