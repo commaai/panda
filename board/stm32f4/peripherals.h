@@ -22,8 +22,6 @@ void gpio_usart2_init(void) {
 
 // Common GPIO initialization
 void common_init_gpio(void) {
-  // TODO: Is this block actually doing something???
-  // pull low to hold ESP in reset??
   // enable OTG out tied to ground
   GPIOA->ODR = 0;
   GPIOB->ODR = 0;
