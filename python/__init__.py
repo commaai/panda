@@ -12,13 +12,24 @@ from itertools import accumulate
 from opendbc.car.structs import CarParams
 
 from .base import BaseHandle
-from .constants import FW_PATH, McuType
+from .constants import FW_PATH, McuType, USBPACKET_MAX_SIZE
 from .dfu import PandaDFU
 from .spi import PandaSpiHandle, PandaSpiException, PandaProtocolMismatch
 from .usb import PandaUsbHandle
 from .utils import logger
 
+# PandaJungle is available via: from panda.board.jungle import PandaJungle
+# We don't import it here to avoid circular import issues
+
 __version__ = '0.0.10'
+
+# Explicitly export all classes that consumers expect
+__all__ = [
+    'Panda', 'PandaDFU', 'PandaProtocolMismatch', 'CarParams',
+    'FW_PATH', 'McuType', 'USBPACKET_MAX_SIZE',
+    'DLC_TO_LEN', 'LEN_TO_DLC', 'PANDA_BUS_CNT',
+    'pack_can_buffer', 'unpack_can_buffer', 'calculate_checksum'
+]
 
 CANPACKET_HEAD_SIZE = 0x6
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]

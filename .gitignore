@@ -14,6 +14,10 @@ a.out
 dist/
 build/
 pandacan.egg-info/
+panda.egg-info/
+*.egg-info/
+test_env/
+test_install/
 obj/
 examples/output.csv
 .DS_Store

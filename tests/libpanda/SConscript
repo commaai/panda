@@ -1,5 +1,6 @@
-import opendbc
 import platform
+
+import opendbc
 
 CC = 'gcc'
 system = platform.system()

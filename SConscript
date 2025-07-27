@@ -1,6 +1,7 @@
 import os
-import opendbc
 import subprocess
+
+import opendbc
 
 PREFIX = "arm-none-eabi-"
 BUILDER = "DEV"

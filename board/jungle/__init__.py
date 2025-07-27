@@ -1,10 +1,25 @@
 # python library to interface with panda
 import os
+import sys
 import struct
 from functools import wraps
 
-from panda import Panda, PandaDFU
-from panda.python.constants import McuType
+# Import dependencies - works for pip installed package
+try:
+    from panda import Panda, PandaDFU
+    from panda.constants import McuType
+except ImportError:
+    # Fallback for development - define minimal stubs
+    print("Warning: panda package not found, using stubs", file=sys.stderr)
+
+    class Panda:  # type: ignore[no-redef]
+        pass
+
+    class PandaDFU:  # type: ignore[no-redef]
+        pass
+
+    class McuType:  # type: ignore[no-redef]
+        pass
 
 BASEDIR = os.path.dirname(os.path.realpath(__file__))
 FW_PATH = os.path.join(BASEDIR, "../obj/")
