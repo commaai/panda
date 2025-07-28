@@ -101,21 +101,22 @@ void adc_init(void) {
 
 void adc_calibrate(void) {
   // Read VREFINT channel (19) with max sampling time and oversampling
-  ADC1->SQR1 &= ~(ADC_SQR1_L);
-  ADC1->SQR1 = 19U << 6U;
-  ADC1->SMPR2 = 0x7UL << ((19U - 10U) * 3UL); // 810.5 ADC cycles
-  ADC1->PCSEL_RES0 = (0x1UL << 19U);
-  ADC1->CFGR2 = (63UL << ADC_CFGR2_OVSR_Pos) | (0x6U << ADC_CFGR2_OVSS_Pos) | ADC_CFGR2_ROVSE; // 64x oversampling, 6-bit shift
+  ADC2->SQR1 &= ~(ADC_SQR1_L);
+  ADC2->SQR1 = 19U << 6U;
+  ADC2->SMPR2 = 0x7UL << ((19U - 10U) * 3UL); // 810.5 ADC cycles
+  ADC2->PCSEL_RES0 = (0x1UL << 19U);
+  ADC2->CFGR2 = (63UL << ADC_CFGR2_OVSR_Pos) | (0x6U << ADC_CFGR2_OVSS_Pos) | ADC_CFGR2_ROVSE; // 64x oversampling, 6-bit shift
 
   ADC3_COMMON->CCR |= ADC_CCR_VREFEN;
 
-  ADC1->CR |= ADC_CR_ADSTART;
-  while (!(ADC1->ISR & ADC_ISR_EOC));
+  ADC2->CR |= ADC_CR_ADSTART;
+  while (!(ADC2->ISR & ADC_ISR_EOC));
 
-  uint16_t vref_raw = ADC1->DR;
+  uint16_t vref_raw = ADC2->DR;
+  print("vref_raw: "); puth(vref_raw); print("\n");
 
-  while (!(ADC1->ISR & ADC_ISR_EOS));
-  ADC1->ISR |= ADC_ISR_EOS;
+  while (!(ADC2->ISR & ADC_ISR_EOS));
+  ADC2->ISR |= ADC_ISR_EOS;
 
   ADC3_COMMON->CCR &= ~(ADC_CCR_VREFEN);
 
