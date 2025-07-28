@@ -1,6 +1,7 @@
 #include "lladc_declarations.h"
 
 struct cadc_state_t cadc_state;
+uint16_t adc_cal_factor = 1000U;
 
 static uint16_t adc_get_raw(uint8_t channel) {
   uint16_t res = 0U;
@@ -72,6 +73,8 @@ void adc_init(void) {
   ADC1->CR |= ADC_CR_ADEN;
   while(!(ADC1->ISR & ADC_ISR_ADRDY));
 
+  adc_calibrate();
+
   // ADC2 for continuous sampling of voltage and current
   if ((current_board->voltage_cadc_channel != CADC_CHANNEL_NONE) || (current_board->current_cadc_channel != CADC_CHANNEL_NONE)) {
     ADC2->CR = ADC_CR_ADVREGEN;
@@ -93,5 +96,31 @@ void adc_init(void) {
 
     // start readout
     adc2_start_channel((current_board->voltage_cadc_channel != CADC_CHANNEL_NONE) ? current_board->voltage_cadc_channel : current_board->current_cadc_channel);
+  }
+}
+
+void adc_calibrate(void) {
+  // Read VREFINT channel (19) with max sampling time and oversampling
+  ADC1->SQR1 &= ~(ADC_SQR1_L);
+  ADC1->SQR1 = 19U << 6U;
+  ADC1->SMPR2 = 0x7UL << ((19U - 10U) * 3UL); // 810.5 ADC cycles
+  ADC1->PCSEL_RES0 = (0x1UL << 19U);
+  ADC1->CFGR2 = (63UL << ADC_CFGR2_OVSR_Pos) | (0x6U << ADC_CFGR2_OVSS_Pos) | ADC_CFGR2_ROVSE; // 64x oversampling, 6-bit shift
+
+  ADC3_COMMON->CCR |= ADC_CCR_VREFEN;
+
+  ADC1->CR |= ADC_CR_ADSTART;
+  while (!(ADC1->ISR & ADC_ISR_EOC));
+
+  uint16_t vref_raw = ADC1->DR;
+
+  while (!(ADC1->ISR & ADC_ISR_EOS));
+  ADC1->ISR |= ADC_ISR_EOS;
+
+  ADC3_COMMON->CCR &= ~(ADC_CCR_VREFEN);
+
+  // Calculate calibration factor: VREFINT typ = 1.21V
+  if (vref_raw > 0U) {
+    adc_cal_factor = (1210U * 65535U) / vref_raw;
   }
 }
