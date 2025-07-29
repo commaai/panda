@@ -41,7 +41,19 @@ static void cuatro_set_bootkick(BootState state) {
   set_gpio_output(GPIOA, 0, state != BOOT_BOOTKICK);
 }
 
-static void cuatro_set_amp_enabled(bool enabled){
+static void cuatro_set_amp_enabled(bool enabled) {
+  // *** tmp, remove soon ***
+  static const uint8_t olds[][12] = {
+    // ', '.join(f'0x{b:02x}' for b in bytes.fromhex(Panda().get_uid()))
+    {0x2d, 0x00, 0x04, 0x00, 0x02, 0x51, 0x33, 0x33, 0x33, 0x36, 0x39, 0x36},
+  };
+  bool is_old = false;
+  for (int i = 0; i < (int)(sizeof(olds) / sizeof(olds[0])); i++) {
+    is_old |= (memcmp(olds[i], ((uint8_t *)UID_BASE), 12) == 0);
+  }
+  if (is_old) set_gpio_output(GPIOA, 5, enabled);
+  // *** tmp end ***
+
   set_gpio_output(GPIOB, 0, enabled);
 }
 

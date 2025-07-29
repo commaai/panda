@@ -104,12 +104,27 @@ void sound_init(void) {
   REGISTER_INTERRUPT(BDMA_Channel0_IRQn, BDMA_Channel0_IRQ_Handler, 128U, FAULT_INTERRUPT_RATE_SOUND_DMA)
   REGISTER_INTERRUPT(DMA1_Stream0_IRQn, DMA1_Stream0_IRQ_Handler, 128U, FAULT_INTERRUPT_RATE_SOUND_DMA)
 
+  // *** tmp, remove soon ***
+  static const uint8_t olds[][12] = {
+    // ', '.join(f'0x{b:02x}' for b in bytes.fromhex(Panda().get_uid()))
+    {0x2d, 0x00, 0x04, 0x00, 0x02, 0x51, 0x33, 0x33, 0x33, 0x36, 0x39, 0x36},
+  };
+  bool is_old = false;
+  for (int i = 0; i < (int)(sizeof(olds) / sizeof(olds[0])); i++) {
+    is_old |= (memcmp(olds[i], ((uint8_t *)UID_BASE), 12) == 0);
+  }
+  // *** tmp end ***
+
   // Init DAC
   DAC1->DHR12R1 = (1UL << 11);
-  DAC1->DHR12R2 = (1UL << 11);
+  if (!is_old) DAC1->DHR12R2 = (1UL << 11);
   register_set(&DAC1->MCR, 0U, 0xFFFFFFFFU);
   register_set(&DAC1->CR, DAC_CR_TEN1 | (4U << DAC_CR_TSEL1_Pos) | DAC_CR_DMAEN1, 0xFFFFFFFFU);
-  register_set_bits(&DAC1->CR, DAC_CR_EN1 | DAC_CR_EN2);
+  if (is_old) {
+    register_set_bits(&DAC1->CR, DAC_CR_EN1);
+  } else {
+    register_set_bits(&DAC1->CR, DAC_CR_EN1 | DAC_CR_EN2);
+  }
 
   // Setup DMAMUX (DAC_CH1_DMA as input)
   register_set(&DMAMUX1_Channel1->CCR, 67U, DMAMUX_CxCR_DMAREQ_ID_Msk);
