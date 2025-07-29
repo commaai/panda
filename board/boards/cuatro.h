@@ -39,8 +39,6 @@ static void cuatro_set_fan_enabled(bool enabled) {
 
 static void cuatro_set_bootkick(BootState state) {
   set_gpio_output(GPIOA, 0, state != BOOT_BOOTKICK);
-  // TODO: confirm we need this
-  //set_gpio_output(GPIOC, 12, state != BOOT_RESET);
 }
 
 static void cuatro_set_amp_enabled(bool enabled){
@@ -101,7 +99,6 @@ static void cuatro_init(void) {
 }
 
 static harness_configuration cuatro_harness_config = {
-  .has_harness = true,
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
   .GPIO_relay_SBU1 = GPIOA,
@@ -117,7 +114,6 @@ static harness_configuration cuatro_harness_config = {
 board board_cuatro = {
   .harness_config = &cuatro_harness_config,
   .has_spi = true,
-  .has_canfd = true,
   .fan_max_rpm = 12500U,
   .fan_max_pwm = 99U, // it can go up to 14k RPM, but 99% -> 100% is very non-linear
   .avdd_mV = 1800U,
@@ -130,7 +126,6 @@ board board_cuatro = {
   .led_pin = {6, 7, 9},
   .led_pwm_channels = {1, 2, 4},
   .set_can_mode = tres_set_can_mode,
-  .check_ignition = red_check_ignition,
   .read_voltage_mV = cuatro_read_voltage_mV,
   .read_current_mA = cuatro_read_current_mA,
   .set_fan_enabled = cuatro_set_fan_enabled,
