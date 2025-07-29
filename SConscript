@@ -22,9 +22,6 @@ else:
   if os.getenv("DEBUG"):
     common_flags += ["-DDEBUG"]
 
-  if os.getenv("DIFFERENTIAL_SOUND"):
-    common_flags += ["-DDIFFERENTIAL_SOUND"]
-
 def objcopy(source, target, env, for_signature):
     return '$OBJCOPY -O binary %s %s' % (source[0], target[0])
 
