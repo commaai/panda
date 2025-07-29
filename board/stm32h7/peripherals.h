@@ -108,6 +108,7 @@ void peripherals_init(void) {
 
   // Analog
   RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN; // Enable ADC12 clocks
+  RCC->AHB4ENR |= RCC_AHB4ENR_ADC3EN; // Enable ADC3 clocks
   RCC->APB1LENR |= RCC_APB1LENR_DAC12EN; // DAC
 
   // Audio
@@ -126,7 +127,6 @@ void peripherals_init(void) {
 
 #ifdef PANDA_JUNGLE
   RCC->AHB3ENR |= RCC_AHB3ENR_SDMMC1EN; // SDMMC
-  RCC->AHB4ENR |= RCC_AHB4ENR_ADC3EN; // Enable ADC3 clocks
 #endif
 }
 

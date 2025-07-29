@@ -3,28 +3,30 @@
 struct cadc_state_t cadc_state;
 uint16_t adc_cal_factor = 1000U;
 
-static uint16_t adc_get_raw(uint8_t channel) {
-  uint16_t res = 0U;
-  ADC1->SQR1 &= ~(ADC_SQR1_L);
-  ADC1->SQR1 = (uint32_t)channel << 6U;
+uint16_t adc_get_raw(ADC_TypeDef *adc, uint8_t channel) {
+  adc->SQR1 &= ~(ADC_SQR1_L);
+  adc->SQR1 = ((uint32_t) channel << 6U);
 
-  ADC1->SMPR1 = 0x4UL << (channel * 3UL);
-  ADC1->PCSEL_RES0 = (0x1UL << channel);
-  ADC1->CFGR2 = (63UL << ADC_CFGR2_OVSR_Pos) | (0x6U << ADC_CFGR2_OVSS_Pos) | ADC_CFGR2_ROVSE;
+  if (channel < 10U) {
+    adc->SMPR1 = (0x7U << (channel * 3U));
+  } else {
+    adc->SMPR2 = (0x7U << ((channel - 10U) * 3U));
+  }
+  adc->PCSEL_RES0 = (0x1U << channel);
 
-  ADC1->CR |= ADC_CR_ADSTART;
-  while (!(ADC1->ISR & ADC_ISR_EOC));
+  adc->CR |= ADC_CR_ADSTART;
+  while (!(adc->ISR & ADC_ISR_EOC));
 
-  res = ADC1->DR;
+  uint16_t res = adc->DR;
 
-  while (!(ADC1->ISR & ADC_ISR_EOS));
-  ADC1->ISR |= ADC_ISR_EOS;
+  while (!(adc->ISR & ADC_ISR_EOS));
+  adc->ISR |= ADC_ISR_EOS;
 
   return res;
 }
 
 uint16_t adc_get_mV(uint8_t channel) {
-  return ADC_RAW_TO_mV(adc_get_raw(channel));
+  return ADC_RAW_TO_mV(adc_get_raw(ADC1, channel));
 }
 
 void adc2_start_channel(uint8_t channel) {
@@ -99,29 +101,39 @@ void adc_init(void) {
   }
 }
 
+void adc_init2(ADC_TypeDef *adc) {
+  adc->CR &= ~(ADC_CR_DEEPPWD); // Reset deep-power-down mode
+  adc->CR |= ADC_CR_ADVREGEN; // Enable ADC regulator
+  while(!(adc->ISR & ADC_ISR_LDORDY) && (adc != ADC3));
+
+  if (adc != ADC3) {
+    adc->CR &= ~(ADC_CR_ADCALDIF); // Choose single-ended calibration
+    adc->CR |= ADC_CR_ADCALLIN; // Lineriality calibration
+  }
+  adc->CR |= ADC_CR_ADCAL; // Start calibrtation
+  while((adc->CR & ADC_CR_ADCAL) != 0);
+
+  adc->ISR |= ADC_ISR_ADRDY;
+  adc->CR |= ADC_CR_ADEN;
+  while(!(adc->ISR & ADC_ISR_ADRDY));
+}
+
 void adc_calibrate(void) {
-  // Read VREFINT channel (19) with max sampling time and oversampling
-  ADC2->SQR1 &= ~(ADC_SQR1_L);
-  ADC2->SQR1 = 19U << 6U;
-  ADC2->SMPR2 = 0x7UL << ((19U - 10U) * 3UL); // 810.5 ADC cycles
-  ADC2->PCSEL_RES0 = (0x1UL << 19U);
-  ADC2->CFGR2 = (63UL << ADC_CFGR2_OVSR_Pos) | (0x6U << ADC_CFGR2_OVSS_Pos) | ADC_CFGR2_ROVSE; // 64x oversampling, 6-bit shift
+  adc_init2(ADC2);
 
+  // make sure the channel is enabled
   ADC3_COMMON->CCR |= ADC_CCR_VREFEN;
+  SYSCFG->ADC2ALT |= SYSCFG_ADC2ALT_ADC2_ROUT1;
 
-  ADC2->CR |= ADC_CR_ADSTART;
-  while (!(ADC2->ISR & ADC_ISR_EOC));
-
-  uint16_t vref_raw = ADC2->DR;
+  //uint16_t vref_raw = adc_get_raw(ADC3, 18U);
+  uint32_t vref_raw = adc_get_raw(ADC2, 17U);
   print("vref_raw: "); puth(vref_raw); print("\n");
-
-  while (!(ADC2->ISR & ADC_ISR_EOS));
-  ADC2->ISR |= ADC_ISR_EOS;
 
   ADC3_COMMON->CCR &= ~(ADC_CCR_VREFEN);
 
   // Calculate calibration factor: VREFINT typ = 1.21V
-  if (vref_raw > 0U) {
-    adc_cal_factor = (1210U * 65535U) / vref_raw;
-  }
+  uint32_t cal_data = *(uint16_t *)VREFINT_CAL_ADDR;
+  adc_cal_factor = (3300UL * cal_data * 16UL * 10U) / (vref_raw * (current_board->avdd_mV / 100UL));
+  print("cal_factor: "); puth(adc_cal_factor); print("\n");
+  print("stored cal factor: "); puth(cal_data); print("\n");
 }
