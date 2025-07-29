@@ -134,10 +134,8 @@ void soft_flasher_start(void) {
   gpio_usb_init();
   led_init();
 
-  // enable USB
+  // enable comms
   usb_init();
-
-  // enable SPI
   if (current_board->has_spi) {
     gpio_spi_init();
     spi_init();

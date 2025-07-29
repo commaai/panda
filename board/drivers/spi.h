@@ -1,7 +1,7 @@
 #pragma once
 
-#include "spi_declarations.h"
-#include "crc.h"
+#include "board/drivers/spi_declarations.h"
+#include "board/crc.h"
 
 #ifdef STM32H7
 #define SPI_BUF_SIZE 2048U
@@ -16,7 +16,6 @@ uint8_t spi_buf_tx[SPI_BUF_SIZE];
 
 uint16_t spi_checksum_error_count = 0;
 
-#if defined(ENABLE_SPI) || defined(BOOTSTUB)
 static uint8_t spi_state = SPI_STATE_HEADER;
 static uint16_t spi_data_len_mosi;
 static bool spi_can_tx_ready = false;
@@ -108,7 +107,9 @@ void spi_rx_done(void) {
       response_len = 1U;
     } else {
       // response: NACK and reset state machine
-      print("- incorrect header sync or checksum "); hexdump(spi_buf_rx, SPI_HEADER_SIZE);
+      #ifdef DEBUG_SPI
+        print("- incorrect header sync or checksum "); hexdump(spi_buf_rx, SPI_HEADER_SIZE);
+      #endif
       spi_buf_tx[0] = SPI_NACK;
       next_rx_state = SPI_STATE_HEADER_NACK;
       response_len = 1U;
@@ -160,12 +161,14 @@ void spi_rx_done(void) {
     } else {
       // Checksum was incorrect
       response_ack = false;
-      print("- incorrect data checksum ");
-      puth4(spi_data_len_mosi);
-      print("\n");
-      hexdump(spi_buf_rx, SPI_HEADER_SIZE);
-      hexdump(&(spi_buf_rx[SPI_HEADER_SIZE]), MIN(spi_data_len_mosi, 64));
-      print("\n");
+      #ifdef DEBUG_SPI
+        print("- incorrect data checksum ");
+        puth4(spi_data_len_mosi);
+        print("\n");
+        hexdump(spi_buf_rx, SPI_HEADER_SIZE);
+        hexdump(&(spi_buf_rx[SPI_HEADER_SIZE]), MIN(spi_data_len_mosi, 64));
+        print("\n");
+      #endif
     }
 
     if (!response_ack) {
@@ -230,8 +233,3 @@ void spi_tx_done(bool reset) {
 void can_tx_comms_resume_spi(void) {
   spi_can_tx_ready = true;
 }
-#else
-void can_tx_comms_resume_spi(void) {
-  return;
-}
-#endif

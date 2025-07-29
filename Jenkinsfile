@@ -4,7 +4,6 @@ def docker_run(String step_label, int timeout_mins, String cmd) {
           --env PYTHONWARNINGS=error \
           --volume /dev/bus/usb:/dev/bus/usb \
           --volume /var/run/dbus:/var/run/dbus \
-          --workdir /tmp/pythonpath/panda \
           --net host \
           ${env.DOCKER_IMAGE_TAG} \
           bash -c 'scons -j8 && ${cmd}'", \
@@ -34,6 +33,9 @@ export GIT_COMMIT=${env.GIT_COMMIT}
 export PYTHONPATH=${env.TEST_DIR}/../
 export PYTHONWARNINGS=error
 ln -sf /data/openpilot/opendbc_repo/opendbc /data/opendbc
+
+# TODO: this is an agnos issue
+export PYTEST_ADDOPTS="-p no:asyncio"
 
 cd ${env.TEST_DIR} || true
 ${cmd}
@@ -83,7 +85,6 @@ pipeline {
           steps {
             timeout(time: 20, unit: 'MINUTES') {
               script {
-                sh 'git archive -v -o panda.tar.gz --format=tar.gz HEAD'
                 dockerImage = docker.build("${env.DOCKER_IMAGE_TAG}")
               }
             }
@@ -101,14 +102,26 @@ pipeline {
 
         stage('parallel tests') {
           parallel {
+            stage('test cuatro') {
+              agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
+              steps {
+                phone_steps("panda-cuatro", [
+                  ["build", "scons -j4"],
+                  ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
+                  ["flash jungle", "cd board/jungle && ./flash.py --all"],
+                  ["test", "cd tests/hitl && HW_TYPES=10 pytest --durations=0 2*.py [5-9]*.py"],
+                ])
+              }
+            }
+
             stage('test tres') {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
                 phone_steps("panda-tres", [
                   ["build", "scons -j4"],
-                  ["flash", "cd tests/ && ./reflash_internal_panda.py"],
+                  ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["flash jungle", "cd board/jungle && ./flash.py --all"],
-                  ["test", "cd tests/hitl && HW_TYPES=9 pytest -n0 --durations=0 2*.py [5-9]*.py"],
+                  ["test", "cd tests/hitl && HW_TYPES=9 pytest --durations=0 2*.py [5-9]*.py"],
                 ])
               }
             }
@@ -118,9 +131,9 @@ pipeline {
               steps {
                 phone_steps("panda-dos", [
                   ["build", "scons -j4"],
-                  ["flash", "cd tests/ && ./reflash_internal_panda.py"],
+                  ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["flash jungle", "cd board/jungle && ./flash.py --all"],
-                  ["test", "cd tests/hitl && HW_TYPES=6 pytest -n0 --durations=0 [2-9]*.py -k 'not test_send_recv'"],
+                  ["test", "cd tests/hitl && HW_TYPES=6 pytest --durations=0 [2-9]*.py -k 'not test_send_recv'"],
                 ])
               }
             }
@@ -128,7 +141,7 @@ pipeline {
             stage('bootkick tests') {
               steps {
                 script {
-                  docker_run("test", 10, "pytest -n0 ./tests/som/test_bootkick.py")
+                  docker_run("test", 10, "pytest ./tests/som/test_bootkick.py")
                 }
               }
             }

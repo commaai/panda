@@ -39,12 +39,11 @@ static void cuatro_set_fan_enabled(bool enabled) {
 
 static void cuatro_set_bootkick(BootState state) {
   set_gpio_output(GPIOA, 0, state != BOOT_BOOTKICK);
-  // TODO: confirm we need this
-  //set_gpio_output(GPIOC, 12, state != BOOT_RESET);
 }
 
 static void cuatro_set_amp_enabled(bool enabled){
   set_gpio_output(GPIOA, 5, enabled);
+  set_gpio_output(GPIOB, 0, enabled);
 }
 
 static void cuatro_init(void) {
@@ -85,13 +84,8 @@ static void cuatro_init(void) {
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
   register_set_bits(&(GPIOC->OTYPER), GPIO_OTYPER_OT8); // open drain
 
-  // Initialize IR PWM and set to 0%
-  set_gpio_alternate(GPIOC, 9, GPIO_AF2_TIM3);
-  pwm_init(TIM3, 4);
-  tres_set_ir_power(0U);
-
   // Clock source
-  clock_source_init();
+  clock_source_init(true);
 
   // Sound codec
   cuatro_set_amp_enabled(false);
@@ -105,10 +99,22 @@ static void cuatro_init(void) {
   sound_init();
 }
 
+static harness_configuration cuatro_harness_config = {
+  .GPIO_SBU1 = GPIOC,
+  .GPIO_SBU2 = GPIOA,
+  .GPIO_relay_SBU1 = GPIOA,
+  .GPIO_relay_SBU2 = GPIOA,
+  .pin_SBU1 = 4,
+  .pin_SBU2 = 1,
+  .pin_relay_SBU1 = 9,
+  .pin_relay_SBU2 = 3,
+  .adc_channel_SBU1 = 4, // ADC12_INP4
+  .adc_channel_SBU2 = 17 // ADC1_INP17
+};
+
 board board_cuatro = {
-  .harness_config = &tres_harness_config,
+  .harness_config = &cuatro_harness_config,
   .has_spi = true,
-  .has_canfd = true,
   .fan_max_rpm = 12500U,
   .fan_max_pwm = 99U, // it can go up to 14k RPM, but 99% -> 100% is very non-linear
   .avdd_mV = 1800U,
@@ -119,8 +125,8 @@ board board_cuatro = {
   .enable_can_transceiver = cuatro_enable_can_transceiver,
   .led_GPIO = {GPIOC, GPIOC, GPIOC},
   .led_pin = {6, 7, 9},
+  .led_pwm_channels = {1, 2, 4},
   .set_can_mode = tres_set_can_mode,
-  .check_ignition = red_check_ignition,
   .read_voltage_mV = cuatro_read_voltage_mV,
   .read_current_mA = cuatro_read_current_mA,
   .set_fan_enabled = cuatro_set_fan_enabled,
