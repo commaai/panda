@@ -8,17 +8,17 @@ void adc_init(ADC_TypeDef *adc) {
 }
 
 static uint16_t adc_get_raw(const adc_signal_t *signal) {
-  // Set sampling time
+  // sample time
   if (signal->channel < 10U) {
-    register_set(&(signal->adc->SMPR2), (uint32_t)signal->sample_time << (signal->channel * 3U), 0x7FFFFFFU);
+    signal->adc->SMPR2 = (signal->sample_time << (signal->channel * 3U));
   } else {
-    register_set(&(signal->adc->SMPR1), (uint32_t)signal->sample_time << ((signal->channel - 10U) * 3U), 0x7FFFFFFU);
+    signal->adc->SMPR1 = (signal->sample_time << ((signal->channel - 10U) * 3U));
   }
 
-  // Select channel
-  register_set(&(signal->adc->JSQR), ((uint32_t) signal->channel << 15U), 0x3FFFFFU);
+  // select channel
+  signal->adc->JSQR = ((uint32_t) signal->channel << 15U);
 
-  // Start conversion
+  // start conversion
   signal->adc->SR &= ~(ADC_SR_JEOC);
   signal->adc->CR2 |= ADC_CR2_JSWSTART;
   while (!(signal->adc->SR & ADC_SR_JEOC));
