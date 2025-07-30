@@ -75,7 +75,11 @@ static void dos_set_siren(bool enabled){
 }
 
 static uint32_t dos_read_voltage_mV(void){
-  return adc_get_mV(12) * 11U;
+  return adc_get_mV(&(const adc_signal_t) {
+    .adc = ADC1,
+    .channel = 12,
+    .sample_time = SAMPLETIME_480_CYCLES,
+  }) * 11U;
 }
 
 static bool dos_read_som_gpio (void){
@@ -117,8 +121,16 @@ static harness_configuration dos_harness_config = {
   .pin_SBU2 = 3,
   .pin_relay_SBU1 = 10,
   .pin_relay_SBU2 = 11,
-  .adc_channel_SBU1 = 10,
-  .adc_channel_SBU2 = 13
+  .adc_signal_SBU1 = {
+    .adc = ADC1,
+    .channel = 10,
+    .sample_time = SAMPLETIME_480_CYCLES,
+  },
+  .adc_signal_SBU2 = {
+    .adc = ADC1,
+    .channel = 13,
+    .sample_time = SAMPLETIME_480_CYCLES,
+  }
 };
 
 board board_dos = {

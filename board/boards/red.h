@@ -68,7 +68,12 @@ static void red_set_can_mode(uint8_t mode) {
 }
 
 static uint32_t red_read_voltage_mV(void){
-  return adc_get_mV(2) * 11U; // TODO: is this correct?
+  return adc_get_mV(&(const adc_signal_t) {
+    .adc = ADC1,
+    .channel = 2,
+    .sample_time = SAMPLETIME_32_CYCLES,
+    .oversampling = OVERSAMPLING_64
+  }) * 11U;
 }
 
 static void red_init(void) {
@@ -107,8 +112,18 @@ static harness_configuration red_harness_config = {
   .pin_SBU2 = 1,
   .pin_relay_SBU1 = 10,
   .pin_relay_SBU2 = 11,
-  .adc_channel_SBU1 = 4, //ADC12_INP4
-  .adc_channel_SBU2 = 17 //ADC1_INP17
+  .adc_signal_SBU1 = {
+    .adc = ADC1,
+    .channel = 4,
+    .sample_time = SAMPLETIME_32_CYCLES,
+    .oversampling = OVERSAMPLING_64
+  },
+  .adc_signal_SBU2 = {
+    .adc = ADC1,
+    .channel = 17,
+    .sample_time = SAMPLETIME_32_CYCLES,
+    .oversampling = OVERSAMPLING_64
+  }
 };
 
 board board_red = {

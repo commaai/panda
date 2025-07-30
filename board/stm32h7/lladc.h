@@ -1,39 +1,57 @@
+#include "lladc_declarations.h"
 
-void adc_init(void) {
-  ADC1->CR &= ~(ADC_CR_DEEPPWD); //Reset deep-power-down mode
-  ADC1->CR |= ADC_CR_ADVREGEN; // Enable ADC regulator
-  while(!(ADC1->ISR & ADC_ISR_LDORDY));
+void adc_init(ADC_TypeDef *adc) {
+  adc->CR &= ~(ADC_CR_DEEPPWD); // Reset deep-power-down mode
+  adc->CR |= ADC_CR_ADVREGEN; // Enable ADC regulator
+  while(!(adc->ISR & ADC_ISR_LDORDY) && (adc != ADC3));
 
-  ADC1->CR &= ~(ADC_CR_ADCALDIF); // Choose single-ended calibration
-  ADC1->CR |= ADC_CR_ADCALLIN; // Lineriality calibration
-  ADC1->CR |= ADC_CR_ADCAL; // Start calibrtation
-  while((ADC1->CR & ADC_CR_ADCAL) != 0U);
+  if (adc != ADC3) {
+    adc->CR &= ~(ADC_CR_ADCALDIF); // Choose single-ended calibration
+    adc->CR |= ADC_CR_ADCALLIN; // Lineriality calibration
+  }
+  adc->CR |= ADC_CR_ADCAL; // Start calibrtation
+  while((adc->CR & ADC_CR_ADCAL) != 0);
 
-  ADC1->ISR |= ADC_ISR_ADRDY;
-  ADC1->CR |= ADC_CR_ADEN;
-  while(!(ADC1->ISR & ADC_ISR_ADRDY));
+  adc->ISR |= ADC_ISR_ADRDY;
+  adc->CR |= ADC_CR_ADEN;
+  while(!(adc->ISR & ADC_ISR_ADRDY));
 }
 
-static uint16_t adc_get_raw(uint8_t channel) {
-  uint16_t res = 0U;
-  ADC1->SQR1 &= ~(ADC_SQR1_L);
-  ADC1->SQR1 = (uint32_t)channel << 6U;
+uint16_t adc_get_raw(const adc_signal_t *signal) {
+  signal->adc->SQR1 &= ~(ADC_SQR1_L);
+  signal->adc->SQR1 = ((uint32_t) signal->channel << 6U);
 
-  ADC1->SMPR1 = 0x4UL << (channel * 3UL);
-  ADC1->PCSEL_RES0 = (0x1UL << channel);
-  ADC1->CFGR2 = (63UL << ADC_CFGR2_OVSR_Pos) | (0x6U << ADC_CFGR2_OVSS_Pos) | ADC_CFGR2_ROVSE;
+  // sample time
+  if (signal->channel < 10U) {
+    signal->adc->SMPR1 = (signal->sample_time << (signal->channel * 3U));
+  } else {
+    signal->adc->SMPR2 = (signal->sample_time << ((signal->channel - 10U) * 3U));
+  }
 
-  ADC1->CR |= ADC_CR_ADSTART;
-  while (!(ADC1->ISR & ADC_ISR_EOC));
+  // select channel
+  signal->adc->PCSEL_RES0 = (0x1U << signal->channel);
 
-  res = ADC1->DR;
+  // oversampling
+  signal->adc->CFGR2 = (((1U << signal->oversampling) - 1U) << ADC_CFGR2_OVSR_Pos) | (signal->oversampling << ADC_CFGR2_OVSS_Pos) | ADC_CFGR2_ROVSE;
 
-  while (!(ADC1->ISR & ADC_ISR_EOS));
-  ADC1->ISR |= ADC_ISR_EOS;
+  // start conversion
+  signal->adc->CR |= ADC_CR_ADSTART;
+  while (!(signal->adc->ISR & ADC_ISR_EOC));
+
+  uint16_t res = signal->adc->DR;
+
+  while (!(signal->adc->ISR & ADC_ISR_EOS));
+  signal->adc->ISR |= ADC_ISR_EOS;
 
   return res;
 }
 
-uint16_t adc_get_mV(uint8_t channel) {
-  return (adc_get_raw(channel) * current_board->avdd_mV) / 65535U;
+uint16_t adc_get_mV(const adc_signal_t *signal) {
+  uint16_t ret = 0;
+  if ((signal->adc == ADC1) || (signal->adc == ADC2)) {
+    ret = (adc_get_raw(signal) * current_board->avdd_mV) / 65535U;
+  } else if (signal->adc == ADC3) {
+    ret = (adc_get_raw(signal) * current_board->avdd_mV) / 4095U;
+  } else {}
+  return ret;
 }

@@ -22,8 +22,8 @@ struct harness_configuration {
   const uint8_t pin_SBU2;
   const uint8_t pin_relay_SBU1;
   const uint8_t pin_relay_SBU2;
-  const uint8_t adc_channel_SBU1;
-  const uint8_t adc_channel_SBU2;
+  const adc_signal_t adc_signal_SBU1;
+  const adc_signal_t adc_signal_SBU2;
 };
 
 // The ignition relay is only used for testing purposes

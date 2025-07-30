@@ -141,8 +141,18 @@ static harness_configuration tres_harness_config = {
   .pin_SBU2 = 1,
   .pin_relay_SBU1 = 8,
   .pin_relay_SBU2 = 3,
-  .adc_channel_SBU1 = 4, // ADC12_INP4
-  .adc_channel_SBU2 = 17 // ADC1_INP17
+  .adc_signal_SBU1 = {
+    .adc = ADC1,
+    .channel = 4,
+    .sample_time = SAMPLETIME_32_CYCLES,
+    .oversampling = OVERSAMPLING_64
+  },
+  .adc_signal_SBU2 = {
+    .adc = ADC1,
+    .channel = 17,
+    .sample_time = SAMPLETIME_32_CYCLES,
+    .oversampling = OVERSAMPLING_64
+  }
 };
 
 board board_tres = {
