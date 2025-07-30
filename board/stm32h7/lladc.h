@@ -1,7 +1,7 @@
 #include "lladc_declarations.h"
 
 struct cadc_state_t cadc_state;
-uint16_t adc_cal_factor = 1000U;
+uint32_t adc_cal_factor = 1000U;
 
 uint16_t adc_get_raw(ADC_TypeDef *adc, uint8_t channel) {
   adc->SQR1 &= ~(ADC_SQR1_L);
@@ -24,6 +24,7 @@ uint16_t adc_get_raw(ADC_TypeDef *adc, uint8_t channel) {
 
   return res;
 }
+
 
 uint16_t adc_get_mV(uint8_t channel) {
   return ADC_RAW_TO_mV(adc_get_raw(ADC1, channel));
@@ -136,4 +137,7 @@ void adc_calibrate(void) {
   adc_cal_factor = (3300UL * cal_data * 16UL * 10U) / (vref_raw * (current_board->avdd_mV / 100UL));
   print("cal_factor: "); puth(adc_cal_factor); print("\n");
   print("stored cal factor: "); puth(cal_data); print("\n");
+
+  // disable ADC2 again before re-init
+  ADC2->CR &= ~ADC_CR_ADEN;
 }

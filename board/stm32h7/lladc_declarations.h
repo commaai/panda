@@ -1,7 +1,7 @@
 #pragma once
 
 #define CADC_FILTERING 8U
-#define ADC_RAW_TO_mV(x) (((x) * current_board->avdd_mV * adc_cal_factor) / (65535U * 1000U))
+#define ADC_RAW_TO_mV(x) ((((uint32_t)(x) * current_board->avdd_mV) / 65535U) * adc_cal_factor / 1000UL)
 
 #define VREFINT_CAL_ADDR   ((uint16_t *)0x1FF1E860UL)
 
@@ -12,6 +12,6 @@ struct cadc_state_t {
 };
 
 extern struct cadc_state_t cadc_state;
-extern uint16_t adc_cal_factor;
+extern uint32_t adc_cal_factor;
 
 void adc_calibrate(void);
