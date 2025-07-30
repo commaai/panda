@@ -32,7 +32,8 @@ uint16_t adc_get_raw(const adc_signal_t *signal) {
   signal->adc->PCSEL_RES0 = (0x1UL << signal->channel);
 
   // oversampling
-  signal->adc->CFGR2 = (((1U << (uint32_t) signal->oversampling) - 1U) << ADC_CFGR2_OVSR_Pos) | ((uint32_t) signal->oversampling << ADC_CFGR2_OVSS_Pos) | ADC_CFGR2_ROVSE;
+  signal->adc->CFGR2 = (((1U << (uint32_t) signal->oversampling) - 1U) << ADC_CFGR2_OVSR_Pos) | ((uint32_t) signal->oversampling << ADC_CFGR2_OVSS_Pos);
+  signal->adc->CFGR2 |= (signal->oversampling != OVERSAMPLING_1) ? ADC_CFGR2_ROVSE : 0U;
 
   // start conversion
   signal->adc->CR |= ADC_CR_ADSTART;
