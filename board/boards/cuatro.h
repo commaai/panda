@@ -26,11 +26,11 @@ static void cuatro_enable_can_transceiver(uint8_t transceiver, bool enabled) {
 }
 
 static uint32_t cuatro_read_voltage_mV(void) {
-  return adc_get_mV(8) * 11U;
+  return adc_get_mV(&(const adc_signal_t) ADC_CHANNEL_DEFAULT(ADC1, 8)) * 11U;
 }
 
 static uint32_t cuatro_read_current_mA(void) {
-  return adc_get_mV(3) * 2U;
+  return adc_get_mV(&(const adc_signal_t) ADC_CHANNEL_DEFAULT(ADC1, 3)) * 2U;
 }
 
 static void cuatro_set_fan_enabled(bool enabled) {
@@ -125,8 +125,8 @@ static harness_configuration cuatro_harness_config = {
   .pin_SBU2 = 1,
   .pin_relay_SBU1 = 9,
   .pin_relay_SBU2 = 3,
-  .adc_channel_SBU1 = 4, // ADC12_INP4
-  .adc_channel_SBU2 = 17 // ADC1_INP17
+  .adc_signal_SBU1 = ADC_CHANNEL_DEFAULT(ADC1, 4),
+  .adc_signal_SBU2 = ADC_CHANNEL_DEFAULT(ADC1, 17)
 };
 
 board board_cuatro = {

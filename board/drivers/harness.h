@@ -59,8 +59,8 @@ static uint8_t harness_detect_orientation(void) {
     set_gpio_mode(current_board->harness_config->GPIO_SBU1, current_board->harness_config->pin_SBU1, MODE_ANALOG);
     set_gpio_mode(current_board->harness_config->GPIO_SBU2, current_board->harness_config->pin_SBU2, MODE_ANALOG);
 
-    harness.sbu1_voltage_mV = adc_get_mV(current_board->harness_config->adc_channel_SBU1);
-    harness.sbu2_voltage_mV = adc_get_mV(current_board->harness_config->adc_channel_SBU2);
+    harness.sbu1_voltage_mV = adc_get_mV(&current_board->harness_config->adc_signal_SBU1);
+    harness.sbu2_voltage_mV = adc_get_mV(&current_board->harness_config->adc_signal_SBU2);
     uint16_t detection_threshold = current_board->avdd_mV / 2U;
 
     // Detect connection and orientation
