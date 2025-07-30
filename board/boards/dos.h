@@ -117,16 +117,8 @@ static harness_configuration dos_harness_config = {
   .pin_SBU2 = 3,
   .pin_relay_SBU1 = 10,
   .pin_relay_SBU2 = 11,
-  .adc_signal_SBU1 = {
-    .adc = ADC1,
-    .channel = 10,
-    .sample_time = SAMPLETIME_480_CYCLES,
-  },
-  .adc_signal_SBU2 = {
-    .adc = ADC1,
-    .channel = 13,
-    .sample_time = SAMPLETIME_480_CYCLES,
-  }
+  .adc_signal_SBU1 = ADC_CHANNEL_DEFAULT(ADC1, 10),
+  .adc_signal_SBU2 = ADC_CHANNEL_DEFAULT(ADC1, 13),
 };
 
 board board_dos = {
