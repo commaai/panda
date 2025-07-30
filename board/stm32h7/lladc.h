@@ -10,7 +10,7 @@ void adc_init(ADC_TypeDef *adc) {
     adc->CR |= ADC_CR_ADCALLIN; // Lineriality calibration
   }
   adc->CR |= ADC_CR_ADCAL; // Start calibrtation
-  while((adc->CR & ADC_CR_ADCAL) != 0);
+  while((adc->CR & ADC_CR_ADCAL) != 0U);
 
   adc->ISR |= ADC_ISR_ADRDY;
   adc->CR |= ADC_CR_ADEN;
@@ -23,16 +23,16 @@ uint16_t adc_get_raw(const adc_signal_t *signal) {
 
   // sample time
   if (signal->channel < 10U) {
-    signal->adc->SMPR1 = (signal->sample_time << (signal->channel * 3U));
+    signal->adc->SMPR1 = ((uint32_t) signal->sample_time << (signal->channel * 3U));
   } else {
-    signal->adc->SMPR2 = (signal->sample_time << ((signal->channel - 10U) * 3U));
+    signal->adc->SMPR2 = ((uint32_t) signal->sample_time << ((signal->channel - 10U) * 3U));
   }
 
   // select channel
-  signal->adc->PCSEL_RES0 = (0x1U << signal->channel);
+  signal->adc->PCSEL_RES0 = (0x1UL << signal->channel);
 
   // oversampling
-  signal->adc->CFGR2 = (((1U << signal->oversampling) - 1U) << ADC_CFGR2_OVSR_Pos) | (signal->oversampling << ADC_CFGR2_OVSS_Pos) | ADC_CFGR2_ROVSE;
+  signal->adc->CFGR2 = (((1U << (uint32_t) signal->oversampling) - 1U) << ADC_CFGR2_OVSR_Pos) | ((uint32_t) signal->oversampling << ADC_CFGR2_OVSS_Pos) | ADC_CFGR2_ROVSE;
 
   // start conversion
   signal->adc->CR |= ADC_CR_ADSTART;

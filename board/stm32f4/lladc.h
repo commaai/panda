@@ -10,9 +10,9 @@ void adc_init(ADC_TypeDef *adc) {
 static uint16_t adc_get_raw(const adc_signal_t *signal) {
   // sample time
   if (signal->channel < 10U) {
-    signal->adc->SMPR2 = (signal->sample_time << (signal->channel * 3U));
+    signal->adc->SMPR2 = ((uint32_t) signal->sample_time << (signal->channel * 3U));
   } else {
-    signal->adc->SMPR1 = (signal->sample_time << ((signal->channel - 10U) * 3U));
+    signal->adc->SMPR1 = ((uint32_t) signal->sample_time << ((signal->channel - 10U) * 3U));
   }
 
   // select channel

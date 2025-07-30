@@ -2,7 +2,7 @@
 // Jungle board v2 (STM32H7) //
 // ///////////////////////// //
 
-#define ADC_CHANNEL(a, c) {.adc = a, .channel = c, .sample_time = SAMPLETIME_810_CYCLES, .oversampling = OVERSAMPLING_1}
+#define ADC_CHANNEL(a, c) {.adc = (a), .channel = (c), .sample_time = SAMPLETIME_810_CYCLES, .oversampling = OVERSAMPLING_1}
 
 gpio_t power_pins[] = {
   {.bank = GPIOA, .pin = 0},
