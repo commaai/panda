@@ -75,11 +75,7 @@ static void dos_set_siren(bool enabled){
 }
 
 static uint32_t dos_read_voltage_mV(void){
-  return adc_get_mV(&(const adc_signal_t) {
-    .adc = ADC1,
-    .channel = 12,
-    .sample_time = SAMPLETIME_480_CYCLES,
-  }) * 11U;
+  return adc_get_mV(&(const adc_signal_t) ADC_CHANNEL_DEFAULT(ADC1, 12)) * 11U;
 }
 
 static bool dos_read_som_gpio (void){

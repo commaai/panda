@@ -30,6 +30,8 @@
 #define PROVISION_CHUNK_ADDRESS 0x1FFF79E0U
 #define DEVICE_SERIAL_NUMBER_ADDRESS 0x1FFF79C0U
 
+#define ADC_CHANNEL_DEFAULT(a, c) {.adc = (a), .channel = (c), .sample_time = SAMPLETIME_480_CYCLES}
+
 #include "board/can.h"
 #include "board/comms_definitions.h"
 
