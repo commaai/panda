@@ -16,3 +16,5 @@ typedef struct {
   uint8_t channel;
   adc_sample_time_t sample_time;
 } adc_signal_t;
+
+#define ADC_CHANNEL_DEFAULT(a, c) {.adc = (a), .channel = (c), .sample_time = SAMPLETIME_480_CYCLES}

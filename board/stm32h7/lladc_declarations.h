@@ -32,3 +32,4 @@ typedef struct {
   adc_oversampling_t oversampling;
 } adc_signal_t;
 
+#define ADC_CHANNEL_DEFAULT(a, c) {.adc = (a), .channel = (c), .sample_time = SAMPLETIME_32_CYCLES, .oversampling = OVERSAMPLING_64}
