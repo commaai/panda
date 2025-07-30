@@ -284,6 +284,9 @@ int main(void) {
   led_set(LED_RED, true);
   led_set(LED_GREEN, true);
   adc_init(ADC1);
+  #ifdef STM32H7 // TODO fix
+  adc_calibrate_vdda();
+  #endif
 
   // print hello
   print("\n\n\n************************ MAIN START ************************\n");
