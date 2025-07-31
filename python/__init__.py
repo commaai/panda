@@ -562,7 +562,7 @@ class Panda:
       "interrupt_load": a[18],
       "fan_power": a[19],
       "safety_rx_checks_invalid": a[20],
-      "spi_checksum_error_count": a[21],
+      "spi_error_count": a[21],
       "fan_stall_count": a[22],
       "sbu1_voltage_mV": a[23],
       "sbu2_voltage_mV": a[24],
