@@ -1,6 +1,6 @@
 #include "lladc_declarations.h"
 
-uint16_t adc_avdd_mV = 0U;
+static uint32_t adc_avdd_mV = 0U;
 
 void adc_init(ADC_TypeDef *adc) {
   adc->CR &= ~(ADC_CR_ADEN); // Disable ADC
@@ -50,7 +50,7 @@ uint16_t adc_get_raw(const adc_signal_t *signal) {
   return res;
 }
 
-void adc_calibrate_vdda(void) {
+static void adc_calibrate_vdda(void) {
   // ADC2 used for calibration
   adc_init(ADC2);
 
