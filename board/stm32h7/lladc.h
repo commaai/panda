@@ -58,18 +58,10 @@ void adc_calibrate_vdda(void) {
   ADC3_COMMON->CCR |= ADC_CCR_VREFEN;
   SYSCFG->ADC2ALT |= SYSCFG_ADC2ALT_ADC2_ROUT1;
 
-  // measure VREFINT
+  // measure VREFINT and derive AVDD
   uint16_t raw_vrefint = adc_get_raw(&(adc_signal_t){.adc = ADC2, .channel = 17U, .sample_time = SAMPLETIME_810_CYCLES, .oversampling = OVERSAMPLING_256});
-  print("raw vrefint "); puth(raw_vrefint); print("\n");
-
-  // get factory calibration value
-  uint16_t factory_cal = *VREFINT_CAL_ADDR;
-
-  print("factory vrefint "); puth(factory_cal); print("\n");
-
-  adc_avdd_mV = (uint32_t) factory_cal * 16U * 3300U / raw_vrefint;
-
-  print("calibrated avdd_mV "); puth(adc_avdd_mV); print("\n");
+  adc_avdd_mV = (uint32_t) *VREFINT_CAL_ADDR * 16U * 3300U / raw_vrefint;
+  print("  AVDD: 0x"); puth(adc_avdd_mV); print(" mV\n");
 }
 
 uint16_t adc_get_mV(const adc_signal_t *signal) {
