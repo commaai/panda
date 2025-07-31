@@ -17,14 +17,27 @@ def flash():
     parser.add_argument("--all", action="store_true", help="Flash all connected Panda devices")
     args = parser.parse_args()
 
-    # Build the firmware
-    board_path = os.path.join(BASEDIR, "board")
-    print("Building firmware...")
-    try:
-        subprocess.check_call(f"scons -C {BASEDIR} -j$(nproc) {board_path}", shell=True)
-    except subprocess.CalledProcessError:
-        print("Failed to build firmware. Make sure you have all build dependencies installed.")
-        return 1
+    # Check if pre-built firmware exists
+    from panda import FW_PATH
+    from panda.constants import McuType
+    
+    # Check if any firmware files exist
+    fw_files_exist = any(
+        os.path.exists(os.path.join(FW_PATH, mcu.config.app_fn))
+        for mcu in [McuType.F4, McuType.H7]
+    )
+    
+    if not fw_files_exist:
+        # Build the firmware if not pre-built
+        board_path = os.path.join(BASEDIR, "board")
+        print("Building firmware...")
+        try:
+            subprocess.check_call(f"scons -C {BASEDIR} -j$(nproc) {board_path}", shell=True)
+        except subprocess.CalledProcessError:
+            print("Failed to build firmware. Make sure you have all build dependencies installed.")
+            return 1
+    else:
+        print("Using pre-built firmware...")
 
     # Get list of devices to flash
     if args.all:
@@ -48,14 +61,27 @@ def flash():
 
 def recover():
     """Recover Panda device(s) by putting them in DFU mode and reflashing."""
-    # Build the firmware
-    board_path = os.path.join(BASEDIR, "board")
-    print("Building firmware...")
-    try:
-        subprocess.check_call(f"scons -C {BASEDIR} -j$(nproc) {board_path}", shell=True)
-    except subprocess.CalledProcessError:
-        print("Failed to build firmware. Make sure you have all build dependencies installed.")
-        return 1
+    # Check if pre-built firmware exists
+    from panda import FW_PATH
+    from panda.constants import McuType
+    
+    # Check if any firmware files exist
+    fw_files_exist = any(
+        os.path.exists(os.path.join(FW_PATH, mcu.config.app_fn))
+        for mcu in [McuType.F4, McuType.H7]
+    )
+    
+    if not fw_files_exist:
+        # Build the firmware if not pre-built
+        board_path = os.path.join(BASEDIR, "board")
+        print("Building firmware...")
+        try:
+            subprocess.check_call(f"scons -C {BASEDIR} -j$(nproc) {board_path}", shell=True)
+        except subprocess.CalledProcessError:
+            print("Failed to build firmware. Make sure you have all build dependencies installed.")
+            return 1
+    else:
+        print("Using pre-built firmware...")
 
     # Put all connected pandas in DFU mode
     pandas = Panda.list()

@@ -9,11 +9,7 @@ import binascii
 from functools import wraps, partial
 from itertools import accumulate
 
-try:
-    from opendbc.car.structs import CarParams
-except ImportError:
-    # opendbc is optional
-    CarParams = None
+from opendbc.car.structs import CarParams
 
 from .base import BaseHandle
 from .constants import FW_PATH, McuType
@@ -709,7 +705,7 @@ class Panda:
 
   def set_safety_mode(self, mode=None, param=0):
     if mode is None:
-      mode = CarParams.SafetyModel.silent if CarParams else 0
+      mode = CarParams.SafetyModel.silent
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
 
   def set_obd(self, obd):
