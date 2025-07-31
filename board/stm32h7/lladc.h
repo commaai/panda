@@ -3,6 +3,7 @@
 uint16_t adc_avdd_mV = 0U;
 
 void adc_init(ADC_TypeDef *adc) {
+  adc->CR &= ~(ADC_CR_ADEN); // Disable ADC
   adc->CR &= ~(ADC_CR_DEEPPWD); // Reset deep-power-down mode
   adc->CR |= ADC_CR_ADVREGEN; // Enable ADC regulator
   while(!(adc->ISR & ADC_ISR_LDORDY) && (adc != ADC3));
@@ -49,16 +50,6 @@ uint16_t adc_get_raw(const adc_signal_t *signal) {
   return res;
 }
 
-uint16_t adc_get_mV(const adc_signal_t *signal) {
-  uint16_t ret = 0;
-  if ((signal->adc == ADC1) || (signal->adc == ADC2)) {
-    ret = (adc_get_raw(signal) * adc_avdd_mV) / 65535U;
-  } else if (signal->adc == ADC3) {
-    ret = (adc_get_raw(signal) * adc_avdd_mV) / 4095U;
-  } else {}
-  return ret;
-}
-
 void adc_calibrate_vdda(void) {
   // ADC2 used for calibration
   adc_init(ADC2);
@@ -79,4 +70,19 @@ void adc_calibrate_vdda(void) {
   adc_avdd_mV = (uint32_t) factory_cal * 16U * 3300U / raw_vrefint;
 
   print("calibrated avdd_mV "); puth(adc_avdd_mV); print("\n");
+}
+
+uint16_t adc_get_mV(const adc_signal_t *signal) {
+  uint16_t ret = 0;
+
+  if (adc_avdd_mV == 0U) {
+    adc_calibrate_vdda();
+  }
+
+  if ((signal->adc == ADC1) || (signal->adc == ADC2)) {
+    ret = (adc_get_raw(signal) * adc_avdd_mV) / 65535U;
+  } else if (signal->adc == ADC3) {
+    ret = (adc_get_raw(signal) * adc_avdd_mV) / 4095U;
+  } else {}
+  return ret;
 }
