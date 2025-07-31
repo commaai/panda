@@ -8,12 +8,12 @@ from setuptools.command.build_py import build_py
 
 class BuildPyCommand(build_py):
     """Custom build command that builds firmware before packaging."""
-    
+
     def run(self):
         # Build firmware
         base_dir = os.path.dirname(os.path.abspath(__file__))
         board_dir = os.path.join(base_dir, "board")
-        
+
         print("Building Panda firmware...")
         try:
             # Check if scons is available
@@ -35,7 +35,7 @@ class BuildPyCommand(build_py):
         except Exception as e:
             print(f"WARNING: Failed to build firmware: {e}")
             print("Continuing with package build anyway...")
-        
+
         # Run the original build_py command
         super().run()
 
@@ -54,18 +54,18 @@ def _build_with_firmware(config_settings=None):
     # Temporarily monkey-patch the build_py command
     from setuptools import setup
     from setuptools.dist import Distribution
-    
+
     # Create a custom distribution that uses our build command
     class CustomDistribution(Distribution):
         def get_command_class(self, command):
             if command == 'build_py':
                 return BuildPyCommand
             return super().get_command_class(command)
-    
+
     # Patch setuptools to use our custom distribution
     _orig_distribution = setup.Distribution
     setup.Distribution = CustomDistribution
-    
+
     try:
         # Build the wheel
         return _orig.build_wheel(config_settings)

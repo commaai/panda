@@ -8,7 +8,7 @@ import argparse
 # Add the parent directory to the path so we can import panda
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from panda import Panda, PandaDFU, BASEDIR
+from panda import Panda, PandaDFU, BASEDIR, FW_PATH, McuType
 
 
 def flash():
@@ -18,15 +18,13 @@ def flash():
     args = parser.parse_args()
 
     # Check if pre-built firmware exists
-    from panda import FW_PATH
-    from panda.constants import McuType
-    
+
     # Check if any firmware files exist
     fw_files_exist = any(
         os.path.exists(os.path.join(FW_PATH, mcu.config.app_fn))
         for mcu in [McuType.F4, McuType.H7]
     )
-    
+
     if not fw_files_exist:
         # Build the firmware if not pre-built
         board_path = os.path.join(BASEDIR, "board")
@@ -62,15 +60,13 @@ def flash():
 def recover():
     """Recover Panda device(s) by putting them in DFU mode and reflashing."""
     # Check if pre-built firmware exists
-    from panda import FW_PATH
-    from panda.constants import McuType
-    
+
     # Check if any firmware files exist
     fw_files_exist = any(
         os.path.exists(os.path.join(FW_PATH, mcu.config.app_fn))
         for mcu in [McuType.F4, McuType.H7]
     )
-    
+
     if not fw_files_exist:
         # Build the firmware if not pre-built
         board_path = os.path.join(BASEDIR, "board")
