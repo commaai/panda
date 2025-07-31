@@ -283,7 +283,7 @@ int main(void) {
   // red+green leds enabled until succesful USB/SPI init, as a debug indicator
   led_set(LED_RED, true);
   led_set(LED_GREEN, true);
-  adc_init();
+  adc_init(ADC1);
 
   // print hello
   print("\n\n\n************************ MAIN START ************************\n");
