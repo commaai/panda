@@ -38,8 +38,7 @@ dev = [
 
 [build-system]
 requires = ["setuptools>=61", "wheel"]
-build-backend = "build_backend"
-backend-path = ["."]
+build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = ["panda"]
