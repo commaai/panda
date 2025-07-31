@@ -35,7 +35,7 @@ enum {
   SPI_STATE_DATA_TX
 };
 
-extern uint16_t spi_checksum_error_count;
+extern uint16_t spi_error_count;
 
 #define SPI_HEADER_SIZE 7U
 

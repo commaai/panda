@@ -29,7 +29,7 @@ static int get_health_pkt(void *dat) {
   health->safety_rx_checks_invalid_pkt = safety_rx_checks_invalid;
 
   #ifndef STM32F4
-  health->spi_checksum_error_count_pkt = spi_checksum_error_count;
+  health->spi_error_count_pkt = spi_error_count;
   #endif
 
   health->fault_status_pkt = fault_status;
