@@ -33,3 +33,5 @@ typedef struct {
 } adc_signal_t;
 
 #define ADC_CHANNEL_DEFAULT(a, c) {.adc = (a), .channel = (c), .sample_time = SAMPLETIME_32_CYCLES, .oversampling = OVERSAMPLING_64}
+
+#define VREFINT_CAL_ADDR ((uint16_t *)0x1FF1E860UL)
