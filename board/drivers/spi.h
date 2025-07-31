@@ -152,9 +152,12 @@ void spi_rx_done(void) {
           print("SPI: did expect data for can_write\n");
         }
       } else if (spi_endpoint == 0xABU) {
-        // test endpoint, send max response length
+        // test endpoint: mimics panda -> device transfer
         response_len = spi_data_len_miso;
         response_ack = true;
+      } else if (spi_endpoint == 0xACU) {
+        // test endpoint: mimics device -> panda transfer (with NACK)
+        response_ack = false;
       } else {
         print("SPI: unexpected endpoint"); puth(spi_endpoint); print("\n");
       }
