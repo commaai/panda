@@ -1,7 +1,7 @@
 name: Update cppcheck
 
 on:
-  push:
+  #push:
   schedule:
     - cron: "0 14 * * 1" # every Monday at 2am UTC (6am PST)
   workflow_dispatch:
