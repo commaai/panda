@@ -352,9 +352,10 @@ class Panda:
     return isinstance(self._handle, PandaUsbHandle)
 
   @classmethod
-  def list(cls):
+  def list(cls, usb_only: bool = False):
     ret = cls.usb_list()
-    ret += cls.spi_list()
+    if not usb_only:
+      ret += cls.spi_list()
     return list(set(ret))
 
   @classmethod
