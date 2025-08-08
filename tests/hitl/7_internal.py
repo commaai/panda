@@ -9,8 +9,6 @@ pytestmark = [
 
 @pytest.mark.timeout(2*60)
 def test_fan_controller(p):
-  start_health = p.health()
-
   for power in (30, 50, 80, 100):
     p.set_fan_power(0)
     while p.get_fan_rpm() > 0:
@@ -28,14 +26,6 @@ def test_fan_controller(p):
     expected_rpm = Panda.MAX_FAN_RPMs[bytes(p.get_type())] * power / 100
     assert 0.9 * expected_rpm <= p.get_fan_rpm() <= 1.1 * expected_rpm
 
-  # Ensure the stall detection is tested on dos
-  if p.get_type() == Panda.HW_TYPE_DOS:
-    stalls = p.health()['fan_stall_count'] - start_health['fan_stall_count']
-    assert stalls >= 2
-    print("stall count", stalls)
-  else:
-    assert p.health()['fan_stall_count'] == 0
-
 def test_fan_cooldown(p):
   # if the fan cooldown doesn't work, we get high frequency noise on the tach line
   # while the rotor spins down. this makes sure it never goes beyond the expected max RPM
@@ -47,8 +37,6 @@ def test_fan_cooldown(p):
     time.sleep(0.5)
 
 def test_fan_overshoot(p):
-  if p.get_type() == Panda.HW_TYPE_DOS:
-    pytest.skip("panda's fan controller overshoots on the comma three fans that need stall recovery")
 
   # make sure it's stopped completely
   p.set_fan_power(0)

@@ -66,8 +66,6 @@ cppcheck() {
 
 PANDA_OPTS="--enable=all --disable=unusedFunction --addon=misra"
 
-printf "\n${GREEN}** PANDA F4 CODE **${NC}\n"
-cppcheck $PANDA_OPTS -DSTM32F4 -DSTM32F413xx -I $PANDA_DIR/board/stm32f4/inc/ $PANDA_DIR/board/main.c
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
 cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ $PANDA_DIR/board/main.c

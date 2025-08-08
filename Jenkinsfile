@@ -126,18 +126,6 @@ pipeline {
               }
             }
 
-            stage('test dos') {
-              agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
-              steps {
-                phone_steps("panda-dos", [
-                  ["build", "scons -j4"],
-                  ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
-                  ["flash jungle", "cd board/jungle && ./flash.py --all"],
-                  ["test", "cd tests/hitl && HW_TYPES=6 pytest --durations=0 [2-9]*.py -k 'not test_send_recv'"],
-                ])
-              }
-            }
-
             stage('bootkick tests') {
               steps {
                 script {

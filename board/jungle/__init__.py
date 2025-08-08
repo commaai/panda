@@ -34,10 +34,8 @@ class PandaJungle(Panda):
   USB_PIDS = (0xddef, 0xddcf)
 
   HW_TYPE_UNKNOWN = b'\x00'
-  HW_TYPE_V1 = b'\x01'
   HW_TYPE_V2 = b'\x02'
 
-  F4_DEVICES = [HW_TYPE_V1, ]
   H7_DEVICES = [HW_TYPE_V2, ]
 
   HEALTH_PACKET_VERSION = 1
@@ -76,16 +74,8 @@ class PandaJungle(Panda):
 
   def get_mcu_type(self) -> McuType:
     hw_type = self.get_type()
-    if hw_type in PandaJungle.F4_DEVICES:
-      return McuType.F4
-    elif hw_type in PandaJungle.H7_DEVICES:
+    if hw_type in PandaJungle.H7_DEVICES:
       return McuType.H7
-    else:
-      # have to assume F4, see comment in Panda.connect
-      # initially Jungle V1 has HW type: bytearray(b'')
-      if hw_type == b'' or self._assume_f4_mcu:
-        return McuType.F4
-
     raise ValueError(f"unknown HW type: {hw_type}")
 
   def up_to_date(self, fn=None) -> bool:

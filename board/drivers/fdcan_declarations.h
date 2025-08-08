@@ -4,8 +4,6 @@
 //       FDCAN2_IT0, FDCAN2_IT1
 //       FDCAN3_IT0, FDCAN3_IT1
 
-#define CANFD
-
 typedef struct {
   volatile uint32_t header[2];
   volatile uint32_t data_word[CANPACKET_DATA_SIZE_MAX/4U];

@@ -35,14 +35,6 @@ def test_known_bootstub(p):
   Test that compiled app can work with known production bootstub
   """
   known_bootstubs = {
-    # covers the two cases listed in Panda.connect
-    McuType.F4: [
-      # case A - no bcdDevice or panda type, has to assume F4
-      "bootstub_f4_first_dos_production.panda.bin",
-
-      # case B - just bcdDevice
-      "bootstub_f4_only_bcd.panda.bin",
-    ],
     McuType.H7: ["bootstub.panda_h7.bin"],
   }
 

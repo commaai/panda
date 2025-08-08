@@ -118,7 +118,6 @@ board board_red = {
   .fan_max_rpm = 0U,
   .fan_max_pwm = 100U,
   .avdd_mV = 3300U,
-  .fan_stall_recovery = false,
   .fan_enable_cooldown_time = 0U,
   .init = red_init,
   .init_bootloader = unused_init_bootloader,
