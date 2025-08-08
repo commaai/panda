@@ -158,7 +158,6 @@ board board_tres = {
   .fan_max_rpm = 6600U,
   .fan_max_pwm = 100U,
   .avdd_mV = 1800U,
-  .fan_stall_recovery = false,
   .fan_enable_cooldown_time = 3U,
   .init = tres_init,
   .init_bootloader = unused_init_bootloader,

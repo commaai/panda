@@ -135,7 +135,6 @@ board board_cuatro = {
   .fan_max_rpm = 12500U,
   .fan_max_pwm = 99U, // it can go up to 14k RPM, but 99% -> 100% is very non-linear
   .avdd_mV = 1800U,
-  .fan_stall_recovery = false,
   .fan_enable_cooldown_time = 3U,
   .init = cuatro_init,
   .init_bootloader = unused_init_bootloader,

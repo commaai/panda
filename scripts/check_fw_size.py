@@ -14,11 +14,6 @@ def check_space(file, mcu):
       ".sram4": 16*1024, # SRAM4
       ".backup_sram": 4*1024, # SRAM4
     },
-    "F4": {
-      ".flash": 1024*1024, # FLASH
-      ".dtcmram": 256*1024, # RAM
-      ".ram_d1": 64*1024, # RAM2
-    },
   }
   IGNORE_LIST = [
     ".ARM.attributes",
@@ -86,12 +81,6 @@ if __name__ == "__main__":
   # red panda
   check_space("../board/obj/bootstub.panda_h7.elf", "H7")
   check_space("../board/obj/panda_h7.elf", "H7")
-  # black panda
-  check_space("../board/obj/bootstub.panda.elf", "F4")
-  check_space("../board/obj/panda.elf", "F4")
-  # jungle v1
-  check_space("../board/jungle/obj/bootstub.panda_jungle.elf", "F4")
-  check_space("../board/jungle/obj/panda_jungle.elf", "F4")
   # jungle v2
   check_space("../board/jungle/obj/bootstub.panda_jungle_h7.elf", "H7")
   check_space("../board/jungle/obj/panda_jungle_h7.elf", "H7")

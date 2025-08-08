@@ -1,12 +1,10 @@
 import time
-import pytest
 
 from opendbc.car.hyundai.values import HyundaiSafetyFlags
 from opendbc.car.structs import CarParams
 from panda import Panda
 
 
-@pytest.mark.skip_panda_types((Panda.HW_TYPE_DOS, ))
 def test_voltage(p):
   for _ in range(10):
     voltage = p.health()['voltage']

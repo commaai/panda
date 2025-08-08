@@ -17,7 +17,7 @@ extern bool green_led_enabled;
 // heartbeat state
 extern uint32_t heartbeat_counter;
 extern bool heartbeat_lost;
-extern bool heartbeat_disabled;            // set over USB
+extern bool heartbeat_disabled;
 
 // siren state
 extern bool siren_enabled;

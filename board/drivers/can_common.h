@@ -25,16 +25,10 @@ bool can_loopback = false;
 #define CAN_RX_BUFFER_SIZE 4096U
 #define CAN_TX_BUFFER_SIZE 416U
 
-#ifdef STM32H7
 // ITCM RAM and DTCM RAM are the fastest for Cortex-M7 core access
 __attribute__((section(".axisram"))) can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
 __attribute__((section(".itcmram"))) can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
 __attribute__((section(".itcmram"))) can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
-#else
-can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
-can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
-can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
-#endif
 can_buffer(tx3_q, CAN_TX_BUFFER_SIZE)
 
 // FIXME:
@@ -139,9 +133,7 @@ bus_config_t bus_config[BUS_CONFIG_ARRAY_SIZE] = {
 
 void can_init_all(void) {
   for (uint8_t i=0U; i < PANDA_CAN_CNT; i++) {
-    #ifndef CANFD
-      bus_config[i].can_data_speed = 0U;
-    #endif
+    bus_config[i].can_data_speed = 0U;
     can_clear(can_queues[i]);
     (void)can_init(i);
   }
