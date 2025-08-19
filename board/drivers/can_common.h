@@ -130,21 +130,38 @@ void can_clear(can_ring *q) {
 
 // Helpers
 // Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
-bus_config_t bus_config[BUS_CONFIG_ARRAY_SIZE] = {
-  { .bus_lookup = 0U, .can_num_lookup = 0U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_auto = false, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
-  { .bus_lookup = 1U, .can_num_lookup = 1U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_auto = false, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
-  { .bus_lookup = 2U, .can_num_lookup = 2U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_auto = false, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
-  { .bus_lookup = 0xFFU, .can_num_lookup = 0xFFU, .forwarding_bus = -1, .can_speed = 333U, .can_data_speed = 333U, .canfd_auto = false, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
-};
+bus_config_t bus_config[BUS_CONFIG_ARRAY_SIZE];
 
 void can_init_all(void) {
   for (uint8_t i=0U; i < PANDA_CAN_CNT; i++) {
-    #ifndef CANFD
-      bus_config[i].can_data_speed = 0U;
-    #endif
+    bus_config[i].bus_lookup = i;
+    bus_config[i].can_num_lookup = i;
+    bus_config[i].forwarding_bus = -1;
+    bus_config[i].can_speed = 5000U;
+#ifdef CANFD
+    bus_config[i].can_data_speed = 20000U;
+#else
+    bus_config[i].can_data_speed = 0U;
+#endif
+    bus_config[i].canfd_auto = false;
+    bus_config[i].canfd_enabled = false;
+    bus_config[i].brs_enabled = false;
+    bus_config[i].canfd_non_iso = false;
+
     can_clear(can_queues[i]);
     (void)can_init(i);
   }
+
+  // sentinel entry for invalid bus
+  bus_config[PANDA_CAN_CNT].bus_lookup = 0xFFU;
+  bus_config[PANDA_CAN_CNT].can_num_lookup = 0xFFU;
+  bus_config[PANDA_CAN_CNT].forwarding_bus = -1;
+  bus_config[PANDA_CAN_CNT].can_speed = 333U;
+  bus_config[PANDA_CAN_CNT].can_data_speed = 333U;
+  bus_config[PANDA_CAN_CNT].canfd_auto = false;
+  bus_config[PANDA_CAN_CNT].canfd_enabled = false;
+  bus_config[PANDA_CAN_CNT].brs_enabled = false;
+  bus_config[PANDA_CAN_CNT].canfd_non_iso = false;
 }
 
 void can_set_orientation(bool flipped) {
