@@ -7,15 +7,17 @@
 // ////////////////////////// //
 
 static void cuatro_enable_can_transceiver(uint8_t transceiver, bool enabled) {
+  static bool can0_enabled = false, can2_enabled = false;
+
   switch (transceiver) {
     case 1U:
-      set_gpio_output(GPIOB, 7, !enabled);
+      can0_enabled = enabled;
       break;
     case 2U:
       set_gpio_output(GPIOB, 10, !enabled);
       break;
     case 3U:
-      set_gpio_output(GPIOD, 8, !enabled);
+      can2_enabled = enabled;
       break;
     case 4U:
       set_gpio_output(GPIOB, 11, !enabled);
@@ -23,6 +25,10 @@ static void cuatro_enable_can_transceiver(uint8_t transceiver, bool enabled) {
     default:
       break;
   }
+
+  // CAN0 and 2 are tied, so enable both if either is enabled
+  set_gpio_output(GPIOB, 7, !(can0_enabled || can2_enabled));
+  set_gpio_output(GPIOD, 8, !(can0_enabled || can2_enabled));
 }
 
 static uint32_t cuatro_read_voltage_mV(void) {
