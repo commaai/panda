@@ -151,17 +151,6 @@ void can_init_all(void) {
     can_clear(can_queues[i]);
     (void)can_init(i);
   }
-
-  // sentinel entry for invalid bus
-  bus_config[PANDA_CAN_CNT].bus_lookup = 0xFFU;
-  bus_config[PANDA_CAN_CNT].can_num_lookup = 0xFFU;
-  bus_config[PANDA_CAN_CNT].forwarding_bus = -1;
-  bus_config[PANDA_CAN_CNT].can_speed = 333U;
-  bus_config[PANDA_CAN_CNT].can_data_speed = 333U;
-  bus_config[PANDA_CAN_CNT].canfd_auto = false;
-  bus_config[PANDA_CAN_CNT].canfd_enabled = false;
-  bus_config[PANDA_CAN_CNT].brs_enabled = false;
-  bus_config[PANDA_CAN_CNT].canfd_non_iso = false;
 }
 
 void can_set_orientation(bool flipped) {
