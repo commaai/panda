@@ -30,7 +30,8 @@ static void tres_set_fan_enabled(bool enabled) {
 }
 
 static void tres_enable_can_transceiver(uint8_t transceiver, bool enabled) {
-  static bool can0_enabled = false, can2_enabled = false;
+  static bool can0_enabled = false;
+  static bool can2_enabled = false;
 
   switch (transceiver) {
     case 1U:
