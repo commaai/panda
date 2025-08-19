@@ -30,15 +30,18 @@ static void tres_set_fan_enabled(bool enabled) {
 }
 
 static void tres_enable_can_transceiver(uint8_t transceiver, bool enabled) {
+  static bool can0_enabled = false;
+  static bool can2_enabled = false;
+
   switch (transceiver) {
     case 1U:
-      set_gpio_output(GPIOG, 11, !enabled);
+      can0_enabled = enabled;
       break;
     case 2U:
       set_gpio_output(GPIOB, 10, !enabled);
       break;
     case 3U:
-      set_gpio_output(GPIOD, 7, !enabled);
+      can2_enabled = enabled;
       break;
     case 4U:
       set_gpio_output(GPIOB, 11, !enabled);
@@ -46,6 +49,10 @@ static void tres_enable_can_transceiver(uint8_t transceiver, bool enabled) {
     default:
       break;
   }
+
+  // CAN0 and 2 are tied, so enable both if either is enabled
+  set_gpio_output(GPIOG, 11, !(can0_enabled || can2_enabled));
+  set_gpio_output(GPIOD, 7, !(can0_enabled || can2_enabled));
 }
 
 static void tres_set_can_mode(uint8_t mode) {
