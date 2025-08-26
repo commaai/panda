@@ -6,9 +6,6 @@ struct fan_state_t {
   uint16_t target_rpm;
   uint8_t power;
   float error_integral;
-  uint8_t stall_counter;
-  uint8_t stall_threshold;
-  uint8_t total_stall_count;
   uint8_t cooldown_counter;
 };
 extern struct fan_state_t fan_state;

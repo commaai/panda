@@ -127,9 +127,9 @@ class Panda:
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
 
   H7_DEVICES = [HW_TYPE_RED_PANDA, HW_TYPE_TRES, HW_TYPE_CUATRO]
+  SUPPORTED_DEVICES = H7_DEVICES
 
   INTERNAL_DEVICES = (HW_TYPE_TRES, HW_TYPE_CUATRO)
-  DEPRECATED_DEVICES = (HW_TYPE_WHITE, HW_TYPE_BLACK)
 
   MAX_FAN_RPMs = {
     HW_TYPE_TRES: 6600,
@@ -215,7 +215,7 @@ class Panda:
     logger.debug("connected")
 
     hw_type = self.get_type()
-    if hw_type in Panda.DEPRECATED_DEVICES:
+    if hw_type not in self.SUPPORTED_DEVICES:
       print("WARNING: Using deprecated HW")
 
     # disable openpilot's heartbeat checks
@@ -449,7 +449,7 @@ class Panda:
       return
 
     hw_type = self.get_type()
-    if hw_type in Panda.DEPRECATED_DEVICES:
+    if hw_type not in self.SUPPORTED_DEVICES:
       raise RuntimeError(f"HW type {hw_type.hex()} is deprecated and can no longer be flashed.")
 
     if not fn:
@@ -812,8 +812,6 @@ class Panda:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf6, int(enabled), 0, b'')
 
   # ****************** Debug *****************
-  def set_green_led(self, enabled):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, int(enabled), 0, b'')
 
   # arr: timer period
   # ccrN: channel N pulse length

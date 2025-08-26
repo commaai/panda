@@ -37,6 +37,7 @@ class PandaJungle(Panda):
   HW_TYPE_V2 = b'\x02'
 
   H7_DEVICES = [HW_TYPE_V2, ]
+  SUPPORTED_DEVICES = H7_DEVICES
 
   HEALTH_PACKET_VERSION = 1
   HEALTH_STRUCT = struct.Struct("<IffffffHHHHHHHHHHHH")
