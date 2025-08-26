@@ -160,7 +160,7 @@ static void tick_handler(void) {
       #endif
 
       // set green LED to be controls allowed
-      led_set(LED_GREEN, controls_allowed | green_led_enabled);
+      led_set(LED_GREEN, controls_allowed);
 
       // turn off the blue LED, turned on by CAN
       // unless we are in power saving mode

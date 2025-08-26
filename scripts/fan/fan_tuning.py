@@ -22,7 +22,6 @@ def logger(event):
   with Panda(claim=False) as p, open('/tmp/fan_log', 'w') as f:
     power = None
     target_rpm = None
-    stall_count = None
     rpm_fast = None
     t = time.monotonic()
 
@@ -33,7 +32,7 @@ def logger(event):
       for l in drain_serial(p)[::-1]:
         ns = l.decode('utf8').strip().split(' ')
         if len(ns) == 4:
-          target_rpm, rpm_fast, power, stall_count = (int(n, 16) for n in ns)
+          target_rpm, rpm_fast, power = (int(n, 16) for n in ns)
           break
 
       dat = {
@@ -43,8 +42,6 @@ def logger(event):
         'target_rpm': target_rpm,
         'rpm_fast': rpm_fast,
         'rpm': p.get_fan_rpm(),
-        'stall_counter': stall_count,
-        'total_stall_count': p.health()['fan_stall_count'],
       }
       f.write(json.dumps(dat) + '\n')
       time.sleep(1/16.)

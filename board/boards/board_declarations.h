@@ -51,7 +51,6 @@ struct board {
 // These should match the enums in cereal/log.capnp and __init__.py
 #define HW_TYPE_UNKNOWN 0U
 #define HW_TYPE_RED_PANDA 7U
-#define HW_TYPE_RED_PANDA_V2 8U
 #define HW_TYPE_TRES 9U
 #define HW_TYPE_CUATRO 10U
 
