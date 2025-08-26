@@ -1,7 +1,6 @@
 import time
 
 from opendbc.car.structs import CarParams
-from panda import Panda
 
 
 def test_safety_nooutput(p):
