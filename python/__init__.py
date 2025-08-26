@@ -555,9 +555,9 @@ class Panda:
       "fan_power": a[19],
       "safety_rx_checks_invalid": a[20],
       "spi_error_count": a[21],
-      "sbu1_voltage_mV": a[23],
-      "sbu2_voltage_mV": a[24],
-      "som_reset_triggered": a[25],
+      "sbu1_voltage_mV": a[22],
+      "sbu2_voltage_mV": a[23],
+      "som_reset_triggered": a[24],
     }
 
   @ensure_can_health_packet_version
