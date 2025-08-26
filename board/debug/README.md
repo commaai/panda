@@ -13,8 +13,6 @@ Make sure you're using a genuine one for boards that do not have a 3.3V panda po
 ## Openocd
 Install openocd. For Ubuntu 24.04, the one in the package manager works fine: `sudo apt install openocd`.
 
-To run, use `./debug_f4.sh (TODO)` or `./debug_h7.sh` depending on the panda.
-
 ## GDB
 You need `gdb-multiarch`.
 

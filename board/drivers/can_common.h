@@ -30,7 +30,7 @@ bool can_loopback = false;
 __attribute__((section(".axisram"))) can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
 __attribute__((section(".itcmram"))) can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
 __attribute__((section(".itcmram"))) can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
-#else
+#else  // kept for PC
 can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
 can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
 can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
@@ -139,9 +139,6 @@ bus_config_t bus_config[BUS_CONFIG_ARRAY_SIZE] = {
 
 void can_init_all(void) {
   for (uint8_t i=0U; i < PANDA_CAN_CNT; i++) {
-    #ifndef CANFD
-      bus_config[i].can_data_speed = 0U;
-    #endif
     can_clear(can_queues[i]);
     (void)can_init(i);
   }
