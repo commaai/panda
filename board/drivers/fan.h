@@ -5,6 +5,13 @@ struct fan_state_t fan_state;
 static const uint8_t FAN_TICK_FREQ = 8U;
 
 void fan_set_power(uint8_t percentage) {
+  if (hw_type == HW_TYPE_CUATRO) {
+    if (percentage > 0U) {
+      fan_state.power = CLAMP(percentage, 20U, current_board->fan_max_pwm);
+    } else {
+      fan_state.power = 0U;
+    }
+  }
   fan_state.target_rpm = ((current_board->fan_max_rpm * CLAMP(percentage, 0U, 100U)) / 100U);
 }
 
@@ -41,14 +48,16 @@ void fan_tick(void) {
     }
 
     // Update controller
-    if (fan_state.target_rpm == 0U) {
-      fan_state.error_integral = 0.0f;
-    } else {
-      float error = (fan_state.target_rpm - fan_rpm_fast) / ((float) current_board->fan_max_rpm);
-      fan_state.error_integral += FAN_I * error;
+    if (hw_type != HW_TYPE_CUATRO) {
+      if (fan_state.target_rpm == 0U) {
+        fan_state.error_integral = 0.0f;
+      } else {
+        float error = (fan_state.target_rpm - fan_rpm_fast) / ((float) current_board->fan_max_rpm);
+        fan_state.error_integral += FAN_I * error;
+      }
+      fan_state.error_integral = CLAMP(fan_state.error_integral, 0U, current_board->fan_max_pwm);
+      fan_state.power = fan_state.error_integral;
     }
-    fan_state.error_integral = CLAMP(fan_state.error_integral, 0U, current_board->fan_max_pwm);
-    fan_state.power = fan_state.error_integral;
 
     // Set PWM and enable line
     pwm_set(TIM3, 3, fan_state.power);
