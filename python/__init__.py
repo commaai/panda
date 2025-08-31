@@ -471,8 +471,8 @@ class Panda:
     Panda.flash_static(self._handle, code, mcu_type=self._mcu_type)
 
     # reconnect
-    #if reconnect:
-    #  self.reconnect()
+    if reconnect:
+      self.reconnect()
 
   def recover(self, timeout: int | None = 60, reset: bool = True) -> bool:
     dfu_serial = self.get_dfu_serial()
