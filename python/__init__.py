@@ -431,7 +431,7 @@ class Panda:
       handle.controlWrite(Panda.REQUEST_IN, 0xb2, i, 0, b'')
 
     # flash over EP2
-    STEP = 0x10
+    STEP = 0x200
     logger.info("flash: flashing")
     for i in range(0, len(code), STEP):
       handle.bulkWrite(2, code[i:i + STEP])
@@ -471,8 +471,8 @@ class Panda:
     Panda.flash_static(self._handle, code, mcu_type=self._mcu_type)
 
     # reconnect
-    if reconnect:
-      self.reconnect()
+    #if reconnect:
+    #  self.reconnect()
 
   def recover(self, timeout: int | None = 60, reset: bool = True) -> bool:
     dfu_serial = self.get_dfu_serial()
