@@ -5,7 +5,6 @@ from panda import Panda, PandaDFU
 class GPIO:
   STM_RST_N = 124
   STM_BOOT0 = 134
-  HUB_RST_N = 30
 
 
 def gpio_init(pin, output):
@@ -18,32 +17,24 @@ def gpio_set(pin, high):
 
 
 if __name__ == "__main__":
-  for pin in (GPIO.STM_RST_N, GPIO.STM_BOOT0, GPIO.HUB_RST_N):
+  for pin in (GPIO.STM_RST_N, GPIO.STM_BOOT0):
     gpio_init(pin, True)
-
-  # reset USB hub
-  gpio_set(GPIO.HUB_RST_N, 0)
-  time.sleep(0.5)
-  gpio_set(GPIO.HUB_RST_N, 1)
 
   # flash bootstub
   print("resetting into DFU")
   gpio_set(GPIO.STM_RST_N, 1)
   gpio_set(GPIO.STM_BOOT0, 1)
-  time.sleep(1)
+  time.sleep(0.2)
   gpio_set(GPIO.STM_RST_N, 0)
   gpio_set(GPIO.STM_BOOT0, 0)
-  time.sleep(1)
 
+  # bootstub flash takes 2s and is limited by the 255 byte flashing chunk size
   print("flashing bootstub")
+  assert Panda.wait_for_dfu(None, 5)
   PandaDFU(None).recover()
 
-  gpio_set(GPIO.STM_RST_N, 1)
-  time.sleep(0.5)
-  gpio_set(GPIO.STM_RST_N, 0)
-  time.sleep(1)
-
   print("flashing app")
+  assert Panda.wait_for_panda(None, 5)
   p = Panda()
   assert p.bootstub
   p.flash()

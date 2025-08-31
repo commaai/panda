@@ -1,4 +1,5 @@
 import os
+import time
 import usb1
 import struct
 import binascii
@@ -6,6 +7,7 @@ import binascii
 from .base import BaseSTBootloaderHandle
 from .spi import STBootloaderSPIHandle, PandaSpiException
 from .usb import STBootloaderUSBHandle
+from .utils import logger
 from .constants import FW_PATH, McuType
 
 
@@ -116,18 +118,21 @@ class PandaDFU:
   def program_bootstub(self, code_bootstub):
     self._handle.clear_status()
 
-    # erase all sectors
-    for i in range(len(self._mcu_type.config.sector_sizes)):
+    # erase bootstub + app sectors
+    for i in (0, 1):
       self._handle.erase_sector(i)
 
+    # write bootstub
     self._handle.program(self._mcu_type.config.bootstub_address, code_bootstub)
 
   def recover(self):
+    st = time.monotonic()
     fn = os.path.join(FW_PATH, self._mcu_type.config.bootstub_fn)
     with open(fn, "rb") as f:
       code = f.read()
     self.program_bootstub(code)
     self.reset()
+    logger.debug(f"recover took {time.monotonic() - st:.2f}s")
 
   @staticmethod
   def list() -> list[str]:
