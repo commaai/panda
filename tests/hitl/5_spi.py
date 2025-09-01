@@ -6,10 +6,6 @@ from unittest.mock import patch
 from panda import Panda, PandaDFU
 from panda.python.spi import SpiDevice, PandaProtocolMismatch, PandaSpiNackResponse
 
-pytestmark = [
-  pytest.mark.test_panda_types((Panda.HW_TYPE_TRES, ))
-]
-
 @pytest.mark.skip("doesn't work, bootloader seems to ignore commands once it sees junk")
 def test_dfu_with_spam(p):
   dfu_serial = p.get_dfu_serial()
