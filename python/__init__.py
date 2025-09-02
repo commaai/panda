@@ -32,10 +32,9 @@ def calculate_checksum(data):
     res ^= b
   return res
 
-def pack_can_buffer(arr, fd=False):
+def pack_can_buffer(arr, chunk=False, fd=False):
   snds = [b'']
   for address, dat, bus in arr:
-    assert len(dat) in LEN_TO_DLC
     #logger.debug("  W 0x%x: 0x%s", address, dat.hex())
 
     extended = 1 if address >= 0x800 else 0
@@ -50,7 +49,7 @@ def pack_can_buffer(arr, fd=False):
     header[5] = calculate_checksum(header[:5] + dat)
 
     snds[-1] += header + dat
-    if len(snds[-1]) > 2048: # Limit chunks to 256 bytes
+    if chunk and len(snds[-1]) > 256:
       snds.append(b'')
 
   return snds
@@ -729,7 +728,7 @@ class Panda:
 
   @ensure_can_packet_version
   def can_send_many(self, arr, *, fd=False, timeout=CAN_SEND_TIMEOUT_MS):
-    snds = pack_can_buffer(arr, fd=fd)
+    snds = pack_can_buffer(arr, chunk=(not self.spi), fd=fd)
     for tx in snds:
       while len(tx) > 0:
         bs = self._handle.bulkWrite(3, tx, timeout=timeout)
