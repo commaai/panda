@@ -29,7 +29,8 @@ CHECKSUM_START = 0xAB
 MIN_ACK_TIMEOUT_MS = 100
 MAX_XFER_RETRY_COUNT = 5
 
-XFER_SIZE = 0x40*31
+SPI_BUF_SIZE = 4096  # from panda/board/drivers/spi.h
+XFER_SIZE = SPI_BUF_SIZE - 0x40 # give some room for SPI protocol overhead
 
 DEV_PATH = "/dev/spidev0.0"
 

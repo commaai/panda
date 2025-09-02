@@ -50,7 +50,7 @@ def pack_can_buffer(arr, fd=False):
     header[5] = calculate_checksum(header[:5] + dat)
 
     snds[-1] += header + dat
-    if len(snds[-1]) > 256: # Limit chunks to 256 bytes
+    if len(snds[-1]) > 2048: # Limit chunks to 256 bytes
       snds.append(b'')
 
   return snds
