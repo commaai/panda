@@ -29,7 +29,8 @@ CHECKSUM_START = 0xAB
 MIN_ACK_TIMEOUT_MS = 100
 MAX_XFER_RETRY_COUNT = 5
 
-XFER_SIZE = 0x40*31
+SPI_BUF_SIZE = 4096  # from panda/board/drivers/spi.h
+XFER_SIZE = SPI_BUF_SIZE - 0x40 # give some room for SPI protocol overhead
 
 DEV_PATH = "/dev/spidev0.0"
 
@@ -290,8 +291,9 @@ class PandaSpiHandle(BaseHandle):
     return self._transfer(0, struct.pack("<BHHH", request, value, index, length), timeout, max_rx_len=length)
 
   def bulkWrite(self, endpoint: int, data: bytes, timeout: int = TIMEOUT) -> int:
+    mv = memoryview(data)
     for x in range(math.ceil(len(data) / XFER_SIZE)):
-      self._transfer(endpoint, data[XFER_SIZE*x:XFER_SIZE*(x+1)], timeout)
+      self._transfer(endpoint, mv[XFER_SIZE*x:XFER_SIZE*(x+1)], timeout)
     return len(data)
 
   def bulkRead(self, endpoint: int, length: int, timeout: int = TIMEOUT) -> bytes:

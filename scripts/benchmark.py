@@ -1,17 +1,32 @@
 #!/usr/bin/env python3
+import io
+import os
 import time
+import pstats
+import cProfile
 from contextlib import contextmanager
 
 from panda import Panda, PandaDFU
 from panda.tests.hitl.helpers import get_random_can_messages
 
 
+PROFILE = "PROFILE" in os.environ
+
 @contextmanager
 def print_time(desc):
+  if PROFILE:
+    pr = cProfile.Profile()
+    pr.enable()
   start = time.perf_counter()
   yield
   end = time.perf_counter()
-  print(f"{end - start:.2f}s - {desc}")
+  print(f"{end - start:.3f}s - {desc}")
+  if PROFILE:
+    pr.disable()
+    s = io.StringIO()
+    ps = pstats.Stats(pr, stream=s).sort_stats("cumtime")
+    ps.print_stats()
+    print(s.getvalue())
 
 
 if __name__ == "__main__":

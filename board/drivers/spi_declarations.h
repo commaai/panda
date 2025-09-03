@@ -8,7 +8,7 @@
 // in a tight loop, plus some buffer
 #define SPI_IRQ_RATE  16000U
 
-#define SPI_BUF_SIZE 2048U
+#define SPI_BUF_SIZE 4096U
 // H7 DMA2 located in D2 domain, so we need to use SRAM1/SRAM2
 __attribute__((section(".sram12"))) extern uint8_t spi_buf_rx[SPI_BUF_SIZE];
 __attribute__((section(".sram12"))) extern uint8_t spi_buf_tx[SPI_BUF_SIZE];

@@ -32,16 +32,13 @@ def calculate_checksum(data):
     res ^= b
   return res
 
-def pack_can_buffer(arr, fd=False):
-  snds = [b'']
+def pack_can_buffer(arr, chunk=False, fd=False):
+  snds = [bytearray(), ]
   for address, dat, bus in arr:
-    assert len(dat) in LEN_TO_DLC
-    #logger.debug("  W 0x%x: 0x%s", address, dat.hex())
-
     extended = 1 if address >= 0x800 else 0
     data_len_code = LEN_TO_DLC[len(dat)]
     header = bytearray(CANPACKET_HEAD_SIZE)
-    word_4b = address << 3 | extended << 2
+    word_4b = (address << 3) | (extended << 2)
     header[0] = (data_len_code << 4) | (bus << 1) | int(fd)
     header[1] = word_4b & 0xFF
     header[2] = (word_4b >> 8) & 0xFF
@@ -49,9 +46,10 @@ def pack_can_buffer(arr, fd=False):
     header[4] = (word_4b >> 24) & 0xFF
     header[5] = calculate_checksum(header[:5] + dat)
 
-    snds[-1] += header + dat
-    if len(snds[-1]) > 256: # Limit chunks to 256 bytes
-      snds.append(b'')
+    snds[-1].extend(header)
+    snds[-1].extend(dat)
+    if chunk and len(snds[-1]) > 256:
+      snds.append(bytearray())
 
   return snds
 
@@ -729,7 +727,7 @@ class Panda:
 
   @ensure_can_packet_version
   def can_send_many(self, arr, *, fd=False, timeout=CAN_SEND_TIMEOUT_MS):
-    snds = pack_can_buffer(arr, fd=fd)
+    snds = pack_can_buffer(arr, chunk=(not self.spi), fd=fd)
     for tx in snds:
       while len(tx) > 0:
         bs = self._handle.bulkWrite(3, tx, timeout=timeout)
