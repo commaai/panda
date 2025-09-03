@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+import io
 import os
 import time
-import cProfile, pstats, io
+import pstats
+import cProfile
 from contextlib import contextmanager
 
 from panda import Panda, PandaDFU
@@ -28,11 +30,11 @@ def print_time(desc):
 
 
 if __name__ == "__main__":
-  #with print_time("Panda()"):
-  #  p = Panda()
+  with print_time("Panda()"):
+    p = Panda()
 
-  #with print_time("PandaDFU.list()"):
-  #  PandaDFU.list()
+  with print_time("PandaDFU.list()"):
+    PandaDFU.list()
 
   fxn = [
     'reset',
@@ -41,18 +43,16 @@ if __name__ == "__main__":
     'health',
     #'flash',
   ]
-  #for f in fxn:
-  #  with print_time(f"Panda.{f}()"):
-  #    getattr(p, f)()
+  for f in fxn:
+    with print_time(f"Panda.{f}()"):
+      getattr(p, f)()
 
-  p = Panda()
   p.set_can_loopback(True)
 
   for n in range(6):
-  #for n in (5, ):
     msgs = get_random_can_messages(int(10**n))
     with print_time(f"Panda.can_send_many() - {len(msgs)} msgs"):
       p.can_send_many(msgs)
 
-  #with print_time("Panda.can_recv()"):
-  #  m = p.can_recv()
+  with print_time("Panda.can_recv()"):
+    m = p.can_recv()
