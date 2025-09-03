@@ -33,7 +33,7 @@ def calculate_checksum(data):
   return res
 
 def pack_can_buffer(arr, chunk=False, fd=False):
-  snds = [bytearray(len(arr)), ]
+  snds = [bytearray(), ]
   for address, dat, bus in arr:
     extended = 1 if address >= 0x800 else 0
     data_len_code = LEN_TO_DLC[len(dat)]
