@@ -33,14 +33,12 @@ def calculate_checksum(data):
   return res
 
 def pack_can_buffer(arr, chunk=False, fd=False):
-  snds = [b'']
+  snds = [bytearray(len(arr)), ]
   for address, dat, bus in arr:
-    #logger.debug("  W 0x%x: 0x%s", address, dat.hex())
-
     extended = 1 if address >= 0x800 else 0
     data_len_code = LEN_TO_DLC[len(dat)]
     header = bytearray(CANPACKET_HEAD_SIZE)
-    word_4b = address << 3 | extended << 2
+    word_4b = (address << 3) | (extended << 2)
     header[0] = (data_len_code << 4) | (bus << 1) | int(fd)
     header[1] = word_4b & 0xFF
     header[2] = (word_4b >> 8) & 0xFF
@@ -48,9 +46,10 @@ def pack_can_buffer(arr, chunk=False, fd=False):
     header[4] = (word_4b >> 24) & 0xFF
     header[5] = calculate_checksum(header[:5] + dat)
 
-    snds[-1] += header + dat
+    snds[-1].extend(header)
+    snds[-1].extend(dat)
     if chunk and len(snds[-1]) > 256:
-      snds.append(b'')
+      snds.append(bytearray())
 
   return snds
 
