@@ -244,7 +244,7 @@ class PandaSpiHandle(BaseHandle):
 
           # ensure slave is in a consistent state and ready for the next transfer (e.g. slave TX buffer isn't stuck full)
           nack_cnt = 0
-          while nack_cnt < 3:
+          while (nack_cnt < 3) and (time.monotonic() - start_time) < timeout*1e-3:
             try:
               self._wait_for_ack(spi, NACK, MIN_ACK_TIMEOUT_MS, 0x11, length=XFER_SIZE//2)
               nack_cnt += 1
