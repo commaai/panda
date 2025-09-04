@@ -32,6 +32,7 @@ export GIT_BRANCH=${env.GIT_BRANCH}
 export GIT_COMMIT=${env.GIT_COMMIT}
 export PYTHONPATH=${env.TEST_DIR}/../
 export PYTHONWARNINGS=error
+export LOGLEVEL=debug
 ln -sf /data/openpilot/opendbc_repo/opendbc /data/opendbc
 
 # TODO: this is an agnos issue
