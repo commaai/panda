@@ -1,5 +1,4 @@
 import binascii
-import ctypes
 import os
 import fcntl
 import math
@@ -16,8 +15,10 @@ from .utils import logger
 
 try:
   import spidev
+  import spidev2
 except ImportError:
   spidev = None
+  spidev2 = None
 
 # Constants
 SYNC = 0x5A
@@ -71,18 +72,6 @@ class PandaSpiTransferFailed(PandaSpiException):
   pass
 
 
-class PandaSpiTransfer(ctypes.Structure):
-  _fields_ = [
-    ('rx_buf', ctypes.c_uint64),
-    ('tx_buf', ctypes.c_uint64),
-    ('tx_length', ctypes.c_uint32),
-    ('rx_length_max', ctypes.c_uint32),
-    ('timeout', ctypes.c_uint32),
-    ('endpoint', ctypes.c_uint8),
-    ('expect_disconnect', ctypes.c_uint8),
-  ]
-
-
 SPI_LOCK = threading.Lock()
 SPI_DEVICES = {}
 class SpiDevice:
@@ -90,9 +79,7 @@ class SpiDevice:
   Provides locked, thread-safe access to a panda's SPI interface.
   """
 
-  # 50MHz is the max of the 845. older rev comma three
-  # may not support the full 50MHz
-  MAX_SPEED = 50000000
+  MAX_SPEED = 50000000  # max of the SDM845
 
   def __init__(self, speed=MAX_SPEED):
     assert speed <= self.MAX_SPEED
@@ -129,24 +116,12 @@ class PandaSpiHandle(BaseHandle):
   """
 
   PROTOCOL_VERSION = 2
+  HEADER = struct.Struct("<BBHH")
 
   def __init__(self) -> None:
     self.dev = SpiDevice()
-
-    self._transfer_raw: Callable[[SpiDevice, int, bytes, int, int, bool], bytes] = self._transfer_spidev
-
-    if "KERN" in os.environ:
-      self._transfer_raw = self._transfer_kernel_driver
-
-      self.tx_buf = bytearray(1024)
-      self.rx_buf = bytearray(1024)
-      tx_buf_raw = ctypes.c_char.from_buffer(self.tx_buf)
-      rx_buf_raw = ctypes.c_char.from_buffer(self.rx_buf)
-
-      self.ioctl_data = PandaSpiTransfer()
-      self.ioctl_data.tx_buf = ctypes.addressof(tx_buf_raw)
-      self.ioctl_data.rx_buf = ctypes.addressof(rx_buf_raw)
-      self.fileno = self.dev._spidev.fileno()
+    if spidev2 is not None:
+      self._spi2 = spidev2.SPIBus("/dev/spidev0.0", "w+b", bits_per_word=8, speed_hz=50_000_000)
 
   # helpers
   def _calc_checksum(self, data: bytes) -> int:
@@ -172,7 +147,7 @@ class PandaSpiHandle(BaseHandle):
     max_rx_len = max(USBPACKET_MAX_SIZE, max_rx_len)
 
     logger.debug("- send header")
-    packet = struct.pack("<BBHH", SYNC, endpoint, len(data), max_rx_len)
+    packet = self.HEADER.pack(SYNC, endpoint, len(data), max_rx_len)
     packet += bytes([self._calc_checksum(packet), ])
     spi.xfer2(packet)
 
@@ -201,29 +176,57 @@ class PandaSpiHandle(BaseHandle):
       if remaining > 0:
         dat += bytes(spi.readbytes(remaining))
 
-
       dat = dat[:3 + response_len + 1]
       if self._calc_checksum(dat) != 0:
         raise PandaSpiBadChecksum
 
       return dat[3:-1]
 
-  def _transfer_kernel_driver(self, spi, endpoint: int, data, timeout: int, max_rx_len: int = 1000, expect_disconnect: bool = False) -> bytes:
-    import spidev2
-    self.tx_buf[:len(data)] = data
-    self.ioctl_data.endpoint = endpoint
-    self.ioctl_data.tx_length = len(data)
-    self.ioctl_data.rx_length_max = max_rx_len
-    self.ioctl_data.expect_disconnect = int(expect_disconnect)
+  def _transfer_spidev2(self, spi, endpoint: int, data, timeout: int, max_rx_len: int = USBPACKET_MAX_SIZE, expect_disconnect: bool = False) -> bytes:
+    max_rx_len = max(USBPACKET_MAX_SIZE, max_rx_len)
 
-    # TODO: use our own ioctl request
-    try:
-      ret = fcntl.ioctl(self.fileno, spidev2.SPI_IOC_RD_LSB_FIRST, self.ioctl_data)
-    except OSError as e:
-      raise PandaSpiException from e
-    if ret < 0:
-      raise PandaSpiException(f"ioctl returned {ret}")
-    return bytes(self.rx_buf[:ret])
+    header = self.HEADER.pack(SYNC, endpoint, len(data), max_rx_len)
+
+    header_ack = bytearray(1)
+
+    # ACK + <2 bytes for response length> + data + checksum
+    data_rx = bytearray(3+max_rx_len+1)
+
+    self._spi2.submitTransferList(spidev2.SPITransferList((
+      # header
+      {'tx_buf': header + bytes([self._calc_checksum(header), ]), 'delay_usecs': 0, 'cs_change': True},
+      {'rx_buf': header_ack, 'delay_usecs': 0, 'cs_change': True},
+
+      # send data
+      {'tx_buf': bytes([*data, self._calc_checksum(data)]), 'delay_usecs': 0, 'cs_change': True},
+      {'rx_buf': data_rx, 'delay_usecs': 0, 'cs_change': True},
+    )))
+
+    if header_ack[0] != HACK:
+      raise PandaSpiMissingAck
+
+    if expect_disconnect:
+      logger.debug("- expecting disconnect, returning")
+      return b""
+    else:
+      dat = bytes(data_rx)
+      if dat[0] != DACK:
+        if dat[0] == NACK:
+          raise PandaSpiNackResponse
+
+        print("trying again")
+        dat = self._wait_for_ack(spi, DACK, timeout, 0x13, length=3 + max_rx_len)
+
+      # get response length, then response
+      response_len = struct.unpack("<H", dat[1:3])[0]
+      if response_len > max_rx_len:
+        raise PandaSpiException(f"response length greater than max ({max_rx_len} {response_len})")
+
+      dat = dat[:3 + response_len + 1]
+      if self._calc_checksum(dat) != 0:
+        raise PandaSpiBadChecksum
+
+      return dat[3:-1]
 
   def _transfer(self, endpoint: int, data, timeout: int, max_rx_len: int = 1000, expect_disconnect: bool = False) -> bytes:
     logger.debug("starting transfer: endpoint=%d, max_rx_len=%d", endpoint, max_rx_len)
@@ -237,7 +240,9 @@ class PandaSpiHandle(BaseHandle):
       logger.debug("\ntry #%d", n)
       with self.dev.acquire() as spi:
         try:
-          return self._transfer_raw(spi, endpoint, data, timeout, max_rx_len, expect_disconnect)
+          fn = self._transfer_spidev
+          #fn = self._transfer_spidev2
+          return fn(spi, endpoint, data, timeout, max_rx_len, expect_disconnect)
         except PandaSpiException as e:
           exc = e
           logger.info("SPI transfer failed, retrying", exc_info=True)

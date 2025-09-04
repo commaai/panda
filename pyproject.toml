@@ -30,6 +30,7 @@ dev = [
   "mypy",
   "setuptools",
   "spidev; platform_system == 'Linux'",
+  "spidev2; platform_system == 'Linux'",
 ]
 
 [build-system]
