@@ -161,10 +161,10 @@ class PandaSpiHandle(BaseHandle):
     start = time.monotonic()
     while (timeout == 0) or ((time.monotonic() - start) < timeout_s):
       dat = spi.xfer2([tx, ] * length)
-      if dat[0] == NACK:
-        raise PandaSpiNackResponse
-      elif dat[0] == ack_val:
+      if dat[0] == ack_val:
         return bytes(dat)
+      elif dat[0] == NACK:
+        raise PandaSpiNackResponse
 
     raise PandaSpiMissingAck
 
