@@ -322,6 +322,9 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
   """
     Implementation of the STM32 SPI bootloader protocol described in:
     https://www.st.com/resource/en/application_note/an4286-spi-protocol-used-in-the-stm32-bootloader-stmicroelectronics.pdf
+
+    NOTE: the bootloader's state machine is fragile and immediately gets into a bad state when
+          sending any junk, e.g. when using the panda SPI protocol.
   """
 
   SYNC = 0x5A
