@@ -7,7 +7,6 @@ import struct
 import threading
 from contextlib import contextmanager
 from functools import reduce
-from collections.abc import Callable
 
 from .base import BaseHandle, BaseSTBootloaderHandle, TIMEOUT
 from .constants import McuType, MCU_TYPE_BY_IDCODE, USBPACKET_MAX_SIZE
@@ -245,7 +244,7 @@ class PandaSpiHandle(BaseHandle):
           return fn(spi, endpoint, data, timeout, max_rx_len, expect_disconnect)
         except PandaSpiException as e:
           exc = e
-          logger.info("SPI transfer failed, retrying", exc_info=True)
+          logger.debug("SPI transfer failed, retrying", exc_info=True)
 
           # ensure slave is in a consistent state and ready for the next transfer
           # (e.g. slave TX buffer isn't stuck full)
