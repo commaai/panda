@@ -14,9 +14,11 @@ from .utils import logger
 
 try:
   import spidev
-  import spidev2
 except ImportError:
   spidev = None
+try:
+  import spidev2
+except ImportError:
   spidev2 = None
 
 # Constants

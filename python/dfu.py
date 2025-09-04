@@ -63,6 +63,8 @@ class PandaDFU:
       handle = STBootloaderSPIHandle()
       this_dfu_serial = PandaDFU.st_serial_to_dfu_serial(handle.get_uid(), handle.get_mcu_type())
     except PandaSpiException:
+      import traceback
+      traceback.print_exc()
       handle = None
 
     if dfu_serial is not None and dfu_serial != this_dfu_serial:
