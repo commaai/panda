@@ -161,10 +161,10 @@ class PandaSpiHandle(BaseHandle):
     start = time.monotonic()
     while (timeout == 0) or ((time.monotonic() - start) < timeout_s):
       dat = spi.xfer2([tx, ] * length)
-      if dat[0] == NACK:
-        raise PandaSpiNackResponse
-      elif dat[0] == ack_val:
+      if dat[0] == ack_val:
         return bytes(dat)
+      elif dat[0] == NACK:
+        raise PandaSpiNackResponse
 
     raise PandaSpiMissingAck
 
@@ -240,7 +240,19 @@ class PandaSpiHandle(BaseHandle):
           return self._transfer_raw(spi, endpoint, data, timeout, max_rx_len, expect_disconnect)
         except PandaSpiException as e:
           exc = e
-          logger.debug("SPI transfer failed, retrying", exc_info=True)
+          logger.info("SPI transfer failed, retrying", exc_info=True)
+
+          # ensure slave is in a consistent state and ready for the next transfer
+          # (e.g. slave TX buffer isn't stuck full)
+          nack_cnt = 0
+          attempts = 5
+          while (nack_cnt <= 3) and (attempts > 0):
+            attempts -= 1
+            try:
+              self._wait_for_ack(spi, NACK, MIN_ACK_TIMEOUT_MS, 0x11, length=XFER_SIZE//2)
+              nack_cnt += 1
+            except PandaSpiException:
+              nack_cnt = 0
 
     raise exc
 
