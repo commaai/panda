@@ -240,11 +240,12 @@ class PandaSpiHandle(BaseHandle):
           return self._transfer_raw(spi, endpoint, data, timeout, max_rx_len, expect_disconnect)
         except PandaSpiException as e:
           exc = e
-          logger.debug("SPI transfer failed, retrying", exc_info=True)
+          logger.warning("SPI transfer failed, retrying", exc_info=True)
 
-          # ensure slave is in a consistent state and ready for the next transfer (e.g. slave TX buffer isn't stuck full)
+          # ensure slave is in a consistent state and ready for the next transfer
+          # (e.g. slave TX buffer isn't stuck full)
           nack_cnt = 0
-          while (nack_cnt < 3) and (time.monotonic() - start_time) < timeout*1e-3:
+          while (nack_cnt <= 3) and (time.monotonic() - start_time) < timeout*1e-3:
             try:
               self._wait_for_ack(spi, NACK, MIN_ACK_TIMEOUT_MS, 0x11, length=XFER_SIZE//2)
               nack_cnt += 1
