@@ -4,6 +4,7 @@ import pytest
 from opendbc.car.structs import CarParams
 from panda import Panda, PandaJungle
 
+# NOTE: this test's thresholds are designed for a comma 3X with 2/4 supercaps removed (for speed)
 PANDA_SERIAL = "300008001851333037333932"
 JUNGLE_SERIAL = "26001c001451313236343430"
 
@@ -35,7 +36,7 @@ def p(pj):
   p.close()
 
 def setup_state(panda, jungle, state):
-  jungle.set_panda_power(0)
+  jungle.set_panda_power(False)
 
   if state == "off":
     wait_for_full_poweroff(jungle)
@@ -73,7 +74,7 @@ def wait_for_som_shutdown(panda, jungle):
 def wait_for_full_poweroff(jungle, timeout=30):
   st = time.monotonic()
 
-  time.sleep(15)
+  time.sleep(3)
   while PANDA_SERIAL in Panda.list():
     if time.monotonic() - st > timeout:
       raise Exception("took too long for device to turn off")
