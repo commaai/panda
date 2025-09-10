@@ -1,4 +1,5 @@
 #include "uart_declarations.h"
+#include "ringbuffer.h"
 
 // ***************************** Definitions *****************************
 
@@ -46,62 +47,19 @@ uart_ring *get_ring_by_number(int a) {
 
 // ************************* Low-level buffer functions *************************
 bool get_char(uart_ring *q, char *elem) {
-  bool ret = false;
-
-  ENTER_CRITICAL();
-  if (q->w_ptr_rx != q->r_ptr_rx) {
-    if (elem != NULL) *elem = q->elems_rx[q->r_ptr_rx];
-    q->r_ptr_rx = (q->r_ptr_rx + 1U) % q->rx_fifo_size;
-    ret = true;
-  }
-  EXIT_CRITICAL();
-
-  return ret;
+  return rb_pop(&q->w_ptr_rx, &q->r_ptr_rx, q->rx_fifo_size,
+                q->elems_rx, sizeof(uint8_t), elem);
 }
 
 bool injectc(uart_ring *q, char elem) {
-  int ret = false;
-  uint16_t next_w_ptr;
-
-  ENTER_CRITICAL();
-  next_w_ptr = (q->w_ptr_rx + 1U) % q->rx_fifo_size;
-
-  if ((next_w_ptr == q->r_ptr_rx) && q->overwrite) {
-    // overwrite mode: drop oldest byte
-    q->r_ptr_rx = (q->r_ptr_rx + 1U) % q->rx_fifo_size;
-  }
-
-  if (next_w_ptr != q->r_ptr_rx) {
-    q->elems_rx[q->w_ptr_rx] = elem;
-    q->w_ptr_rx = next_w_ptr;
-    ret = true;
-  }
-  EXIT_CRITICAL();
-
-  return ret;
+  return rb_push(&q->w_ptr_rx, &q->r_ptr_rx, q->rx_fifo_size,
+                 q->elems_rx, sizeof(uint8_t), &elem, q->overwrite);
 }
 
 bool put_char(uart_ring *q, char elem) {
-  bool ret = false;
-  uint16_t next_w_ptr;
-
-  ENTER_CRITICAL();
-  next_w_ptr = (q->w_ptr_tx + 1U) % q->tx_fifo_size;
-
-  if ((next_w_ptr == q->r_ptr_tx) && q->overwrite) {
-    // overwrite mode: drop oldest byte
-    q->r_ptr_tx = (q->r_ptr_tx + 1U) % q->tx_fifo_size;
-  }
-
-  if (next_w_ptr != q->r_ptr_tx) {
-    q->elems_tx[q->w_ptr_tx] = elem;
-    q->w_ptr_tx = next_w_ptr;
-    ret = true;
-  }
-  EXIT_CRITICAL();
-
+  bool ret = rb_push(&q->w_ptr_tx, &q->r_ptr_tx, q->tx_fifo_size,
+                     q->elems_tx, sizeof(uint8_t), &elem, q->overwrite);
   uart_tx_ring(q);
-
   return ret;
 }
 

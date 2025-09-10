@@ -3,7 +3,7 @@
 bool bootkick_reset_triggered = false;
 
 void bootkick_tick(bool ignition, bool recent_heartbeat) {
-  static uint16_t bootkick_last_serial_ptr = 0;
+  static uint32_t bootkick_last_serial_ptr = 0;
   static uint8_t waiting_to_boot_countdown = 0;
   static uint8_t boot_reset_countdown = 0;
   static uint8_t bootkick_harness_status_prev = HARNESS_STATUS_NC;

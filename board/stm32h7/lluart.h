@@ -1,3 +1,5 @@
+#include "ringbuffer.h"
+
 static void uart_rx_ring(uart_ring *q){
   // Do not read out directly if DMA enabled
   ENTER_CRITICAL();
@@ -5,20 +7,9 @@ static void uart_rx_ring(uart_ring *q){
   // Read out RX buffer
   uint8_t c = q->uart->RDR;  // This read after reading SR clears a bunch of interrupts
 
-  uint16_t next_w_ptr = (q->w_ptr_rx + 1U) % q->rx_fifo_size;
-
-  if ((next_w_ptr == q->r_ptr_rx) && q->overwrite) {
-    // overwrite mode: drop oldest byte
-    q->r_ptr_rx = (q->r_ptr_rx + 1U) % q->rx_fifo_size;
-  }
-
-  // Do not overwrite buffer data
-  if (next_w_ptr != q->r_ptr_rx) {
-    q->elems_rx[q->w_ptr_rx] = c;
-    q->w_ptr_rx = next_w_ptr;
-    if (q->callback != NULL) {
-      q->callback(q);
-    }
+  (void)injectc(q, (char)c);
+  if (q->callback != NULL) {
+    q->callback(q);
   }
 
   EXIT_CRITICAL();
@@ -26,20 +17,20 @@ static void uart_rx_ring(uart_ring *q){
 
 void uart_tx_ring(uart_ring *q){
   ENTER_CRITICAL();
-  // Send out next byte of TX buffer
-  if (q->w_ptr_tx != q->r_ptr_tx) {
-    // Only send if transmit register is empty (aka last byte has been sent)
-    if ((q->uart->ISR & USART_ISR_TXE_TXFNF) != 0U) {
-      q->uart->TDR = q->elems_tx[q->r_ptr_tx];   // This clears TXE
-      q->r_ptr_tx = (q->r_ptr_tx + 1U) % q->tx_fifo_size;
+  // Send out next byte of TX buffer if register empty
+  if ((q->uart->ISR & USART_ISR_TXE_TXFNF) != 0U) {
+    uint8_t c;
+    if (rb_pop(&q->w_ptr_tx, &q->r_ptr_tx, q->tx_fifo_size,
+               q->elems_tx, sizeof(uint8_t), &c)) {
+      q->uart->TDR = c;   // This clears TXE
     }
+  }
 
-    // Enable TXE interrupt if there is still data to be sent
-    if(q->r_ptr_tx != q->w_ptr_tx){
-      q->uart->CR1 |= USART_CR1_TXEIE;
-    } else {
-      q->uart->CR1 &= ~USART_CR1_TXEIE;
-    }
+  // Enable TXE interrupt if there is still data to be sent
+  if(q->r_ptr_tx != q->w_ptr_tx){
+    q->uart->CR1 |= USART_CR1_TXEIE;
+  } else {
+    q->uart->CR1 &= ~USART_CR1_TXEIE;
   }
   EXIT_CRITICAL();
 }
