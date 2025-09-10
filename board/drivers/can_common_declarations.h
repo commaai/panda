@@ -67,7 +67,7 @@ uint32_t can_slots_empty(const can_ring *q);
 
 // Helpers
 // Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
-#define BUS_CONFIG_ARRAY_SIZE 4U
+#define BUS_CONFIG_ARRAY_SIZE 4
 extern bus_config_t bus_config[BUS_CONFIG_ARRAY_SIZE];
 
 #define CANIF_FROM_CAN_NUM(num) (cans[num])

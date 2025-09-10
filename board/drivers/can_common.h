@@ -139,12 +139,9 @@ bus_config_t bus_config[BUS_CONFIG_ARRAY_SIZE] = {
 
 void can_init_all(void) {
   for (uint8_t i=0U; i < PANDA_CAN_CNT; i++) {
+    bus_config[i].canfd_enabled = false;
     can_clear(can_queues[i]);
     (void)can_init(i);
-  }
-
-  for (uint8_t i = 0U; i < BUS_CONFIG_ARRAY_SIZE; i++) {
-    bus_config[i].canfd_enabled = false;
   }
 }
 
