@@ -238,29 +238,22 @@ class Panda:
 
   @classmethod
   def spi_connect(cls, serial, ignore_version=False):
-    no_device = (None, None, None, False)
-
-    # try connect
     try:
       handle = PandaSpiHandle()
-    except PandaSpiException:
-      return no_device
-
-    # get UID to confirm slave is present and up
-    try:
       dat = handle.get_protocol_version()
-      spi_serial = binascii.hexlify(dat[:12]).decode()
-      pid = dat[13]
-      if pid not in (0xcc, 0xee):
-        raise PandaProtocolMismatch(f"invalid bootstub status ({pid=}). reflash panda")
-      bootstub = pid == 0xee
-      spi_version = dat[14]
     except PandaSpiException:
-      return no_device
+      return None, None, None, False
 
-    # no connection or wrong panda
-    if (serial is not None and (spi_serial != serial)):
-      return no_device
+    spi_serial = binascii.hexlify(dat[:12]).decode()
+    pid = dat[13]
+    if pid not in (0xcc, 0xee):
+      raise PandaProtocolMismatch(f"invalid bootstub status ({pid=}). reflash panda")
+    bootstub = pid == 0xee
+    spi_version = dat[14]
+
+    # did we get the right panda?
+    if serial is not None and spi_serial != serial:
+      return None, None, None, False
 
     # ensure our protocol version matches the panda
     if (not ignore_version) and spi_version != handle.PROTOCOL_VERSION:
