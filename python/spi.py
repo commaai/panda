@@ -121,7 +121,7 @@ class PandaSpiHandle(BaseHandle):
 
   def __init__(self) -> None:
     self.dev = SpiDevice()
-    if spidev2 is not None:
+    if spidev2 is not None and "SPI2" in os.environ:
       self._spi2 = spidev2.SPIBus("/dev/spidev0.0", "w+b", bits_per_word=8, speed_hz=50_000_000)
 
   # helpers
@@ -263,8 +263,8 @@ class PandaSpiHandle(BaseHandle):
     raise exc
 
   def get_protocol_version(self) -> bytes:
-    vers_str = b"VERSION"
     def _get_version(spi) -> bytes:
+      vers_str = b"VERSION"
       spi.writebytes(vers_str)
 
       logger.debug("- waiting for echo")
@@ -274,7 +274,7 @@ class PandaSpiHandle(BaseHandle):
         if bytes(version_bytes).startswith(vers_str):
           break
         if (time.monotonic() - start) > 0.001:
-          raise PandaSpiMissingAck
+          raise PandaSpiMissingAck(f"got {version_bytes}")
 
       rlen = struct.unpack("<H", bytes(version_bytes[-2:]))[0]
       if rlen > 1000:
