@@ -238,43 +238,35 @@ class Panda:
 
   @classmethod
   def spi_connect(cls, serial, ignore_version=False):
-    # get UID to confirm slave is present and up
-    handle = None
-    spi_serial = None
-    bootstub = None
-    spi_version = None
+    no_device = (None, None, None, False)
+
+    # try connect
     try:
       handle = PandaSpiHandle()
-
-      # connect by protcol version
-      try:
-        dat = handle.get_protocol_version()
-        spi_serial = binascii.hexlify(dat[:12]).decode()
-        pid = dat[13]
-        if pid not in (0xcc, 0xee):
-          raise PandaSpiException("invalid bootstub status")
-        bootstub = pid == 0xee
-        spi_version = dat[14]
-      except PandaSpiException:
-        # fallback, we'll raise a protocol mismatch below
-        dat = handle.controlRead(Panda.REQUEST_IN, 0xc3, 0, 0, 12, timeout=100)
-        spi_serial = binascii.hexlify(dat).decode()
-        bootstub = Panda.flasher_present(handle)
-        spi_version = -1
     except PandaSpiException:
-      pass
+      return no_device
+
+    # get UID to confirm slave is present and up
+    try:
+      dat = handle.get_protocol_version()
+      spi_serial = binascii.hexlify(dat[:12]).decode()
+      pid = dat[13]
+      if pid not in (0xcc, 0xee):
+        raise PandaProtocolMismatch(f"invalid bootstub status ({pid=}). reflash panda")
+      bootstub = pid == 0xee
+      spi_version = dat[14]
+    except PandaSpiException:
+      return no_device
 
     # no connection or wrong panda
-    if None in (spi_serial, bootstub) or (serial is not None and (spi_serial != serial)):
-      handle = None
-      spi_serial = None
-      bootstub = False
+    if (serial is not None and (spi_serial != serial)):
+      return no_device
 
     # ensure our protocol version matches the panda
-    if handle is not None and not ignore_version:
-      if spi_version != handle.PROTOCOL_VERSION:
-        raise PandaProtocolMismatch(f"panda protocol mismatch: expected {handle.PROTOCOL_VERSION}, got {spi_version}. reflash panda")
+    if (not ignore_version) and spi_version != handle.PROTOCOL_VERSION:
+      raise PandaProtocolMismatch(f"panda protocol mismatch: expected {handle.PROTOCOL_VERSION}, got {spi_version}. reflash panda")
 
+    # got a device and all good
     return None, handle, spi_serial, bootstub
 
   @classmethod
