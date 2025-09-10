@@ -296,6 +296,9 @@ class PandaSpiHandle(BaseHandle):
         except PandaSpiException as e:
           exc = e
           logger.debug("SPI get protocol version failed, retrying", exc_info=True)
+
+        # ensure slave is in a good state and not stuck TXing a massive buffer
+        spi.readbytes(SPI_BUF_SIZE)
     raise exc
 
   # libusb1 functions
