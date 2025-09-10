@@ -196,9 +196,9 @@ class Panda:
     self._handle = None
     while self._handle is None:
       # try USB first, then SPI
-      self._context, self._handle, serial, self.bootstub, bcd = self.usb_connect(self._connect_serial, claim=claim, no_error=wait)
+      self._context, self._handle, serial, self.bootstub = self.usb_connect(self._connect_serial, claim=claim, no_error=wait)
       if self._handle is None:
-        self._context, self._handle, serial, self.bootstub, bcd = self.spi_connect(self._connect_serial)
+        self._context, self._handle, serial, self.bootstub = self.spi_connect(self._connect_serial)
       if not wait:
         break
 
@@ -238,49 +238,33 @@ class Panda:
 
   @classmethod
   def spi_connect(cls, serial, ignore_version=False):
-    # get UID to confirm slave is present and up
-    handle = None
-    spi_serial = None
-    bootstub = None
-    spi_version = None
     try:
       handle = PandaSpiHandle()
-
-      # connect by protcol version
-      try:
-        dat = handle.get_protocol_version()
-        spi_serial = binascii.hexlify(dat[:12]).decode()
-        pid = dat[13]
-        if pid not in (0xcc, 0xee):
-          raise PandaSpiException("invalid bootstub status")
-        bootstub = pid == 0xee
-        spi_version = dat[14]
-      except PandaSpiException:
-        # fallback, we'll raise a protocol mismatch below
-        dat = handle.controlRead(Panda.REQUEST_IN, 0xc3, 0, 0, 12, timeout=100)
-        spi_serial = binascii.hexlify(dat).decode()
-        bootstub = Panda.flasher_present(handle)
-        spi_version = 0
+      dat = handle.get_protocol_version()
     except PandaSpiException:
-      pass
+      return None, None, None, False
 
-    # no connection or wrong panda
-    if None in (spi_serial, bootstub) or (serial is not None and (spi_serial != serial)):
-      handle = None
-      spi_serial = None
-      bootstub = False
+    spi_serial = binascii.hexlify(dat[:12]).decode()
+    pid = dat[13]
+    if pid not in (0xcc, 0xee):
+      raise PandaProtocolMismatch(f"invalid bootstub status ({pid=}). reflash panda")
+    bootstub = pid == 0xee
+    spi_version = dat[14]
+
+    # did we get the right panda?
+    if serial is not None and spi_serial != serial:
+      return None, None, None, False
 
     # ensure our protocol version matches the panda
-    if handle is not None and not ignore_version:
-      if spi_version != handle.PROTOCOL_VERSION:
-        err = f"panda protocol mismatch: expected {handle.PROTOCOL_VERSION}, got {spi_version}. reflash panda"
-        raise PandaProtocolMismatch(err)
+    if (not ignore_version) and spi_version != handle.PROTOCOL_VERSION:
+      raise PandaProtocolMismatch(f"panda protocol mismatch: expected {handle.PROTOCOL_VERSION}, got {spi_version}. reflash panda")
 
-    return None, handle, spi_serial, bootstub, None
+    # got a device and all good
+    return None, handle, spi_serial, bootstub
 
   @classmethod
   def usb_connect(cls, serial, claim=True, no_error=False):
-    handle, usb_serial, bootstub, bcd = None, None, None, None
+    handle, usb_serial, bootstub = None, None, None
     context = usb1.USBContext()
     context.open()
     try:
@@ -306,11 +290,6 @@ class Panda:
               handle.claimInterface(0)
               # handle.setInterfaceAltSetting(0, 0)  # Issue in USB stack
 
-            # bcdDevice wasn't always set to the hw type, ignore if it's the old constant
-            this_bcd = device.getbcdDevice()
-            if this_bcd is not None and this_bcd != 0x2300:
-              bcd = bytearray([this_bcd >> 8, ])
-
             break
     except Exception:
       logger.exception("USB connect error")
@@ -321,7 +300,7 @@ class Panda:
     else:
       context.close()
 
-    return context, usb_handle, usb_serial, bootstub, bcd
+    return context, usb_handle, usb_serial, bootstub
 
   def is_connected_spi(self):
     return isinstance(self._handle, PandaSpiHandle)
@@ -357,7 +336,7 @@ class Panda:
 
   @classmethod
   def spi_list(cls):
-    _, _, serial, _, _ = cls.spi_connect(None, ignore_version=True)
+    _, _, serial, _ = cls.spi_connect(None, ignore_version=True)
     if serial is not None:
       return [serial, ]
     return []
