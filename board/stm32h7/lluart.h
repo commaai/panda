@@ -5,17 +5,8 @@ static void uart_rx_ring(uart_ring *q){
   // Read out RX buffer
   uint8_t c = q->uart->RDR;  // This read after reading SR clears a bunch of interrupts
 
-  uint16_t next_w_ptr = (q->w_ptr_rx + 1U) % q->rx_fifo_size;
-
-  if ((next_w_ptr == q->r_ptr_rx) && q->overwrite) {
-    // overwrite mode: drop oldest byte
-    q->r_ptr_rx = (q->r_ptr_rx + 1U) % q->rx_fifo_size;
-  }
-
-  // Do not overwrite buffer data
-  if (next_w_ptr != q->r_ptr_rx) {
-    q->elems_rx[q->w_ptr_rx] = c;
-    q->w_ptr_rx = next_w_ptr;
+  bool pushed = rb_push_u16(q->elems_rx, 1U, &q->w_ptr_rx, &q->r_ptr_rx, (uint16_t)q->rx_fifo_size, &c, q->overwrite);
+  if (pushed) {
     if (q->callback != NULL) {
       q->callback(q);
     }
@@ -30,8 +21,10 @@ void uart_tx_ring(uart_ring *q){
   if (q->w_ptr_tx != q->r_ptr_tx) {
     // Only send if transmit register is empty (aka last byte has been sent)
     if ((q->uart->ISR & USART_ISR_TXE_TXFNF) != 0U) {
-      q->uart->TDR = q->elems_tx[q->r_ptr_tx];   // This clears TXE
-      q->r_ptr_tx = (q->r_ptr_tx + 1U) % q->tx_fifo_size;
+      uint8_t out;
+      if (rb_pop_u16(q->elems_tx, 1U, &q->w_ptr_tx, &q->r_ptr_tx, (uint16_t)q->tx_fifo_size, &out)) {
+        q->uart->TDR = out;   // This clears TXE
+      }
     }
 
     // Enable TXE interrupt if there is still data to be sent
