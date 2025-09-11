@@ -9,8 +9,6 @@ from panda import Panda
 
 @pytest.mark.panda_expect_can_error
 def test_harness_status(p, panda_jungle):
-  return
-
   # map from jungle orientations to panda orientations
   orientation_map = {
     Panda.HARNESS_STATUS_NC: Panda.HARNESS_STATUS_NC,
@@ -26,6 +24,8 @@ def test_harness_status(p, panda_jungle):
 
     # wait for orientation detection
     time.sleep(0.25)
+
+    continue
 
     health = p.health()
     detected_orientation = health['car_harness_status']
