@@ -32,9 +32,7 @@ extern can_health_t can_health[PANDA_CAN_CNT];
 extern bool ignition_can;
 extern uint32_t ignition_can_cnt;
 
-#define ALL_CAN_SILENT 0xFF
-#define ALL_CAN_LIVE 0
-extern int can_silent;
+extern bool can_silent;
 extern bool can_loopback;
 
 // ******************* functions prototypes *********************

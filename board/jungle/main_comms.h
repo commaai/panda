@@ -225,7 +225,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xf5: Set CAN silent mode
     case 0xf5:
-      can_silent = (req->param1 > 0U) ? ALL_CAN_SILENT : ALL_CAN_LIVE;
+      can_silent = (req->param1 > 0U);
       can_init_all();
       break;
     // **** 0xf7: enable/disable header pin by number

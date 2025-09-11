@@ -55,12 +55,12 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
     case SAFETY_SILENT:
       set_intercept_relay(false, false);
       current_board->set_can_mode(CAN_MODE_NORMAL);
-      can_silent = ALL_CAN_SILENT;
+      can_silent = true;
       break;
     case SAFETY_NOOUTPUT:
       set_intercept_relay(false, false);
       current_board->set_can_mode(CAN_MODE_NORMAL);
-      can_silent = ALL_CAN_LIVE;
+      can_silent = false;
       break;
     case SAFETY_ELM327:
       set_intercept_relay(false, false);
@@ -75,14 +75,14 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
       } else {
         current_board->set_can_mode(CAN_MODE_NORMAL);
       }
-      can_silent = ALL_CAN_LIVE;
+      can_silent = false;
       break;
     default:
       set_intercept_relay(true, false);
       heartbeat_counter = 0U;
       heartbeat_lost = false;
       current_board->set_can_mode(CAN_MODE_NORMAL);
-      can_silent = ALL_CAN_LIVE;
+      can_silent = false;
       break;
   }
   can_init_all();
