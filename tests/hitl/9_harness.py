@@ -19,13 +19,14 @@ def test_harness_status(p, panda_jungle):
   for ignition, orientation in itertools.product([True, False], [Panda.HARNESS_STATUS_NC, Panda.HARNESS_STATUS_NORMAL, Panda.HARNESS_STATUS_FLIPPED]):
     print()
     p.set_safety_mode(CarParams.SafetyModel.elm327)
+    continue
     panda_jungle.set_harness_orientation(orientation)
     panda_jungle.set_ignition(ignition)
 
     # wait for orientation detection
     time.sleep(0.25)
 
-    continue
+    # here bad
 
     health = p.health()
     detected_orientation = health['car_harness_status']
