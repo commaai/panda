@@ -63,7 +63,6 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   can_health[can_number].irq0_call_rate = interrupts[can_irq_number[can_number][0]].call_rate;
   can_health[can_number].irq1_call_rate = interrupts[can_irq_number[can_number][1]].call_rate;
 
-
   if (ir_reg != 0U) {
     // Clear error interrupts
     FDCANx->IR |= (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EP | FDCAN_IR_BO | FDCAN_IR_RF0L);
@@ -158,13 +157,13 @@ void can_rx(uint8_t can_number) {
 
   // Clear all new messages from Rx FIFO 0
   FDCANx->IR |= FDCAN_IR_RF0N;
-  while((FDCANx->RXF0S & FDCAN_RXF0S_F0FL) != 0U) {
+  while ((FDCANx->RXF0S & FDCAN_RXF0S_F0FL) != 0U) {
     can_health[can_number].total_rx_cnt += 1U;
     // get the index of the next RX FIFO element (0 to FDCAN_RX_FIFO_0_EL_CNT - 1)
     uint32_t rx_fifo_idx = (uint8_t)((FDCANx->RXF0S >> FDCAN_RXF0S_F0GI_Pos) & 0x3FU);
 
     // Recommended to offset get index by at least +1 if RX FIFO is in overwrite mode and full (datasheet)
-    if((FDCANx->RXF0S & FDCAN_RXF0S_F0F) == FDCAN_RXF0S_F0F) {
+    if ((FDCANx->RXF0S & FDCAN_RXF0S_F0F) == FDCAN_RXF0S_F0F) {
       rx_fifo_idx = ((rx_fifo_idx + 1U) >= FDCAN_RX_FIFO_0_EL_CNT) ? 0U : (rx_fifo_idx + 1U);
       can_health[can_number].total_rx_lost_cnt += 1U; // At least one message was lost
     }

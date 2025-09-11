@@ -50,18 +50,6 @@ extern can_ring *can_queues[PANDA_CAN_CNT];
 bool can_pop(can_ring *q, CANPacket_t *elem);
 bool can_push(can_ring *q, const CANPacket_t *elem);
 uint32_t can_slots_empty(const can_ring *q);
-
-// assign CAN numbering
-// bus num: CAN Bus numbers in panda, sent to/from USB
-//    Min: 0; Max: 127; Bit 7 marks message as receipt (bus 129 is receipt for but 1)
-// cans: Look up MCU can interface from bus number
-// can number: numeric lookup for MCU CAN interfaces (0 = CAN1, 1 = CAN2, etc);
-// bus_lookup: Translates from 'can number' to 'bus number'.
-// can_num_lookup: Translates from 'bus number' to 'can number'.
-// forwarding bus: If >= 0, forward all messages from this bus to the specified bus.
-
-// Helpers
-// Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
 extern bus_config_t bus_config[PANDA_CAN_CNT];
 
 #define CANIF_FROM_CAN_NUM(num) (cans[num])
