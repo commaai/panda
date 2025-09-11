@@ -21,7 +21,7 @@ env = Environment(
     '-Wfatal-errors',
     '-Wno-pointer-to-int-cast',
   ],
-  CPPPATH=[".", "../../board/", opendbc.INCLUDE_PATH],
+  CPPPATH=[".", "#", "../../board/", opendbc.INCLUDE_PATH],
 )
 if system == "Darwin":
   env.PrependENVPath('PATH', '/opt/homebrew/bin')

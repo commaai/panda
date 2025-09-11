@@ -189,7 +189,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xde: set can bitrate
     case 0xde:
-      if ((req->param1 < PANDA_BUS_CNT) && is_speed_valid(req->param2, speeds, sizeof(speeds)/sizeof(speeds[0]))) {
+      if ((req->param1 < PANDA_CAN_CNT) && is_speed_valid(req->param2, speeds, sizeof(speeds)/sizeof(speeds[0]))) {
         bus_config[req->param1].can_speed = req->param2;
         bool ret = can_init(CAN_NUM_FROM_BUS_NUM(req->param1));
         UNUSED(ret);
@@ -212,7 +212,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       if (req->param1 == 0xFFFFU) {
         print("Clearing CAN Rx queue\n");
         can_clear(&can_rx_q);
-      } else if (req->param1 < PANDA_BUS_CNT) {
+      } else if (req->param1 < PANDA_CAN_CNT) {
         print("Clearing CAN Tx queue\n");
         can_clear(can_queues[req->param1]);
       } else {
@@ -225,7 +225,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xf5: Set CAN silent mode
     case 0xf5:
-      can_silent = (req->param1 > 0U) ? ALL_CAN_SILENT : ALL_CAN_LIVE;
+      can_silent = (req->param1 > 0U);
       can_init_all();
       break;
     // **** 0xf7: enable/disable header pin by number

@@ -175,7 +175,7 @@ int main(void) {
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();
 
-  can_silent = ALL_CAN_LIVE;
+  can_silent = false;
   set_safety_hooks(SAFETY_ALLOUTPUT, 0U);
 
   can_init_all();
