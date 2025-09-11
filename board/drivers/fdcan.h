@@ -160,10 +160,6 @@ void can_rx(uint8_t can_number) {
   FDCANx->IR |= FDCAN_IR_RF0N;
   while((FDCANx->RXF0S & FDCAN_RXF0S_F0FL) != 0U) {
     can_health[can_number].total_rx_cnt += 1U;
-
-    // can is live
-    pending_can_live = 1;
-
     // get the index of the next RX FIFO element (0 to FDCAN_RX_FIFO_0_EL_CNT - 1)
     uint32_t rx_fifo_idx = (uint8_t)((FDCANx->RXF0S >> FDCAN_RXF0S_F0GI_Pos) & 0x3FU);
 

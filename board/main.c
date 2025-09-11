@@ -143,14 +143,7 @@ static void tick_handler(void) {
 
     // decimated to 1Hz
     if (loop_counter == 0U) {
-      can_live = pending_can_live;
-
       //puth(usart1_dma); print(" "); puth(DMA2_Stream5->M0AR); print(" "); puth(DMA2_Stream5->NDTR); print("\n");
-
-      // reset this every 16th pass
-      if ((uptime_cnt & 0xFU) == 0U) {
-        pending_can_live = 0;
-      }
       #ifdef DEBUG
         print("** blink ");
         print("rx:"); puth4(can_rx_q.r_ptr); print("-"); puth4(can_rx_q.w_ptr); print("  ");

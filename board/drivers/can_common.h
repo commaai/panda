@@ -11,8 +11,6 @@ can_health_t can_health[PANDA_CAN_CNT] = {{0}, {0}, {0}};
 bool ignition_can = false;
 uint32_t ignition_can_cnt = 0U;
 
-int can_live = 0;
-int pending_can_live = 0;
 int can_silent = ALL_CAN_SILENT;
 bool can_loopback = false;
 

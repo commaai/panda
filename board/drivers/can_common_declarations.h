@@ -34,9 +34,6 @@ extern uint32_t ignition_can_cnt;
 
 #define ALL_CAN_SILENT 0xFF
 #define ALL_CAN_LIVE 0
-
-extern int can_live;
-extern int pending_can_live;
 extern int can_silent;
 extern bool can_loopback;
 
