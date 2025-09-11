@@ -155,20 +155,18 @@ void can_set_forwarding(uint8_t from, uint8_t to) {
 #endif
 
 void ignition_can_hook(CANPacket_t *msg) {
-  int bus = GET_BUS(msg);
-  if (bus == 0) {
-    int addr = GET_ADDR(msg);
+  if (msg->bus == 0U) {
     int len = GET_LEN(msg);
 
     // GM exception
-    if ((addr == 0x1F1) && (len == 8)) {
+    if ((msg->addr == 0x1F1U) && (len == 8)) {
       // SystemPowerMode (2=Run, 3=Crank Request)
       ignition_can = (msg->data[0] & 0x2U) != 0U;
       ignition_can_cnt = 0U;
     }
 
     // Rivian R1S/T GEN1 exception
-    if ((addr == 0x152) && (len == 8)) {
+    if ((msg->addr == 0x152U) && (len == 8)) {
       // 0x152 overlaps with Subaru pre-global which has this bit as the high beam
       int counter = msg->data[1] & 0xFU;  // max is only 14
 
@@ -182,7 +180,7 @@ void ignition_can_hook(CANPacket_t *msg) {
     }
 
     // Tesla Model 3/Y exception
-    if ((addr == 0x221) && (len == 8)) {
+    if ((msg->addr == 0x221U) && (len == 8)) {
       // 0x221 overlaps with Rivian which has random data on byte 0
       int counter = msg->data[6] >> 4;
 
@@ -197,7 +195,7 @@ void ignition_can_hook(CANPacket_t *msg) {
     }
 
     // Mazda exception
-    if ((addr == 0x9E) && (len == 8)) {
+    if ((msg->addr == 0x9EU) && (len == 8)) {
       ignition_can = (msg->data[0] >> 5) == 0x6U;
       ignition_can_cnt = 0U;
     }

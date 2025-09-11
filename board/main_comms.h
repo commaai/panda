@@ -210,13 +210,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xdb: set OBD CAN multiplexing mode
     case 0xdb:
-      if (req->param1 == 1U) {
-        // Enable OBD CAN
-        current_board->set_can_mode(CAN_MODE_OBD_CAN2);
-      } else {
-        // Disable OBD CAN
-        current_board->set_can_mode(CAN_MODE_NORMAL);
-      }
+      current_board->set_can_mode((req->param1 == 1U) ? CAN_MODE_OBD_CAN2 : CAN_MODE_NORMAL);
       break;
     // **** 0xdc: set safety mode
     case 0xdc:
