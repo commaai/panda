@@ -1,5 +1,7 @@
 #pragma once
 
+#include "board/can.h"
+
 typedef struct {
   volatile uint32_t w_ptr;
   volatile uint32_t r_ptr;
@@ -24,8 +26,7 @@ extern uint32_t safety_rx_invalid;
 extern uint32_t tx_buffer_overflow;
 extern uint32_t rx_buffer_overflow;
 
-#define CAN_HEALTH_ARRAY_SIZE 3
-extern can_health_t can_health[CAN_HEALTH_ARRAY_SIZE];
+extern can_health_t can_health[PANDA_CAN_CNT];
 
 // Ignition detected from CAN meessages
 extern bool ignition_can;
@@ -44,8 +45,7 @@ bool can_init(uint8_t can_number);
 void process_can(uint8_t can_number);
 
 // ********************* instantiate queues *********************
-#define CAN_QUEUES_ARRAY_SIZE 3
-extern can_ring *can_queues[CAN_QUEUES_ARRAY_SIZE];
+extern can_ring *can_queues[PANDA_CAN_CNT];
 
 // helpers
 #define WORD_TO_BYTE_ARRAY(dst8, src32) 0[dst8] = ((src32) & 0xFFU); 1[dst8] = (((src32) >> 8U) & 0xFFU); 2[dst8] = (((src32) >> 16U) & 0xFFU); 3[dst8] = (((src32) >> 24U) & 0xFFU)
@@ -67,8 +67,7 @@ uint32_t can_slots_empty(const can_ring *q);
 
 // Helpers
 // Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
-#define BUS_CONFIG_ARRAY_SIZE 4
-extern bus_config_t bus_config[BUS_CONFIG_ARRAY_SIZE];
+extern bus_config_t bus_config[PANDA_CAN_CNT];
 
 #define CANIF_FROM_CAN_NUM(num) (cans[num])
 #define BUS_NUM_FROM_CAN_NUM(num) (bus_config[num].bus_lookup)
