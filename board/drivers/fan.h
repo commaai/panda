@@ -33,7 +33,7 @@ void fan_tick(void) {
       print("\n");
     #endif
 
-    // Cooldown counter
+    // Cooldown counter to prevent noise on tachometer line.
     if (fan_state.power > 0U) {
       fan_state.cooldown_counter = current_board->fan_enable_cooldown_time * FAN_TICK_FREQ;
     } else {
