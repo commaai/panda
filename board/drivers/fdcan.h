@@ -1,6 +1,6 @@
 #include "fdcan_declarations.h"
 
-FDCAN_GlobalTypeDef *cans[CANS_ARRAY_SIZE] = {FDCAN1, FDCAN2, FDCAN3};
+FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT] = {FDCAN1, FDCAN2, FDCAN3};
 
 static bool can_set_speed(uint8_t can_number) {
   bool ret = true;
@@ -32,7 +32,7 @@ void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number) {
 }
 
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
-  uint8_t can_irq_number[3][2] = {
+  uint8_t can_irq_number[PANDA_CAN_CNT][2] = {
     { FDCAN1_IT0_IRQn, FDCAN1_IT1_IRQn },
     { FDCAN2_IT0_IRQn, FDCAN2_IT1_IRQn },
     { FDCAN3_IT0_IRQn, FDCAN3_IT1_IRQn },

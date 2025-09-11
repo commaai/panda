@@ -1,5 +1,7 @@
 #pragma once
 
+#include "board/can.h"
+
 // IRQs: FDCAN1_IT0, FDCAN1_IT1
 //       FDCAN2_IT0, FDCAN2_IT1
 //       FDCAN3_IT0, FDCAN3_IT1
@@ -9,8 +11,7 @@ typedef struct {
   volatile uint32_t data_word[CANPACKET_DATA_SIZE_MAX/4U];
 } canfd_fifo;
 
-#define CANS_ARRAY_SIZE 3
-extern FDCAN_GlobalTypeDef *cans[CANS_ARRAY_SIZE];
+extern FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT];
 
 #define CAN_ACK_ERROR 3U
 
