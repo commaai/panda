@@ -155,6 +155,7 @@ static harness_configuration tres_harness_config = {
 board board_tres = {
   .harness_config = &tres_harness_config,
   .has_spi = true,
+  .has_fan = true,
   .avdd_mV = 1800U,
   .fan_enable_cooldown_time = 3U,
   .init = tres_init,

@@ -20,7 +20,7 @@ void fan_init(void) {
 
 // Call this at FAN_TICK_FREQ
 void fan_tick(void) {
-  if (current_board->fan_max_rpm > 0U) {
+  if (current_board->has_fan) {
     // Measure fan RPM
     uint16_t fan_rpm_fast = fan_state.tach_counter * (60U * FAN_TICK_FREQ / 4U);   // 4 interrupts per rotation
     fan_state.tach_counter = 0U;

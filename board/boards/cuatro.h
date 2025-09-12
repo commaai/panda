@@ -132,6 +132,7 @@ static harness_configuration cuatro_harness_config = {
 board board_cuatro = {
   .harness_config = &cuatro_harness_config,
   .has_spi = true,
+  .has_fan = true,
   .avdd_mV = 1800U,
   .fan_enable_cooldown_time = 3U,
   .init = cuatro_init,
