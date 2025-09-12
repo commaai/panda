@@ -6,7 +6,7 @@ static const uint8_t FAN_TICK_FREQ = 8U;
 
 void fan_set_power(uint8_t percentage) {
   if (percentage > 0U) {
-    fan_state.power = CLAMP(percentage, 20U, current_board->fan_max_pwm);
+    fan_state.power = CLAMP(percentage, 20U, 100U);
   } else {
     fan_state.power = 0U;
   }
