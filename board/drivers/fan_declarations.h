@@ -3,7 +3,6 @@
 struct fan_state_t {
   uint16_t tach_counter;
   uint16_t rpm;
-  uint16_t target_rpm;
   uint8_t power;
   float error_integral;
   uint8_t cooldown_counter;

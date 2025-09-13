@@ -294,7 +294,7 @@ int main(void) {
   microsecond_timer_init();
 
   current_board->set_siren(false);
-  if (current_board->fan_max_rpm > 0U) {
+  if (current_board->has_fan) {
     fan_init();
   }
 

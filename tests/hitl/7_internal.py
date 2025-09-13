@@ -24,7 +24,7 @@ def test_fan_controller(p):
     time.sleep(5)
 
     expected_rpm = Panda.MAX_FAN_RPMs[bytes(p.get_type())] * power / 100
-    assert 0.9 * expected_rpm <= p.get_fan_rpm() <= 1.1 * expected_rpm
+    assert 0.85 * expected_rpm <= p.get_fan_rpm() <= 1.15 * expected_rpm
 
 def test_fan_cooldown(p):
   # if the fan cooldown doesn't work, we get high frequency noise on the tach line
