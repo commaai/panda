@@ -4,18 +4,19 @@ import pytest
 from panda import Panda
 
 pytestmark = [
-  pytest.mark.test_panda_types(Panda.INTERNAL_DEVICES)
+  # TODO: re-enable this once we update the HITL devices
+  #pytest.mark.test_panda_types(Panda.INTERNAL_DEVICES)
+  pytest.mark.test_panda_types([Panda.HW_TYPE_TRES])
 ]
 
 @pytest.mark.timeout(2*60)
-def test_fan_controller(p):
+def test_fan_curve(p):
   for power in (30, 50, 80, 100):
     p.set_fan_power(0)
     while p.get_fan_rpm() > 0:
       time.sleep(0.1)
 
-    # wait until fan spins up (and recovers if needed),
-    # then wait a bit more for the RPM to converge
+    # wait until fan spins up, then wait a bit more for the RPM to converge
     p.set_fan_power(power)
     for _ in range(20):
       time.sleep(1)
