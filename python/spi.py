@@ -121,7 +121,7 @@ class PandaSpiHandle(BaseHandle):
 
   def __init__(self) -> None:
     self.dev = SpiDevice()
-    if spidev2 is not None:
+    if spidev2 is not None and "SPI2" in os.environ:
       self._spi2 = spidev2.SPIBus("/dev/spidev0.0", "w+b", bits_per_word=8, speed_hz=50_000_000)
 
   # helpers
