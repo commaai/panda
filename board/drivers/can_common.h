@@ -136,6 +136,7 @@ bus_config_t bus_config[PANDA_CAN_CNT] = {
 
 void can_init_all(void) {
   for (uint8_t i=0U; i < PANDA_CAN_CNT; i++) {
+    bus_config[i].canfd_enabled = false;
     can_clear(can_queues[i]);
     (void)can_init(i);
   }
