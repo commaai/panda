@@ -12,7 +12,6 @@ void fan_set_power(uint8_t percentage) {
   }
 }
 
-void llfan_init(void);
 void fan_init(void) {
   fan_state.cooldown_counter = current_board->fan_enable_cooldown_time * FAN_TICK_FREQ;
   llfan_init();

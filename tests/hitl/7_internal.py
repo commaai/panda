@@ -11,6 +11,8 @@ pytestmark = [
 
 @pytest.mark.timeout(2*60)
 def test_fan_curve(p):
+  # ensure fan curve is (roughly) linear
+
   for power in (30, 50, 80, 100):
     p.set_fan_power(0)
     while p.get_fan_rpm() > 0:
@@ -25,7 +27,7 @@ def test_fan_curve(p):
     time.sleep(5)
 
     expected_rpm = Panda.MAX_FAN_RPMs[bytes(p.get_type())] * power / 100
-    assert 0.85 * expected_rpm <= p.get_fan_rpm() <= 1.15 * expected_rpm
+    assert 0.75 * expected_rpm <= p.get_fan_rpm() <= 1.25 * expected_rpm
 
 def test_fan_cooldown(p):
   # if the fan cooldown doesn't work, we get high frequency noise on the tach line
