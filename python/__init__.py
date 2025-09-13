@@ -131,7 +131,7 @@ class Panda:
 
   MAX_FAN_RPMs = {
     HW_TYPE_TRES: 6600,
-    HW_TYPE_CUATRO: 12500,
+    HW_TYPE_CUATRO: 5000,
   }
 
   HARNESS_STATUS_NC = 0
