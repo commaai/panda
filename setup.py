@@ -11,7 +11,7 @@ class build(_build):
         project_root = os.path.abspath(os.path.dirname(__file__))
 
         print("Building firmware with scons...")
-        
+
         subprocess.check_call(
             ["scons", "-j4"],
             cwd=project_root,
