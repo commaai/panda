@@ -19,7 +19,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "scons",
-  "pycryptodome >= 3.9.8",
   "cffi",
   "flaky",
   "pytest",
@@ -34,7 +33,7 @@ dev = [
 ]
 
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=61", "wheel", "pycryptodome >= 3.9.8"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
@@ -42,6 +41,24 @@ packages = ["panda"]
 
 [tool.setuptools.package-dir]
 panda = "."
+
+[tool.hatch.build.targets.wheel] 
+packages = ["src/panda"] 
+include = [ "include/**" 
+]
+
+[tool.hatch.build.targets.wheel.shared-data] 
+"include" = "include"
+
+[tool.setuptools.package-data]
+panda = [
+"board/**/*.h", 
+"board/**/*.py", 
+"board/obj/**/*.bin", 
+"board/obj/**/*.elf", 
+"board/obj/**/*.bin.signed", 
+"python/**/*.py"
+]
 
 [tool.mypy]
 # third-party packages
