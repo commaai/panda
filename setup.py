@@ -1,6 +1,6 @@
 import os
 import subprocess
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.command.build import build as _build
 
 class build(_build):
@@ -21,5 +21,10 @@ class build(_build):
         super().run()
 
 setup(
+    name="pandacan",
+    version="0.0.10",
+    packages=find_packages(),
     cmdclass={"build": build},
+    package_data={"panda": ["py.typed"]},
+    zip_safe=False,
 )
