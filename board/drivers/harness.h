@@ -51,6 +51,7 @@ bool harness_check_ignition(void) {
 
 static uint8_t harness_detect_orientation(void) {
   uint8_t ret = harness.status;
+  return ret;
 
   #ifndef BOOTSTUB
   // We can't detect orientation if the relay is being driven
