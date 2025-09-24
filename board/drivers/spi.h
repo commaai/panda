@@ -200,7 +200,7 @@ void spi_rx_done(void) {
   llspi_miso_dma(spi_buf_tx, response_len);
 
   spi_state = next_rx_state;
-  if (!checksum_valid && (spi_error_count < UINT16_MAX)) {
+  if (!checksum_valid) {
     spi_error_count += 1U;
   }
 }
