@@ -55,12 +55,12 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
     case SAFETY_SILENT:
       set_intercept_relay(false, false);
       current_board->set_can_mode(CAN_MODE_NORMAL);
-      can_silent = ALL_CAN_SILENT;
+      can_silent = true;
       break;
     case SAFETY_NOOUTPUT:
       set_intercept_relay(false, false);
       current_board->set_can_mode(CAN_MODE_NORMAL);
-      can_silent = ALL_CAN_LIVE;
+      can_silent = false;
       break;
     case SAFETY_ELM327:
       set_intercept_relay(false, false);
@@ -75,14 +75,14 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
       } else {
         current_board->set_can_mode(CAN_MODE_NORMAL);
       }
-      can_silent = ALL_CAN_LIVE;
+      can_silent = false;
       break;
     default:
       set_intercept_relay(true, false);
       heartbeat_counter = 0U;
       heartbeat_lost = false;
       current_board->set_can_mode(CAN_MODE_NORMAL);
-      can_silent = ALL_CAN_LIVE;
+      can_silent = false;
       break;
   }
   can_init_all();
@@ -143,14 +143,7 @@ static void tick_handler(void) {
 
     // decimated to 1Hz
     if (loop_counter == 0U) {
-      can_live = pending_can_live;
-
       //puth(usart1_dma); print(" "); puth(DMA2_Stream5->M0AR); print(" "); puth(DMA2_Stream5->NDTR); print("\n");
-
-      // reset this every 16th pass
-      if ((uptime_cnt & 0xFU) == 0U) {
-        pending_can_live = 0;
-      }
       #ifdef DEBUG
         print("** blink ");
         print("rx:"); puth4(can_rx_q.r_ptr); print("-"); puth4(can_rx_q.w_ptr); print("  ");
@@ -301,7 +294,7 @@ int main(void) {
   microsecond_timer_init();
 
   current_board->set_siren(false);
-  if (current_board->fan_max_rpm > 0U) {
+  if (current_board->has_fan) {
     fan_init();
   }
 

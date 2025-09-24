@@ -1,6 +1,6 @@
 #include "fdcan_declarations.h"
 
-FDCAN_GlobalTypeDef *cans[CANS_ARRAY_SIZE] = {FDCAN1, FDCAN2, FDCAN3};
+FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT] = {FDCAN1, FDCAN2, FDCAN3};
 
 static bool can_set_speed(uint8_t can_number) {
   bool ret = true;
@@ -13,7 +13,7 @@ static bool can_set_speed(uint8_t can_number) {
     bus_config[bus_number].can_data_speed,
     bus_config[bus_number].canfd_non_iso,
     can_loopback,
-    (unsigned int)(can_silent) & (1U << can_number)
+    can_silent
   );
   return ret;
 }
@@ -32,7 +32,7 @@ void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number) {
 }
 
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
-  uint8_t can_irq_number[3][2] = {
+  uint8_t can_irq_number[PANDA_CAN_CNT][2] = {
     { FDCAN1_IT0_IRQn, FDCAN1_IT1_IRQn },
     { FDCAN2_IT0_IRQn, FDCAN2_IT1_IRQn },
     { FDCAN3_IT0_IRQn, FDCAN3_IT1_IRQn },
@@ -62,7 +62,6 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
 
   can_health[can_number].irq0_call_rate = interrupts[can_irq_number[can_number][0]].call_rate;
   can_health[can_number].irq1_call_rate = interrupts[can_irq_number[can_number][1]].call_rate;
-
 
   if (ir_reg != 0U) {
     // Clear error interrupts
@@ -158,17 +157,13 @@ void can_rx(uint8_t can_number) {
 
   // Clear all new messages from Rx FIFO 0
   FDCANx->IR |= FDCAN_IR_RF0N;
-  while((FDCANx->RXF0S & FDCAN_RXF0S_F0FL) != 0U) {
+  while ((FDCANx->RXF0S & FDCAN_RXF0S_F0FL) != 0U) {
     can_health[can_number].total_rx_cnt += 1U;
-
-    // can is live
-    pending_can_live = 1;
-
     // get the index of the next RX FIFO element (0 to FDCAN_RX_FIFO_0_EL_CNT - 1)
     uint32_t rx_fifo_idx = (uint8_t)((FDCANx->RXF0S >> FDCAN_RXF0S_F0GI_Pos) & 0x3FU);
 
     // Recommended to offset get index by at least +1 if RX FIFO is in overwrite mode and full (datasheet)
-    if((FDCANx->RXF0S & FDCAN_RXF0S_F0F) == FDCAN_RXF0S_F0F) {
+    if ((FDCANx->RXF0S & FDCAN_RXF0S_F0F) == FDCAN_RXF0S_F0F) {
       rx_fifo_idx = ((rx_fifo_idx + 1U) >= FDCAN_RX_FIFO_0_EL_CNT) ? 0U : (rx_fifo_idx + 1U);
       can_health[can_number].total_rx_lost_cnt += 1U; // At least one message was lost
     }
