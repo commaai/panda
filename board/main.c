@@ -329,6 +329,8 @@ int main(void) {
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();
 
+  print("boot time: "); puth(microsecond_timer_get()); print("us\n");
+
   // LED should keep on blinking all the time
   while (true) {
     if (power_save_status == POWER_SAVE_STATUS_DISABLED) {
