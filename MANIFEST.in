@@ -1,6 +1,0 @@
-include SConstruct
-include SConscript
-recursive-include board *
-recursive-include crypto *
-recursive-include certs *
-recursive-include tests *
