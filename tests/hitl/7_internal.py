@@ -4,8 +4,7 @@ import pytest
 from panda import Panda
 
 pytestmark = [
-  # TODO: re-enable this once we update the HITL devices
-  #pytest.mark.test_panda_types(Panda.INTERNAL_DEVICES)
+  pytest.mark.test_panda_types(Panda.INTERNAL_DEVICES),
   pytest.mark.test_panda_types([Panda.HW_TYPE_TRES])
 ]
 
