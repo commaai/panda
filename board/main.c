@@ -138,6 +138,7 @@ static void tick_handler(void) {
         fault_recovered(FAULT_RELAY_MALFUNCTION);
       }
     }
+    relay_malfunction_prev = relay_malfunction;
 
     // re-init everything that uses harness status
     if (harness.status != prev_harness_status) {
