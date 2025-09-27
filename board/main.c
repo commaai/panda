@@ -118,6 +118,7 @@ static void tick_handler(void) {
   static uint32_t controls_allowed_countdown = 0;
   static uint8_t prev_harness_status = HARNESS_STATUS_NC;
   static uint8_t loop_counter = 0U;
+  static bool relay_malfunction_prev = false;
 
   if (TICK_TIMER->SR != 0U) {
 
@@ -129,6 +130,15 @@ static void tick_handler(void) {
     harness_tick();
     simple_watchdog_kick();
     sound_tick();
+
+    if (relay_malfunction_prev != relay_malfunction) {
+      if (relay_malfunction) {
+        fault_occurred(FAULT_RELAY_MALFUNCTION);
+      } else {
+        fault_recovered(FAULT_RELAY_MALFUNCTION);
+      }
+    }
+    relay_malfunction_prev = relay_malfunction;
 
     // re-init everything that uses harness status
     if (harness.status != prev_harness_status) {
