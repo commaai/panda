@@ -3,7 +3,7 @@
 #define LED_GREEN 1U
 #define LED_BLUE 2U
 
-#define LED_PWM_POWER 5U
+#define LED_PWM_POWER 2U
 
 void led_set(uint8_t color, bool enabled) {
   if (color < 3U) {
