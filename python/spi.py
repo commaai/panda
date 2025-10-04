@@ -308,63 +308,82 @@ class PandaSpiHandle(BaseHandle):
 
     raise exc
 
+  def _wait_for_ack(self, spi, ack_val: int, timeout: int, tx: int, length: int = 1) -> bytes:
+    timeout_s = max(MIN_ACK_TIMEOUT_MS, timeout) * 1e-3
+
+    start = time.monotonic()
+    while (timeout == 0) or ((time.monotonic() - start) < timeout_s):
+      dat = spi.xfer2([tx, ] * length)
+      if dat[0] == ack_val:
+        return bytes(dat)
+      elif dat[0] == NACK:
+        raise PandaSpiNackResponse
+
+    raise PandaSpiMissingAck
+
   def get_protocol_version(self) -> bytes:
     vers_str = b"VERSION"
 
     def _get_version(spi) -> bytes:
-      # Send a fixed-size frame whose prefix is 'VERSION', padded otherwise
       tx = bytearray(SPI_BUF_SIZE)
       tx[:len(vers_str)] = vers_str
-      spi.xfer2(list(tx))
+      a = spi.xfer2(list(tx))
+      print("a", bytes(a[:30]))
 
-      # Poll until the TX frame begins with 'VERSION', then parse and drain
-      deadline = time.monotonic() + 0.5  # short deadline, outer loop retries
+      # poll for response
+      deadline = time.monotonic() + 0.5
       while True:
         # Poll one byte until 'V'
-        b0 = spi.xfer2([0x00])[0]
-        if b0 == vers_str[0]:
-          # Read remaining of 'VERSION'
-          tail = bytes(spi.xfer2([0x00] * (len(vers_str) - 1)))
-          if tail == vers_str[1:]:
-            break
+        response = spi.xfer2([0x00, ]*SPI_BUF_SIZE)
+        print(bytes(response[:30]))
+        if bytes(response).startswith(vers_str):
+          break
+
+        # TODO: needs something to sync them back up
+        #if response[0] == NACK:
+        #  raise PandaSpiMissingAck
         if time.monotonic() > deadline:
           raise PandaSpiMissingAck
 
       # We are aligned at start of VERSION block
-      len_bytes = bytes(spi.xfer2([0x00, 0x00]))
+      len_bytes = bytes(response[7:7+2])
       rlen = struct.unpack('<H', len_bytes)[0]
       if rlen > 1000:
-        # Drain rest of frame
-        to_drain = rlen + 1
-        if to_drain > 0:
-          spi.xfer2([0x00] * to_drain)
-        pad = SPI_BUF_SIZE - (len(vers_str) + 2 + to_drain)
-        if pad > 0:
-          spi.xfer2([0x00] * pad)
         raise PandaSpiException("response length greater than max")
 
-      data_ck = bytes(spi.xfer2([0x00] * (rlen + 1)))
+      data_ck = response[9:9+rlen+1]
       # Verify CRC8 over 'VERSION'+len+data
-      if crc8(vers_str + len_bytes + data_ck[:-1]) != data_ck[-1]:
-        pad = SPI_BUF_SIZE - (len(vers_str) + 2 + len(data_ck))
-        if pad > 0:
-          spi.xfer2([0x00] * pad)
+      if crc8(vers_str + len_bytes + bytes(data_ck[:-1])) != data_ck[-1]:
         raise PandaSpiBadChecksum
+      print("got it!!")
+      exit()
 
-      # Drain remainder of the frame
-      pad = SPI_BUF_SIZE - (len(vers_str) + 2 + len(data_ck))
-      if pad > 0:
-        spi.xfer2([0x00] * pad)
       return data_ck[:-1]
 
     exc = PandaSpiException()
     with self.dev.acquire() as spi:
-      for _ in range(10):
+      #for _ in range(10):
+      for _ in range(30):
         try:
           return _get_version(spi)
         except PandaSpiException as e:
           exc = e
           logger.debug("SPI get protocol version failed, retrying", exc_info=True)
+
+          # ensure slave is in a consistent state and ready for the next transfer
+          # (e.g. slave TX buffer isn't stuck full)
+          #print("recovering")
+          #nack_cnt = 0
+          #attempts = 5
+          #while (nack_cnt <= 3) and (attempts > 0):
+          #  attempts -= 1
+          #  try:
+          #    self._wait_for_ack(spi, NACK, MIN_ACK_TIMEOUT_MS, 0x11, length=XFER_SIZE)
+          #    nack_cnt += 1
+          #  except PandaSpiException:
+          #    nack_cnt = 0
+          #print("recover done", nack_cnt, attempts)
+
     raise exc
 
   # libusb1 functions
@@ -473,7 +492,13 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
         return self._cmd_no_retry(cmd, data, read_bytes, predata)
       except PandaSpiException as e:
         exc = e
-        logger.debug("SPI transfer failed, %d retries left", MAX_XFER_RETRY_COUNT - n - 1, exc_info=True)
+        import traceback
+        traceback.print_exception(type(e), e, e.__traceback__, limit=None)
+        print()
+        print()
+        print()
+        print()
+        #logger.debug("SPI transfer failed, %d retries left", MAX_XFER_RETRY_COUNT - n - 1, exc_info=True)
     raise exc
 
   def _checksum(self, data: bytes) -> bytes:

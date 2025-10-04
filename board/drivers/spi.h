@@ -185,7 +185,7 @@ void spi_rx_done(void) {
   }
 
   // send out the response
-  llspi_miso_dma(spi_buf_tx, SPI_BUF_SIZE);
+  llspi_miso_dma(spi_buf_tx, response_len);
 }
 
 void spi_tx_done() {

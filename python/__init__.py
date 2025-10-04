@@ -147,9 +147,10 @@ class Panda:
     self._can_speed_kbps = can_speed_kbps
 
     if cli and serial is None:
-        self._connect_serial = self._cli_select_panda()
+      #self._connect_serial = self._cli_select_panda()
+      self._connect_serial = None
     else:
-        self._connect_serial = serial
+      self._connect_serial = serial
 
     # connect and set mcu type
     self.connect(claim)
