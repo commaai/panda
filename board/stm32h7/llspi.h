@@ -19,7 +19,7 @@ void llspi_mosi_dma(uint8_t *addr) {
 
   // setup destination and length
   register_set(&(DMA2_Stream2->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
-  DMA2_Stream2->NDTR = 1024;
+  DMA2_Stream2->NDTR = SPI_MOSI_FRAME_LEN;
 
   // enable DMA + SPI
   DMA2_Stream2->CR |= DMA_SxCR_EN;

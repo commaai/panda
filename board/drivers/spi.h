@@ -109,12 +109,14 @@ void spi_rx_done(void) {
   } else if (spi_state == SPI_STATE_DATA_RX) {
     // We got everything! Based on the endpoint specified, call the appropriate handler
     bool response_ack = false;
-    checksum_valid = validate_checksum(&(spi_buf_rx[SPI_HEADER_SIZE]), spi_data_len_mosi + 1U);
+    // With fixed-length MOSI frames, the data payload starts at the
+    // beginning of the RX buffer (the host sent only data for this phase).
+    checksum_valid = validate_checksum(&(spi_buf_rx[0]), spi_data_len_mosi + 1U);
     if (checksum_valid) {
       if (spi_endpoint == 0U) {
         if (spi_data_len_mosi >= sizeof(ControlPacket_t)) {
           ControlPacket_t ctrl = {0};
-          (void)memcpy((uint8_t*)&ctrl, &spi_buf_rx[SPI_HEADER_SIZE], sizeof(ControlPacket_t));
+          (void)memcpy((uint8_t*)&ctrl, &spi_buf_rx[0], sizeof(ControlPacket_t));
           response_len = comms_control_handler(&ctrl, &spi_buf_tx[3]);
           response_ack = true;
         } else {
@@ -128,13 +130,13 @@ void spi_rx_done(void) {
           print("SPI: did not expect data for can_read\n");
         }
       } else if (spi_endpoint == 2U) {
-        comms_endpoint2_write(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi);
+        comms_endpoint2_write(&spi_buf_rx[0], spi_data_len_mosi);
         response_ack = true;
       } else if (spi_endpoint == 3U) {
         if (spi_data_len_mosi > 0U) {
           if (spi_can_tx_ready) {
             spi_can_tx_ready = false;
-            comms_can_write(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi);
+            comms_can_write(&spi_buf_rx[0], spi_data_len_mosi);
             response_ack = true;
           } else {
             response_ack = false;
@@ -161,7 +163,7 @@ void spi_rx_done(void) {
         puth4(spi_data_len_mosi);
         print("\n");
         hexdump(spi_buf_rx, SPI_HEADER_SIZE);
-        hexdump(&(spi_buf_rx[SPI_HEADER_SIZE]), MIN(spi_data_len_mosi, 64));
+        hexdump(&(spi_buf_rx[0]), MIN(spi_data_len_mosi, 64));
         print("\n");
       #endif
     }
@@ -213,7 +215,8 @@ void spi_tx_done(bool reset) {
   } else if (spi_state == SPI_STATE_HEADER_ACK) {
     // ACK was sent, queue up the RX buf for the data + checksum
     spi_state = SPI_STATE_DATA_RX;
-    llspi_mosi_dma(&spi_buf_rx[SPI_HEADER_SIZE]);
+    // Re-arm MOSI to read a fixed-length frame again from the start.
+    llspi_mosi_dma(spi_buf_rx);
   } else if (spi_state == SPI_STATE_DATA_TX) {
     // Reset state
     spi_state = SPI_STATE_HEADER;

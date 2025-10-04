@@ -8,7 +8,13 @@
 // in a tight loop, plus some buffer
 #define SPI_IRQ_RATE  16000U
 
+// Size of the SPI staging buffers on the device
 #define SPI_BUF_SIZE 4096U
+
+// Fixed-length MOSI frame size used by the RX DMA.
+// Host pads all MOSI transfers to this length.
+// Keep this <= SPI_BUF_SIZE and aligned with python/spi.py.
+#define SPI_MOSI_FRAME_LEN 1024U
 // H7 DMA2 located in D2 domain, so we need to use SRAM1/SRAM2
 __attribute__((section(".sram12"))) extern uint8_t spi_buf_rx[SPI_BUF_SIZE];
 __attribute__((section(".sram12"))) extern uint8_t spi_buf_tx[SPI_BUF_SIZE];
