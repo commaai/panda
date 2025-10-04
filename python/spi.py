@@ -102,6 +102,9 @@ class SpiDevice:
     try:
       SPI_LOCK.acquire()
       fcntl.flock(self._spidev, fcntl.LOCK_EX)
+
+      self._spidev
+
       yield self._spidev
     finally:
       fcntl.flock(self._spidev, fcntl.LOCK_UN)
@@ -110,6 +113,8 @@ class SpiDevice:
   def close(self):
     pass
 
+def pad(x):
+  return x + b"\x00"*max(0, SPI_BUF_SIZE - len(x))
 
 class PandaSpiHandle(BaseHandle):
   """
@@ -150,14 +155,14 @@ class PandaSpiHandle(BaseHandle):
     logger.debug("- send header")
     packet = self.HEADER.pack(SYNC, endpoint, len(data), max_rx_len)
     packet += bytes([self._calc_checksum(packet), ])
-    spi.xfer2(packet)
+    spi.xfer2(pad(packet))
 
     logger.debug("- waiting for header ACK")
     self._wait_for_ack(spi, HACK, MIN_ACK_TIMEOUT_MS, 0x11)
 
     logger.debug("- sending data")
     packet = bytes([*data, self._calc_checksum(data)])
-    spi.xfer2(packet)
+    spi.xfer2(pad(packet))
 
     if expect_disconnect:
       logger.debug("- expecting disconnect, returning")
@@ -371,8 +376,7 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
     ret = b""
     with self.dev.acquire() as spi:
       # sync + command
-      spi.xfer([self.SYNC, ])
-      spi.xfer([cmd, cmd ^ 0xFF])
+      spi.xfer([self.SYNC, cmd, cmd ^ 0xFF])
       self._get_ack(spi, timeout=0.01)
 
       # "predata" - for commands that send the first data without a checksum

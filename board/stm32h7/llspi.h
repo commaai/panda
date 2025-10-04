@@ -1,5 +1,7 @@
 // master -> panda DMA start
 void llspi_mosi_dma(uint8_t *addr, int len) {
+  //len = 4096;
+
   // disable DMA + SPI
   register_clear_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN);
   DMA2_Stream2->CR &= ~DMA_SxCR_EN;
