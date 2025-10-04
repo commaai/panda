@@ -63,7 +63,7 @@ void spi_init(void) {
 
   // Start the first packet!
   spi_state = SPI_STATE_HEADER;
-  llspi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
+  llspi_mosi_dma(spi_buf_rx);
 }
 
 static bool validate_checksum(const uint8_t *data, uint16_t len) {
@@ -209,18 +209,18 @@ void spi_tx_done(bool reset) {
   if ((spi_state == SPI_STATE_HEADER_NACK) || reset) {
     // Reset state
     spi_state = SPI_STATE_HEADER;
-    llspi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
+    llspi_mosi_dma(spi_buf_rx);
   } else if (spi_state == SPI_STATE_HEADER_ACK) {
     // ACK was sent, queue up the RX buf for the data + checksum
     spi_state = SPI_STATE_DATA_RX;
-    llspi_mosi_dma(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi + 1U);
+    llspi_mosi_dma(&spi_buf_rx[SPI_HEADER_SIZE]);
   } else if (spi_state == SPI_STATE_DATA_TX) {
     // Reset state
     spi_state = SPI_STATE_HEADER;
-    llspi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
+    llspi_mosi_dma(spi_buf_rx);
   } else {
     spi_state = SPI_STATE_HEADER;
-    llspi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
+    llspi_mosi_dma(spi_buf_rx);
     print("SPI: TX unexpected state: "); puth(spi_state); print("\n");
   }
 }

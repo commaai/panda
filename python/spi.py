@@ -31,7 +31,7 @@ CHECKSUM_START = 0xAB
 MIN_ACK_TIMEOUT_MS = 100
 MAX_XFER_RETRY_COUNT = 5
 
-SPI_BUF_SIZE = 4096  # from panda/board/drivers/spi.h
+SPI_BUF_SIZE = 1024  # from panda/board/drivers/spi.h
 XFER_SIZE = SPI_BUF_SIZE - 0x40 # give some room for SPI protocol overhead
 
 DEV_PATH = "/dev/spidev0.0"
@@ -102,8 +102,6 @@ class SpiDevice:
     try:
       SPI_LOCK.acquire()
       fcntl.flock(self._spidev, fcntl.LOCK_EX)
-
-      self._spidev
 
       yield self._spidev
     finally:
@@ -270,12 +268,14 @@ class PandaSpiHandle(BaseHandle):
   def get_protocol_version(self) -> bytes:
     vers_str = b"VERSION"
     def _get_version(spi) -> bytes:
-      spi.writebytes(vers_str)
+      print(len(pad(vers_str)))
+      spi.writebytes(pad(vers_str))
 
       logger.debug("- waiting for echo")
       start = time.monotonic()
       while True:
         version_bytes = spi.readbytes(len(vers_str) + 2)
+        print(version_bytes)
         if bytes(version_bytes).startswith(vers_str):
           break
         if (time.monotonic() - start) > 0.001:
@@ -301,6 +301,21 @@ class PandaSpiHandle(BaseHandle):
         except PandaSpiException as e:
           exc = e
           logger.debug("SPI get protocol version failed, retrying", exc_info=True)
+
+          print("recovering")
+          # ensure slave is in a consistent state and ready for the next transfer
+          # (e.g. slave TX buffer isn't stuck full)
+          nack_cnt = 0
+          attempts = 5
+          while (nack_cnt <= 3) and (attempts > 0):
+            attempts -= 1
+            try:
+              self._wait_for_ack(spi, NACK, MIN_ACK_TIMEOUT_MS, 0x11, length=XFER_SIZE//2)
+              nack_cnt += 1
+            except PandaSpiException:
+              nack_cnt = 0
+          print("recover done", nack_cnt, attempts)
+
     raise exc
 
   # libusb1 functions

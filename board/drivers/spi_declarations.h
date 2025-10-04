@@ -35,7 +35,7 @@ extern uint16_t spi_error_count;
 
 // low level SPI prototypes
 void llspi_init(void);
-void llspi_mosi_dma(uint8_t *addr, int len);
+void llspi_mosi_dma(uint8_t *addr);
 void llspi_miso_dma(uint8_t *addr, int len);
 
 void can_tx_comms_resume_spi(void);
