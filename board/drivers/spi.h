@@ -8,7 +8,7 @@ uint8_t spi_buf_tx[SPI_BUF_SIZE];
 
 uint16_t spi_error_count = 0;
 
-static uint8_t spi_state = SPI_STATE_HEADER;
+static uint8_t spi_state = SPI_STATE_RX_FRAME;
 static uint16_t spi_data_len_mosi;
 static bool spi_can_tx_ready = false;
 static const unsigned char version_text[] = "VERSION";
@@ -62,8 +62,8 @@ void spi_init(void) {
   llspi_init();
 
   // Start the first packet!
-  spi_state = SPI_STATE_HEADER;
-  llspi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
+  spi_state = SPI_STATE_RX_FRAME;
+  llspi_mosi_dma(spi_buf_rx, SPI_BUF_SIZE);
 }
 
 static bool validate_checksum(const uint8_t *data, uint16_t len) {
@@ -77,152 +77,128 @@ static bool validate_checksum(const uint8_t *data, uint16_t len) {
 
 void spi_rx_done(void) {
   uint16_t response_len = 0U;
-  uint8_t next_rx_state = SPI_STATE_HEADER_NACK;
   bool checksum_valid = false;
   static uint8_t spi_endpoint;
   static uint16_t spi_data_len_miso;
 
-  // parse header
-  spi_endpoint = spi_buf_rx[1];
-  spi_data_len_mosi = (spi_buf_rx[3] << 8) | spi_buf_rx[2];
-  spi_data_len_miso = (spi_buf_rx[5] << 8) | spi_buf_rx[4];
-
+  // VERSION request remains special and can be issued by sending a frame
+  // that begins with 'VERSION' (rest padded). Respond with the same stable
+  // format at the start of the TX frame.
   if (memcmp(spi_buf_rx, version_text, 7) == 0) {
     response_len = spi_version_packet(spi_buf_tx);
-    next_rx_state = SPI_STATE_HEADER_NACK;;
-  } else if (spi_state == SPI_STATE_HEADER) {
-    checksum_valid = validate_checksum(spi_buf_rx, SPI_HEADER_SIZE);
-    if ((spi_buf_rx[0] == SPI_SYNC_BYTE) && checksum_valid) {
-      // response: ACK and start receiving data portion
-      spi_buf_tx[0] = SPI_HACK;
-      next_rx_state = SPI_STATE_HEADER_ACK;
-      response_len = 1U;
-    } else {
-      // response: NACK and reset state machine
-      #ifdef DEBUG_SPI
-        print("- incorrect header sync or checksum "); hexdump(spi_buf_rx, SPI_HEADER_SIZE);
-      #endif
-      spi_buf_tx[0] = SPI_NACK;
-      next_rx_state = SPI_STATE_HEADER_NACK;
-      response_len = 1U;
+  } else {
+    // Parse combined header + data in a single fixed-size RX frame
+    spi_endpoint = spi_buf_rx[1];
+    spi_data_len_mosi = (spi_buf_rx[3] << 8) | spi_buf_rx[2];
+    spi_data_len_miso = (spi_buf_rx[5] << 8) | spi_buf_rx[4];
+
+    // Clamp lengths to available buffer space to avoid OOB
+    uint16_t max_mosi = (uint16_t)(SPI_BUF_SIZE - SPI_HEADER_SIZE - 1U);
+    if (spi_data_len_mosi > max_mosi) {
+      spi_data_len_mosi = max_mosi;
     }
-  } else if (spi_state == SPI_STATE_DATA_RX) {
-    // We got everything! Based on the endpoint specified, call the appropriate handler
+    uint16_t max_miso = (uint16_t)(SPI_BUF_SIZE - 4U);  // DACK + LEN(2) + CRC8
+    if (spi_data_len_miso > max_miso) {
+      spi_data_len_miso = max_miso;
+    }
+
+    // Validate header
+    bool header_ok = false;
+    if (spi_buf_rx[0] == SPI_SYNC_BYTE) {
+      header_ok = validate_checksum(spi_buf_rx, SPI_HEADER_SIZE);
+    }
+
     bool response_ack = false;
-    checksum_valid = validate_checksum(&(spi_buf_rx[SPI_HEADER_SIZE]), spi_data_len_mosi + 1U);
-    if (checksum_valid) {
-      if (spi_endpoint == 0U) {
-        if (spi_data_len_mosi >= sizeof(ControlPacket_t)) {
-          ControlPacket_t ctrl = {0};
-          (void)memcpy((uint8_t*)&ctrl, &spi_buf_rx[SPI_HEADER_SIZE], sizeof(ControlPacket_t));
-          response_len = comms_control_handler(&ctrl, &spi_buf_tx[3]);
-          response_ack = true;
-        } else {
-          print("SPI: insufficient data for control handler\n");
-        }
-      } else if ((spi_endpoint == 1U) || (spi_endpoint == 0x81U)) {
-        if (spi_data_len_mosi == 0U) {
-          response_len = comms_can_read(&(spi_buf_tx[3]), spi_data_len_miso);
-          response_ack = true;
-        } else {
-          print("SPI: did not expect data for can_read\n");
-        }
-      } else if (spi_endpoint == 2U) {
-        comms_endpoint2_write(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi);
-        response_ack = true;
-      } else if (spi_endpoint == 3U) {
-        if (spi_data_len_mosi > 0U) {
-          if (spi_can_tx_ready) {
-            spi_can_tx_ready = false;
-            comms_can_write(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi);
+    if (header_ok) {
+      // Validate data+checksum. Data checksum byte sits immediately after data
+      checksum_valid = validate_checksum(&(spi_buf_rx[SPI_HEADER_SIZE]), spi_data_len_mosi + 1U);
+
+      if (checksum_valid) {
+        // Dispatch
+        if (spi_endpoint == 0U) {
+          if (spi_data_len_mosi >= sizeof(ControlPacket_t)) {
+            ControlPacket_t ctrl = {0};
+            (void)memcpy((uint8_t*)&ctrl, &spi_buf_rx[SPI_HEADER_SIZE], sizeof(ControlPacket_t));
+            response_len = comms_control_handler(&ctrl, &spi_buf_tx[3]);
             response_ack = true;
           } else {
-            response_ack = false;
-            print("SPI: CAN NACK\n");
+            print("SPI: insufficient data for control handler\n");
           }
+        } else if ((spi_endpoint == 1U) || (spi_endpoint == 0x81U)) {
+          if (spi_data_len_mosi == 0U) {
+            response_len = comms_can_read(&(spi_buf_tx[3]), spi_data_len_miso);
+            response_ack = true;
+          } else {
+            print("SPI: did not expect data for can_read\n");
+          }
+        } else if (spi_endpoint == 2U) {
+          comms_endpoint2_write(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi);
+          response_ack = true;
+        } else if (spi_endpoint == 3U) {
+          if (spi_data_len_mosi > 0U) {
+            if (spi_can_tx_ready) {
+              spi_can_tx_ready = false;
+              comms_can_write(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi);
+              response_ack = true;
+            } else {
+              response_ack = false;
+              print("SPI: CAN NACK\n");
+            }
+          } else {
+            print("SPI: expected data for can_write\n");
+          }
+        } else if (spi_endpoint == 0xABU) {
+          // test endpoint: mimics panda -> device transfer
+          response_len = spi_data_len_miso;
+          response_ack = true;
+        } else if (spi_endpoint == 0xACU) {
+          // test endpoint: mimics device -> panda transfer (with NACK)
+          response_ack = false;
         } else {
-          print("SPI: did expect data for can_write\n");
+          print("SPI: unexpected endpoint"); puth(spi_endpoint); print("\n");
         }
-      } else if (spi_endpoint == 0xABU) {
-        // test endpoint: mimics panda -> device transfer
-        response_len = spi_data_len_miso;
-        response_ack = true;
-      } else if (spi_endpoint == 0xACU) {
-        // test endpoint: mimics device -> panda transfer (with NACK)
-        response_ack = false;
-      } else {
-        print("SPI: unexpected endpoint"); puth(spi_endpoint); print("\n");
       }
-    } else {
-      // Checksum was incorrect
-      response_ack = false;
-      #ifdef DEBUG_SPI
-        print("- incorrect data checksum ");
-        puth4(spi_data_len_mosi);
-        print("\n");
-        hexdump(spi_buf_rx, SPI_HEADER_SIZE);
-        hexdump(&(spi_buf_rx[SPI_HEADER_SIZE]), MIN(spi_data_len_mosi, 64));
-        print("\n");
-      #endif
+    }
+
+    if (!header_ok || !checksum_valid) {
+      spi_error_count += 1U;
     }
 
     if (!response_ack) {
       spi_buf_tx[0] = SPI_NACK;
-      next_rx_state = SPI_STATE_HEADER_NACK;
       response_len = 1U;
     } else {
+      // Enforce response length limits
+      if (response_len > spi_data_len_miso) {
+        response_len = spi_data_len_miso;
+      }
+
       // Setup response header
       spi_buf_tx[0] = SPI_DACK;
       spi_buf_tx[1] = response_len & 0xFFU;
       spi_buf_tx[2] = (response_len >> 8) & 0xFFU;
 
-      // Add checksum
+      // Add checksum over header + payload
       uint8_t checksum = SPI_CHECKSUM_START;
       for(uint16_t i = 0U; i < (response_len + 3U); i++) {
         checksum ^= spi_buf_tx[i];
       }
       spi_buf_tx[response_len + 3U] = checksum;
+      // response_len now refers to header + payload + checksum
       response_len += 4U;
-
-      next_rx_state = SPI_STATE_DATA_TX;
     }
-  } else {
-    print("SPI: RX unexpected state: "); puth(spi_state); print("\n");
   }
 
-  // send out response
-  if (response_len == 0U) {
-    print("SPI: no response\n");
-    spi_buf_tx[0] = SPI_NACK;
-    spi_state = SPI_STATE_HEADER_NACK;
-    response_len = 1U;
-  }
-  llspi_miso_dma(spi_buf_tx, response_len);
-
-  spi_state = next_rx_state;
-  if (!checksum_valid) {
-    spi_error_count += 1U;
-  }
+  // Transmit the full fixed-size TX frame
+  llspi_miso_dma(spi_buf_tx, SPI_BUF_SIZE);
+  spi_state = SPI_STATE_TX_FRAME;
 }
 
 void spi_tx_done(bool reset) {
-  if ((spi_state == SPI_STATE_HEADER_NACK) || reset) {
-    // Reset state
-    spi_state = SPI_STATE_HEADER;
-    llspi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
-  } else if (spi_state == SPI_STATE_HEADER_ACK) {
-    // ACK was sent, queue up the RX buf for the data + checksum
-    spi_state = SPI_STATE_DATA_RX;
-    llspi_mosi_dma(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi + 1U);
-  } else if (spi_state == SPI_STATE_DATA_TX) {
-    // Reset state
-    spi_state = SPI_STATE_HEADER;
-    llspi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
-  } else {
-    spi_state = SPI_STATE_HEADER;
-    llspi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
-    print("SPI: TX unexpected state: "); puth(spi_state); print("\n");
-  }
+  (void)reset;
+  // After sending a full TX frame, always prepare to receive the next full RX frame
+  spi_state = SPI_STATE_RX_FRAME;
+  llspi_mosi_dma(spi_buf_rx, SPI_BUF_SIZE);
 }
 
 void can_tx_comms_resume_spi(void) {

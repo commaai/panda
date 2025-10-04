@@ -13,24 +13,29 @@
 __attribute__((section(".sram12"))) extern uint8_t spi_buf_rx[SPI_BUF_SIZE];
 __attribute__((section(".sram12"))) extern uint8_t spi_buf_tx[SPI_BUF_SIZE];
 
+// Protocol constants
 #define SPI_CHECKSUM_START 0xABU
 #define SPI_SYNC_BYTE 0x5AU
 #define SPI_HACK 0x79U
 #define SPI_DACK 0x85U
 #define SPI_NACK 0x1FU
 
-// SPI states
+// SPI states (simplified): alternate full-size RX then full-size TX
 enum {
-  SPI_STATE_HEADER,
-  SPI_STATE_HEADER_ACK,
-  SPI_STATE_HEADER_NACK,
-  SPI_STATE_DATA_RX,
-  SPI_STATE_DATA_RX_ACK,
-  SPI_STATE_DATA_TX
+  SPI_STATE_RX_FRAME = 0,
+  SPI_STATE_TX_FRAME = 1
 };
 
 extern uint16_t spi_error_count;
 
+// Fixed frame contains a 7-byte header followed by data and a 1-byte data checksum.
+//   header: [SYNC(1) | EP(1) | MOSI_LEN(2 LE) | MISO_MAX(2 LE) | HDR_CKSUM(1)]
+//   data:   MOSI_LEN bytes starting at offset SPI_HEADER_SIZE
+//   data checksum byte immediately following data.
+// The device responds in the next frame with:
+//   [DACK(1) | RESP_LEN(2 LE) | RESP_DATA | RESP_CKSUM(1)]
+// VERSION requests remain special: if the RX frame begins with 'VERSION', the TX frame
+// will contain 'VERSION' + 2 byte length + data + CRC8 at the start.
 #define SPI_HEADER_SIZE 7U
 
 // low level SPI prototypes

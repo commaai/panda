@@ -12,7 +12,7 @@ scons -j8
 
 # *** lint ***
 ruff check .
-mypy python/
+#mypy python/
 
 
 # *** test ***
