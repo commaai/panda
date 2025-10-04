@@ -74,7 +74,7 @@ static void SPI4_IRQ_Handler(void) {
 
   if (spi_tx_dma_done && ((SPI4->SR & SPI_SR_TXC) != 0U)) {
     spi_tx_dma_done = false;
-    spi_tx_done(false);
+    spi_tx_done();
   }
 }
 

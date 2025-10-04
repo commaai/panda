@@ -8,7 +8,6 @@ uint8_t spi_buf_tx[SPI_BUF_SIZE];
 
 uint16_t spi_error_count = 0;
 
-static uint8_t spi_state = SPI_STATE_RX_FRAME;
 static uint16_t spi_data_len_mosi;
 static bool spi_can_tx_ready = false;
 static const unsigned char version_text[] = "VERSION";
@@ -61,8 +60,7 @@ void spi_init(void) {
   // platform init
   llspi_init();
 
-  // Start the first packet!
-  spi_state = SPI_STATE_RX_FRAME;
+  // start listening!
   llspi_mosi_dma(spi_buf_rx, SPI_BUF_SIZE);
 }
 
@@ -81,9 +79,6 @@ void spi_rx_done(void) {
   static uint8_t spi_endpoint;
   static uint16_t spi_data_len_miso;
 
-  // VERSION request remains special and can be issued by sending a frame
-  // that begins with 'VERSION' (rest padded). Respond with the same stable
-  // format at the start of the TX frame.
   if (memcmp(spi_buf_rx, version_text, 7) == 0) {
     response_len = spi_version_packet(spi_buf_tx);
   } else {
@@ -180,7 +175,7 @@ void spi_rx_done(void) {
 
       // Add checksum over header + payload
       uint8_t checksum = SPI_CHECKSUM_START;
-      for(uint16_t i = 0U; i < (response_len + 3U); i++) {
+      for (uint16_t i = 0U; i < (response_len + 3U); i++) {
         checksum ^= spi_buf_tx[i];
       }
       spi_buf_tx[response_len + 3U] = checksum;
@@ -189,15 +184,11 @@ void spi_rx_done(void) {
     }
   }
 
-  // Transmit the full fixed-size TX frame
+  // send out the response
   llspi_miso_dma(spi_buf_tx, SPI_BUF_SIZE);
-  spi_state = SPI_STATE_TX_FRAME;
 }
 
-void spi_tx_done(bool reset) {
-  (void)reset;
-  // After sending a full TX frame, always prepare to receive the next full RX frame
-  spi_state = SPI_STATE_RX_FRAME;
+void spi_tx_done() {
   llspi_mosi_dma(spi_buf_rx, SPI_BUF_SIZE);
 }
 
