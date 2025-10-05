@@ -28,7 +28,6 @@ MIN_ACK_TIMEOUT_MS = 100
 MAX_XFER_RETRY_COUNT = 5
 
 SPI_BUF_SIZE = 4096  # from panda/board/drivers/spi.h
-SPI_BUF_SIZE = 68 # from panda/board/drivers/spi.h
 XFER_SIZE = SPI_BUF_SIZE - 0x40 # give some room for SPI protocol overhead
 
 DEV_PATH = "/dev/spidev0.0"
@@ -337,13 +336,7 @@ class STBootloaderSPIHandle(BaseSTBootloaderHandle):
         return self._cmd_no_retry(cmd, data, read_bytes, predata)
       except PandaSpiException as e:
         exc = e
-        import traceback
-        traceback.print_exception(type(e), e, e.__traceback__, limit=None)
-        print()
-        print()
-        print()
-        print()
-        #logger.debug("SPI transfer failed, %d retries left", MAX_XFER_RETRY_COUNT - n - 1, exc_info=True)
+        logger.debug("SPI transfer failed, %d retries left", MAX_XFER_RETRY_COUNT - n - 1, exc_info=True)
     raise exc
 
   def _checksum(self, data: bytes) -> bytes:
