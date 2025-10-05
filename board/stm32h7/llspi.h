@@ -1,31 +1,6 @@
 #include "board/drivers/spi_declarations.h"
 
 // master -> panda DMA start
-static volatile bool spi_rx_active = false;
-
-// helper: finish current MOSI RX DMA
-static inline void llspi_mosi_finish(uint8_t *base_addr) {
-  // stop RX DMA
-  register_clear_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN);
-  DMA2_Stream2->CR &= ~DMA_SxCR_EN;
-  
-  // drain any residual bytes in RX FIFO directly into the buffer (best effort)
-  uint16_t rx_len = (uint16_t)(SPI_BUF_SIZE - DMA2_Stream2->NDTR);
-  while ((SPI4->SR & SPI_SR_RXP) != 0U) {
-    if (rx_len < SPI_BUF_SIZE) {
-      base_addr[rx_len++] = (uint8_t)SPI4->RXDR;
-    } else {
-      volatile uint8_t dat_ovf = (uint8_t)SPI4->RXDR;
-      (void)dat_ovf;  // drop if overflow
-    }
-  }
-
-  // clear status flags (EOT, UDR, OVR, etc.)
-  SPI4->IFCR |= (0x1FFU << 3U);
-
-  spi_rx_active = false;
-}
-
 void llspi_mosi_dma(uint8_t *addr) {
   // disable DMA + SPI
   register_clear_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN);
@@ -39,9 +14,9 @@ void llspi_mosi_dma(uint8_t *addr) {
     (void)dat;
   }
 
-  // clear all pending and enable EOT interrupt so we can end on CS rising
+  // clear all pending
   SPI4->IFCR |= (0x1FFU << 3U);
-  register_set(&(SPI4->IER), (1U << SPI_IER_EOTIE_Pos), 0x3FFU);
+  register_set(&(SPI4->IER), 0, 0x3FFU);
 
   // setup destination and length
   register_set(&(DMA2_Stream2->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
@@ -52,8 +27,6 @@ void llspi_mosi_dma(uint8_t *addr) {
   register_set_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN);
   register_set_bits(&(SPI4->CR1), SPI_CR1_SPE);
   SPI4->TXDR = 0xdddddddd;  // match the UDR bytes
-
-  spi_rx_active = true;
 }
 
 // panda -> master DMA start
@@ -86,11 +59,7 @@ static void DMA2_Stream2_IRQ_Handler(void) {
   // Clear interrupt flag
   DMA2->LIFCR = DMA_LIFCR_CTCIF2;
 
-  // If RX was active, finalize and dispatch
-  if (spi_rx_active) {
-    llspi_mosi_finish(spi_buf_rx);
-    spi_rx_done();
-  }
+  spi_rx_done();
 }
 
 // panda -> master DMA finished
@@ -111,12 +80,6 @@ static void SPI4_IRQ_Handler(void) {
   if (spi_tx_dma_done && ((SPI4->SR & SPI_SR_TXC) != 0U)) {
     spi_tx_dma_done = false;
     spi_tx_done();
-  }
-
-  // Early end of MOSI on EOT (e.g., NSS rising)
-  if (spi_rx_active && ((SPI4->SR & SPI_SR_EOT) != 0U)) {
-    llspi_mosi_finish(spi_buf_rx);
-    spi_rx_done();
   }
 }
 
