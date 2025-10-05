@@ -16,10 +16,6 @@ try:
   import spidev
 except ImportError:
   spidev = None
-try:
-  import spidev2
-except ImportError:
-  spidev2 = None
 
 # Constants
 SYNC = 0x5A
@@ -121,8 +117,6 @@ class PandaSpiHandle(BaseHandle):
 
   def __init__(self) -> None:
     self.dev = SpiDevice()
-    if spidev2 is not None and "SPI2" in os.environ:
-      self._spi2 = spidev2.SPIBus("/dev/spidev0.0", "w+b", bits_per_word=8, speed_hz=50_000_000)
 
   # helpers
   def _calc_checksum(self, data: bytes) -> int:
@@ -131,58 +125,35 @@ class PandaSpiHandle(BaseHandle):
       cksum ^= b
     return cksum
 
-  # New fixed-frame protocol helpers
-  def _build_tx_frame(self, endpoint: int, data: bytes, max_rx_len: int) -> bytes:
-    # header without checksum
-    header = self.HEADER.pack(SYNC, endpoint, len(data), max_rx_len)
+  def _transfer_spidev(self, spi, endpoint: int, data, timeout: int, max_rx_len: int = 1000, expect_disconnect: bool = False) -> bytes:
+    max_rx_len = max(USBPACKET_MAX_SIZE, max_rx_len)
+
+    # *** TX to panda ***
     frame = bytearray(SPI_BUF_SIZE)
-    # header + checksum
-    frame[0:len(header)] = header
-    frame[len(header)] = self._calc_checksum(header)
-    # payload + checksum
-    payload_off = len(header) + 1
+    frame[0:self.HEADER.size] = self.HEADER.pack(SYNC, endpoint, len(data), max_rx_len)
+    frame[self.HEADER.size] = self._calc_checksum(frame[:self.HEADER.size])
+    data_offset = self.HEADER.size + 1
     if len(data) > 0:
-      frame[payload_off:payload_off+len(data)] = data
-    frame[payload_off + len(data)] = self._calc_checksum(data)
-    return bytes(frame)
+      frame[data_offset:data_offset+len(data)] = data
+    frame[data_offset + len(data)] = self._calc_checksum(data)
+    spi.xfer2(frame)
 
-  def _parse_rx_frame(self, frame: bytes, max_rx_len: int) -> bytes:
-    if len(frame) < 4:
-      raise PandaSpiMissingAck
-    status = frame[0]
-    if status == NACK:
-      raise PandaSpiNackResponse
-    if status != DACK:
-      raise PandaSpiMissingAck
-    response_len = struct.unpack('<H', frame[1:3])[0]
-    if response_len > max_rx_len:
-      raise PandaSpiException(f"response length greater than max ({max_rx_len} {response_len})")
-    used = 3 + response_len + 1
-    if used > len(frame):
-      raise PandaSpiMissingAck
-    if self._calc_checksum(frame[:used]) != 0:
-      raise PandaSpiBadChecksum
-    return bytes(frame[3:3+response_len])
+    # *** RX from panda ***
+    if expect_disconnect:
+      logger.debug("- expecting disconnect, returning")
+      return b""
 
-  def _read_response_polled_spidev(self, spi, timeout_ms: int, max_rx_len: int) -> bytes:
-    # Poll first byte until we see DACK or NACK; until TX DMA arms, the slave
-    # returns its under-run value (e.g., 0xCD). Once DACK/NACK is observed, that
-    # is the first byte of the TX frame, so we must clock the remaining bytes of
-    # the frame to let the device finish TX DMA and re-arm RX.
-    deadline = time.monotonic() + (timeout_ms * 1e-3 if timeout_ms > 0 else 3600.0)
+    deadline = time.monotonic() + (timeout * 1e-3 if timeout > 0 else 3600.0)
 
     status = 0
-    while True:
-      response = spi.xfer2([0x00]*SPI_BUF_SIZE)
+    while status != DACK:
+      response = spi.readbytes(SPI_BUF_SIZE)
       status = response[0]
       if status == NACK:
         raise PandaSpiNackResponse
-      if status in (DACK, NACK):
-        break
-      if timeout_ms != 0 and time.monotonic() > deadline:
+      if timeout != 0 and time.monotonic() > deadline:
         raise PandaSpiMissingAck
 
-    # status == DACK: read len (2), payload, checksum, then drain padding
     len_bytes = response[1:3]
     response_len = struct.unpack('<H', bytes(len_bytes))[0]
     if response_len > max_rx_len:
@@ -193,77 +164,6 @@ class PandaSpiHandle(BaseHandle):
     if self._calc_checksum(frame_head) != 0:
       raise PandaSpiBadChecksum
 
-    return bytes(data_ck[:-1])
-
-  def _transfer_spidev(self, spi, endpoint: int, data, timeout: int, max_rx_len: int = 1000, expect_disconnect: bool = False) -> bytes:
-    max_rx_len = max(USBPACKET_MAX_SIZE, max_rx_len)
-    tx_frame = self._build_tx_frame(endpoint, bytes(data), max_rx_len)
-    spi.xfer2(list(tx_frame))
-
-    if expect_disconnect:
-      logger.debug("- expecting disconnect, returning")
-      return b""
-
-    # Poll for response status and then drain the full frame
-    return self._read_response_polled_spidev(spi, timeout, max_rx_len)
-
-  def _transfer_spidev2(self, spi, endpoint: int, data, timeout: int, max_rx_len: int = USBPACKET_MAX_SIZE, expect_disconnect: bool = False) -> bytes:
-    # Fallback to the same fixed-frame logic using spidev2 when available
-    max_rx_len = max(USBPACKET_MAX_SIZE, max_rx_len)
-
-    tx_frame = self._build_tx_frame(endpoint, bytes(data), max_rx_len)
-
-    # Send TX frame
-    self._spi2.submitTransferList(spidev2.SPITransferList((
-      {'tx_buf': tx_frame, 'delay_usecs': 0, 'cs_change': True},
-    )))
-
-    if expect_disconnect:
-      return b""
-
-    # Poll one byte at a time until DACK/NACK
-    deadline = time.monotonic() + (timeout * 1e-3 if timeout > 0 else 3600.0)
-    status_b = bytearray(1)
-    status = 0
-    while True:
-      self._spi2.submitTransferList(spidev2.SPITransferList(({'rx_buf': status_b, 'delay_usecs': 0, 'cs_change': True},)))
-      status = status_b[0]
-      if status in (DACK, NACK):
-        break
-      if timeout != 0 and time.monotonic() > deadline:
-        raise PandaSpiMissingAck
-
-    if status == NACK:
-      # Drain rest of frame
-      pad = bytearray(SPI_BUF_SIZE - 1)
-      self._spi2.submitTransferList(spidev2.SPITransferList(({'rx_buf': pad, 'delay_usecs': 0, 'cs_change': True},)))
-      raise PandaSpiNackResponse
-
-    # Read len
-    len_b = bytearray(2)
-    self._spi2.submitTransferList(spidev2.SPITransferList(({'rx_buf': len_b, 'delay_usecs': 0, 'cs_change': True},)))
-    response_len = struct.unpack('<H', bytes(len_b))[0]
-    if response_len > max_rx_len:
-      # Drain remainder
-      drain = bytearray(response_len + 1)
-      self._spi2.submitTransferList(spidev2.SPITransferList(({'rx_buf': drain, 'delay_usecs': 0, 'cs_change': True},)))
-      pad = bytearray(SPI_BUF_SIZE - (1 + 2 + len(drain)))
-      if len(pad) > 0:
-        self._spi2.submitTransferList(spidev2.SPITransferList(({'rx_buf': pad, 'delay_usecs': 0, 'cs_change': True},)))
-      raise PandaSpiException(f"response length greater than max ({max_rx_len} {response_len})")
-
-    data_ck = bytearray(response_len + 1)
-    self._spi2.submitTransferList(spidev2.SPITransferList(({'rx_buf': data_ck, 'delay_usecs': 0, 'cs_change': True},)))
-    frame_head = bytes([DACK]) + bytes(len_b) + bytes(data_ck)
-    if self._calc_checksum(frame_head) != 0:
-      pad = bytearray(SPI_BUF_SIZE - len(frame_head))
-      if len(pad) > 0:
-        self._spi2.submitTransferList(spidev2.SPITransferList(({'rx_buf': pad, 'delay_usecs': 0, 'cs_change': True},)))
-      raise PandaSpiBadChecksum
-
-    pad = bytearray(SPI_BUF_SIZE - len(frame_head))
-    if len(pad) > 0:
-      self._spi2.submitTransferList(spidev2.SPITransferList(({'rx_buf': pad, 'delay_usecs': 0, 'cs_change': True},)))
     return bytes(data_ck[:-1])
 
   def _transfer(self, endpoint: int, data, timeout: int, max_rx_len: int = 1000, expect_disconnect: bool = False) -> bytes:
@@ -278,17 +178,11 @@ class PandaSpiHandle(BaseHandle):
       logger.debug("\ntry #%d", n)
       with self.dev.acquire() as spi:
         try:
-          fn = self._transfer_spidev
-          #fn = self._transfer_spidev2
-          return fn(spi, endpoint, data, timeout, max_rx_len, expect_disconnect)
+          return self._transfer_spidev(spi, endpoint, data, timeout, max_rx_len, expect_disconnect)
         except PandaSpiException as e:
           exc = e
           logger.debug("SPI transfer failed, retrying", exc_info=True)
           self._resync(spi)
-
-        if n > 5:
-          exit()
-
     raise exc
 
   def _resync(self, spi):
