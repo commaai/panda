@@ -215,7 +215,6 @@ class PandaSpiHandle(BaseHandle):
 
   def _transfer_spidev(self, spi, endpoint: int, data, timeout: int, max_rx_len: int = 1000, expect_disconnect: bool = False) -> bytes:
     max_rx_len = max(USBPACKET_MAX_SIZE, max_rx_len)
-    # Build and send a single fixed-size TX frame
     tx_frame = self._build_tx_frame(endpoint, bytes(data), max_rx_len)
     spi.xfer2(list(tx_frame))
 
@@ -303,8 +302,10 @@ class PandaSpiHandle(BaseHandle):
         except PandaSpiException as e:
           exc = e
           logger.debug("SPI transfer failed, retrying", exc_info=True)
+          self._resync(spi)
 
-          # No resynchronization dance needed with fixed frames; just retry
+        if n > 5:
+          exit()
 
     raise exc
 
@@ -353,13 +354,10 @@ class PandaSpiHandle(BaseHandle):
         raise PandaSpiException("response length greater than max")
 
       data_ck = response[9:9+rlen+1]
-      # Verify CRC8 over 'VERSION'+len+data
       if crc8(vers_str + len_bytes + bytes(data_ck[:-1])) != data_ck[-1]:
         raise PandaSpiBadChecksum
-      print("got it!!")
-      exit()
 
-      return data_ck[:-1]
+      return bytes(data_ck[:-1])
 
     exc = PandaSpiException()
     with self.dev.acquire() as spi:
