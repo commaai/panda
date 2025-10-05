@@ -1,9 +1,12 @@
+#include "board/drivers/spi_declarations.h"
+
 // master -> panda DMA start
-void llspi_mosi_dma(uint8_t *addr, int len) {
+void llspi_mosi_dma(uint8_t *addr) {
   // disable DMA + SPI
   register_clear_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN);
   DMA2_Stream2->CR &= ~DMA_SxCR_EN;
   register_clear_bits(&(SPI4->CR1), SPI_CR1_SPE);
+  register_set(&(SPI4->UDRDR), 0xdd, 0xFFFFU);  // set under-run value for debugging
 
   // drain the bus
   while ((SPI4->SR & SPI_SR_RXP) != 0U) {
@@ -17,12 +20,13 @@ void llspi_mosi_dma(uint8_t *addr, int len) {
 
   // setup destination and length
   register_set(&(DMA2_Stream2->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
-  DMA2_Stream2->NDTR = len;
+  DMA2_Stream2->NDTR = SPI_BUF_SIZE;
 
   // enable DMA + SPI
   DMA2_Stream2->CR |= DMA_SxCR_EN;
   register_set_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN);
   register_set_bits(&(SPI4->CR1), SPI_CR1_SPE);
+  SPI4->TXDR = 0xdddddddd;  // match the UDR bytes
 }
 
 // panda -> master DMA start
@@ -31,6 +35,7 @@ void llspi_miso_dma(uint8_t *addr, int len) {
   DMA2_Stream3->CR &= ~DMA_SxCR_EN;
   register_clear_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
   register_clear_bits(&(SPI4->CR1), SPI_CR1_SPE);
+  register_set(&(SPI4->UDRDR), 0xcc, 0xFFFFU);  // set under-run value for debugging
 
   // setup source and length
   register_set(&(DMA2_Stream3->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
@@ -74,7 +79,7 @@ static void SPI4_IRQ_Handler(void) {
 
   if (spi_tx_dma_done && ((SPI4->SR & SPI_SR_TXC) != 0U)) {
     spi_tx_dma_done = false;
-    spi_tx_done(false);
+    spi_tx_done();
   }
 }
 
@@ -96,8 +101,7 @@ void llspi_init(void) {
 
   // Enable SPI
   register_set(&(SPI4->IER), 0, 0x3FFU);
-  register_set(&(SPI4->CFG1), (7U << SPI_CFG1_DSIZE_Pos), SPI_CFG1_DSIZE_Msk);
-  register_set(&(SPI4->UDRDR), 0xcd, 0xFFFFU);  // set under-run value for debugging
+  register_set(&(SPI4->CFG1), (7U << SPI_CFG1_DSIZE_Pos) | (0b01 << SPI_CFG1_UDRDET_Pos), SPI_CFG1_DSIZE_Msk | SPI_CFG1_UDRDET_Msk);
   register_set(&(SPI4->CR1), SPI_CR1_SPE, 0xFFFFU);
   register_set(&(SPI4->CR2), 0, 0xFFFFU);
 

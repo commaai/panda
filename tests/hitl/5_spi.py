@@ -10,7 +10,7 @@ from panda.python.spi import PandaProtocolMismatch, PandaSpiNackResponse
 class TestSpi:
   def _ping(self, mocker, panda):
     # should work with no retries
-    spy = mocker.spy(panda._handle, '_wait_for_ack')
+    spy = mocker.spy(panda._handle, '_cmd_no_retry')
     panda.health()
     assert spy.call_count == 2
     mocker.stop(spy)
@@ -41,17 +41,17 @@ class TestSpi:
       assert bstub == (0xEE if bootstub else 0xCC)
 
   def test_all_comm_types(self, mocker, p):
-    spy = mocker.spy(p._handle, '_wait_for_ack')
+    spy = mocker.spy(p._handle, '_cmd_no_retry')
 
     # controlRead + controlWrite
     p.health()
     p.can_clear(0)
-    assert spy.call_count == 2*2
+    assert spy.call_count == 2
 
     # bulkRead + bulkWrite
     p.can_recv()
     p.can_send(0x123, b"somedata", 0)
-    assert spy.call_count == 2*4
+    assert spy.call_count == 4
 
   def test_bad_header(self, mocker, p):
     with patch('panda.python.spi.SYNC', return_value=0):

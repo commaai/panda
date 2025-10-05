@@ -35,5 +35,5 @@ void puth(unsigned int i);
 static void puth4(unsigned int i);
 #endif
 #if defined(DEBUG_SPI) || defined(DEBUG_USB) || defined(DEBUG_COMMS)
-static void hexdump(const void *a, int l);
+void hexdump(const void *a, int l);
 #endif
