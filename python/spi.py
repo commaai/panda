@@ -291,30 +291,15 @@ class PandaSpiHandle(BaseHandle):
 
     raise exc
 
-  def _wait_for_ack(self, spi, ack_val: int, timeout: int, tx: int, length: int = 1) -> bytes:
-    timeout_s = max(MIN_ACK_TIMEOUT_MS, timeout) * 1e-3
-
-    start = time.monotonic()
-    while (timeout == 0) or ((time.monotonic() - start) < timeout_s):
-      dat = spi.xfer2([tx, ] * length)
-      if dat[0] == ack_val:
-        return bytes(dat)
-      elif dat[0] == NACK:
-        raise PandaSpiNackResponse
-
-    raise PandaSpiMissingAck
-
   def _resync(self, spi):
     # ensure slave is in a consistent state and ready for the next transfer
-    # (e.g. slave TX buffer isn't stuck full)
-    print("recovering")
+    # (e.g. slave isn't stuck trying to RX/TX a massive buffer)
     attempts = 5
     while attempts > 0:
       x = spi.xfer2([0x00, ]*SPI_BUF_SIZE)
       if x[0] == NACK and set(bytes(x[1:])) == {0xcc, }:
         break
       attempts -= 1
-    print("recover done", attempts)
 
   def get_protocol_version(self) -> bytes:
     vers_str = b"VERSION"
@@ -323,10 +308,8 @@ class PandaSpiHandle(BaseHandle):
       tx = bytearray(SPI_BUF_SIZE)
       tx[:len(vers_str)] = vers_str
       a = spi.xfer2(list(tx))
-      print("a", bytes(a[:30]))
 
       response = spi.xfer2([0x00, ]*SPI_BUF_SIZE)
-      print(bytes(response[:30]))
       if not bytes(response).startswith(vers_str):
         raise PandaSpiMissingAck
 
@@ -343,8 +326,7 @@ class PandaSpiHandle(BaseHandle):
 
     exc = PandaSpiException()
     with self.dev.acquire() as spi:
-      #for _ in range(10):
-      for _ in range(30):
+      for _ in range(10):
         try:
           return _get_version(spi)
         except PandaSpiException as e:
