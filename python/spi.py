@@ -27,7 +27,7 @@ CHECKSUM_START = 0xAB
 MIN_ACK_TIMEOUT_MS = 100
 MAX_XFER_RETRY_COUNT = 5
 
-SPI_BUF_SIZE = 4096  # from panda/board/drivers/spi.h
+SPI_BUF_SIZE = 128  # from panda/board/drivers/spi.h
 XFER_SIZE = SPI_BUF_SIZE - 0x40 # give some room for SPI protocol overhead
 
 DEV_PATH = "/dev/spidev0.0"
@@ -117,8 +117,8 @@ class PandaSpiHandle(BaseHandle):
 
   def __init__(self) -> None:
     self.dev = SpiDevice()
+    self.no_retry = "NO_RETRY" in os.environ
 
-  # helpers
   def _calc_checksum(self, data: bytes) -> int:
     cksum = CHECKSUM_START
     for b in data:
@@ -129,7 +129,7 @@ class PandaSpiHandle(BaseHandle):
     max_rx_len = max(USBPACKET_MAX_SIZE, max_rx_len)
 
     # *** TX to panda ***
-    frame = bytearray(SPI_BUF_SIZE)
+    frame = bytearray(b"\xea" * SPI_BUF_SIZE)
     frame[0:self.HEADER.size] = self.HEADER.pack(SYNC, endpoint, len(data), max_rx_len)
     frame[self.HEADER.size] = self._calc_checksum(frame[:self.HEADER.size])
     data_offset = self.HEADER.size + 1
@@ -145,9 +145,11 @@ class PandaSpiHandle(BaseHandle):
 
     deadline = time.monotonic() + (timeout * 1e-3 if timeout > 0 else 3600.0)
 
+    cnt = 0
     status = 0
     while status != ACK:
-      response = spi.readbytes(SPI_BUF_SIZE)
+      cnt += 1
+      response = spi.xfer2(cnt.to_bytes() * SPI_BUF_SIZE)  # cnt is nice for debugging
       status = response[0]
       if status == NACK:
         raise PandaSpiNackResponse
@@ -159,7 +161,7 @@ class PandaSpiHandle(BaseHandle):
     if response_len > max_rx_len:
       raise PandaSpiException(f"response length greater than max ({max_rx_len} {response_len})")
 
-    data_ck = response[3:3+response_len+1] #spi.xfer2([0x00] * (response_len + 1))
+    data_ck = response[3:3+response_len+1]
     frame_head = bytes([ACK]) + bytes(len_bytes) + bytes(data_ck)
     if self._calc_checksum(frame_head) != 0:
       raise PandaSpiBadChecksum
@@ -182,6 +184,8 @@ class PandaSpiHandle(BaseHandle):
         except PandaSpiException as e:
           exc = e
           logger.debug("SPI transfer failed, retrying", exc_info=True)
+          if self.no_retry:
+            break
           self._resync(spi)
     raise exc
 

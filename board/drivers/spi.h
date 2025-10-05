@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include "board/drivers/spi_declarations.h"
 #include "board/crc.h"
 
@@ -146,6 +147,8 @@ void spi_rx_done(void) {
     }
 
     if (!header_ok || !checksum_valid) {
+      print("error: "); hexdump(spi_buf_rx, 24); print("\n");
+      if (false) puth4(4);
       spi_error_count += 1U;
     }
 
