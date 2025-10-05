@@ -173,43 +173,25 @@ class PandaSpiHandle(BaseHandle):
 
     status = 0
     while True:
-      status = spi.xfer2([0x00])[0]
+      response = spi.xfer2([0x00]*SPI_BUF_SIZE)
+      status = response[0]
+      if status == NACK:
+        raise PandaSpiNackResponse
       if status in (DACK, NACK):
         break
       if timeout_ms != 0 and time.monotonic() > deadline:
         raise PandaSpiMissingAck
 
-    if status == NACK:
-      # Drain rest of frame so device can re-arm RX, then raise
-      spi.xfer2([0x00] * (SPI_BUF_SIZE - 1))
-      raise PandaSpiNackResponse
-
     # status == DACK: read len (2), payload, checksum, then drain padding
-    len_bytes = spi.xfer2([0x00, 0x00])
+    len_bytes = response[1:3]
     response_len = struct.unpack('<H', bytes(len_bytes))[0]
     if response_len > max_rx_len:
-      # Drain the frame before erroring
-      to_drain = response_len + 1
-      if to_drain > 0:
-        spi.xfer2([0x00] * to_drain)
-      pad = SPI_BUF_SIZE - (1 + 2 + to_drain)
-      if pad > 0:
-        spi.xfer2([0x00] * pad)
       raise PandaSpiException(f"response length greater than max ({max_rx_len} {response_len})")
 
-    data_ck = spi.xfer2([0x00] * (response_len + 1))
+    data_ck = response[3:3+response_len+1] #spi.xfer2([0x00] * (response_len + 1))
     frame_head = bytes([DACK]) + bytes(len_bytes) + bytes(data_ck)
     if self._calc_checksum(frame_head) != 0:
-      # Drain padding then raise
-      pad = SPI_BUF_SIZE - len(frame_head)
-      if pad > 0:
-        spi.xfer2([0x00] * pad)
       raise PandaSpiBadChecksum
-
-    # Drain remaining padding (if any) to complete the frame
-    pad = SPI_BUF_SIZE - len(frame_head)
-    if pad > 0:
-      spi.xfer2([0x00] * pad)
 
     return bytes(data_ck[:-1])
 
