@@ -20,17 +20,13 @@ void unused_interrupt_handler(void);
 
 extern interrupt interrupts[NUM_INTERRUPTS];
 
-// Default priority configuration. Changing these does not by itself change NVIC
-// behavior until priorities are (re)set, but allows a single place to tune.
-#ifndef IRQ_PRIORITY_GROUPING_DEFAULT
-#define IRQ_PRIORITY_GROUPING_DEFAULT (0U)  // 0 => all bits are preempt priority
-#endif
-#ifndef IRQ_DEFAULT_PREEMPT_PRIORITY
-#define IRQ_DEFAULT_PREEMPT_PRIORITY (0U)   // keep existing behavior: all equal
-#endif
-#ifndef IRQ_DEFAULT_SUBPRIORITY
-#define IRQ_DEFAULT_SUBPRIORITY      (0U)
-#endif
+// Default priority configuration (fixed, not overridable)
+//  - Grouping 0: all available bits used for preempt priority
+//  - Baseline preempt priority: 2 (SPI/DMA use 0 to preempt)
+//  - Subpriority: 0 (unused with grouping 0)
+#define IRQ_PRIORITY_GROUPING_DEFAULT (0U)
+#define IRQ_DEFAULT_PREEMPT_PRIORITY  (2U)
+#define IRQ_DEFAULT_SUBPRIORITY       (0U)
 
 // Apply defaults on registration and set NVIC priority accordingly.
 #define REGISTER_INTERRUPT(irq_num, func_ptr, call_rate_max, rate_fault) \
