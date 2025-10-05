@@ -321,6 +321,18 @@ class PandaSpiHandle(BaseHandle):
 
     raise PandaSpiMissingAck
 
+  def _resync(self, spi):
+    # ensure slave is in a consistent state and ready for the next transfer
+    # (e.g. slave TX buffer isn't stuck full)
+    print("recovering")
+    attempts = 5
+    while attempts > 0:
+      x = spi.xfer2([0x00, ]*SPI_BUF_SIZE)
+      if x[0] == NACK and set(bytes(x[1:])) == {0xcc, }:
+        break
+      attempts -= 1
+    print("recover done", attempts)
+
   def get_protocol_version(self) -> bytes:
     vers_str = b"VERSION"
 
@@ -330,22 +342,11 @@ class PandaSpiHandle(BaseHandle):
       a = spi.xfer2(list(tx))
       print("a", bytes(a[:30]))
 
-      # poll for response
-      deadline = time.monotonic() + 0.5
-      while True:
-        # Poll one byte until 'V'
-        response = spi.xfer2([0x00, ]*SPI_BUF_SIZE)
-        print(bytes(response[:30]))
-        if bytes(response).startswith(vers_str):
-          break
+      response = spi.xfer2([0x00, ]*SPI_BUF_SIZE)
+      print(bytes(response[:30]))
+      if not bytes(response).startswith(vers_str):
+        raise PandaSpiMissingAck
 
-        # TODO: needs something to sync them back up
-        #if response[0] == NACK:
-        #  raise PandaSpiMissingAck
-        if time.monotonic() > deadline:
-          raise PandaSpiMissingAck
-
-      # We are aligned at start of VERSION block
       len_bytes = bytes(response[7:7+2])
       rlen = struct.unpack('<H', len_bytes)[0]
       if rlen > 1000:
@@ -369,20 +370,7 @@ class PandaSpiHandle(BaseHandle):
         except PandaSpiException as e:
           exc = e
           logger.debug("SPI get protocol version failed, retrying", exc_info=True)
-
-          # ensure slave is in a consistent state and ready for the next transfer
-          # (e.g. slave TX buffer isn't stuck full)
-          #print("recovering")
-          #nack_cnt = 0
-          #attempts = 5
-          #while (nack_cnt <= 3) and (attempts > 0):
-          #  attempts -= 1
-          #  try:
-          #    self._wait_for_ack(spi, NACK, MIN_ACK_TIMEOUT_MS, 0x11, length=XFER_SIZE)
-          #    nack_cnt += 1
-          #  except PandaSpiException:
-          #    nack_cnt = 0
-          #print("recover done", nack_cnt, attempts)
+          self._resync(spi)
 
     raise exc
 
