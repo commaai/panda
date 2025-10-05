@@ -201,7 +201,7 @@ class PandaSpiHandle(BaseHandle):
     def _get_version(spi) -> bytes:
       tx = bytearray(SPI_BUF_SIZE)
       tx[:len(vers_str)] = vers_str
-      a = spi.xfer2(list(tx))
+      spi.xfer2(list(tx))
 
       response = spi.xfer2([0x00, ]*SPI_BUF_SIZE)
       if not bytes(response).startswith(vers_str):
