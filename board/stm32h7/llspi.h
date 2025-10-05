@@ -1,5 +1,7 @@
+#include "board/drivers/spi_declarations.h"
+
 // master -> panda DMA start
-void llspi_mosi_dma(uint8_t *addr, int len) {
+void llspi_mosi_dma(uint8_t *addr) {
   // disable DMA + SPI
   register_clear_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN);
   DMA2_Stream2->CR &= ~DMA_SxCR_EN;
@@ -18,7 +20,7 @@ void llspi_mosi_dma(uint8_t *addr, int len) {
 
   // setup destination and length
   register_set(&(DMA2_Stream2->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
-  DMA2_Stream2->NDTR = len;
+  DMA2_Stream2->NDTR = SPI_BUF_SIZE;
 
   // enable DMA + SPI
   DMA2_Stream2->CR |= DMA_SxCR_EN;

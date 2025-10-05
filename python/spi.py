@@ -20,7 +20,7 @@ except ImportError:
 # Constants
 SYNC = 0x5A
 HACK = 0x79
-DACK = 0x85
+ACK = 0x85
 NACK = 0x1F
 CHECKSUM_START = 0xAB
 
@@ -28,6 +28,7 @@ MIN_ACK_TIMEOUT_MS = 100
 MAX_XFER_RETRY_COUNT = 5
 
 SPI_BUF_SIZE = 4096  # from panda/board/drivers/spi.h
+SPI_BUF_SIZE = 68 # from panda/board/drivers/spi.h
 XFER_SIZE = SPI_BUF_SIZE - 0x40 # give some room for SPI protocol overhead
 
 DEV_PATH = "/dev/spidev0.0"
@@ -146,7 +147,7 @@ class PandaSpiHandle(BaseHandle):
     deadline = time.monotonic() + (timeout * 1e-3 if timeout > 0 else 3600.0)
 
     status = 0
-    while status != DACK:
+    while status != ACK:
       response = spi.readbytes(SPI_BUF_SIZE)
       status = response[0]
       if status == NACK:
@@ -160,7 +161,7 @@ class PandaSpiHandle(BaseHandle):
       raise PandaSpiException(f"response length greater than max ({max_rx_len} {response_len})")
 
     data_ck = response[3:3+response_len+1] #spi.xfer2([0x00] * (response_len + 1))
-    frame_head = bytes([DACK]) + bytes(len_bytes) + bytes(data_ck)
+    frame_head = bytes([ACK]) + bytes(len_bytes) + bytes(data_ck)
     if self._calc_checksum(frame_head) != 0:
       raise PandaSpiBadChecksum
 

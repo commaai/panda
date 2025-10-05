@@ -8,7 +8,7 @@
 // in a tight loop, plus some buffer
 #define SPI_IRQ_RATE  16000U
 
-#define SPI_BUF_SIZE 4096U
+#define SPI_BUF_SIZE 68U
 // H7 DMA2 located in D2 domain, so we need to use SRAM1/SRAM2
 __attribute__((section(".sram12"))) extern uint8_t spi_buf_rx[SPI_BUF_SIZE];
 __attribute__((section(".sram12"))) extern uint8_t spi_buf_tx[SPI_BUF_SIZE];
@@ -16,7 +16,7 @@ __attribute__((section(".sram12"))) extern uint8_t spi_buf_tx[SPI_BUF_SIZE];
 // Protocol constants
 #define SPI_CHECKSUM_START 0xABU
 #define SPI_SYNC_BYTE 0x5AU
-#define SPI_DACK 0x85U
+#define SPI_ACK 0x85U
 #define SPI_NACK 0x1FU
 
 extern uint16_t spi_error_count;
@@ -31,7 +31,7 @@ extern uint16_t spi_error_count;
 
 // low level SPI prototypes
 void llspi_init(void);
-void llspi_mosi_dma(uint8_t *addr, int len);
+void llspi_mosi_dma(uint8_t *addr);
 void llspi_miso_dma(uint8_t *addr, int len);
 
 void can_tx_comms_resume_spi(void);

@@ -60,8 +60,8 @@ void spi_init(void) {
   // platform init
   llspi_init();
 
-  // start listening!
-  llspi_mosi_dma(spi_buf_rx, SPI_BUF_SIZE);
+  // Start the first packet!
+  llspi_mosi_dma(spi_buf_rx);
 }
 
 static bool validate_checksum(const uint8_t *data, uint16_t len) {
@@ -82,20 +82,10 @@ void spi_rx_done(void) {
   if (memcmp(spi_buf_rx, version_text, 7) == 0) {
     response_len = spi_version_packet(spi_buf_tx);
   } else {
-    // Parse combined header + data in a single fixed-size RX frame
+    // parse header
     spi_endpoint = spi_buf_rx[1];
     spi_data_len_mosi = (spi_buf_rx[3] << 8) | spi_buf_rx[2];
     spi_data_len_miso = (spi_buf_rx[5] << 8) | spi_buf_rx[4];
-
-    // Clamp lengths to available buffer space to avoid OOB
-    uint16_t max_mosi = (uint16_t)(SPI_BUF_SIZE - SPI_HEADER_SIZE - 1U);
-    if (spi_data_len_mosi > max_mosi) {
-      spi_data_len_mosi = max_mosi;
-    }
-    uint16_t max_miso = (uint16_t)(SPI_BUF_SIZE - 4U);  // DACK + LEN(2) + CRC8
-    if (spi_data_len_miso > max_miso) {
-      spi_data_len_miso = max_miso;
-    }
 
     // Validate header
     bool header_ok = false;
@@ -163,13 +153,8 @@ void spi_rx_done(void) {
       spi_buf_tx[0] = SPI_NACK;
       response_len = 1U;
     } else {
-      // Enforce response length limits
-      if (response_len > spi_data_len_miso) {
-        response_len = spi_data_len_miso;
-      }
-
       // Setup response header
-      spi_buf_tx[0] = SPI_DACK;
+      spi_buf_tx[0] = SPI_ACK;
       spi_buf_tx[1] = response_len & 0xFFU;
       spi_buf_tx[2] = (response_len >> 8) & 0xFFU;
 
@@ -189,7 +174,7 @@ void spi_rx_done(void) {
 }
 
 void spi_tx_done() {
-  llspi_mosi_dma(spi_buf_rx, SPI_BUF_SIZE);
+  llspi_mosi_dma(spi_buf_rx);
 }
 
 void can_tx_comms_resume_spi(void) {
