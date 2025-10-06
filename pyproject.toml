@@ -19,7 +19,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "scons",
-  "pycryptodome >= 3.9.8",
   "cffi",
   "flaky",
   "pytest",
@@ -33,7 +32,7 @@ dev = [
 ]
 
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=61", "wheel", "pycryptodome >= 3.9.8", "scons", "opendbc @ git+https://github.com/commaai/opendbc.git@master#egg=opendbc"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
@@ -41,6 +40,19 @@ packages = ["panda"]
 
 [tool.setuptools.package-dir]
 panda = "."
+
+[tool.hatch.build.targets.wheel] 
+packages = ["src/panda"] 
+include = ["include/**"]
+
+[tool.hatch.build.targets.wheel.shared-data] 
+"include" = "include"
+
+[tool.setuptools.package-data]
+panda = [
+  "board/**",
+  "python/**",
+]
 
 [tool.mypy]
 # third-party packages
