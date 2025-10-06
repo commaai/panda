@@ -97,6 +97,6 @@ void uart_init(uart_ring *q, unsigned int baud) {
     q->uart->CR1 |= USART_CR1_RXNEIE;
 
     // Enable UART interrupts
-    NVIC_EnableIRQ(UART7_IRQn);
+    //NVIC_EnableIRQ(UART7_IRQn);
   }
 }

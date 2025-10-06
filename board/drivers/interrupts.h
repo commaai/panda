@@ -15,6 +15,9 @@ static uint32_t busy_time = 0U;
 float interrupt_load = 0.0f;
 
 void handle_interrupt(IRQn_Type irq_type){
+  if (irq_type != 0x3a && irq_type != 0x3b && irq_type != 0x54) {
+    print("irq: "); puth(irq_type); print("\n");
+  }
   static uint8_t interrupt_depth = 0U;
   static uint32_t last_time = 0U;
   ENTER_CRITICAL();

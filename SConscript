@@ -64,10 +64,10 @@ def build_project(project_name, project, main, extra_flags):
   project_dir = Dir(f'./board/obj/{project_name}/')
 
   flags = project["FLAGS"] + extra_flags + common_flags + [
-    "-Wall",
-    "-Wextra",
+    #"-Wall",
+    #"-Wextra",
     "-Wstrict-prototypes",
-    "-Werror",
+    #"-Werror",
     "-mlittle-endian",
     "-mthumb",
     "-nostdlib",

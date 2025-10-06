@@ -137,6 +137,7 @@ class PandaSpiHandle(BaseHandle):
       frame[data_offset:data_offset+len(data)] = data
     frame[data_offset + len(data)] = self._calc_checksum(data)
     spi.xfer2(frame)
+    #spi.xfer2(frame, 50_000_000, 1000, 8)
 
     # *** RX from panda ***
     if expect_disconnect:
@@ -148,7 +149,7 @@ class PandaSpiHandle(BaseHandle):
     cnt = 0
     status = 0
     while status != ACK:
-      cnt += 1
+      cnt = (cnt+1) % 0xff
       response = spi.xfer2(cnt.to_bytes() * SPI_BUF_SIZE)  # cnt is nice for debugging
       status = response[0]
       if status == NACK:

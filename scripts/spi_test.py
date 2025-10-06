@@ -12,10 +12,8 @@ if __name__ == "__main__":
   def avg(k):
     return sum(s[k])/len(s[k])
 
-
-  start = datetime.now()
   p = Panda()
-  p.serial_read(0)  # drain
+  start = datetime.now()
   le = p.health()['spi_error_count']
   while True:
     cnt = 0

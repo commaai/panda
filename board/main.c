@@ -121,6 +121,11 @@ static void tick_handler(void) {
   static bool relay_malfunction_prev = false;
 
   if (TICK_TIMER->SR != 0U) {
+    /*
+    uint32_t sr = FLASH->SR1;
+    uint32_t cr = FLASH->CR1;
+    print("sr "); puth4(sr); print(" cr "); puth4(cr); print(" lock "); puth(flash_is_locked()); print("\n");
+    */
 
     // siren
     current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));

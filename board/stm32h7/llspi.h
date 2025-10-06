@@ -29,6 +29,8 @@ void llspi_mosi_dma(uint8_t *addr) {
   SPI4->TXDR = 0xdddddddd;  // match the UDR bytes
 }
 
+static uint32_t dma_start_ts = 0;
+
 // panda -> master DMA start
 void llspi_miso_dma(uint8_t *addr, int len) {
   // disable DMA + SPI
@@ -51,8 +53,10 @@ void llspi_miso_dma(uint8_t *addr, int len) {
   register_set_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
   DMA2_Stream3->CR |= DMA_SxCR_EN;
   register_set_bits(&(SPI4->CR1), SPI_CR1_SPE);
+  dma_start_ts = microsecond_timer_get();
 }
 
+static uint32_t dma_done_ts = 0;
 static bool spi_tx_dma_done = false;
 // master -> panda DMA finished
 static void DMA2_Stream2_IRQ_Handler(void) {
@@ -64,10 +68,29 @@ static void DMA2_Stream2_IRQ_Handler(void) {
 
 // panda -> master DMA finished
 static void DMA2_Stream3_IRQ_Handler(void) {
+  dma_done_ts = microsecond_timer_get();
   ENTER_CRITICAL();
 
   DMA2->LIFCR = DMA_LIFCR_CTCIF3;
-  spi_tx_dma_done = true;
+  //spi_tx_dma_done = true;
+
+  //bool timed_out = false;
+  uint32_t start_time = microsecond_timer_get();
+  while (!(SPI4->SR & SPI_SR_TXC)) {
+    if (get_ts_elapsed(microsecond_timer_get(), start_time) > SPI_TIMEOUT_US) {
+      //timed_out = true;
+      break;
+    }
+  }
+  uint32_t diff = get_ts_elapsed(microsecond_timer_get(), start_time);
+  //print("diff: 0x"); puth4(get_ts_elapsed(start_time, dma_start_ts)); print(", 0x"); puth4(diff); print("\n");
+
+  // clear out FIFO
+  volatile uint8_t dat = SPI4->TXDR;
+  (void)dat;
+  (void)dma_start_ts;
+  (void)dat;
+  spi_tx_done();
 
   EXIT_CRITICAL();
 }
@@ -78,6 +101,9 @@ static void SPI4_IRQ_Handler(void) {
   SPI4->IFCR |= (0x1FFU << 3U);
 
   if (spi_tx_dma_done && ((SPI4->SR & SPI_SR_TXC) != 0U)) {
+    uint32_t now = microsecond_timer_get();
+    uint32_t diff = get_ts_elapsed(now, dma_done_ts);
+    print("diff: 0x"); puth4(diff); print("\n");
     spi_tx_dma_done = false;
     spi_tx_done();
   }

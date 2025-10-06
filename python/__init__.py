@@ -746,7 +746,7 @@ class Panda:
     ret = []
     while 1:
       lret = bytes(self._handle.controlRead(Panda.REQUEST_IN, 0xe0, port_number, 0, 0x40))
-      if len(lret) == 0:
+      if len(lret) == 0 or len(ret) > 1024:
         break
       ret.append(lret)
     return b''.join(ret)
