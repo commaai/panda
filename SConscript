@@ -161,6 +161,9 @@ if os.getenv("FINAL_PROVISIONING"):
   flags += ["-DFINAL_PROVISIONING"]
 build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", flags)
 
+# body_v2 fw
+build_project("body_v2_h7", base_project_h7, "./board/body_v2/main.c", [])
+
 # test files
 if GetOption('extras'):
   SConscript('tests/libpanda/SConscript')
