@@ -1,19 +1,25 @@
-
-
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "board/config.h"
+#include "board/config.h"
 
-
-void led_init(void);
-void led_set(uint8_t color, bool enabled);
+#include "board/boards/board_declarations.h"
+#include "board/boards/body_v2.h"
+#include "board/main_declarations.h"
+#include "board/drivers/interrupts_declarations.h"
+#include "board/drivers/led.h"
+#include "board/comms_definitions.h"
+#include "board/faults_declarations.h"
 #include "board/early_init.h"
 #include "stm32h7xx.h"
 #include "stm32h725xx.h"
 
+
 typedef struct uart_ring uart_ring;
+
 void usb_irqhandler(void) {
-  // no-op stub for minimal bring-up
+  // Handle USB interrupts
 }
 
 int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
@@ -44,13 +50,6 @@ void debug_ring_callback(uart_ring *ring) {
   (void)ring;
 }
 
-void led_init(void) {}
-
-void led_set(uint8_t color, bool enabled) {
-  (void)color;
-  (void)enabled;
-}
-
 void pwm_init(TIM_TypeDef *TIM, uint8_t channel) {
   (void)TIM;
   (void)channel;
@@ -62,51 +61,28 @@ void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage) {
   (void)percentage;
 }
 
-#define LED_GPIO         GPIOC
-#define LED_PIN          7U
-#define LED_PORT_ENABLE  RCC_AHB4ENR_GPIOCEN
-
-static inline void led_gpio_init(void) {
-  RCC->AHB4ENR |= LED_PORT_ENABLE;
-  __DSB();
-  __ISB();
-
-  const uint32_t pos = LED_PIN * 2U;
-
-  LED_GPIO->MODER = (LED_GPIO->MODER & ~(0x3U << pos)) | (0x1U << pos);
-  LED_GPIO->OTYPER &= ~(1U << LED_PIN);
-  LED_GPIO->OSPEEDR = (LED_GPIO->OSPEEDR & ~(0x3U << pos)) | (0x1U << pos);
-  LED_GPIO->PUPDR &= ~(0x3U << pos);
-}
-
-static inline void led_on(void) {
-  LED_GPIO->BSRR = (1U << LED_PIN);
-}
-
-static inline void led_off(void) {
-  LED_GPIO->BSRR = (1U << (LED_PIN + 16U));
-}
-
 void __initialize_hardware_early(void) {
   early_initialization();
 }
 
+
+
 int main(void) {
-  init_interrupts(true);
   disable_interrupts();
 
   clock_init();
   peripherals_init();
 
-  led_gpio_init();
+  current_board = &board_body_v2;
+  hw_type = HW_TYPE_BODY_V2;
 
-  enable_interrupts();
-
+  led_init();
+  
   while (1) {
-    led_on();
-    delay(250000U);
-    led_off();
-    delay(250000U);
+    led_set(LED_RED, true);
+    delay(12000000U);  // 1/10th of previous delay
+    led_set(LED_RED, false);
+    delay(12000000U);
   }
 
   return 0;
