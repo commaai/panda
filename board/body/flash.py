@@ -5,15 +5,15 @@ import subprocess
 
 from panda import Panda
 
-BODY_V2_DIR = os.path.dirname(os.path.realpath(__file__))
-BOARD_DIR = os.path.abspath(os.path.join(BODY_V2_DIR, ".."))
+BODY_DIR = os.path.dirname(os.path.realpath(__file__))
+BOARD_DIR = os.path.abspath(os.path.join(BODY_DIR, ".."))
 REPO_ROOT = os.path.abspath(os.path.join(BOARD_DIR, ".."))
-DEFAULT_FIRMWARE = os.path.join(BOARD_DIR, "obj", "body_v2_h7.bin.signed")
+DEFAULT_FIRMWARE = os.path.join(BOARD_DIR, "obj", "body_h7.bin.signed")
 
 
-def build_body_v2() -> None:
+def build_body() -> None:
   subprocess.check_call(
-    f"scons -C {REPO_ROOT} -j$(nproc) {BODY_V2_DIR}",
+    f"scons -C {REPO_ROOT} -j$(nproc) board/obj/body_h7.bin.signed",
     shell=True,
   )
 
@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
   firmware_path = os.path.abspath(args.firmware) if args.firmware is not None else DEFAULT_FIRMWARE
 
-  build_body_v2()
+  build_body()
 
   if not os.path.isfile(firmware_path):
     parser.error(f"firmware file not found: {firmware_path}")
