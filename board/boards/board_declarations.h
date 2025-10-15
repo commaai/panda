@@ -52,6 +52,7 @@ struct board {
 #define HW_TYPE_RED_PANDA 7U
 #define HW_TYPE_TRES 9U
 #define HW_TYPE_CUATRO 10U
+#define HW_TYPE_BODY 0xB0U
 
 // CAN modes
 #define CAN_MODE_NORMAL 0U
@@ -60,3 +61,4 @@ struct board {
 extern struct board board_tres;
 extern struct board board_cuatro;
 extern struct board board_red;
+extern struct board board_body;
