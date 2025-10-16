@@ -9,57 +9,23 @@
 // M1 drive: PB8 -> TIM16_CH1, PB9 -> TIM17_CH1, PE2/PE3 enables
 // M2 drive: PA2 -> TIM15_CH1, PA3 -> TIM15_CH2, PE8/PE9 enables
 
-#ifndef MOTOR_PWM_TIMER_CLOCK_HZ
 // TIM15/16/17 are on APB2 running at 120 MHz on the body board
 #define MOTOR_PWM_TIMER_CLOCK_HZ 120000000U
-#endif
-
-#ifndef MOTOR_PWM_FREQUENCY_HZ
-// Target PWM switching frequency for the motor drivers
 #define MOTOR_PWM_FREQUENCY_HZ 5000U
-#endif
 
-#ifndef MOTOR_SPEED_CONTROL_KP
 #define MOTOR_SPEED_CONTROL_KP 0.25f
-#endif
-
-#ifndef MOTOR_SPEED_CONTROL_KI
 #define MOTOR_SPEED_CONTROL_KI 0.5f
-#endif
-
-#ifndef MOTOR_SPEED_CONTROL_KD
 #define MOTOR_SPEED_CONTROL_KD 0.008f
-#endif
-
-#ifndef MOTOR_SPEED_CONTROL_KFF
 #define MOTOR_SPEED_CONTROL_KFF 0.9f
-#endif
 
-#ifndef MOTOR_SPEED_CONTROL_TARGET_MAX_RPM
 #define MOTOR_SPEED_CONTROL_TARGET_MAX_RPM 100.0f
-#endif
-
-#ifndef MOTOR_SPEED_CONTROL_OUTPUT_MAX
 #define MOTOR_SPEED_CONTROL_OUTPUT_MAX 100.0f
-#endif
-
-#ifndef MOTOR_SPEED_CONTROL_DEADBAND_RPM
 #define MOTOR_SPEED_CONTROL_DEADBAND_RPM 1.0f
-#endif
 
-#ifndef MOTOR_SPEED_CONTROL_INTEGRAL_LIMIT
 #define MOTOR_SPEED_CONTROL_INTEGRAL_LIMIT 50.0f
-#endif
-
-#ifndef MOTOR_SPEED_CONTROL_DERIVATIVE_MAX_RPMS
 #define MOTOR_SPEED_CONTROL_DERIVATIVE_MAX_RPMS 250.0f
-#endif
 
-#ifndef MOTOR_SPEED_CONTROL_UPDATE_PERIOD_US
 #define MOTOR_SPEED_CONTROL_UPDATE_PERIOD_US 1000U
-#endif
-
-#define MOTOR_CONTROL_UNUSED __attribute__((unused))
 
 typedef struct {
   bool active;
@@ -84,16 +50,16 @@ static inline float motor_clampf(float value, float min_value, float max_value) 
   return value;
 }
 
-static MOTOR_CONTROL_UNUSED motor_speed_state_t motor_speed_states[2];
+static motor_speed_state_t motor_speed_states[2];
 
-static inline MOTOR_CONTROL_UNUSED motor_speed_state_t *motor_speed_state_get(uint8_t motor) {
+static inline motor_speed_state_t *motor_speed_state_get(uint8_t motor) {
   if ((motor == 0U) || (motor > 2U)) {
     return NULL;
   }
   return &motor_speed_states[motor - 1U];
 }
 
-static inline MOTOR_CONTROL_UNUSED void motor_speed_state_reset(motor_speed_state_t *state) {
+static inline void motor_speed_state_reset(motor_speed_state_t *state) {
   state->active = false;
   state->target_rpm = 0.0f;
   state->integral = 0.0f;
@@ -102,7 +68,7 @@ static inline MOTOR_CONTROL_UNUSED void motor_speed_state_reset(motor_speed_stat
   state->last_update_us = 0U;
 }
 
-static inline MOTOR_CONTROL_UNUSED uint16_t motor_pwm_reload_value(void) {
+static inline uint16_t motor_pwm_reload_value(void) {
   uint32_t clock_hz = MOTOR_PWM_TIMER_CLOCK_HZ;
   uint32_t target_hz = MOTOR_PWM_FREQUENCY_HZ;
   if (target_hz == 0U) {
@@ -120,20 +86,20 @@ static inline MOTOR_CONTROL_UNUSED uint16_t motor_pwm_reload_value(void) {
   return (uint16_t)ticks_per_period;
 }
 
-static inline MOTOR_CONTROL_UNUSED void motor_pwm_apply_frequency(TIM_TypeDef *TIM) {
+static inline void motor_pwm_apply_frequency(TIM_TypeDef *TIM) {
   uint16_t reload = motor_pwm_reload_value();
   register_set(&(TIM->PSC), 0U, 0xFFFFU);
   register_set(&(TIM->ARR), (uint32_t)reload, 0xFFFFU);
   TIM->EGR |= TIM_EGR_UG;
 }
 
-static MOTOR_CONTROL_UNUSED void motor_speed_controller_init(void) {
+static void motor_speed_controller_init(void) {
   for (uint8_t i = 0U; i < 2U; i++) {
     motor_speed_state_reset(&motor_speed_states[i]);
   }
 }
 
-static MOTOR_CONTROL_UNUSED void motor_speed_controller_disable(uint8_t motor) {
+static void motor_speed_controller_disable(uint8_t motor) {
   motor_speed_state_t *state = motor_speed_state_get(motor);
   if (state == NULL) {
     return;
@@ -141,7 +107,7 @@ static MOTOR_CONTROL_UNUSED void motor_speed_controller_disable(uint8_t motor) {
   motor_speed_state_reset(state);
 }
 
-static MOTOR_CONTROL_UNUSED void motor_init(void) {
+static void motor_init(void) {
   register_set_bits(&(RCC->AHB4ENR), RCC_AHB4ENR_GPIOAEN | RCC_AHB4ENR_GPIOBEN | RCC_AHB4ENR_GPIOEEN);
   register_set_bits(&(RCC->APB2ENR), RCC_APB2ENR_TIM16EN | RCC_APB2ENR_TIM17EN | RCC_APB2ENR_TIM15EN);
 
@@ -169,7 +135,7 @@ static MOTOR_CONTROL_UNUSED void motor_init(void) {
   register_set(&(TIM17->BDTR), TIM_BDTR_MOE, 0xFFFFU);
 }
 
-static MOTOR_CONTROL_UNUSED void motor_apply_pwm(uint8_t motor, int32_t speed_command) {
+static void motor_apply_pwm(uint8_t motor, int32_t speed_command) {
   if ((motor == 0U) || (motor > 2U)) {
     return;
   }
@@ -220,29 +186,12 @@ static MOTOR_CONTROL_UNUSED void motor_apply_pwm(uint8_t motor, int32_t speed_co
   }
 }
 
-static MOTOR_CONTROL_UNUSED void motor_set_speed(uint8_t motor, int8_t speed) {
+static inline void motor_set_speed(uint8_t motor, int8_t speed) {
   motor_speed_controller_disable(motor);
   motor_apply_pwm(motor, (int32_t)speed);
 }
 
-static MOTOR_CONTROL_UNUSED void motor_stop(uint8_t motor) {
-  motor_speed_controller_disable(motor);
-  motor_apply_pwm(motor, 0);
-}
-
-static MOTOR_CONTROL_UNUSED int32_t motor_get_position(uint8_t motor) {
-  return motor_encoder_get_position(motor);
-}
-
-static MOTOR_CONTROL_UNUSED void motor_reset_position(uint8_t motor) {
-  motor_encoder_reset(motor);
-}
-
-static MOTOR_CONTROL_UNUSED float motor_get_speed_rpm(uint8_t motor) {
-  return motor_encoder_get_speed_rpm(motor);
-}
-
-static MOTOR_CONTROL_UNUSED void motor_speed_controller_set_target_rpm(uint8_t motor, float target_rpm) {
+static inline void motor_speed_controller_set_target_rpm(uint8_t motor, float target_rpm) {
   motor_speed_state_t *state = motor_speed_state_get(motor);
   if (state == NULL) {
     return;
@@ -258,13 +207,12 @@ static MOTOR_CONTROL_UNUSED void motor_speed_controller_set_target_rpm(uint8_t m
   state->active = true;
   state->target_rpm = target_rpm;
   state->integral = 0.0f;
-  state->previous_error = target_rpm - motor_get_speed_rpm(motor);
+  state->previous_error = target_rpm - motor_encoder_get_speed_rpm(motor);
   state->last_output = 0.0f;
   state->last_update_us = 0U;
 }
 
-#if defined(PANDA_BODY) && !defined(BOOTSTUB)
-static MOTOR_CONTROL_UNUSED void motor_speed_controller_update(uint32_t now_us) {
+static inline void motor_speed_controller_update(uint32_t now_us) {
   for (uint8_t motor = 1U; motor <= 2U; motor++) {
     motor_speed_state_t *state = motor_speed_state_get(motor);
     if ((state == NULL) || !state->active) {
@@ -277,7 +225,7 @@ static MOTOR_CONTROL_UNUSED void motor_speed_controller_update(uint32_t now_us) 
       continue;
     }
 
-    float measured_rpm = motor_get_speed_rpm(motor);
+    float measured_rpm = motor_encoder_get_speed_rpm(motor);
     float error = state->target_rpm - measured_rpm;
 
     if ((motor_absf(state->target_rpm) <= MOTOR_SPEED_CONTROL_DEADBAND_RPM) &&
@@ -327,4 +275,3 @@ static MOTOR_CONTROL_UNUSED void motor_speed_controller_update(uint32_t now_us) 
     state->last_update_us = now_us;
   }
 }
-#endif  // PANDA_BODY && !defined(BOOTSTUB)

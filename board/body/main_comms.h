@@ -77,7 +77,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // **** 0xe1: stop motor
     // param1: motor number (1 or 2)
     case 0xe1:
-      motor_stop((uint8_t)req->param1);
+      motor_set_speed((uint8_t)req->param1, 0);
       break;
 
     // **** 0xe2: get motor encoder state
@@ -85,8 +85,8 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // response: int32 position counts + int32 speed (milli-RPM)
     case 0xe2: {
       uint8_t motor = (uint8_t)req->param1;
-      int32_t position = motor_get_position(motor);
-      float rpm = motor_get_speed_rpm(motor);
+      int32_t position = motor_encoder_get_position(motor);
+      float rpm = motor_encoder_get_speed_rpm(motor);
       int32_t rpm_milli = (int32_t)(rpm * 1000.0f);
       (void)memcpy(resp, &position, sizeof(position));
       (void)memcpy(resp + sizeof(position), &rpm_milli, sizeof(rpm_milli));
@@ -96,7 +96,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
 
     // **** 0xe3: reset encoder position
     case 0xe3:
-      motor_reset_position((uint8_t)req->param1);
+      motor_encoder_reset((uint8_t)req->param1);
       break;
 
     // **** 0xe4: set motor target speed (rpm * 0.1)

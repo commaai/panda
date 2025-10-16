@@ -12,19 +12,19 @@
 #include "board/faults_declarations.h"
 #include "board/obj/gitversion.h"
 #include "board/body/boards/motor_control.h"
+
 #include "board/body/can.h"
+
 #include "opendbc/safety/safety.h"
-#include "board/health.h"
 #include "board/drivers/can_common.h"
 #include "board/drivers/fdcan.h"
 #include "board/can_comms.h"
 
 extern int _app_start[0xc000];
 
-//typedef struct uart_ring uart_ring;
+typedef struct uart_ring uart_ring;
 
 #include "board/body/main_comms.h"
-#include "board/body/can.c"
 
 void debug_ring_callback(uart_ring *ring) {
   (void)ring;
@@ -42,12 +42,22 @@ void __attribute__ ((noinline)) enable_fpu(void) {
 volatile uint32_t tick_count = 0;
 
 void tick_handler(void) {
+  if (TICK_TIMER->SR != 0) {
+    if (generated_can_traffic) {
+      for (int i = 0; i < 3; i++) {
+        if (can_health[i].transmit_error_cnt >= 128) {
+          (void)llcan_init(CANIF_FROM_CAN_NUM(i));
+        }
+      }
+      generated_can_traffic = false;
+    }
+
+    static bool led_on = false;
+    led_set(LED_RED, led_on);
+    led_on = !led_on;
+    tick_count++;
+  }
   TICK_TIMER->SR = 0;
-  tick_count++;
-  
-  static bool led_on = false;
-  led_set(LED_RED, led_on);
-  led_on = !led_on;
 }
 
 int main(void) {
@@ -70,21 +80,11 @@ int main(void) {
   REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK);
   tick_timer_init();
 
-  for (int i = 0; i < 8; i++) {
-    NVIC->ICER[i] = 0xFFFFFFFF;
-  }
-
-  NVIC_EnableIRQ(TICK_TIMER_IRQ);
-  NVIC_EnableIRQ(OTG_HS_IRQn);
-
   body_can_init();
 
   usb_init();
 
   enable_interrupts();
-
-  //motor_speed_controller_set_target_rpm(1, 50);
-  //motor_speed_controller_set_target_rpm(2, 50);
 
   while (true) {
     uint32_t now = microsecond_timer_get();

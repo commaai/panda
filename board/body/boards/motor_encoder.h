@@ -6,41 +6,14 @@
 // M1 encoder: PB6 -> TIM4_CH1, PB7 -> TIM4_CH2
 // M2 encoder: PA6 -> TIM3_CH1, PA7 -> TIM3_CH2
 
-#ifndef MOTOR1_ENCODER_COUNTS_PER_REV
-#define MOTOR1_ENCODER_COUNTS_PER_REV 44U
-#endif
+#define MOTOR_ENCODER_COUNTS_PER_REV 44U
+#define MOTOR_GEAR_RATIO 90U
 
-#ifndef MOTOR2_ENCODER_COUNTS_PER_REV
-#define MOTOR2_ENCODER_COUNTS_PER_REV 44U
-#endif
-
-#ifndef MOTOR1_GEAR_RATIO
-#define MOTOR1_GEAR_RATIO 90U
-#endif
-
-#ifndef MOTOR2_GEAR_RATIO
-#define MOTOR2_GEAR_RATIO 90U
-#endif
-
-#ifndef MOTOR_ENCODER_MIN_DT_US
 #define MOTOR_ENCODER_MIN_DT_US 250U
-#endif
-
-#ifndef MOTOR_ENCODER_FILTER
 #define MOTOR_ENCODER_FILTER 3U
-#endif
-
-#ifndef MOTOR_ENCODER_SPEED_ALPHA
 #define MOTOR_ENCODER_SPEED_ALPHA 0.2f
-#endif
-
-#ifndef MOTOR_ENCODER_ZERO_TIMEOUT_US
 #define MOTOR_ENCODER_ZERO_TIMEOUT_US 30000U
-#endif
-
-#ifndef MOTOR_ENCODER_SPEED_DECAY
 #define MOTOR_ENCODER_SPEED_DECAY 0.5f
-#endif
 
 typedef struct {
   TIM_TypeDef *timer;
@@ -67,7 +40,7 @@ static motor_encoder_state_t motor_encoders[2] = {
     .gpio_b = GPIOB,
     .pin_b = 7U,
     .af_b = GPIO_AF2_TIM4,
-    .effective_counts_per_rev = (uint32_t)(((uint64_t)MOTOR1_ENCODER_COUNTS_PER_REV) * ((uint64_t)MOTOR1_GEAR_RATIO)),
+    .effective_counts_per_rev = (uint32_t)(((uint64_t)MOTOR_ENCODER_COUNTS_PER_REV) * ((uint64_t)MOTOR_GEAR_RATIO)),
   },
   {
     .timer = TIM3,
@@ -77,7 +50,7 @@ static motor_encoder_state_t motor_encoders[2] = {
     .gpio_b = GPIOA,
     .pin_b = 7U,
     .af_b = GPIO_AF2_TIM3,
-    .effective_counts_per_rev = (uint32_t)(((uint64_t)MOTOR2_ENCODER_COUNTS_PER_REV) * ((uint64_t)MOTOR2_GEAR_RATIO)),
+    .effective_counts_per_rev = (uint32_t)(((uint64_t)MOTOR_ENCODER_COUNTS_PER_REV) * ((uint64_t)MOTOR_GEAR_RATIO)),
   },
 };
 
@@ -145,7 +118,7 @@ static inline int32_t motor_encoder_refresh(motor_encoder_state_t *encoder) {
   return encoder->accumulated_count;
 }
 
-static int32_t motor_encoder_get_position(uint8_t motor) {
+static inline int32_t motor_encoder_get_position(uint8_t motor) {
   motor_encoder_state_t *encoder = get_encoder(motor);
   if (encoder == NULL) {
     return 0;
@@ -166,7 +139,7 @@ static void motor_encoder_reset(uint8_t motor) {
   encoder->cached_speed_rps = 0.0f;
 }
 
-static float motor_encoder_get_speed_rps(uint8_t motor) {
+static float motor_encoder_get_speed_rpm(uint8_t motor) {
   motor_encoder_state_t *encoder = get_encoder(motor);
   if (encoder == NULL) {
     return 0.0f;
@@ -184,7 +157,7 @@ static float motor_encoder_get_speed_rps(uint8_t motor) {
 
   uint32_t dt = now - encoder->last_speed_timestamp_us;
   if (dt < MOTOR_ENCODER_MIN_DT_US) {
-    return encoder->cached_speed_rps;
+    return encoder->cached_speed_rps * 60.0f;
   }
 
   int32_t delta = encoder->accumulated_count - encoder->last_speed_count;
@@ -203,7 +176,7 @@ static float motor_encoder_get_speed_rps(uint8_t motor) {
       encoder->last_speed_timestamp_us = now;
       encoder->last_speed_count = encoder->accumulated_count;
     }
-    return encoder->cached_speed_rps;
+    return encoder->cached_speed_rps * 60.0f;
   }
 
   encoder->last_speed_count = encoder->accumulated_count;
@@ -223,9 +196,5 @@ static float motor_encoder_get_speed_rps(uint8_t motor) {
   }
 
   encoder->cached_speed_rps += alpha * (new_speed_rps - encoder->cached_speed_rps);
-  return encoder->cached_speed_rps;
-}
-
-static float motor_encoder_get_speed_rpm(uint8_t motor) {
-  return motor_encoder_get_speed_rps(motor) * 60.0f;
+  return encoder->cached_speed_rps * 60.0f;
 }

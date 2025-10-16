@@ -15,7 +15,6 @@
 #include "board/boards/red.h"
 #include "board/boards/tres.h"
 #include "board/boards/cuatro.h"
-#include "board/boards/body.h"
 
 
 void detect_board_type(void) {
