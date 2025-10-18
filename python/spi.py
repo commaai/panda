@@ -117,6 +117,7 @@ class PandaSpiHandle(BaseHandle):
 
   def __init__(self) -> None:
     self.dev = SpiDevice()
+    self.no_retry = "NO_RETRY" in os.environ
 
   # helpers
   def _calc_checksum(self, data: bytes) -> int:
@@ -193,6 +194,8 @@ class PandaSpiHandle(BaseHandle):
         except PandaSpiException as e:
           exc = e
           logger.debug("SPI transfer failed, retrying", exc_info=True)
+          if self.no_retry:
+            break
 
           # ensure slave is in a consistent state and ready for the next transfer
           # (e.g. slave TX buffer isn't stuck full)
