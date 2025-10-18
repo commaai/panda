@@ -18,6 +18,10 @@ void handle_interrupt(IRQn_Type irq_type){
   if (irq_type != 0x3a && irq_type != 0x3b && irq_type != 0x54) {
     print("irq: "); puth(irq_type); print("\n");
   }
+
+  interrupts[irq_type].handler();
+  return;
+
   static uint8_t interrupt_depth = 0U;
   static uint32_t last_time = 0U;
   ENTER_CRITICAL();
@@ -49,6 +53,8 @@ void handle_interrupt(IRQn_Type irq_type){
 
 // Every second
 void interrupt_timer_handler(void) {
+  INTERRUPT_TIMER->SR = 0;
+  return;
   if (INTERRUPT_TIMER->SR != 0U) {
     for (uint16_t i = 0U; i < NUM_INTERRUPTS; i++) {
       // Log IRQ call rate faults

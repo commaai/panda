@@ -2,7 +2,7 @@
 
 #include "board/crc.h"
 
-#define SPI_TIMEOUT_US 10000U
+#define SPI_TIMEOUT_US 1000U
 
 // got max rate from hitting a non-existent endpoint
 // in a tight loop, plus some buffer

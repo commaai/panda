@@ -5,7 +5,7 @@ USB_OTG_GlobalTypeDef *USBx = USB_OTG_HS;
 static void OTG_HS_IRQ_Handler(void) {
   NVIC_DisableIRQ(OTG_HS_IRQn);
   usb_irqhandler();
-  NVIC_EnableIRQ(OTG_HS_IRQn);
+  NVIC_DisableIRQ(OTG_HS_IRQn);
 }
 
 void usb_init(void) {
@@ -61,7 +61,7 @@ void usb_init(void) {
   USBx->GINTMSK = 0U;
   // Clear any pending interrupts
   USBx->GINTSTS = 0xBFFFFFFFU;
-  // Enable interrupts matching to the Device mode ONLY
+  // Disable interrupts matching to the Device mode ONLY
   USBx->GINTMSK = USB_OTG_GINTMSK_USBRST | USB_OTG_GINTMSK_ENUMDNEM | USB_OTG_GINTMSK_OTGINT |
                   USB_OTG_GINTMSK_RXFLVLM | USB_OTG_GINTMSK_GONAKEFFM | USB_OTG_GINTMSK_GINAKEFFM |
                   USB_OTG_GINTMSK_OEPINT | USB_OTG_GINTMSK_IEPINT |
@@ -69,11 +69,11 @@ void usb_init(void) {
 
   // Set USB Turnaround time
   USBx->GUSBCFG |= ((USBD_FS_TRDT_VALUE << 10) & USB_OTG_GUSBCFG_TRDT);
-  // Enables the controller's Global Int in the AHB Config reg
+  // Disables the controller's Global Int in the AHB Config reg
   USBx->GAHBCFG |= USB_OTG_GAHBCFG_GINT;
   // Soft disconnect disable:
   USBx_DEVICE->DCTL &= ~(USB_OTG_DCTL_SDIS);
 
   // enable the IRQ
-  NVIC_EnableIRQ(OTG_HS_IRQn);
+  NVIC_DisableIRQ(OTG_HS_IRQn);
 }
