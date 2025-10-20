@@ -1,0 +1,72 @@
+{
+  "timestamp": 1760948184.3006392,
+  "overall_status": "FAIL",
+  "total_tests": 6,
+  "passed_tests": 0,
+  "failed_tests": 6,
+  "total_duration": 0.007767200469970703,
+  "test_results": [
+    {
+      "test_name": "modular_build_panda_jungle_h7",
+      "status": "ERROR",
+      "duration": 0.0037102699279785156,
+      "message": "Modular build error: [Errno 2] No such file or directory: 'scons'",
+      "details": null,
+      "artifacts": null
+    },
+    {
+      "test_name": "performance_regression_panda_jungle_h7",
+      "status": "ERROR",
+      "duration": 0.0028951168060302734,
+      "message": "Performance test error: [Errno 2] No such file or directory: 'scons'",
+      "details": null,
+      "artifacts": null
+    },
+    {
+      "test_name": "legacy_build_panda_jungle_h7",
+      "status": "ERROR",
+      "duration": 0.005629539489746094,
+      "message": "Legacy build error: [Errno 2] No such file or directory: 'scons'",
+      "details": null,
+      "artifacts": null
+    },
+    {
+      "test_name": "binary_equivalence_panda_jungle_h7",
+      "status": "FAIL",
+      "duration": 0.0048847198486328125,
+      "message": "Cannot compare - one or both builds failed",
+      "details": null,
+      "artifacts": null
+    },
+    {
+      "test_name": "incremental_builds_panda_jungle_h7",
+      "status": "ERROR",
+      "duration": 0.0011932849884033203,
+      "message": "Incremental test error: [Errno 2] No such file or directory: 'scons'",
+      "details": null,
+      "artifacts": null
+    },
+    {
+      "test_name": "size_regression_panda_jungle_h7",
+      "status": "FAIL",
+      "duration": 0.0024805068969726562,
+      "message": "Cannot compare sizes - builds failed",
+      "details": null,
+      "artifacts": null
+    }
+  ],
+  "config": {
+    "enable_performance_tests": true,
+    "enable_regression_tests": true,
+    "enable_incremental_tests": true,
+    "build_timeout": 300,
+    "parallel_jobs": 4,
+    "archive_artifacts": false,
+    "notification_webhook": null,
+    "fail_on_performance_regression": true,
+    "fail_on_size_increase": true,
+    "max_size_increase_percent": 5.0,
+    "max_performance_regression_percent": 20.0
+  },
+  "baseline_updated": true
+}

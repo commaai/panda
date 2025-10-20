@@ -1,0 +1,44 @@
+[
+  {
+    "timestamp": 1760948052.6271222,
+    "build_time": 0,
+    "equivalent": false,
+    "regression_count": 0
+  },
+  {
+    "timestamp": 1760948058.6432893,
+    "build_time": 0,
+    "equivalent": false,
+    "regression_count": 0
+  },
+  {
+    "timestamp": 1760948183.7649817,
+    "build_time": 0,
+    "equivalent": false,
+    "regression_count": 0
+  },
+  {
+    "timestamp": 1760948184.1101139,
+    "build_time": 0,
+    "equivalent": false,
+    "regression_count": 0
+  },
+  {
+    "timestamp": 1760948186.231723,
+    "build_time": 0,
+    "equivalent": false,
+    "regression_count": 0
+  },
+  {
+    "timestamp": 1760948262.466764,
+    "build_time": 0,
+    "equivalent": false,
+    "regression_count": 0
+  },
+  {
+    "timestamp": 1760948274.8842082,
+    "build_time": 0,
+    "equivalent": false,
+    "regression_count": 0
+  }
+]
