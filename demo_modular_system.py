@@ -87,7 +87,7 @@ def demonstrate_panda_modules():
     # Define core system modules based on actual panda structure
 
     # 1. Hardware Abstraction Layer
-    hal = registry.register(Module(
+    registry.register(Module(
         name="hal",
         sources=[
             "board/stm32h7/clock.h",
@@ -100,7 +100,7 @@ def demonstrate_panda_modules():
     ))
 
     # 2. Basic Drivers
-    drivers = registry.register(Module(
+    registry.register(Module(
         name="drivers",
         sources=[
             "board/drivers/led.h",
@@ -115,7 +115,7 @@ def demonstrate_panda_modules():
     ))
 
     # 3. Advanced Drivers
-    advanced_drivers = registry.register(Module(
+    registry.register(Module(
         name="advanced_drivers",
         sources=[
             "board/drivers/fdcan.h",
@@ -129,7 +129,7 @@ def demonstrate_panda_modules():
     ))
 
     # 4. Safety System
-    safety = registry.register(Module(
+    registry.register(Module(
         name="safety",
         sources=[
             "board/health.h",
@@ -143,7 +143,7 @@ def demonstrate_panda_modules():
     ))
 
     # 5. Power Management
-    power = registry.register(Module(
+    registry.register(Module(
         name="power",
         sources=[
             "board/power_saving.h",
@@ -156,7 +156,7 @@ def demonstrate_panda_modules():
     ))
 
     # 6. Jungle-specific modules
-    jungle = registry.register(Module(
+    registry.register(Module(
         name="jungle",
         sources=[
             "board/jungle/main.c",
@@ -170,7 +170,7 @@ def demonstrate_panda_modules():
     ))
 
     # 7. Panda Main Application
-    panda_main = registry.register(Module(
+    registry.register(Module(
         name="panda_main",
         sources=[
             "board/main.c",

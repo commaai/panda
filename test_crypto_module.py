@@ -44,27 +44,27 @@ def test_crypto_module_isolation():
 
 int main() {
     printf("Testing crypto module isolation...\\n");
-    
+
     // Test SHA-1 basic functionality
     uint8_t test_data[] = "hello world";
     uint8_t digest[SHA_DIGEST_SIZE];
-    
+
     SHA_hash(test_data, strlen((char*)test_data), digest);
-    
+
     printf("SHA-1 test: ");
     for (int i = 0; i < SHA_DIGEST_SIZE; i++) {
         printf("%02x", digest[i]);
     }
     printf("\\n");
-    
+
     // Test RSA structure
     RSAPublicKey key = {0};
     key.len = RSANUMWORDS;
     key.exponent = 65537;
-    
+
     printf("RSA key length: %d words\\n", key.len);
     printf("RSA exponent: %d\\n", key.exponent);
-    
+
     printf("Crypto module isolation test PASSED\\n");
     return 0;
 }

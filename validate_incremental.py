@@ -4,7 +4,7 @@ Validation script for incremental modular refactoring.
 
 This script validates the incremental approach by:
 1. Testing the module registry system
-2. Validating module definitions 
+2. Validating module definitions
 3. Checking dependency resolution
 4. Simulating the incremental build process
 """
@@ -36,7 +36,7 @@ def test_module_registry():
         directory='crypto'
     )
 
-    core = registry.register_module(
+    registry.register_module(
         name='core',
         description='Test core module',
         sources=['core.c'],
@@ -45,7 +45,7 @@ def test_module_registry():
         directory='board'
     )
 
-    app = registry.register_module(
+    registry.register_module(
         name='app',
         description='Test app module',
         sources=['main.c'],

@@ -2,7 +2,7 @@
 """
 Test script to verify the incremental build system with modular crypto.
 
-This script tests that the incremental build system can properly load 
+This script tests that the incremental build system can properly load
 and use the modular crypto module.
 """
 
@@ -37,7 +37,7 @@ class MockEnvironment:
 # Test module registration
 try:
     print("Testing module registry...")
-    
+
     # Register a simple test module
     test_module = module_registry.register_module(
         name='test_module',
@@ -48,25 +48,25 @@ try:
         dependencies=[],
         directory='test'
     )
-    
+
     print(f"✓ Registered module: {test_module.name}")
     print(f"  Description: {test_module.description}")
     print(f"  Sources: {test_module.sources}")
-    
+
     # Test dependency validation
     module_registry.validate_all_dependencies()
     print("✓ Module dependency validation passed")
-    
+
     # Test build order calculation
     build_order = module_registry.get_build_order('test_module')
     print(f"✓ Build order: {build_order}")
-    
+
     # Test statistics
     stats = module_registry.get_stats()
     print(f"✓ Module statistics: {stats}")
-    
+
     print("✓ Module registry test PASSED")
-    
+
 except Exception as e:
     print(f"✗ Module registry test FAILED: {e}")
     import traceback
@@ -126,13 +126,13 @@ from module_registry import module_registry
 class MockEnvironment:
     def __init__(self):
         self.values = {}
-    
+
     def Clone(self):
         return MockEnvironment()
-    
+
     def Object(self, name, source=None):
         return f"mock_object({name}, {source})"
-        
+
     def Append(self, **kwargs):
         for key, value in kwargs.items():
             if key not in self.values:
@@ -145,10 +145,10 @@ class MockEnvironment:
 # Test the incremental registration function
 try:
     from SConscript import register_incremental_modules
-    
+
     mock_env = MockEnvironment()
     register_incremental_modules(mock_env)
-    
+
     # Check if crypto module was loaded
     if 'crypto' in module_registry.modules:
         crypto_module = module_registry.get_module('crypto')
@@ -156,17 +156,17 @@ try:
         print(f"  Sources: {crypto_module.sources}")
         print(f"  Directory: {crypto_module.directory}")
         print(f"  Dependencies: {crypto_module.dependencies}")
-        
+
         # Test build order
         build_order = module_registry.get_build_order('crypto')
         print(f"  Build order: {build_order}")
-        
+
         print("✓ Crypto module integration test PASSED")
     else:
         print("✗ Crypto module not found in registry")
         print(f"Available modules: {list(module_registry.modules.keys())}")
         sys.exit(1)
-        
+
 except Exception as e:
     print(f"✗ Crypto module integration test FAILED: {e}")
     import traceback

@@ -207,8 +207,8 @@ class BuildComparator:
                     result.errors.append(
                         f"Expected output file not found: {output_file}")
 
-            print(f"✓ {system} build completed for {target} "
-                  f"({result.build_time:.2f}s)")
+            build_msg = f"✓ {system} build completed for {target} ({result.build_time:.2f}s)"
+            print(build_msg)
 
         except subprocess.TimeoutExpired:
             result.errors.append("Build timed out after 5 minutes")
@@ -251,9 +251,8 @@ class BuildComparator:
 
             if legacy_hash != modular_hash:
                 comparison.equivalent = False
-                comparison.binary_differences.append(
-                    f"{filename}: legacy={legacy_hash[:16]}..., "
-                    f"modular={modular_hash[:16]}...")
+                diff_msg = f"{filename}: legacy={legacy_hash[:16]}..., modular={modular_hash[:16]}..."
+                comparison.binary_differences.append(diff_msg)
 
         # Compare file sizes
         for filename in (set(legacy_result.file_sizes.keys()) |
@@ -263,15 +262,13 @@ class BuildComparator:
 
             if legacy_size != modular_size:
                 size_diff = modular_size - legacy_size
-                comparison.size_differences.append(
-                    f"{filename}: legacy={legacy_size}B, "
-                    f"modular={modular_size}B (Δ{size_diff:+d}B)")
+                size_msg = f"{filename}: legacy={legacy_size}B, modular={modular_size}B (Δ{size_diff:+d}B)"
+                comparison.size_differences.append(size_msg)
 
                 # Large size differences might indicate compatibility issues
                 if abs(size_diff) > 1024:  # More than 1KB difference
-                    comparison.compatibility_issues.append(
-                        f"Significant size difference in {filename}: "
-                        f"{size_diff:+d} bytes")
+                    size_issue = f"Significant size difference in {filename}: {size_diff:+d} bytes"
+                    comparison.compatibility_issues.append(size_issue)
 
         # Performance comparison
         build_time_delta = modular_result.build_time - legacy_result.build_time
@@ -288,9 +285,8 @@ class BuildComparator:
         # 50% slower threshold
         if build_time_delta > legacy_result.build_time * 0.5:
             comparison.regression_detected = True
-            comparison.compatibility_issues.append(
-                f"Performance regression: modular build "
-                f"{build_time_delta:.2f}s slower")
+            perf_issue = f"Performance regression: modular build {build_time_delta:.2f}s slower"
+            comparison.compatibility_issues.append(perf_issue)
 
         print(f"✓ Comparison completed for {legacy_result.target}")
         return comparison
@@ -347,9 +343,8 @@ class BuildComparator:
 
                 # Validate incremental build is faster
                 if incremental_result.build_time >= full_result.build_time:
-                    results['issues'].append(
-                        f"{system} incremental build not faster than "
-                        f"full build")
+                    issue_msg = f"{system} incremental build not faster than full build"
+                    results['issues'].append(issue_msg)
                     results['incremental_equivalent'] = False
 
         print(f"✓ Incremental build test completed for {target}")
@@ -508,15 +503,13 @@ class BuildComparator:
         recommendations = []
 
         if all(r.equivalent for r in results):
-            recommendations.append(
-                "✓ All targets produce equivalent outputs - "
-                "migration can proceed")
+            rec_msg = "✓ All targets produce equivalent outputs - migration can proceed"
+            recommendations.append(rec_msg)
             recommendations.append(
                 "Consider setting up automated validation in CI/CD pipeline")
         else:
-            recommendations.append(
-                "⚠ Binary differences detected - investigate before "
-                "migration")
+            warn_msg = "⚠ Binary differences detected - investigate before migration"
+            recommendations.append(warn_msg)
             recommendations.append(
                 "Run detailed binary analysis on differing outputs")
 
@@ -554,8 +547,8 @@ class BuildComparator:
 
         status = report['overall_status']
         print("\nOVERALL STATUS:")
-        print(f"  Ready for migration: "
-              f"{'✓ YES' if status['ready_for_migration'] else '✗ NO'}")
+        migration_status = '✓ YES' if status['ready_for_migration'] else '✗ NO'
+        print(f"  Ready for migration: {migration_status}")
         equiv_targets = status['equivalent_targets']
         total_targets = status['total_targets']
         print(f"  Equivalent outputs: {equiv_targets}/{total_targets} targets")

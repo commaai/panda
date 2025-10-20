@@ -116,7 +116,7 @@ print(f"  Dependencies: {len(crypto.dependencies)}")
 build_order = module_registry.get_build_order("crypto_demo")
 print(f"✓ Build order: {build_order}")
 
-# Test include resolution  
+# Test include resolution
 includes = module_registry.get_all_includes("crypto_demo")
 print(f"✓ Include paths: {includes}")
 
@@ -206,7 +206,7 @@ mock_env = MockEnvironment()
 try:
     # This would normally be called from SConscript.incremental
     print("✓ Mock environment created")
-    
+
     # Test crypto module loading
     crypto = module_registry.register_module(
         name="crypto_integration_test",
@@ -217,19 +217,19 @@ try:
         dependencies=[],
         directory="modules/crypto"
     )
-    
+
     print(f"✓ Crypto module loaded: {crypto.name}")
-    
+
     # Test build order calculation
     order = module_registry.get_build_order("crypto_integration_test")
     print(f"✓ Build order calculated: {order}")
-    
+
     # Test source resolution
     sources = module_registry.get_all_sources("crypto_integration_test")
     print(f"✓ Sources resolved: {len(sources)} files")
-    
+
     print("✓ Build integration test PASSED")
-    
+
 except Exception as e:
     print(f"✗ Build integration test FAILED: {e}")
     import traceback
@@ -282,7 +282,7 @@ def demo_validation_suite():
             in_summary = True
         elif in_summary and line.strip():
             print(f"  {line}")
-        elif line.startswith('✓') or line.startswith('✗'):
+        elif line.startswith(('✓', '✗')):
             print(f"  {line}")
 
 def show_final_summary():

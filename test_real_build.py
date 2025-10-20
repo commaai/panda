@@ -38,7 +38,10 @@ class BuildTester:
             # Try importing key modules
             import sys
             sys.path.insert(0, 'modules')
-            from module_registry import module_registry
+            # Test that module_registry can be imported
+            import module_registry
+            # Verify it has expected attributes
+            _ = module_registry.module_registry
             module_registry_ok = True
         except ImportError as e:
             module_registry_ok = False
@@ -318,7 +321,7 @@ else:
         try:
             # Test module registry
             sys.path.insert(0, 'modules')
-            from module_registry import module_registry
+            from module_registry import ModuleRegistry
 
             registry = ModuleRegistry()
             registry.register_module(

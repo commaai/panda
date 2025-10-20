@@ -5,7 +5,7 @@ Comprehensive validation script for the modular build system
 This script validates all aspects of the modular build system:
 1. Module structure and files
 2. Dependency resolution
-3. Build integration logic  
+3. Build integration logic
 4. SConscript parsing and validation
 5. Module registry functionality
 """
@@ -175,7 +175,7 @@ class ModularBuildValidator:
 
         try:
             # Register test modules with proper dependencies
-            hal_module = module_registry.register_module(
+            module_registry.register_module(
                 name='hal_stm32h7',
                 description='STM32H7 hardware abstraction layer',
                 sources=['startup_stm32h7x5xx.s'],
@@ -185,7 +185,7 @@ class ModularBuildValidator:
                 directory='modules/hal_stm32h7'
             )
 
-            basic_module = module_registry.register_module(
+            module_registry.register_module(
                 name='drivers_basic',
                 description='Basic hardware drivers',
                 sources=[],
@@ -195,7 +195,7 @@ class ModularBuildValidator:
                 directory='modules/drivers_basic'
             )
 
-            comm_module = module_registry.register_module(
+            module_registry.register_module(
                 name='drivers_comm',
                 description='Communication drivers',
                 sources=[],
@@ -205,7 +205,7 @@ class ModularBuildValidator:
                 directory='modules/drivers_comm'
             )
 
-            crypto_module = module_registry.register_module(
+            module_registry.register_module(
                 name='crypto',
                 description='Cryptographic functions',
                 sources=['rsa.c', 'sha.c'],
@@ -442,11 +442,11 @@ class ModularBuildValidator:
         print("=" * 80)
 
         # Run all validation tests
-        structure_ok = self.validate_module_structure()
-        syntax_ok = self.validate_sconscript_syntax()
-        dependencies_ok = self.validate_dependency_resolution()
-        integration_ok = self.validate_build_integration()
-        docs_ok = self.validate_module_documentation()
+        self.validate_module_structure()
+        self.validate_sconscript_syntax()
+        self.validate_dependency_resolution()
+        self.validate_build_integration()
+        self.validate_module_documentation()
 
         # Generate final report
         report = self.generate_report()

@@ -177,7 +177,7 @@ def test_module_system():
         app.dependencies.append("circular")
         registry.get_dependencies("circular")  # Should not cause infinite loop
         print("✓ Circular dependency handling works")
-    except:
+    except Exception:
         print("✗ Circular dependency handling failed")
         return False
 

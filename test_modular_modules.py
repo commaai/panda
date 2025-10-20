@@ -16,7 +16,7 @@ def test_module_loading():
 
     try:
         # Test HAL STM32H7 module (foundation layer)
-        hal_module = module_registry.register_module(
+        module_registry.register_module(
             name='hal_stm32h7_test',
             description='Test HAL module',
             sources=['startup_stm32h7x5xx.s'],
@@ -28,7 +28,7 @@ def test_module_loading():
         print("✓ HAL STM32H7 module registration successful")
 
         # Test drivers_basic module (depends on HAL)
-        drivers_basic_module = module_registry.register_module(
+        module_registry.register_module(
             name='drivers_basic_test',
             description='Test drivers basic module',
             sources=[],
@@ -40,7 +40,7 @@ def test_module_loading():
         print("✓ Drivers basic module registration successful")
 
         # Test drivers_comm module (depends on drivers_basic)
-        drivers_comm_module = module_registry.register_module(
+        module_registry.register_module(
             name='drivers_comm_test',
             description='Test drivers comm module',
             sources=[],

@@ -2,7 +2,7 @@
 """
 Comprehensive Crypto Module Conversion Validation
 
-This script validates the complete conversion of the crypto module to the 
+This script validates the complete conversion of the crypto module to the
 modular build system by testing:
 
 1. Module isolation and compilation
@@ -106,18 +106,18 @@ int main() {
     // Test SHA-1 functionality
     uint8_t test_data[] = "test";
     uint8_t digest[SHA_DIGEST_SIZE];
-    
+
     SHA_hash(test_data, 4, digest);
-    
+
     printf("SHA-1 test completed\\n");
-    
+
     // Test RSA structure initialization
     RSAPublicKey key = {0};
     key.len = RSANUMWORDS;
     key.exponent = 65537;
-    
+
     printf("RSA structure test completed\\n");
-    
+
     return 0;
 }
 '''
@@ -190,23 +190,23 @@ try:
         dependencies=[],
         directory="modules/crypto"
     )
-    
+
     print("✓ Module registration successful")
-    
+
     # Test retrieval
     retrieved = module_registry.get_module("test_crypto")
     print(f"✓ Module retrieval successful: {retrieved.name}")
-    
+
     # Test build order
     build_order = module_registry.get_build_order("test_crypto")
     print(f"✓ Build order: {build_order}")
-    
+
     # Test validation
     module_registry.validate_all_dependencies()
     print("✓ Dependency validation successful")
-    
+
     print("SUCCESS")
-    
+
 except Exception as e:
     print(f"FAILED: {e}")
     import traceback
@@ -259,35 +259,35 @@ test_content = """
 int main() {
     uint8_t test_data[] = "Hello, World!";
     uint8_t digest[SHA_DIGEST_SIZE];
-    
+
     SHA_hash(test_data, 13, digest);
-    
+
     for (int i = 0; i < SHA_DIGEST_SIZE; i++) {
         printf("%02x", digest[i]);
     }
     printf("\\n");
-    
+
     return 0;
 }
 """
 
 with tempfile.TemporaryDirectory() as temp_dir:
     import shutil
-    
+
     # Copy crypto files
     for filename in ["rsa.c", "sha.c", "rsa.h", "sha.h", "hash-internal.h"]:
         shutil.copy2(f"{crypto_dir}/{filename}", f"{temp_dir}/{filename}")
-    
+
     # Write test
     with open(f"{temp_dir}/test.c", "w") as f:
         f.write(test_content)
-    
+
     # Compile
     result = subprocess.run([
         "gcc", "-std=c99", "-DCRYPTO_HAS_MEMCPY", "-I.",
         "test.c", "sha.c", "-o", "test"
     ], cwd=temp_dir, capture_output=True, text=True)
-    
+
     if result.returncode == 0:
         # Run
         run_result = subprocess.run(["./test"], cwd=temp_dir, capture_output=True, text=True)
@@ -372,7 +372,7 @@ sys.path.insert(0, "./modules")
 try:
     from module_registry import module_registry
     print("✓ Module registry import successful")
-    
+
     # Test that crypto directory structure is correct
     import os
     crypto_path = "./modules/crypto"
@@ -386,9 +386,9 @@ try:
             print(f"✗ Missing files: {missing}")
     else:
         print("✗ Crypto module directory not found")
-    
+
     print("SUCCESS")
-    
+
 except Exception as e:
     print(f"FAILED: {e}")
 '''

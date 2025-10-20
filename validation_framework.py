@@ -18,7 +18,7 @@ Features:
 
 Integration with:
 - Build comparison pipeline
-- CI validation pipeline  
+- CI validation pipeline
 - Performance analysis suite
 - Rollback safety system
 """
@@ -689,7 +689,6 @@ class ValidationFramework:
         start_time = time.time()
 
         score = 85.0  # Base score
-        issues = []
 
         # Check for proper documentation
         key_files = [

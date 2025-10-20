@@ -584,7 +584,7 @@ class PerformanceAnalyzer:
     def _generate_comparison_summary(self, profiles: List[BuildProfile]) -> Dict[str, Any]:
         """Generate summary comparing legacy and modular builds."""
         summary = {
-            'targets_analyzed': set(p.target for p in profiles),
+            'targets_analyzed': {p.target for p in profiles},
             'system_comparisons': {}
         }
 
@@ -632,23 +632,23 @@ class PerformanceAnalyzer:
                     if t > 5.0  # Files taking >5 seconds
                 ]
                 if slow_files:
+                    slow_list = ', '.join(f for f, t in slow_files[:3])
                     recommendations.append(
-                        f"Optimize slow compilation in {profile.system}: "
-                        f"{', '.join(f for f, t in slow_files[:3])}"
+                        f"Optimize slow compilation in {profile.system}: {slow_list}"
                     )
 
             # Parallel efficiency
             if profile.parallel_efficiency < 0.5:
+                efficiency = profile.parallel_efficiency
                 recommendations.append(
-                    f"Improve parallelization in {profile.system} build "
-                    f"(efficiency: {profile.parallel_efficiency:.1%})"
+                    f"Improve parallelization in {profile.system} build (efficiency: {efficiency:.1%})"
                 )
 
             # Memory usage
             if profile.memory_usage and max(profile.memory_usage) > 2000:  # >2GB
+                peak_mem = max(profile.memory_usage)
                 recommendations.append(
-                    f"Reduce memory usage in {profile.system} build "
-                    f"(peak: {max(profile.memory_usage):.0f}MB)"
+                    f"Reduce memory usage in {profile.system} build (peak: {peak_mem:.0f}MB)"
                 )
 
         # Dependency analysis recommendations
@@ -656,9 +656,9 @@ class PerformanceAnalyzer:
             dep = report.dependency_analysis
 
             if dep.critical_path_time > 30:  # >30 seconds on critical path
+                cp_time = dep.critical_path_time
                 recommendations.append(
-                    f"Optimize critical path dependencies "
-                    f"(estimated: {dep.critical_path_time:.1f}s)"
+                    f"Optimize critical path dependencies (estimated: {cp_time:.1f}s)"
                 )
 
             if len(dep.parallelizable_groups) < 2:
@@ -669,15 +669,15 @@ class PerformanceAnalyzer:
         # System comparison recommendations
         for target, comparison in report.comparison_summary.get('system_comparisons', {}).items():
             if comparison['build_time_ratio'] > 1.2:  # Modular 20% slower
+                ratio = comparison['build_time_ratio']
                 recommendations.append(
-                    f"Modular build for {target} is significantly slower "
-                    f"({comparison['build_time_ratio']:.1f}x) - investigate bottlenecks"
+                    f"Modular build for {target} is significantly slower ({ratio:.1f}x) - investigate bottlenecks"
                 )
 
             if comparison['memory_usage_ratio'] > 1.5:  # 50% more memory
+                mem_ratio = comparison['memory_usage_ratio']
                 recommendations.append(
-                    f"Modular build for {target} uses significantly more memory "
-                    f"({comparison['memory_usage_ratio']:.1f}x)"
+                    f"Modular build for {target} uses significantly more memory ({mem_ratio:.1f}x)"
                 )
 
         return recommendations
@@ -743,8 +743,6 @@ class PerformanceAnalyzer:
     def _generate_visualizations(self, report: PerformanceReport):
         """Generate performance visualization charts."""
         try:
-            import matplotlib.pyplot as plt
-
             # Build time comparison chart
             self._plot_build_time_comparison(report)
 
@@ -763,11 +761,11 @@ class PerformanceAnalyzer:
 
     def _plot_build_time_comparison(self, report: PerformanceReport):
         """Plot build time comparison between systems."""
+        import matplotlib.pyplot as plt
         plt.figure(figsize=(10, 6))
 
         # Group profiles by target and system
-        targets = set(p.target for p in report.build_profiles)
-        systems = ['legacy', 'modular']
+        targets = {p.target for p in report.build_profiles}
 
         x_pos = range(len(targets))
         width = 0.35

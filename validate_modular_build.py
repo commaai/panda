@@ -94,8 +94,8 @@ def validate_modular_build():
                 mod_size = os.path.getsize(modular)
                 size_diff_pct = abs(orig_size - mod_size) / orig_size * 100
 
-                print(f"  {os.path.basename(original)}: {orig_size} -> {mod_size} bytes "
-                      f"({size_diff_pct:.1f}% diff)")
+                filename = os.path.basename(original)
+                print(f"  {filename}: {orig_size} -> {mod_size} bytes ({size_diff_pct:.1f}% diff)")
 
                 # Allow up to 5% size difference (due to different compilation)
                 if size_diff_pct > 5.0:
