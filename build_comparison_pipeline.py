@@ -40,8 +40,8 @@ class BuildResult:
     system: str  # 'legacy' or 'modular'
     success: bool
     build_time: float
-    outputs: Dict[str, str] = field(default_factory=dict)  # filename -> hash
-    file_sizes: Dict[str, int] = field(default_factory=dict)  # filename -> size
+    outputs: Dict[str, str] = field(default_factory=dict)  # filename->hash
+    file_sizes: Dict[str, int] = field(default_factory=dict)  # filename->size
     errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
     command: str = ""
@@ -141,7 +141,8 @@ class BuildComparator:
         """Get file size in bytes."""
         return filepath.stat().st_size if filepath.exists() else 0
 
-    def run_build(self, target: str, system: str, clean: bool = True) -> BuildResult:
+    def run_build(self, target: str, system: str,
+                  clean: bool = True) -> BuildResult:
         """Run a build for a specific target and system."""
         print(f"Building {target} with {system} system...")
 
@@ -188,7 +189,8 @@ class BuildComparator:
             result.success = process.returncode == 0
 
             if not result.success:
-                result.errors.append(f"Build failed with return code {process.returncode}")
+                result.errors.append(
+                    f"Build failed with return code {process.returncode}")
                 result.errors.append(f"stderr: {process.stderr}")
                 print(f"✗ {system} build failed for {target}")
                 return result
@@ -197,12 +199,16 @@ class BuildComparator:
             for output_file in target_config['expected_outputs']:
                 output_path = self.panda_root / output_file
                 if output_path.exists():
-                    result.outputs[output_file] = self.calculate_file_hash(output_path)
-                    result.file_sizes[output_file] = self.get_file_size(output_path)
+                    result.outputs[output_file] = self.calculate_file_hash(
+                        output_path)
+                    result.file_sizes[output_file] = self.get_file_size(
+                        output_path)
                 else:
-                    result.errors.append(f"Expected output file not found: {output_file}")
+                    result.errors.append(
+                        f"Expected output file not found: {output_file}")
 
-            print(f"✓ {system} build completed for {target} ({result.build_time:.2f}s)")
+            print(f"✓ {system} build completed for {target} "
+                  f"({result.build_time:.2f}s)")
 
         except subprocess.TimeoutExpired:
             result.errors.append("Build timed out after 5 minutes")
@@ -216,7 +222,8 @@ class BuildComparator:
 
         return result
 
-    def compare_builds(self, legacy_result: BuildResult, modular_result: BuildResult) -> ComparisonResult:
+    def compare_builds(self, legacy_result: BuildResult,
+                       modular_result: BuildResult) -> ComparisonResult:
         """Compare results from legacy and modular builds."""
         print(f"Comparing builds for {legacy_result.target}...")
 
@@ -229,38 +236,42 @@ class BuildComparator:
         if not legacy_result.success or not modular_result.success:
             comparison.equivalent = False
             if not legacy_result.success:
-                comparison.compatibility_issues.append("Legacy build failed")
+                comparison.compatibility_issues.append(
+                    "Legacy build failed")
             if not modular_result.success:
-                comparison.compatibility_issues.append("Modular build failed")
+                comparison.compatibility_issues.append(
+                    "Modular build failed")
             return comparison
 
         # Compare binary outputs
-        for filename in set(legacy_result.outputs.keys()) | set(modular_result.outputs.keys()):
+        for filename in (set(legacy_result.outputs.keys()) |
+                         set(modular_result.outputs.keys())):
             legacy_hash = legacy_result.outputs.get(filename, "MISSING")
             modular_hash = modular_result.outputs.get(filename, "MISSING")
 
             if legacy_hash != modular_hash:
                 comparison.equivalent = False
                 comparison.binary_differences.append(
-                    f"{filename}: legacy={legacy_hash[:16]}..., modular={modular_hash[:16]}..."
-                )
+                    f"{filename}: legacy={legacy_hash[:16]}..., "
+                    f"modular={modular_hash[:16]}...")
 
         # Compare file sizes
-        for filename in set(legacy_result.file_sizes.keys()) | set(modular_result.file_sizes.keys()):
+        for filename in (set(legacy_result.file_sizes.keys()) |
+                         set(modular_result.file_sizes.keys())):
             legacy_size = legacy_result.file_sizes.get(filename, 0)
             modular_size = modular_result.file_sizes.get(filename, 0)
 
             if legacy_size != modular_size:
                 size_diff = modular_size - legacy_size
                 comparison.size_differences.append(
-                    f"{filename}: legacy={legacy_size}B, modular={modular_size}B (Δ{size_diff:+d}B)"
-                )
+                    f"{filename}: legacy={legacy_size}B, "
+                    f"modular={modular_size}B (Δ{size_diff:+d}B)")
 
                 # Large size differences might indicate compatibility issues
                 if abs(size_diff) > 1024:  # More than 1KB difference
                     comparison.compatibility_issues.append(
-                        f"Significant size difference in {filename}: {size_diff:+d} bytes"
-                    )
+                        f"Significant size difference in {filename}: "
+                        f"{size_diff:+d} bytes")
 
         # Performance comparison
         build_time_delta = modular_result.build_time - legacy_result.build_time
@@ -268,15 +279,18 @@ class BuildComparator:
             'build_time_delta': build_time_delta,
             'legacy_time': legacy_result.build_time,
             'modular_time': modular_result.build_time,
-            'speedup_factor': legacy_result.build_time / modular_result.build_time if modular_result.build_time > 0 else 0
+            'speedup_factor': (legacy_result.build_time /
+                               modular_result.build_time
+                               if modular_result.build_time > 0 else 0)
         }
 
         # Detect regressions (modular significantly slower)
-        if build_time_delta > legacy_result.build_time * 0.5:  # 50% slower
+        # 50% slower threshold
+        if build_time_delta > legacy_result.build_time * 0.5:
             comparison.regression_detected = True
             comparison.compatibility_issues.append(
-                f"Performance regression: modular build {build_time_delta:.2f}s slower"
-            )
+                f"Performance regression: modular build "
+                f"{build_time_delta:.2f}s slower")
 
         print(f"✓ Comparison completed for {legacy_result.target}")
         return comparison
@@ -299,7 +313,8 @@ class BuildComparator:
             # Full build
             full_result = self.run_build(target, system, clean=True)
             if not full_result.success:
-                results[f'{system}_incremental']['full_build_failed'] = True
+                results[f'{system}_incremental'][
+                    'full_build_failed'] = True
                 continue
 
             # Touch a source file to trigger incremental build
@@ -309,11 +324,13 @@ class BuildComparator:
                 original_content = test_file.read_text()
 
                 # Make a trivial change
-                modified_content = original_content + '\n// Incremental test comment\n'
+                modified_content = (original_content +
+                                    '\n// Incremental test comment\n')
                 test_file.write_text(modified_content)
 
                 # Incremental build
-                incremental_result = self.run_build(target, system, clean=False)
+                incremental_result = self.run_build(
+                    target, system, clean=False)
 
                 # Restore original content
                 test_file.write_text(original_content)
@@ -323,12 +340,16 @@ class BuildComparator:
                     'full_build_time': full_result.build_time,
                     'incremental_build_time': incremental_result.build_time,
                     'incremental_success': incremental_result.success,
-                    'speedup': full_result.build_time / incremental_result.build_time if incremental_result.build_time > 0 else 0
+                    'speedup': (full_result.build_time /
+                                incremental_result.build_time
+                                if incremental_result.build_time > 0 else 0)
                 }
 
                 # Validate incremental build is faster
                 if incremental_result.build_time >= full_result.build_time:
-                    results['issues'].append(f"{system} incremental build not faster than full build")
+                    results['issues'].append(
+                        f"{system} incremental build not faster than "
+                        f"full build")
                     results['incremental_equivalent'] = False
 
         print(f"✓ Incremental build test completed for {target}")
@@ -358,9 +379,12 @@ class BuildComparator:
             os.environ.pop('SCONS_FLAGS', None)
 
             if sequential_result.success and parallel_result.success:
-                results['sequential_times'][system] = sequential_result.build_time
-                results['parallel_times'][system] = parallel_result.build_time
-                results['parallel_efficiency'][system] = sequential_result.build_time / parallel_result.build_time
+                results['sequential_times'][system] = (
+                    sequential_result.build_time)
+                results['parallel_times'][system] = (
+                    parallel_result.build_time)
+                results['parallel_efficiency'][system] = (
+                    sequential_result.build_time / parallel_result.build_time)
 
         print(f"✓ Parallel build test completed for {target}")
         return results
@@ -389,28 +413,33 @@ class BuildComparator:
                 time_change = curr['build_time'] - prev['build_time']
                 trends['build_time_trend'].append(time_change)
 
-                if time_change > prev['build_time'] * 0.2:  # 20% regression
+                # 20% regression threshold
+                if time_change > prev['build_time'] * 0.2:
                     trends['regression_count'] += 1
 
         return trends
 
     def generate_comparison_report(self, results: List[ComparisonResult],
-                                 incremental_results: List[Dict],
-                                 parallel_results: List[Dict]) -> Dict[str, Any]:
+                                   incremental_results: List[Dict],
+                                   parallel_results: List[Dict]
+                                   ) -> Dict[str, Any]:
         """Generate comprehensive comparison report."""
         timestamp = time.time()
 
         # Overall status
         all_equivalent = all(r.equivalent for r in results)
-        total_regressions = sum(1 for r in results if r.regression_detected)
+        total_regressions = sum(1 for r in results
+                                if r.regression_detected)
 
         # Performance summary
         performance_summary = {}
         for result in results:
             if result.performance_delta:
                 performance_summary[result.target] = {
-                    'speedup': result.performance_delta.get('speedup_factor', 0),
-                    'time_delta': result.performance_delta.get('build_time_delta', 0)
+                    'speedup': result.performance_delta.get(
+                        'speedup_factor', 0),
+                    'time_delta': result.performance_delta.get(
+                        'build_time_delta', 0)
                 }
 
         # Compatibility issues
@@ -423,9 +452,11 @@ class BuildComparator:
             'overall_status': {
                 'all_equivalent': all_equivalent,
                 'total_targets': len(results),
-                'equivalent_targets': sum(1 for r in results if r.equivalent),
+                'equivalent_targets': sum(1 for r in results
+                                          if r.equivalent),
                 'total_regressions': total_regressions,
-                'ready_for_migration': all_equivalent and total_regressions == 0
+                'ready_for_migration': (all_equivalent and
+                                        total_regressions == 0)
             },
             'detailed_results': [
                 {
@@ -443,11 +474,13 @@ class BuildComparator:
             'incremental_build_results': incremental_results,
             'parallel_build_results': parallel_results,
             'all_compatibility_issues': all_issues,
-            'recommendations': self.generate_recommendations(results, all_issues)
+            'recommendations': self.generate_recommendations(
+                results, all_issues)
         }
 
         # Save report
-        report_file = self.results_dir / f'build_comparison_report_{int(timestamp)}.json'
+        report_file = (self.results_dir /
+                       f'build_comparison_report_{int(timestamp)}.json')
         with open(report_file, 'w') as f:
             json.dump(report, f, indent=2)
 
@@ -459,7 +492,8 @@ class BuildComparator:
         # Update performance history
         perf_entry = {
             'timestamp': timestamp,
-            'build_time': sum(r.performance_delta.get('modular_time', 0) for r in results),
+            'build_time': sum(r.performance_delta.get('modular_time', 0)
+                              for r in results),
             'equivalent': all_equivalent,
             'regression_count': total_regressions
         }
@@ -468,33 +502,47 @@ class BuildComparator:
 
         return report
 
-    def generate_recommendations(self, results: List[ComparisonResult], issues: List[str]) -> List[str]:
+    def generate_recommendations(self, results: List[ComparisonResult],
+                                 issues: List[str]) -> List[str]:
         """Generate actionable recommendations based on results."""
         recommendations = []
 
         if all(r.equivalent for r in results):
-            recommendations.append("✓ All targets produce equivalent outputs - migration can proceed")
-            recommendations.append("Consider setting up automated validation in CI/CD pipeline")
+            recommendations.append(
+                "✓ All targets produce equivalent outputs - "
+                "migration can proceed")
+            recommendations.append(
+                "Consider setting up automated validation in CI/CD pipeline")
         else:
-            recommendations.append("⚠ Binary differences detected - investigate before migration")
-            recommendations.append("Run detailed binary analysis on differing outputs")
+            recommendations.append(
+                "⚠ Binary differences detected - investigate before "
+                "migration")
+            recommendations.append(
+                "Run detailed binary analysis on differing outputs")
 
         if any(r.regression_detected for r in results):
-            recommendations.append("⚠ Performance regressions detected - optimization needed")
-            recommendations.append("Profile modular build system for bottlenecks")
+            recommendations.append(
+                "⚠ Performance regressions detected - optimization needed")
+            recommendations.append(
+                "Profile modular build system for bottlenecks")
 
         if issues:
-            recommendations.append("⚠ Compatibility issues found - review and address")
-            recommendations.append("Create rollback plan before proceeding with migration")
+            recommendations.append(
+                "⚠ Compatibility issues found - review and address")
+            recommendations.append(
+                "Create rollback plan before proceeding with migration")
         else:
             recommendations.append("✓ No compatibility issues detected")
 
         # Performance recommendations
-        avg_speedup = sum(r.performance_delta.get('speedup_factor', 1) for r in results) / len(results)
+        avg_speedup = (sum(r.performance_delta.get('speedup_factor', 1)
+                           for r in results) / len(results))
         if avg_speedup > 1.1:
-            recommendations.append(f"✓ Modular system shows {avg_speedup:.1f}x average speedup")
+            recommendations.append(
+                f"✓ Modular system shows {avg_speedup:.1f}x average speedup")
         elif avg_speedup < 0.9:
-            recommendations.append(f"⚠ Modular system {1/avg_speedup:.1f}x slower - investigate")
+            recommendations.append(
+                f"⚠ Modular system {1/avg_speedup:.1f}x slower - investigate")
 
         return recommendations
 
@@ -506,14 +554,18 @@ class BuildComparator:
 
         status = report['overall_status']
         print("\nOVERALL STATUS:")
-        print(f"  Ready for migration: {'✓ YES' if status['ready_for_migration'] else '✗ NO'}")
-        print(f"  Equivalent outputs: {status['equivalent_targets']}/{status['total_targets']} targets")
+        print(f"  Ready for migration: "
+              f"{'✓ YES' if status['ready_for_migration'] else '✗ NO'}")
+        equiv_targets = status['equivalent_targets']
+        total_targets = status['total_targets']
+        print(f"  Equivalent outputs: {equiv_targets}/{total_targets} targets")
         print(f"  Performance regressions: {status['total_regressions']}")
 
         print("\nTARGET RESULTS:")
         for result in report['detailed_results']:
             equiv_status = "✓" if result['equivalent'] else "✗"
-            regression_status = " (REGRESSION)" if result['regression_detected'] else ""
+            regression_status = (" (REGRESSION)"
+                                 if result['regression_detected'] else "")
             print(f"  {equiv_status} {result['target']}{regression_status}")
 
             if result['performance'].get('speedup_factor'):
@@ -525,19 +577,23 @@ class BuildComparator:
 
         if report['all_compatibility_issues']:
             print("\nCOMPATIBILITY ISSUES:")
-            for issue in report['all_compatibility_issues'][:5]:  # Show first 5
+            # Show first 5 issues
+            for issue in report['all_compatibility_issues'][:5]:
                 print(f"  ⚠ {issue}")
             if len(report['all_compatibility_issues']) > 5:
-                print(f"  ... and {len(report['all_compatibility_issues']) - 5} more")
+                remaining = len(report['all_compatibility_issues']) - 5
+                print(f"  ... and {remaining} more")
 
         print("\nRECOMMENDATIONS:")
         for rec in report['recommendations']:
             print(f"  {rec}")
 
-        print(f"\nDetailed report saved to: {self.results_dir / 'latest_comparison_report.json'}")
+        report_path = self.results_dir / 'latest_comparison_report.json'
+        print(f"\nDetailed report saved to: {report_path}")
 
     def run_comprehensive_comparison(self, targets: List[str] = None,
-                                   include_performance_tests: bool = True) -> Dict[str, Any]:
+                                     include_performance_tests: bool = True
+                                     ) -> Dict[str, Any]:
         """Run comprehensive build comparison."""
         print("Starting comprehensive build comparison...")
 
@@ -578,7 +634,8 @@ class BuildComparator:
                 comparison_results.append(failed_comparison)
 
         # Generate comprehensive report
-        report = self.generate_comparison_report(comparison_results, incremental_results, parallel_results)
+        report = self.generate_comparison_report(
+            comparison_results, incremental_results, parallel_results)
         self.print_summary_report(report)
 
         return report
@@ -586,12 +643,20 @@ class BuildComparator:
 
 def main():
     """Main entry point for the build comparison pipeline."""
-    parser = argparse.ArgumentParser(description='Panda Build Comparison Pipeline')
-    parser.add_argument('--target', help='Specific target to test (panda_h7, panda_jungle_h7)')
+    parser = argparse.ArgumentParser(
+        description='Panda Build Comparison Pipeline')
+    parser.add_argument(
+        '--target', help='Specific target to test (panda_h7, panda_jungle_h7)')
     parser.add_argument('--all', action='store_true', help='Test all targets')
-    parser.add_argument('--performance-only', action='store_true', help='Run only performance tests')
-    parser.add_argument('--ci-mode', action='store_true', help='CI mode - minimal output, exit codes')
-    parser.add_argument('--clean', action='store_true', help='Clean before builds', default=True)
+    parser.add_argument(
+        '--performance-only', action='store_true',
+        help='Run only performance tests')
+    parser.add_argument(
+        '--ci-mode', action='store_true',
+        help='CI mode - minimal output, exit codes')
+    parser.add_argument(
+        '--clean', action='store_true', help='Clean before builds',
+        default=True)
 
     args = parser.parse_args()
 

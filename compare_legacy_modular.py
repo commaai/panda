@@ -57,15 +57,15 @@ class LegacyModularComparator:
 int test_sha1() {
     uint8_t test_data[] = "test_vector_123";
     uint8_t digest[SHA_DIGEST_SIZE];
-    
+
     SHA_hash(test_data, strlen((char*)test_data), digest);
-    
+
     printf("SHA1:");
     for (int i = 0; i < SHA_DIGEST_SIZE; i++) {
         printf("%02x", digest[i]);
     }
     printf("\\n");
-    
+
     return 0;
 }
 
@@ -73,11 +73,11 @@ int test_rsa_structure() {
     RSAPublicKey key = {0};
     key.len = RSANUMWORDS;
     key.exponent = 65537;
-    
+
     printf("RSA_LEN:%d\\n", key.len);
     printf("RSA_EXP:%d\\n", key.exponent);
     printf("RSA_SIZE:%zu\\n", sizeof(RSAPublicKey));
-    
+
     return 0;
 }
 
@@ -176,15 +176,15 @@ int main() {
 int test_sha1() {
     uint8_t test_data[] = "test_vector_123";
     uint8_t digest[SHA_DIGEST_SIZE];
-    
+
     SHA_hash(test_data, strlen((char*)test_data), digest);
-    
+
     printf("SHA1:");
     for (int i = 0; i < SHA_DIGEST_SIZE; i++) {
         printf("%02x", digest[i]);
     }
     printf("\\n");
-    
+
     return 0;
 }
 
@@ -192,11 +192,11 @@ int test_rsa_structure() {
     RSAPublicKey key = {0};
     key.len = RSANUMWORDS;
     key.exponent = 65537;
-    
+
     printf("RSA_LEN:%d\\n", key.len);
     printf("RSA_EXP:%d\\n", key.exponent);
     printf("RSA_SIZE:%zu\\n", sizeof(RSAPublicKey));
-    
+
     return 0;
 }
 

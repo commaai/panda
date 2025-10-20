@@ -92,9 +92,12 @@ class CIValidationPipeline:
         if os.getenv('CI_MODE'):
             # CI-specific optimizations
             self.config.parallel_jobs = int(os.getenv('PARALLEL_JOBS', '4'))
-            self.config.build_timeout = int(os.getenv('BUILD_TIMEOUT', '300'))
-            self.config.archive_artifacts = bool(os.getenv('ARCHIVE_ARTIFACTS'))
-            self.config.notification_webhook = os.getenv('NOTIFICATION_WEBHOOK')
+            timeout = int(os.getenv('BUILD_TIMEOUT', '300'))
+            self.config.build_timeout = timeout
+            artifacts = bool(os.getenv('ARCHIVE_ARTIFACTS'))
+            self.config.archive_artifacts = artifacts
+            webhook = os.getenv('NOTIFICATION_WEBHOOK')
+            self.config.notification_webhook = webhook
 
     def _load_baseline_data(self) -> Dict[str, Any]:
         """Load baseline performance and size data."""
@@ -123,7 +126,8 @@ class CIValidationPipeline:
         with self.results_lock:
             self.test_results.append(result)
 
-    def _run_command(self, cmd: List[str], timeout: int = None, cwd: Path = None) -> subprocess.CompletedProcess:
+    def _run_command(self, cmd: List[str], timeout: int = None,
+                     cwd: Path = None) -> subprocess.CompletedProcess:
         """Run a command with proper error handling."""
         timeout = timeout or self.config.build_timeout
         cwd = cwd or self.panda_root
@@ -138,7 +142,8 @@ class CIValidationPipeline:
                 env=os.environ.copy()
             )
         except subprocess.TimeoutExpired:
-            raise Exception(f"Command timed out after {timeout}s: {' '.join(cmd)}")
+            cmd_str = ' '.join(cmd)
+            raise Exception(f"Command timed out after {timeout}s: {cmd_str}")
 
     def test_legacy_build(self, target: str) -> CITestResult:
         """Test legacy build system."""
@@ -191,10 +196,12 @@ class CIValidationPipeline:
             self._log(f"Testing modular build for {target}")
 
             # Clean previous artifacts
-            self._run_command(['scons', '-c', '-f', 'SConscript.modular'], timeout=30)
+            cmd = ['scons', '-c', '-f', 'SConscript.modular']
+            self._run_command(cmd, timeout=30)
 
             # Build target
-            result = self._run_command(['scons', '-f', 'SConscript.modular', f'{target}_modular'])
+            cmd = ['scons', '-f', 'SConscript.modular', f'{target}_modular']
+            result = self._run_command(cmd)
 
             if result.returncode != 0:
                 return CITestResult(
@@ -236,7 +243,8 @@ class CIValidationPipeline:
             legacy_result = self.test_legacy_build(target)
             modular_result = self.test_modular_build(target)
 
-            if legacy_result.status != 'PASS' or modular_result.status != 'PASS':
+            if (legacy_result.status != 'PASS' or
+                    modular_result.status != 'PASS'):
                 return CITestResult(
                     test_name=test_name,
                     status='FAIL',
@@ -401,7 +409,8 @@ class CIValidationPipeline:
             legacy_result = self.test_legacy_build(target)
             modular_result = self.test_modular_build(target)
 
-            if legacy_result.status != 'PASS' or modular_result.status != 'PASS':
+            if (legacy_result.status != 'PASS' or
+                    modular_result.status != 'PASS'):
                 return CITestResult(
                     test_name=test_name,
                     status='FAIL',
@@ -438,7 +447,8 @@ class CIValidationPipeline:
                 baseline_key = f"{target}_{output_file}_size"
                 if baseline_key in self.baseline_data:
                     baseline_size = self.baseline_data[baseline_key]
-                    baseline_change = ((modular_size - baseline_size) / baseline_size) * 100
+                    # Track baseline change for future use
+                    _ = ((modular_size - baseline_size) / baseline_size) * 100
                 else:
                     pass  # No baseline data available
 
