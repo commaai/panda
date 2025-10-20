@@ -49,23 +49,23 @@ def get_version(builder, build_type):
 
 def get_key_header(name):
     from Crypto.PublicKey import RSA
-    
+
     public_fn = File(f'./certs/{name}.pub').srcnode().get_path()
     with open(public_fn) as f:
         rsa = RSA.importKey(f.read())
     assert(rsa.size_in_bits() == 1024)
-    
+
     rr = pow(2**1024, 2, rsa.n)
     n0inv = 2**32 - pow(rsa.n, -1, 2**32)
-    
+
     r = [
         f"RSAPublicKey {name}_rsa_key = {{",
-        f"  .len = 0x20,",
+        "  .len = 0x20,",
         f"  .n0inv = {n0inv}U,",
         f"  .n = {to_c_uint32(rsa.n)},",
         f"  .rr = {to_c_uint32(rr)},",
         f"  .exponent = {rsa.e},",
-        f"}};",
+        "};",
     ]
     return r
 
@@ -84,7 +84,7 @@ class Module:
     """
     Represents a buildable module with sources, dependencies, and configuration.
     """
-    def __init__(self, name, sources=None, includes=None, dependencies=None, 
+    def __init__(self, name, sources=None, includes=None, dependencies=None,
                  flags=None, description=""):
         self.name = name
         self.sources = sources or []
@@ -93,10 +93,10 @@ class Module:
         self.flags = flags or []
         self.description = description
         self.built_objects = []
-    
+
     def __str__(self):
         return f"Module({self.name})"
-    
+
     def __repr__(self):
         return self.__str__()
 
@@ -107,25 +107,25 @@ class ModuleRegistry:
     def __init__(self):
         self.modules = {}
         self.build_cache = {}
-    
+
     def register(self, module):
         """Register a module in the system."""
         if module.name in self.modules:
             raise ValueError(f"Module {module.name} already registered")
         self.modules[module.name] = module
         return module
-    
+
     def get(self, name):
         """Get a module by name."""
         if name not in self.modules:
             raise ValueError(f"Module {name} not found")
         return self.modules[name]
-    
+
     def get_dependencies(self, module_name):
         """Get all dependencies for a module (including transitive)."""
         visited = set()
         result = []
-        
+
         def _collect(name):
             if name in visited:
                 return
@@ -135,29 +135,29 @@ class ModuleRegistry:
                 _collect(dep)
                 if dep not in result:
                     result.append(dep)
-        
+
         _collect(module_name)
         return result
-    
+
     def build_module(self, env, module_name, project_dir):
         """Build a module and all its dependencies."""
         if module_name in self.build_cache:
             return self.build_cache[module_name]
-        
+
         module = self.get(module_name)
         objects = []
-        
+
         # Build dependencies first
         for dep_name in module.dependencies:
             dep_objects = self.build_module(env, dep_name, project_dir)
             objects.extend(dep_objects)
-        
+
         # Build this module's sources
         for source in module.sources:
             obj = env.Object(f"{project_dir}/{module.name}_{os.path.basename(source)}", source)
             objects.append(obj)
             module.built_objects.append(obj)
-        
+
         self.build_cache[module_name] = objects
         return objects
 
@@ -220,7 +220,7 @@ safety = registry.register(Module(
 def build_modular_target(target_name, platform_config, main_source, required_modules, extra_flags=None):
     """
     Build a target using the modular system.
-    
+
     Args:
         target_name: Name of the target (e.g., "panda_h7")
         platform_config: Platform-specific configuration
@@ -229,10 +229,10 @@ def build_modular_target(target_name, platform_config, main_source, required_mod
         extra_flags: Additional compiler flags
     """
     print(f"Building modular target: {target_name}")
-    
+
     project_dir = Dir(f'./board/obj/{target_name}/')
     extra_flags = extra_flags or []
-    
+
     # Prepare build environment
     flags = platform_config["FLAGS"] + extra_flags + common_flags + [
         "-Wall", "-Wextra", "-Wstrict-prototypes", "-Werror",
@@ -241,7 +241,7 @@ def build_modular_target(target_name, platform_config, main_source, required_mod
         f"-T{File(platform_config['LINKER_SCRIPT']).srcnode().relpath}",
         "-fsingle-precision-constant", "-Os", "-g",
     ]
-    
+
     env = Environment(
         ENV=os.environ,
         CC=PREFIX + 'gcc',
@@ -257,39 +257,39 @@ def build_modular_target(target_name, platform_config, main_source, required_mod
         BUILDERS={'Objcopy': Builder(generator=objcopy, suffix='.bin', src_suffix='.elf')},
         tools=["default", "compilation_db"],
     )
-    
+
     # Build all required modules
     all_objects = []
     for module_name in required_modules:
         module_objects = registry.build_module(env, module_name, project_dir)
         all_objects.extend(module_objects)
-    
+
     # Add startup file
     startup = env.Object(platform_config["STARTUP_FILE"])
     all_objects.append(startup)
-    
+
     # Build bootstub (shared across targets)
     bs_env = env.Clone()
     bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
     bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", [
         startup,
         "./crypto/rsa.c",
-        "./crypto/sha.c", 
+        "./crypto/sha.c",
         "./board/bootstub.c",
     ])
     bs_env.Objcopy(f"./board/obj/bootstub.{target_name}.bin", bs_elf)
-    
+
     # Build main application
     main_elf = env.Program(f"{project_dir}/main.elf", [
         startup,
         main_source
     ] + all_objects, LINKFLAGS=[f"-Wl,--section-start,.isr_vector={platform_config['APP_START_ADDRESS']}"] + flags)
-    
+
     main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
-    sign_py = File(f"./crypto/sign.py").srcnode().relpath
-    env.Command(f"./board/obj/{target_name}.bin.signed", main_bin, 
+    sign_py = File("./crypto/sign.py").srcnode().relpath
+    env.Command(f"./board/obj/{target_name}.bin.signed", main_bin,
                 f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
-    
+
     return env
 
 # =============================================================================
@@ -343,7 +343,7 @@ if os.getenv("FINAL_PROVISIONING"):
     jungle_flags += ["-DFINAL_PROVISIONING"]
 
 jungle_env = build_modular_target(
-    target_name="panda_jungle_h7_modular", 
+    target_name="panda_jungle_h7_modular",
     platform_config=base_project_h7,
     main_source="./board/jungle/main.c",
     required_modules=["safety"],  # Same modules as panda for this PoC
@@ -359,7 +359,7 @@ def print_module_info():
     print("\n" + "="*60)
     print("MODULAR BUILD SYSTEM - PoC ANALYSIS")
     print("="*60)
-    
+
     print(f"\nRegistered Modules ({len(registry.modules)}):")
     for name, module in registry.modules.items():
         deps = registry.get_dependencies(name)
@@ -369,15 +369,15 @@ def print_module_info():
         print(f"    Direct deps: {module.dependencies}")
         print(f"    All deps: {deps}")
         print()
-    
+
     print("Dependency Graph:")
     for name, module in registry.modules.items():
         print(f"  {name} -> {module.dependencies}")
-    
+
     print("\nBuild Order (example for safety module):")
     deps = registry.get_dependencies("safety")
     print(f"  {' -> '.join(deps + ['safety'])}")
-    
+
     print("\n" + "="*60)
 
 # Print analysis when building
@@ -387,4 +387,4 @@ print_module_info()
 if GetOption('extras'):
     SConscript('tests/libpanda/SConscript')
 
-print(f"\nModular PoC build completed. Check board/obj/*_modular/ for outputs.")
+print("\nModular PoC build completed. Check board/obj/*_modular/ for outputs.")

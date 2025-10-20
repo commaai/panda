@@ -6,7 +6,7 @@ This script provides comprehensive validation of the entire modular build
 system implementation, including:
 
 1. PoC validation
-2. Dependency mapping validation  
+2. Dependency mapping validation
 3. Incremental refactoring validation
 4. Integration testing
 5. Performance analysis
@@ -183,7 +183,7 @@ class ComprehensiveValidator:
             registry = ModuleRegistry()
 
             # Test basic functionality
-            test_module = registry.register_module(
+            registry.register_module(
                 name='test',
                 description='Test module',
                 sources=['test.c'],

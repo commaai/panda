@@ -134,7 +134,7 @@ class ModuleRegistry:
                         full_path = include
                     all_includes.add(full_path)
 
-        return sorted(list(all_includes))
+        return sorted(all_includes)
 
     def get_all_flags(self, target_module: str) -> List[str]:
         """Get all compiler flags needed for a target module."""

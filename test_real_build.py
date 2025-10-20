@@ -38,7 +38,7 @@ class BuildTester:
             # Try importing key modules
             import sys
             sys.path.insert(0, 'modules')
-            from module_registry import ModuleRegistry
+            from module_registry import module_registry
             module_registry_ok = True
         except ImportError as e:
             module_registry_ok = False
@@ -70,7 +70,7 @@ class BuildTester:
 # Mock opendbc module for testing
 class MockOpenDBC:
     INCLUDE_PATH = "."
-    
+
     def __init__(self):
         pass
 
@@ -135,20 +135,20 @@ def to_c_uint32(x):
 
 def build_project(project_name, project, main, extra_flags):
     project_dir = Dir(f'./board/obj/{project_name}/')
-    
+
     flags = project.get("FLAGS", []) + extra_flags + common_flags + [
         "-Wall", "-Wextra", "-Wstrict-prototypes", "-Werror",
         "-mlittle-endian", "-mthumb", "-nostdlib", "-fno-builtin",
         "-std=gnu11", "-fmax-errors=1",
         "-fsingle-precision-constant", "-Os", "-g",
     ]
-    
+
     # Use regular gcc if ARM toolchain not available
     cc = PREFIX + 'gcc'
     if not os.system(f'which {cc} > /dev/null 2>&1') != 0:
         cc = 'gcc'  # Fall back to system gcc
         flags = [f for f in flags if not f.startswith('-m')]  # Remove ARM-specific flags
-    
+
     env = Environment(
         ENV=os.environ,
         CC=cc,
@@ -166,24 +166,24 @@ def build_project(project_name, project, main, extra_flags):
         },
         tools=["default"],
     )
-    
+
     # Create test main instead of complex build
     test_c = f"""
     #include <stdio.h>
-    
+
     // Test our modular components
     int main(void) {{
         printf("Testing {project_name} build...\\\\n");
         return 0;
     }}
     """
-    
+
     # Write test source
     test_main_path = f"{project_dir}/test_main.c"
     os.makedirs(os.path.dirname(test_main_path), exist_ok=True)
     with open(test_main_path, 'w') as f:
         f.write(test_c)
-    
+
     # Try to compile crypto module if available
     crypto_objects = []
     if os.path.exists('crypto/rsa.c'):
@@ -192,7 +192,7 @@ def build_project(project_name, project, main, extra_flags):
             crypto_objects.append(crypto_obj)
         except:
             print(f"  Warning: Could not compile crypto for {project_name}")
-    
+
     # Build test executable
     try:
         test_exe = env.Program(f"{project_dir}/test_{project_name}", [
@@ -233,14 +233,14 @@ print("="*60)
 legacy_success = build_project("panda_h7_legacy_test", base_project_h7, "./board/main.c", [])
 
 print("="*60)
-print("TESTING MODULAR BUILD SYSTEM")  
+print("TESTING MODULAR BUILD SYSTEM")
 print("="*60)
 
 # Test modular build with our system
 sys.path.insert(0, 'modules')
 try:
     from module_registry import module_registry
-    
+
     # Register crypto module
     crypto = module_registry.register_module(
         name='crypto',
@@ -248,10 +248,10 @@ try:
         sources=['rsa.c', 'sha.c'],
         directory='crypto'
     )
-    
+
     print("✓ Module registry loaded successfully")
     modular_success = build_project("panda_h7_modular_test", base_project_h7, "./board/main.c", [])
-    
+
 except Exception as e:
     print(f"✗ Modular system failed: {e}")
     modular_success = False
@@ -318,10 +318,10 @@ else:
         try:
             # Test module registry
             sys.path.insert(0, 'modules')
-            from module_registry import ModuleRegistry
+            from module_registry import module_registry
 
             registry = ModuleRegistry()
-            crypto = registry.register_module(
+            registry.register_module(
                 name='crypto',
                 description='Test crypto',
                 sources=['rsa.c', 'sha.c'],
@@ -358,10 +358,10 @@ else:
             self.create_test_sconscript()
 
         # Phase 2: Test modular framework
-        framework_ok = self.test_modular_vs_legacy()
+        self.test_modular_vs_legacy()
 
         # Phase 3: Run build test
-        build_ok = self.run_build_test()
+        self.run_build_test()
 
         # Final results
         print("\n" + "="*60)

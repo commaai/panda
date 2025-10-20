@@ -53,23 +53,23 @@ def get_version(builder, build_type):
 
 def get_key_header(name):
     from Crypto.PublicKey import RSA
-    
+
     public_fn = File(f'./certs/{name}.pub').srcnode().get_path()
     with open(public_fn) as f:
         rsa = RSA.importKey(f.read())
     assert(rsa.size_in_bits() == 1024)
-    
+
     rr = pow(2**1024, 2, rsa.n)
     n0inv = 2**32 - pow(rsa.n, -1, 2**32)
-    
+
     r = [
         f"RSAPublicKey {name}_rsa_key = {{",
-        f"  .len = 0x20,",
+        "  .len = 0x20,",
         f"  .n0inv = {n0inv}U,",
         f"  .n = {to_c_uint32(rsa.n)},",
         f"  .rr = {to_c_uint32(rr)},",
         f"  .exponent = {rsa.e},",
-        f"}};",
+        "};",
     ]
     return r
 
@@ -86,7 +86,7 @@ def to_c_uint32(x):
 
 def register_incremental_modules(base_env):
     """Register the modules we've converted to the new system so far."""
-    
+
     # 1. HAL STM32H7 module (foundation layer - no dependencies)
     print("Loading HAL STM32H7 module...")
     try:
@@ -98,7 +98,7 @@ def register_incremental_modules(base_env):
     except Exception as e:
         print(f"✗ Failed to load HAL STM32H7 module: {e}")
         print("  Using fallback registration...")
-        hal_stm32h7 = module_registry.register_module(
+        module_registry.register_module(
             name='hal_stm32h7',
             description='STM32H7 hardware abstraction layer (fallback)',
             sources=['startup_stm32h7x5xx.s'],
@@ -107,7 +107,7 @@ def register_incremental_modules(base_env):
             dependencies=[],
             directory='board/stm32h7'
         )
-    
+
     # 2. Drivers Basic module (depends on HAL)
     print("Loading Drivers Basic module...")
     try:
@@ -119,7 +119,7 @@ def register_incremental_modules(base_env):
     except Exception as e:
         print(f"✗ Failed to load Drivers Basic module: {e}")
         print("  Using fallback registration...")
-        drivers_basic = module_registry.register_module(
+        module_registry.register_module(
             name='drivers_basic',
             description='Basic hardware drivers (fallback)',
             sources=[],
@@ -128,7 +128,7 @@ def register_incremental_modules(base_env):
             dependencies=['hal_stm32h7'],
             directory='board/drivers'
         )
-    
+
     # 3. Drivers Communication module (depends on Drivers Basic)
     print("Loading Drivers Communication module...")
     try:
@@ -140,7 +140,7 @@ def register_incremental_modules(base_env):
     except Exception as e:
         print(f"✗ Failed to load Drivers Communication module: {e}")
         print("  Using fallback registration...")
-        drivers_comm = module_registry.register_module(
+        module_registry.register_module(
             name='drivers_comm',
             description='Communication drivers (fallback)',
             sources=[],
@@ -149,7 +149,7 @@ def register_incremental_modules(base_env):
             dependencies=['drivers_basic'],
             directory='board/drivers'
         )
-    
+
     # 4. Crypto module (self-contained, depends on core system concepts)
     print("Loading Crypto module...")
     try:
@@ -161,7 +161,7 @@ def register_incremental_modules(base_env):
     except Exception as e:
         print(f"✗ Failed to load Crypto module: {e}")
         print("  Using fallback registration...")
-        crypto = module_registry.register_module(
+        module_registry.register_module(
             name='crypto',
             description='Cryptographic functions for secure boot and signing (fallback)',
             sources=['rsa.c', 'sha.c'],
@@ -170,7 +170,7 @@ def register_incremental_modules(base_env):
             dependencies=[],
             directory='crypto'
         )
-    
+
     print("Incremental modules registered:")
     for name, module in module_registry.modules.items():
         print(f"  - {name}: {module.description}")
@@ -178,7 +178,7 @@ def register_incremental_modules(base_env):
 def build_incremental_target(target_name, platform_config, main_source, extra_flags=None):
     """
     Build a target using both legacy and modular approaches for comparison.
-    
+
     This function:
     1. Builds using the legacy monolithic approach
     2. Builds using the new modular approach (where available)
@@ -186,9 +186,9 @@ def build_incremental_target(target_name, platform_config, main_source, extra_fl
     """
     print(f"\nBuilding incremental target: {target_name}")
     extra_flags = extra_flags or []
-    
+
     project_dir = Dir(f'./board/obj/{target_name}_incremental/')
-    
+
     # Prepare build environment (same as legacy)
     flags = platform_config["FLAGS"] + extra_flags + common_flags + [
         "-Wall", "-Wextra", "-Wstrict-prototypes", "-Werror",
@@ -197,7 +197,7 @@ def build_incremental_target(target_name, platform_config, main_source, extra_fl
         f"-T{File(platform_config['LINKER_SCRIPT']).srcnode().relpath}",
         "-fsingle-precision-constant", "-Os", "-g",
     ]
-    
+
     env = Environment(
         ENV=os.environ,
         CC=PREFIX + 'gcc',
@@ -213,18 +213,18 @@ def build_incremental_target(target_name, platform_config, main_source, extra_fl
         BUILDERS={'Objcopy': Builder(generator=objcopy, suffix='.bin', src_suffix='.elf')},
         tools=["default", "compilation_db"],
     )
-    
+
     # Build modular components in dependency order
     modular_objects = []
-    
+
     # Build modules in dependency order: hal_stm32h7 -> drivers_basic -> drivers_comm -> crypto
     module_build_order = ['hal_stm32h7', 'drivers_basic', 'drivers_comm', 'crypto']
-    
+
     for module_name in module_build_order:
         if module_name in module_registry.modules:
             print(f"  Using modular {module_name} module for {target_name}")
             module = module_registry.get_module(module_name)
-            
+
             # Use the pre-built objects from the module if available
             if hasattr(module, 'built_objects') and module.built_objects:
                 print(f"    Using {len(module.built_objects)} pre-built {module_name} objects")
@@ -233,7 +233,7 @@ def build_incremental_target(target_name, platform_config, main_source, extra_fl
                 # Build module objects with proper environment
                 print(f"    Building {module_name} module from sources")
                 module_env = env.Clone()
-                
+
                 # Add module-specific includes and flags
                 module_includes = module_registry.get_all_includes(module_name)
                 module_flags = module_registry.get_all_flags(module_name)
@@ -241,15 +241,15 @@ def build_incremental_target(target_name, platform_config, main_source, extra_fl
                 if module_flags:
                     module_env.Append(CFLAGS=module_flags)
                     module_env.Append(ASFLAGS=module_flags)
-                
+
                 # Add module-specific flags for embedded environment
                 module_env.Append(CPPDEFINES=[f'{module_name.upper()}_MODULE_BUILD=1'])
-                
+
                 for source in module.sources:
                     source_path = os.path.join(module.directory, source)
                     obj_name = f"{project_dir}/{module_name}_{os.path.basename(source)}"
                     print(f"      Building {source} -> {obj_name}")
-                    
+
                     # Handle assembly and C source files
                     if source.endswith('.s'):
                         obj = module_env.Object(obj_name, source_path)
@@ -258,27 +258,27 @@ def build_incremental_target(target_name, platform_config, main_source, extra_fl
                     modular_objects.append(obj)
         else:
             print(f"  WARNING: {module_name} module not found, falling back to legacy build")
-    
+
     # Build bootstub (legacy approach for now, but using modular objects)
     bs_env = env.Clone()
     bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
-    bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", 
+    bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf",
         modular_objects + [
             # Legacy files not yet modularized
             "./board/bootstub.c",
         ])
     bs_env.Objcopy(f"./board/obj/bootstub.{target_name}_incremental.bin", bs_elf)
-    
+
     # Build main application (using modular objects)
     main_elf = env.Program(f"{project_dir}/main.elf", [
         main_source
     ] + modular_objects, LINKFLAGS=[f"-Wl,--section-start,.isr_vector={platform_config['APP_START_ADDRESS']}"] + flags)
-    
+
     main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
-    sign_py = File(f"./crypto/sign.py").srcnode().relpath
+    sign_py = File("./crypto/sign.py").srcnode().relpath
     env.Command(f"./board/obj/{target_name}_incremental.bin.signed", main_bin,
                 f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
-    
+
     return env
 
 # =============================================================================
@@ -361,17 +361,17 @@ jungle_env = build_incremental_target(
 
 # Print module statistics
 stats = module_registry.get_stats()
-print(f"\nMODULE SYSTEM STATISTICS:")
+print("\nMODULE SYSTEM STATISTICS:")
 print(f"  Modules registered: {stats['total_modules']}")
 print(f"  Total source files: {stats['total_sources']}")
 print(f"  Total header files: {stats['total_headers']}")
 print(f"  Modules with tests: {stats['modules_with_tests']}")
 print(f"  Modules with dependencies: {stats['modules_with_dependencies']}")
 
-print(f"\nIncremental build targets created:")
-print(f"  - board/obj/panda_h7_incremental.bin.signed")
-print(f"  - board/obj/panda_jungle_h7_incremental.bin.signed")
-print(f"\nCompare these with legacy targets for validation.")
+print("\nIncremental build targets created:")
+print("  - board/obj/panda_h7_incremental.bin.signed")
+print("  - board/obj/panda_jungle_h7_incremental.bin.signed")
+print("\nCompare these with legacy targets for validation.")
 
 # Include tests if requested
 if GetOption('extras'):
