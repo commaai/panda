@@ -505,12 +505,12 @@ class BuildComparator:
         print(f"{'='*80}")
 
         status = report['overall_status']
-        print(f"\nOVERALL STATUS:")
+        print("\nOVERALL STATUS:")
         print(f"  Ready for migration: {'✓ YES' if status['ready_for_migration'] else '✗ NO'}")
         print(f"  Equivalent outputs: {status['equivalent_targets']}/{status['total_targets']} targets")
         print(f"  Performance regressions: {status['total_regressions']}")
 
-        print(f"\nTARGET RESULTS:")
+        print("\nTARGET RESULTS:")
         for result in report['detailed_results']:
             equiv_status = "✓" if result['equivalent'] else "✗"
             regression_status = " (REGRESSION)" if result['regression_detected'] else ""
@@ -524,13 +524,13 @@ class BuildComparator:
                     print(f"    Performance: {1/speedup:.2f}x slower")
 
         if report['all_compatibility_issues']:
-            print(f"\nCOMPATIBILITY ISSUES:")
+            print("\nCOMPATIBILITY ISSUES:")
             for issue in report['all_compatibility_issues'][:5]:  # Show first 5
                 print(f"  ⚠ {issue}")
             if len(report['all_compatibility_issues']) > 5:
                 print(f"  ... and {len(report['all_compatibility_issues']) - 5} more")
 
-        print(f"\nRECOMMENDATIONS:")
+        print("\nRECOMMENDATIONS:")
         for rec in report['recommendations']:
             print(f"  {rec}")
 

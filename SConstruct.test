@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+"""
+Test SConstruct for Modular Build System
+
+This creates a standalone test environment for our modular build system
+that doesn't require opendbc or ARM cross-compilation tools.
+"""
+
+AddOption('--minimal',
+          action='store_false',
+          dest='extras',
+          default=True,
+          help='the minimum build. no tests, tools, etc.')
+
+env = Environment(
+  COMPILATIONDB_USE_ABSPATH=True,
+  tools=["default", "compilation_db"],
+)
+
+env.CompilationDatabase("compile_commands.json")
+
+# Test our modular build system
+SConscript('SConscript.test')

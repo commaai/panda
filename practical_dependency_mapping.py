@@ -9,7 +9,7 @@ clear dependency relationships.
 
 import json
 from dataclasses import dataclass
-from typing import List, Dict, Set
+from typing import List
 
 @dataclass
 class PracticalModule:
@@ -24,13 +24,13 @@ class PracticalModule:
 
 class PandaModuleMapper:
     """Creates a practical module mapping for the panda codebase."""
-    
+
     def __init__(self):
         self.modules = {}
-    
+
     def define_modules(self):
         """Define the practical module structure based on codebase analysis."""
-        
+
         # 1. Hardware Abstraction Layer (HAL)
         self.modules['hal_stm32h7'] = PracticalModule(
             name='hal_stm32h7',
@@ -62,7 +62,7 @@ class PandaModuleMapper:
             ],
             flags=['-DSTM32H7', '-mcpu=cortex-m7']
         )
-        
+
         # 2. Core System
         self.modules['core_system'] = PracticalModule(
             name='core_system',
@@ -81,7 +81,7 @@ class PandaModuleMapper:
             includes=['board'],
             flags=[]
         )
-        
+
         # 3. Basic Drivers
         self.modules['drivers_basic'] = PracticalModule(
             name='drivers_basic',
@@ -102,7 +102,7 @@ class PandaModuleMapper:
             includes=['board/drivers'],
             flags=[]
         )
-        
+
         # 4. Communication Drivers
         self.modules['drivers_comm'] = PracticalModule(
             name='drivers_comm',
@@ -119,7 +119,7 @@ class PandaModuleMapper:
             includes=['board/drivers'],
             flags=[]
         )
-        
+
         # 5. CAN System
         self.modules['drivers_can'] = PracticalModule(
             name='drivers_can',
@@ -134,7 +134,7 @@ class PandaModuleMapper:
             includes=['board/drivers'],
             flags=[]
         )
-        
+
         # 6. Monitoring and Control
         self.modules['drivers_monitoring'] = PracticalModule(
             name='drivers_monitoring',
@@ -154,14 +154,14 @@ class PandaModuleMapper:
             includes=['board/drivers'],
             flags=[]
         )
-        
+
         # 7. Safety System
         self.modules['safety'] = PracticalModule(
             name='safety',
             description='Safety-critical functionality and monitoring',
             files=[
                 'board/health.h',
-                'board/faults.h', 
+                'board/faults.h',
                 'board/faults_declarations.h',
                 # Note: opendbc/safety files would be included if available
             ],
@@ -169,7 +169,7 @@ class PandaModuleMapper:
             includes=['board', 'opendbc/safety'],
             flags=[]
         )
-        
+
         # 8. Communication Layer
         self.modules['communication'] = PracticalModule(
             name='communication',
@@ -184,7 +184,7 @@ class PandaModuleMapper:
             includes=['board'],
             flags=[]
         )
-        
+
         # 9. Power Management
         self.modules['power_management'] = PracticalModule(
             name='power_management',
@@ -197,7 +197,7 @@ class PandaModuleMapper:
             includes=['board'],
             flags=[]
         )
-        
+
         # 10. Board Support
         self.modules['board_support'] = PracticalModule(
             name='board_support',
@@ -205,7 +205,7 @@ class PandaModuleMapper:
             files=[
                 'board/boards/board_declarations.h',
                 'board/boards/tres.h',
-                'board/boards/cuatro.h', 
+                'board/boards/cuatro.h',
                 'board/boards/red.h',
                 'board/boards/unused_funcs.h',
             ],
@@ -213,7 +213,7 @@ class PandaModuleMapper:
             includes=['board/boards'],
             flags=[]
         )
-        
+
         # 11. Cryptography
         self.modules['crypto'] = PracticalModule(
             name='crypto',
@@ -229,7 +229,7 @@ class PandaModuleMapper:
             includes=['crypto'],
             flags=[]
         )
-        
+
         # 12. Bootloader
         self.modules['bootloader'] = PracticalModule(
             name='bootloader',
@@ -244,7 +244,7 @@ class PandaModuleMapper:
             includes=['board'],
             flags=[]
         )
-        
+
         # 13. Main Application
         self.modules['panda_main'] = PracticalModule(
             name='panda_main',
@@ -259,14 +259,14 @@ class PandaModuleMapper:
             flags=[],
             target_specific=True
         )
-        
-        # 14. Jungle Application  
+
+        # 14. Jungle Application
         self.modules['jungle_main'] = PracticalModule(
             name='jungle_main',
             description='Jungle-specific application logic',
             files=[
                 'board/jungle/main.c',
-                'board/jungle/main_comms.h', 
+                'board/jungle/main_comms.h',
                 'board/jungle/jungle_health.h',
                 'board/jungle/boards/board_declarations.h',
                 'board/jungle/boards/board_v2.h',
@@ -277,35 +277,35 @@ class PandaModuleMapper:
             flags=['-DPANDA_JUNGLE'],
             target_specific=True
         )
-    
+
     def get_build_order(self, target_module: str) -> List[str]:
         """Get the build order for a target module."""
         visited = set()
         result = []
-        
+
         def _visit(module_name):
             if module_name in visited:
                 return
             visited.add(module_name)
-            
+
             module = self.modules.get(module_name)
             if not module:
                 return
-                
+
             # Visit dependencies first
             for dep in module.dependencies:
                 _visit(dep)
-            
+
             # Add this module
             result.append(module_name)
-        
+
         _visit(target_module)
         return result
-    
+
     def generate_target_configs(self):
         """Generate target-specific build configurations."""
         targets = {}
-        
+
         # Panda H7 target
         panda_build_order = self.get_build_order('panda_main')
         targets['panda_h7'] = {
@@ -317,21 +317,21 @@ class PandaModuleMapper:
             'linker_script': 'board/stm32h7/stm32h7x5_flash.ld',
             'startup_file': 'board/stm32h7/startup_stm32h7x5xx.s',
         }
-        
+
         # Jungle H7 target
         jungle_build_order = self.get_build_order('jungle_main')
         targets['panda_jungle_h7'] = {
             'description': 'Jungle firmware for STM32H7',
-            'main_module': 'jungle_main', 
+            'main_module': 'jungle_main',
             'build_order': jungle_build_order,
             'required_modules': jungle_build_order,
             'platform_flags': ['-DSTM32H7', '-DSTM32H725xx', '-DPANDA_JUNGLE'],
             'linker_script': 'board/stm32h7/stm32h7x5_flash.ld',
             'startup_file': 'board/stm32h7/startup_stm32h7x5xx.s',
         }
-        
+
         return targets
-    
+
     def analyze_module_stats(self):
         """Analyze statistics about the modular organization."""
         stats = {
@@ -342,7 +342,7 @@ class PandaModuleMapper:
             'max_dependency_depth': 0,
             'dependency_graph': {}
         }
-        
+
         # Calculate dependency depths
         for module_name in self.modules:
             build_order = self.get_build_order(module_name)
@@ -352,25 +352,25 @@ class PandaModuleMapper:
                 'dependencies': self.modules[module_name].dependencies,
                 'depth': depth
             }
-        
+
         return stats
-    
+
     def generate_report(self):
         """Generate a comprehensive modular organization report."""
         print("="*70)
         print("PANDA PRACTICAL MODULAR ORGANIZATION")
         print("="*70)
-        
+
         stats = self.analyze_module_stats()
-        
-        print(f"\nOVERVIEW:")
+
+        print("\nOVERVIEW:")
         print(f"  Total modules: {stats['total_modules']}")
         print(f"  Total files: {stats['total_files']}")
         print(f"  Shared modules: {stats['shared_modules']}")
         print(f"  Target-specific modules: {stats['target_specific_modules']}")
         print(f"  Maximum dependency depth: {stats['max_dependency_depth']}")
-        
-        print(f"\nMODULE DEFINITIONS:")
+
+        print("\nMODULE DEFINITIONS:")
         for name, module in self.modules.items():
             print(f"\n  {name}:")
             print(f"    Description: {module.description}")
@@ -379,16 +379,16 @@ class PandaModuleMapper:
             print(f"    Target-specific: {module.target_specific}")
             if module.flags:
                 print(f"    Flags: {module.flags}")
-        
+
         targets = self.generate_target_configs()
-        print(f"\nTARGET CONFIGURATIONS:")
+        print("\nTARGET CONFIGURATIONS:")
         for name, config in targets.items():
             print(f"\n  {name}:")
             print(f"    Description: {config['description']}")
             print(f"    Build order: {' -> '.join(config['build_order'])}")
             print(f"    Required modules: {len(config['required_modules'])}")
             print(f"    Platform flags: {config['platform_flags']}")
-        
+
         return {
             'modules': {name: {
                 'description': mod.description,
@@ -401,14 +401,14 @@ class PandaModuleMapper:
             'targets': targets,
             'statistics': stats
         }
-    
+
     def save_report(self, filename="practical_dependency_mapping.json"):
         """Save the practical mapping to a JSON file."""
         report_data = self.generate_report()
-        
+
         with open(filename, 'w') as f:
             json.dump(report_data, f, indent=2)
-        
+
         print(f"\nPractical dependency mapping saved to {filename}")
 
 def main():

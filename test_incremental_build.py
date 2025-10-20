@@ -9,13 +9,12 @@ and use the modular crypto module.
 import os
 import sys
 import subprocess
-import tempfile
 
 def test_incremental_module_loading():
     """Test that the incremental build system can load the crypto module."""
-    
+
     print("Testing incremental build system module loading...")
-    
+
     # Test module loading in isolation
     test_script = """
 import os
@@ -74,11 +73,11 @@ except Exception as e:
     traceback.print_exc()
     sys.exit(1)
 """
-    
+
     # Write test script
     with open('test_module_loading.py', 'w') as f:
         f.write(test_script)
-    
+
     try:
         # Run the test
         result = subprocess.run(
@@ -88,7 +87,7 @@ except Exception as e:
             text=True,
             timeout=30
         )
-        
+
         if result.returncode == 0:
             print("✓ Module loading test PASSED")
             print("Output:")
@@ -99,11 +98,11 @@ except Exception as e:
             print("STDERR:", result.stderr)
             print("STDOUT:", result.stdout)
             return False
-            
+
     except Exception as e:
         print(f"✗ Module loading test ERROR: {e}")
         return False
-        
+
     finally:
         # Clean up
         if os.path.exists('test_module_loading.py'):
@@ -111,9 +110,9 @@ except Exception as e:
 
 def test_crypto_module_integration():
     """Test that the crypto module can be loaded by the incremental system."""
-    
+
     print("\nTesting crypto module integration...")
-    
+
     test_script = """
 import os
 import sys
@@ -174,11 +173,11 @@ except Exception as e:
     traceback.print_exc()
     sys.exit(1)
 """
-    
+
     # Write test script
     with open('test_crypto_integration.py', 'w') as f:
         f.write(test_script)
-    
+
     try:
         # Run the test
         result = subprocess.run(
@@ -188,7 +187,7 @@ except Exception as e:
             text=True,
             timeout=30
         )
-        
+
         if result.returncode == 0:
             print("✓ Crypto integration test PASSED")
             print("Output:")
@@ -199,11 +198,11 @@ except Exception as e:
             print("STDERR:", result.stderr)
             print("STDOUT:", result.stdout)
             return False
-            
+
     except Exception as e:
         print(f"✗ Crypto integration test ERROR: {e}")
         return False
-        
+
     finally:
         # Clean up
         if os.path.exists('test_crypto_integration.py'):
@@ -211,18 +210,18 @@ except Exception as e:
 
 def test_scons_syntax():
     """Test that the SConscript files have valid syntax."""
-    
+
     print("\nTesting SConscript syntax...")
-    
+
     scripts_to_test = [
         'modules/crypto/SConscript',
         'SConscript.incremental',
         'modules/module_registry.py'
     ]
-    
+
     for script_path in scripts_to_test:
         print(f"  Testing {script_path}...")
-        
+
         try:
             result = subprocess.run(
                 [sys.executable, '-m', 'py_compile', script_path],
@@ -231,36 +230,36 @@ def test_scons_syntax():
                 text=True,
                 timeout=10
             )
-            
+
             if result.returncode == 0:
                 print(f"    ✓ {script_path} syntax OK")
             else:
                 print(f"    ✗ {script_path} syntax error:")
                 print(f"      {result.stderr}")
                 return False
-                
+
         except Exception as e:
             print(f"    ✗ {script_path} test error: {e}")
             return False
-    
+
     print("✓ All SConscript syntax tests PASSED")
     return True
 
 if __name__ == "__main__":
     print("Incremental Build System Test")
     print("=" * 50)
-    
+
     success = True
-    
+
     # Test module loading
     success &= test_incremental_module_loading()
-    
+
     # Test crypto integration (currently disabled due to SConscript dependency)
     # success &= test_crypto_module_integration()
-    
+
     # Test syntax
     success &= test_scons_syntax()
-    
+
     print("\n" + "=" * 50)
     if success:
         print("✓ All incremental build system tests PASSED")

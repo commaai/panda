@@ -31,8 +31,10 @@ import time
 import hashlib
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
+import threading
+import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import zipfile
 
@@ -438,7 +440,7 @@ class CIValidationPipeline:
                     baseline_size = self.baseline_data[baseline_key]
                     baseline_change = ((modular_size - baseline_size) / baseline_size) * 100
                 else:
-                    baseline_change = None
+                    pass  # No baseline data available
 
                 # Update baseline
                 self.baseline_data[baseline_key] = modular_size
@@ -746,7 +748,7 @@ class CIValidationPipeline:
         # Show failed tests
         failed_tests = [r for r in self.test_results if r['status'] != 'PASS']
         if failed_tests:
-            print(f"\nFailed Tests:")
+            print("\nFailed Tests:")
             for test in failed_tests:
                 print(f"  ✗ {test['test_name']}: {test['status']} - {test['message']}")
 

@@ -12,11 +12,8 @@ This script demonstrates the complete modular crypto system, showcasing:
 Run this script to see the modular crypto system in action.
 """
 
-import os
 import sys
 import subprocess
-import tempfile
-import json
 from pathlib import Path
 
 def print_section(title):
@@ -32,21 +29,21 @@ def print_subsection(title):
 def demo_module_structure():
     """Demonstrate the modular crypto structure."""
     print_section("MODULAR CRYPTO STRUCTURE")
-    
+
     crypto_dir = Path("/home/dholzric/projects/comma/openpilot/panda/modules/crypto")
-    
+
     print(f"Crypto module location: {crypto_dir}")
     print(f"Module exists: {crypto_dir.exists()}")
-    
+
     if crypto_dir.exists():
         print("\\nModule contents:")
         for item in sorted(crypto_dir.iterdir()):
             if item.is_file():
                 size = item.stat().st_size
                 print(f"  {item.name:<20} ({size:,} bytes)")
-    
+
     # Show module metadata
-    sconscript_path = crypto_dir / "SConscript" 
+    sconscript_path = crypto_dir / "SConscript"
     if sconscript_path.exists():
         print("\\nModule metadata extracted from SConscript:")
         with open(sconscript_path) as f:
@@ -65,9 +62,9 @@ def demo_module_structure():
 def demo_isolation():
     """Demonstrate module isolation."""
     print_section("MODULE ISOLATION DEMO")
-    
+
     print("Testing crypto module isolation...")
-    
+
     # Run isolation test
     result = subprocess.run(
         [sys.executable, "test_crypto_module.py"],
@@ -76,7 +73,7 @@ def demo_isolation():
         text=True,
         timeout=30
     )
-    
+
     if result.returncode == 0:
         print("✓ Module isolation test PASSED")
         print("\\nIsolation test output:")
@@ -90,7 +87,7 @@ def demo_isolation():
 def demo_module_registry():
     """Demonstrate module registry functionality."""
     print_section("MODULE REGISTRY DEMO")
-    
+
     test_script = '''
 import sys
 sys.path.insert(0, "./modules")
@@ -131,7 +128,7 @@ print("✓ Dependency validation passed")
 stats = module_registry.get_stats()
 print(f"✓ Registry stats: {stats}")
 '''
-    
+
     try:
         result = subprocess.run(
             [sys.executable, "-c", test_script],
@@ -140,7 +137,7 @@ print(f"✓ Registry stats: {stats}")
             text=True,
             timeout=30
         )
-        
+
         if result.returncode == 0:
             print("✓ Module registry demo PASSED")
             print("\\nRegistry demo output:")
@@ -150,16 +147,16 @@ print(f"✓ Registry stats: {stats}")
         else:
             print("✗ Module registry demo FAILED")
             print(f"Error: {result.stderr}")
-            
+
     except Exception as e:
         print(f"✗ Module registry demo ERROR: {e}")
 
 def demo_functional_equivalence():
     """Demonstrate functional equivalence with legacy."""
     print_section("FUNCTIONAL EQUIVALENCE DEMO")
-    
+
     print("Running legacy vs modular comparison...")
-    
+
     result = subprocess.run(
         [sys.executable, "compare_legacy_modular.py"],
         cwd="/home/dholzric/projects/comma/openpilot/panda",
@@ -167,11 +164,11 @@ def demo_functional_equivalence():
         text=True,
         timeout=60
     )
-    
+
     if result.returncode == 0:
         print("✓ Legacy vs modular comparison PASSED")
         print("\\nComparison results:")
-        
+
         # Extract key results from output
         for line in result.stdout.split('\\n'):
             if any(keyword in line for keyword in ['BUILD STATUS', 'RUNTIME STATUS', 'EQUIVALENCE', 'identical']):
@@ -183,9 +180,9 @@ def demo_functional_equivalence():
 def demo_build_integration():
     """Demonstrate build system integration."""
     print_section("BUILD SYSTEM INTEGRATION DEMO")
-    
+
     print("Testing build system integration...")
-    
+
     test_script = '''
 import sys
 sys.path.insert(0, "./modules")
@@ -238,7 +235,7 @@ except Exception as e:
     import traceback
     traceback.print_exc()
 '''
-    
+
     try:
         result = subprocess.run(
             [sys.executable, "-c", test_script],
@@ -247,7 +244,7 @@ except Exception as e:
             text=True,
             timeout=30
         )
-        
+
         if result.returncode == 0:
             print("✓ Build integration demo PASSED")
             print("\\nIntegration demo output:")
@@ -257,16 +254,16 @@ except Exception as e:
         else:
             print("✗ Build integration demo FAILED")
             print(f"Error: {result.stderr}")
-            
+
     except Exception as e:
         print(f"✗ Build integration demo ERROR: {e}")
 
 def demo_validation_suite():
     """Demonstrate the validation suite."""
     print_section("VALIDATION SUITE DEMO")
-    
+
     print("Running comprehensive validation suite...")
-    
+
     result = subprocess.run(
         [sys.executable, "validate_crypto_conversion.py"],
         cwd="/home/dholzric/projects/comma/openpilot/panda",
@@ -274,10 +271,10 @@ def demo_validation_suite():
         text=True,
         timeout=60
     )
-    
+
     # Extract key results regardless of return code
     output_lines = result.stdout.split('\\n')
-    
+
     print("\\nValidation results:")
     in_summary = False
     for line in output_lines:
@@ -291,7 +288,7 @@ def demo_validation_suite():
 def show_final_summary():
     """Show final summary of the modular crypto system."""
     print_section("MODULAR CRYPTO SYSTEM SUMMARY")
-    
+
     print("✅ CRYPTO MODULE CONVERSION COMPLETE")
     print()
     print("📁 Module Structure:")
@@ -333,7 +330,7 @@ def main():
     print("🚀 MODULAR CRYPTO SYSTEM DEMONSTRATION")
     print("This demo showcases the complete conversion of the crypto module")
     print("from legacy monolithic to modular build system.")
-    
+
     # Run all demos
     demo_module_structure()
     demo_isolation()
@@ -342,7 +339,7 @@ def main():
     demo_build_integration()
     demo_validation_suite()
     show_final_summary()
-    
+
     print("\\n🎉 Demo complete! The modular crypto system is fully functional.")
 
 if __name__ == "__main__":

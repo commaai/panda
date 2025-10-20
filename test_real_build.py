@@ -10,30 +10,29 @@ import os
 import sys
 import subprocess
 import shutil
-from pathlib import Path
 
 class BuildTester:
     """Tests the real build process for both legacy and modular systems."""
-    
+
     def __init__(self):
         self.test_results = {}
         self.dependencies_ok = False
-        
+
     def check_dependencies(self):
         """Check if we have the necessary build dependencies."""
         print("🔍 Checking build dependencies...")
-        
+
         # Check SCons
         scons_available = shutil.which('scons') is not None
         self.log_result("SCons available", scons_available)
-        
+
         # Check ARM toolchain
         arm_gcc = shutil.which('arm-none-eabi-gcc')
         arm_available = arm_gcc is not None
         self.log_result("ARM toolchain available", arm_available)
         if arm_available:
             print(f"  Found ARM GCC: {arm_gcc}")
-        
+
         # Check Python dependencies
         try:
             # Try importing key modules
@@ -44,29 +43,29 @@ class BuildTester:
         except ImportError as e:
             module_registry_ok = False
             print(f"  Module registry import failed: {e}")
-        
+
         self.log_result("Module registry available", module_registry_ok)
-        
+
         # Check if we have crypto files
         crypto_files = [
             'crypto/rsa.c',
-            'crypto/sha.c', 
+            'crypto/sha.c',
             'crypto/rsa.h',
             'crypto/sha.h'
         ]
-        
+
         crypto_ok = all(os.path.exists(f) for f in crypto_files)
         self.log_result("Crypto files available", crypto_ok)
-        
+
         # Overall dependency check
         self.dependencies_ok = scons_available and module_registry_ok and crypto_ok
-        
+
         return self.dependencies_ok
-    
+
     def create_mock_opendbc(self):
         """Create a mock opendbc module for testing."""
         print("📦 Creating mock opendbc for testing...")
-        
+
         mock_opendbc = """
 # Mock opendbc module for testing
 class MockOpenDBC:
@@ -80,17 +79,17 @@ import sys
 sys.modules['opendbc'] = MockOpenDBC()
 INCLUDE_PATH = "."
 """
-        
+
         # Create mock opendbc.py
         with open('opendbc.py', 'w') as f:
             f.write(mock_opendbc)
-        
+
         print("✓ Mock opendbc created")
-    
+
     def create_test_sconscript(self):
         """Create a test version of SConscript that works without all dependencies."""
         print("📝 Creating test SConscript...")
-        
+
         test_sconscript = '''
 import os
 import sys
@@ -272,25 +271,25 @@ else:
     print("\\n✗ Build testing revealed issues")
     print("✗ Review errors above before proceeding")
 '''
-        
+
         with open('SConscript.buildtest', 'w') as f:
             f.write(test_sconscript)
-        
+
         print("✓ Test SConscript created")
-    
+
     def run_build_test(self):
         """Run the actual build test."""
         print("🔨 Running build test...")
-        
+
         try:
             # Run the test build
             result = subprocess.run([
                 'scons', '-f', 'SConscript.buildtest'
             ], capture_output=True, text=True, timeout=120)
-            
+
             success = result.returncode == 0
             self.log_result("Build test execution", success)
-            
+
             if success:
                 print("✓ Build test completed successfully")
                 print("Build output:")
@@ -301,26 +300,26 @@ else:
                 print(result.stderr)
                 print("Standard output:")
                 print(result.stdout)
-            
+
             return success
-            
+
         except subprocess.TimeoutExpired:
             print("✗ Build test timed out")
             return False
         except Exception as e:
             print(f"✗ Build test exception: {e}")
             return False
-    
+
     def test_modular_vs_legacy(self):
         """Test that modular system produces equivalent results to legacy."""
         print("⚖️  Testing modular vs legacy equivalence...")
-        
+
         # This would compare build outputs, but for now we test the framework
         try:
             # Test module registry
             sys.path.insert(0, 'modules')
             from module_registry import ModuleRegistry
-            
+
             registry = ModuleRegistry()
             crypto = registry.register_module(
                 name='crypto',
@@ -328,58 +327,58 @@ else:
                 sources=['rsa.c', 'sha.c'],
                 directory='crypto'
             )
-            
+
             build_order = registry.get_build_order('crypto')
             sources = registry.get_all_sources('crypto')
-            
+
             framework_ok = len(build_order) > 0 and len(sources) > 0
             self.log_result("Modular framework test", framework_ok)
-            
+
             return framework_ok
-            
+
         except Exception as e:
             print(f"✗ Modular framework test failed: {e}")
             return False
-    
+
     def log_result(self, test_name, passed):
         """Log a test result."""
         self.test_results[test_name] = passed
         status = "✓" if passed else "✗"
         print(f"  {status} {test_name}")
-    
+
     def run_all_tests(self):
         """Run the complete build testing suite."""
         print("🚀 Starting Real Build Testing")
         print("="*60)
-        
+
         # Phase 1: Check dependencies
         if not self.check_dependencies():
             print("\n❌ Missing dependencies - setting up test environment...")
             self.create_mock_opendbc()
             self.create_test_sconscript()
-        
+
         # Phase 2: Test modular framework
         framework_ok = self.test_modular_vs_legacy()
-        
+
         # Phase 3: Run build test
         build_ok = self.run_build_test()
-        
+
         # Final results
         print("\n" + "="*60)
         print("REAL BUILD TEST SUMMARY")
         print("="*60)
-        
+
         passed_tests = sum(self.test_results.values())
         total_tests = len(self.test_results)
-        
+
         print(f"Tests passed: {passed_tests}/{total_tests}")
         print("\nDetailed results:")
         for test, result in self.test_results.items():
             status = "PASS" if result else "FAIL"
             print(f"  {test}: {status}")
-        
+
         overall_success = passed_tests == total_tests
-        
+
         if overall_success:
             print("\n🎉 ALL BUILD TESTS PASSED!")
             print("✅ Modular build system is working correctly")
@@ -388,7 +387,7 @@ else:
         else:
             print("\n❌ Some build tests failed")
             print("❌ Review issues before proceeding")
-        
+
         return overall_success
 
 def main():

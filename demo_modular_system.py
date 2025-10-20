@@ -6,13 +6,10 @@ This script demonstrates the key concepts and functionality of the
 modular build system without requiring SCons or a full build environment.
 """
 
-import os
-import sys
-from pathlib import Path
 
 class Module:
     """Represents a buildable module with sources, dependencies, and configuration."""
-    def __init__(self, name, sources=None, includes=None, dependencies=None, 
+    def __init__(self, name, sources=None, includes=None, dependencies=None,
                  flags=None, description=""):
         self.name = name
         self.sources = sources or []
@@ -21,7 +18,7 @@ class Module:
         self.flags = flags or []
         self.description = description
         self.built_objects = []
-    
+
     def __str__(self):
         return f"Module({self.name})"
 
@@ -30,25 +27,25 @@ class ModuleRegistry:
     def __init__(self):
         self.modules = {}
         self.build_cache = {}
-    
+
     def register(self, module):
         """Register a module in the system."""
         if module.name in self.modules:
             raise ValueError(f"Module {module.name} already registered")
         self.modules[module.name] = module
         return module
-    
+
     def get(self, name):
         """Get a module by name."""
         if name not in self.modules:
             raise ValueError(f"Module {name} not found")
         return self.modules[name]
-    
+
     def get_dependencies(self, module_name):
         """Get all dependencies for a module (including transitive)."""
         visited = set()
         result = []
-        
+
         def _collect(name):
             if name in visited:
                 return
@@ -58,21 +55,21 @@ class ModuleRegistry:
                 _collect(dep)
                 if dep not in result:
                     result.append(dep)
-        
+
         _collect(module_name)
         return result
-    
+
     def build_order(self, module_name):
         """Get the build order for a module and its dependencies."""
         deps = self.get_dependencies(module_name)
         return deps + [module_name]
-    
+
     def simulate_build(self, module_name):
         """Simulate building a module and its dependencies."""
         build_order = self.build_order(module_name)
         print(f"\nSimulating build for module '{module_name}':")
         print(f"Build order: {' -> '.join(build_order)}")
-        
+
         for mod_name in build_order:
             module = self.get(mod_name)
             print(f"  Building {mod_name}: {len(module.sources)} source files")
@@ -84,30 +81,30 @@ def demonstrate_panda_modules():
     print("="*60)
     print("PANDA MODULAR BUILD SYSTEM DEMONSTRATION")
     print("="*60)
-    
+
     registry = ModuleRegistry()
-    
+
     # Define core system modules based on actual panda structure
-    
+
     # 1. Hardware Abstraction Layer
     hal = registry.register(Module(
         name="hal",
         sources=[
             "board/stm32h7/clock.h",
-            "board/stm32h7/peripherals.h", 
+            "board/stm32h7/peripherals.h",
             "board/stm32h7/lladc.h",
             "board/early_init.h",
         ],
         includes=["board", "board/stm32h7", "board/stm32h7/inc"],
         description="Hardware abstraction layer for STM32H7"
     ))
-    
+
     # 2. Basic Drivers
     drivers = registry.register(Module(
         name="drivers",
         sources=[
             "board/drivers/led.h",
-            "board/drivers/uart.h", 
+            "board/drivers/uart.h",
             "board/drivers/gpio.h",
             "board/drivers/timers.h",
             "board/drivers/pwm.h",
@@ -116,7 +113,7 @@ def demonstrate_panda_modules():
         dependencies=["hal"],
         description="Basic hardware drivers (LED, UART, GPIO, etc.)"
     ))
-    
+
     # 3. Advanced Drivers
     advanced_drivers = registry.register(Module(
         name="advanced_drivers",
@@ -130,7 +127,7 @@ def demonstrate_panda_modules():
         dependencies=["drivers"],
         description="Advanced hardware drivers (CAN, USB, SPI, Fan)"
     ))
-    
+
     # 4. Safety System
     safety = registry.register(Module(
         name="safety",
@@ -144,7 +141,7 @@ def demonstrate_panda_modules():
         dependencies=["advanced_drivers"],
         description="Safety-critical CAN communication and monitoring"
     ))
-    
+
     # 5. Power Management
     power = registry.register(Module(
         name="power",
@@ -157,7 +154,7 @@ def demonstrate_panda_modules():
         dependencies=["advanced_drivers"],
         description="Power management and harness control"
     ))
-    
+
     # 6. Jungle-specific modules
     jungle = registry.register(Module(
         name="jungle",
@@ -171,7 +168,7 @@ def demonstrate_panda_modules():
         flags=["-DPANDA_JUNGLE"],
         description="Jungle-specific functionality"
     ))
-    
+
     # 7. Panda Main Application
     panda_main = registry.register(Module(
         name="panda_main",
@@ -183,26 +180,26 @@ def demonstrate_panda_modules():
         dependencies=["safety", "power"],
         description="Main panda application"
     ))
-    
+
     return registry
 
 def demonstrate_build_targets(registry):
     """Demonstrate how different targets are built from modules."""
     print("\nDEMONSTRATING BUILD TARGETS")
     print("-" * 40)
-    
+
     # Simulate panda build
     print("\n1. Building Panda H7 Target:")
     registry.simulate_build("panda_main")
-    
-    # Simulate jungle build  
+
+    # Simulate jungle build
     print("\n2. Building Jungle H7 Target:")
     registry.simulate_build("jungle")
-    
+
     # Show dependency analysis
     print("\n3. DEPENDENCY ANALYSIS:")
     print("-" * 30)
-    
+
     for name, module in registry.modules.items():
         direct_deps = module.dependencies
         all_deps = registry.get_dependencies(name)
@@ -217,18 +214,18 @@ def demonstrate_benefits():
     print("\n" + "="*60)
     print("BENEFITS OF MODULAR BUILD SYSTEM")
     print("="*60)
-    
+
     benefits = [
         ("Clear Dependencies", "Each module explicitly declares its dependencies"),
         ("Incremental Builds", "Only changed modules need to be rebuilt"),
-        ("Reusable Components", "Modules can be shared between targets"), 
+        ("Reusable Components", "Modules can be shared between targets"),
         ("Testability", "Individual modules can be unit tested"),
         ("Maintainability", "Clear separation of concerns"),
         ("Scalability", "Easy to add new modules and targets"),
         ("Documentation", "Self-documenting through module descriptions"),
         ("Debugging", "Build issues isolated to specific modules"),
     ]
-    
+
     for benefit, description in benefits:
         print(f"✓ {benefit}: {description}")
 
@@ -237,7 +234,7 @@ def demonstrate_before_after():
     print("\n" + "="*60)
     print("BEFORE vs AFTER COMPARISON")
     print("="*60)
-    
+
     print("\nBEFORE (Monolithic):")
     print("─" * 20)
     print("• All sources compiled into single target")
@@ -246,7 +243,7 @@ def demonstrate_before_after():
     print("• Hard to test individual components")
     print("• Code duplication between targets")
     print("• Unclear component boundaries")
-    
+
     print("\nAFTER (Modular):")
     print("─" * 15)
     print("• Components organized into logical modules")
@@ -261,7 +258,7 @@ def demonstrate_next_steps():
     print("\n" + "="*60)
     print("IMPLEMENTATION ROADMAP")
     print("="*60)
-    
+
     phases = [
         ("Phase 1", "Convert existing .c/.h files to module organization"),
         ("Phase 2", "Create automated dependency analysis"),
@@ -270,31 +267,31 @@ def demonstrate_next_steps():
         ("Phase 5", "Create build optimization and caching"),
         ("Phase 6", "Add continuous integration for modules"),
     ]
-    
+
     for phase, description in phases:
         print(f"{phase}: {description}")
-    
-    print(f"\nEstimated effort: 2-3 weeks for full implementation")
-    print(f"Risk level: Low (incremental changes to existing system)")
-    print(f"Benefits: High (maintainability, testability, build performance)")
+
+    print("\nEstimated effort: 2-3 weeks for full implementation")
+    print("Risk level: Low (incremental changes to existing system)")
+    print("Benefits: High (maintainability, testability, build performance)")
 
 def main():
     """Run the complete demonstration."""
     # Create the modular system
     registry = demonstrate_panda_modules()
-    
+
     # Show build targets
     demonstrate_build_targets(registry)
-    
+
     # Show benefits
     demonstrate_benefits()
-    
+
     # Show before/after
     demonstrate_before_after()
-    
+
     # Show implementation plan
     demonstrate_next_steps()
-    
+
     print(f"\n{'='*60}")
     print("DEMONSTRATION COMPLETE")
     print("="*60)
