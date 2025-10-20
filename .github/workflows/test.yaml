@@ -20,6 +20,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - run: ./setup.sh
       - name: Test python package installer
         run: ${{ env.RUN }} "pip install --break-system-packages .[dev]"
@@ -42,6 +45,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - run: ./test.sh
 
   misra_linter:
@@ -50,6 +56,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Cache cppcheck
         id: cppcheck-cache
         uses: actions/cache@v4
@@ -68,6 +77,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Cache cppcheck
         id: cppcheck-cache
         uses: actions/cache@v4

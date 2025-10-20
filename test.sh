@@ -11,7 +11,11 @@ source ./setup.sh
 scons -j8
 
 # *** lint ***
-ruff check .
+if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+  ruff check --format=github .
+else
+  ruff check .
+fi
 mypy python/
 
 
