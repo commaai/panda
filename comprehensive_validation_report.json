@@ -1,201 +1,201 @@
 {
-  "timestamp": 1760948256.7663352,
+  "timestamp": 1760950301.1403744,
   "overall_status": "TESTED",
   "test_results": {
     "PoC file exists: SConscript.modular": {
       "passed": true,
       "details": "",
-      "timestamp": 2.3126602172851562e-05
+      "timestamp": 2.7418136596679688e-05
     },
     "PoC file exists: demo_modular_system.py": {
       "passed": true,
       "details": "",
-      "timestamp": 3.266334533691406e-05
+      "timestamp": 3.6716461181640625e-05
     },
     "PoC file exists: test_modular_poc.py": {
       "passed": true,
       "details": "",
-      "timestamp": 3.8623809814453125e-05
+      "timestamp": 4.291534423828125e-05
     },
     "PoC functional test": {
       "passed": true,
       "details": "",
-      "timestamp": 0.052341461181640625
+      "timestamp": 0.0458216667175293
     },
     "PoC demonstration": {
       "passed": true,
       "details": "",
-      "timestamp": 0.09310531616210938
+      "timestamp": 0.0869295597076416
     },
     "Mapping file exists: dependency_analysis.py": {
       "passed": true,
       "details": "",
-      "timestamp": 0.093170166015625
+      "timestamp": 0.0869607925415039
     },
     "Mapping file exists: practical_dependency_mapping.py": {
       "passed": true,
       "details": "",
-      "timestamp": 0.09319448471069336
+      "timestamp": 0.08697032928466797
     },
     "Mapping file exists: practical_dependency_mapping.json": {
       "passed": true,
       "details": "",
-      "timestamp": 0.09321331977844238
+      "timestamp": 0.08697772026062012
     },
     "Reasonable module count": {
       "passed": true,
       "details": "Got 14 modules",
-      "timestamp": 0.11162900924682617
+      "timestamp": 0.10306715965270996
     },
     "Panda target defined": {
       "passed": true,
       "details": "",
-      "timestamp": 0.11165904998779297
+      "timestamp": 0.10309576988220215
     },
     "Jungle target defined": {
       "passed": true,
       "details": "",
-      "timestamp": 0.11166191101074219
+      "timestamp": 0.10309815406799316
     },
     "Build order for panda_h7": {
       "passed": true,
       "details": "Order: hal_stm32h7 -> core_system -> drivers_basic...",
-      "timestamp": 0.11166930198669434
+      "timestamp": 0.10310530662536621
     },
     "Build order for panda_jungle_h7": {
       "passed": true,
       "details": "Order: hal_stm32h7 -> core_system -> drivers_basic...",
-      "timestamp": 0.11167383193969727
+      "timestamp": 0.10310959815979004
     },
     "Incremental file exists: modules/module_registry.py": {
       "passed": true,
       "details": "",
-      "timestamp": 0.11170220375061035
+      "timestamp": 0.1031339168548584
     },
     "Incremental file exists: SConscript.incremental": {
       "passed": true,
       "details": "",
-      "timestamp": 0.11171078681945801
+      "timestamp": 0.10314178466796875
     },
     "Incremental file exists: validate_incremental.py": {
       "passed": true,
       "details": "",
-      "timestamp": 0.11172318458557129
+      "timestamp": 0.10315513610839844
     },
     "Incremental validation": {
       "passed": true,
       "details": "",
-      "timestamp": 0.1792590618133545
+      "timestamp": 0.1740889549255371
     },
     "Module registry basic function": {
       "passed": true,
       "details": "",
-      "timestamp": 0.18090128898620605
+      "timestamp": 0.17667746543884277
     },
     "Directory exists: board": {
       "passed": true,
       "details": "",
-      "timestamp": 0.1809215545654297
+      "timestamp": 0.17671561241149902
     },
     "Directory exists: board/drivers": {
       "passed": true,
       "details": "",
-      "timestamp": 0.18092894554138184
+      "timestamp": 0.1767277717590332
     },
     "Directory exists: board/stm32h7": {
       "passed": true,
       "details": "",
-      "timestamp": 0.18093395233154297
+      "timestamp": 0.17673635482788086
     },
     "Directory exists: board/jungle": {
       "passed": true,
       "details": "",
-      "timestamp": 0.1809380054473877
+      "timestamp": 0.1767435073852539
     },
     "Directory exists: crypto": {
       "passed": true,
       "details": "",
-      "timestamp": 0.18094325065612793
+      "timestamp": 0.17675256729125977
     },
     "Directory exists: modules": {
       "passed": true,
       "details": "",
-      "timestamp": 0.18094682693481445
+      "timestamp": 0.1767594814300537
     },
     "Key file exists: board/main.c": {
       "passed": true,
       "details": "",
-      "timestamp": 0.1809537410736084
+      "timestamp": 0.17676997184753418
     },
     "Key file exists: board/jungle/main.c": {
       "passed": true,
       "details": "",
-      "timestamp": 0.18095922470092773
+      "timestamp": 0.17677855491638184
     },
     "Key file exists: board/bootstub.c": {
       "passed": true,
       "details": "",
-      "timestamp": 0.18096375465393066
+      "timestamp": 0.17678618431091309
     },
     "Key file exists: crypto/rsa.c": {
       "passed": true,
       "details": "",
-      "timestamp": 0.1809678077697754
+      "timestamp": 0.17679381370544434
     },
     "Key file exists: crypto/sha.c": {
       "passed": true,
       "details": "",
-      "timestamp": 0.18097233772277832
+      "timestamp": 0.1768021583557129
     },
     "Modular system files exist": {
       "passed": true,
       "details": "",
-      "timestamp": 0.18099308013916016
+      "timestamp": 0.17683672904968262
     },
     "Legacy system preserved": {
       "passed": true,
       "details": "",
-      "timestamp": 0.18099451065063477
+      "timestamp": 0.17683959007263184
     },
     "Systems coexist properly": {
       "passed": true,
       "details": "",
-      "timestamp": 0.18099594116210938
+      "timestamp": 0.17684173583984375
     },
     "Report exists: dependency_report.json": {
       "passed": true,
       "details": "",
-      "timestamp": 0.18100357055664062
+      "timestamp": 0.17685461044311523
     },
     "Valid JSON: dependency_report.json": {
       "passed": true,
       "details": "",
-      "timestamp": 0.18133974075317383
+      "timestamp": 0.17748451232910156
     },
     "Report exists: practical_dependency_mapping.json": {
       "passed": true,
       "details": "",
-      "timestamp": 0.1813511848449707
+      "timestamp": 0.177506685256958
     },
     "Valid JSON: practical_dependency_mapping.json": {
       "passed": true,
       "details": "",
-      "timestamp": 0.18151354789733887
+      "timestamp": 0.17777681350708008
     },
     "Script documented: demo_modular_system.py": {
       "passed": true,
       "details": "",
-      "timestamp": 0.18161249160766602
+      "timestamp": 0.17794227600097656
     },
     "Script documented: practical_dependency_mapping.py": {
       "passed": true,
       "details": "",
-      "timestamp": 0.18172574043273926
+      "timestamp": 0.17810392379760742
     },
     "Script documented: validate_incremental.py": {
       "passed": true,
       "details": "",
-      "timestamp": 0.18182134628295898
+      "timestamp": 0.17833757400512695
     }
   },
   "analysis": {
