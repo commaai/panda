@@ -1,0 +1,49 @@
+{
+  "timestamp": 1760948261.0888915,
+  "snapshot_id": "snapshot_1760948261_validation",
+  "description": "Pre-validation snapshot",
+  "files_backup": "/home/dholzric/projects/comma/openpilot/panda/.modular_migration_safety/backups/snapshot_1760948261_validation.tar.gz",
+  "build_configs": {
+    "SConscript": {
+      "exists": true,
+      "size": 4595,
+      "mtime": 1760939878.8360155,
+      "hash": "8b9828b28e91068f561d9b9111fb726bae8ec87df077e57459fc8fc52d6099e9"
+    },
+    "SConscript.modular": {
+      "exists": true,
+      "size": 13048,
+      "mtime": 1760943963.2314365,
+      "hash": "939a6489d08539078dd7456e84bccef56a32c9b32c5e2d0a12b57feefe7ad1ff"
+    },
+    "SConstruct": {
+      "exists": true,
+      "size": 443,
+      "mtime": 1760939878.8360155,
+      "hash": "6486f31d367821d797101cb1665d7bb96a945c95cd1b1b9e7319807921fbff56"
+    },
+    "module_registry": {
+      "exists": true,
+      "hash": "2fd285440f7f88aea14e63aa3eaa1306dc74dae4c9d19b846ba9a610560a5160"
+    }
+  },
+  "environment_state": {
+    "PATH": "/home/dholzric/.local/bin:/home/dholzric/.cargo/bin:/home/dholzric:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
+    "PYTHONPATH": "",
+    "CC": "",
+    "CXX": "",
+    "CFLAGS": "",
+    "CXXFLAGS": "",
+    "RELEASE": "",
+    "DEBUG": "",
+    "CERT": ""
+  },
+  "build_outputs": {},
+  "validation_results": {
+    "file_exists_SConscript": true,
+    "file_exists_board/main.c": true,
+    "file_exists_crypto/rsa.c": true,
+    "sconscript_parseable": true
+  },
+  "migration_stage": "validation"
+}

@@ -1,0 +1,105 @@
+{
+  "timestamp": 1760948081.008977,
+  "tests": {
+    "crypto_directory_exists": {
+      "passed": true,
+      "details": "Directory: /home/dholzric/projects/comma/openpilot/panda/modules/crypto",
+      "timestamp": 1760948081.009053
+    },
+    "file_exists_SConscript": {
+      "passed": true,
+      "details": "File: /home/dholzric/projects/comma/openpilot/panda/modules/crypto/SConscript",
+      "timestamp": 1760948081.0090926
+    },
+    "file_exists_rsa.c": {
+      "passed": true,
+      "details": "File: /home/dholzric/projects/comma/openpilot/panda/modules/crypto/rsa.c",
+      "timestamp": 1760948081.0091228
+    },
+    "file_exists_sha.c": {
+      "passed": true,
+      "details": "File: /home/dholzric/projects/comma/openpilot/panda/modules/crypto/sha.c",
+      "timestamp": 1760948081.009146
+    },
+    "file_exists_rsa.h": {
+      "passed": true,
+      "details": "File: /home/dholzric/projects/comma/openpilot/panda/modules/crypto/rsa.h",
+      "timestamp": 1760948081.0091653
+    },
+    "file_exists_sha.h": {
+      "passed": true,
+      "details": "File: /home/dholzric/projects/comma/openpilot/panda/modules/crypto/sha.h",
+      "timestamp": 1760948081.009189
+    },
+    "file_exists_hash-internal.h": {
+      "passed": true,
+      "details": "File: /home/dholzric/projects/comma/openpilot/panda/modules/crypto/hash-internal.h",
+      "timestamp": 1760948081.009209
+    },
+    "file_exists_README.md": {
+      "passed": true,
+      "details": "File: /home/dholzric/projects/comma/openpilot/panda/modules/crypto/README.md",
+      "timestamp": 1760948081.0092273
+    },
+    "file_exists_sign.py": {
+      "passed": true,
+      "details": "File: /home/dholzric/projects/comma/openpilot/panda/modules/crypto/sign.py",
+      "timestamp": 1760948081.0092452
+    },
+    "isolation_compile": {
+      "passed": true,
+      "details": "Compiled successfully",
+      "timestamp": 1760948081.1338923
+    },
+    "isolation_execution": {
+      "passed": true,
+      "details": "SHA-1 test completed\nRSA structure test completed\n",
+      "timestamp": 1760948081.1351147
+    },
+    "module_registry_integration": {
+      "passed": true,
+      "details": "Registered module: test_crypto\n\u2713 Module registration successful\n\u2713 Module retrieval successful: test_crypto\n\u2713 Build order: ['test_crypto']\n\u2713 All module dependencies validated\n\u2713 Dependency validation successful\nSUCCESS\n",
+      "timestamp": 1760948081.2022502
+    },
+    "sha1_functional_equivalence": {
+      "passed": false,
+      "details": "Expected: 0a0a9f2a6772942557ab5355d76af442f8f65e01, Got: COMPILE_FAILED",
+      "timestamp": 1760948081.3006706
+    },
+    "readme_exists": {
+      "passed": true,
+      "details": "Size: 6363 chars",
+      "timestamp": 1760948081.3010142
+    },
+    "readme_has_overview": {
+      "passed": true,
+      "details": "",
+      "timestamp": 1760948081.3010235
+    },
+    "readme_has_api_docs": {
+      "passed": true,
+      "details": "",
+      "timestamp": 1760948081.3010275
+    },
+    "readme_has_usage": {
+      "passed": true,
+      "details": "",
+      "timestamp": 1760948081.3010306
+    },
+    "sconscript_documented": {
+      "passed": true,
+      "details": "",
+      "timestamp": 1760948081.3011904
+    },
+    "build_system_integration": {
+      "passed": true,
+      "details": "\u2713 Module registry import successful\n\u2713 Crypto module structure complete\nSUCCESS\n",
+      "timestamp": 1760948081.3551533
+    }
+  },
+  "summary": {
+    "passed": 18,
+    "failed": 1,
+    "total": 19
+  }
+}

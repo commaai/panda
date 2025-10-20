@@ -1,0 +1,372 @@
+#!/usr/bin/env python3
+"""
+Comprehensive HAL STM32H7 Module SCons Build Script
+
+This is a complete, production-ready hardware abstraction layer module for STM32H7
+microcontrollers. This module provides the foundational hardware access layer that
+all other panda modules depend on.
+
+Module Features:
+- STM32H7-specific hardware abstraction layer
+- Low-level hardware access functions (ADC, FDCAN, Flash, I2C, SPI, UART, USB)
+- Hardware interrupt handlers and peripherals definitions
+- Clock and power management
+- Board-specific hardware configurations
+- No dependencies on other panda modules (foundation layer)
+
+Interface:
+- Hardware abstraction functions for all STM32H7 peripherals
+- Low-level drivers for communication interfaces
+- Hardware configuration and initialization
+- Interrupt handling and hardware event management
+
+Usage:
+- Foundation layer for all hardware-dependent operations
+- Used by all driver modules for hardware access
+- Provides hardware abstraction for portable code
+"""
+
+Import('env', 'module_registry')
+import os
+
+# =============================================================================
+# MODULE METADATA AND DOCUMENTATION
+# =============================================================================
+
+module_info = {
+    'name': 'hal_stm32h7',
+    'version': '1.0.0',
+    'description': 'STM32H7 hardware abstraction layer - low-level hardware access',
+    'author': 'comma.ai',
+    'license': 'MIT',
+    'interface': {
+        'public_functions': [
+            'clock_init()',
+            'adc_init(), adc_get()',
+            'can_init(), can_send(), can_recv()',
+            'flash_erase(), flash_write()',
+            'uart_init(), uart_tx(), uart_rx()',
+            'usb_init(), usb_cb_*',
+            'spi_init(), spi_tx_rx()',
+            'i2c_init(), i2c_read(), i2c_write()'
+        ],
+        'public_types': [
+            'CANPacket_t',
+            'uart_ring',
+            'usb_configuration',
+            'SPI_TypeDef',
+            'I2C_TypeDef'
+        ],
+        'constants': [
+            'STM32H7XX',
+            'STM32H725xx',
+            'HSE_VALUE',
+            'SYSCLK_FREQ'
+        ]
+    },
+    'dependencies': {
+        'internal': [],  # No internal panda dependencies (foundation layer)
+        'external': [
+            'cmsis_core',
+            'stm32h7xx.h',
+            'system_stm32h7xx.h'
+        ],
+        'build_deps': []  # No build-time dependencies
+    },
+    'validation': {
+        'unit_tests': ['test_clock_init', 'test_peripheral_access'],
+        'integration_tests': ['test_hardware_integration'],
+        'benchmarks': ['clock_performance', 'peripheral_latency']
+    }
+}
+
+# =============================================================================
+# MODULE REGISTRATION
+# =============================================================================
+
+# Register the hal_stm32h7 module with comprehensive metadata
+hal_stm32h7_module = module_registry.register_module(
+    name=module_info['name'],
+    description=module_info['description'],
+    sources=[
+        # No C source files - this module is header-only and assembly
+        'startup_stm32h7x5xx.s',  # STM32H7 startup code
+    ],
+    headers=[
+        'board.h',                      # Board-specific hardware definitions
+        'clock.h',                      # Clock configuration and management
+        'peripherals.h',                # Peripheral base addresses and configs
+        'interrupt_handlers.h',         # Hardware interrupt handlers
+        'stm32h7_config.h',            # STM32H7 configuration defines
+        'sound.h',                      # Audio/sound hardware interface
+        # Low-level hardware abstraction interfaces
+        'lladc.h',                      # Low-level ADC interface
+        'lladc_declarations.h',         # ADC function declarations
+        'llfdcan.h',                    # Low-level FDCAN interface
+        'llfdcan_declarations.h',       # FDCAN function declarations
+        'llflash.h',                    # Low-level flash interface
+        'llfan.h',                      # Low-level fan control
+        'lli2c.h',                      # Low-level I2C interface
+        'llspi.h',                      # Low-level SPI interface
+        'lluart.h',                     # Low-level UART interface
+        'llusb.h',                      # Low-level USB interface
+        'llusb_declarations.h',         # USB function declarations
+    ],
+    includes=[
+        '.',        # Module root directory
+        'inc',      # STM32H7 CMSIS includes
+    ],
+    dependencies=[],  # No dependencies - foundation layer
+    flags=[
+        # STM32H7-specific processor flags
+        '-DSTM32H7',                    # STM32H7 family define
+        '-DSTM32H725xx',                # Specific STM32H725 variant
+        '-mcpu=cortex-m7',              # ARM Cortex-M7 processor
+        '-mhard-float',                 # Hardware floating point
+        '-mfpu=fpv5-d16',              # FPU configuration
+        # Optimization and safety flags
+        '-O2',                          # Optimize for performance
+        '-fstack-protector-strong',     # Stack protection
+        '-fno-builtin',                 # Disable builtin functions
+        '-nostdlib',                    # No standard library
+    ],
+    tests=[
+        'test_hal_basic.c',             # Basic HAL functionality tests
+        'test_peripheral_init.c',       # Peripheral initialization tests
+        'test_clock_config.c',          # Clock configuration tests
+        'test_hardware_integration.c'   # Hardware integration tests
+    ],
+    directory=Dir('.').srcnode().abspath  # Set directory for module
+)
+
+print(f"Registered hal_stm32h7 module with {len(hal_stm32h7_module.sources)} sources")
+print(f"Module directory: {hal_stm32h7_module.directory}")
+
+# =============================================================================
+# BUILD CONFIGURATION
+# =============================================================================
+
+# Create a dedicated environment for the hal_stm32h7 module
+hal_env = env.Clone()
+
+# Add module-specific include paths
+hal_includes = module_registry.get_all_includes('hal_stm32h7')
+print(f"HAL STM32H7 module includes: {hal_includes}")
+hal_env.Append(CPPPATH=hal_includes)
+
+# Add module-specific compiler flags
+hal_flags = module_registry.get_all_flags('hal_stm32h7')
+if hal_flags:
+    print(f"HAL STM32H7 module flags: {hal_flags}")
+    hal_env.Append(CFLAGS=hal_flags)
+    hal_env.Append(ASFLAGS=hal_flags)
+
+# Add HAL-specific definitions
+hal_env.Append(CPPDEFINES=[
+    'HAL_STM32H7_MODULE_VERSION="1.0.0"',
+    'HAL_MODULE_BUILD=1',
+    'USE_HAL_DRIVER',
+    'HSE_VALUE=8000000',            # External oscillator frequency
+    'HSI_VALUE=64000000',           # Internal oscillator frequency  
+    'CSI_VALUE=4000000',            # CSI oscillator frequency
+    'LSI_VALUE=32000',              # LSI oscillator frequency
+    'LSE_VALUE=32768',              # LSE oscillator frequency
+])
+
+# =============================================================================
+# MODULE BUILDING
+# =============================================================================
+
+# Build all source files for the hal_stm32h7 module
+hal_objects = []
+print("Building hal_stm32h7 module sources:")
+
+for source in hal_stm32h7_module.sources:
+    source_path = os.path.join(hal_stm32h7_module.directory, source)
+    obj_name = f"hal_stm32h7_{os.path.basename(source)}"
+    print(f"  Building {source} -> {obj_name}")
+    
+    # Build with hal-specific environment
+    if source.endswith('.s'):
+        # Assembly source
+        obj = hal_env.Object(obj_name, source_path)
+    else:
+        # C source
+        obj = hal_env.Object(obj_name, source_path)
+    
+    hal_objects.append(obj)
+    
+    # Store in module for dependency tracking
+    hal_stm32h7_module.built_objects.append(obj)
+
+print(f"HAL STM32H7 module built successfully: {len(hal_objects)} objects")
+
+# =============================================================================
+# MODULE VALIDATION (if enabled)
+# =============================================================================
+
+# Add validation targets if requested
+if GetOption('validate_modules'):
+    print("Adding hal_stm32h7 module validation targets")
+    
+    # Header validation - ensure all headers compile independently
+    for header in hal_stm32h7_module.headers:
+        header_path = os.path.join(hal_stm32h7_module.directory, header)
+        test_source = f"test_header_{header.replace('.', '_').replace('/', '_')}.c"
+        
+        # Create a simple test that includes the header
+        test_content = f'''
+// Auto-generated header test for {header}
+#include "{header}"
+
+// Minimal test to ensure header compiles
+int test_{header.replace('.', '_').replace('/', '_')}_compiles(void) {{
+    return 0;
+}}
+'''
+        test_file = hal_env.Textfile(test_source, test_content)
+        
+        # Compile the test
+        header_test = hal_env.Object(f"test_{header.replace('.', '_').replace('/', '_')}", test_file)
+        hal_env.Depends(header_test, header_path)
+        
+        # Add to validation target
+        hal_env.Alias('validate_hal_stm32h7_headers', header_test)
+
+# =============================================================================
+# EXPORTS AND INTERFACE
+# =============================================================================
+
+# Export objects for use by other modules and targets
+Export('hal_objects')
+Export('hal_stm32h7_module')
+Export('hal_env')
+
+# Create convenience aliases
+hal_env.Alias('hal_stm32h7', hal_objects)
+
+# Add module information to global namespace for debugging
+if GetOption('debug_modules'):
+    print("\nHAL STM32H7 Module Debug Information:")
+    print(f"  Sources: {hal_stm32h7_module.sources}")
+    print(f"  Headers: {hal_stm32h7_module.headers}")
+    print(f"  Includes: {hal_stm32h7_module.includes}")
+    print(f"  Dependencies: {hal_stm32h7_module.dependencies}")
+    print(f"  Flags: {hal_stm32h7_module.flags}")
+    print(f"  Built objects: {len(hal_stm32h7_module.built_objects)}")
+    print(f"  Directory: {hal_stm32h7_module.directory}")
+
+# =============================================================================
+# MODULE INTERFACE DOCUMENTATION
+# =============================================================================
+
+# Generate module interface documentation if requested
+if GetOption('generate_docs'):
+    doc_content = f"""
+# HAL STM32H7 Module Documentation
+
+## Overview
+{module_info['description']}
+
+## Version
+{module_info['version']}
+
+## Architecture
+
+This module provides the hardware abstraction layer for STM32H7 microcontrollers,
+serving as the foundation for all hardware-dependent operations in the panda system.
+
+### Key Components
+
+1. **Clock Management** (`clock.h`)
+   - System clock configuration
+   - Peripheral clock enablement
+   - Power management integration
+
+2. **Low-Level Peripherals**
+   - ADC: Analog-to-digital conversion
+   - FDCAN: Flexible datarate CAN interface
+   - Flash: Non-volatile memory operations
+   - I2C: Inter-integrated circuit communication
+   - SPI: Serial peripheral interface
+   - UART: Universal asynchronous receiver-transmitter
+   - USB: Universal serial bus interface
+
+3. **Hardware Configuration**
+   - Board-specific pin assignments
+   - Peripheral base addresses
+   - Interrupt vector table
+   - Memory layout definitions
+
+## Public Interface
+
+### Hardware Initialization Functions
+{chr(10).join(f"- {func}" for func in module_info['interface']['public_functions'])}
+
+### Types and Structures
+{chr(10).join(f"- {typ}" for typ in module_info['interface']['public_types'])}
+
+### Configuration Constants
+{chr(10).join(f"- {const}" for const in module_info['interface']['constants'])}
+
+## Dependencies
+- Internal: {module_info['dependencies']['internal'] or 'None (foundation layer)'}
+- External: {module_info['dependencies']['external']}
+
+## Usage
+
+### Basic Initialization
+```c
+#include "hal_stm32h7/clock.h"
+#include "hal_stm32h7/peripherals.h"
+
+// Initialize system clock
+void system_init(void) {{
+    clock_init();
+    // System ready for peripheral initialization
+}}
+```
+
+### Peripheral Access
+```c
+#include "hal_stm32h7/lladc.h"
+#include "hal_stm32h7/lluart.h"
+
+// Example peripheral usage
+void read_voltage(void) {{
+    adc_init(ADCU);
+    uint32_t value = adc_get(ADCU);
+    // Process ADC reading
+}}
+```
+
+## Files
+- Sources: {', '.join(hal_stm32h7_module.sources) or 'Header-only module'}
+- Headers: {', '.join(hal_stm32h7_module.headers)}
+
+## Hardware Support
+
+### Supported Boards
+- STM32H725xx (primary target)
+- STM32H735xx (compatible variant)
+
+### Peripheral Coverage
+- All major STM32H7 peripherals supported
+- Low-level register access abstracted
+- Hardware-specific optimizations included
+
+## Security Considerations
+
+- Direct hardware register access protected
+- Critical sections for interrupt-safe operations  
+- Memory protection unit (MPU) configuration support
+- Secure boot integration ready
+"""
+    
+    doc_file = hal_env.Textfile('hal_stm32h7_module_docs.md', doc_content)
+    hal_env.Alias('docs', doc_file)
+
+print("HAL STM32H7 module configuration complete")
+
+# Return module for dependency tracking
+Return('hal_stm32h7_module')

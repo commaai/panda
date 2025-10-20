@@ -1,0 +1,390 @@
+#!/usr/bin/env python3
+"""
+Modular Build System PoC for Panda Project
+
+This file demonstrates a modular approach to organizing and building
+the panda firmware components. It introduces:
+
+1. Module-based organization with clear dependencies
+2. Reusable component definitions
+3. Target-specific builds from shared modules
+4. Clear separation of concerns
+
+Key concepts:
+- Modules: Self-contained components with defined interfaces
+- Dependencies: Explicit dependency declarations between modules
+- Targets: Final artifacts built from modules (panda_h7, jungle_h7, etc.)
+"""
+
+import os
+import opendbc
+import subprocess
+
+PREFIX = "arm-none-eabi-"
+BUILDER = "DEV"
+
+# Build configuration
+common_flags = []
+if os.getenv("RELEASE"):
+    BUILD_TYPE = "RELEASE"
+    cert_fn = os.getenv("CERT")
+    assert cert_fn is not None, 'No certificate file specified. Please set CERT env variable'
+    assert os.path.exists(cert_fn), 'Certificate file not found. Please specify absolute path'
+else:
+    BUILD_TYPE = "DEBUG"
+    cert_fn = File("./certs/debug").srcnode().relpath
+    common_flags += ["-DALLOW_DEBUG"]
+    if os.getenv("DEBUG"):
+        common_flags += ["-DDEBUG"]
+
+def objcopy(source, target, env, for_signature):
+    return '$OBJCOPY -O binary %s %s' % (source[0], target[0])
+
+def get_version(builder, build_type):
+    try:
+        git = subprocess.check_output(["git", "rev-parse", "--short=8", "HEAD"], encoding='utf8').strip()
+    except subprocess.CalledProcessError:
+        git = "unknown"
+    return f"{builder}-{git}-{build_type}"
+
+def get_key_header(name):
+    from Crypto.PublicKey import RSA
+    
+    public_fn = File(f'./certs/{name}.pub').srcnode().get_path()
+    with open(public_fn) as f:
+        rsa = RSA.importKey(f.read())
+    assert(rsa.size_in_bits() == 1024)
+    
+    rr = pow(2**1024, 2, rsa.n)
+    n0inv = 2**32 - pow(rsa.n, -1, 2**32)
+    
+    r = [
+        f"RSAPublicKey {name}_rsa_key = {{",
+        f"  .len = 0x20,",
+        f"  .n0inv = {n0inv}U,",
+        f"  .n = {to_c_uint32(rsa.n)},",
+        f"  .rr = {to_c_uint32(rr)},",
+        f"  .exponent = {rsa.e},",
+        f"}};",
+    ]
+    return r
+
+def to_c_uint32(x):
+    nums = []
+    for _ in range(0x20):
+        nums.append(x % (2**32))
+        x //= (2**32)
+    return "{" + 'U,'.join(map(str, nums)) + "U}"
+
+# =============================================================================
+# MODULE SYSTEM
+# =============================================================================
+
+class Module:
+    """
+    Represents a buildable module with sources, dependencies, and configuration.
+    """
+    def __init__(self, name, sources=None, includes=None, dependencies=None, 
+                 flags=None, description=""):
+        self.name = name
+        self.sources = sources or []
+        self.includes = includes or []
+        self.dependencies = dependencies or []
+        self.flags = flags or []
+        self.description = description
+        self.built_objects = []
+    
+    def __str__(self):
+        return f"Module({self.name})"
+    
+    def __repr__(self):
+        return self.__str__()
+
+class ModuleRegistry:
+    """
+    Central registry for all modules in the system.
+    """
+    def __init__(self):
+        self.modules = {}
+        self.build_cache = {}
+    
+    def register(self, module):
+        """Register a module in the system."""
+        if module.name in self.modules:
+            raise ValueError(f"Module {module.name} already registered")
+        self.modules[module.name] = module
+        return module
+    
+    def get(self, name):
+        """Get a module by name."""
+        if name not in self.modules:
+            raise ValueError(f"Module {name} not found")
+        return self.modules[name]
+    
+    def get_dependencies(self, module_name):
+        """Get all dependencies for a module (including transitive)."""
+        visited = set()
+        result = []
+        
+        def _collect(name):
+            if name in visited:
+                return
+            visited.add(name)
+            module = self.get(name)
+            for dep in module.dependencies:
+                _collect(dep)
+                if dep not in result:
+                    result.append(dep)
+        
+        _collect(module_name)
+        return result
+    
+    def build_module(self, env, module_name, project_dir):
+        """Build a module and all its dependencies."""
+        if module_name in self.build_cache:
+            return self.build_cache[module_name]
+        
+        module = self.get(module_name)
+        objects = []
+        
+        # Build dependencies first
+        for dep_name in module.dependencies:
+            dep_objects = self.build_module(env, dep_name, project_dir)
+            objects.extend(dep_objects)
+        
+        # Build this module's sources
+        for source in module.sources:
+            obj = env.Object(f"{project_dir}/{module.name}_{os.path.basename(source)}", source)
+            objects.append(obj)
+            module.built_objects.append(obj)
+        
+        self.build_cache[module_name] = objects
+        return objects
+
+# Global module registry
+registry = ModuleRegistry()
+
+# =============================================================================
+# CORE MODULES DEFINITION (PoC with 3 representative modules)
+# =============================================================================
+
+# Core system module - represents low-level system functionality
+core_system = registry.register(Module(
+    name="core_system",
+    sources=[
+        "./board/stm32h7/clock.h",  # Using header as placeholder for this PoC
+        "./board/early_init.h",
+    ],
+    includes=[
+        "./board",
+        "./board/stm32h7",
+        "./board/stm32h7/inc",
+    ],
+    description="Core system initialization and low-level hardware abstraction"
+))
+
+# Driver module - represents hardware drivers
+drivers = registry.register(Module(
+    name="drivers",
+    sources=[
+        "./board/drivers/fan.h",
+        "./board/drivers/led.h",
+        "./board/drivers/uart.h",
+    ],
+    includes=[
+        "./board/drivers",
+    ],
+    dependencies=["core_system"],
+    description="Hardware abstraction layer drivers"
+))
+
+# Safety module - represents safety-critical functionality
+safety = registry.register(Module(
+    name="safety",
+    sources=[
+        "./board/health.h",
+        "./board/can_comms.h",
+    ],
+    includes=[
+        "./board",
+        "./opendbc/safety",
+    ],
+    dependencies=["drivers"],
+    description="Safety-critical CAN communication and health monitoring"
+))
+
+# =============================================================================
+# TARGET DEFINITIONS
+# =============================================================================
+
+def build_modular_target(target_name, platform_config, main_source, required_modules, extra_flags=None):
+    """
+    Build a target using the modular system.
+    
+    Args:
+        target_name: Name of the target (e.g., "panda_h7")
+        platform_config: Platform-specific configuration
+        main_source: Main source file for the target
+        required_modules: List of module names required for this target
+        extra_flags: Additional compiler flags
+    """
+    print(f"Building modular target: {target_name}")
+    
+    project_dir = Dir(f'./board/obj/{target_name}/')
+    extra_flags = extra_flags or []
+    
+    # Prepare build environment
+    flags = platform_config["FLAGS"] + extra_flags + common_flags + [
+        "-Wall", "-Wextra", "-Wstrict-prototypes", "-Werror",
+        "-mlittle-endian", "-mthumb", "-nostdlib", "-fno-builtin",
+        "-std=gnu11", "-fmax-errors=1",
+        f"-T{File(platform_config['LINKER_SCRIPT']).srcnode().relpath}",
+        "-fsingle-precision-constant", "-Os", "-g",
+    ]
+    
+    env = Environment(
+        ENV=os.environ,
+        CC=PREFIX + 'gcc',
+        AS=PREFIX + 'gcc',
+        OBJCOPY=PREFIX + 'objcopy',
+        OBJDUMP=PREFIX + 'objdump',
+        OBJPREFIX=project_dir,
+        CFLAGS=flags,
+        ASFLAGS=flags,
+        LINKFLAGS=flags,
+        CPPPATH=[Dir("./"), "./board/stm32h7/inc", opendbc.INCLUDE_PATH],
+        ASCOM="$AS $ASFLAGS -o $TARGET -c $SOURCES",
+        BUILDERS={'Objcopy': Builder(generator=objcopy, suffix='.bin', src_suffix='.elf')},
+        tools=["default", "compilation_db"],
+    )
+    
+    # Build all required modules
+    all_objects = []
+    for module_name in required_modules:
+        module_objects = registry.build_module(env, module_name, project_dir)
+        all_objects.extend(module_objects)
+    
+    # Add startup file
+    startup = env.Object(platform_config["STARTUP_FILE"])
+    all_objects.append(startup)
+    
+    # Build bootstub (shared across targets)
+    bs_env = env.Clone()
+    bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
+    bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", [
+        startup,
+        "./crypto/rsa.c",
+        "./crypto/sha.c", 
+        "./board/bootstub.c",
+    ])
+    bs_env.Objcopy(f"./board/obj/bootstub.{target_name}.bin", bs_elf)
+    
+    # Build main application
+    main_elf = env.Program(f"{project_dir}/main.elf", [
+        startup,
+        main_source
+    ] + all_objects, LINKFLAGS=[f"-Wl,--section-start,.isr_vector={platform_config['APP_START_ADDRESS']}"] + flags)
+    
+    main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
+    sign_py = File(f"./crypto/sign.py").srcnode().relpath
+    env.Command(f"./board/obj/{target_name}.bin.signed", main_bin, 
+                f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
+    
+    return env
+
+# =============================================================================
+# PLATFORM CONFIGURATIONS
+# =============================================================================
+
+base_project_h7 = {
+    "STARTUP_FILE": "./board/stm32h7/startup_stm32h7x5xx.s",
+    "LINKER_SCRIPT": "./board/stm32h7/stm32h7x5_flash.ld",
+    "APP_START_ADDRESS": "0x8020000",
+    "FLAGS": [
+        "-mcpu=cortex-m7", "-mhard-float", "-DSTM32H7", "-DSTM32H725xx",
+        "-Iboard/stm32h7/inc", "-mfpu=fpv5-d16",
+    ],
+}
+
+# =============================================================================
+# AUTO-GENERATED FILES (shared)
+# =============================================================================
+
+# Generate version and certificate headers
+with open("board/obj/gitversion.h", "w") as f:
+    version = get_version(BUILDER, BUILD_TYPE)
+    f.write(f'extern const uint8_t gitversion[{len(version)}];\n')
+    f.write(f'const uint8_t gitversion[{len(version)}] = "{version}";\n')
+
+with open("board/obj/version", "w") as f:
+    f.write(f'{get_version(BUILDER, BUILD_TYPE)}')
+
+certs = [get_key_header(n) for n in ["debug", "release"]]
+with open("board/obj/cert.h", "w") as f:
+    for cert in certs:
+        f.write("\n".join(cert) + "\n")
+
+# =============================================================================
+# TARGET BUILDS (PoC)
+# =============================================================================
+
+# Build standard panda firmware
+panda_env = build_modular_target(
+    target_name="panda_h7_modular",
+    platform_config=base_project_h7,
+    main_source="./board/main.c",
+    required_modules=["safety"],  # This pulls in drivers and core_system transitively
+    extra_flags=[]
+)
+
+# Build jungle firmware (demonstrates different module requirements)
+jungle_flags = ["-DPANDA_JUNGLE"]
+if os.getenv("FINAL_PROVISIONING"):
+    jungle_flags += ["-DFINAL_PROVISIONING"]
+
+jungle_env = build_modular_target(
+    target_name="panda_jungle_h7_modular", 
+    platform_config=base_project_h7,
+    main_source="./board/jungle/main.c",
+    required_modules=["safety"],  # Same modules as panda for this PoC
+    extra_flags=jungle_flags
+)
+
+# =============================================================================
+# MODULE DEPENDENCY ANALYSIS (for validation)
+# =============================================================================
+
+def print_module_info():
+    """Print information about the modular build system."""
+    print("\n" + "="*60)
+    print("MODULAR BUILD SYSTEM - PoC ANALYSIS")
+    print("="*60)
+    
+    print(f"\nRegistered Modules ({len(registry.modules)}):")
+    for name, module in registry.modules.items():
+        deps = registry.get_dependencies(name)
+        print(f"  {name}")
+        print(f"    Description: {module.description}")
+        print(f"    Sources: {len(module.sources)} files")
+        print(f"    Direct deps: {module.dependencies}")
+        print(f"    All deps: {deps}")
+        print()
+    
+    print("Dependency Graph:")
+    for name, module in registry.modules.items():
+        print(f"  {name} -> {module.dependencies}")
+    
+    print("\nBuild Order (example for safety module):")
+    deps = registry.get_dependencies("safety")
+    print(f"  {' -> '.join(deps + ['safety'])}")
+    
+    print("\n" + "="*60)
+
+# Print analysis when building
+print_module_info()
+
+# Test dependencies at build time
+if GetOption('extras'):
+    SConscript('tests/libpanda/SConscript')
+
+print(f"\nModular PoC build completed. Check board/obj/*_modular/ for outputs.")

@@ -1,0 +1,452 @@
+{
+  "modules": {
+    "hal_stm32h7": {
+      "description": "STM32H7 hardware abstraction layer - low-level hardware access",
+      "files": [
+        "board/stm32h7/clock.h",
+        "board/stm32h7/peripherals.h",
+        "board/stm32h7/lladc.h",
+        "board/stm32h7/lladc_declarations.h",
+        "board/stm32h7/llfdcan.h",
+        "board/stm32h7/llfdcan_declarations.h",
+        "board/stm32h7/llflash.h",
+        "board/stm32h7/llfan.h",
+        "board/stm32h7/lli2c.h",
+        "board/stm32h7/llspi.h",
+        "board/stm32h7/lluart.h",
+        "board/stm32h7/llusb.h",
+        "board/stm32h7/llusb_declarations.h",
+        "board/stm32h7/interrupt_handlers.h",
+        "board/stm32h7/board.h",
+        "board/stm32h7/sound.h",
+        "board/stm32h7/stm32h7_config.h",
+        "board/stm32h7/startup_stm32h7x5xx.s"
+      ],
+      "dependencies": [],
+      "includes": [
+        "board/stm32h7",
+        "board/stm32h7/inc"
+      ],
+      "flags": [
+        "-DSTM32H7",
+        "-mcpu=cortex-m7"
+      ],
+      "target_specific": false
+    },
+    "core_system": {
+      "description": "Core system initialization and basic utilities",
+      "files": [
+        "board/early_init.h",
+        "board/config.h",
+        "board/libc.h",
+        "board/utils.h",
+        "board/crc.h",
+        "board/critical.h",
+        "board/critical_declarations.h",
+        "board/fake_stm.h"
+      ],
+      "dependencies": [
+        "hal_stm32h7"
+      ],
+      "includes": [
+        "board"
+      ],
+      "flags": [],
+      "target_specific": false
+    },
+    "drivers_basic": {
+      "description": "Basic hardware drivers - GPIO, LED, timers, PWM",
+      "files": [
+        "board/drivers/gpio.h",
+        "board/drivers/led.h",
+        "board/drivers/timers.h",
+        "board/drivers/pwm.h",
+        "board/drivers/registers.h",
+        "board/drivers/registers_declarations.h",
+        "board/drivers/interrupts.h",
+        "board/drivers/interrupts_declarations.h",
+        "board/drivers/clock_source.h",
+        "board/drivers/clock_source_declarations.h"
+      ],
+      "dependencies": [
+        "core_system"
+      ],
+      "includes": [
+        "board/drivers"
+      ],
+      "flags": [],
+      "target_specific": false
+    },
+    "drivers_comm": {
+      "description": "Communication drivers - UART, USB, SPI",
+      "files": [
+        "board/drivers/uart.h",
+        "board/drivers/uart_declarations.h",
+        "board/drivers/usb.h",
+        "board/drivers/usb_declarations.h",
+        "board/drivers/spi.h",
+        "board/drivers/spi_declarations.h"
+      ],
+      "dependencies": [
+        "drivers_basic"
+      ],
+      "includes": [
+        "board/drivers"
+      ],
+      "flags": [],
+      "target_specific": false
+    },
+    "drivers_can": {
+      "description": "CAN bus drivers and communication",
+      "files": [
+        "board/drivers/fdcan.h",
+        "board/drivers/fdcan_declarations.h",
+        "board/drivers/can_common.h",
+        "board/drivers/can_common_declarations.h"
+      ],
+      "dependencies": [
+        "drivers_comm"
+      ],
+      "includes": [
+        "board/drivers"
+      ],
+      "flags": [],
+      "target_specific": false
+    },
+    "drivers_monitoring": {
+      "description": "System monitoring and control drivers",
+      "files": [
+        "board/drivers/fan.h",
+        "board/drivers/fan_declarations.h",
+        "board/drivers/harness.h",
+        "board/drivers/harness_declarations.h",
+        "board/drivers/simple_watchdog.h",
+        "board/drivers/simple_watchdog_declarations.h",
+        "board/drivers/bootkick.h",
+        "board/drivers/bootkick_declarations.h",
+        "board/drivers/fake_siren.h"
+      ],
+      "dependencies": [
+        "drivers_basic"
+      ],
+      "includes": [
+        "board/drivers"
+      ],
+      "flags": [],
+      "target_specific": false
+    },
+    "safety": {
+      "description": "Safety-critical functionality and monitoring",
+      "files": [
+        "board/health.h",
+        "board/faults.h",
+        "board/faults_declarations.h"
+      ],
+      "dependencies": [
+        "drivers_can",
+        "drivers_monitoring"
+      ],
+      "includes": [
+        "board",
+        "opendbc/safety"
+      ],
+      "flags": [],
+      "target_specific": false
+    },
+    "communication": {
+      "description": "High-level communication protocols",
+      "files": [
+        "board/can_comms.h",
+        "board/can.h",
+        "board/main_comms.h",
+        "board/comms_definitions.h"
+      ],
+      "dependencies": [
+        "safety"
+      ],
+      "includes": [
+        "board"
+      ],
+      "flags": [],
+      "target_specific": false
+    },
+    "power_management": {
+      "description": "Power saving and management functionality",
+      "files": [
+        "board/power_saving.h",
+        "board/power_saving_declarations.h"
+      ],
+      "dependencies": [
+        "drivers_monitoring"
+      ],
+      "includes": [
+        "board"
+      ],
+      "flags": [],
+      "target_specific": false
+    },
+    "board_support": {
+      "description": "Board-specific configurations and support",
+      "files": [
+        "board/boards/board_declarations.h",
+        "board/boards/tres.h",
+        "board/boards/cuatro.h",
+        "board/boards/red.h",
+        "board/boards/unused_funcs.h"
+      ],
+      "dependencies": [
+        "core_system"
+      ],
+      "includes": [
+        "board/boards"
+      ],
+      "flags": [],
+      "target_specific": false
+    },
+    "crypto": {
+      "description": "Cryptographic functions for secure boot and signing",
+      "files": [
+        "crypto/rsa.h",
+        "crypto/rsa.c",
+        "crypto/sha.h",
+        "crypto/sha.c",
+        "crypto/hash-internal.h"
+      ],
+      "dependencies": [
+        "core_system"
+      ],
+      "includes": [
+        "crypto"
+      ],
+      "flags": [],
+      "target_specific": false
+    },
+    "bootloader": {
+      "description": "Bootloader and firmware update functionality",
+      "files": [
+        "board/bootstub.c",
+        "board/bootstub_declarations.h",
+        "board/flasher.h",
+        "board/provision.h"
+      ],
+      "dependencies": [
+        "crypto",
+        "core_system"
+      ],
+      "includes": [
+        "board"
+      ],
+      "flags": [],
+      "target_specific": false
+    },
+    "panda_main": {
+      "description": "Main panda application entry point and logic",
+      "files": [
+        "board/main.c",
+        "board/main_declarations.h",
+        "board/main_definitions.h"
+      ],
+      "dependencies": [
+        "communication",
+        "power_management",
+        "board_support"
+      ],
+      "includes": [
+        "board"
+      ],
+      "flags": [],
+      "target_specific": true
+    },
+    "jungle_main": {
+      "description": "Jungle-specific application logic",
+      "files": [
+        "board/jungle/main.c",
+        "board/jungle/main_comms.h",
+        "board/jungle/jungle_health.h",
+        "board/jungle/boards/board_declarations.h",
+        "board/jungle/boards/board_v2.h",
+        "board/jungle/stm32h7/board.h"
+      ],
+      "dependencies": [
+        "communication",
+        "power_management"
+      ],
+      "includes": [
+        "board/jungle"
+      ],
+      "flags": [
+        "-DPANDA_JUNGLE"
+      ],
+      "target_specific": true
+    }
+  },
+  "targets": {
+    "panda_h7": {
+      "description": "Main panda firmware for STM32H7",
+      "main_module": "panda_main",
+      "build_order": [
+        "hal_stm32h7",
+        "core_system",
+        "drivers_basic",
+        "drivers_comm",
+        "drivers_can",
+        "drivers_monitoring",
+        "safety",
+        "communication",
+        "power_management",
+        "board_support",
+        "panda_main"
+      ],
+      "required_modules": [
+        "hal_stm32h7",
+        "core_system",
+        "drivers_basic",
+        "drivers_comm",
+        "drivers_can",
+        "drivers_monitoring",
+        "safety",
+        "communication",
+        "power_management",
+        "board_support",
+        "panda_main"
+      ],
+      "platform_flags": [
+        "-DSTM32H7",
+        "-DSTM32H725xx"
+      ],
+      "linker_script": "board/stm32h7/stm32h7x5_flash.ld",
+      "startup_file": "board/stm32h7/startup_stm32h7x5xx.s"
+    },
+    "panda_jungle_h7": {
+      "description": "Jungle firmware for STM32H7",
+      "main_module": "jungle_main",
+      "build_order": [
+        "hal_stm32h7",
+        "core_system",
+        "drivers_basic",
+        "drivers_comm",
+        "drivers_can",
+        "drivers_monitoring",
+        "safety",
+        "communication",
+        "power_management",
+        "jungle_main"
+      ],
+      "required_modules": [
+        "hal_stm32h7",
+        "core_system",
+        "drivers_basic",
+        "drivers_comm",
+        "drivers_can",
+        "drivers_monitoring",
+        "safety",
+        "communication",
+        "power_management",
+        "jungle_main"
+      ],
+      "platform_flags": [
+        "-DSTM32H7",
+        "-DSTM32H725xx",
+        "-DPANDA_JUNGLE"
+      ],
+      "linker_script": "board/stm32h7/stm32h7x5_flash.ld",
+      "startup_file": "board/stm32h7/startup_stm32h7x5xx.s"
+    }
+  },
+  "statistics": {
+    "total_modules": 14,
+    "total_files": 87,
+    "target_specific_modules": 2,
+    "shared_modules": 12,
+    "max_dependency_depth": 11,
+    "dependency_graph": {
+      "hal_stm32h7": {
+        "dependencies": [],
+        "depth": 1
+      },
+      "core_system": {
+        "dependencies": [
+          "hal_stm32h7"
+        ],
+        "depth": 2
+      },
+      "drivers_basic": {
+        "dependencies": [
+          "core_system"
+        ],
+        "depth": 3
+      },
+      "drivers_comm": {
+        "dependencies": [
+          "drivers_basic"
+        ],
+        "depth": 4
+      },
+      "drivers_can": {
+        "dependencies": [
+          "drivers_comm"
+        ],
+        "depth": 5
+      },
+      "drivers_monitoring": {
+        "dependencies": [
+          "drivers_basic"
+        ],
+        "depth": 4
+      },
+      "safety": {
+        "dependencies": [
+          "drivers_can",
+          "drivers_monitoring"
+        ],
+        "depth": 7
+      },
+      "communication": {
+        "dependencies": [
+          "safety"
+        ],
+        "depth": 8
+      },
+      "power_management": {
+        "dependencies": [
+          "drivers_monitoring"
+        ],
+        "depth": 5
+      },
+      "board_support": {
+        "dependencies": [
+          "core_system"
+        ],
+        "depth": 3
+      },
+      "crypto": {
+        "dependencies": [
+          "core_system"
+        ],
+        "depth": 3
+      },
+      "bootloader": {
+        "dependencies": [
+          "crypto",
+          "core_system"
+        ],
+        "depth": 4
+      },
+      "panda_main": {
+        "dependencies": [
+          "communication",
+          "power_management",
+          "board_support"
+        ],
+        "depth": 11
+      },
+      "jungle_main": {
+        "dependencies": [
+          "communication",
+          "power_management"
+        ],
+        "depth": 10
+      }
+    }
+  }
+}
