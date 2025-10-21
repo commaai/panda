@@ -2,19 +2,17 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <limits.h>
 
 #include "board/can.h"
 #include "board/health.h"
-
-#include "board/body/boards/motor_control.h"
-#include "board/critical_declarations.h"
+#include "board/body/motor_control.h"
 #include "board/drivers/can_common_declarations.h"
 #include "board/main_declarations.h"
 
 #define BODY_CAN_ADDR_TARGET_RPM           0x600U
 #define BODY_CAN_ADDR_MOTOR_SPEED          0x201U
 #define BODY_CAN_MOTOR_SPEED_PERIOD_US     10000U
+#define BODY_BUS_NUMBER                 0U
 
 typedef struct {
   volatile bool pending;
@@ -31,7 +29,7 @@ static body_can_command_t body_can_command = {
 static bool generated_can_traffic = false;
 
 static inline bool body_can_bus_ready(uint8_t bus) {
-  if (bus >= PANDA_CAN_CNT) {
+  if (bus != 0U) {
     return false;
   }
   uint8_t can_number = CAN_NUM_FROM_BUS_NUM(bus);
@@ -86,12 +84,8 @@ void body_can_safety_rx(const CANPacket_t *msg) {
 
 void body_can_init(void) {
   body_can_command.pending = false;
-  body_can_command.motor = 0;
-  body_can_command.target_deci_rpm = 0;
-
   can_silent = false;
   can_loopback = false;
-  current_board->set_can_mode(CAN_MODE_NORMAL);
   current_board->enable_can_transceiver(1, true);
   can_init_all();
 }
@@ -104,18 +98,9 @@ void body_can_periodic(uint32_t now) {
     body_can_command.pending = false;
     motor = body_can_command.motor;
     target_deci_rpm = body_can_command.target_deci_rpm;
-  } else {
-    motor = 0;
-    target_deci_rpm = 0;
-  }
-
-  if (motor != 0) {
     float target_rpm = ((float)target_deci_rpm) * 0.1f;
     motor_speed_controller_set_target_rpm(motor, target_rpm);
   }
-
-  float target_rpm = ((float)target_deci_rpm) * 0.1f;
-  motor_speed_controller_set_target_rpm(motor, target_rpm);
 
   static uint32_t last_motor_speed_tx_us = 0;
   bool first_update = (last_motor_speed_tx_us == 0);

@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
+
 #include "board/config.h"
 #include "board/main_declarations.h"
 #include "board/drivers/interrupts_declarations.h"
@@ -7,14 +8,11 @@
 #include "board/drivers/pwm.h"
 #include "board/drivers/usb.h"
 #include "board/early_init.h"
-#include "board/provision.h"
 #include "board/comms_definitions.h"
 #include "board/faults_declarations.h"
 #include "board/obj/gitversion.h"
-#include "board/body/boards/motor_control.h"
-
+#include "board/body/motor_control.h"
 #include "board/body/can.h"
-
 #include "opendbc/safety/safety.h"
 #include "board/drivers/can_common.h"
 #include "board/drivers/fdcan.h"
@@ -47,7 +45,7 @@ void tick_handler(void) {
     if (generated_can_traffic) {
       for (int i = 0; i < 3; i++) {
         if (can_health[i].transmit_error_cnt >= 128) {
-          //(void)llcan_init(CANIF_FROM_CAN_NUM(i));
+          (void)llcan_init(CANIF_FROM_CAN_NUM(i));
         }
       }
       generated_can_traffic = false;

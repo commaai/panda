@@ -36,11 +36,7 @@ void pwm_init(TIM_TypeDef *TIM, uint8_t channel){
 }
 
 void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage){
-  uint32_t period = TIM->ARR;
-  if (period == 0U) {
-    period = PWM_COUNTER_OVERFLOW;
-  }
-  uint16_t comp_value = (uint16_t)((((uint32_t)percentage) * period) / 100U);
+  uint16_t comp_value = (((uint16_t) percentage * PWM_COUNTER_OVERFLOW) / 100U);
   switch(channel){
     case 1U:
       register_set(&(TIM->CCR1), comp_value, 0xFFFFU);
