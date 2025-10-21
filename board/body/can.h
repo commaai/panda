@@ -89,7 +89,7 @@ void body_can_init(void) {
   body_can_command.motor = 0;
   body_can_command.target_deci_rpm = 0;
 
-  can_silent = true;
+  can_silent = false;
   can_loopback = false;
   current_board->set_can_mode(CAN_MODE_NORMAL);
   current_board->enable_can_transceiver(1, true);

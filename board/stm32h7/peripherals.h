@@ -39,22 +39,12 @@ void common_init_gpio(void) {
 
   gpio_usb_init();
 
-  // Configure FDCAN1 pins
-#ifdef PANDA_BODY
-  // Body board: PD0 (RX), PD1 (TX)
-  set_gpio_pullup(GPIOD, 0, PULL_NONE);
-  set_gpio_alternate(GPIOD, 0, GPIO_AF9_FDCAN1);
-
-  set_gpio_pullup(GPIOD, 1, PULL_NONE);
-  set_gpio_alternate(GPIOD, 1, GPIO_AF9_FDCAN1);
-#else
-  // Default: PB8 (RX), PB9 (TX)
+  // B8,B9: FDCAN1
   set_gpio_pullup(GPIOB, 8, PULL_NONE);
   set_gpio_alternate(GPIOB, 8, GPIO_AF9_FDCAN1);
 
   set_gpio_pullup(GPIOB, 9, PULL_NONE);
   set_gpio_alternate(GPIOB, 9, GPIO_AF9_FDCAN1);
-#endif
 
   // B5,B6 (mplex to B12,B13): FDCAN2
   set_gpio_pullup(GPIOB, 12, PULL_NONE);

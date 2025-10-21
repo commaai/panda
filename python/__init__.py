@@ -117,7 +117,7 @@ class Panda:
   HW_TYPE_RED_PANDA = b'\x07'
   HW_TYPE_TRES = b'\x09'
   HW_TYPE_CUATRO = b'\x0a'
-  HW_TYPE_BODY = b'\xb0'
+  HW_TYPE_BODY = b'\xb1'
 
   CAN_PACKET_VERSION = 4
   HEALTH_PACKET_VERSION = 17

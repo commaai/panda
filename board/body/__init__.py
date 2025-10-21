@@ -3,9 +3,7 @@ import struct
 
 from panda import Panda
 
-
 class PandaBody(Panda):
-  SUPPORTED_DEVICES = (Panda.HW_TYPE_BODY,)
 
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)

@@ -22,21 +22,22 @@
 
 extern int _app_start[0xc000];
 
-typedef struct uart_ring uart_ring;
-
 #include "board/body/main_comms.h"
 
 void debug_ring_callback(uart_ring *ring) {
-  (void)ring;
-}
-
-void __initialize_hardware_early(void) {
-  early_initialization();
+  char rcv;
+  while (get_char(ring, &rcv)) {
+    (void)injectc(ring, rcv);
+  }
 }
 
 void __attribute__ ((noinline)) enable_fpu(void) {
-  // enable the FPU
   SCB->CPACR |= ((3UL << (10U * 2U)) | (3UL << (11U * 2U)));
+}
+
+void __initialize_hardware_early(void) {
+  enable_fpu();
+  early_initialization();
 }
 
 volatile uint32_t tick_count = 0;
@@ -46,7 +47,7 @@ void tick_handler(void) {
     if (generated_can_traffic) {
       for (int i = 0; i < 3; i++) {
         if (can_health[i].transmit_error_cnt >= 128) {
-          (void)llcan_init(CANIF_FROM_CAN_NUM(i));
+          //(void)llcan_init(CANIF_FROM_CAN_NUM(i));
         }
       }
       generated_can_traffic = false;
@@ -61,8 +62,8 @@ void tick_handler(void) {
 }
 
 int main(void) {
-  init_interrupts(true);
   disable_interrupts();
+  init_interrupts(true);
 
   clock_init();
   peripherals_init();
@@ -71,18 +72,14 @@ int main(void) {
   hw_type = HW_TYPE_BODY;
 
   current_board->init();
-
-  // we have an FPU, let's use it!
-  enable_fpu();
+  
+  REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK);
 
   led_init();
   microsecond_timer_init();
-  REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK);
   tick_timer_init();
-
-  body_can_init();
-
   usb_init();
+  body_can_init();
 
   enable_interrupts();
 
