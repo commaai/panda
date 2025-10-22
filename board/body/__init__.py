@@ -8,11 +8,6 @@ class PandaBody(Panda):
   MOTOR_LEFT: int = 1
   MOTOR_RIGHT: int = 2
 
-  def __init__(self, *args, **kwargs):
-    super().__init__(*args, **kwargs)
-    if self.get_type() not in PandaBody.SUPPORTED_DEVICES:
-      raise ValueError("connected device is not a body panda")
-
   # ****************** Motor Control *****************
   @staticmethod
   def _ensure_valid_motor(motor: int) -> None:
