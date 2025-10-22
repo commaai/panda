@@ -8,6 +8,9 @@
 #include "board/body/motor_control.h"
 #include "board/drivers/can_common_declarations.h"
 
+#define BODY_CAN_ADDR_TARGET_RPM       0x600U
+#define BODY_CAN_ADDR_MOTOR_SPEED      0x201U
+#define BODY_CAN_MOTOR_SPEED_PERIOD_US 10000U
 #define BODY_BUS_NUMBER                 0U
 
 static struct {
