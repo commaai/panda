@@ -2,14 +2,10 @@
 #include <stdbool.h>
 
 #include "board/config.h"
-#include "board/main_declarations.h"
-#include "board/drivers/interrupts_declarations.h"
 #include "board/drivers/led.h"
 #include "board/drivers/pwm.h"
 #include "board/drivers/usb.h"
 #include "board/early_init.h"
-#include "board/comms_definitions.h"
-#include "board/faults_declarations.h"
 #include "board/obj/gitversion.h"
 #include "board/body/motor_control.h"
 #include "board/body/can.h"
@@ -43,14 +39,11 @@ volatile uint32_t tick_count = 0;
 void tick_handler(void) {
   if (TICK_TIMER->SR != 0) {
     if (generated_can_traffic) {
-      for (int i = 0; i < 3; i++) {
-        if (can_health[i].transmit_error_cnt >= 128) {
-          (void)llcan_init(CANIF_FROM_CAN_NUM(i));
-        }
+      if (can_health[BODY_BUS_NUMBER].transmit_error_cnt >= 128) {
+        (void)llcan_init(CANIF_FROM_CAN_NUM(BODY_BUS_NUMBER));
       }
       generated_can_traffic = false;
     }
-
     static bool led_on = false;
     led_set(LED_RED, led_on);
     led_on = !led_on;

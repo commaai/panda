@@ -3,29 +3,51 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "board/body/motor_common.h"
 #include "board/body/motor_encoder.h"
 
 // Motor pin map:
 // M1 drive: PB8 -> TIM16_CH1, PB9 -> TIM17_CH1, PE2/PE3 enables
 // M2 drive: PA2 -> TIM15_CH1, PA3 -> TIM15_CH2, PE8/PE9 enables
 
-// TIM15/16/17 are on APB2 running at 120 MHz on the body board
-#define MOTOR_PWM_TIMER_CLOCK_HZ 120000000U
-#define MOTOR_PWM_FREQUENCY_HZ 5000U
+#define PWM_TIMER_CLOCK_HZ 120000000U
+#define PWM_FREQUENCY_HZ 5000U
+#define PWM_PERCENT_MAX 100
+#define PWM_RELOAD_TICKS ((PWM_TIMER_CLOCK_HZ + (PWM_FREQUENCY_HZ / 2U)) / PWM_FREQUENCY_HZ)
 
-#define MOTOR_SPEED_CONTROL_KP 0.25f
-#define MOTOR_SPEED_CONTROL_KI 0.5f
-#define MOTOR_SPEED_CONTROL_KD 0.008f
-#define MOTOR_SPEED_CONTROL_KFF 0.9f
+#define KP                  0.25f
+#define KI                  0.5f
+#define KD                  0.008f
+#define KFF                 0.9f
+#define MAX_RPM      100.0f
+#define OUTPUT_MAX          100.0f
+#define DEADBAND_RPM        1.0f
+#define INTEGRAL_LIMIT      50.0f
+#define DERIVATIVE_MAX_RPMS 250.0f
+#define UPDATE_PERIOD_US    1000U
 
-#define MOTOR_SPEED_CONTROL_TARGET_MAX_RPM 100.0f
-#define MOTOR_SPEED_CONTROL_OUTPUT_MAX 100.0f
-#define MOTOR_SPEED_CONTROL_DEADBAND_RPM 1.0f
-
-#define MOTOR_SPEED_CONTROL_INTEGRAL_LIMIT 50.0f
-#define MOTOR_SPEED_CONTROL_DERIVATIVE_MAX_RPMS 250.0f
-
-#define MOTOR_SPEED_CONTROL_UPDATE_PERIOD_US 1000U
+static const struct {
+  TIM_TypeDef *forward_timer;
+  uint8_t forward_channel;
+  TIM_TypeDef *reverse_timer;
+  uint8_t reverse_channel;
+  GPIO_TypeDef *pwm_port[2];
+  uint8_t pwm_pin[2];
+  uint8_t pwm_af[2];
+  GPIO_TypeDef *enable_port[2];
+  uint8_t enable_pin[2];
+} motor_pwm_config[BODY_MOTOR_COUNT] = {
+  [BODY_MOTOR_LEFT - 1U] = {
+    TIM16, 1U, TIM17, 1U,
+    {GPIOB, GPIOB}, {8U, 9U}, {GPIO_AF1_TIM16, GPIO_AF1_TIM17},
+    {GPIOE, GPIOE}, {2U, 3U},
+  },
+  [BODY_MOTOR_RIGHT - 1U] = {
+    TIM15, 2U, TIM15, 1U,
+    {GPIOA, GPIOA}, {2U, 3U}, {GPIO_AF4_TIM15, GPIO_AF4_TIM15},
+    {GPIOE, GPIOE}, {8U, 9U},
+  },
+};
 
 typedef struct {
   bool active;
@@ -50,13 +72,10 @@ static inline float motor_clampf(float value, float min_value, float max_value) 
   return value;
 }
 
-static motor_speed_state_t motor_speed_states[2];
+static motor_speed_state_t motor_speed_states[BODY_MOTOR_COUNT];
 
 static inline motor_speed_state_t *motor_speed_state_get(uint8_t motor) {
-  if ((motor == 0U) || (motor > 2U)) {
-    return NULL;
-  }
-  return &motor_speed_states[motor - 1U];
+  return body_motor_is_valid(motor) ? &motor_speed_states[motor - 1U] : NULL;
 }
 
 static inline void motor_speed_state_reset(motor_speed_state_t *state) {
@@ -68,33 +87,8 @@ static inline void motor_speed_state_reset(motor_speed_state_t *state) {
   state->last_update_us = 0U;
 }
 
-static inline uint16_t motor_pwm_reload_value(void) {
-  uint32_t clock_hz = MOTOR_PWM_TIMER_CLOCK_HZ;
-  uint32_t target_hz = MOTOR_PWM_FREQUENCY_HZ;
-  if (target_hz == 0U) {
-    target_hz = 1U;
-  }
-
-  // Round to the nearest integer number of timer ticks per PWM period
-  uint32_t ticks_per_period = (clock_hz + (target_hz / 2U)) / target_hz;
-  if (ticks_per_period == 0U) {
-    ticks_per_period = 1U;
-  } else if (ticks_per_period > 0xFFFFU) {
-    ticks_per_period = 0xFFFFU;
-  }
-
-  return (uint16_t)ticks_per_period;
-}
-
-static inline void motor_pwm_apply_frequency(TIM_TypeDef *TIM) {
-  uint16_t reload = motor_pwm_reload_value();
-  register_set(&(TIM->PSC), 0U, 0xFFFFU);
-  register_set(&(TIM->ARR), (uint32_t)reload, 0xFFFFU);
-  TIM->EGR |= TIM_EGR_UG;
-}
-
 static void motor_speed_controller_init(void) {
-  for (uint8_t i = 0U; i < 2U; i++) {
+  for (uint8_t i = 0U; i < BODY_MOTOR_COUNT; i++) {
     motor_speed_state_reset(&motor_speed_states[i]);
   }
 }
@@ -107,82 +101,65 @@ static void motor_speed_controller_disable(uint8_t motor) {
   motor_speed_state_reset(state);
 }
 
+static inline void motor_write_enable(uint8_t motor_index, bool enable) {
+  const typeof(*motor_pwm_config) *cfg = &motor_pwm_config[motor_index];
+  uint8_t level = enable ? 1U : 0U;
+  set_gpio_output(cfg->enable_port[0], cfg->enable_pin[0], level);
+  set_gpio_output(cfg->enable_port[1], cfg->enable_pin[1], level);
+}
+
 static void motor_init(void) {
   register_set_bits(&(RCC->AHB4ENR), RCC_AHB4ENR_GPIOAEN | RCC_AHB4ENR_GPIOBEN | RCC_AHB4ENR_GPIOEEN);
   register_set_bits(&(RCC->APB2ENR), RCC_APB2ENR_TIM16EN | RCC_APB2ENR_TIM17EN | RCC_APB2ENR_TIM15EN);
 
-  set_gpio_output(GPIOE, 2U, 0);
-  set_gpio_output(GPIOE, 3U, 0);
-  set_gpio_output(GPIOE, 8U, 0);
-  set_gpio_output(GPIOE, 9U, 0);
+  for (uint8_t i = 0U; i < BODY_MOTOR_COUNT; i++) {
+    const typeof(*motor_pwm_config) *cfg = &motor_pwm_config[i];
+    motor_write_enable(i, false);
+    set_gpio_alternate(cfg->pwm_port[0], cfg->pwm_pin[0], cfg->pwm_af[0]);
+    set_gpio_alternate(cfg->pwm_port[1], cfg->pwm_pin[1], cfg->pwm_af[1]);
 
-  set_gpio_alternate(GPIOB, 8U, GPIO_AF1_TIM16);
-  set_gpio_alternate(GPIOB, 9U, GPIO_AF1_TIM17);
-  set_gpio_alternate(GPIOA, 2U, GPIO_AF4_TIM15);
-  set_gpio_alternate(GPIOA, 3U, GPIO_AF4_TIM15);
+    pwm_init(cfg->forward_timer, cfg->forward_channel);
+    register_set(&(cfg->forward_timer->PSC), 0U, 0xFFFFU);
+    register_set(&(cfg->forward_timer->ARR), PWM_RELOAD_TICKS, 0xFFFFU);
+    cfg->forward_timer->EGR |= TIM_EGR_UG;
+    register_set(&(cfg->forward_timer->BDTR), TIM_BDTR_MOE, 0xFFFFU);
 
-  pwm_init(TIM16, 1);
-  motor_pwm_apply_frequency(TIM16);
-  pwm_init(TIM17, 1);
-  motor_pwm_apply_frequency(TIM17);
-  pwm_init(TIM15, 1);
-  pwm_init(TIM15, 2);
-  motor_pwm_apply_frequency(TIM15);
-
-  // Advanced timers require MOE to drive outputs
-  register_set(&(TIM15->BDTR), TIM_BDTR_MOE, 0xFFFFU);
-  register_set(&(TIM16->BDTR), TIM_BDTR_MOE, 0xFFFFU);
-  register_set(&(TIM17->BDTR), TIM_BDTR_MOE, 0xFFFFU);
+    pwm_init(cfg->reverse_timer, cfg->reverse_channel);
+    if (cfg->reverse_timer != cfg->forward_timer) {
+      register_set(&(cfg->reverse_timer->PSC), 0U, 0xFFFFU);
+      register_set(&(cfg->reverse_timer->ARR), PWM_RELOAD_TICKS, 0xFFFFU);
+      cfg->reverse_timer->EGR |= TIM_EGR_UG;
+      register_set(&(cfg->reverse_timer->BDTR), TIM_BDTR_MOE, 0xFFFFU);
+    }
+  }
 }
 
 static void motor_apply_pwm(uint8_t motor, int32_t speed_command) {
-  if ((motor == 0U) || (motor > 2U)) {
+  if (!body_motor_is_valid(motor)) {
     return;
   }
 
-  if (speed_command > 100) {
-    speed_command = 100;
-  } else if (speed_command < -100) {
-    speed_command = -100;
-  }
-
-  int8_t speed = (int8_t)speed_command;
+  int8_t speed = (int8_t)motor_clampf((float)speed_command, -(float)PWM_PERCENT_MAX, (float)PWM_PERCENT_MAX);
   uint8_t pwm_value = (uint8_t)((speed < 0) ? -speed : speed);
+  uint8_t motor_index = motor - 1U;
+  const typeof(*motor_pwm_config) *cfg = &motor_pwm_config[motor_index];
+  TIM_TypeDef *forward_timer = cfg->forward_timer;
+  TIM_TypeDef *reverse_timer = cfg->reverse_timer;
+  uint8_t forward_channel = cfg->forward_channel;
+  uint8_t reverse_channel = cfg->reverse_channel;
 
-  if (motor == 1U) {
-    if (speed > 0) {
-      pwm_set(TIM16, 1, pwm_value);
-      pwm_set(TIM17, 1, 0);
-      set_gpio_output(GPIOE, 2U, 1);
-      set_gpio_output(GPIOE, 3U, 1);
-    } else if (speed < 0) {
-      pwm_set(TIM16, 1, 0);
-      pwm_set(TIM17, 1, pwm_value);
-      set_gpio_output(GPIOE, 2U, 1);
-      set_gpio_output(GPIOE, 3U, 1);
-    } else {
-      pwm_set(TIM16, 1, 0);
-      pwm_set(TIM17, 1, 0);
-      set_gpio_output(GPIOE, 2U, 0);
-      set_gpio_output(GPIOE, 3U, 0);
-    }
+  if (speed > 0) {
+    pwm_set(forward_timer, forward_channel, pwm_value);
+    pwm_set(reverse_timer, reverse_channel, 0U);
+    motor_write_enable(motor_index, true);
+  } else if (speed < 0) {
+    pwm_set(forward_timer, forward_channel, 0U);
+    pwm_set(reverse_timer, reverse_channel, pwm_value);
+    motor_write_enable(motor_index, true);
   } else {
-    if (speed > 0) {
-      pwm_set(TIM15, 2, pwm_value);
-      pwm_set(TIM15, 1, 0);
-      set_gpio_output(GPIOE, 8U, 1);
-      set_gpio_output(GPIOE, 9U, 1);
-    } else if (speed < 0) {
-      pwm_set(TIM15, 2, 0);
-      pwm_set(TIM15, 1, pwm_value);
-      set_gpio_output(GPIOE, 8U, 1);
-      set_gpio_output(GPIOE, 9U, 1);
-    } else {
-      pwm_set(TIM15, 1, 0);
-      pwm_set(TIM15, 2, 0);
-      set_gpio_output(GPIOE, 8U, 0);
-      set_gpio_output(GPIOE, 9U, 0);
-    }
+    pwm_set(forward_timer, forward_channel, 0U);
+    pwm_set(reverse_timer, reverse_channel, 0U);
+    motor_write_enable(motor_index, false);
   }
 }
 
@@ -197,8 +174,8 @@ static inline void motor_speed_controller_set_target_rpm(uint8_t motor, float ta
     return;
   }
 
-  target_rpm = motor_clampf(target_rpm, -MOTOR_SPEED_CONTROL_TARGET_MAX_RPM, MOTOR_SPEED_CONTROL_TARGET_MAX_RPM);
-  if (motor_absf(target_rpm) <= MOTOR_SPEED_CONTROL_DEADBAND_RPM) {
+  target_rpm = motor_clampf(target_rpm, -MAX_RPM, MAX_RPM);
+  if (motor_absf(target_rpm) <= DEADBAND_RPM) {
     motor_speed_controller_disable(motor);
     motor_apply_pwm(motor, 0);
     return;
@@ -213,48 +190,44 @@ static inline void motor_speed_controller_set_target_rpm(uint8_t motor, float ta
 }
 
 static inline void motor_speed_controller_update(uint32_t now_us) {
-  for (uint8_t motor = 1U; motor <= 2U; motor++) {
+  for (uint8_t motor = BODY_MOTOR_LEFT; motor <= BODY_MOTOR_RIGHT; motor++) {
     motor_speed_state_t *state = motor_speed_state_get(motor);
-    if ((state == NULL) || !state->active) {
+    if (!state->active) {
       continue;
     }
 
     bool first_update = (state->last_update_us == 0U);
-    uint32_t dt_us = first_update ? MOTOR_SPEED_CONTROL_UPDATE_PERIOD_US : (now_us - state->last_update_us);
-    if (!first_update && (dt_us < MOTOR_SPEED_CONTROL_UPDATE_PERIOD_US)) {
+    uint32_t dt_us = first_update ? UPDATE_PERIOD_US : (now_us - state->last_update_us);
+    if (!first_update && (dt_us < UPDATE_PERIOD_US)) {
       continue;
     }
 
     float measured_rpm = motor_encoder_get_speed_rpm(motor);
     float error = state->target_rpm - measured_rpm;
 
-    if ((motor_absf(state->target_rpm) <= MOTOR_SPEED_CONTROL_DEADBAND_RPM) &&
-        (motor_absf(error) <= MOTOR_SPEED_CONTROL_DEADBAND_RPM) &&
-        (motor_absf(measured_rpm) <= MOTOR_SPEED_CONTROL_DEADBAND_RPM)) {
+    if ((motor_absf(state->target_rpm) <= DEADBAND_RPM) && (motor_absf(error) <= DEADBAND_RPM) && (motor_absf(measured_rpm) <= DEADBAND_RPM)) {
       motor_speed_controller_disable(motor);
       motor_apply_pwm(motor, 0);
       continue;
     }
 
     float dt_s = (float)dt_us * 1.0e-6f;
-    float control = MOTOR_SPEED_CONTROL_KFF * state->target_rpm;
+    float control = KFF * state->target_rpm;
 
     if (dt_s > 0.0f) {
       state->integral += error * dt_s;
-      state->integral = motor_clampf(state->integral, -MOTOR_SPEED_CONTROL_INTEGRAL_LIMIT, MOTOR_SPEED_CONTROL_INTEGRAL_LIMIT);
+      state->integral = motor_clampf(state->integral, -INTEGRAL_LIMIT, INTEGRAL_LIMIT);
 
       float derivative = 0.0f;
       if (!first_update) {
         derivative = (error - state->previous_error) / dt_s;
-        derivative = motor_clampf(derivative, -MOTOR_SPEED_CONTROL_DERIVATIVE_MAX_RPMS, MOTOR_SPEED_CONTROL_DERIVATIVE_MAX_RPMS);
+        derivative = motor_clampf(derivative, -DERIVATIVE_MAX_RPMS, DERIVATIVE_MAX_RPMS);
       }
 
-      control += (MOTOR_SPEED_CONTROL_KP * error) +
-                 (MOTOR_SPEED_CONTROL_KI * state->integral) +
-                 (MOTOR_SPEED_CONTROL_KD * derivative);
+      control += (KP * error) + (KI * state->integral) + (KD * derivative);
     } else {
       state->integral = 0.0f;
-      control += MOTOR_SPEED_CONTROL_KP * error;
+      control += KP * error;
     }
 
     if ((state->target_rpm > 0.0f) && (control < 0.0f)) {
@@ -265,7 +238,7 @@ static inline void motor_speed_controller_update(uint32_t now_us) {
       state->integral = 0.0f;
     }
 
-    control = motor_clampf(control, -MOTOR_SPEED_CONTROL_OUTPUT_MAX, MOTOR_SPEED_CONTROL_OUTPUT_MAX);
+    control = motor_clampf(control, -OUTPUT_MAX, OUTPUT_MAX);
 
     int32_t command = (control >= 0.0f) ? (int32_t)(control + 0.5f) : (int32_t)(control - 0.5f);
     motor_apply_pwm(motor, command);

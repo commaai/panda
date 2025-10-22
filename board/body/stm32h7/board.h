@@ -6,5 +6,4 @@ extern uint8_t hw_type;
 
 void detect_board_type(void) {
   // Board type set explicitly in main()
-  // No GPIO detection required
 }

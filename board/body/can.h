@@ -7,33 +7,20 @@
 #include "board/health.h"
 #include "board/body/motor_control.h"
 #include "board/drivers/can_common_declarations.h"
-#include "board/main_declarations.h"
 
-#define BODY_CAN_ADDR_TARGET_RPM           0x600U
-#define BODY_CAN_ADDR_MOTOR_SPEED          0x201U
-#define BODY_CAN_MOTOR_SPEED_PERIOD_US     10000U
 #define BODY_BUS_NUMBER                 0U
 
-typedef struct {
-  volatile bool pending;
-  volatile uint8_t motor;
-  volatile int32_t target_deci_rpm;
-} body_can_command_t;
-
-static body_can_command_t body_can_command = {
-  .pending = false,
-  .motor = 0,
-  .target_deci_rpm = 0,
-};
+static struct {
+  bool pending;
+  uint8_t motor;
+  int32_t target_deci_rpm;
+} body_can_command;
 
 static bool generated_can_traffic = false;
 
 static inline bool body_can_bus_ready(uint8_t bus) {
-  if (bus != 0U) {
-    return false;
-  }
   uint8_t can_number = CAN_NUM_FROM_BUS_NUM(bus);
-  if (can_number >= PANDA_CAN_CNT) {
+  if (bus != 0U || can_number >= PANDA_CAN_CNT) {
     return false;
   }
   const can_health_t *health = &can_health[can_number];
@@ -73,7 +60,7 @@ void body_can_safety_rx(const CANPacket_t *msg) {
 
   if ((msg->addr == BODY_CAN_ADDR_TARGET_RPM) && (dlc_to_len[msg->data_len_code] >= 3U)) {
     uint8_t motor = msg->data[0];
-    if ((motor >= 1) && (motor <= 2)) {
+    if (body_motor_is_valid(motor)) {
       int16_t target_deci_rpm = (int16_t)((msg->data[2] << 8U) | msg->data[1]);
       body_can_command.motor = motor;
       body_can_command.target_deci_rpm = (int32_t)target_deci_rpm;
@@ -107,7 +94,7 @@ void body_can_periodic(uint32_t now) {
   if (first_update || ((uint32_t)(now - last_motor_speed_tx_us) >= BODY_CAN_MOTOR_SPEED_PERIOD_US)) {
     float left_speed_rpm = motor_encoder_get_speed_rpm(1);
     float right_speed_rpm = motor_encoder_get_speed_rpm(2);
-    bool sent = body_can_send_motor_speeds(0, left_speed_rpm, right_speed_rpm);
+    bool sent = body_can_send_motor_speeds(BODY_BUS_NUMBER, left_speed_rpm, right_speed_rpm);
     if (sent) {
       last_motor_speed_tx_us = now;
     }
