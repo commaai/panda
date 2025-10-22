@@ -19,8 +19,6 @@ static struct {
   int32_t target_deci_rpm;
 } body_can_command;
 
-static bool generated_can_traffic = false;
-
 static inline bool body_can_bus_ready(uint8_t bus) {
   uint8_t can_number = CAN_NUM_FROM_BUS_NUM(bus);
   if (bus != 0U || can_number >= PANDA_CAN_CNT) {
@@ -32,7 +30,6 @@ static inline bool body_can_bus_ready(uint8_t bus) {
 
 static inline bool body_can_send_motor_speeds(uint8_t bus, float left_speed_rpm, float right_speed_rpm) {
   if (!body_can_bus_ready(bus)) {
-    generated_can_traffic = true;
     return false;
   }
 
@@ -52,7 +49,6 @@ static inline bool body_can_send_motor_speeds(uint8_t bus, float left_speed_rpm,
   pkt.data[3] = (uint8_t)((right_speed_deci >> 8) & 0xFFU);
   can_set_checksum(&pkt);
   can_send(&pkt, bus, true);
-  generated_can_traffic = true;
   return true;
 }
 

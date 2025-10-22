@@ -38,12 +38,6 @@ volatile uint32_t tick_count = 0;
 
 void tick_handler(void) {
   if (TICK_TIMER->SR != 0) {
-    if (generated_can_traffic) {
-      if (can_health[BODY_BUS_NUMBER].transmit_error_cnt >= 128) {
-        (void)llcan_init(CANIF_FROM_CAN_NUM(BODY_BUS_NUMBER));
-      }
-      generated_can_traffic = false;
-    }
     static bool led_on = false;
     led_set(LED_RED, led_on);
     led_on = !led_on;
