@@ -72,7 +72,7 @@ void body_can_init(void) {
   body_can_command.pending = false;
   can_silent = false;
   can_loopback = false;
-  current_board->enable_can_transceiver(1, true);
+  set_gpio_output(GPIOD, 2U, 0); // Enable CAN transceiver
   can_init_all();
 }
 

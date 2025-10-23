@@ -14,10 +14,8 @@ struct board {
   const uint8_t led_pwm_channels[3]; // leave at 0 to disable PWM
   board_init init;
   board_init_bootloader init_bootloader;
-  board_enable_can_transceiver enable_can_transceiver;
   const bool has_spi;
 };
 
 // ******************* Definitions ********************
-#define HW_TYPE_UNKNOWN 0U
 #define HW_TYPE_BODY 0xB1U

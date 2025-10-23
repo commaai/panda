@@ -17,11 +17,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xd1:
       switch (req->param1) {
         case 0:
-#ifdef ALLOW_DEBUG
           print("-> entering bootloader\n");
           enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
           NVIC_SystemReset();
-#endif
           break;
         case 1:
           print("-> entering softloader\n");

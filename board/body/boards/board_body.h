@@ -14,16 +14,8 @@ void board_body_init(void) {
   set_gpio_alternate(GPIOD, 1, GPIO_AF9_FDCAN1);
 }
 
-void board_body_enable_can_transceiver(uint8_t transceiver, bool enabled) {
-  if (transceiver == 1U) {
-    set_gpio_output(GPIOD, 2U, !enabled);
-  }
-}
-
 board board_body = {
   .led_GPIO = {GPIOC, GPIOC, GPIOC},
   .led_pin = {7, 7, 7},
   .init = board_body_init,
-  .enable_can_transceiver = board_body_enable_can_transceiver,
-  .has_spi = false,
 };
