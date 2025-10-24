@@ -89,6 +89,14 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     }
 
+    // **** 0xdd: get healthpacket and CANPacket versions
+    case 0xdd:
+      resp[0] = HEALTH_PACKET_VERSION;
+      resp[1] = CAN_PACKET_VERSION;
+      resp[2] = CAN_HEALTH_PACKET_VERSION;
+      resp_len = 3U;
+      break;
+
     default:
       // Ignore unhandled requests
       break;
