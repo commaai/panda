@@ -111,10 +111,7 @@ static void BDMA_Channel0_IRQ_Handler(void) {
   sound_tick();
 }
 
-void sound_init(void) {
-  REGISTER_INTERRUPT(BDMA_Channel0_IRQn, BDMA_Channel0_IRQ_Handler, 128U, FAULT_INTERRUPT_RATE_SOUND_DMA)
-  REGISTER_INTERRUPT(DMA1_Stream0_IRQn, DMA1_Stream0_IRQ_Handler, 128U, FAULT_INTERRUPT_RATE_SOUND_DMA)
-
+void sound_init_dac(void) {
   // Init DAC
   DAC1->DHR12R1 = (1UL << 11);
   DAC1->DHR12R2 = (1UL << 11);
@@ -132,6 +129,26 @@ void sound_init(void) {
   register_set(&DMA1_Stream1->FCR, 0U, 0x00000083U);
   DMA1_Stream1->NDTR = SOUND_TX_BUF_SIZE;
   DMA1_Stream1->CR = DMA_SxCR_DBM | (0b11UL << DMA_SxCR_PL_Pos) | (0b01UL << DMA_SxCR_MSIZE_Pos) | (0b01UL << DMA_SxCR_PSIZE_Pos) | DMA_SxCR_MINC | (1U << DMA_SxCR_DIR_Pos);
+}
+
+static void sound_stop_dac(void) {
+  register_clear_bits(&BDMA_Channel0->CCR, BDMA_CCR_EN);
+  BDMA->IFCR = 0xFFFFFFFF;
+
+  register_clear_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
+  while (DMA1_Stream1->CR & DMA_SxCR_EN);
+  DMA1->LIFCR = 0x3F << 6;
+
+  register_clear_bits(&DAC1->CR, DAC_CR_EN1 | DAC_CR_EN2);
+  while (DAC1->CR & (DAC_CR_EN1 | DAC_CR_EN2));
+}
+
+void sound_init(void) {
+  REGISTER_INTERRUPT(BDMA_Channel0_IRQn, BDMA_Channel0_IRQ_Handler, 128U, FAULT_INTERRUPT_RATE_SOUND_DMA)
+  REGISTER_INTERRUPT(DMA1_Stream0_IRQn, DMA1_Stream0_IRQ_Handler, 128U, FAULT_INTERRUPT_RATE_SOUND_DMA)
+
+  // Init DAC and its DMA
+  sound_init_dac();
 
   // Init trigger timer (little slower than 48kHz, pulled in sync by SAI4_FS_B)
   register_set(&TIM5->PSC, 2600U, 0xFFFFU);
