@@ -9,7 +9,6 @@
 #include "board/drivers/can_common_declarations.h"
 #include "opendbc/safety/declarations.h"
 
-#define BODY_CAN_ADDR_TARGET_RPM       0x250U
 #define BODY_CAN_ADDR_MOTOR_SPEED      0x201U
 #define BODY_CAN_MOTOR_SPEED_PERIOD_US 10000U
 #define BODY_BUS_NUMBER                 0U
@@ -20,20 +19,7 @@ static struct {
   int32_t right_target_deci_rpm;
 } body_can_command;
 
-static inline bool body_can_bus_ready(uint8_t bus) {
-  uint8_t can_number = CAN_NUM_FROM_BUS_NUM(bus);
-  if (bus != 0U || can_number >= PANDA_CAN_CNT) {
-    return false;
-  }
-  const can_health_t *health = &can_health[can_number];
-  return (health->bus_off == 0U) && (health->transmit_error_cnt < 128U);
-}
-
-static inline bool body_can_send_motor_speeds(uint8_t bus, float left_speed_rpm, float right_speed_rpm) {
-  if (!body_can_bus_ready(bus)) {
-    return false;
-  }
-
+void body_can_send_motor_speeds(uint8_t bus, float left_speed_rpm, float right_speed_rpm) {
   CANPacket_t pkt;
   pkt.bus = bus;
   pkt.addr = BODY_CAN_ADDR_MOTOR_SPEED;
@@ -54,17 +40,12 @@ static inline bool body_can_send_motor_speeds(uint8_t bus, float left_speed_rpm,
   pkt.data[7] = 0U;
   can_set_checksum(&pkt);
   can_send(&pkt, bus, true);
-  return true;
 }
 
-void body_can_safety_rx(const CANPacket_t *msg) {
-  if ((msg != NULL) && (msg->addr == BODY_CAN_ADDR_TARGET_RPM) && (GET_LEN(msg) >= 4U)) {
-    int16_t left_target_deci_rpm = (int16_t)((msg->data[0] << 8U) | msg->data[1]);
-    int16_t right_target_deci_rpm = (int16_t)((msg->data[2] << 8U) | msg->data[3]);
-    body_can_command.left_target_deci_rpm = (int32_t)left_target_deci_rpm;
-    body_can_command.right_target_deci_rpm = (int32_t)right_target_deci_rpm;
-    body_can_command.pending = true;
-  }
+void body_can_process_target(int16_t left_target_deci_rpm, int16_t right_target_deci_rpm) {
+  body_can_command.left_target_deci_rpm = (int32_t)left_target_deci_rpm;
+  body_can_command.right_target_deci_rpm = (int32_t)right_target_deci_rpm;
+  body_can_command.pending = true;
 }
 
 void body_can_init(void) {
@@ -86,13 +67,10 @@ void body_can_periodic(uint32_t now) {
   }
 
   static uint32_t last_motor_speed_tx_us = 0;
-  bool first_update = (last_motor_speed_tx_us == 0);
-  if (first_update || ((uint32_t)(now - last_motor_speed_tx_us) >= BODY_CAN_MOTOR_SPEED_PERIOD_US)) {
+  if ((now - last_motor_speed_tx_us) >= BODY_CAN_MOTOR_SPEED_PERIOD_US) {
     float left_speed_rpm = motor_encoder_get_speed_rpm(BODY_MOTOR_LEFT);
     float right_speed_rpm = motor_encoder_get_speed_rpm(BODY_MOTOR_RIGHT);
-    bool sent = body_can_send_motor_speeds(BODY_BUS_NUMBER, left_speed_rpm, right_speed_rpm);
-    if (sent) {
-      last_motor_speed_tx_us = now;
-    }
+    body_can_send_motor_speeds(BODY_BUS_NUMBER, left_speed_rpm, right_speed_rpm);
+    last_motor_speed_tx_us = now;
   }
 }

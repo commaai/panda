@@ -1,9 +1,5 @@
 #include "fdcan_declarations.h"
 
-#ifdef PANDA_BODY
-void body_can_safety_rx(const CANPacket_t *msg);
-#endif
-
 FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT] = {FDCAN1, FDCAN2, FDCAN3};
 
 static bool can_set_speed(uint8_t can_number) {
@@ -220,9 +216,6 @@ void can_rx(uint8_t can_number) {
     }
 
     safety_rx_invalid += safety_rx_hook(&to_push) ? 0U : 1U;
-#ifdef PANDA_BODY
-    body_can_safety_rx(&to_push);
-#endif
     ignition_can_hook(&to_push);
 
     led_set(LED_BLUE, true);

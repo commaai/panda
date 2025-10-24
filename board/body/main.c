@@ -38,6 +38,9 @@ volatile uint32_t tick_count = 0;
 
 void tick_handler(void) {
   if (TICK_TIMER->SR != 0) {
+    if (can_health[0].transmit_error_cnt >= 128) {
+      (void)llcan_init(CANIF_FROM_CAN_NUM(0));
+    }
     static bool led_on = false;
     led_set(LED_RED, led_on);
     led_on = !led_on;
