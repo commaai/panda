@@ -13,6 +13,7 @@ ROOT = os.path.join(HERE, "../../")
 IGNORED_PATHS = (
   'board/obj',
   'board/jungle',
+  'board/body',
   'board/stm32h7/inc',
   'board/fake_stm.h',
 
