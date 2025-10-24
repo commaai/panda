@@ -102,6 +102,7 @@ void fake_siren_set(bool enabled) {
       current_board->set_amp_enabled(true);
       register_set_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
     } else {
+      current_board->set_amp_enabled(false);
       // Stop modified 8-bit DAC and start normal 12-bit DAC
       sound_stop_dac();
       sound_init_dac();
