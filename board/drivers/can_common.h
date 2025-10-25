@@ -156,7 +156,7 @@ void can_set_forwarding(uint8_t from, uint8_t to) {
 #endif
 
 void ignition_can_hook(CANPacket_t *msg) {
-  if (msg->bus == 2U) {
+  if (msg->bus == 0U || msg->bus == 2U) {
     int len = GET_LEN(msg);
 
     // Body exception
