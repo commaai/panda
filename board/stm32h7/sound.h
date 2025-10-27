@@ -7,8 +7,11 @@ __attribute__((section(".sram4"))) static uint16_t sound_tx_buf[2][SOUND_TX_BUF_
 __attribute__((section(".sram4"))) static uint32_t mic_rx_buf[2][MIC_RX_BUF_SIZE];
 
 #define SOUND_IDLE_TIMEOUT 4U
+#define MIC_SKIP_BUFFERS 2U // Skip first 2 buffers (1024 samples = ~21ms at 48kHz)
 static uint8_t sound_idle_count;
 static uint8_t mic_idle_count;
+static bool mic_recording_active;
+static uint8_t mic_skip_buffer_count;
 
 void sound_tick(void) {
   if (sound_idle_count > 0U) {
@@ -23,6 +26,7 @@ void sound_tick(void) {
     mic_idle_count--;
     if (mic_idle_count == 0U) {
       register_clear_bits(&DFSDM1_Channel0->CHCFGR1, DFSDM_CHCFGR1_DFSDMEN);
+      mic_recording_active = false;  // Recording session ended
     }
   }
 }
@@ -31,13 +35,24 @@ void sound_tick(void) {
 static void DMA1_Stream0_IRQ_Handler(void) {
   __attribute__((section(".sram4"))) static uint16_t tx_buf[MIC_TX_BUF_SIZE];
 
-  DMA1->LIFCR |= 0x7D; // clear flags
+  DMA1->LIFCR |= 0x7DU; // clear flags
 
-  // process samples
-  uint8_t buf_idx = (((DMA1_Stream0->CR & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos) == 1U) ? 0U : 1U;
-  for (uint16_t i=0U; i < MIC_RX_BUF_SIZE; i++) {
-    tx_buf[2U*i] = ((mic_rx_buf[buf_idx][i] >> 16U) & 0xFFFFU);
-    tx_buf[(2U*i)+1U] = tx_buf[2U*i];
+  if (mic_skip_buffer_count > 0U) {
+    mic_skip_buffer_count--;
+    if (mic_skip_buffer_count == 0U) {
+      mic_recording_active = true;
+    }
+    // Send silence during settling
+    for (uint16_t i = 0U; i < MIC_TX_BUF_SIZE; i++) {
+      tx_buf[i] = 0U;
+    }
+  } else {
+    // process samples
+    uint8_t buf_idx = (((DMA1_Stream0->CR & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos) == 1U) ? 0U : 1U;
+    for (uint16_t i=0U; i < MIC_RX_BUF_SIZE; i++) {
+      tx_buf[2U*i] = ((mic_rx_buf[buf_idx][i] >> 16U) & 0xFFFFU);
+      tx_buf[(2U*i)+1U] = tx_buf[2U*i];
+    }
   }
 
   BDMA->IFCR |= BDMA_IFCR_CGIF1;
@@ -59,7 +74,7 @@ static void BDMA_Channel0_IRQ_Handler(void) {
   // wait until we're done playing the current buf
   for (uint32_t timeout_counter = 100000U; timeout_counter > 0U; timeout_counter--){
     uint8_t playing_buf = (DMA1_Stream1->CR & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos;
-    if ((playing_buf != playback_buf) || (!(DMA1_Stream1->CR & DMA_SxCR_EN))) {
+    if ((playing_buf != playback_buf) || ((DMA1_Stream1->CR & DMA_SxCR_EN) == 0U)) {
       break;
     }
   }
@@ -93,6 +108,10 @@ static void BDMA_Channel0_IRQ_Handler(void) {
   // manage mic state
   if (mic_idle_count == 0U) {
     register_set_bits(&DFSDM1_Channel0->CHCFGR1, DFSDM_CHCFGR1_DFSDMEN);
+
+    if (!mic_recording_active) {
+      mic_skip_buffer_count = MIC_SKIP_BUFFERS;
+    }
     DFSDM1_Filter0->FLTCR1 |= DFSDM_FLTCR1_RSWSTART;
   }
   mic_idle_count = SOUND_IDLE_TIMEOUT;
