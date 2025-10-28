@@ -209,7 +209,6 @@ class Panda:
     self._serial = serial
     self._connect_serial = serial
     self._handle_open = True
-    self._mcu_type = self.get_mcu_type()
     self.health_version, self.can_version, self.can_health_version = self.get_packets_versions()
     logger.debug("connected")
 
@@ -430,8 +429,10 @@ class Panda:
     if hw_type not in self.SUPPORTED_DEVICES:
       raise RuntimeError(f"HW type {hw_type.hex()} is deprecated and can no longer be flashed.")
 
+    mcu_type = self.get_mcu_type()
+
     if not fn:
-      fn = os.path.join(FW_PATH, self._mcu_type.config.app_fn)
+      fn = os.path.join(FW_PATH, mcu_type.config.app_fn)
     assert os.path.isfile(fn)
     logger.debug("flash: main version is %s", self.get_version())
     if not self.bootstub:
@@ -446,7 +447,7 @@ class Panda:
     logger.debug("flash: bootstub version is %s", self.get_version())
 
     # do flash
-    Panda.flash_static(self._handle, code, mcu_type=self._mcu_type)
+    Panda.flash_static(self._handle, code, mcu_type=mcu_type)
 
     # reconnect
     if reconnect:
@@ -635,7 +636,8 @@ class Panda:
     return self._serial
 
   def get_dfu_serial(self):
-    return PandaDFU.st_serial_to_dfu_serial(self._serial, self._mcu_type)
+    mcu_type = self.get_mcu_type()
+    return PandaDFU.st_serial_to_dfu_serial(self._serial, mcu_type)
 
   def get_uid(self):
     """
