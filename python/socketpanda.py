@@ -1,5 +1,6 @@
 import socket
 import struct
+import time
 
 # /**
 #  * struct canfd_frame - CAN flexible data rate frame structure
@@ -91,14 +92,18 @@ class SocketPanda():
 
     can_frame = struct.pack(CAN_HEADER_FMT, addr, msg_len, flags) + msg_dat
 
-    # Block until the message is sent
-    # TODO: implement timeout
-    while True:
+    # Try to send until timeout. sendto might block if the TX buffer is full.
+    # TX buffer size can also be adjusted through `ip link set can0 txqueuelen <size>` if needed
+    start_t = time.monotonic()
+    while (time.monotonic() - start_t < (timeout / 1000)) or (timeout == 0):
       try:
         self.socket.sendto(can_frame, (self.interface,))
         break
-      except BlockingIOError:
+      except (BlockingIOError, OSError):
         continue
+    else:
+      raise TimeoutError
+
 
   def can_recv(self) -> list[tuple[int, bytes, int]]:
     msgs = list()
