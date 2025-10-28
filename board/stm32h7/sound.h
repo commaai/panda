@@ -10,8 +10,7 @@ __attribute__((section(".sram4"))) static uint32_t mic_rx_buf[2][MIC_RX_BUF_SIZE
 #define MIC_SKIP_BUFFERS 2U // Skip first 2 buffers (1024 samples = ~21ms at 48kHz)
 static uint8_t sound_idle_count;
 static uint8_t mic_idle_count;
-static bool mic_recording_active;
-static uint8_t mic_skip_buffer_count;
+static uint8_t mic_buffer_count;
 
 void sound_tick(void) {
   if (sound_idle_count > 0U) {
@@ -26,7 +25,7 @@ void sound_tick(void) {
     mic_idle_count--;
     if (mic_idle_count == 0U) {
       register_clear_bits(&DFSDM1_Channel0->CHCFGR1, DFSDM_CHCFGR1_DFSDMEN);
-      mic_recording_active = false;  // Recording session ended
+      mic_buffer_count = 0U;
     }
   }
 }
@@ -37,12 +36,9 @@ static void DMA1_Stream0_IRQ_Handler(void) {
 
   DMA1->LIFCR |= 0x7DU; // clear flags
 
-  if (mic_skip_buffer_count > 0U) {
-    mic_skip_buffer_count--;
-    if (mic_skip_buffer_count == 0U) {
-      mic_recording_active = true;
-    }
+  if (mic_buffer_count < MIC_SKIP_BUFFERS) {
     // Send silence during settling
+    mic_buffer_count++;
     for (uint16_t i = 0U; i < MIC_TX_BUF_SIZE; i++) {
       tx_buf[i] = 0U;
     }
@@ -108,10 +104,6 @@ static void BDMA_Channel0_IRQ_Handler(void) {
   // manage mic state
   if (mic_idle_count == 0U) {
     register_set_bits(&DFSDM1_Channel0->CHCFGR1, DFSDM_CHCFGR1_DFSDMEN);
-
-    if (!mic_recording_active) {
-      mic_skip_buffer_count = MIC_SKIP_BUFFERS;
-    }
     DFSDM1_Filter0->FLTCR1 |= DFSDM_FLTCR1_RSWSTART;
   }
   mic_idle_count = SOUND_IDLE_TIMEOUT;
