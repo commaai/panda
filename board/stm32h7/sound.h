@@ -33,7 +33,7 @@ void sound_tick(void) {
 
 // Recording processing
 static void DMA1_Stream0_IRQ_Handler(void) {
-  DMA1->LIFCR |= 0x7DU;
+  DMA1->LIFCR |= 0x7DU; // clear flags
 
   uint8_t tx_buf_idx = (((BDMA_Channel1->CCR & BDMA_CCR_CT) >> BDMA_CCR_CT_Pos) == 1U) ? 0U : 1U;
 
