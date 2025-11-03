@@ -49,6 +49,7 @@ static void DMA1_Stream0_IRQ_Handler(void) {
       tx_buf[2U*i] = ((mic_rx_buf[buf_idx][i] >> 16U) & 0xFFFFU);
       tx_buf[(2U*i)+1U] = tx_buf[2U*i];
     }
+  }
 
   BDMA->IFCR |= BDMA_IFCR_CGIF1;
   BDMA_Channel1->CCR &= ~BDMA_CCR_EN;
