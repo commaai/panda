@@ -26,9 +26,9 @@ void siren_dma_init(void) {
   register_set(&DMA1_Stream1->PAR, (uint32_t)&(DAC1->DHR8R1), 0xFFFFFFFFU);
   // Setup DMA
   register_set(&DMA1_Stream1->M0AR, (uint32_t)fake_siren_lut, 0xFFFFFFFFU);
+  register_set(&DMA1_Stream1->FCR, 0U, 0x00000083U);
   DMA1_Stream1->NDTR = sizeof(fake_siren_lut);
-  register_set(&DMA1_Stream1->FCR, 0U, 0xFFFFFFFFU);
-  register_set(&DMA1_Stream1->CR, (0b11UL << DMA_SxCR_PL_Pos) | DMA_SxCR_MINC | DMA_SxCR_CIRC | (1U << DMA_SxCR_DIR_Pos), 0xFFFFFFFFU);
+  DMA1_Stream1->CR = (0b11UL << DMA_SxCR_PL_Pos) | DMA_SxCR_MINC | DMA_SxCR_CIRC | (1U << DMA_SxCR_DIR_Pos);
 }
 
 void fake_siren_codec_enable(bool enabled) {
