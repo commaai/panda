@@ -13,9 +13,11 @@ void siren_tim7_init(void) {
 }
 
 void siren_dac_init(void) {
+  DAC1->DHR8R1 = (1 << 7);
+  DAC1->DHR8R2 = (1 << 7);
   register_set(&DAC1->MCR, 0U, 0xFFFFFFFFU);
   register_set(&DAC1->CR, DAC_CR_TEN1 | (6U << DAC_CR_TSEL1_Pos) | DAC_CR_DMAEN1, 0xFFFFFFFFU);
-  register_set_bits(&DAC1->CR, DAC_CR_EN1);
+  register_set_bits(&DAC1->CR, DAC_CR_EN1 | DAC_CR_EN2);
 }
 
 void siren_dma_init(void) {
