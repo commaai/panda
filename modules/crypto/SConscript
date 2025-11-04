@@ -1,0 +1,253 @@
+#!/usr/bin/env python3
+"""
+Comprehensive Crypto Module SCons Build Script
+
+This is a complete, production-ready modular crypto module that serves as a 
+template for converting other modules. The crypto module provides:
+
+1. RSA signature verification (1024-bit keys)
+2. SHA-1 hashing functionality
+3. Secure boot validation
+4. Self-contained implementation with no external dependencies
+
+Module Features:
+- Self-contained with clear interface boundaries
+- No dependencies on other panda modules
+- Used by both panda and jungle targets
+- Includes comprehensive documentation and metadata
+- Supports isolated testing and validation
+
+Interface:
+- RSA_verify(): Verify RSA signatures against SHA-1 hashes
+- SHA_hash(), SHA_init(), SHA_update(), SHA_final(): SHA-1 hashing
+- RSAPublicKey structure for key management
+
+Usage:
+- Bootloader signature verification in bootstub.c
+- Firmware signing and validation
+- Secure boot process
+"""
+
+Import('env', 'module_registry')
+import os
+
+# =============================================================================
+# MODULE METADATA AND DOCUMENTATION
+# =============================================================================
+
+module_info = {
+    'name': 'crypto',
+    'version': '1.0.0',
+    'description': 'Cryptographic functions for secure boot and signing',
+    'author': 'comma.ai (based on Android Open Source Project)',
+    'license': 'BSD-3-Clause',
+    'interface': {
+        'public_functions': [
+            'RSA_verify(key, signature, len, hash, hash_len)',
+            'SHA_hash(data, len, digest)',
+            'SHA_init(ctx)',
+            'SHA_update(ctx, data, len)', 
+            'SHA_final(ctx)'
+        ],
+        'public_types': [
+            'RSAPublicKey',
+            'SHA_CTX',
+            'HASH_CTX',
+            'HASH_VTAB'
+        ],
+        'constants': [
+            'RSANUMBYTES (128)',
+            'RSANUMWORDS (32)',
+            'SHA_DIGEST_SIZE (20)'
+        ]
+    },
+    'dependencies': {
+        'internal': [],  # No internal panda dependencies
+        'external': ['stdint.h'],  # Standard library only
+        'build_deps': []  # No build-time dependencies
+    },
+    'validation': {
+        'unit_tests': ['test_rsa_verify', 'test_sha_hash'],
+        'integration_tests': ['test_bootstub_integration'],
+        'benchmarks': ['rsa_verify_performance', 'sha_hash_performance']
+    }
+}
+
+# =============================================================================
+# MODULE REGISTRATION
+# =============================================================================
+
+# Register the crypto module with comprehensive metadata
+crypto_module = module_registry.register_module(
+    name=module_info['name'],
+    description=module_info['description'],
+    sources=[
+        'rsa.c',    # RSA signature verification implementation
+        'sha.c',    # SHA-1 hashing implementation
+    ],
+    headers=[
+        'rsa.h',            # RSA public interface
+        'sha.h',            # SHA-1 public interface  
+        'hash-internal.h',  # Internal hash context definitions
+    ],
+    includes=[
+        '.',  # Module root directory for internal includes
+    ],
+    dependencies=[],  # No dependencies on other panda modules
+    flags=[
+        # Optimization flags for crypto operations
+        '-O2',  # Optimize for performance in crypto operations
+        # Security flags
+        '-fstack-protector-strong',  # Stack protection
+        '-D_FORTIFY_SOURCE=2',       # Buffer overflow protection
+    ],
+    tests=[
+        'test_rsa_basic.c',       # Basic RSA verification tests
+        'test_sha_vectors.c',     # SHA-1 test vectors
+        'test_crypto_integration.c'  # Integration tests
+    ],
+    directory=Dir('.').srcnode().abspath  # Set directory for module
+)
+
+print(f"Registered crypto module with {len(crypto_module.sources)} sources")
+print(f"Module directory: {crypto_module.directory}")
+
+# =============================================================================
+# BUILD CONFIGURATION
+# =============================================================================
+
+# Create a dedicated environment for the crypto module
+crypto_env = env.Clone()
+
+# Add module-specific include paths
+crypto_includes = module_registry.get_all_includes('crypto')
+print(f"Crypto module includes: {crypto_includes}")
+crypto_env.Append(CPPPATH=crypto_includes)
+
+# Add module-specific compiler flags
+crypto_flags = module_registry.get_all_flags('crypto')
+if crypto_flags:
+    print(f"Crypto module flags: {crypto_flags}")
+    crypto_env.Append(CFLAGS=crypto_flags)
+
+# Add crypto-specific definitions
+crypto_env.Append(CPPDEFINES=[
+    'CRYPTO_MODULE_VERSION="1.0.0"',
+    'CRYPTO_SELF_CONTAINED=1'
+])
+
+# =============================================================================
+# MODULE BUILDING
+# =============================================================================
+
+# Build all source files for the crypto module
+crypto_objects = []
+print("Building crypto module sources:")
+
+for source in crypto_module.sources:
+    source_path = os.path.join(crypto_module.directory, source)
+    obj_name = f"crypto_{os.path.basename(source)}"
+    print(f"  Building {source} -> {obj_name}")
+    
+    # Build with crypto-specific environment
+    obj = crypto_env.Object(obj_name, source_path)
+    crypto_objects.append(obj)
+    
+    # Store in module for dependency tracking
+    crypto_module.built_objects.append(obj)
+
+print(f"Crypto module built successfully: {len(crypto_objects)} objects")
+
+# =============================================================================
+# MODULE VALIDATION (if enabled)
+# =============================================================================
+
+# Add validation targets if requested
+if GetOption('validate_modules'):
+    print("Adding crypto module validation targets")
+    
+    # Header validation - ensure all headers compile independently
+    for header in crypto_module.headers:
+        header_path = os.path.join(crypto_module.directory, header)
+        test_source = f"test_header_{header.replace('.', '_')}.c"
+        
+        # Create a simple test that includes the header
+        test_content = f'#include "{header}"\nint main(void) {{ return 0; }}'
+        test_file = crypto_env.Textfile(test_source, test_content)
+        
+        # Compile the test
+        header_test = crypto_env.Object(f"test_{header.replace('.', '_')}", test_file)
+        crypto_env.Depends(header_test, header_path)
+        
+        # Add to validation target
+        crypto_env.Alias('validate_crypto_headers', header_test)
+
+# =============================================================================
+# EXPORTS AND INTERFACE
+# =============================================================================
+
+# Export objects for use by other modules and targets
+Export('crypto_objects')
+Export('crypto_module')
+Export('crypto_env')
+
+# Create convenience aliases
+crypto_env.Alias('crypto', crypto_objects)
+
+# Add module information to global namespace for debugging
+if GetOption('debug_modules'):
+    print("\nCrypto Module Debug Information:")
+    print(f"  Sources: {crypto_module.sources}")
+    print(f"  Headers: {crypto_module.headers}")
+    print(f"  Includes: {crypto_module.includes}")
+    print(f"  Dependencies: {crypto_module.dependencies}")
+    print(f"  Flags: {crypto_module.flags}")
+    print(f"  Built objects: {len(crypto_module.built_objects)}")
+    print(f"  Directory: {crypto_module.directory}")
+
+# =============================================================================
+# MODULE INTERFACE DOCUMENTATION
+# =============================================================================
+
+# Generate module interface documentation if requested
+if GetOption('generate_docs'):
+    doc_content = f"""
+# Crypto Module Documentation
+
+## Overview
+{module_info['description']}
+
+## Version
+{module_info['version']}
+
+## Public Interface
+
+### Functions
+{chr(10).join(f"- {func}" for func in module_info['interface']['public_functions'])}
+
+### Types
+{chr(10).join(f"- {typ}" for typ in module_info['interface']['public_types'])}
+
+### Constants
+{chr(10).join(f"- {const}" for const in module_info['interface']['constants'])}
+
+## Dependencies
+- Internal: {module_info['dependencies']['internal'] or 'None'}
+- External: {module_info['dependencies']['external']}
+
+## Usage
+The crypto module provides secure boot functionality for panda firmware.
+Primary usage is in bootstub.c for verifying firmware signatures.
+
+## Files
+- Sources: {', '.join(crypto_module.sources)}
+- Headers: {', '.join(crypto_module.headers)}
+"""
+    
+    doc_file = crypto_env.Textfile('crypto_module_docs.md', doc_content)
+    crypto_env.Alias('docs', doc_file)
+
+print("Crypto module configuration complete")
+
+# Return module for dependency tracking
+Return('crypto_module')

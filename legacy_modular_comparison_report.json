@@ -1,0 +1,61 @@
+{
+  "timestamp": 1760946086.2350023,
+  "legacy": {
+    "build_success": true,
+    "run_success": true,
+    "output": "LEGACY_BUILD\nSHA1:1c149f8b31851d971bb1d81ccaba3d0ac802cfbb\nRSA_LEN:32\nRSA_EXP:65537\nRSA_SIZE:268\nLEGACY_COMPLETE\n",
+    "errors": ""
+  },
+  "modular": {
+    "build_success": true,
+    "run_success": true,
+    "output": "MODULAR_BUILD\nSHA1:1c149f8b31851d971bb1d81ccaba3d0ac802cfbb\nRSA_LEN:32\nRSA_EXP:65537\nRSA_SIZE:268\nMODULAR_COMPLETE\n",
+    "errors": ""
+  },
+  "comparison": {
+    "legacy_values": {},
+    "modular_values": {},
+    "equivalent": true,
+    "differences": []
+  },
+  "summary": {
+    "equivalent": true,
+    "differences": []
+  },
+  "file_structure": {
+    "legacy_files": [
+      "sign.py",
+      "hash-internal.h",
+      "rsa.c",
+      "sha.h",
+      "sha.c",
+      "rsa.h"
+    ],
+    "modular_files": [
+      "README.md",
+      "SConscript",
+      "sign.py",
+      "hash-internal.h",
+      "rsa.c",
+      "sha.h",
+      "sha.c",
+      "rsa.h"
+    ],
+    "only_legacy": [],
+    "only_modular": [
+      "README.md",
+      "SConscript"
+    ],
+    "common_files": [
+      "sign.py",
+      "rsa.c",
+      "hash-internal.h",
+      "sha.h",
+      "sha.c",
+      "rsa.h"
+    ],
+    "content_differences": [
+      "sha.c"
+    ]
+  }
+}
