@@ -1,4 +1,5 @@
 #include "can_common_declarations.h"
+#include "ringbuffer.h"
 
 uint32_t safety_tx_blocked = 0;
 uint32_t safety_rx_invalid = 0;
@@ -41,38 +42,20 @@ can_ring *can_queues[PANDA_CAN_CNT] = {&can_tx1_q, &can_tx2_q, &can_tx3_q};
 
 // ********************* interrupt safe queue *********************
 bool can_pop(can_ring *q, CANPacket_t *elem) {
-  bool ret = 0;
+  bool ret;
 
   ENTER_CRITICAL();
-  if (q->w_ptr != q->r_ptr) {
-    *elem = q->elems[q->r_ptr];
-    if ((q->r_ptr + 1U) == q->fifo_size) {
-      q->r_ptr = 0;
-    } else {
-      q->r_ptr += 1U;
-    }
-    ret = 1;
-  }
+  ret = ring_pop(&q->w_ptr, &q->r_ptr, q->fifo_size, (uint8_t *)q->elems, elem, sizeof(*elem));
   EXIT_CRITICAL();
 
   return ret;
 }
 
 bool can_push(can_ring *q, const CANPacket_t *elem) {
-  bool ret = false;
-  uint32_t next_w_ptr;
+  bool ret;
 
   ENTER_CRITICAL();
-  if ((q->w_ptr + 1U) == q->fifo_size) {
-    next_w_ptr = 0;
-  } else {
-    next_w_ptr = q->w_ptr + 1U;
-  }
-  if (next_w_ptr != q->r_ptr) {
-    q->elems[q->w_ptr] = *elem;
-    q->w_ptr = next_w_ptr;
-    ret = true;
-  }
+  ret = ring_push(&q->w_ptr, &q->r_ptr, q->fifo_size, (uint8_t *)q->elems, elem, sizeof(*elem), false);
   EXIT_CRITICAL();
   if (!ret) {
     #ifdef DEBUG
@@ -95,14 +78,10 @@ bool can_push(can_ring *q, const CANPacket_t *elem) {
 }
 
 uint32_t can_slots_empty(const can_ring *q) {
-  uint32_t ret = 0;
+  uint32_t ret;
 
   ENTER_CRITICAL();
-  if (q->w_ptr >= q->r_ptr) {
-    ret = q->fifo_size - 1U - q->w_ptr + q->r_ptr;
-  } else {
-    ret = q->r_ptr - q->w_ptr - 1U;
-  }
+  ret = ring_slots_empty(&q->w_ptr, &q->r_ptr, q->fifo_size);
   EXIT_CRITICAL();
 
   return ret;
@@ -110,8 +89,7 @@ uint32_t can_slots_empty(const can_ring *q) {
 
 void can_clear(can_ring *q) {
   ENTER_CRITICAL();
-  q->w_ptr = 0;
-  q->r_ptr = 0;
+  ring_clear(&q->w_ptr, &q->r_ptr);
   EXIT_CRITICAL();
   // handle TX buffer full with zero ECUs awake on the bus
   refresh_can_tx_slots_available();
