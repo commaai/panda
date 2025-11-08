@@ -18,9 +18,8 @@
 #define KP         0.25f
 #define KI         0.5f
 #define KD         0.008f
-#define KFF        0.9f
+#define KFF        0.4f
 #define MAX_RPM    100.0f
-#define OUTPUT_MAX 100.0f
 #define DEADBAND_RPM 1.0f
 #define UPDATE_PERIOD_US 1000U
 
@@ -239,7 +238,7 @@ static inline void motor_speed_controller_update(uint32_t now_us) {
       state->integral = 0.0f;
     }
 
-    control = motor_clampf(control, -OUTPUT_MAX, OUTPUT_MAX);
+    control = motor_clampf(control, -100, 100);
 
     int32_t command = (control >= 0.0f) ? (int32_t)(control + 0.5f) : (int32_t)(control - 0.5f);
     motor_apply_pwm(motor, command);

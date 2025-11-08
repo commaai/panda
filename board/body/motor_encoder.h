@@ -7,7 +7,6 @@
 // Encoder pin map:
 // Left motor:  PB6 -> TIM4_CH1, PB7 -> TIM4_CH2
 // Right motor: PA6 -> TIM3_CH1, PA7 -> TIM3_CH2
-
 typedef struct {
   TIM_TypeDef *timer;
   GPIO_TypeDef *pin_a_port;
@@ -21,6 +20,7 @@ typedef struct {
   uint32_t min_dt_us;
   float speed_alpha;
   uint32_t filter;
+  uint32_t stationary_timeout_us;
 } motor_encoder_config_t;
 
 typedef struct {
@@ -37,21 +37,23 @@ static const motor_encoder_config_t motor_encoder_config[BODY_MOTOR_COUNT] = {
     .timer = TIM4,
     .pin_a_port = GPIOB, .pin_a = 6U, .pin_a_af = GPIO_AF2_TIM4,
     .pin_b_port = GPIOB, .pin_b = 7U, .pin_b_af = GPIO_AF2_TIM4,
-    .direction = -1,
-    .counts_per_output_rev = 44U * 90U,
+    .direction = 1,
+    .counts_per_output_rev = 64U * 43.8f,
     .min_dt_us = 250U,
     .speed_alpha = 0.2f,
     .filter = 3U,
+    .stationary_timeout_us = 300000U,
   },
   [BODY_MOTOR_RIGHT - 1U] = {
     .timer = TIM3,
     .pin_a_port = GPIOA, .pin_a = 6U, .pin_a_af = GPIO_AF2_TIM3,
     .pin_b_port = GPIOA, .pin_b = 7U, .pin_b_af = GPIO_AF2_TIM3,
-    .direction = 1,
-    .counts_per_output_rev = 44U * 90U,
+    .direction = -1,
+    .counts_per_output_rev = 64U * 43.8f,
     .min_dt_us = 250U,
     .speed_alpha = 0.2f,
     .filter = 3U,
+    .stationary_timeout_us = 300000U,
   },
 };
 
@@ -86,6 +88,7 @@ static void motor_encoder_configure_timer(motor_encoder_state_t *state) {
   state->last_timer_count = 0U;
   state->accumulated_count = 0;
   state->last_speed_count = 0;
+  state->last_speed_timestamp_us = 0U;
   state->cached_speed_rps = 0.0f;
   timer->SMCR = (TIM_SMCR_SMS_0 | TIM_SMCR_SMS_1);
   timer->CR1 = TIM_CR1_CEN;
@@ -101,7 +104,6 @@ static void motor_encoder_init(void) {
     const motor_encoder_config_t *cfg = state->config;
     motor_encoder_configure_gpio(cfg);
     motor_encoder_configure_timer(state);
-    state->last_speed_timestamp_us = 0U;
   }
 }
 
@@ -156,7 +158,19 @@ static float motor_encoder_get_speed_rpm(uint8_t motor) {
 
   uint32_t dt = now - state->last_speed_timestamp_us;
   int32_t delta = state->accumulated_count - state->last_speed_count;
-  if ((dt < cfg->min_dt_us) || (delta == 0)) {
+
+  if (delta == 0) {
+    uint32_t stationary_timeout_us = cfg->stationary_timeout_us;
+    if ((stationary_timeout_us > 0U) && (dt >= stationary_timeout_us)) {
+      state->cached_speed_rps = 0.0f;
+      state->last_speed_timestamp_us = now;
+      state->last_speed_count = state->accumulated_count;
+      return 0.0f;
+    }
+    return state->cached_speed_rps * 60.0f;
+  }
+
+  if (dt < cfg->min_dt_us) {
     return state->cached_speed_rps * 60.0f;
   }
 

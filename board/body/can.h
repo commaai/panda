@@ -9,17 +9,20 @@
 #include "board/drivers/can_common_declarations.h"
 #include "opendbc/safety/declarations.h"
 
-#define BODY_CAN_ADDR_MOTOR_SPEED      0x201U
-#define BODY_CAN_MOTOR_SPEED_PERIOD_US 10000U
-#define BODY_BUS_NUMBER                 0U
+#define BODY_CAN_ADDR_MOTOR_SPEED        0x201U
+#define BODY_CAN_MOTOR_SPEED_PERIOD_US   10000U
+#define BODY_CAN_CMD_TIMEOUT_US          100000U
+#define BODY_BUS_NUMBER                  0U
 
 static struct {
   bool pending;
   int32_t left_target_deci_rpm;
   int32_t right_target_deci_rpm;
+  uint32_t last_cmd_timestamp_us;
 } body_can_command;
 
 void body_can_send_motor_speeds(uint8_t bus, float left_speed_rpm, float right_speed_rpm) {
+  static uint16_t counter = 0U;
   CANPacket_t pkt;
   pkt.bus = bus;
   pkt.addr = BODY_CAN_ADDR_MOTOR_SPEED;
@@ -36,20 +39,22 @@ void body_can_send_motor_speeds(uint8_t bus, float left_speed_rpm, float right_s
   pkt.data[3] = (uint8_t)(right_speed_deci & 0xFFU);
   pkt.data[4] = 0U;
   pkt.data[5] = 0U;
-  pkt.data[6] = 0U;
-  pkt.data[7] = 0U;
+  pkt.data[6] = counter & 0xFFU;
   can_set_checksum(&pkt);
   can_send(&pkt, bus, true);
+  counter++;
 }
 
 void body_can_process_target(int16_t left_target_deci_rpm, int16_t right_target_deci_rpm) {
   body_can_command.left_target_deci_rpm = (int32_t)left_target_deci_rpm;
   body_can_command.right_target_deci_rpm = (int32_t)right_target_deci_rpm;
   body_can_command.pending = true;
+  body_can_command.last_cmd_timestamp_us = microsecond_timer_get();
 }
 
 void body_can_init(void) {
   body_can_command.pending = false;
+  body_can_command.last_cmd_timestamp_us = 0U;
   can_silent = false;
   can_loopback = false;
   (void)set_safety_hooks(SAFETY_BODY, 0U);
@@ -58,6 +63,13 @@ void body_can_init(void) {
 }
 
 void body_can_periodic(uint32_t now) {
+  if ((body_can_command.last_cmd_timestamp_us != 0U) &&
+      ((now - body_can_command.last_cmd_timestamp_us) >= BODY_CAN_CMD_TIMEOUT_US)) {
+    motor_speed_controller_set_target_rpm(BODY_MOTOR_LEFT, 0);
+    motor_speed_controller_set_target_rpm(BODY_MOTOR_RIGHT, 0);
+    body_can_command.last_cmd_timestamp_us = 0U;
+  }
+
   if (body_can_command.pending) {
     body_can_command.pending = false;
     float left_target_rpm = ((float)body_can_command.left_target_deci_rpm) * 0.1f;
