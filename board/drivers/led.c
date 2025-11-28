@@ -1,5 +1,6 @@
 #include "led.h"
-#include "../main_declarations.h"
+#include "board/globals.h"
+#include "pwm.h"
 
 void led_set(uint8_t color, bool enabled) {
   if (color < 3U) {

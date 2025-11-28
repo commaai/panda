@@ -137,9 +137,6 @@ def build_project(project_name, project, main, extra_flags):
     "./board/utils.c",
   ]
 
-  #   # "./board/libc.c",
-  #   # "./board/can_comms.c",
-  #   # "./board/critical.c",
   #   # "./board/main_definitions.c",
 
   # Build bootstub
@@ -177,7 +174,7 @@ def build_project(project_name, project, main, extra_flags):
   ] + shared, LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
   sign_py = File(f"./crypto/sign.py").srcnode().relpath
-  # env.Command(f"./board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
+  env.Command(f"./board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
 
 
 
@@ -213,11 +210,11 @@ with open("board/obj/cert.h", "w") as f:
 build_project("panda_h7", base_project_h7, "./board/main.c", [])
 
 # # panda jungle fw
-# flags = [
-#   "-DPANDA_JUNGLE",
-# ]
-# if os.getenv("FINAL_PROVISIONING"):
-#   flags += ["-DFINAL_PROVISIONING"]
+flags = [
+  "-DPANDA_JUNGLE",
+]
+if os.getenv("FINAL_PROVISIONING"):
+  flags += ["-DFINAL_PROVISIONING"]
 # build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", flags)
 
 # # body fw

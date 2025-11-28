@@ -3,9 +3,6 @@
 #include "board/can_comms.h"
 #include "timers.h"
 #include "board/utils.h"
-// #include "opendbc/safety/safety.h"
-
-#include "board/critical_declarations.h"
 
 uint32_t safety_tx_blocked = 0;
 uint32_t safety_rx_invalid = 0;

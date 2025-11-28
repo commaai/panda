@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-#include "faults_declarations.h"
+#define PERMANENT_FAULTS 0U
 
 extern uint8_t fault_status;
 extern uint32_t faults;

@@ -77,9 +77,8 @@ bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len);
 #include "timers.h"
 #include "board/utils.h"
 #include "opendbc/safety/declarations.h"
-// #include "opendbc/safety/safety.h"
 
-#include "board/critical_declarations.h"
+#include "board/critical.h"
 
 extern uint32_t safety_tx_blocked;
 extern uint32_t safety_rx_invalid;

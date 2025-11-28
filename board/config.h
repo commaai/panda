@@ -36,7 +36,6 @@
 #ifdef STM32H7
   #include "board/stm32h7/stm32h7_config.h"
 #else
-  #error help me!
   // TODO: uncomment this, cppcheck complains
   // building for tests
   #include "fake_stm.h"

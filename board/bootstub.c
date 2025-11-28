@@ -22,6 +22,9 @@
 #include "board/obj/gitversion.h"
 #include "board/flasher.h"
 
+#include "globals.h"
+
+
 // TODO
 uint8_t hw_type;
 board *current_board;
