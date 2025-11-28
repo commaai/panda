@@ -9,6 +9,8 @@
 #include "early_init.h"
 #include "obj/gitversion.h"
 
+#include "board/config.h"
+
 // from the linker script
 #define APP_START_ADDRESS 0x8020000U
 

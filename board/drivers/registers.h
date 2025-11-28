@@ -29,15 +29,10 @@
 #define FAULT_HEARTBEAT_LOOP_WATCHDOG       (1UL << 26)
 #define FAULT_INTERRUPT_RATE_SOUND_DMA      (1UL << 27)
 
-// Permanent faults
-#define PERMANENT_FAULTS 0U
-
-extern uint8_t fault_status;
-extern uint32_t faults;
-
-void fault_occurred(uint32_t fault);
-void fault_recovered(uint32_t fault);
-
+// 10 bit hash with 23 as a prime
+#define REGISTER_MAP_SIZE 0x3FFU
+#define HASHING_PRIME 23U
+#define CHECK_COLLISION(hash, addr) (((uint32_t) register_map[hash].address != 0U) && (register_map[hash].address != (addr)))
 
 typedef struct reg {
   volatile uint32_t *address;
@@ -45,11 +40,6 @@ typedef struct reg {
   uint32_t check_mask;
   bool logged_fault;
 } reg;
-
-// 10 bit hash with 23 as a prime
-#define REGISTER_MAP_SIZE 0x3FFU
-#define HASHING_PRIME 23U
-#define CHECK_COLLISION(hash, addr) (((uint32_t) register_map[hash].address != 0U) && (register_map[hash].address != (addr)))
 
 // Do not put bits in the check mask that get changed by the hardware
 void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask);

@@ -32,31 +32,5 @@ typedef struct {
   float cached_speed_rps;
 } motor_encoder_state_t;
 
-static const motor_encoder_config_t motor_encoder_config[BODY_MOTOR_COUNT] = {
-  [BODY_MOTOR_LEFT - 1U] = {
-    .timer = TIM4,
-    .pin_a_port = GPIOB, .pin_a = 6U, .pin_a_af = GPIO_AF2_TIM4,
-    .pin_b_port = GPIOB, .pin_b = 7U, .pin_b_af = GPIO_AF2_TIM4,
-    .direction = -1,
-    .counts_per_output_rev = 44U * 90U,
-    .min_dt_us = 250U,
-    .speed_alpha = 0.2f,
-    .filter = 3U,
-  },
-  [BODY_MOTOR_RIGHT - 1U] = {
-    .timer = TIM3,
-    .pin_a_port = GPIOA, .pin_a = 6U, .pin_a_af = GPIO_AF2_TIM3,
-    .pin_b_port = GPIOA, .pin_b = 7U, .pin_b_af = GPIO_AF2_TIM3,
-    .direction = 1,
-    .counts_per_output_rev = 44U * 90U,
-    .min_dt_us = 250U,
-    .speed_alpha = 0.2f,
-    .filter = 3U,
-  },
-};
 
-static motor_encoder_state_t motor_encoders[BODY_MOTOR_COUNT] = {
-  { .config = &motor_encoder_config[0] },
-  { .config = &motor_encoder_config[1] },
-};
-
+float motor_encoder_get_speed_rpm(uint8_t motor);

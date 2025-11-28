@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 #include "board/can.h"
-#include "board/stm32h7/stm32h7_config.h"
+#include "board/config.h"
 
 typedef struct {
   volatile uint32_t header[2];
