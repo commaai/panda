@@ -1,14 +1,10 @@
 #include "fdcan.h"
-// #include "board/stm32h7/stm32h7_config.h"
 
 #include "can_common.h"
 
 #include "board/config.h"
 
 #include "led.h"
-
-// FIXME!
-#include "board/stm32h7/llfdcan.h"
 
 FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT] = {FDCAN1, FDCAN2, FDCAN3};
 

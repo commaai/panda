@@ -5,6 +5,8 @@
 #include "can.h"
 #include "drivers/usb.h"
 
+#include "config.h"
+
 static asm_buffer can_read_buffer = {.ptr = 0U, .tail_size = 0U};
 
 int comms_can_read(uint8_t *data, uint32_t max_len) {

@@ -1,12 +1,9 @@
 #include <stdint.h>
 
 #include "early_init.h"
-
-#include "board/stm32h7/stm32h7_config.h"
-
 #include "drivers/led.h"
-
-#include "bootstub_declarations.h"
+#include "globals.h"
+#include "board/config.h"
 
 extern void *g_pfnVectors;
 extern uint32_t enter_bootloader_mode;

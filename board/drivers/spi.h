@@ -3,9 +3,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "board/drivers/spi.h"
-#include "board/crc.h"
-
 #define SPI_TIMEOUT_US 10000U
 // got max rate from hitting a non-existent endpoint
 // in a tight loop, plus some buffer

@@ -2,9 +2,7 @@
 // manufacturing. aside from this, there's a UID for the MCU
 
 #include "provision.h"
-#include "board/stm32h7/stm32h7_config.h"
-
-#define PROVISION_CHUNK_LEN 0x20
+#include "config.h"
 
 void get_provision_chunk(uint8_t *resp) {
   const unsigned char unprovisioned_text[] = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff";
