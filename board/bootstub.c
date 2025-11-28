@@ -2,6 +2,10 @@
 #define MIN_VERSION 2
 
 // ********************* Includes *********************
+#include <stdbool.h>
+
+#include "board/bootstub_declarations.h"
+
 #include "board/config.h"
 
 #include "board/drivers/led.h"
@@ -18,9 +22,23 @@
 #include "board/obj/gitversion.h"
 #include "board/flasher.h"
 
+// TODO
+uint8_t hw_type;
+board *current_board;
+struct harness_t harness;
+
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {
   early_initialization();
+}
+
+// TODO
+void print(const char *a) {
+  UNUSED(a);
+}
+
+void puth(unsigned int i) {
+  UNUSED(i);
 }
 
 void fail(void) {

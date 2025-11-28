@@ -1,16 +1,11 @@
+#include <stdint.h>
+#include <stdbool.h>
+
 #include "critical_declarations.h"
 
 // ********************* Critical section helpers *********************
-uint8_t global_critical_depth = 0U;
+extern uint8_t global_critical_depth;
+static volatile bool interrupts_enabled;
 
-static volatile bool interrupts_enabled = false;
-
-void enable_interrupts(void) {
-  interrupts_enabled = true;
-  __enable_irq();
-}
-
-void disable_interrupts(void) {
-  interrupts_enabled = false;
-  __disable_irq();
-}
+void enable_interrupts(void);
+void disable_interrupts(void);
