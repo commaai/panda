@@ -1,68 +1,64 @@
-#include "registers_declarations.h"
+#pragma once
 
-static reg register_map[REGISTER_MAP_SIZE];
+#include <stdbool.h>
+#include <stdint.h>
 
-// Hash spread in first and second iterations seems to be reasonable.
-// See: tests/development/register_hashmap_spread.py
-// Also, check the collision warnings in the debug output, and minimize those.
-static uint16_t hash_addr(uint32_t input){
-  return (((input >> 16U) ^ ((((input + 1U) & 0xFFFFU) * HASHING_PRIME) & 0xFFFFU)) & REGISTER_MAP_SIZE);
-}
+#include "board/critical.h"
+
+#define FAULT_STATUS_NONE 0U
+#define FAULT_STATUS_TEMPORARY 1U
+#define FAULT_STATUS_PERMANENT 2U
+
+// Fault types, matches cereal.log.PandaState.FaultType
+#define FAULT_RELAY_MALFUNCTION             (1UL << 0)
+#define FAULT_UNUSED_INTERRUPT_HANDLED      (1UL << 1)
+#define FAULT_INTERRUPT_RATE_CAN_1          (1UL << 2)
+#define FAULT_INTERRUPT_RATE_CAN_2          (1UL << 3)
+#define FAULT_INTERRUPT_RATE_CAN_3          (1UL << 4)
+#define FAULT_INTERRUPT_RATE_TACH           (1UL << 5)
+#define FAULT_INTERRUPT_RATE_INTERRUPTS     (1UL << 7)
+#define FAULT_INTERRUPT_RATE_SPI_DMA        (1UL << 8)
+#define FAULT_INTERRUPT_RATE_USB            (1UL << 15)
+#define FAULT_REGISTER_DIVERGENT            (1UL << 18)
+#define FAULT_INTERRUPT_RATE_CLOCK_SOURCE   (1UL << 20)
+#define FAULT_INTERRUPT_RATE_TICK           (1UL << 21)
+#define FAULT_INTERRUPT_RATE_EXTI           (1UL << 22)
+#define FAULT_INTERRUPT_RATE_SPI            (1UL << 23)
+#define FAULT_INTERRUPT_RATE_UART_7         (1UL << 24)
+#define FAULT_SIREN_MALFUNCTION             (1UL << 25)
+#define FAULT_HEARTBEAT_LOOP_WATCHDOG       (1UL << 26)
+#define FAULT_INTERRUPT_RATE_SOUND_DMA      (1UL << 27)
+
+// Permanent faults
+#define PERMANENT_FAULTS 0U
+
+extern uint8_t fault_status;
+extern uint32_t faults;
+
+void fault_occurred(uint32_t fault);
+void fault_recovered(uint32_t fault);
+
+
+typedef struct reg {
+  volatile uint32_t *address;
+  uint32_t value;
+  uint32_t check_mask;
+  bool logged_fault;
+} reg;
+
+// 10 bit hash with 23 as a prime
+#define REGISTER_MAP_SIZE 0x3FFU
+#define HASHING_PRIME 23U
+#define CHECK_COLLISION(hash, addr) (((uint32_t) register_map[hash].address != 0U) && (register_map[hash].address != (addr)))
 
 // Do not put bits in the check mask that get changed by the hardware
-void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask){
-  ENTER_CRITICAL()
-  // Set bits in register that are also in the mask
-  (*addr) = ((*addr) & (~mask)) | (val & mask);
-
-  // Add these values to the map
-  uint16_t hash = hash_addr((uint32_t) addr);
-  uint16_t tries = REGISTER_MAP_SIZE;
-  while(CHECK_COLLISION(hash, addr) && (tries > 0U)) { hash = hash_addr((uint32_t) hash); tries--;}
-  if (tries != 0U){
-    register_map[hash].address = addr;
-    register_map[hash].value = (register_map[hash].value & (~mask)) | (val & mask);
-    register_map[hash].check_mask |= mask;
-  } else {
-    #ifdef DEBUG_FAULTS
-      print("Hash collision: address 0x"); puth((uint32_t) addr); print("!\n");
-    #endif
-  }
-  EXIT_CRITICAL()
-}
-
+void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask);
 // Set individual bits. Also add them to the check_mask.
 // Do not use this to change bits that get reset by the hardware
-void register_set_bits(volatile uint32_t *addr, uint32_t val) {
-  register_set(addr, val, val);
-}
-
+void register_set_bits(volatile uint32_t *addr, uint32_t val);
 // Clear individual bits. Also add them to the check_mask.
 // Do not use this to clear bits that get set by the hardware
-void register_clear_bits(volatile uint32_t *addr, uint32_t val) {
-  register_set(addr, (~val), val);
-}
-
+void register_clear_bits(volatile uint32_t *addr, uint32_t val);
 // To be called periodically
-void check_registers(void){
-  for(uint16_t i=0U; i<REGISTER_MAP_SIZE; i++){
-    if((uint32_t) register_map[i].address != 0U){
-      ENTER_CRITICAL()
-      if((*(register_map[i].address) & register_map[i].check_mask) != (register_map[i].value & register_map[i].check_mask)){
-        if(!register_map[i].logged_fault){
-          print("Register 0x"); puth((uint32_t) register_map[i].address); print(" divergent! Map: 0x"); puth(register_map[i].value); print(" Reg: 0x"); puth(*(register_map[i].address)); print("\n");
-          register_map[i].logged_fault = true;
-        }
-        fault_occurred(FAULT_REGISTER_DIVERGENT);
-      }
-      EXIT_CRITICAL()
-    }
-  }
-}
-
-void init_registers(void) {
-  for(uint16_t i=0U; i<REGISTER_MAP_SIZE; i++){
-    register_map[i].address = (volatile uint32_t *) 0U;
-    register_map[i].check_mask = 0U;
-  }
-}
+void check_registers(void);
+void init_registers(void);
