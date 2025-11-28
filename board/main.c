@@ -10,6 +10,8 @@
 #include "board/early_init.h"
 #include "board/provision.h"
 
+#include "libc.h"
+
 #include "opendbc/safety/safety.h"
 
 #include "board/health.h"
@@ -24,7 +26,17 @@
 
 #include "board/can_comms.h"
 #include "board/main_comms.h"
+#include "board/main_declarations.h"
 
+uint8_t hw_type;
+board *current_board;
+struct harness_t harness;
+// TODO
+uint32_t heartbeat_counter;
+bool heartbeat_lost;
+bool heartbeat_disabled;
+bool siren_enabled;
+uint32_t uptime_cnt;
 
 // ********************* Serial debugging *********************
 

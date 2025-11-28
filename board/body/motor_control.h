@@ -6,6 +6,8 @@
 #include "board/body/motor_common.h"
 #include "board/body/motor_encoder.h"
 
+#include "board/drivers/pwm.h"
+
 // Motor pin map:
 // M1 drive: PB8 -> TIM16_CH1, PB9 -> TIM17_CH1, PE2/PE3 enables
 // M2 drive: PA2 -> TIM15_CH1, PA3 -> TIM15_CH2, PE8/PE9 enables

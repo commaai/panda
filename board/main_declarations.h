@@ -1,16 +1,19 @@
 #pragma once
 
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "boards/board_declarations.h"
+
 // ******************** Prototypes ********************
-void print(const char *a);
-void puth(unsigned int i);
-typedef struct board board;
-typedef struct harness_configuration harness_configuration;
+
+
 void pwm_init(TIM_TypeDef *TIM, uint8_t channel);
 void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
 
 // ********************* Globals **********************
-extern uint8_t hw_type;
-extern board *current_board;
+#include "globals.h"
+
 extern uint32_t uptime_cnt;
 
 // heartbeat state
