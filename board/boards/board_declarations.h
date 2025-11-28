@@ -23,8 +23,13 @@ typedef void (*board_set_bootkick)(BootState state);
 typedef bool (*board_read_som_gpio)(void);
 typedef void (*board_set_amp_enabled)(bool enabled);
 
+// #include "board/drivers/harness_declarations.h"
+#include "board/config.h"
+
+struct harness_configuration;
+
 struct board {
-  harness_configuration *harness_config;
+  struct harness_configuration *harness_config;
   GPIO_TypeDef * const led_GPIO[3];
   const uint8_t led_pin[3];
   const uint8_t led_pwm_channels[3]; // leave at 0 to disable PWM
