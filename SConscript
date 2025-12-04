@@ -60,7 +60,7 @@ def to_c_uint32(x):
   return "{" + 'U,'.join(map(str, nums)) + "U}"
 
 
-def build_project(project_name, project, main, extra_flags):
+def build_project(project_name, project, main, shared, extra_flags):
   project_dir = Dir(f'./board/obj/{project_name}/')
 
   flags = project["FLAGS"] + extra_flags + common_flags + [
@@ -100,13 +100,12 @@ def build_project(project_name, project, main, extra_flags):
 
   startup = env.Object(project["STARTUP_FILE"])
 
-  shared = [
+  shared += [
     "./crypto/rsa.c",
     "./crypto/sha.c",
     "./board/libc.c",
     "./board/crc.c",
     "./board/early_init.c",
-    # "./board/boards/red.c",
     "./board/critical.c",
     "./board/drivers/led.c",
     "./board/drivers/pwm.c",
@@ -132,31 +131,8 @@ def build_project(project_name, project, main, extra_flags):
     "./board/faults.c",
     "./board/boards/unused_funcs.c",
     "./board/utils.c",
+    "./board/globals.c",
   ]
-
-  if "-DPANDA_JUNGLE" in flags:
-    shared += [
-      "board/jungle/stm32h7/board.c",
-      "board/jungle/boards/board_v2.c"
-    ]
-
-  if "-DPANDA" in flags:
-    shared += [
-      "board/stm32h7/board.c",
-      "board/boards/tres.c",
-      "board/boards/red.c",
-      "board/boards/cuatro.c",
-    ]
-
-  if "-DPANDA_BODY" in flags:
-    shared += [
-      "board/body/boards/board_body.c",
-      "board/body/stm32h7/board.c",
-      "board/body/motor_control.c",
-      "board/body/motor_encoder.c"
-    ]
-    # board/body/boards/board_body.c
-  #   # "./board/main_definitions.c",
 
   # Build bootstub
   bs_env = env.Clone()
@@ -186,9 +162,7 @@ def build_project(project_name, project, main, extra_flags):
     "./board/main_comms.c",
     "./board/drivers/bootkick.c",
     "./board/stm32h7/llfan.c",
-    # "./board/stm32h7/llusb.c",
     "./board/stm32h7/lluart.c",
-    # "./board/stm32h7/peripherals.c",
     main,
   ] + shared, LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
@@ -223,13 +197,13 @@ certs = [get_key_header(n) for n in ["debug", "release"]]
 with open("board/obj/cert.h", "w") as f:
   for cert in certs:
     f.write("\n".join(cert) + "\n")
-
-# panda fw
-panda_c = [
-  "./board/main.c",
+shared = [
+  "board/stm32h7/board.c",
+  "board/boards/tres.c",
+  "board/boards/red.c",
+  "board/boards/cuatro.c",
 ]
-
-build_project("panda_h7", base_project_h7, panda_c, ["-DPANDA"])
+build_project("panda_h7", base_project_h7, "./board/main.c", shared, ["-DPANDA"])
 
 # # panda jungle fw
 flags = [
@@ -238,14 +212,24 @@ flags = [
 if os.getenv("FINAL_PROVISIONING"):
   flags += ["-DFINAL_PROVISIONING"]
 
-build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", flags)
+shared = [
+  "board/jungle/stm32h7/board.c",
+  "board/jungle/boards/board_v2.c"
+]
+build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", shared, flags)
 
 # # body fw
 body_c = [
   "./board/body/main.c",
 ]
 
-build_project("body_h7", base_project_h7, body_c, ["-DPANDA_BODY"])
+shared = [
+  "board/body/boards/board_body.c",
+  "board/body/stm32h7/board.c",
+  "board/body/motor_control.c",
+  "board/body/motor_encoder.c"
+]
+build_project("body_h7", base_project_h7, body_c, shared, ["-DPANDA_BODY"])
 
 # test files
 if GetOption('extras'):

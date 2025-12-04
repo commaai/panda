@@ -1,6 +1,5 @@
 #include "red.h"
 
-#include "board/boards/board_declarations.h"
 #include "board/boards/unused_funcs.h"
 #include "board/board_struct.h"
 

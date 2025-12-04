@@ -25,11 +25,6 @@
 #include "globals.h"
 
 
-// TODO
-uint8_t hw_type;
-board *current_board;
-struct harness_t harness;
-
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {
   early_initialization();
