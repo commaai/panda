@@ -4,6 +4,7 @@
 #include "libc.h"
 #include "can.h"
 #include "drivers/usb.h"
+#include "board/drivers/spi.h"
 
 #include "config.h"
 

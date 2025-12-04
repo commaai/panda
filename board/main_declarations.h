@@ -14,7 +14,6 @@ void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
 // ********************* Globals **********************
 #include "globals.h"
 
-extern uint32_t uptime_cnt;
 
 // heartbeat state
 extern uint32_t heartbeat_counter;

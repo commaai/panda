@@ -54,11 +54,6 @@ int get_gpio_input(const GPIO_TypeDef *GPIO, unsigned int pin) {
 }
 
 #ifdef PANDA_JUNGLE
-typedef struct {
-  GPIO_TypeDef * const bank;
-  uint8_t pin;
-} gpio_t;
-
 void gpio_set_all_output(gpio_t *pins, uint8_t num_pins, bool enabled) {
   for (uint8_t i = 0; i < num_pins; i++) {
     set_gpio_output(pins[i].bank, pins[i].pin, enabled);

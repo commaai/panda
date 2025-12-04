@@ -16,6 +16,9 @@ typedef struct board {
   const uint8_t fan_enable_cooldown_time;
   board_init init;
   board_init_bootloader init_bootloader;
+  board_board_tick board_tick;
+  board_set_panda_power set_panda_power;
+  board_get_button get_button;
   board_enable_can_transceiver enable_can_transceiver;
   board_set_can_mode set_can_mode;
   board_read_voltage_mV read_voltage_mV;
@@ -26,40 +29,11 @@ typedef struct board {
   board_set_bootkick set_bootkick;
   board_read_som_gpio read_som_gpio;
   board_set_amp_enabled set_amp_enabled;
+  board_set_panda_individual_power set_panda_individual_power;
+  board_set_ignition set_ignition;
+  board_set_individual_ignition set_individual_ignition;
+  board_set_harness_orientation set_harness_orientation;
+  board_enable_header_pin enable_header_pin;
+  board_get_channel_power get_channel_power;
+  board_get_sbu_mV get_sbu_mV;
 } board;
-
-
-#ifdef PANDA
-#define HW_TYPE_UNKNOWN 0U
-#define HW_TYPE_RED_PANDA 7U
-#define HW_TYPE_TRES 9U
-#define HW_TYPE_CUATRO 10U
-
-// CAN modes
-#define CAN_MODE_NORMAL 0U
-#define CAN_MODE_OBD_CAN2 1U
-
-#elif defined(PANDA_JUNGLE)
-#define HW_TYPE_UNKNOWN 0U
-#define HW_TYPE_V2 2U
-
-// CAN modes
-#define CAN_MODE_NORMAL 0U
-#define CAN_MODE_OBD_CAN2 3U
-
-// Harness states
-#define HARNESS_ORIENTATION_NONE 0U
-#define HARNESS_ORIENTATION_1 1U
-#define HARNESS_ORIENTATION_2 2U
-
-#define SBU1 0U
-#define SBU2 1U
-
-#elif defined(PANDA_JUNGLE)
-
-#elif defined(PANDA_BODY)
-#elif defined(LIB_PANDA)
-// NO IDEA BOI
-#else
-#error FUCK YOU
-#endif

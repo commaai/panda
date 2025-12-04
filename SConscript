@@ -103,7 +103,6 @@ def build_project(project_name, project, main, extra_flags):
   shared = [
     "./crypto/rsa.c",
     "./crypto/sha.c",
-    "board/body/stm32h7/board.c",
     "./board/libc.c",
     "./board/crc.c",
     "./board/early_init.c",
@@ -127,8 +126,7 @@ def build_project(project_name, project, main, extra_flags):
     "./board/drivers/usb.c",
     "./board/drivers/spi.c",
     "./board/drivers/timers.c",
-    # "./board/boards/cuatro.c",
-    # "./board/boards/tres.c",
+    
     "./board/stm32h7/lladc.c",
     "./board/stm32h7/llspi.c",
     "./board/faults.c",
@@ -136,6 +134,28 @@ def build_project(project_name, project, main, extra_flags):
     "./board/utils.c",
   ]
 
+  if "-DPANDA_JUNGLE" in flags:
+    shared += [
+      "board/jungle/stm32h7/board.c",
+      "board/jungle/boards/board_v2.c"
+    ]
+
+  if "-DPANDA" in flags:
+    shared += [
+      "board/stm32h7/board.c",
+      "board/boards/tres.c",
+      "board/boards/red.c",
+      "board/boards/cuatro.c",
+    ]
+
+  if "-DPANDA_BODY" in flags:
+    shared += [
+      "board/body/boards/board_body.c",
+      "board/body/stm32h7/board.c",
+      "board/body/motor_control.c",
+      "board/body/motor_encoder.c"
+    ]
+    # board/body/boards/board_body.c
   #   # "./board/main_definitions.c",
 
   # Build bootstub
@@ -206,11 +226,10 @@ with open("board/obj/cert.h", "w") as f:
 
 # panda fw
 panda_c = [
-  "./board/stm32h7/board.c",
   "./board/main.c",
 ]
 
-# build_project("panda_h7", base_project_h7, panda_c, ["-DPANDA"])
+build_project("panda_h7", base_project_h7, panda_c, ["-DPANDA"])
 
 # # panda jungle fw
 flags = [
@@ -219,14 +238,11 @@ flags = [
 if os.getenv("FINAL_PROVISIONING"):
   flags += ["-DFINAL_PROVISIONING"]
 
-# build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", flags)
+build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", flags)
 
 # # body fw
 body_c = [
-  "./board/body/motor_control.c",
   "./board/body/main.c",
-  "./board/body/boards/board_body.c",
-  "./board/body/motor_encoder.c"
 ]
 
 build_project("body_h7", base_project_h7, body_c, ["-DPANDA_BODY"])
