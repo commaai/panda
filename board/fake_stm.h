@@ -1,3 +1,4 @@
+#pragma once
 // minimal code to fake a panda for tests
 #include <stdio.h>
 #include <stdint.h>
@@ -7,8 +8,12 @@
 
 #define ALLOW_DEBUG
 
+#ifndef ENTER_CRITICAL
 #define ENTER_CRITICAL() 0
+#endif
+#ifndef EXIT_CRITICAL
 #define EXIT_CRITICAL() 0
+#endif
 
 void print(const char *a);
 void puth(unsigned int i);

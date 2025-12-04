@@ -14,9 +14,17 @@
 #include "board/drivers/fdcan.h"
 #include "board/can_comms.h"
 
+// TODO
+#include "board/body/boards/board_body.h"
+
 extern int _app_start[0xc000];
 
 #include "board/body/main_comms.h"
+
+// TODO
+uint8_t hw_type;
+board *current_board;
+struct harness_t harness;
 
 void debug_ring_callback(uart_ring *ring) {
   char rcv;
