@@ -3,7 +3,8 @@
 #include <stdint.h>
 
 #include "utils.h"
-#include "stm32h7/inc/stm32h7xx.h"
+// #include "stm32h7/inc/stm32h7xx.h"
+#include "config.h"
 
 // ******************** Prototypes ********************
 

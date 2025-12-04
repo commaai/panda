@@ -6,6 +6,13 @@
 #include "board/can.h"
 #include "board/health.h"
 
+#include "board/can_comms.h"
+#include "timers.h"
+#include "board/utils.h"
+#include "opendbc/safety/declarations.h"
+
+#include "board/critical.h"
+
 typedef struct {
   volatile uint32_t w_ptr;
   volatile uint32_t r_ptr;
@@ -54,6 +61,7 @@ extern can_ring *can_queues[PANDA_CAN_CNT];
 bool can_pop(can_ring *q, CANPacket_t *elem);
 bool can_push(can_ring *q, const CANPacket_t *elem);
 uint32_t can_slots_empty(const can_ring *q);
+void can_clear(can_ring *q);
 extern bus_config_t bus_config[PANDA_CAN_CNT];
 
 #define CANIF_FROM_CAN_NUM(num) (cans[num])
@@ -73,12 +81,6 @@ bool can_check_checksum(CANPacket_t *packet);
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook);
 bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len);
 
-#include "board/can_comms.h"
-#include "timers.h"
-#include "board/utils.h"
-#include "opendbc/safety/declarations.h"
-
-#include "board/critical.h"
 
 extern uint32_t safety_tx_blocked;
 extern uint32_t safety_rx_invalid;
@@ -118,26 +120,3 @@ extern can_ring can_tx3_q;
 // FIXME:
 // cppcheck-suppress misra-c2012-9.3
 // can_ring *can_queues[PANDA_CAN_CNT] = {&can_tx1_q, &can_tx2_q, &can_tx3_q};
-
-// ********************* interrupt safe queue *********************
-bool can_pop(can_ring *q, CANPacket_t *elem);
-
-bool can_push(can_ring *q, const CANPacket_t *elem);
-uint32_t can_slots_empty(const can_ring *q);
-void can_clear(can_ring *q);
-
-extern bus_config_t bus_config[PANDA_CAN_CNT];
-void can_init_all(void);
-void can_set_orientation(bool flipped);
-
-#ifdef PANDA_JUNGLE
-void can_set_forwarding(uint8_t from, uint8_t to);
-#endif
-
-void ignition_can_hook(CANPacket_t *msg);
-bool can_tx_check_min_slots_free(uint32_t min);
-uint8_t calculate_checksum(const uint8_t *dat, uint32_t len);
-void can_set_checksum(CANPacket_t *packet);
-bool can_check_checksum(CANPacket_t *packet);
-void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook);
-bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len);

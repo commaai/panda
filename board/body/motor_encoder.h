@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "board/body/motor_common.h"
+#include "board/config.h"
 
 // Encoder pin map:
 // Left motor:  PB6 -> TIM4_CH1, PB7 -> TIM4_CH2
@@ -32,5 +33,10 @@ typedef struct {
   float cached_speed_rps;
 } motor_encoder_state_t;
 
+extern motor_encoder_state_t motor_encoders[BODY_MOTOR_COUNT];
 
+void motor_encoder_configure_gpio(const motor_encoder_config_t *cfg);
+void motor_encoder_init(void);
+int32_t motor_encoder_get_position(uint8_t motor);
+void motor_encoder_reset(uint8_t motor);
 float motor_encoder_get_speed_rpm(uint8_t motor);
