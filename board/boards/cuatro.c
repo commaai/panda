@@ -1,4 +1,10 @@
-#include "board_declarations.h"
+// #include "board_declarations.h"
+// #include "board/stm32h7/lladc.h"
+
+#include "board/config.h"
+#include "board/board_struct.h"
+#include "board/boards/unused_funcs.h"
+#include "board/drivers/fake_siren.h"
 
 // ////////////////////////// //
 // Cuatro (STM32H7) + Harness //

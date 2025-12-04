@@ -10,6 +10,4 @@ typedef enum {
   BODY_MOTOR_RIGHT = 2U,
 } body_motor_id_e;
 
-static inline bool body_motor_is_valid(uint8_t motor) {
-  return (motor > 0U) && (motor <= BODY_MOTOR_COUNT);
-}
+bool body_motor_is_valid(uint8_t motor);
