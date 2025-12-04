@@ -1,5 +1,7 @@
 #include "unused_funcs.h"
 
+#include "board/utils.h"
+
 void unused_init_bootloader(void) {
 }
 

@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "boards/board_declarations.h"
+#include "board/board_struct.h"
 
 // ******************** Prototypes ********************
 
