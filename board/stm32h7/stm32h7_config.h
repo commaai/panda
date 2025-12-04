@@ -48,12 +48,6 @@ separate IRQs for RX and TX.
 #include "board/can.h"
 #include "board/comms_definitions.h"
 
-// #ifndef BOOTSTUB
-//   #include "board/main_declarations.h"
-// #else
-//   #include "board/bootstub_declarations.h"
-// #endif
-
 #include "board/libc.h"
 #include "board/critical.h"
 #include "board/faults.h"

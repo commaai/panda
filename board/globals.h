@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include "boards/board_declarations.h"
+#include "board/board_struct.h"
 #include "board/drivers/harness.h"
 
 typedef struct board board;

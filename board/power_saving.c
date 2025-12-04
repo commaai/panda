@@ -7,10 +7,6 @@
 // WARNING: To stay in compliance with the SIL2 rules laid out in STM UM1840, we should never implement any of the available hardware low power modes.
 // See rule: CoU_3
 
-// FIXME!
-void llcan_irq_disable(const FDCAN_GlobalTypeDef *FDCANx);
-void llcan_irq_enable(const FDCAN_GlobalTypeDef *FDCANx);
-
 int power_save_status = POWER_SAVE_STATUS_DISABLED;
 
 void enable_can_transceivers(bool enabled) {
