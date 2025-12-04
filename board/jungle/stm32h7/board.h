@@ -1,3 +1,5 @@
+#include "board/config.h"
+
 #include "board/jungle/boards/board_declarations.h"
 
 #include "board/stm32h7/lladc.h"

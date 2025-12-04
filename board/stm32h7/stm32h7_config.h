@@ -72,12 +72,19 @@ separate IRQs for RX and TX.
 #endif
 
 #ifdef PANDA_JUNGLE
+#error NOT DOING THIS BOY
 #include "board/jungle/stm32h7/board.h"
 #elif defined(PANDA_BODY)
+#include "board/boards/boot_state.h"
 #include "board/body/stm32h7/board.h"
+#include "board/stm32h7/lladc.h"
+#include "board/drivers/clock_source.h"
+#include "board/stm32h7/sound.h"
+#include "board/drivers/harness.h"
 #else
 #include "board/stm32h7/board.h"
 #endif
+
 #include "board/stm32h7/clock.h"
 
 #ifdef BOOTSTUB

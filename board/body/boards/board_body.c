@@ -1,6 +1,7 @@
 #include "board_body.h"
 
 #include "board/config.h"
+#include "board/board_struct.h"
 
 void board_body_init(void) {
   motor_init();
