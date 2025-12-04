@@ -2,6 +2,7 @@
 
 #include "board/stm32h7/lli2c.h"
 #include "board/globals.h"
+#include "board/stm32h7/sound.h"
 
 void siren_tim7_init(void) {
   // Init trigger timer (around 2.5kHz)
