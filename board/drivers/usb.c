@@ -4,6 +4,7 @@
 #include "usb.h"
 #include "board/config.h"
 #include "board/globals.h"
+#include "board/can_comms.h"
 
 static uint8_t response[USBPACKET_MAX_SIZE];
 
