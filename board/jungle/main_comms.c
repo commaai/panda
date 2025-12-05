@@ -1,92 +1,57 @@
-#include <stdint.h>
-#include <stdbool.h>
-
-#include "board/utils.h"
+#include "board/globals.h"
 #include "board/config.h"
+#include "main_comms.h"
+#include "jungle_health.h"
 #include "board/health.h"
-#include "board/main_declarations.h"
-#include "board/drivers/can_common.h"
-#include "board/power_saving.h"
-#include "board/drivers/spi.h"
-#include "board/drivers/bootkick.h"
 #include "board/drivers/fdcan.h"
+#include "board/drivers/can_common.h"
 #include "board/provision.h"
 #include "board/early_init.h"
 #include "board/obj/gitversion.h"
-#include "board/drivers/fan.h"
-#include "board/drivers/clock_source.h"
-#include "board/globals.h"
-#include "board/drivers/uart.h"
-
 #include "board/stm32h7/llfdcan.h"
-#include "board/main_comms.h"
+#include "board/libc.h"
+#include "board/drivers/uart.h"
 
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
-extern uint32_t heartbeat_counter;
-extern bool heartbeat_lost;
-extern bool heartbeat_disabled;
+bool generated_can_traffic = false;
 
-void set_safety_mode(uint16_t mode, uint16_t param);
-
-static int get_health_pkt(void *dat) {
-  COMPILE_TIME_ASSERT(sizeof(struct health_t) <= USBPACKET_MAX_SIZE);
-  struct health_t * health = (struct health_t*)dat;
+static int get_jungle_health_pkt(void *dat) {
+  COMPILE_TIME_ASSERT(sizeof(struct jungle_health_t) <= USBPACKET_MAX_SIZE);
+  struct jungle_health_t * health = (struct jungle_health_t*)dat;
 
   health->uptime_pkt = uptime_cnt;
-  health->voltage_pkt = current_board->read_voltage_mV();
-  health->current_pkt = current_board->read_current_mA();
+  health->ch1_power = current_board->get_channel_power(1U);
+  health->ch2_power = current_board->get_channel_power(2U);
+  health->ch3_power = current_board->get_channel_power(3U);
+  health->ch4_power = current_board->get_channel_power(4U);
+  health->ch5_power = current_board->get_channel_power(5U);
+  health->ch6_power = current_board->get_channel_power(6U);
 
-  health->ignition_line_pkt = (uint8_t)(harness_check_ignition());
-  health->ignition_can_pkt = ignition_can;
-
-  health->controls_allowed_pkt = controls_allowed;
-  health->safety_tx_blocked_pkt = safety_tx_blocked;
-  health->safety_rx_invalid_pkt = safety_rx_invalid;
-  health->tx_buffer_overflow_pkt = tx_buffer_overflow;
-  health->rx_buffer_overflow_pkt = rx_buffer_overflow;
-  health->car_harness_status_pkt = harness.status;
-  health->safety_mode_pkt = (uint8_t)(current_safety_mode);
-  health->safety_param_pkt = current_safety_param;
-  health->alternative_experience_pkt = alternative_experience;
-  health->power_save_enabled_pkt = power_save_status == POWER_SAVE_STATUS_ENABLED;
-  health->heartbeat_lost_pkt = heartbeat_lost;
-  health->safety_rx_checks_invalid_pkt = safety_rx_checks_invalid;
-
-  health->spi_error_count_pkt = spi_error_count;
-
-  health->fault_status_pkt = fault_status;
-  health->faults_pkt = faults;
-
-  health->interrupt_load_pkt = interrupt_load;
-
-  health->fan_power = fan_state.power;
-
-  health->sbu1_voltage_mV = harness.sbu1_voltage_mV;
-  health->sbu2_voltage_mV = harness.sbu2_voltage_mV;
-
-  health->som_reset_triggered = bootkick_reset_triggered;
+  health->ch1_sbu1_mV = current_board->get_sbu_mV(1U, SBU1);
+  health->ch1_sbu2_mV = current_board->get_sbu_mV(1U, SBU2);
+  health->ch2_sbu1_mV = current_board->get_sbu_mV(2U, SBU1);
+  health->ch2_sbu2_mV = current_board->get_sbu_mV(2U, SBU2);
+  health->ch3_sbu1_mV = current_board->get_sbu_mV(3U, SBU1);
+  health->ch3_sbu2_mV = current_board->get_sbu_mV(3U, SBU2);
+  health->ch4_sbu1_mV = current_board->get_sbu_mV(4U, SBU1);
+  health->ch4_sbu2_mV = current_board->get_sbu_mV(4U, SBU2);
+  health->ch5_sbu1_mV = current_board->get_sbu_mV(5U, SBU1);
+  health->ch5_sbu2_mV = current_board->get_sbu_mV(5U, SBU2);
+  health->ch6_sbu1_mV = current_board->get_sbu_mV(6U, SBU1);
+  health->ch6_sbu2_mV = current_board->get_sbu_mV(6U, SBU2);
 
   return sizeof(*health);
 }
 
 // send on serial, first byte to select the ring
 void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
-  uart_ring *ur = get_ring_by_number(data[0]);
-  if ((len != 0U) && (ur != NULL)) {
-    if ((data[0] < 2U) || (data[0] >= 4U)) {
-      for (uint32_t i = 1; i < len; i++) {
-        while (!put_char(ur, data[i])) {
-          // wait
-        }
-      }
-    }
-  }
+  UNUSED(data);
+  UNUSED(len);
 }
 
 int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   unsigned int resp_len = 0;
-  uart_ring *ur = NULL;
   uint32_t time;
 
 #ifdef DEBUG_COMMS
@@ -97,6 +62,26 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
 #endif
 
   switch (req->request) {
+    // **** 0xa0: Set panda power.
+    case 0xa0:
+      current_board->set_panda_power((req->param1 == 1U));
+      break;
+    // **** 0xa1: Set harness orientation.
+    case 0xa1:
+      current_board->set_harness_orientation(req->param1);
+      break;
+    // **** 0xa2: Set ignition.
+    case 0xa2:
+      current_board->set_ignition((req->param1 == 1U));
+      break;
+    // **** 0xa3: Set panda power per channel by bitmask.
+    case 0xa3:
+      current_board->set_panda_individual_power(req->param1, (req->param2 > 0U));
+      break;
+    // **** 0xa4: Enable generated CAN traffic.
+    case 0xa4:
+      generated_can_traffic = (req->param1 > 0U);
+      break;
     // **** 0xa8: get microsecond timer
     case 0xa8:
       time = microsecond_timer_get();
@@ -106,21 +91,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       resp[3] = ((time & 0xFF000000U) >> 24U);
       resp_len = 4U;
       break;
-    // **** 0xb0: set IR power
-    case 0xb0:
-      current_board->set_ir_power(req->param1);
-      break;
-    // **** 0xb1: set fan power
-    case 0xb1:
-      fan_set_power(req->param1);
-      break;
-    // **** 0xb2: get fan rpm
-    case 0xb2:
-      resp[0] = (fan_state.rpm & 0x00FFU);
-      resp[1] = ((fan_state.rpm & 0xFF00U) >> 8U);
-      resp_len = 2;
-      break;
-    // **** 0xc0: reset communications state
+    // **** 0xc0: reset communications
     case 0xc0:
       comms_can_reset();
       break;
@@ -140,33 +111,13 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         can_health[req->param1].brs_enabled = bus_config[req->param1].brs_enabled;
         can_health[req->param1].canfd_non_iso = bus_config[req->param1].canfd_non_iso;
         resp_len = sizeof(can_health[req->param1]);
-        (void)memcpy(resp, (uint8_t*)(&can_health[req->param1]), resp_len);
+        (void)memcpy(resp, &can_health[req->param1], resp_len);
       }
       break;
     // **** 0xc3: fetch MCU UID
     case 0xc3:
       (void)memcpy(resp, ((uint8_t *)UID_BASE), 12);
       resp_len = 12;
-      break;
-    // **** 0xc4: get interrupt call rate
-    case 0xc4:
-      if (req->param1 < NUM_INTERRUPTS) {
-        uint32_t load = interrupts[req->param1].call_rate;
-        resp[0] = (load & 0x000000FFU);
-        resp[1] = ((load & 0x0000FF00U) >> 8U);
-        resp[2] = ((load & 0x00FF0000U) >> 16U);
-        resp[3] = ((load & 0xFF000000U) >> 24U);
-        resp_len = 4U;
-      }
-      break;
-    // **** 0xc5: DEBUG: drive relay
-    case 0xc5:
-      set_intercept_relay((req->param1 & 0x1U), (req->param1 & 0x2U));
-      break;
-    // **** 0xc6: DEBUG: read SOM GPIO
-    case 0xc6:
-      resp[0] = current_board->read_som_gpio();
-      resp_len = 1;
       break;
     // **** 0xd0: fetch serial (aka the provisioned dongle ID)
     case 0xd0:
@@ -203,7 +154,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xd2: get health packet
     case 0xd2:
-      resp_len = get_health_pkt(resp);
+      resp_len = get_jungle_health_pkt(resp);
       break;
     // **** 0xd3: get first 64 bytes of signature
     case 0xd3:
@@ -235,15 +186,17 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xdb: set OBD CAN multiplexing mode
     case 0xdb:
-      current_board->set_can_mode((req->param1 == 1U) ? CAN_MODE_OBD_CAN2 : CAN_MODE_NORMAL);
-      break;
-    // **** 0xdc: set safety mode
-    case 0xdc:
-      set_safety_mode(req->param1, (uint16_t)req->param2);
+      if (req->param1 == 1U) {
+        // Enable OBD CAN
+        current_board->set_can_mode(CAN_MODE_OBD_CAN2);
+      } else {
+        // Disable OBD CAN
+        current_board->set_can_mode(CAN_MODE_NORMAL);
+      }
       break;
     // **** 0xdd: get healthpacket and CANPacket versions
     case 0xdd:
-      resp[0] = HEALTH_PACKET_VERSION;
+      resp[0] = JUNGLE_HEALTH_PACKET_VERSION;
       resp[1] = CAN_PACKET_VERSION;
       resp[2] = CAN_HEALTH_PACKET_VERSION;
       resp_len = 3;
@@ -256,43 +209,17 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         UNUSED(ret);
       }
       break;
-    // **** 0xdf: set alternative experience
-    case 0xdf:
-      // you can only set this if you are in a non car safety mode
-      if (!is_car_safety_mode(current_safety_mode)) {
-        alternative_experience = req->param1;
-      }
-      break;
-    // **** 0xe0: uart read
+    // **** 0xe0: debug read
     case 0xe0:
-      ur = get_ring_by_number(req->param1);
-      if (!ur) {
-        break;
-      }
-
       // read
-      uint16_t req_length = MIN(req->length, USBPACKET_MAX_SIZE);
-      while ((resp_len < req_length) &&
-                         get_char(ur, (char*)&resp[resp_len])) {
+      while ((resp_len < MIN(req->length, USBPACKET_MAX_SIZE)) && get_char(get_ring_by_number(0), (char*)&resp[resp_len])) {
         ++resp_len;
       }
       break;
     // **** 0xe5: set CAN loopback (for testing)
     case 0xe5:
-      can_loopback = req->param1 > 0U;
+      can_loopback = (req->param1 > 0U);
       can_init_all();
-      break;
-    // **** 0xe6: set custom clock source period and pulse length
-    case 0xe6:
-      clock_source_set_timer_params(req->param1, req->param2);
-      break;
-    // **** 0xe7: set power save state
-    case 0xe7:
-      set_power_save_state(req->param1);
-      break;
-    // **** 0xe8: set can-fd auto swithing mode
-    case 0xe8:
-      bus_config[req->param1].canfd_auto = req->param2 > 0U;
       break;
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:
@@ -306,24 +233,18 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         print("Clearing CAN CAN ring buffer failed: wrong bus number\n");
       }
       break;
-    // **** 0xf3: Heartbeat. Resets heartbeat counter.
-    case 0xf3:
-      {
-        heartbeat_counter = 0U;
-        heartbeat_lost = false;
-        heartbeat_disabled = false;
-        heartbeat_engaged = (req->param1 == 1U);
-        break;
-      }
-    // **** 0xf6: set siren enabled
-    case 0xf6:
-      siren_enabled = (req->param1 != 0U);
+    // **** 0xf4: Set CAN transceiver enable pin
+    case 0xf4:
+      current_board->enable_can_transceiver(req->param1, req->param2 > 0U);
       break;
-    // **** 0xf8: disable heartbeat checks
-    case 0xf8:
-      if (!is_car_safety_mode(current_safety_mode)) {
-        heartbeat_disabled = true;
-      }
+    // **** 0xf5: Set CAN silent mode
+    case 0xf5:
+      can_silent = (req->param1 > 0U);
+      can_init_all();
+      break;
+    // **** 0xf7: enable/disable header pin by number
+    case 0xf7:
+      current_board->enable_header_pin(req->param1, req->param2 > 0U);
       break;
     // **** 0xf9: set CAN FD data bitrate
     case 0xf9:

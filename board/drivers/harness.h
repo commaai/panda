@@ -18,7 +18,6 @@ struct harness_t {
   bool relay_driven;
   bool sbu_adc_lock;
 };
-extern struct harness_t harness;
 
 struct harness_configuration {
   GPIO_TypeDef * const GPIO_SBU1;

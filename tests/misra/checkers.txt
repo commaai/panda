@@ -5,7 +5,7 @@ Cppcheck checkers list from test_misra.sh:
 
 
 TEST variant options:
---enable=all --disable=unusedFunction --addon=misra -DSTM32H7 -DSTM32H725xx -I /board/stm32h7/inc/ /board/main.c
+--enable=all --disable=unusedFunction --addon=misra -DSTM32H7 -DSTM32H725xx -I /board/stm32h7/inc/ /board/main.c -DPANDA
 
 
 Critical errors

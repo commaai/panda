@@ -92,3 +92,4 @@ separate IRQs for RX and TX.
 #include "board/stm32h7/llspi.h"
 
 void early_gpio_float(void);
+void detect_board_type(void);
