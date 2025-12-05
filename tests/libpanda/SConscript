@@ -36,12 +36,12 @@ if GetOption('ubsan'):
   env['LINKFLAGS'] += flags
 
 shared = [
-  "./crypto/rsa.c",
-  "./crypto/sha.c",
-  "./board/can_comms.c",
-  "./board/drivers/can_common.c",
-  "./board/fake_stm.c",
-  "./board/utils.c",
+  "crypto/rsa.c",
+  "crypto/sha.c",
+  "board/can_comms.c",
+  "board/drivers/can_common.c",
+  "board/fake_stm.c",
+  "board/utils.c",
 ]
 
 c = ["panda.c"] + ["../../" + s for s in shared]
