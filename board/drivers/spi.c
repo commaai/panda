@@ -9,7 +9,6 @@
 
 // H7 DMA2 located in D2 domain, so we need to use SRAM1/SRAM2
 __attribute__((section(".sram12"))) static uint8_t spi_buf_rx[SPI_BUF_SIZE];
-__attribute__((section(".sram12"))) static uint8_t spi_buf_tx[SPI_BUF_SIZE];
 
 uint16_t spi_error_count = 0;
 
@@ -104,6 +103,7 @@ void spi_rx_done(void) {
   bool checksum_valid = false;
   static uint8_t spi_endpoint;
   static uint16_t spi_data_len_miso;
+  __attribute__((section(".sram12"))) static uint8_t spi_buf_tx[SPI_BUF_SIZE];
 
   // parse header
   spi_endpoint = spi_buf_rx[1];

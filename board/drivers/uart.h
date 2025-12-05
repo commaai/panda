@@ -35,6 +35,7 @@ void clear_uart_buff(uart_ring *q);
 
 // ******************************** UART buffers ********************************
 
+extern uart_ring uart_ring_debug;
 extern uart_ring uart_ring_som_debug;
 
 uart_ring *get_ring_by_number(int a);
