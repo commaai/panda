@@ -25,9 +25,6 @@ typedef union _USB_Setup {
   } b;
 } USB_Setup_TypeDef;
 
-void usb_init(void);
-void refresh_can_tx_slots_available(void);
-
 // **** supporting defines ****
 #define  USB_REQ_GET_STATUS                             0x00
 #define  USB_REQ_CLEAR_FEATURE                          0x01

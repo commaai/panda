@@ -12,5 +12,3 @@
 #include "board/drivers/fake_siren.h"
 #include "board/drivers/clock_source.h"
 #include "board/boards/cuatro.h"
-
-void detect_board_type(void);
