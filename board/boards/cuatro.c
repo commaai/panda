@@ -1,6 +1,3 @@
-// #include "board_declarations.h"
-// #include "board/stm32h7/lladc.h"
-
 #include "board/config.h"
 #include "board/board_struct.h"
 #include "board/boards/unused_funcs.h"
