@@ -16,6 +16,24 @@ static uint16_t spi_data_len_mosi;
 static bool spi_can_tx_ready = false;
 static const unsigned char version_text[] = "VERSION";
 
+static uint8_t crc_checksum(const uint8_t *dat, int len, const uint8_t poly) {
+  uint8_t crc = 0xFFU;
+  int i;
+  int j;
+  for (i = len - 1; i >= 0; i--) {
+    crc ^= dat[i];
+    for (j = 0; j < 8; j++) {
+      if ((crc & 0x80U) != 0U) {
+        crc = (uint8_t)((crc << 1) ^ poly);
+      }
+      else {
+        crc <<= 1;
+      }
+    }
+  }
+  return crc;
+}
+
 static uint16_t spi_version_packet(uint8_t *out) {
   // this protocol version request is a stable portion of
   // the panda's SPI protocol. its contents match that of the

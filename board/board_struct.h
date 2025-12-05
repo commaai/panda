@@ -1,7 +1,6 @@
 #pragma once
 
 #include "board/config.h"
-
 #include "board/board_forward.h"
 #include "board/boards/boot_state.h"
 

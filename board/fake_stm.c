@@ -17,6 +17,4 @@ uint32_t microsecond_timer_get(void) {
   return MICROSECOND_TIMER->CNT;
 }
 
-
-// NOCHECKIN
 void put_char(char c) {};

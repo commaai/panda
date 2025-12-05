@@ -4,8 +4,6 @@
 #include <stdbool.h>
 
 #include "board/config.h"
-// TODO
-#include "board/stm32h7/lladc.h"
 
 #define HARNESS_STATUS_NC 0U
 #define HARNESS_STATUS_NORMAL 1U

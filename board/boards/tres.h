@@ -1,8 +1,9 @@
 #pragma once
 
-#include "board/board_struct.h"
+#include <stdint.h>
+#include <stdbool.h>
 
-// ///////////////////////////
-// Tres (STM32H7) + Harness //
-// ///////////////////////////
 extern struct board board_tres;
+
+void tres_set_can_mode(uint8_t mode);
+bool tres_read_som_gpio (void);
