@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PANDA_DIR=$(realpath $DIR/../../)
@@ -36,18 +35,21 @@ CHECKLIST=$DIR/checkers.txt
 echo "Cppcheck checkers list from test_misra.sh:" > $CHECKLIST
 
 cppcheck() {
+  # get all gcc defines: arm-none-eabi-gcc -dM -E - < /dev/null
+  COMMON_DEFINES="-D__GNUC__=9 -UCMSIS_NVIC_VIRTUAL -UCMSIS_VECTAB_VIRTUAL -UPANDA_JUNGLE -UBOOTSTUB"
 
   # note that cppcheck build cache results in inconsistent results as of v2.13.0
   OUTPUT=$DIR/.output.log
-
+  
   echo -e "\n\n\n\n\nTEST variant options:" >> $CHECKLIST
   echo -e ""${@//$PANDA_DIR/}"\n\n" >> $CHECKLIST # (absolute path removed)
 
   $CPPCHECK_DIR/cppcheck --inline-suppr \
+          -I "$(arm-none-eabi-gcc -print-file-name=include)" \
           --enable=all --addon=misra \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
           --suppress=*:*include/* --error-exitcode=2 --check-level=exhaustive --safety \
-          --platform=arm32-wchar_t4 --checkers-report=$CHECKLIST.tmp \
+          --platform=arm32-wchar_t4 $COMMON_DEFINES --checkers-report=$CHECKLIST.tmp \
           --std=c11 --project=compile_commands.json -icrypto 2>&1 | tee $OUTPUT
 
   cat $CHECKLIST.tmp >> $CHECKLIST
