@@ -6,6 +6,7 @@
 #include "board/utils.h"
 #include "board/libc.h"
 #include "board/faults.h"
+#include "board/print.h"
 
 simple_watchdog_state_t wd_state;
 

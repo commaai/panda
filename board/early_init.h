@@ -14,3 +14,4 @@ typedef void (*bootloader_fcn)(void);
 typedef bootloader_fcn *bootloader_fcn_ptr;
 
 void early_initialization(void);
+void __initialize_hardware_early(void);

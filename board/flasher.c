@@ -2,6 +2,7 @@
 #include "libc.h"
 #include "board/stm32h7/llflash.h"
 #include "drivers/led.h"
+#include "print.h"
 
 #include "globals.h"
 #include "provision.h"

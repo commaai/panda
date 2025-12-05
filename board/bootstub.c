@@ -4,6 +4,7 @@
 // ********************* Includes *********************
 #include <stdbool.h>
 
+#include "board/config.h"
 #include "board/early_init.h"
 #include "board/flasher.h"
 
@@ -11,6 +12,7 @@
 #include "crypto/sha.h"
 
 #include "board/obj/cert.h"
+#include "board/print.h"
 
 #include "globals.h"
 
@@ -21,11 +23,14 @@ void __initialize_hardware_early(void) {
 
 void print(const char *a){ UNUSED(a); }
 void puth(unsigned int i){ UNUSED(i); }
-void puth2(uint8_t i){ UNUSED(i); }
-void puth4(uint8_t i){ UNUSED(i); }
+#if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
+void puth4(unsigned int i){ UNUSED(i); }
+#endif
+#if defined(DEBUG_SPI) || defined(DEBUG_USB) || defined(DEBUG_COMMS)
 void hexdump(const void *a, int l){ UNUSED(a); UNUSED(l); }
+#endif
 
-void fail(void) {
+static void fail(void) {
   soft_flasher_start();
 }
 

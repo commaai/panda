@@ -16,5 +16,3 @@ void *memset(void *str, int c, unsigned int n);
 void *memcpy(void *dest, const void *src, unsigned int len);
 // cppcheck-suppress misra-c2012-21.2
 int memcmp(const void * ptr1, const void * ptr2, unsigned int num);
-void print(const char *a);
-void puth(unsigned int i);
