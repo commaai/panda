@@ -3,14 +3,12 @@
 
 #include "board/drivers/led.h"
 #include "board/drivers/pwm.h"
-// #include "board/drivers/usb.h"
 #include "board/drivers/simple_watchdog.h"
 #include "board/drivers/bootkick.h"
 
 #include "board/early_init.h"
-// #include "board/provision.h"
 
-// #include "libc.h"
+#include "board/libc.h"
 
 #include "board/power_saving.h"
 #include "board/globals.h"
@@ -18,19 +16,27 @@
 #include "opendbc/safety/safety.h"
 #include "board/drivers/can_common.h"
 #include "board/drivers/fdcan.h"
-#include "board/obj/gitversion.h"
-
-// #include "board/can_comms.h"
-#include "board/main_comms.h"
-// #include "board/main_declarations.h"
+#include "board/main_declarations.h"
 
 
-// TODO
-extern uint32_t heartbeat_counter;
-extern bool heartbeat_lost;
-extern bool heartbeat_disabled;
-extern bool siren_enabled;
-uint32_t uptime_cnt;
+static void simple_watchdog_kick(void) {
+  uint32_t ts = microsecond_timer_get();
+
+  uint32_t et = get_ts_elapsed(ts, wd_state.last_ts);
+  if (et > wd_state.threshold) {
+    print("WD timeout 0x"); puth(et); print("\n");
+    fault_occurred(wd_state.fault);
+  }
+
+  wd_state.last_ts = ts;
+}
+
+
+static void simple_watchdog_init(uint32_t fault, uint32_t threshold) {
+  wd_state.fault = fault;
+  wd_state.threshold = threshold;
+  wd_state.last_ts = microsecond_timer_get();
+}
 
 // ********************* Serial debugging *********************
 

@@ -3,7 +3,7 @@
 #include "early_init.h"
 #include "drivers/led.h"
 #include "globals.h"
-#include "board/config.h"
+// #include "board/config.h"
 
 extern void *g_pfnVectors;
 extern uint32_t enter_bootloader_mode;
