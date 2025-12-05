@@ -36,8 +36,6 @@ CHECKLIST=$DIR/checkers.txt
 echo "Cppcheck checkers list from test_misra.sh:" > $CHECKLIST
 
 cppcheck() {
-  # get all gcc defines: arm-none-eabi-gcc -dM -E - < /dev/null
-  COMMON_DEFINES="-D__GNUC__=9 -UCMSIS_NVIC_VIRTUAL -UCMSIS_VECTAB_VIRTUAL -UPANDA_JUNGLE -UBOOTSTUB"
 
   # note that cppcheck build cache results in inconsistent results as of v2.13.0
   OUTPUT=$DIR/.output.log
@@ -46,13 +44,12 @@ cppcheck() {
   echo -e ""${@//$PANDA_DIR/}"\n\n" >> $CHECKLIST # (absolute path removed)
 
   $CPPCHECK_DIR/cppcheck --inline-suppr \
-          -I $PANDA_DIR \
-          -I "$(arm-none-eabi-gcc -print-file-name=include)" \
-          -I $OPENDBC_ROOT \
+          --enable=all --addon=misra \
+          -j `nproc` \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
           --suppress=*:*include/* --error-exitcode=2 --check-level=exhaustive --safety \
-          --platform=arm32-wchar_t4 $COMMON_DEFINES --checkers-report=$CHECKLIST.tmp \
-          --std=c11 "$@" 2>&1 | tee $OUTPUT
+          --platform=arm32-wchar_t4 --checkers-report=$CHECKLIST.tmp \
+          --std=c11 --project=compile_commands.json --file-filter=*.c 2>&1 | tee $OUTPUT
 
   cat $CHECKLIST.tmp >> $CHECKLIST
   rm $CHECKLIST.tmp
@@ -64,14 +61,10 @@ cppcheck() {
   fi
 }
 
-PANDA_OPTS="--enable=all --disable=unusedFunction --addon=misra"
+PANDA_OPTS="--enable=all --addon=misra"
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ $PANDA_DIR/board/main.c -DPANDA
-
-# unused needs to run globally
-#printf "\n${GREEN}** UNUSED ALL CODE **${NC}\n"
-#cppcheck --enable=unusedFunction --quiet $PANDA_DIR/board/
+cppcheck $PANDA_OPTS
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 
