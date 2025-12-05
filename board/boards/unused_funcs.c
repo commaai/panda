@@ -29,6 +29,7 @@ bool unused_read_som_gpio(void) {
   return false;
 }
 
+// cppcheck-suppress misra-c2012-8.7
 void unused_set_amp_enabled(bool enabled) {
   UNUSED(enabled);
 }
