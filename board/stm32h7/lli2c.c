@@ -8,14 +8,14 @@
 
 bool i2c_status_wait(const volatile uint32_t *reg, uint32_t mask, uint32_t val) {
   uint32_t start_time = microsecond_timer_get();
-  while(((*reg & mask) != val) && (get_ts_elapsed(microsecond_timer_get(), start_time) < I2C_TIMEOUT_US));
+  while(((*reg & mask) != val) && (get_ts_elapsed(microsecond_timer_get(), start_time) < I2C_TIMEOUT_US)) {}
   return ((*reg & mask) == val);
 }
 
 void i2c_reset(I2C_TypeDef *I2C) {
   // peripheral reset
   register_clear_bits(&I2C->CR1, I2C_CR1_PE);
-  while ((I2C->CR1 & I2C_CR1_PE) != 0U);
+  while ((I2C->CR1 & I2C_CR1_PE) != 0U) {}
   register_set_bits(&I2C->CR1, I2C_CR1_PE);
 }
 

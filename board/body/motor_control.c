@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 #include "board/body/motor_common.h"
+#include "board/body/motor_control.h"
 #include "board/body/motor_encoder.h"
 
 #include "board/drivers/pwm.h"

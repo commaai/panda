@@ -1,4 +1,5 @@
 #include "libc.h"
+#include "print.h"
 
 void delay(uint32_t a) {
   volatile uint32_t i;

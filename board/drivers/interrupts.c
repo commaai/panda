@@ -1,6 +1,6 @@
 #include "interrupts.h"
-
 #include "board/libc.h"
+#include "board/print.h"
 
 void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!

@@ -1,6 +1,7 @@
 #include "lladc.h"
 
 #include "board/libc.h"
+#include "board/print.h"
 
 static uint32_t adc_avdd_mV = 0U;
 
@@ -8,18 +9,18 @@ void adc_init(ADC_TypeDef *adc) {
   adc->CR &= ~(ADC_CR_ADEN); // Disable ADC
   adc->CR &= ~(ADC_CR_DEEPPWD); // Reset deep-power-down mode
   adc->CR |= ADC_CR_ADVREGEN; // Enable ADC regulator
-  while(!(adc->ISR & ADC_ISR_LDORDY) && (adc != ADC3));
+  while(!(adc->ISR & ADC_ISR_LDORDY) && (adc != ADC3)) {}
 
   if (adc != ADC3) {
     adc->CR &= ~(ADC_CR_ADCALDIF); // Choose single-ended calibration
     adc->CR |= ADC_CR_ADCALLIN; // Lineriality calibration
   }
   adc->CR |= ADC_CR_ADCAL; // Start calibration
-  while((adc->CR & ADC_CR_ADCAL) != 0U);
+  while((adc->CR & ADC_CR_ADCAL) != 0U) {}
 
   adc->ISR |= ADC_ISR_ADRDY;
   adc->CR |= ADC_CR_ADEN;
-  while(!(adc->ISR & ADC_ISR_ADRDY));
+  while(!(adc->ISR & ADC_ISR_ADRDY)) {}
 }
 
 uint16_t adc_get_raw(const adc_signal_t *signal) {
@@ -42,11 +43,11 @@ uint16_t adc_get_raw(const adc_signal_t *signal) {
 
   // start conversion
   signal->adc->CR |= ADC_CR_ADSTART;
-  while (!(signal->adc->ISR & ADC_ISR_EOC));
+  while (!(signal->adc->ISR & ADC_ISR_EOC)) {}
 
   uint16_t res = signal->adc->DR;
 
-  while (!(signal->adc->ISR & ADC_ISR_EOS));
+  while (!(signal->adc->ISR & ADC_ISR_EOS)) {}
   signal->adc->ISR |= ADC_ISR_EOS;
 
   return res;

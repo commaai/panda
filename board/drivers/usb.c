@@ -6,6 +6,7 @@
 #include "board/globals.h"
 #include "board/can_comms.h"
 #include "board/drivers/uart.h"
+#include "board/print.h"
 
 static uint8_t response[USBPACKET_MAX_SIZE];
 
@@ -107,10 +108,10 @@ static void usb_reset(void) {
 
   // flush TX fifo
   USBx->GRSTCTL = USB_OTG_GRSTCTL_TXFFLSH | USB_OTG_GRSTCTL_TXFNUM_4;
-  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH) == USB_OTG_GRSTCTL_TXFFLSH);
+  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH) == USB_OTG_GRSTCTL_TXFFLSH) {}
   // flush RX FIFO
   USBx->GRSTCTL = USB_OTG_GRSTCTL_RXFFLSH;
-  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_RXFFLSH) == USB_OTG_GRSTCTL_RXFFLSH);
+  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_RXFFLSH) == USB_OTG_GRSTCTL_RXFFLSH) {}
 
   // no global NAK
   USBx_DEVICE->DCTL |= USB_OTG_DCTL_CGINAK;
