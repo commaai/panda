@@ -2,7 +2,6 @@
 
 #include <stdbool.h>
 
-// TODO: This should be included everywhere!, and checked!
 //#define DEBUG
 //#define DEBUG_UART
 //#define DEBUG_USB
