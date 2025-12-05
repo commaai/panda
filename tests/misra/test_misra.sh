@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PANDA_DIR=$(realpath $DIR/../../)
@@ -40,17 +41,18 @@ cppcheck() {
 
   # note that cppcheck build cache results in inconsistent results as of v2.13.0
   OUTPUT=$DIR/.output.log
-  
+
   echo -e "\n\n\n\n\nTEST variant options:" >> $CHECKLIST
   echo -e ""${@//$PANDA_DIR/}"\n\n" >> $CHECKLIST # (absolute path removed)
 
   $CPPCHECK_DIR/cppcheck --inline-suppr \
+          -I $PANDA_DIR \
           -I "$(arm-none-eabi-gcc -print-file-name=include)" \
-          --enable=all --addon=misra \
+          -I $OPENDBC_ROOT \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
           --suppress=*:*include/* --error-exitcode=2 --check-level=exhaustive --safety \
           --platform=arm32-wchar_t4 $COMMON_DEFINES --checkers-report=$CHECKLIST.tmp \
-          --std=c11 --project=compile_commands.json -icrypto 2>&1 | tee $OUTPUT
+          --std=c11 "$@" 2>&1 | tee $OUTPUT
 
   cat $CHECKLIST.tmp >> $CHECKLIST
   rm $CHECKLIST.tmp
@@ -62,9 +64,58 @@ cppcheck() {
   fi
 }
 
-printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
+PANDA_OPTS="--enable=all --disable=unusedFunction --addon=misra"
 
-cppcheck
+
+printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
+cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ -DPANDA \
+    $PANDA_DIR/board/libc.c \
+    $PANDA_DIR/board/early_init.c \
+    $PANDA_DIR/board/critical.c \
+    $PANDA_DIR/board/drivers/led.c \
+    $PANDA_DIR/board/drivers/pwm.c \
+    $PANDA_DIR/board/drivers/gpio.c \
+    $PANDA_DIR/board/drivers/fake_siren.c \
+    $PANDA_DIR/board/stm32h7/lli2c.c \
+    $PANDA_DIR/board/stm32h7/clock.c \
+    $PANDA_DIR/board/drivers/clock_source.c \
+    $PANDA_DIR/board/stm32h7/sound.c \
+    $PANDA_DIR/board/stm32h7/llflash.c \
+    $PANDA_DIR/board/stm32h7/stm32h7_config.c \
+    $PANDA_DIR/board/drivers/registers.c \
+    $PANDA_DIR/board/drivers/interrupts.c \
+    $PANDA_DIR/board/provision.c \
+    $PANDA_DIR/board/stm32h7/peripherals.c \
+    $PANDA_DIR/board/stm32h7/llusb.c \
+    $PANDA_DIR/board/drivers/usb.c \
+    $PANDA_DIR/board/drivers/spi.c \
+    $PANDA_DIR/board/drivers/timers.c \
+    $PANDA_DIR/board/stm32h7/lladc.c \
+    $PANDA_DIR/board/stm32h7/llspi.c \
+    $PANDA_DIR/board/faults.c \
+    $PANDA_DIR/board/boards/unused_funcs.c \
+    $PANDA_DIR/board/utils.c \
+    $PANDA_DIR/board/globals.c \
+    $PANDA_DIR/board/obj/gitversion.c \
+    $PANDA_DIR/board/can_comms.c \
+    $PANDA_DIR/board/drivers/fan.c \
+    $PANDA_DIR/board/power_saving.c \
+    $PANDA_DIR/board/drivers/uart.c \
+    $PANDA_DIR/board/stm32h7/llfdcan.c \
+    $PANDA_DIR/board/drivers/harness.c   \
+    $PANDA_DIR/board/drivers/bootkick.c \
+    $PANDA_DIR/board/stm32h7/llfan.c \
+    $PANDA_DIR/board/stm32h7/lluart.c \
+    $PANDA_DIR/board/drivers/fdcan.c \
+    $PANDA_DIR/board/drivers/can_common.c \
+    $PANDA_DIR/board/main_comms.c \
+    $PANDA_DIR/board/main.c \
+    $PANDA_DIR/board/drivers/simple_watchdog.c \
+    $PANDA_DIR/board/stm32h7/board.c \
+    $PANDA_DIR/board/boards/tres.c \
+    $PANDA_DIR/board/boards/red.c \
+    $PANDA_DIR/board/boards/cuatro.c \
+    $PANDA_DIR/board/main_definitions.c
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 
