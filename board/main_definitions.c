@@ -1,6 +1,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "main_declarations.h"
+
 // heartbeat state
 uint32_t heartbeat_counter = 0;
 bool heartbeat_lost = false;

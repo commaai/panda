@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "registers.h"
 #include "board/libc.h"
 

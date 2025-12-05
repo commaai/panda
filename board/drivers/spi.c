@@ -2,6 +2,7 @@
 #include "board/libc.h"
 #include "board/config.h"
 #include "board/can_comms.h"
+#include "board/drivers/uart.h"
 
 #include "board/globals.h"
 
