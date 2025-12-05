@@ -1,4 +1,5 @@
 #include "board.h"
+#include "board/config.h"
 
 #ifndef PANDA_BODY
 #error This should only be used on Panda Body!

@@ -73,3 +73,5 @@
   // building for tests
   #include "fake_stm.h"
 #endif
+
+void detect_board_type(void);
