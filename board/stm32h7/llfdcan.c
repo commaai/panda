@@ -8,7 +8,7 @@ static bool fdcan_request_init(FDCAN_GlobalTypeDef *FDCANx) {
   bool ret = true;
   // Exit from sleep mode
   FDCANx->CCCR &= ~(FDCAN_CCCR_CSR);
-  while ((FDCANx->CCCR & FDCAN_CCCR_CSA) == FDCAN_CCCR_CSA);
+  while ((FDCANx->CCCR & FDCAN_CCCR_CSA) == FDCAN_CCCR_CSA) {}
 
   // Request init
   uint32_t timeout_counter = 0U;

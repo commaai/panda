@@ -20,10 +20,10 @@ void usb_init(void) {
   USBx->GUSBCFG |= USB_OTG_GUSBCFG_FDMOD;
   delay(250000); // Wait for about 25ms (explicitly stated in H7 ref manual)
   // Wait for AHB master IDLE state.
-  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL) == 0U);
+  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL) == 0U) {}
   // Core Soft Reset
   USBx->GRSTCTL |= USB_OTG_GRSTCTL_CSRST;
-  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_CSRST) == USB_OTG_GRSTCTL_CSRST);
+  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_CSRST) == USB_OTG_GRSTCTL_CSRST) {}
   // Activate the USB Transceiver
   USBx->GCCFG |= USB_OTG_GCCFG_PWRDWN;
 
@@ -46,10 +46,10 @@ void usb_init(void) {
 
   // Flush FIFOs
   USBx->GRSTCTL = (USB_OTG_GRSTCTL_TXFFLSH | (0x10U << 6));
-  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH) == USB_OTG_GRSTCTL_TXFFLSH);
+  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH) == USB_OTG_GRSTCTL_TXFFLSH) {}
 
   USBx->GRSTCTL = USB_OTG_GRSTCTL_RXFFLSH;
-  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_RXFFLSH) == USB_OTG_GRSTCTL_RXFFLSH);
+  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_RXFFLSH) == USB_OTG_GRSTCTL_RXFFLSH) {}
 
   // Clear all pending Device Interrupts
   USBx_DEVICE->DIEPMSK = 0U;
