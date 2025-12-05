@@ -1,9 +1,11 @@
 #include <stdint.h>
 
-#include "power_saving.h"
-#include "main_declarations.h"
-#include "config.h"
+#include "board/power_saving.h"
+#include "board/main_declarations.h"
+#include "board/config.h"
 #include "board/drivers/fdcan.h"
+#include "board/globals.h"
+
 // WARNING: To stay in compliance with the SIL2 rules laid out in STM UM1840, we should never implement any of the available hardware low power modes.
 // See rule: CoU_3
 

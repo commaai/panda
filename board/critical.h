@@ -22,8 +22,7 @@ extern uint8_t global_critical_depth;
   }
 #endif
 
-extern uint8_t global_critical_depth;
-static volatile bool interrupts_enabled;
+extern volatile bool interrupts_enabled;
 
 void enable_interrupts(void);
 void disable_interrupts(void);
