@@ -65,9 +65,6 @@
 #error FUCK YOU
 #endif
 
-// TODO, better spot
-void detect_board_type(void);
-
 // platform includes
 #ifdef STM32H7
   #include "board/stm32h7/stm32h7_config.h"

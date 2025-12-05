@@ -3,6 +3,8 @@
 #include "board/boards/unused_funcs.h"
 #include "board/board_struct.h"
 
+#include "board/globals.h"
+
 // ///////////////////////////// //
 // Red Panda (STM32H7) + Harness //
 // ///////////////////////////// //

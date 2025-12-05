@@ -1,5 +1,6 @@
 #include "fake_stm.h"
-#include "utils.h"
+
+#include <stdio.h>
 
 void print(const char *a) {
   printf("%s", a);
