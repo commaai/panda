@@ -1,7 +1,5 @@
 #include "uart.h"
 
-// ***************************** Definitions *****************************
-
 #define UART_BUFFER(x, size_rx, size_tx, uart_ptr, callback_ptr, overwrite_mode) \
   static uint8_t elems_rx_##x[size_rx]; \
   static uint8_t elems_tx_##x[size_tx]; \
@@ -129,11 +127,11 @@ void puth(unsigned int i) {
   puthx(i, 8U);
 }
 
-// #if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
-// void puth4(unsigned int i) {
-//   puthx(i, 4U);
-// }
-// #endif
+#if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
+void puth4(unsigned int i) {
+  puthx(i, 4U);
+}
+#endif
 
 #if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG_USB) || defined(DEBUG_COMMS)
 void hexdump(const void *a, int l) {

@@ -1,4 +1,4 @@
-// #include "faults.h"
+#include "faults.h"
 #include "board/drivers/registers.h"
 
 uint8_t fault_status = FAULT_STATUS_NONE;

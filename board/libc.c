@@ -1,10 +1,5 @@
 #include "libc.h"
 
-// **** libc ****
-
-void print(const char *a);
-void puth(unsigned int i);
-
 void delay(uint32_t a) {
   volatile uint32_t i;
   for (i = 0; i < a; i++) {}

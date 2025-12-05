@@ -5,8 +5,9 @@
 
 #include "board/globals.h"
 
-uint8_t spi_buf_rx[SPI_BUF_SIZE];
-uint8_t spi_buf_tx[SPI_BUF_SIZE];
+// H7 DMA2 located in D2 domain, so we need to use SRAM1/SRAM2
+__attribute__((section(".sram12"))) uint8_t spi_buf_rx[SPI_BUF_SIZE];
+__attribute__((section(".sram12"))) uint8_t spi_buf_tx[SPI_BUF_SIZE];
 
 uint16_t spi_error_count = 0;
 

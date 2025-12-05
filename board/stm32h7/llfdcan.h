@@ -42,9 +42,6 @@
 #define CAN_NAME_FROM_CANIF(CAN_DEV) (((CAN_DEV)==FDCAN1) ? "FDCAN1" : (((CAN_DEV) == FDCAN2) ? "FDCAN2" : "FDCAN3"))
 #define CAN_NUM_FROM_CANIF(CAN_DEV) (((CAN_DEV)==FDCAN1) ? 0UL : (((CAN_DEV) == FDCAN2) ? 1UL : 2UL))
 
-
-void print(const char *a);
-
 // kbps multiplied by 10
 #define SPEEDS_ARRAY_SIZE 8
 extern const uint32_t speeds[SPEEDS_ARRAY_SIZE];
@@ -56,6 +53,3 @@ void llcan_irq_disable(const FDCAN_GlobalTypeDef *FDCANx);
 void llcan_irq_enable(const FDCAN_GlobalTypeDef *FDCANx);
 bool llcan_init(FDCAN_GlobalTypeDef *FDCANx);
 void llcan_clear_send(FDCAN_GlobalTypeDef *FDCANx);
-
-void llcan_irq_disable(const FDCAN_GlobalTypeDef *FDCANx);
-void llcan_irq_enable(const FDCAN_GlobalTypeDef *FDCANx);

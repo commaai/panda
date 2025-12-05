@@ -1,4 +1,5 @@
 #include "fan.h"
+#include "board/stm32h7/llfan.h"
 #include "board/utils.h"
 #include "board/globals.h"
 #include "board/drivers/pwm.h"

@@ -1,5 +1,4 @@
 #include "flasher.h"
-// #include "utils.h"
 #include "libc.h"
 #include "board/stm32h7/llflash.h"
 #include "drivers/led.h"
@@ -11,14 +10,9 @@
 
 #include "board/config.h"
 
-// from the linker script
-#define APP_START_ADDRESS 0x8020000U
-
 // flasher state variables
 uint32_t *prog_ptr = NULL;
 bool unlocked = false;
-
-void spi_init(void);
 
 int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   int resp_len = 0;

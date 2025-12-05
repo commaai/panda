@@ -1,6 +1,4 @@
 #include "clock.h"
-
-#include "stm32h7xx.h"
 #include "board/drivers/registers.h"
 
 /*
