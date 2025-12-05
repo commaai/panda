@@ -501,6 +501,7 @@ static void usb_setup(void) {
           break;
         default:
           USB_WritePacket_EP0(0, 0);
+          break;
       }
       break;
     default:
@@ -614,7 +615,7 @@ void usb_irqhandler(void) {
     }
   }
 
-  /*if (gintsts & USB_OTG_GINTSTS_HPRTINT) {
+#if 0
     // host
     print("HPRT:");
     puth(USBx_HOST_PORT->HPRT);
@@ -624,7 +625,7 @@ void usb_irqhandler(void) {
       USBx_HOST_PORT->HPRT |= USB_OTG_HPRT_PCDET;
     }
 
-  }*/
+#endif
 
   if ((gintsts & USB_OTG_GINTSTS_BOUTNAKEFF) || (gintsts & USB_OTG_GINTSTS_GINAKEFF)) {
     // no global NAK, why is this getting set?
