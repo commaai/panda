@@ -90,7 +90,7 @@ def build_project(project_name, project, main, shared, extra_flags):
     CFLAGS=flags,
     ASFLAGS=flags,
     LINKFLAGS=flags,
-    CPPPATH=[Dir("./"), "./board/stm32h7/inc", opendbc.INCLUDE_PATH],
+    CPPPATH=[Dir(""), "board/stm32h7/inc", opendbc.INCLUDE_PATH],
     ASCOM="$AS $ASFLAGS -o $TARGET -c $SOURCES",
     BUILDERS={
       'Objcopy': Builder(generator=objcopy, suffix='.bin', src_suffix='.elf')
@@ -125,14 +125,15 @@ def build_project(project_name, project, main, shared, extra_flags):
     "./board/drivers/usb.c",
     "./board/drivers/spi.c",
     "./board/drivers/timers.c",
-    
     "./board/stm32h7/lladc.c",
     "./board/stm32h7/llspi.c",
     "./board/faults.c",
     "./board/boards/unused_funcs.c",
     "./board/utils.c",
     "./board/globals.c",
+    
   ]
+  
 
   # Build bootstub
   bs_env = env.Clone()
@@ -145,35 +146,36 @@ def build_project(project_name, project, main, shared, extra_flags):
     "./board/bootstub.c",
     "./board/flasher.c",
   ] + shared)
-  bs_env.Objcopy(f"./board/obj/bootstub.{project_name}.bin", bs_elf)
+  bs_env.Objcopy(f"board/obj/bootstub.{project_name}.bin", bs_elf)
 
   # Build + sign main (aka app)
   main_elf = env.Program(f"{project_dir}/main.elf", [
     startup,
     "./board/can_comms.c",
     "./board/drivers/fan.c",
-    "./board/drivers/can_common.c",
+    
     "./board/power_saving.c",
     "./board/drivers/uart.c",
-    "./board/drivers/fdcan.c",
+    
     "./board/stm32h7/llfdcan.c",
     "./board/drivers/harness.c",
     "./board/drivers/simple_watchdog.c",
-    "./board/main_comms.c",
     "./board/drivers/bootkick.c",
     "./board/stm32h7/llfan.c",
     "./board/stm32h7/lluart.c",
+    "./board/drivers/fdcan.c",
+    "./board/drivers/can_common.c",
     main,
   ] + shared, LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
-  sign_py = File(f"./crypto/sign.py").srcnode().relpath
-  env.Command(f"./board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
+  sign_py = File(f"crypto/sign.py").srcnode().relpath
+  env.Command(f"board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
 
 
 
 base_project_h7 = {
-  "STARTUP_FILE": "./board/stm32h7/startup_stm32h7x5xx.s",
-  "LINKER_SCRIPT": "./board/stm32h7/stm32h7x5_flash.ld",
+  "STARTUP_FILE": "board/stm32h7/startup_stm32h7x5xx.s",
+  "LINKER_SCRIPT": "board/stm32h7/stm32h7x5_flash.ld",
   "APP_START_ADDRESS": "0x8020000",
   "FLAGS": [
     "-mcpu=cortex-m7",
@@ -197,13 +199,21 @@ certs = [get_key_header(n) for n in ["debug", "release"]]
 with open("board/obj/cert.h", "w") as f:
   for cert in certs:
     f.write("\n".join(cert) + "\n")
+
 shared = [
   "board/stm32h7/board.c",
   "board/boards/tres.c",
   "board/boards/red.c",
   "board/boards/cuatro.c",
+  "board/main_definitions.c"
 ]
-build_project("panda_h7", base_project_h7, "./board/main.c", shared, ["-DPANDA"])
+
+project = [
+  "board/main_comms.c",
+  "board/main.c"
+]
+
+build_project("panda_h7", base_project_h7, project, shared, ["-DPANDA"])
 
 # # panda jungle fw
 flags = [
@@ -214,13 +224,18 @@ if os.getenv("FINAL_PROVISIONING"):
 
 shared = [
   "board/jungle/stm32h7/board.c",
-  "board/jungle/boards/board_v2.c"
+  "board/jungle/boards/board_v2.c",
 ]
-build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", shared, flags)
+project = [
+  "board/jungle/main_comms.c",
+  "board/jungle/main.c",
+]
+build_project("panda_jungle_h7", base_project_h7, project, shared, flags)
 
 # # body fw
 body_c = [
-  "./board/body/main.c",
+  "board/body/main.c",
+  "board/body/main_comms.c",
 ]
 
 shared = [
@@ -229,6 +244,7 @@ shared = [
   "board/body/motor_control.c",
   "board/body/motor_encoder.c"
 ]
+
 build_project("body_h7", base_project_h7, body_c, shared, ["-DPANDA_BODY"])
 
 # test files

@@ -81,21 +81,6 @@ bool can_check_checksum(CANPacket_t *packet);
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook);
 bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len);
 
-
-extern uint32_t safety_tx_blocked;
-extern uint32_t safety_rx_invalid;
-extern uint32_t tx_buffer_overflow;
-extern uint32_t rx_buffer_overflow;
-
-extern can_health_t can_health[PANDA_CAN_CNT];
-
-// Ignition detected from CAN meessages
-extern bool ignition_can;
-extern uint32_t ignition_can_cnt;
-
-extern bool can_silent;
-extern bool can_loopback;
-
 // ********************* instantiate queues *********************
 #define can_buffer(x, size) \
   static CANPacket_t elems_##x[size]; \

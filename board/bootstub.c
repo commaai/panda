@@ -4,22 +4,22 @@
 // ********************* Includes *********************
 #include <stdbool.h>
 
-#include "board/bootstub_declarations.h"
+// #include "board/bootstub_declarations.h"
 
-#include "board/config.h"
+// #include "board/config.h"
 
-#include "board/drivers/led.h"
-#include "board/drivers/pwm.h"
+// #include "board/drivers/led.h"
+// #include "board/drivers/pwm.h"
 #include "board/drivers/usb.h"
 
 #include "board/early_init.h"
-#include "board/provision.h"
+// #include "board/provision.h"
 
 #include "crypto/rsa.h"
 #include "crypto/sha.h"
 
 #include "board/obj/cert.h"
-#include "board/obj/gitversion.h"
+// #include "board/obj/gitversion.h"
 #include "board/flasher.h"
 
 #include "globals.h"
