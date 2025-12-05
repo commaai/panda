@@ -101,39 +101,37 @@ def build_project(project_name, project, main, shared, extra_flags):
   startup = env.Object(project["STARTUP_FILE"])
 
   shared += [
-    "./crypto/rsa.c",
-    "./crypto/sha.c",
-    "./board/libc.c",
-    "./board/crc.c",
-    "./board/early_init.c",
-    "./board/critical.c",
-    "./board/drivers/led.c",
-    "./board/drivers/pwm.c",
-    "./board/drivers/gpio.c",
-    "./board/drivers/fake_siren.c",
-    "./board/stm32h7/lli2c.c",
-    "./board/stm32h7/clock.c",
-    "./board/drivers/clock_source.c",
-    "./board/stm32h7/sound.c",
-    "./board/stm32h7/llflash.c",
-    "./board/stm32h7/stm32h7_config.c",
-    "./board/drivers/registers.c",
-    "./board/drivers/interrupts.c",
-    "./board/provision.c",
-    "./board/stm32h7/peripherals.c",
-    "./board/stm32h7/llusb.c",
-    "./board/drivers/usb.c",
-    "./board/drivers/spi.c",
-    "./board/drivers/timers.c",
-    "./board/stm32h7/lladc.c",
-    "./board/stm32h7/llspi.c",
-    "./board/faults.c",
-    "./board/boards/unused_funcs.c",
-    "./board/utils.c",
-    "./board/globals.c",
-    
+    "crypto/rsa.c",
+    "crypto/sha.c",
+    "board/libc.c",
+    "board/crc.c",
+    "board/early_init.c",
+    "board/critical.c",
+    "board/drivers/led.c",
+    "board/drivers/pwm.c",
+    "board/drivers/gpio.c",
+    "board/drivers/fake_siren.c",
+    "board/stm32h7/lli2c.c",
+    "board/stm32h7/clock.c",
+    "board/drivers/clock_source.c",
+    "board/stm32h7/sound.c",
+    "board/stm32h7/llflash.c",
+    "board/stm32h7/stm32h7_config.c",
+    "board/drivers/registers.c",
+    "board/drivers/interrupts.c",
+    "board/provision.c",
+    "board/stm32h7/peripherals.c",
+    "board/stm32h7/llusb.c",
+    "board/drivers/usb.c",
+    "board/drivers/spi.c",
+    "board/drivers/timers.c",
+    "board/stm32h7/lladc.c",
+    "board/stm32h7/llspi.c",
+    "board/faults.c",
+    "board/boards/unused_funcs.c",
+    "board/utils.c",
+    "board/globals.c",
   ]
-  
 
   # Build bootstub
   bs_env = env.Clone()
@@ -143,35 +141,31 @@ def build_project(project_name, project, main, shared, extra_flags):
   bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
   bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", [
     startup,
-    "./board/bootstub.c",
-    "./board/flasher.c",
+    "board/bootstub.c",
+    "board/flasher.c",
   ] + shared)
   bs_env.Objcopy(f"board/obj/bootstub.{project_name}.bin", bs_elf)
 
   # Build + sign main (aka app)
   main_elf = env.Program(f"{project_dir}/main.elf", [
     startup,
-    "./board/can_comms.c",
-    "./board/drivers/fan.c",
-    
-    "./board/power_saving.c",
-    "./board/drivers/uart.c",
-    
-    "./board/stm32h7/llfdcan.c",
-    "./board/drivers/harness.c",
-    "./board/drivers/simple_watchdog.c",
-    "./board/drivers/bootkick.c",
-    "./board/stm32h7/llfan.c",
-    "./board/stm32h7/lluart.c",
-    "./board/drivers/fdcan.c",
-    "./board/drivers/can_common.c",
+    "board/can_comms.c",
+    "board/drivers/fan.c",
+    "board/power_saving.c",
+    "board/drivers/uart.c",
+    "board/stm32h7/llfdcan.c",
+    "board/drivers/harness.c",
+    "board/drivers/simple_watchdog.c",
+    "board/drivers/bootkick.c",
+    "board/stm32h7/llfan.c",
+    "board/stm32h7/lluart.c",
+    "board/drivers/fdcan.c",
+    "board/drivers/can_common.c",
     main,
   ] + shared, LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
   sign_py = File(f"crypto/sign.py").srcnode().relpath
   env.Command(f"board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
-
-
 
 base_project_h7 = {
   "STARTUP_FILE": "board/stm32h7/startup_stm32h7x5xx.s",
@@ -200,7 +194,12 @@ with open("board/obj/cert.h", "w") as f:
   for cert in certs:
     f.write("\n".join(cert) + "\n")
 
-shared = [
+panda_main = [
+  "board/main_comms.c",
+  "board/main.c"
+]
+
+panda_shared = [
   "board/stm32h7/board.c",
   "board/boards/tres.c",
   "board/boards/red.c",
@@ -208,44 +207,38 @@ shared = [
   "board/main_definitions.c"
 ]
 
-project = [
-  "board/main_comms.c",
-  "board/main.c"
-]
+build_project("panda_h7", base_project_h7, panda_main, panda_shared, ["-DPANDA"])
 
-build_project("panda_h7", base_project_h7, project, shared, ["-DPANDA"])
-
-# # panda jungle fw
+# panda jungle fw
 flags = [
   "-DPANDA_JUNGLE",
 ]
 if os.getenv("FINAL_PROVISIONING"):
   flags += ["-DFINAL_PROVISIONING"]
 
-shared = [
-  "board/jungle/stm32h7/board.c",
-  "board/jungle/boards/board_v2.c",
-]
-project = [
+jungle_main = [
   "board/jungle/main_comms.c",
   "board/jungle/main.c",
 ]
-build_project("panda_jungle_h7", base_project_h7, project, shared, flags)
+jungle_shared = [
+  "board/jungle/stm32h7/board.c",
+  "board/jungle/boards/board_v2.c",
+]
+build_project("panda_jungle_h7", base_project_h7, jungle_main, jungle_shared, flags)
 
-# # body fw
-body_c = [
+# body fw
+body_main = [
   "board/body/main.c",
   "board/body/main_comms.c",
 ]
-
-shared = [
+body_shared = [
   "board/body/boards/board_body.c",
   "board/body/stm32h7/board.c",
   "board/body/motor_control.c",
   "board/body/motor_encoder.c"
 ]
 
-build_project("body_h7", base_project_h7, body_c, shared, ["-DPANDA_BODY"])
+build_project("body_h7", base_project_h7, body_main, body_shared, ["-DPANDA_BODY"])
 
 # test files
 if GetOption('extras'):
