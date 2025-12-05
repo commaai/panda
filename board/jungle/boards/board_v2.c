@@ -1,5 +1,6 @@
 #include "board/board_struct.h"
 #include "board/jungle/boards/board_v2.h"
+#include "board/print.h"
 
 uint8_t harness_orientation = HARNESS_ORIENTATION_NONE;
 uint8_t can_mode = CAN_MODE_NORMAL;

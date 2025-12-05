@@ -11,6 +11,7 @@
 #include "board/stm32h7/llfdcan.h"
 #include "board/libc.h"
 #include "board/drivers/uart.h"
+#include "board/print.h"
 
 bool generated_can_traffic = false;
 

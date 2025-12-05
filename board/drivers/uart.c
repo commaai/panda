@@ -1,5 +1,6 @@
 #include "board/config.h"
 #include "uart.h"
+#include "board/print.h"
 
 #define UART_BUFFER(x, size_rx, size_tx, uart_ptr, callback_ptr, overwrite_mode) \
   static uint8_t elems_rx_##x[size_rx]; \

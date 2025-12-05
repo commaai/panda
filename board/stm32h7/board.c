@@ -4,6 +4,7 @@
 #include "board/globals.h"
 #include "board/boards/red.h"
 #include "board/boards/tres.h"
+#include "board/print.h"
 
 void detect_board_type(void) {
   // On STM32H7 pandas, we use two different sets of pins.

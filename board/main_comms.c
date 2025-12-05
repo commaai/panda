@@ -11,6 +11,7 @@
 #include "board/obj/gitversion.h"
 #include "board/globals.h"
 #include "board/main_comms.h"
+#include "board/print.h"
 
 
 static int get_health_pkt(void *dat) {
