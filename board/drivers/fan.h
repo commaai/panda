@@ -11,11 +11,7 @@ struct fan_state_t {
 };
 extern struct fan_state_t fan_state;
 
-void fan_set_power(uint8_t percentage);
-void llfan_init(void);
 void fan_init(void);
+void fan_set_power(uint8_t percentage);
 // Call this at FAN_TICK_FREQ
-void fan_tick(void);
-void fan_set_power(uint8_t percentage);
-void fan_init(void);
 void fan_tick(void);

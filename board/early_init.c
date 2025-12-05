@@ -1,12 +1,9 @@
 #include <stdint.h>
 
+#include "board/config.h"
 #include "early_init.h"
 #include "drivers/led.h"
 #include "globals.h"
-// #include "board/config.h"
-
-extern void *g_pfnVectors;
-extern uint32_t enter_bootloader_mode;
 
 static void jump_to_bootloader(void) {
   // do enter bootloader

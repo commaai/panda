@@ -1,4 +1,9 @@
 #pragma once
+
+#ifdef STM32H7
+#error This code only makes on a non stm32h7 platform
+#endif
+
 // minimal code to fake a panda for tests
 #include <stdint.h>
 
@@ -6,12 +11,8 @@
 
 #define ALLOW_DEBUG
 
-#ifndef ENTER_CRITICAL
 #define ENTER_CRITICAL() 0
-#endif
-#ifndef EXIT_CRITICAL
 #define EXIT_CRITICAL() 0
-#endif
 
 void print(const char *a);
 void puth(unsigned int i);

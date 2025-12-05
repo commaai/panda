@@ -155,7 +155,7 @@ void process_can(uint8_t can_number) {
 
 // FDFDCANx_IT0 IRQ Handler (RX and errors)
 // blink blue when we are receiving CAN messages
-void can_rx(uint8_t can_number) {
+static void can_rx(uint8_t can_number) {
   FDCAN_GlobalTypeDef *FDCANx = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
 
