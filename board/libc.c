@@ -1,10 +1,5 @@
 #include "libc.h"
 
-// **** libc ****
-
-void print(const char *a);
-void puth(unsigned int i);
-
 void delay(uint32_t a) {
   // loop is 2.6x faster when 32-byte aligned (ART accelerator prefetches flash in 32-byte chunks)
   volatile uint32_t i;

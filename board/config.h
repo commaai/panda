@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 
+// TODO: This should be included everywhere!, and checked!
 //#define DEBUG
 //#define DEBUG_UART
 //#define DEBUG_USB
@@ -32,19 +33,19 @@
   #endif
 #endif
 
-#ifdef PANDA
 #define HW_TYPE_UNKNOWN 0U
+#define HW_TYPE_V2 2U
 #define HW_TYPE_RED_PANDA 7U
 #define HW_TYPE_TRES 9U
 #define HW_TYPE_CUATRO 10U
+
+#ifdef PANDA
 
 // CAN modes
 #define CAN_MODE_NORMAL 0U
 #define CAN_MODE_OBD_CAN2 1U
 
 #elif defined(PANDA_JUNGLE)
-#define HW_TYPE_UNKNOWN 0U
-#define HW_TYPE_V2 2U
 
 // CAN modes
 #define CAN_MODE_NORMAL 0U

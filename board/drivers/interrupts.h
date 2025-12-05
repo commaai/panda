@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <board/config.h>
+#include "board/config.h"
 
 typedef struct interrupt {
   IRQn_Type irq_type;

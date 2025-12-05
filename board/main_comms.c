@@ -12,7 +12,6 @@
 #include "board/globals.h"
 #include "board/main_comms.h"
 
-void set_safety_mode(uint16_t mode, uint16_t param);
 
 static int get_health_pkt(void *dat) {
   COMPILE_TIME_ASSERT(sizeof(struct health_t) <= USBPACKET_MAX_SIZE);

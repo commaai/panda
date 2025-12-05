@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 /*
   CAN transactions to and from the host come in the form of
   a certain number of CANPacket_t. The transaction is split
@@ -13,8 +15,6 @@
   * the overflow buffers are reset by a dedicated control transfer handler,
     which is sent by the host on each start of a connection.
 */
-
-#include <stdint.h>
 
 typedef struct {
   uint32_t ptr;

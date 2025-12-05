@@ -154,7 +154,7 @@ def build_project(project_name, project, main, shared, extra_flags):
     "board/drivers/uart.c",
     "board/stm32h7/llfdcan.c",
     "board/drivers/harness.c",
-    "board/drivers/simple_watchdog.c",
+    
     "board/drivers/bootkick.c",
     "board/stm32h7/llfan.c",
     "board/stm32h7/lluart.c",
@@ -195,7 +195,8 @@ with open("board/obj/cert.h", "w") as f:
 
 panda_main = [
   "board/main_comms.c",
-  "board/main.c"
+  "board/main.c",
+  "board/drivers/simple_watchdog.c",
 ]
 
 panda_shared = [

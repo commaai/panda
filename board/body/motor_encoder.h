@@ -33,9 +33,6 @@ typedef struct {
   float cached_speed_rps;
 } motor_encoder_state_t;
 
-extern motor_encoder_state_t motor_encoders[BODY_MOTOR_COUNT];
-
-void motor_encoder_configure_gpio(const motor_encoder_config_t *cfg);
 void motor_encoder_init(void);
 int32_t motor_encoder_get_position(uint8_t motor);
 void motor_encoder_reset(uint8_t motor);

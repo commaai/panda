@@ -44,26 +44,6 @@ void hexdump(const void *a, int l);
 #endif
 
 
-// ***************************** Definitions *****************************
-
-#define UART_BUFFER(x, size_rx, size_tx, uart_ptr, callback_ptr, overwrite_mode) \
-  static uint8_t elems_rx_##x[size_rx]; \
-  static uint8_t elems_tx_##x[size_tx]; \
-  extern uart_ring uart_ring_##x; \
-  uart_ring uart_ring_##x = {  \
-    .w_ptr_tx = 0, \
-    .r_ptr_tx = 0, \
-    .elems_tx = ((uint8_t *)&(elems_tx_##x)), \
-    .tx_fifo_size = (size_tx), \
-    .w_ptr_rx = 0, \
-    .r_ptr_rx = 0, \
-    .elems_rx = ((uint8_t *)&(elems_rx_##x)), \
-    .rx_fifo_size = (size_rx), \
-    .uart = (uart_ptr), \
-    .callback = (callback_ptr), \
-    .overwrite = (overwrite_mode) \
-  };
-
 // ******************************** UART buffers ********************************
 
 extern uart_ring uart_ring_som_debug;

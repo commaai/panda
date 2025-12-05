@@ -1,6 +1,8 @@
+#include <stdint.h>
+
 #include "motor_encoder.h"
 
-motor_encoder_config_t motor_encoder_config[BODY_MOTOR_COUNT] = {
+static const motor_encoder_config_t motor_encoder_config[BODY_MOTOR_COUNT] = {
   [BODY_MOTOR_LEFT - 1U] = {
     .timer = TIM4,
     .pin_a_port = GPIOB, .pin_a = 6U, .pin_a_af = GPIO_AF2_TIM4,
@@ -23,12 +25,12 @@ motor_encoder_config_t motor_encoder_config[BODY_MOTOR_COUNT] = {
   },
 };
 
-motor_encoder_state_t motor_encoders[BODY_MOTOR_COUNT] = {
+static motor_encoder_state_t motor_encoders[BODY_MOTOR_COUNT] = {
   { .config = &motor_encoder_config[0] },
   { .config = &motor_encoder_config[1] },
 };
 
-void motor_encoder_configure_gpio(const motor_encoder_config_t *cfg) {
+static void motor_encoder_configure_gpio(const motor_encoder_config_t *cfg) {
   set_gpio_pullup(cfg->pin_a_port, cfg->pin_a, PULL_UP);
   set_gpio_output_type(cfg->pin_a_port, cfg->pin_a, OUTPUT_TYPE_PUSH_PULL);
   set_gpio_alternate(cfg->pin_a_port, cfg->pin_a, cfg->pin_a_af);
@@ -38,7 +40,7 @@ void motor_encoder_configure_gpio(const motor_encoder_config_t *cfg) {
   set_gpio_alternate(cfg->pin_b_port, cfg->pin_b, cfg->pin_b_af);
 }
 
-void motor_encoder_configure_timer(motor_encoder_state_t *state) {
+static void motor_encoder_configure_timer(motor_encoder_state_t *state) {
   const motor_encoder_config_t *cfg = state->config;
   TIM_TypeDef *timer = cfg->timer;
   timer->CR1 = 0U;
@@ -73,7 +75,7 @@ void motor_encoder_init(void) {
   }
 }
 
-int32_t motor_encoder_refresh(motor_encoder_state_t *state) {
+static inline int32_t motor_encoder_refresh(motor_encoder_state_t *state) {
   const motor_encoder_config_t *cfg = state->config;
   TIM_TypeDef *timer = cfg->timer;
   uint16_t raw = (uint16_t)timer->CNT;
