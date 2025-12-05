@@ -7,7 +7,7 @@ void puth(unsigned int i);
 
 void delay(uint32_t a) {
   volatile uint32_t i;
-  for (i = 0; i < a; i++);
+  for (i = 0; i < a; i++) {}
 }
 
 void assert_fatal(bool condition, const char *msg) {
