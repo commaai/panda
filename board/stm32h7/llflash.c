@@ -14,10 +14,10 @@ void flash_unlock(void) {
 }
 
 // cppcheck-suppress misra-c2012-8.7
-bool flash_erase_sector(uint8_t sector, bool unlocked) {
+bool flash_erase_sector(uint8_t sector, bool is_unlocked) {
   // don't erase the bootloader(sector 0)
   bool ret = false;
-  if ((sector != 0u) && (sector < 8u) && unlocked) {
+  if ((sector != 0u) && (sector < 8u) && is_unlocked) {
     FLASH->CR1 = ((uint32_t) sector << 8u) | FLASH_CR_SER;
     FLASH->CR1 |= FLASH_CR_START;
     while ((FLASH->SR1 & FLASH_SR_QW) != 0u) {}

@@ -5,7 +5,7 @@ Cppcheck checkers list from test_misra.sh:
 
 
 TEST variant options:
---enable=all --disable=unusedFunction --addon=misra -DSTM32H7 -DSTM32H725xx -I /board/stm32h7/inc/ /board/main.c -DPANDA
+--enable=all --addon=misra -DSTM32H7 -DSTM32H725xx -I /board/stm32h7/inc/ -DPANDA /board/libc.c /board/early_init.c /board/critical.c /board/drivers/led.c /board/drivers/pwm.c /board/drivers/gpio.c /board/drivers/fake_siren.c /board/stm32h7/lli2c.c /board/stm32h7/clock.c /board/drivers/clock_source.c /board/stm32h7/sound.c /board/stm32h7/llflash.c /board/stm32h7/stm32h7_config.c /board/drivers/registers.c /board/drivers/interrupts.c /board/provision.c /board/stm32h7/peripherals.c /board/stm32h7/llusb.c /board/drivers/usb.c /board/drivers/spi.c /board/drivers/timers.c /board/stm32h7/lladc.c /board/stm32h7/llspi.c /board/faults.c /board/boards/unused_funcs.c /board/utils.c /board/globals.c /board/obj/gitversion.c /board/can_comms.c /board/drivers/fan.c /board/power_saving.c /board/drivers/uart.c /board/stm32h7/llfdcan.c /board/drivers/harness.c /board/drivers/bootkick.c /board/stm32h7/llfan.c /board/stm32h7/lluart.c /board/drivers/fdcan.c /board/drivers/can_common.c /board/main_comms.c /board/main.c /board/drivers/simple_watchdog.c /board/stm32h7/board.c /board/boards/tres.c /board/boards/red.c /board/boards/cuatro.c /board/main_definitions.c
 
 
 Critical errors
@@ -194,7 +194,7 @@ Yes  CheckType::checkSignConversion
 Yes  CheckType::checkTooBigBitwiseShift
 Yes  CheckUninitVar::check
 Yes  CheckUninitVar::valueFlowUninit
-No   CheckUnusedFunctions::check                               require:unusedFunction
+Yes  CheckUnusedFunctions::check
 Yes  CheckUnusedVar::checkFunctionVariableUsage
 Yes  CheckUnusedVar::checkStructMemberUsage
 Yes  CheckVaarg::va_list_usage

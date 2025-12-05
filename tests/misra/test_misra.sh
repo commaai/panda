@@ -49,6 +49,7 @@ cppcheck() {
           -I $PANDA_DIR \
           -I "$(arm-none-eabi-gcc -print-file-name=include)" \
           -I $OPENDBC_ROOT \
+          --suppress=misra-c2012-5.9:$OPENDBC_ROOT/* \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
           --suppress=*:*include/* --error-exitcode=2 --check-level=exhaustive --safety \
           --platform=arm32-wchar_t4 $COMMON_DEFINES --checkers-report=$CHECKLIST.tmp \
@@ -64,8 +65,7 @@ cppcheck() {
   fi
 }
 
-PANDA_OPTS="--enable=all --disable=unusedFunction --addon=misra"
-
+PANDA_OPTS="--enable=all --addon=misra"
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
 cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ -DPANDA \
