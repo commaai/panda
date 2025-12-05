@@ -60,16 +60,14 @@
 
 #elif defined(PANDA_BODY)
 #elif defined(LIB_PANDA)
-// NO IDEA BOI
 #else
-#error FUCK YOU
+#error Unknown board type
 #endif
 
 // platform includes
 #ifdef STM32H7
   #include "board/stm32h7/stm32h7_config.h"
 #else
-  // TODO: uncomment this, cppcheck complains
   // building for tests
   #include "fake_stm.h"
 #endif

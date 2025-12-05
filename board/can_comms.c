@@ -1,12 +1,12 @@
-#include "can_comms.h"
+// #include "can_comms.h"
 #include "drivers/can_common.h"
-#include "utils.h"
-#include "libc.h"
-#include "can.h"
+// #include "utils.h"
+// #include "libc.h"
+// #include "can.h"
 #include "drivers/usb.h"
-#include "board/drivers/spi.h"
+// #include "board/drivers/spi.h"
 
-#include "config.h"
+// #include "config.h"
 
 static asm_buffer can_read_buffer = {.ptr = 0U, .tail_size = 0U};
 

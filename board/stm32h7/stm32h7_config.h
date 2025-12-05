@@ -73,7 +73,6 @@ separate IRQs for RX and TX.
 #include "board/stm32h7/lladc.h"
 #include "board/drivers/clock_source.h"
 #include "board/stm32h7/sound.h"
-#include "board/drivers/harness.h"
 #else
 #include "board/stm32h7/board.h"
 #endif

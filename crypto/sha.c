@@ -60,13 +60,13 @@ static void SHA1_Transform(SHA_CTX* ctx) {
         uint32_t tmp = rol(5,A) + E + W[t];
 
         if (t < 20){ 
-            tmp += (D^(B&(C^D))) + 0x5A827999;
+            tmp += (D^(B&(C^D))) + 0x5A827999u;
         } else if ( t < 40) {
-            tmp += (B^C^D) + 0x6ED9EBA1;
+            tmp += (B^C^D) + 0x6ED9EBA1u;
         } else if ( t < 60) {
-            tmp += ((B&C)|(D&(B|C))) + 0x8F1BBCDC;
+            tmp += ((B&C)|(D&(B|C))) + 0x8F1BBCDCu;
         } else {
-            tmp += (B^C^D) + 0xCA62C1D6;
+            tmp += (B^C^D) + 0xCA62C1D6u;
         }
 
         E = D;
@@ -108,7 +108,7 @@ void SHA_update(SHA_CTX* ctx, const void* data, int len) {
 
     ctx->count += len;
 
-    while (len--) {
+    while (len-- > 0) {
         ctx->buf[i++] = *p++;
         if (i == 64) {
             SHA1_Transform(ctx);
@@ -123,9 +123,9 @@ const uint8_t* SHA_final(SHA_CTX* ctx) {
     uint64_t cnt = ctx->count * 8;
     int i;
 
-    SHA_update(ctx, (uint8_t*)"\x80", 1);
+    SHA_update(ctx, (const uint8_t*)"\x80", 1);
     while ((ctx->count & 63) != 56) {
-        SHA_update(ctx, (uint8_t*)"\0", 1);
+        SHA_update(ctx, (const uint8_t*)"\0", 1);
     }
 
     /* Hack - right shift operator with non const argument requires
