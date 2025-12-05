@@ -46,7 +46,7 @@ separate IRQs for RX and TX.
 #define DEVICE_SERIAL_NUMBER_ADDRESS 0x080FFFC0U
 
 #include "board/can.h"
-#include "board/comms_definitions.h"
+#include "board/comms.h"
 
 #include "board/libc.h"
 #include "board/critical.h"
