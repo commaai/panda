@@ -13,6 +13,7 @@
 
 #include "board/obj/cert.h"
 #include "board/print.h"
+#include "board/drivers/uart.h"
 
 #include "globals.h"
 
@@ -21,14 +22,10 @@ void __initialize_hardware_early(void) {
   early_initialization();
 }
 
-void print(const char *a){ UNUSED(a); }
-void puth(unsigned int i){ UNUSED(i); }
-#if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
-void puth4(unsigned int i){ UNUSED(i); }
-#endif
-#if defined(DEBUG_SPI) || defined(DEBUG_USB) || defined(DEBUG_COMMS)
-void hexdump(const void *a, int l){ UNUSED(a); UNUSED(l); }
-#endif
+void debug_ring_callback(uart_ring *ring) {
+  char rcv;
+  while (get_char(ring, &rcv)) { } // Intentionally disabled, no uart in bootstub
+}
 
 static void fail(void) {
   soft_flasher_start();

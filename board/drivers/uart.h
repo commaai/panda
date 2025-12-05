@@ -39,8 +39,3 @@ extern uart_ring uart_ring_debug;
 extern uart_ring uart_ring_som_debug;
 
 uart_ring *get_ring_by_number(int a);
-
-// ************************* Low-level buffer functions *************************
-bool get_char(uart_ring *q, char *elem);
-bool injectc(uart_ring *q, char elem);
-bool put_char(uart_ring *q, char elem);
