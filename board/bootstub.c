@@ -73,7 +73,7 @@ int main(void) {
 
   // verify version, last bytes in the signed area
   uint32_t vers[2] = {0};
-  memcpy(&vers, ((void*)&_app_start[0]) + len - sizeof(vers), sizeof(vers));
+  (void)memcpy(&vers, ((void*)&_app_start[0]) + len - sizeof(vers), sizeof(vers));
   if (vers[0] != VERS_TAG || vers[1] < MIN_VERSION) {
     goto fail;
   }

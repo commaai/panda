@@ -27,9 +27,8 @@
 
 // Optimized for minimal code size.
 
-void *memcpy(void *str1, const void *str2, unsigned int n);
-
 #include "sha.h"
+#include "board/libc.h"
 
 #define rol(bits, value) (((value) << (bits)) | ((value) >> (32 - (bits))))
 
@@ -60,14 +59,15 @@ static void SHA1_Transform(SHA_CTX* ctx) {
     for(t = 0; t < 80; t++) {
         uint32_t tmp = rol(5,A) + E + W[t];
 
-        if (t < 20)
+        if (t < 20){ 
             tmp += (D^(B&(C^D))) + 0x5A827999;
-        else if ( t < 40)
+        } else if ( t < 40) {
             tmp += (B^C^D) + 0x6ED9EBA1;
-        else if ( t < 60)
+        } else if ( t < 60) {
             tmp += ((B&C)|(D&(B|C))) + 0x8F1BBCDC;
-        else
+        } else {
             tmp += (B^C^D) + 0xCA62C1D6;
+        }
 
         E = D;
         D = C;
@@ -93,11 +93,11 @@ static const HASH_VTAB SHA_VTAB = {
 
 void SHA_init(SHA_CTX* ctx) {
     ctx->f = &SHA_VTAB;
-    ctx->state[0] = 0x67452301;
-    ctx->state[1] = 0xEFCDAB89;
-    ctx->state[2] = 0x98BADCFE;
-    ctx->state[3] = 0x10325476;
-    ctx->state[4] = 0xC3D2E1F0;
+    ctx->state[0] = 0x67452301u;
+    ctx->state[1] = 0xEFCDAB89u;
+    ctx->state[2] = 0x98BADCFEu;
+    ctx->state[3] = 0x10325476u;
+    ctx->state[4] = 0xC3D2E1F0u;
     ctx->count = 0;
 }
 
@@ -142,21 +142,21 @@ const uint8_t* SHA_final(SHA_CTX* ctx) {
 
     uint8_t tmp = 0;
     tmp = (uint8_t) (cnt >> ((7 - 0) * 8));
-    SHA_update(ctx, &tmp, 1);
+    SHA_update(ctx, (void*)&tmp, 1);
     tmp = (uint8_t) (cnt >> ((7 - 1) * 8));
-    SHA_update(ctx, &tmp, 1);
+    SHA_update(ctx, (void*)&tmp, 1);
     tmp = (uint8_t) (cnt >> ((7 - 2) * 8));
-    SHA_update(ctx, &tmp, 1);
+    SHA_update(ctx, (void*)&tmp, 1);
     tmp = (uint8_t) (cnt >> ((7 - 3) * 8));
-    SHA_update(ctx, &tmp, 1);
+    SHA_update(ctx, (void*)&tmp, 1);
     tmp = (uint8_t) (cnt >> ((7 - 4) * 8));
-    SHA_update(ctx, &tmp, 1);
+    SHA_update(ctx, (void*)&tmp, 1);
     tmp = (uint8_t) (cnt >> ((7 - 5) * 8));
-    SHA_update(ctx, &tmp, 1);
+    SHA_update(ctx, (void*)&tmp, 1);
     tmp = (uint8_t) (cnt >> ((7 - 6) * 8));
-    SHA_update(ctx, &tmp, 1);
+    SHA_update(ctx, (void*)&tmp, 1);
     tmp = (uint8_t) (cnt >> ((7 - 7) * 8));
-    SHA_update(ctx, &tmp, 1);
+    SHA_update(ctx, (void*)&tmp, 1);
 
     for (i = 0; i < 5; i++) {
         uint32_t tmp = ctx->state[i];
@@ -174,6 +174,6 @@ const uint8_t* SHA_hash(const void* data, int len, uint8_t* digest) {
     SHA_CTX ctx;
     SHA_init(&ctx);
     SHA_update(&ctx, data, len);
-    memcpy(digest, SHA_final(&ctx), SHA_DIGEST_SIZE);
+    (void)memcpy(digest, SHA_final(&ctx), SHA_DIGEST_SIZE);
     return digest;
 }
