@@ -18,6 +18,7 @@ void assert_fatal(bool condition, const char *msg) {
   }
 }
 
+// cppcheck-suppress misra-c2012-8.7
 // cppcheck-suppress misra-c2012-21.2
 void *memset(void *str, int c, unsigned int n) {
   uint8_t *s = str;

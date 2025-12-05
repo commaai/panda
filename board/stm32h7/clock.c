@@ -38,6 +38,7 @@ static PackageSMPSType get_package_smps_type(void) {
       break;
     default:
       ret = PACKAGE_UNKNOWN;
+      break;
   }
   return ret;
 }
