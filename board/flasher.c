@@ -12,19 +12,19 @@
 #include "board/config.h"
 
 // flasher state variables
-uint32_t *prog_ptr = NULL;
+uint32_t *program_ptr = NULL;
 bool unlocked = false;
 
-int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
+int comms_control_handler(ControlPacket_t * const req, uint8_t *resp) {
   int resp_len = 0;
 
   // flasher machine
-  memset(resp, 0, 4);
-  memcpy(resp+4, "\xde\xad\xd0\x0d", 4);
+  (void)memset(resp, 0, 4);
+  (void)memcpy(resp+4, "\xde\xad\xd0\x0d", 4);
   resp[0] = 0xff;
   resp[2] = req->request;
   resp[3] = ~req->request;
-  *((uint32_t **)&resp[8]) = prog_ptr;
+  *((uint32_t **)&resp[8]) = program_ptr;
   resp_len = 0xc;
 
   int sec;
@@ -41,7 +41,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       }
       led_set(LED_GREEN, 1);
       unlocked = true;
-      prog_ptr = (uint32_t *)APP_START_ADDRESS;
+      program_ptr = (uint32_t *)APP_START_ADDRESS;
       break;
     // **** 0xb2: erase sector
     case 0xb2:
@@ -63,8 +63,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // **** 0xd0: fetch serial number
     case 0xd0:
       // addresses are OTP
-      if (req->param1 == 1) {
-        memcpy(resp, (void *)DEVICE_SERIAL_NUMBER_ADDRESS, 0x10);
+      if (req->param1 == 1u) {
+        volatile const uint8_t *deviceSerialPtr = (volatile const uint8_t *)DEVICE_SERIAL_NUMBER_ADDRESS;
+        memcpy(resp, (void *)deviceSerialPtr, 0x10);
         resp_len = 0x10;
       } else {
         get_provision_chunk(resp);
@@ -85,18 +86,23 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
           enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
           NVIC_SystemReset();
           break;
+        default:
+          break;
       }
       break;
     // **** 0xd6: get version
     case 0xd6:
       COMPILE_TIME_ASSERT(sizeof(gitversion) <= USBPACKET_MAX_SIZE);
-      memcpy(resp, gitversion, sizeof(gitversion));
+      (void)memcpy(resp, gitversion, sizeof(gitversion));
       resp_len = sizeof(gitversion) - 1U;
       break;
     // **** 0xd8: reset ST
     case 0xd8:
       flush_write_buffer();
       NVIC_SystemReset();
+      break;
+    default:
+    // Unknown request
       break;
   }
   return resp_len;
@@ -117,11 +123,11 @@ void refresh_can_tx_slots_available(void) {}
 
 void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   led_set(LED_RED, 0);
-  for (uint32_t i = 0; i < len/4; i++) {
-    flash_write_word(prog_ptr, *(uint32_t*)(data+(i*4)));
+  for (uint32_t i = 0; i < len/4u; i++) {
+    flash_write_word(program_ptr, *(uint32_t*)(data+(i*4u)));
 
-    //*(uint64_t*)(&spi_tx_buf[0x30+(i*4)]) = *prog_ptr;
-    prog_ptr++;
+    //*(uint64_t*)(&spi_tx_buf[0x30+(i*4)]) = *program_ptr;
+    program_ptr++;
   }
   led_set(LED_RED, 1);
 }
