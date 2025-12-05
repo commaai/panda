@@ -2,8 +2,7 @@
 
 #include <stdint.h>
 
-// TODO: I don't know man...
-#include "stm32h7xx.h"
+#include "board/stm32h7/stm32h7_config.h"
 
 typedef enum {
   SAMPLETIME_1_CYCLE = 0,

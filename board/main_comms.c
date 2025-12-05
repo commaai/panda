@@ -1,24 +1,24 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "board/utils.h"
-#include "board/config.h"
-#include "board/health.h"
+// #include "board/utils.h"
+// #include "board/config.h"
+// #include "board/health.h"
 #include "board/main_declarations.h"
 #include "board/drivers/can_common.h"
 #include "board/power_saving.h"
-#include "board/drivers/spi.h"
+// #include "board/drivers/spi.h"
 #include "board/drivers/bootkick.h"
 #include "board/drivers/fdcan.h"
 #include "board/provision.h"
 #include "board/early_init.h"
 #include "board/obj/gitversion.h"
-#include "board/drivers/fan.h"
-#include "board/drivers/clock_source.h"
+// #include "board/drivers/fan.h"
+// #include "board/drivers/clock_source.h"
 #include "board/globals.h"
-#include "board/drivers/uart.h"
+// #include "board/drivers/uart.h"
 
-#include "board/stm32h7/llfdcan.h"
+// #include "board/stm32h7/llfdcan.h"
 #include "board/main_comms.h"
 
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used

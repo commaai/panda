@@ -5,6 +5,8 @@
 #include "board/board_struct.h"
 #include "board/boards/unused_funcs.h"
 #include "board/drivers/fake_siren.h"
+#include "board/boards/tres.h"
+#include "board/drivers/harness.h"
 
 // ////////////////////////// //
 // Cuatro (STM32H7) + Harness //
@@ -117,10 +119,6 @@ static harness_configuration cuatro_harness_config = {
   .adc_signal_SBU1 = ADC_CHANNEL_DEFAULT(ADC1, 4),
   .adc_signal_SBU2 = ADC_CHANNEL_DEFAULT(ADC1, 17)
 };
-
-// TODO 
-void tres_set_can_mode(uint8_t mode);
-bool tres_read_som_gpio (void);
 
 struct board board_cuatro = {
   .harness_config = &cuatro_harness_config,
