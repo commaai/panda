@@ -78,9 +78,12 @@ def check_space(file, mcu):
 
 
 if __name__ == "__main__":
-  # red panda
-  check_space("../board/obj/bootstub.panda_h7.elf", "H7")
-  check_space("../board/obj/panda_h7.elf", "H7")
+  # panda
+  check_space("../board/obj/panda_h7/bootstub.elf", "H7")
+  check_space("../board/obj/panda_h7/main.elf", "H7")
   # jungle v2
-  check_space("../board/jungle/obj/bootstub.panda_jungle_h7.elf", "H7")
-  check_space("../board/jungle/obj/panda_jungle_h7.elf", "H7")
+  check_space("../board/obj/panda_jungle_h7/bootstub.elf", "H7")
+  check_space("../board/obj/panda_jungle_h7/main.elf", "H7")
+  # body
+  check_space("../board/obj/body_h7/bootstub.elf", "H7")
+  check_space("../board/obj/body_h7/main.elf", "H7")
