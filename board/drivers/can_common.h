@@ -39,7 +39,7 @@ extern uint32_t rx_buffer_overflow;
 
 extern can_health_t can_health[PANDA_CAN_CNT];
 
-// Ignition detected from CAN meessages
+// Ignition detected from CAN messages
 extern bool ignition_can;
 extern uint32_t ignition_can_cnt;
 
@@ -82,10 +82,6 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook);
 bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len);
 
 // ********************* instantiate queues *********************
-#define can_buffer(x, size) \
-  static CANPacket_t elems_##x[size]; \
-  extern can_ring can_##x; \
-  can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = (size), .elems = (CANPacket_t *)&(elems_##x) };
 
 #define CAN_RX_BUFFER_SIZE 4096U
 #define CAN_TX_BUFFER_SIZE 416U
@@ -101,7 +97,3 @@ extern can_ring can_tx1_q;
 extern can_ring can_tx2_q;
 #endif
 extern can_ring can_tx3_q;
-
-// FIXME:
-// cppcheck-suppress misra-c2012-9.3
-// can_ring *can_queues[PANDA_CAN_CNT] = {&can_tx1_q, &can_tx2_q, &can_tx3_q};
