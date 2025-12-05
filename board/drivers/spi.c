@@ -1,6 +1,4 @@
 #include "spi.h"
-#include "board/crc.h"
-
 #include "board/libc.h"
 #include "board/config.h"
 #include "board/can_comms.h"
