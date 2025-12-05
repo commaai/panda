@@ -1,7 +1,5 @@
 #include "llfan.h"
 
-#include "stm32h7xx.h"
-
 #include "board/drivers/interrupts.h"
 #include "board/drivers/fan.h"
 #include "board/drivers/pwm.h"

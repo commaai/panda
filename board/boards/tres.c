@@ -121,9 +121,7 @@ static void tres_init(void) {
 
   // SOM debugging UART
   gpio_uart7_init();
-#ifndef BOOTSTUB
-  uart_init(&uart_ring_som_debug, 115200);
-#endif
+  // uart_init(&uart_ring_som_debug, 115200); // TODO
 
   // fan setup
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
@@ -155,9 +153,10 @@ static harness_configuration tres_harness_config = {
   .adc_signal_SBU2 = ADC_CHANNEL_DEFAULT(ADC1, 17)
 };
 
+// TODO: Move me
 uint32_t red_read_voltage_mV(void);
 
-struct board board_tres = {
+board board_tres = {
   .harness_config = &tres_harness_config,
   .has_spi = true,
   .has_fan = true,

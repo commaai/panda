@@ -67,6 +67,7 @@ void gpio_set_bitmask(gpio_t *pins, uint8_t num_pins, uint32_t bitmask) {
 }
 #endif
 
+// Detection with internal pullup
 #define PULL_EFFECTIVE_DELAY 4096
 bool detect_with_pull(GPIO_TypeDef *GPIO, int pin, int mode) {
   set_gpio_mode(GPIO, pin, MODE_INPUT);

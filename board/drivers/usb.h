@@ -111,8 +111,3 @@ void refresh_can_tx_slots_available(void);
 
 // ***************************** USB port *****************************
 void can_tx_comms_resume_usb(void);
-
-// ***************************** USB port *****************************
-
-void usb_irqhandler(void);
-void can_tx_comms_resume_usb(void);

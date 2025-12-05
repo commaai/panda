@@ -22,8 +22,6 @@
 #include "board/can_comms.h"
 #include "board/jungle/main_comms.h"
 
-uint32_t uptime_cnt = 0;
-
 // ********************* Serial debugging *********************
 
 void debug_ring_callback(uart_ring *ring) {

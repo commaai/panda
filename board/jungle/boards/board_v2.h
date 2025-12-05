@@ -9,7 +9,7 @@
 #include "board/drivers/gpio.h"
 
 #ifndef PANDA_JUNGLE
-#error no pandas!
+#error This should only be used on Panda Body!
 #endif
 
 #define ADC_CHANNEL(a, c) {.adc = (a), .channel = (c), .sample_time = SAMPLETIME_810_CYCLES, .oversampling = OVERSAMPLING_1}
@@ -76,6 +76,3 @@ const adc_signal_t sbu2_channels[] = {
   ADC_CHANNEL(ADC3, 9),
   ADC_CHANNEL(ADC3, 11),
 };
-
-
-extern struct board board_v2;
