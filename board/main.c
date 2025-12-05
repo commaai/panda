@@ -18,6 +18,7 @@
 #include "board/drivers/fdcan.h"
 #include "board/main_declarations.h"
 #include "board/print.h"
+#include "board/main_comms.h"
 
 // ********************* Serial debugging *********************
 
