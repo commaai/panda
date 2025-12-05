@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "board/drivers/uart.h"
 
 static void uart_rx_ring(uart_ring *q){
