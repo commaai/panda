@@ -4,6 +4,8 @@
 #include "board/drivers/fake_siren.h"
 #include "board/boards/tres.h"
 #include "board/drivers/harness.h"
+#include "board/drivers/uart.h"
+#include "board/stm32h7/lluart.h"
 
 // ////////////////////////// //
 // Cuatro (STM32H7) + Harness //
@@ -80,7 +82,7 @@ static void cuatro_init(void) {
 
   // SOM debugging UART
   gpio_uart7_init();
-  // uart_init(&uart_ring_som_debug, 115200); // TODO
+  uart_init(&uart_ring_som_debug, 115200);
 
   // fan setup
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);

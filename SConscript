@@ -131,6 +131,8 @@ def build_project(project_name, project, main, shared, extra_flags):
     "./board/utils.c",
     "./board/globals.c",
     "./board/obj/gitversion.c",
+    "./board/stm32h7/lluart.c",
+    "./board/drivers/uart.c",
   ]
 
   # Build bootstub
@@ -152,13 +154,10 @@ def build_project(project_name, project, main, shared, extra_flags):
     "./board/can_comms.c",
     "./board/drivers/fan.c",
     "./board/power_saving.c",
-    "./board/drivers/uart.c",
     "./board/stm32h7/llfdcan.c",
     "./board/drivers/harness.c",
-    
     "./board/drivers/bootkick.c",
     "./board/stm32h7/llfan.c",
-    "./board/stm32h7/lluart.c",
     "./board/drivers/fdcan.c",
     "./board/drivers/can_common.c",
     main,
