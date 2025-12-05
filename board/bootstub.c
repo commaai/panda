@@ -19,13 +19,11 @@ void __initialize_hardware_early(void) {
   early_initialization();
 }
 
-void print(const char *a) {
-  UNUSED(a);
-}
-
-void puth(unsigned int i) {
-  UNUSED(i);
-}
+void print(const char *a){ UNUSED(a); }
+void puth(unsigned int i){ UNUSED(i); }
+void puth2(uint8_t i){ UNUSED(i); }
+void puth4(uint8_t i){ UNUSED(i); }
+void hexdump(const void *a, int l){ UNUSED(a); UNUSED(l); }
 
 void fail(void) {
   soft_flasher_start();

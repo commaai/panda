@@ -45,11 +45,10 @@ cppcheck() {
 
   $CPPCHECK_DIR/cppcheck --inline-suppr \
           --enable=all --addon=misra \
-          -j `nproc` \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
           --suppress=*:*include/* --error-exitcode=2 --check-level=exhaustive --safety \
           --platform=arm32-wchar_t4 --checkers-report=$CHECKLIST.tmp \
-          --std=c11 --project=compile_commands.json --file-filter=*.c 2>&1 | tee $OUTPUT
+          --std=c11 --project=compile_commands.json -icrypto 2>&1 | tee $OUTPUT
 
   cat $CHECKLIST.tmp >> $CHECKLIST
   rm $CHECKLIST.tmp
@@ -61,10 +60,9 @@ cppcheck() {
   fi
 }
 
-PANDA_OPTS="--enable=all --addon=misra"
-
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-cppcheck $PANDA_OPTS
+
+cppcheck
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 

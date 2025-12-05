@@ -30,6 +30,7 @@ void fan_tick(void) {
     fan_state.rpm = (fan_rpm_fast + (3U * fan_state.rpm)) / 4U;
 
     #ifdef DEBUG_FAN
+      // TODO: Broken since a2064b8
       puth(fan_state.target_rpm);
       print(" "); puth(fan_rpm_fast);
       print(" "); puth(fan_state.power);

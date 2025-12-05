@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "can_common.h"
 
 #include "board/can_comms.h"
