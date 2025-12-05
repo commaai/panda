@@ -21,6 +21,7 @@
 
 #include "board/can_comms.h"
 #include "board/jungle/main_comms.h"
+#include "board/print.h"
 
 // ********************* Serial debugging *********************
 

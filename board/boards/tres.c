@@ -1,4 +1,5 @@
 #include "tres.h"
+#include "red.h"
 
 #include "board/drivers/pwm.h"
 #include "board/globals.h"
@@ -106,7 +107,7 @@ static void tres_init(void) {
   // Enable USB 3.3V LDO for USB block
   register_set_bits(&(PWR->CR3), PWR_CR3_USBREGEN);
   register_set_bits(&(PWR->CR3), PWR_CR3_USB33DEN);
-  while ((PWR->CR3 & PWR_CR3_USB33RDY) == 0U);
+  while ((PWR->CR3 & PWR_CR3_USB33RDY) == 0U) {}
 
   common_init_gpio();
 
@@ -152,9 +153,6 @@ static harness_configuration tres_harness_config = {
   .adc_signal_SBU1 = ADC_CHANNEL_DEFAULT(ADC1, 4),
   .adc_signal_SBU2 = ADC_CHANNEL_DEFAULT(ADC1, 17)
 };
-
-// TODO: Move me
-uint32_t red_read_voltage_mV(void);
 
 board board_tres = {
   .harness_config = &tres_harness_config,

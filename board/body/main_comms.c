@@ -1,5 +1,4 @@
 #include "board/body/main_comms.h"
-
 #include "board/globals.h"
 #include "board/config.h"
 #include "main_comms.h"
@@ -11,6 +10,7 @@
 #include "board/libc.h"
 #include "board/drivers/uart.h"
 #include "board/body/motor_control.h"
+#include "board/print.h"
 
 void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   UNUSED(data);
