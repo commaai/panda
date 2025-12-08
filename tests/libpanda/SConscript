@@ -20,6 +20,7 @@ env = Environment(
     '-std=gnu11',
     '-Wfatal-errors',
     '-Wno-pointer-to-int-cast',
+    "-DLIB_PANDA",
   ],
   CPPPATH=[".", "../../", "../../board/", opendbc.INCLUDE_PATH],
 )
@@ -34,5 +35,16 @@ if GetOption('ubsan'):
   env['CFLAGS'] += flags
   env['LINKFLAGS'] += flags
 
-panda = env.SharedObject("panda.os", "panda.c")
-libpanda = env.SharedLibrary("libpanda.so", [panda])
+shared = [
+  "crypto/rsa.c",
+  "crypto/sha.c",
+  "board/can_comms.c",
+  "board/drivers/can_common.c",
+  "board/fake_stm.c",
+  "board/utils.c",
+]
+
+c = ["panda.c"] + ["../../" + s for s in shared]
+
+objs = env.SharedObject(c)
+libpanda = env.SharedLibrary("libpanda.so", objs)
