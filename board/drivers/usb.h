@@ -502,11 +502,8 @@ static void usb_setup(void) {
       control_req.length = setup.b.wLength.w;
 
       resp_len = comms_control_handler(&control_req, response);
-      // response pending if -1 was returned
-      if (resp_len != -1) {
-        USB_WritePacket(response, MIN(resp_len, setup.b.wLength.w), 0);
-        USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
-      }
+      USB_WritePacket(response, MIN(resp_len, setup.b.wLength.w), 0);
+      USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
   }
 }
 
