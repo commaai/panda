@@ -37,6 +37,7 @@ static PackageSMPSType get_package_smps_type(void) {
     case 0b0101U: // LQFP144 Legacy
     case 0b0111U: // LQFP144 Industrial
     case 0b1000U: // UFBGA169
+    case 0b1001U: // UFBGA176+25
       ret = PACKAGE_WITH_SMPS;
       break;
     default:
