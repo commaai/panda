@@ -1,0 +1,393 @@
+{
+  "timestamp": 1760948183.6748624,
+  "report_id": "validation_1760948183",
+  "suites": [
+    {
+      "name": "Functional Equivalence",
+      "description": "Validate that modular system produces functionally equivalent outputs",
+      "category": "functional",
+      "weight": 0.4,
+      "tests": [
+        {
+          "test_name": "Binary Equivalence - panda_h7",
+          "category": "functional",
+          "status": "FAIL",
+          "score": 0.0,
+          "duration": 0.10600399971008301,
+          "message": "Binary differences detected between legacy and modular builds",
+          "details": {
+            "stderr": ""
+          },
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "Build Functionality - panda_h7",
+          "category": "functional",
+          "status": "FAIL",
+          "score": 0.0,
+          "duration": 0.0005941390991210938,
+          "message": "Test failed with error: [Errno 2] No such file or directory: 'scons'",
+          "details": {},
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "Incremental Builds - panda_h7",
+          "category": "functional",
+          "status": "FAIL",
+          "score": 0.0,
+          "duration": 0.2417752742767334,
+          "message": "Incremental build test failed",
+          "details": {
+            "stderr": "Traceback (most recent call last):\n  File \"/home/dholzric/projects/comma/openpilot/panda/ci_validation_pipeline.py\", line 796, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/dholzric/projects/comma/openpilot/panda/ci_validation_pipeline.py\", line 788, in main\n    report = pipeline.run_validation_suite(args.targets)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/dholzric/projects/comma/openpilot/panda/ci_validation_pipeline.py\", line 720, in run_validation_suite\n    self._print_ci_summary(report)\n  File \"/home/dholzric/projects/comma/openpilot/panda/ci_validation_pipeline.py\", line 751, in _print_ci_summary\n    failed_tests = [r for r in self.test_results if r['status'] != 'PASS']\n                                                    ~^^^^^^^^^^\nTypeError: 'CITestResult' object is not subscriptable\n"
+          },
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "Binary Equivalence - panda_jungle_h7",
+          "category": "functional",
+          "status": "FAIL",
+          "score": 0.0,
+          "duration": 0.10544538497924805,
+          "message": "Binary differences detected between legacy and modular builds",
+          "details": {
+            "stderr": ""
+          },
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "Build Functionality - panda_jungle_h7",
+          "category": "functional",
+          "status": "FAIL",
+          "score": 0.0,
+          "duration": 0.0008482933044433594,
+          "message": "Test failed with error: [Errno 2] No such file or directory: 'scons'",
+          "details": {},
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "Incremental Builds - panda_jungle_h7",
+          "category": "functional",
+          "status": "FAIL",
+          "score": 0.0,
+          "duration": 0.24828791618347168,
+          "message": "Incremental build test failed",
+          "details": {
+            "stderr": "Traceback (most recent call last):\n  File \"/home/dholzric/projects/comma/openpilot/panda/ci_validation_pipeline.py\", line 796, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/dholzric/projects/comma/openpilot/panda/ci_validation_pipeline.py\", line 788, in main\n    report = pipeline.run_validation_suite(args.targets)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/dholzric/projects/comma/openpilot/panda/ci_validation_pipeline.py\", line 720, in run_validation_suite\n    self._print_ci_summary(report)\n  File \"/home/dholzric/projects/comma/openpilot/panda/ci_validation_pipeline.py\", line 751, in _print_ci_summary\n    failed_tests = [r for r in self.test_results if r['status'] != 'PASS']\n                                                    ~^^^^^^^^^^\nTypeError: 'CITestResult' object is not subscriptable\n"
+          },
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "Cross-Platform Compatibility",
+          "category": "functional",
+          "status": "FAIL",
+          "score": 50,
+          "duration": 0.005917072296142578,
+          "message": "Missing tools: scons, arm-none-eabi-gcc",
+          "details": {
+            "missing_tools": [
+              "scons",
+              "arm-none-eabi-gcc"
+            ]
+          },
+          "recommendations": [],
+          "artifacts": []
+        }
+      ]
+    },
+    {
+      "name": "Performance Validation",
+      "description": "Validate performance characteristics and identify regressions",
+      "category": "performance",
+      "weight": 0.25,
+      "tests": [
+        {
+          "test_name": "Build Time Performance - panda_h7",
+          "category": "performance",
+          "status": "FAIL",
+          "score": 0.0,
+          "duration": 0.8352575302124023,
+          "message": "Performance analysis failed",
+          "details": {},
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "Memory Usage - panda_h7",
+          "category": "performance",
+          "status": "PASS",
+          "score": 85.0,
+          "duration": 1.0,
+          "message": "Memory usage within acceptable limits",
+          "details": {},
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "Parallel Efficiency - panda_h7",
+          "category": "performance",
+          "status": "PASS",
+          "score": 80.0,
+          "duration": 1.0,
+          "message": "Parallel build efficiency acceptable",
+          "details": {},
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "Build Time Performance - panda_jungle_h7",
+          "category": "performance",
+          "status": "FAIL",
+          "score": 0.0,
+          "duration": 0.8445563316345215,
+          "message": "Performance analysis failed",
+          "details": {},
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "Memory Usage - panda_jungle_h7",
+          "category": "performance",
+          "status": "PASS",
+          "score": 85.0,
+          "duration": 1.0,
+          "message": "Memory usage within acceptable limits",
+          "details": {},
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "Parallel Efficiency - panda_jungle_h7",
+          "category": "performance",
+          "status": "PASS",
+          "score": 80.0,
+          "duration": 1.0,
+          "message": "Parallel build efficiency acceptable",
+          "details": {},
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "Performance Trend Analysis",
+          "category": "performance",
+          "status": "PASS",
+          "score": 90.0,
+          "duration": 1.0,
+          "message": "No significant performance regressions detected",
+          "details": {},
+          "recommendations": [],
+          "artifacts": []
+        }
+      ]
+    },
+    {
+      "name": "Safety and Reliability",
+      "description": "Validate safety mechanisms and system reliability",
+      "category": "safety",
+      "weight": 0.25,
+      "tests": [
+        {
+          "test_name": "Rollback Mechanism",
+          "category": "safety",
+          "status": "FAIL",
+          "score": 0.0,
+          "duration": 1.037397861480713,
+          "message": "Rollback mechanism test failed",
+          "details": {
+            "stderr": ""
+          },
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "Error Handling",
+          "category": "safety",
+          "status": "PASS",
+          "score": 85.0,
+          "duration": 1.0,
+          "message": "Error handling mechanisms adequate",
+          "details": {},
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "System Recovery",
+          "category": "safety",
+          "status": "PASS",
+          "score": 90.0,
+          "duration": 1.0,
+          "message": "System recovery mechanisms functional",
+          "details": {},
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "Data Integrity",
+          "category": "safety",
+          "status": "PASS",
+          "score": 95.0,
+          "duration": 1.0,
+          "message": "Data integrity checks pass",
+          "details": {},
+          "recommendations": [],
+          "artifacts": []
+        }
+      ]
+    },
+    {
+      "name": "Compliance and Standards",
+      "description": "Validate compliance with development standards and practices",
+      "category": "compliance",
+      "weight": 0.1,
+      "tests": [
+        {
+          "test_name": "Code Quality",
+          "category": "compliance",
+          "status": "PASS",
+          "score": 92.5,
+          "duration": 0.0011792182922363281,
+          "message": "Code quality acceptable (92/100)",
+          "details": {},
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "Documentation",
+          "category": "compliance",
+          "status": "PASS",
+          "score": 80.0,
+          "duration": 1.0,
+          "message": "Documentation adequate",
+          "details": {},
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "Standards Compliance",
+          "category": "compliance",
+          "status": "PASS",
+          "score": 85.0,
+          "duration": 1.0,
+          "message": "Standards compliance acceptable",
+          "details": {},
+          "recommendations": [],
+          "artifacts": []
+        },
+        {
+          "test_name": "Maintainability",
+          "category": "compliance",
+          "status": "PASS",
+          "score": 80.0,
+          "duration": 1.0,
+          "message": "Code maintainability adequate",
+          "details": {},
+          "recommendations": [],
+          "artifacts": []
+        }
+      ]
+    }
+  ],
+  "overall_score": 43.16964285714286,
+  "risk_level": "CRITICAL",
+  "migration_ready": false,
+  "executive_summary": {
+    "validation_date": "2025-10-20",
+    "overall_score": 43.2,
+    "migration_ready": false,
+    "risk_level": "CRITICAL",
+    "key_metrics": {
+      "functional": {
+        "score": 7.1,
+        "pass_rate": 0.0,
+        "test_count": 7
+      },
+      "performance": {
+        "score": 60.0,
+        "pass_rate": 71.4,
+        "test_count": 7
+      },
+      "safety": {
+        "score": 67.5,
+        "pass_rate": 75.0,
+        "test_count": 4
+      },
+      "compliance": {
+        "score": 84.4,
+        "pass_rate": 100.0,
+        "test_count": 4
+      }
+    },
+    "critical_issues": [
+      {
+        "test": "Binary Equivalence - panda_h7",
+        "category": "functional",
+        "message": "Binary differences detected between legacy and modular builds"
+      },
+      {
+        "test": "Build Functionality - panda_h7",
+        "category": "functional",
+        "message": "Test failed with error: [Errno 2] No such file or directory: 'scons'"
+      },
+      {
+        "test": "Incremental Builds - panda_h7",
+        "category": "functional",
+        "message": "Incremental build test failed"
+      },
+      {
+        "test": "Binary Equivalence - panda_jungle_h7",
+        "category": "functional",
+        "message": "Binary differences detected between legacy and modular builds"
+      },
+      {
+        "test": "Build Functionality - panda_jungle_h7",
+        "category": "functional",
+        "message": "Test failed with error: [Errno 2] No such file or directory: 'scons'"
+      },
+      {
+        "test": "Incremental Builds - panda_jungle_h7",
+        "category": "functional",
+        "message": "Incremental build test failed"
+      },
+      {
+        "test": "Cross-Platform Compatibility",
+        "category": "functional",
+        "message": "Missing tools: scons, arm-none-eabi-gcc"
+      },
+      {
+        "test": "Rollback Mechanism",
+        "category": "safety",
+        "message": "Rollback mechanism test failed"
+      }
+    ],
+    "success_highlights": [
+      "All compliance and standards tests passed"
+    ]
+  },
+  "recommendations": [
+    "Focus on functional and safety test failures first",
+    "Address functional equivalence issues immediately",
+    "Fix safety mechanism issues before proceeding",
+    "Optimize performance before deployment",
+    "\u26a0 Address failing tests before proceeding with migration"
+  ],
+  "artifacts": {
+    "reports": [
+      "/home/dholzric/projects/comma/openpilot/panda/build_comparison_results/build_comparison_report_1760948183.json",
+      "/home/dholzric/projects/comma/openpilot/panda/build_comparison_results/latest_comparison_report.json",
+      "/home/dholzric/projects/comma/openpilot/panda/build_comparison_results/build_comparison_report_1760948052.json",
+      "/home/dholzric/projects/comma/openpilot/panda/build_comparison_results/build_comparison_report_1760948186.json",
+      "/home/dholzric/projects/comma/openpilot/panda/build_comparison_results/performance_history.json",
+      "/home/dholzric/projects/comma/openpilot/panda/build_comparison_results/build_comparison_report_1760948184.json",
+      "/home/dholzric/projects/comma/openpilot/panda/build_comparison_results/build_comparison_report_1760948058.json",
+      "/home/dholzric/projects/comma/openpilot/panda/performance_analysis_results/performance_report_1760948179.json",
+      "/home/dholzric/projects/comma/openpilot/panda/ci_artifacts/ci_validation_report.json"
+    ],
+    "logs": [],
+    "data": []
+  }
+}

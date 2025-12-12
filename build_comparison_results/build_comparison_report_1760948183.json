@@ -1,0 +1,56 @@
+{
+  "timestamp": 1760948183.7649817,
+  "overall_status": {
+    "all_equivalent": false,
+    "total_targets": 1,
+    "equivalent_targets": 0,
+    "total_regressions": 0,
+    "ready_for_migration": false
+  },
+  "detailed_results": [
+    {
+      "target": "panda_h7",
+      "equivalent": false,
+      "binary_differences": [],
+      "size_differences": [],
+      "performance": {},
+      "regression_detected": false,
+      "compatibility_issues": [
+        "Legacy build failed",
+        "Modular build failed"
+      ]
+    }
+  ],
+  "performance_summary": {},
+  "incremental_build_results": [
+    {
+      "target": "panda_h7",
+      "legacy_incremental": {
+        "full_build_failed": true
+      },
+      "modular_incremental": {
+        "full_build_failed": true
+      },
+      "incremental_equivalent": true,
+      "issues": []
+    }
+  ],
+  "parallel_build_results": [
+    {
+      "target": "panda_h7",
+      "sequential_times": {},
+      "parallel_times": {},
+      "parallel_efficiency": {}
+    }
+  ],
+  "all_compatibility_issues": [
+    "Legacy build failed",
+    "Modular build failed"
+  ],
+  "recommendations": [
+    "\u26a0 Binary differences detected - investigate before migration",
+    "Run detailed binary analysis on differing outputs",
+    "\u26a0 Compatibility issues found - review and address",
+    "Create rollback plan before proceeding with migration"
+  ]
+}

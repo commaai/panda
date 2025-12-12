@@ -1,0 +1,73 @@
+{
+  "validation_date": "2025-10-20",
+  "overall_score": 43.2,
+  "migration_ready": false,
+  "risk_level": "CRITICAL",
+  "key_metrics": {
+    "functional": {
+      "score": 7.1,
+      "pass_rate": 0.0,
+      "test_count": 7
+    },
+    "performance": {
+      "score": 60.0,
+      "pass_rate": 71.4,
+      "test_count": 7
+    },
+    "safety": {
+      "score": 67.5,
+      "pass_rate": 75.0,
+      "test_count": 4
+    },
+    "compliance": {
+      "score": 84.4,
+      "pass_rate": 100.0,
+      "test_count": 4
+    }
+  },
+  "critical_issues": [
+    {
+      "test": "Binary Equivalence - panda_h7",
+      "category": "functional",
+      "message": "Binary differences detected between legacy and modular builds"
+    },
+    {
+      "test": "Build Functionality - panda_h7",
+      "category": "functional",
+      "message": "Test failed with error: [Errno 2] No such file or directory: 'scons'"
+    },
+    {
+      "test": "Incremental Builds - panda_h7",
+      "category": "functional",
+      "message": "Incremental build test failed"
+    },
+    {
+      "test": "Binary Equivalence - panda_jungle_h7",
+      "category": "functional",
+      "message": "Binary differences detected between legacy and modular builds"
+    },
+    {
+      "test": "Build Functionality - panda_jungle_h7",
+      "category": "functional",
+      "message": "Test failed with error: [Errno 2] No such file or directory: 'scons'"
+    },
+    {
+      "test": "Incremental Builds - panda_jungle_h7",
+      "category": "functional",
+      "message": "Incremental build test failed"
+    },
+    {
+      "test": "Cross-Platform Compatibility",
+      "category": "functional",
+      "message": "Missing tools: scons, arm-none-eabi-gcc"
+    },
+    {
+      "test": "Rollback Mechanism",
+      "category": "safety",
+      "message": "Rollback mechanism test failed"
+    }
+  ],
+  "success_highlights": [
+    "All compliance and standards tests passed"
+  ]
+}
