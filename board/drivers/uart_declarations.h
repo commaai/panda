@@ -4,12 +4,12 @@
 #define FIFO_SIZE_INT 0x400U
 
 typedef struct uart_ring {
-  volatile uint16_t w_ptr_tx;
-  volatile uint16_t r_ptr_tx;
+  volatile uint32_t w_ptr_tx;
+  volatile uint32_t r_ptr_tx;
   uint8_t *elems_tx;
   uint32_t tx_fifo_size;
-  volatile uint16_t w_ptr_rx;
-  volatile uint16_t r_ptr_rx;
+  volatile uint32_t w_ptr_rx;
+  volatile uint32_t r_ptr_rx;
   uint8_t *elems_rx;
   uint32_t rx_fifo_size;
   USART_TypeDef *uart;
