@@ -23,7 +23,7 @@ def ensure_jungle_health_packet_version(fn):
 
 class PandaJungleDFU(PandaDFU):
   def recover(self):
-    fn = os.path.join(FW_PATH, self.get_mcu_type().config.bootstub_fn.replace("panda", "panda_jungle"))
+    fn = os.path.join(FW_PATH, self._mcu_type.config.bootstub_fn.replace("panda", "panda_jungle"))
     with open(fn, "rb") as f:
       code = f.read()
     self.program_bootstub(code)
@@ -52,7 +52,7 @@ class PandaJungle(Panda):
 
   def flash(self, fn=None, code=None, reconnect=True):
     if not fn:
-      fn = os.path.join(FW_PATH, self.get_mcu_type().config.app_fn.replace("panda", "panda_jungle"))
+      fn = os.path.join(FW_PATH, self._mcu_type.config.app_fn.replace("panda", "panda_jungle"))
     super().flash(fn=fn, code=code, reconnect=reconnect)
 
   def recover(self, timeout: int | None = 60, reset: bool = True) -> bool:
