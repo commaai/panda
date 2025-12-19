@@ -4,14 +4,10 @@
 #include <stdint.h>
 
 #include "board/config.h"
+#include "board/body/boards/board_declarations.h"
 
 #define DOTSTAR_LED_COUNT 10U
 #define DOTSTAR_GLOBAL_BRIGHTNESS_MAX 31U
-
-#define DOTSTAR_CLK_GPIO GPIOA
-#define DOTSTAR_CLK_PIN 5U
-#define DOTSTAR_DATA_GPIO GPIOB
-#define DOTSTAR_DATA_PIN 5U
 
 typedef struct {
   uint8_t r;
@@ -38,17 +34,17 @@ static inline void dotstar_delay(void) {
 
 static inline void dotstar_set_clk(bool high) {
   if (high) {
-    DOTSTAR_CLK_GPIO->BSRR = (uint32_t)(1U << DOTSTAR_CLK_PIN);
+    DOTSTAR_CLK_PORT->BSRR = (uint32_t)(1U << DOTSTAR_CLK_PIN);
   } else {
-    DOTSTAR_CLK_GPIO->BSRR = (uint32_t)(1U << (DOTSTAR_CLK_PIN + 16U));
+    DOTSTAR_CLK_PORT->BSRR = (uint32_t)(1U << (DOTSTAR_CLK_PIN + 16U));
   }
 }
 
 static inline void dotstar_set_data(bool high) {
   if (high) {
-    DOTSTAR_DATA_GPIO->BSRR = (uint32_t)(1U << DOTSTAR_DATA_PIN);
+    DOTSTAR_DATA_PORT->BSRR = (uint32_t)(1U << DOTSTAR_DATA_PIN);
   } else {
-    DOTSTAR_DATA_GPIO->BSRR = (uint32_t)(1U << (DOTSTAR_DATA_PIN + 16U));
+    DOTSTAR_DATA_PORT->BSRR = (uint32_t)(1U << (DOTSTAR_DATA_PIN + 16U));
   }
 }
 
@@ -84,19 +80,36 @@ static inline void dotstar_send_end_frame(uint16_t led_count) {
   }
 }
 
-static inline void dotstar_init(void) {
-  register_set_bits(&(RCC->AHB4ENR), RCC_AHB4ENR_GPIOAEN | RCC_AHB4ENR_GPIOBEN);
+static inline void dotstar_show(void) {
+  if (!dotstar_state.initialized) {
+    return;
+  }
 
-  set_gpio_pullup(DOTSTAR_CLK_GPIO, DOTSTAR_CLK_PIN, PULL_NONE);
-  set_gpio_output_type(DOTSTAR_CLK_GPIO, DOTSTAR_CLK_PIN, OUTPUT_TYPE_PUSH_PULL);
-  set_gpio_mode(DOTSTAR_CLK_GPIO, DOTSTAR_CLK_PIN, MODE_OUTPUT);
-  register_set(&(DOTSTAR_CLK_GPIO->OSPEEDR), GPIO_OSPEEDR_OSPEED5, GPIO_OSPEEDR_OSPEED5_Msk);
+  dotstar_send_start_frame();
+
+  uint8_t prefix = (uint8_t)(0xE0U | dotstar_state.global_brightness);
+  for (uint16_t i = 0U; i < DOTSTAR_LED_COUNT; i++) {
+    dotstar_rgb_t *pixel = &dotstar_state.pixels[i];
+    dotstar_write_byte(prefix);
+    dotstar_write_byte(pixel->b);
+    dotstar_write_byte(pixel->g);
+    dotstar_write_byte(pixel->r);
+  }
+
+  dotstar_send_end_frame(DOTSTAR_LED_COUNT);
+}
+
+static inline void dotstar_init(void) {
+  set_gpio_pullup(DOTSTAR_CLK_PORT, DOTSTAR_CLK_PIN, PULL_NONE);
+  set_gpio_output_type(DOTSTAR_CLK_PORT, DOTSTAR_CLK_PIN, OUTPUT_TYPE_PUSH_PULL);
+  set_gpio_mode(DOTSTAR_CLK_PORT, DOTSTAR_CLK_PIN, MODE_OUTPUT);
+  register_set(&(DOTSTAR_CLK_PORT->OSPEEDR), GPIO_OSPEEDR_OSPEED5, GPIO_OSPEEDR_OSPEED5_Msk);
   dotstar_set_clk(false);
 
-  set_gpio_pullup(DOTSTAR_DATA_GPIO, DOTSTAR_DATA_PIN, PULL_NONE);
-  set_gpio_output_type(DOTSTAR_DATA_GPIO, DOTSTAR_DATA_PIN, OUTPUT_TYPE_PUSH_PULL);
-  set_gpio_mode(DOTSTAR_DATA_GPIO, DOTSTAR_DATA_PIN, MODE_OUTPUT);
-  register_set(&(DOTSTAR_DATA_GPIO->OSPEEDR), GPIO_OSPEEDR_OSPEED5, GPIO_OSPEEDR_OSPEED5_Msk);
+  set_gpio_pullup(DOTSTAR_DATA_PORT, DOTSTAR_DATA_PIN, PULL_NONE);
+  set_gpio_output_type(DOTSTAR_DATA_PORT, DOTSTAR_DATA_PIN, OUTPUT_TYPE_PUSH_PULL);
+  set_gpio_mode(DOTSTAR_DATA_PORT, DOTSTAR_DATA_PIN, MODE_OUTPUT);
+  register_set(&(DOTSTAR_DATA_PORT->OSPEEDR), GPIO_OSPEEDR_OSPEED5, GPIO_OSPEEDR_OSPEED5_Msk);
   dotstar_set_data(false);
 
   dotstar_state.initialized = true;
@@ -108,14 +121,7 @@ static inline void dotstar_init(void) {
     dotstar_state.pixels[i].b = 0U;
   }
 
-  dotstar_send_start_frame();
-  for (uint16_t i = 0U; i < DOTSTAR_LED_COUNT; i++) {
-    dotstar_write_byte((uint8_t)(0xE0U | dotstar_state.global_brightness));
-    dotstar_write_byte(0U);
-    dotstar_write_byte(0U);
-    dotstar_write_byte(0U);
-  }
-  dotstar_send_end_frame(DOTSTAR_LED_COUNT);
+  dotstar_show();
 }
 
 static inline void dotstar_set_pixel(uint16_t index, uint8_t r, uint8_t g, uint8_t b) {
@@ -140,25 +146,6 @@ static inline void dotstar_fill(uint8_t r, uint8_t g, uint8_t b) {
 
 static inline void dotstar_set_global_brightness(uint8_t brightness) {
   dotstar_state.global_brightness = (brightness > DOTSTAR_GLOBAL_BRIGHTNESS_MAX) ? DOTSTAR_GLOBAL_BRIGHTNESS_MAX : brightness;
-}
-
-static inline void dotstar_show(void) {
-  if (!dotstar_state.initialized) {
-    return;
-  }
-
-  dotstar_send_start_frame();
-
-  uint8_t prefix = (uint8_t)(0xE0U | dotstar_state.global_brightness);
-  for (uint16_t i = 0U; i < DOTSTAR_LED_COUNT; i++) {
-    dotstar_rgb_t *pixel = &dotstar_state.pixels[i];
-    dotstar_write_byte(prefix);
-    dotstar_write_byte(pixel->b);
-    dotstar_write_byte(pixel->g);
-    dotstar_write_byte(pixel->r);
-  }
-
-  dotstar_send_end_frame(DOTSTAR_LED_COUNT);
 }
 
 static inline void dotstar_hue_to_rgb(uint16_t hue, uint8_t *r, uint8_t *g, uint8_t *b) {

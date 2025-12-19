@@ -1,43 +1,46 @@
-#include "board/body/motor_control.h"
+#include "board/body/boards/board_declarations.h"
 
 void board_body_init(void) {
-  motor_init();
-  motor_encoder_init();
-  motor_speed_controller_init();
-  motor_encoder_reset(1);
-  motor_encoder_reset(2);
-
   // Initialize CAN pins
-  set_gpio_pullup(GPIOD, 0, PULL_NONE);
-  set_gpio_alternate(GPIOD, 0, GPIO_AF9_FDCAN1);
-  set_gpio_pullup(GPIOD, 1, PULL_NONE);
-  set_gpio_alternate(GPIOD, 1, GPIO_AF9_FDCAN1);
+  set_gpio_pullup(CAN_RX_PORT, CAN_RX_PIN, PULL_NONE);
+  set_gpio_alternate(CAN_RX_PORT, CAN_RX_PIN, GPIO_AF9_FDCAN1);
+  set_gpio_pullup(CAN_TX_PORT, CAN_TX_PIN, PULL_NONE);
+  set_gpio_alternate(CAN_TX_PORT, CAN_TX_PIN, GPIO_AF9_FDCAN1);
 
-  set_gpio_output_type(GPIOD, 9U, OUTPUT_TYPE_PUSH_PULL);
-  set_gpio_mode(GPIOD, 9U, MODE_OUTPUT);
-  set_gpio_output(GPIOD, 9U, true);
+  // Initialize button input (PC15)
+  set_gpio_mode(IGNITION_SW_PORT, IGNITION_SW_PIN, MODE_INPUT);
+  SYSCFG->EXTICR[3] &= ~(SYSCFG_EXTICR4_EXTI15);
+  SYSCFG->EXTICR[3] |= SYSCFG_EXTICR4_EXTI15_PC;
+  EXTI->PR1 = (1U << 15);
+  EXTI->RTSR1 |= (1U << 15);
+  EXTI->FTSR1 |= (1U << 15);
+  EXTI->IMR1 |= (1U << 15);
 
-  set_gpio_pullup(GPIOD, 8, PULL_UP);
-  set_gpio_mode(GPIOD, 8, MODE_INPUT);
-  SYSCFG->EXTICR[2] &= ~(SYSCFG_EXTICR3_EXTI8);
-  SYSCFG->EXTICR[2] |= SYSCFG_EXTICR3_EXTI8_PD;
-  EXTI->PR1 = (1U << 8);
-  EXTI->RTSR1 |= (1U << 8);
-  EXTI->FTSR1 |= (1U << 8);
-  EXTI->IMR1 |= (1U << 8);
-
-  set_gpio_pullup(GPIOE, 13, PULL_UP);
-  set_gpio_mode(GPIOE, 13, MODE_INPUT);
+  // Initialize barrel jack detection input (PC13)
+  set_gpio_pullup(CHARGING_DETECT_PORT, CHARGING_DETECT_PIN, PULL_UP);
+  set_gpio_mode(CHARGING_DETECT_PORT, CHARGING_DETECT_PIN, MODE_INPUT);
   SYSCFG->EXTICR[3] &= ~(SYSCFG_EXTICR4_EXTI13);
-  SYSCFG->EXTICR[3] |= SYSCFG_EXTICR4_EXTI13_PE;
+  SYSCFG->EXTICR[3] |= SYSCFG_EXTICR4_EXTI13_PC;
   EXTI->PR1 = (1U << 13);
   EXTI->RTSR1 |= (1U << 13);
   EXTI->FTSR1 |= (1U << 13);
   EXTI->IMR1 |= (1U << 13);
+
+  // Initialize and turn on mici power
+  set_gpio_mode(MICI_POWER_ON_PORT, MICI_POWER_ON_PIN, MODE_OUTPUT);
+  set_gpio_output(MICI_POWER_ON_PORT, MICI_POWER_ON_PIN, 1);
+
+  // Initialize and turn off gpu power
+  set_gpio_mode(GPU_POWER_ON_PORT, GPU_POWER_ON_PIN, MODE_OUTPUT);
+  set_gpio_output(GPU_POWER_ON_PORT, GPU_POWER_ON_PIN, 0);
+
+  // Initialize and turn off ignition output
+  set_gpio_mode(IGNITION_ON_PORT, IGNITION_ON_PIN, MODE_OUTPUT);
+  set_gpio_output(IGNITION_ON_PORT, IGNITION_ON_PIN, 0);
 }
 
 board board_body = {
-  .led_GPIO = {GPIOC, GPIOC, GPIOC},
-  .led_pin = {7, 7, 7},
+  .led_GPIO = {GPIOA, GPIOA, GPIOA},
+  .led_pin = {10, 10, 10},
   .init = board_body_init,
 };
