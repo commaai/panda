@@ -10,8 +10,8 @@ class PandaBody(Panda):
 
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
-    self._rpml = 0
-    self._rpmr = 0
+    self._rpml: int = 0
+    self._rpmr: int = 0
 
   @property
   def rpml(self) -> int:

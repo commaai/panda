@@ -122,7 +122,7 @@ int main(void) {
   while (true) {
     uint32_t now = microsecond_timer_get();
     if (plug_charging) {
-      //motor_set_enable(false);
+      motor_set_enable(false);
       dotstar_apply_breathe((dotstar_rgb_t){255U, 40U, 0U}, now, 2000000U);
     } else if (ignition) {
       dotstar_run_rainbow(now);
