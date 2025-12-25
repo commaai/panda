@@ -1,22 +1,12 @@
 #pragma once
 
-// ******************** Prototypes ********************
-void print(const char *a);
-void puth(unsigned int i);
-typedef struct board board;
-typedef struct harness_configuration harness_configuration;
-void pwm_init(TIM_TypeDef *TIM, uint8_t channel);
-void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
-
-// ********************* Globals **********************
-extern uint8_t hw_type;
-extern board *current_board;
-extern uint32_t uptime_cnt;
+#include <stdint.h>
+#include <stdbool.h>
 
 // heartbeat state
 extern uint32_t heartbeat_counter;
 extern bool heartbeat_lost;
-extern bool heartbeat_disabled;
+extern bool heartbeat_disabled;            // set over USB
 
-// siren state
+ // siren state
 extern bool siren_enabled;
