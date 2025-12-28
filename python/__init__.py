@@ -112,8 +112,6 @@ class Panda:
 
   # from https://github.com/commaai/openpilot/blob/103b4df18cbc38f4129555ab8b15824d1a672bdf/cereal/log.capnp#L648
   HW_TYPE_UNKNOWN = b'\x00'
-  HW_TYPE_WHITE = b'\x01'
-  HW_TYPE_BLACK = b'\x03'
   HW_TYPE_RED_PANDA = b'\x07'
   HW_TYPE_TRES = b'\x09'
   HW_TYPE_CUATRO = b'\x0a'
@@ -148,9 +146,9 @@ class Panda:
     self._can_speed_kbps = can_speed_kbps
 
     if cli and serial is None:
-        self._connect_serial = self._cli_select_panda()
+      self._connect_serial = self._cli_select_panda()
     else:
-        self._connect_serial = serial
+      self._connect_serial = serial
 
     # connect and set mcu type
     self.connect(claim)
@@ -214,8 +212,7 @@ class Panda:
     logger.debug("connected")
 
     hw_type = self.get_type()
-    if hw_type not in self.SUPPORTED_DEVICES:
-      print("WARNING: Using deprecated HW")
+    assert hw_type in self.SUPPORTED_DEVICES, f"Unknown HW: {hw_type}"
 
     # disable openpilot's heartbeat checks
     if self._disable_checks:
