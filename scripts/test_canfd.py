@@ -48,10 +48,10 @@ def panda_init(serial, enable_canfd=False, enable_non_iso=False):
   p.set_safety_mode(CarParams.SafetyModel.allOutput)
   return p
 
-def test_canfd_throughput(p, p_recv=None):
+def test_canfd_throughput(p: Panda, p_recv: Panda | None = None):
   two_pandas = p_recv is not None
   p.set_safety_mode(CarParams.SafetyModel.allOutput)
-  if two_pandas:
+  if p_recv is not None:
     p_recv.set_safety_mode(CarParams.SafetyModel.allOutput)
   # enable output mode
   else:

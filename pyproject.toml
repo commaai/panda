@@ -55,13 +55,10 @@ flake8-implicit-str-concat.allow-multiline=false
 "pytest.main".msg = "pytest.main requires special handling that is easy to mess up!"
 
 [tool.ty.rules]
-# Ignore unresolved imports for third-party packages not available to ty
+# Third-party packages (usb1, opendbc, spidev, etc.) can't be resolved by ty
 unresolved-import = "ignore"
-# Ignore invalid assignments where None is assigned to typed attributes
-# These are intentional patterns during reconnection
+# Handle is temporarily set to None during reconnection before being reassigned
 invalid-assignment = "ignore"
-# Ignore possibly-missing-attribute warnings for loosely typed module-level variables
-possibly-missing-attribute = "ignore"
 
 [tool.pytest.ini_options]
 addopts = "-Werror --strict-config --strict-markers --durations=10 --ignore-glob='*.sh' --ignore=tests/misra --ignore=tests/som --ignore=tests/hitl"
