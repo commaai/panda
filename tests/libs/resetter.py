@@ -4,7 +4,8 @@ import usb1
 
 class Resetter():
   def __init__(self):
-    self._handle = None
+    self._handle: usb1.USBDeviceHandle | None = None
+    self._context: usb1.USBContext
     self.connect()
 
   def __enter__(self):
@@ -14,6 +15,7 @@ class Resetter():
     self.close()
 
   def close(self):
+    assert self._handle is not None
     self._handle.close()
     self._context.close()
     self._handle = None
@@ -37,9 +39,11 @@ class Resetter():
     assert self._handle
 
   def enable_power(self, port, enabled):
+    assert self._handle is not None
     self._handle.controlWrite((usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE), 0xff, port, enabled, b'')
 
   def enable_boot(self, enabled):
+    assert self._handle is not None
     self._handle.controlWrite((usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE), 0xff, 0, enabled, b'')
 
   def cycle_power(self, dfu=False, ports=None):
