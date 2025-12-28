@@ -369,8 +369,7 @@ int main(void) {
         }
       #endif
     } else {
-      __WFI();
-      SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
+      enter_stop_mode();
     }
   }
 
