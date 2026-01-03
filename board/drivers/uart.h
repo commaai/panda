@@ -17,6 +17,10 @@ typedef struct uart_ring {
   bool overwrite;
 } uart_ring;
 
+// ***************************** External variables *****************************
+extern uart_ring uart_ring_debug;
+extern uart_ring uart_ring_som_debug;
+
 // ***************************** Function prototypes *****************************
 void debug_ring_callback(uart_ring *ring);
 void uart_tx_ring(uart_ring *q);
