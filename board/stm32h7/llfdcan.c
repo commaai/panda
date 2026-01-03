@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "llfdcan.h"
 
 // kbps multiplied by 10

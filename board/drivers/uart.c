@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "uart.h"
 
 // ***************************** Definitions *****************************

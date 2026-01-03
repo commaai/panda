@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "gpio.h"
 
 void set_gpio_mode(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {

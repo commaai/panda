@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "pwm.h"
 
 // TODO: Implement for 32-bit timers

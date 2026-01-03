@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "spi.h"
 #pragma once
 

@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "harness.h"
 
 struct harness_t harness;

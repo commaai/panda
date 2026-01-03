@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "clock_source.h"
 
 void clock_source_set_timer_params(uint16_t param1, uint16_t param2) {

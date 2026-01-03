@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "can_common.h"
 
 uint32_t safety_tx_blocked = 0;

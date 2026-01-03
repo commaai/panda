@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "lluart.h"
 
 // This read after reading ISR clears all error interrupts. We don't want compiler warnings, nor optimizations

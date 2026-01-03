@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "registers.h"
 
 static reg register_map[REGISTER_MAP_SIZE];

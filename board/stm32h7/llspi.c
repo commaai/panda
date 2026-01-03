@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "llspi.h"
 
 static bool spi_tx_dma_done = false;

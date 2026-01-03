@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "clock.h"
 
 /*

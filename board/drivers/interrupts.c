@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "interrupts.h"
 
 void unused_interrupt_handler(void) {

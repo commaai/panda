@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "llfan.h"
 
 // TACH interrupt handler

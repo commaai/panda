@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "fan.h"
 
 struct fan_state_t fan_state;

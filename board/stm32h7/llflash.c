@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "llflash.h"
 
 bool flash_is_locked(void) {

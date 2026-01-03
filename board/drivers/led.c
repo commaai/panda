@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "led.h"
 
 void led_set(uint8_t color, bool enabled) {

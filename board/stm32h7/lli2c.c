@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "lli2c.h"
 
 // TODO: this driver relies heavily on polling,

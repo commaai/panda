@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "bootkick.h"
 
 bool bootkick_reset_triggered = false;

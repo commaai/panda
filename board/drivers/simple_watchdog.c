@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "simple_watchdog.h"
 
 static simple_watchdog_state_t wd_state;
