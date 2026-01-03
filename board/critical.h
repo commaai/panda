@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 // ********************* Critical section helpers *********************
 void enable_interrupts(void);
 void disable_interrupts(void);
