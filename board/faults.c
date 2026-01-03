@@ -1,5 +1,7 @@
 #include "faults.h"
 
+#include "board/drivers/uart.h"
+
 uint8_t fault_status = FAULT_STATUS_NONE;
 uint32_t faults = 0U;
 

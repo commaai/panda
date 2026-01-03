@@ -1,5 +1,7 @@
 #include "critical.h"
 
+#include <stdbool.h>
+
 // ********************* Critical section helpers *********************
 uint8_t global_critical_depth = 0U;
 
