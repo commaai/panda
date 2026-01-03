@@ -40,6 +40,10 @@ bool can_init(uint8_t can_number);
 void process_can(uint8_t can_number);
 
 // ********************* instantiate queues *********************
+extern can_ring can_rx_q;
+extern can_ring can_tx1_q;
+extern can_ring can_tx2_q;
+extern can_ring can_tx3_q;
 extern can_ring *can_queues[PANDA_CAN_CNT];
 
 // helpers
