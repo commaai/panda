@@ -10,4 +10,5 @@
 
 extern int power_save_status;
 
+void enable_can_transceivers(bool enabled);
 void set_power_save_state(int state);
