@@ -104,7 +104,6 @@ def build_project(project_name, project, main, extra_flags):
   common_sources = [
     "./board/critical.c",
     "./board/faults.c",
-    "./board/power_saving.c",
     "./board/drivers/bootkick.c",
     "./board/drivers/can_common.c",
     "./board/drivers/clock_source.c",
@@ -144,6 +143,9 @@ def build_project(project_name, project, main, extra_flags):
 
   # Build + sign main (aka app)
   sources = [startup, main] + common_sources
+  # power_saving.c is only used for panda and jungle, not body
+  if "-DPANDA_BODY" not in extra_flags:
+    sources += ["./board/power_saving.c"]
   main_elf = env.Program(f"{project_dir}/main.elf", sources, LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
   sign_py = File(f"./crypto/sign.py").srcnode().relpath
