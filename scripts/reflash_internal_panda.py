@@ -16,7 +16,7 @@ def gpio_set(pin, high):
     f.write(b"1" if high else b"0")
 
 
-if __name__ == "__main__":
+def main():
   for pin in (GPIO.STM_RST_N, GPIO.STM_BOOT0):
     gpio_init(pin, True)
 
@@ -38,3 +38,6 @@ if __name__ == "__main__":
   p = Panda()
   assert p.bootstub
   p.flash()
+
+if __name__ == "__main__":
+  main()

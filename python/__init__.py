@@ -8,8 +8,18 @@ import hashlib
 import binascii
 from functools import wraps, partial
 from itertools import accumulate
+from typing import TYPE_CHECKING
 
-from opendbc.car.structs import CarParams
+if TYPE_CHECKING:
+  from opendbc.car.structs import CarParams
+else:
+  try:
+    from opendbc.car.structs import CarParams
+  except ImportError:
+    # opendbc is optional, create a minimal CarParams stub
+    class CarParams:
+      class SafetyModel:
+        silent = 0
 
 from .base import BaseHandle
 from .constants import FW_PATH, McuType
@@ -18,7 +28,7 @@ from .spi import PandaSpiHandle, PandaSpiException, PandaProtocolMismatch
 from .usb import PandaUsbHandle
 from .utils import logger
 
-__version__ = '0.0.10'
+__version__ = '0.0.11'
 
 CANPACKET_HEAD_SIZE = 0x6
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]

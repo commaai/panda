@@ -14,8 +14,7 @@ def colorize_errors(value):
       return f'{RED}{value}\033[0m'
   return str(value)
 
-if __name__ == "__main__":
-
+def main():
   panda = Panda()
   while True:
     print(chr(27) + "[2J") # clear screen
@@ -27,3 +26,6 @@ if __name__ == "__main__":
         print(f"{key}: {colorize_errors(value)}  ", end=" ")
     print()
     time.sleep(1)
+
+if __name__ == "__main__":
+  main()
