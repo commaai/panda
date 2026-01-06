@@ -91,7 +91,7 @@ for p in "${IGNORED_PATHS[@]}"; do
 done
 
 # find all .c files excluding ignored paths
-C_FILES=$(eval "find $PANDA_DIR/board $PRUNE_EXPR -name '*.c' -print")
+C_FILES=$(eval "find $PANDA_DIR/board $PRUNE_EXPR -name '*.c' -print" | sort)
 
 cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ -DPANDA $C_FILES
 
