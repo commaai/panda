@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef STM32H7
-#error This code only makes on a non stm32h7 platform
+#error This code only makes sense on a non stm32h7 platform
 #endif
 
 // minimal code to fake a panda for tests
