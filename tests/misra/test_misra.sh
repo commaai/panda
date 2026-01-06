@@ -97,6 +97,8 @@ cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ -D
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 
+CHECKLIST=$DIR/checkers.txt
+
 # ensure list of checkers is up to date
 cd $DIR
 if [ -z "$SKIP_TABLES_DIFF" ] && ! git diff --quiet $CHECKLIST; then
