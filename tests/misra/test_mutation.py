@@ -15,10 +15,12 @@ IGNORED_PATHS = (
   'board/jungle',
   'board/body',
   'board/stm32h7/inc',
+  'board/fake_stm.c',
   'board/fake_stm.h',
 
   # bootstub only files
   'board/flasher.h',
+  'board/flasher.c',
   'board/bootstub.c',
   'board/bootstub_declarations.h',
   'board/stm32h7/llflash.h',

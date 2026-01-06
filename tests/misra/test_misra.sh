@@ -68,54 +68,32 @@ cppcheck() {
 PANDA_OPTS="--enable=all --addon=misra"
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ -DPANDA \
-    $PANDA_DIR/board/libc.c \
-    $PANDA_DIR/board/early_init.c \
-    $PANDA_DIR/board/critical.c \
-    $PANDA_DIR/board/drivers/led.c \
-    $PANDA_DIR/board/drivers/pwm.c \
-    $PANDA_DIR/board/drivers/gpio.c \
-    $PANDA_DIR/board/drivers/fake_siren.c \
-    $PANDA_DIR/board/stm32h7/lli2c.c \
-    $PANDA_DIR/board/stm32h7/clock.c \
-    $PANDA_DIR/board/drivers/clock_source.c \
-    $PANDA_DIR/board/stm32h7/sound.c \
-    $PANDA_DIR/board/stm32h7/llflash.c \
-    $PANDA_DIR/board/stm32h7/stm32h7_config.c \
-    $PANDA_DIR/board/drivers/registers.c \
-    $PANDA_DIR/board/drivers/interrupts.c \
-    $PANDA_DIR/board/provision.c \
-    $PANDA_DIR/board/stm32h7/peripherals.c \
-    $PANDA_DIR/board/stm32h7/llusb.c \
-    $PANDA_DIR/board/drivers/usb.c \
-    $PANDA_DIR/board/drivers/spi.c \
-    $PANDA_DIR/board/drivers/timers.c \
-    $PANDA_DIR/board/stm32h7/lladc.c \
-    $PANDA_DIR/board/stm32h7/llspi.c \
-    $PANDA_DIR/board/faults.c \
-    $PANDA_DIR/board/boards/unused_funcs.c \
-    $PANDA_DIR/board/utils.c \
-    $PANDA_DIR/board/globals.c \
-    $PANDA_DIR/board/obj/gitversion.c \
-    $PANDA_DIR/board/can_comms.c \
-    $PANDA_DIR/board/drivers/fan.c \
-    $PANDA_DIR/board/power_saving.c \
-    $PANDA_DIR/board/drivers/uart.c \
-    $PANDA_DIR/board/stm32h7/llfdcan.c \
-    $PANDA_DIR/board/drivers/harness.c   \
-    $PANDA_DIR/board/drivers/bootkick.c \
-    $PANDA_DIR/board/stm32h7/llfan.c \
-    $PANDA_DIR/board/stm32h7/lluart.c \
-    $PANDA_DIR/board/drivers/fdcan.c \
-    $PANDA_DIR/board/drivers/can_common.c \
-    $PANDA_DIR/board/main_comms.c \
-    $PANDA_DIR/board/main.c \
-    $PANDA_DIR/board/drivers/simple_watchdog.c \
-    $PANDA_DIR/board/stm32h7/board.c \
-    $PANDA_DIR/board/boards/tres.c \
-    $PANDA_DIR/board/boards/red.c \
-    $PANDA_DIR/board/boards/cuatro.c \
-    $PANDA_DIR/board/main_definitions.c
+
+IGNORED_PATHS=(
+  "$PANDA_DIR/board/obj"
+  "$PANDA_DIR/board/jungle"
+  "$PANDA_DIR/board/body"
+  "$PANDA_DIR/board/stm32h7/inc"
+  "$PANDA_DIR/board/fake_stm.h"
+  "$PANDA_DIR/board/fake_stm.c"
+  "$PANDA_DIR/board/flasher.h"
+  "$PANDA_DIR/board/flasher.c"
+  "$PANDA_DIR/board/bootstub.c"
+  "$PANDA_DIR/board/bootstub_declarations.h"
+  "$PANDA_DIR/board/stm32h7/llflash.h"
+  "$PANDA_DIR/board/stm32h7/llflash.c"
+)
+
+# build the find prune expression
+PRUNE_EXPR=""
+for p in "${IGNORED_PATHS[@]}"; do
+  PRUNE_EXPR="$PRUNE_EXPR -path $p -prune -o"
+done
+
+# find all .c files excluding ignored paths
+C_FILES=$(eval "find $PANDA_DIR/board $PRUNE_EXPR -name '*.c' -print")
+
+cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ -DPANDA $C_FILES
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 

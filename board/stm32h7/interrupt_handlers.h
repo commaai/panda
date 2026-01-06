@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "stm32h7_config.h"
+
 void WWDG_IRQHandler(void);
 void PVD_AVD_IRQHandler(void);
 void TAMP_STAMP_IRQHandler(void);

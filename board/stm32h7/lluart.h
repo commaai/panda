@@ -5,4 +5,3 @@ struct uart_ring;
 #define UART_READ_RDR(uart) volatile uint8_t t = (uart)->RDR; UNUSED(t);
 
 void uart_init(struct uart_ring *q, unsigned int baud);
-void uart_tx_ring(struct uart_ring *q);
