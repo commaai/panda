@@ -27,7 +27,6 @@ def test_fan_curve(p):
         break
     time.sleep(5)
 
-    max_rpm = 5000
     expected_rpm = MAX_RPM * power / 100
     assert 0.75 * expected_rpm <= p.get_fan_rpm() <= 1.5 * expected_rpm
 
