@@ -31,7 +31,7 @@ def test_fan_curve(p):
   print(rpms)
   diffs = [b - a for a, b in zip(rpms, rpms[1:])]
   assert all(x > 0 for x in diffs), f"Fan RPMs not strictly increasing: {rpms=}"
-  assert rpms[100] > (0.75*MAX_RPM)
+  assert rpms[-1] > (0.75*MAX_RPM)
 
 
 def test_fan_cooldown(p):
