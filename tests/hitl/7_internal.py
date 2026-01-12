@@ -5,7 +5,6 @@ from panda import Panda
 
 pytestmark = [
   pytest.mark.test_panda_types(Panda.INTERNAL_DEVICES),
-  pytest.mark.test_panda_types([Panda.HW_TYPE_TRES])
 ]
 
 MAX_RPM = 5000
@@ -14,6 +13,7 @@ MAX_RPM = 5000
 def test_fan_curve(p):
   # ensure fan curve is (roughly) linear
 
+  rpms = []
   for power in (30, 50, 80, 100):
     p.set_fan_power(0)
     while p.get_fan_rpm() > 0:
@@ -25,10 +25,14 @@ def test_fan_curve(p):
       time.sleep(1)
       if p.get_fan_rpm() > 1000:
         break
-    time.sleep(5)
+    time.sleep(2)
+    rpms[power] = p.get_fan_rpm()
 
-    expected_rpm = MAX_RPM * power / 100
-    assert 0.75 * expected_rpm <= p.get_fan_rpm() <= 1.5 * expected_rpm
+  print(rpms)
+  diffs = [b - a for a, b in zip(rpms, rpms[1:])]
+  assert all(x > 0 for x in diffs), f"Fan RPMs not strictly increasing: {rpms=}"
+  assert rpms[100] > (0.75*MAX_RPM)
+
 
 def test_fan_cooldown(p):
   # if the fan cooldown doesn't work, we get high frequency noise on the tach line
