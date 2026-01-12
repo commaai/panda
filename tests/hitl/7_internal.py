@@ -26,7 +26,7 @@ def test_fan_curve(p):
       if p.get_fan_rpm() > 1000:
         break
     time.sleep(2)
-    rpms[power] = p.get_fan_rpm()
+    rpms.append(p.get_fan_rpm())
 
   print(rpms)
   diffs = [b - a for a, b in zip(rpms, rpms[1:])]
