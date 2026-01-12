@@ -15,7 +15,7 @@ def test_fan_curve(p):
 
   rpms = []
   for power in (30, 70, 100):
-    # wait until fan spins up
+    # wait until fan spins up, then wait a bit more for the RPM to converge
     p.set_fan_power(power)
     for _ in range(20):
       time.sleep(1)
