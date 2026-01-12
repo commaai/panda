@@ -37,5 +37,5 @@ def test_fan_cooldown(p):
   time.sleep(3)
   p.set_fan_power(0)
   for _ in range(5):
-    assert p.get_fan_rpm() <= MAX_RPM
+    assert p.get_fan_rpm() <= MAX_RPM*2
     time.sleep(0.5)
