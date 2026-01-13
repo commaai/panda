@@ -118,6 +118,7 @@ def build_project(project_name, project, main, shared, extra_flags):
     "./board/stm32h7/stm32h7_config.c",
     "./board/drivers/registers.c",
     "./board/drivers/interrupts.c",
+    "./board/stm32h7/interrupt_handlers.c",
     "./board/provision.c",
     "./board/stm32h7/peripherals.c",
     "./board/stm32h7/llusb.c",
