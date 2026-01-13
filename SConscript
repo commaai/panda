@@ -185,13 +185,13 @@ base_project_h7 = {
 with open("./board/obj/gitversion.c", "w") as f:
   version = get_version(BUILDER, BUILD_TYPE)
   f.write('#include "gitversion.h"\n')
-  f.write(f'const uint8_t gitversion[{len(version)}] = "{version}";\n')
+  f.write(f'const uint8_t gitversion[{len(version)+1}] = "{version}";\n')
 
 with open("./board/obj/gitversion.h", "w") as f:
   version = get_version(BUILDER, BUILD_TYPE)
   f.write("#pragma once\n")
   f.write("#include <stdint.h>\n")
-  f.write(f'extern const uint8_t gitversion[{len(version)}];\n')
+  f.write(f'extern const uint8_t gitversion[{len(version)+1}];\n')
 
 with open("./board/obj/version", "w") as f:
   f.write(f'{get_version(BUILDER, BUILD_TYPE)}')
