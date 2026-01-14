@@ -43,8 +43,8 @@ static void subM(const RSAPublicKey* key,
 // return a[] >= mod
 static int geM(const RSAPublicKey* key,
                const uint32_t* a) {
-    
-    for (int i = key->len; i; --i) {
+    for (int i = key->len; i;) {
+        --i;
         if (a[i] < key->n[i]) return 0;
         if (a[i] > key->n[i]) return 1;
     }
