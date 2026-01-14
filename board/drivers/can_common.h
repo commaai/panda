@@ -86,14 +86,7 @@ bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len);
 #define CAN_RX_BUFFER_SIZE 4096U
 #define CAN_TX_BUFFER_SIZE 416U
 
-#ifdef STM32H7
-// ITCM RAM and DTCM RAM are the fastest for Cortex-M7 core access
-__attribute__((section(".axisram"))) extern can_ring can_rx_q;
-__attribute__((section(".itcmram"))) extern can_ring can_tx1_q;
-__attribute__((section(".itcmram"))) extern can_ring can_tx2_q;
-#else  // kept for PC
 extern can_ring can_rx_q;
 extern can_ring can_tx1_q;
 extern can_ring can_tx2_q;
-#endif
 extern can_ring can_tx3_q;
