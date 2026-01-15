@@ -101,6 +101,7 @@ void spi_rx_done(void) {
       // response: NACK and reset state machine
       #ifdef DEBUG_SPI
         print("- incorrect header sync or checksum "); hexdump(spi_buf_rx, SPI_HEADER_SIZE);
+        //llspi_dump_state();
       #endif
       spi_buf_tx[0] = SPI_NACK;
       next_rx_state = SPI_STATE_HEADER_NACK;

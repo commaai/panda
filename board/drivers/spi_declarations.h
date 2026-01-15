@@ -21,12 +21,12 @@ __attribute__((section(".sram12"))) extern uint8_t spi_buf_tx[SPI_BUF_SIZE];
 
 // SPI states
 enum {
-  SPI_STATE_HEADER,
-  SPI_STATE_HEADER_ACK,
-  SPI_STATE_HEADER_NACK,
-  SPI_STATE_DATA_RX,
-  SPI_STATE_DATA_RX_ACK,
-  SPI_STATE_DATA_TX
+  SPI_STATE_HEADER = 0U,
+  SPI_STATE_HEADER_ACK = 1U,
+  SPI_STATE_HEADER_NACK = 2U,
+  SPI_STATE_DATA_RX = 3U,
+  SPI_STATE_DATA_RX_ACK = 4U,
+  SPI_STATE_DATA_TX = 5U
 };
 
 extern uint16_t spi_error_count;
@@ -35,6 +35,7 @@ extern uint16_t spi_error_count;
 
 // low level SPI prototypes
 void llspi_init(void);
+void llspi_dump_state(void);
 void llspi_mosi_dma(uint8_t *addr, int len);
 void llspi_miso_dma(uint8_t *addr, int len);
 
