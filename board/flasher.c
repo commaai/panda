@@ -12,7 +12,7 @@
 #include "board/config.h"
 
 // flasher state variables
-uint32_t *program_ptr = NULL;
+uint32_t *prog_ptr = NULL;
 bool unlocked = false;
 
 int comms_control_handler(ControlPacket_t * const req, uint8_t *resp) {
@@ -24,7 +24,7 @@ int comms_control_handler(ControlPacket_t * const req, uint8_t *resp) {
   resp[0] = 0xff;
   resp[2] = req->request;
   resp[3] = ~req->request;
-  *((uint32_t **)&resp[8]) = program_ptr;
+  *((uint32_t **)&resp[8]) = prog_ptr;
   resp_len = 0xc;
 
   int sec;
@@ -41,7 +41,7 @@ int comms_control_handler(ControlPacket_t * const req, uint8_t *resp) {
       }
       led_set(LED_GREEN, 1);
       unlocked = true;
-      program_ptr = (uint32_t *)APP_START_ADDRESS;
+      prog_ptr = (uint32_t *)APP_START_ADDRESS;
       break;
     // **** 0xb2: erase sector
     case 0xb2:
@@ -124,10 +124,10 @@ void refresh_can_tx_slots_available(void) {}
 void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   led_set(LED_RED, 0);
   for (uint32_t i = 0; i < len/4u; i++) {
-    flash_write_word(program_ptr, *(uint32_t*)(data+(i*4u)));
+    flash_write_word(prog_ptr, *(uint32_t*)(data+(i*4u)));
 
-    //*(uint64_t*)(&spi_tx_buf[0x30+(i*4)]) = *program_ptr;
-    program_ptr++;
+    //*(uint64_t*)(&spi_tx_buf[0x30+(i*4)]) = *prog_ptr;
+    prog_ptr++;
   }
   led_set(LED_RED, 1);
 }

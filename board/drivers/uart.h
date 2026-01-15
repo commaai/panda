@@ -32,7 +32,6 @@ bool injectc(uart_ring *q, char elem);
 bool put_char(uart_ring *q, char elem);
 void clear_uart_buff(uart_ring *q);
 
-
 // ******************************** UART buffers ********************************
 
 extern uart_ring uart_ring_debug;

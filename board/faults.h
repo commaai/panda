@@ -1,7 +1,5 @@
 #include <stdint.h>
 
-#define PERMANENT_FAULTS 0U
-
 #define FAULT_STATUS_NONE 0U
 #define FAULT_STATUS_TEMPORARY 1U
 #define FAULT_STATUS_PERMANENT 2U
@@ -25,6 +23,9 @@
 #define FAULT_SIREN_MALFUNCTION             (1UL << 25)
 #define FAULT_HEARTBEAT_LOOP_WATCHDOG       (1UL << 26)
 #define FAULT_INTERRUPT_RATE_SOUND_DMA      (1UL << 27)
+
+// Permanent faults
+#define PERMANENT_FAULTS 0U
 
 extern uint8_t fault_status;
 extern uint32_t faults;

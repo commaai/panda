@@ -16,7 +16,6 @@ static uint32_t idle_time = 0U;
 static uint32_t busy_time = 0U;
 float interrupt_load = 0.0f;
 
-// cppcheck-suppress misra-c2012-8.7
 void handle_interrupt(IRQn_Type irq_type) {
   static uint8_t interrupt_depth = 0U;
   static uint32_t last_time = 0U;

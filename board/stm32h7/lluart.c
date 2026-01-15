@@ -88,7 +88,6 @@ static void uart_interrupt_handler(uart_ring *q) {
 
 static void UART7_IRQ_Handler(void) { uart_interrupt_handler(&uart_ring_som_debug); }
 
-// cppcheck-suppress misra-c2012-8.7
 void uart_init(uart_ring *q, unsigned int baud) {
   if (q->uart == UART7) {
     REGISTER_INTERRUPT(UART7_IRQn, UART7_IRQ_Handler, 150000U, FAULT_INTERRUPT_RATE_UART_7)
