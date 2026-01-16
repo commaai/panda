@@ -8,8 +8,8 @@ void llspi_dump_state(void){
   print(" CFG1: "); puth(SPI4->CFG1);
   print(" CFG2: "); puth(SPI4->CFG2);
   print("\n");
-  // print("    DMA2 Stream2 CR: "); puth(DMA2_Stream2->CR);
-  // print(" NDTR: "); puth(DMA2_Stream2->NDTR); print("\n");
+  print("    DMA2 Stream2 CR: "); puth(DMA2_Stream2->CR);
+  print(" NDTR: "); puth(DMA2_Stream2->NDTR); print("\n");
   print("    DMA2 Stream3 CR: "); puth(DMA2_Stream3->CR);
   print(" NDTR: "); puth(DMA2_Stream3->NDTR); 
   print("\n\n");
@@ -21,17 +21,22 @@ static void llspi_disable(void) {
   DMA2_Stream3->CR &= ~DMA_SxCR_EN;
   while((DMA2_Stream2->CR & DMA_SxCR_EN) != 0U);
   while((DMA2_Stream3->CR & DMA_SxCR_EN) != 0U);
-  register_clear_bits(&(SPI4->CR1), SPI_CR1_SPE);
+  SPI4->CR1 &= ~SPI_CR1_SPE;
   register_clear_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN | SPI_CFG1_TXDMAEN);
 }
 
 // master -> panda DMA start
 void llspi_mosi_dma(uint8_t *addr, int len) {
   // drain the bus
+  bool found_any = false;
   while ((SPI4->SR & SPI_SR_RXP) != 0U) {
     volatile uint8_t dat = SPI4->RXDR;
+    puth(dat); print(" ");
     (void)dat;
+    found_any = true;
   }
+  if (found_any)
+    print("\n");
 
   // clear all pending
   SPI4->IFCR |= (0x1FFU << 3U);
@@ -42,19 +47,23 @@ void llspi_mosi_dma(uint8_t *addr, int len) {
 
   // setup destination and length
   register_set(&(DMA2_Stream2->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
+  SPI4->CR2 = 0U;
   DMA2_Stream2->NDTR = len;
 
   // enable DMA + SPI
   DMA2_Stream2->CR |= DMA_SxCR_EN;
   register_set_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN);
-  register_set_bits(&(SPI4->CR1), SPI_CR1_SPE);
+  SPI4->CR1 |= SPI_CR1_SPE;
 }
 
 // panda -> master DMA start
 void llspi_miso_dma(uint8_t *addr, int len) {
   // setup source and length
   register_set(&(DMA2_Stream3->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
+  //print("TX len "); puth(len); print("\n");
   DMA2_Stream3->NDTR = len;
+  
+  // puth(len); print(" "); puth(SPI4->SR >> 16U); print("\n");
 
   // clear under-run while we were reading
   SPI4->IFCR |= (0x1FFU << 3U);
@@ -67,8 +76,9 @@ void llspi_miso_dma(uint8_t *addr, int len) {
 
   // enable DMA + SPI
   DMA2_Stream3->CR |= DMA_SxCR_EN;
-  register_set_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);  
-  register_set_bits(&(SPI4->CR1), SPI_CR1_SPE);
+  register_set_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
+  SPI4->CR2 = len;
+  SPI4->CR1 |= SPI_CR1_SPE;
 }
 
 static bool spi_tx_dma_done = false;
@@ -94,10 +104,9 @@ static void DMA2_Stream3_IRQ_Handler(void) {
 
 // panda TX finished
 static void SPI4_IRQ_Handler(void) {
-  // clear flag
-  SPI4->IFCR |= (0x1FFU << 3U);
+  //print("IRQ SR: "); puth(SPI4->SR); print("\n");
 
-  if ((SPI4->SR & SPI_SR_TXC) != 0U) {
+  if ((SPI4->SR & SPI_SR_EOT) != 0U) {
     if (spi_tx_dma_done) {
       llspi_disable();
 
@@ -127,6 +136,9 @@ static void SPI4_IRQ_Handler(void) {
       llspi_dump_state();
     #endif
   }
+
+  // clear flag
+  SPI4->IFCR |= (0x1FFU << 3U);
 }
 
 
@@ -148,9 +160,9 @@ void llspi_init(void) {
   // Enable SPI
   register_set(&(SPI4->IER), SPI_IER_OVRIE | SPI_IER_UDRIE, 0x3FFU);
   register_set(&(SPI4->CFG1), (7U << SPI_CFG1_DSIZE_Pos), SPI_CFG1_DSIZE_Msk);
+  register_set_bits(&(SPI4->CFG2), SPI_CFG2_AFCNTR);
   register_set(&(SPI4->UDRDR), 0xcd, 0xFFFFU);  // set under-run value for debugging
-  register_set(&(SPI4->CR1), SPI_CR1_SPE, 0xFFFFU);
-  register_set(&(SPI4->CR2), 0, 0xFFFFU);
+  SPI4->CR2 = 0U;
 
   NVIC_EnableIRQ(DMA2_Stream2_IRQn);
   NVIC_EnableIRQ(DMA2_Stream3_IRQn);

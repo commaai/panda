@@ -201,6 +201,7 @@ void spi_rx_done(void) {
   llspi_miso_dma(spi_buf_tx, response_len);
 
   spi_state = next_rx_state;
+  //puth(spi_state); print(" RX\n");
   if (!checksum_valid) {
     spi_error_count += 1U;
   }
@@ -224,6 +225,7 @@ void spi_tx_done(bool reset) {
     llspi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
     print("SPI: TX unexpected state: "); puth(spi_state); print("\n");
   }
+  //puth(spi_state); print(" TX\n");
 }
 
 void can_tx_comms_resume_spi(void) {
