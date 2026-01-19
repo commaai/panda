@@ -76,6 +76,7 @@ static bool validate_checksum(const uint8_t *data, uint16_t len) {
 }
 
 void spi_done(void) {
+  print("SPI DONE\n");
   uint8_t next_rx_state = SPI_STATE_HEADER;
   bool checksum_valid = false;
   static uint8_t spi_endpoint;
@@ -163,9 +164,9 @@ void spi_done(void) {
         print("- incorrect data checksum ");
         puth4(spi_data_len_mosi);
         print("\n");
-        hexdump(spi_buf_rx, SPI_HEADER_SIZE);
-        hexdump(&(spi_buf_rx[SPI_HEADER_SIZE]), MIN(spi_data_len_mosi, 64));
-        print("\n");
+        // hexdump(spi_buf_rx, SPI_HEADER_SIZE);
+        // hexdump(&(spi_buf_rx[SPI_HEADER_SIZE]), MIN(spi_data_len_mosi, 64));
+        // print("\n");
       #endif
     }
 

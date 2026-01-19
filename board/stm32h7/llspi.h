@@ -1,4 +1,9 @@
 
+static uint8_t *llspi_rx_addr;
+static int llspi_rx_len, llspi_tx_len;
+static bool llspi_pending = false;
+
+
 void llspi_dump_state(void){
   print("    STATE: "); puth(spi_state); print("\n");
   print("    SPI4 CR1: "); puth(SPI4->CR1);
@@ -17,6 +22,7 @@ void llspi_dump_state(void){
 
 static void llspi_disable(void) {
   // disable DMA + SPI
+  llspi_pending = false;
   DMA2_Stream2->CR &= ~DMA_SxCR_EN;
   DMA2_Stream3->CR &= ~DMA_SxCR_EN;
   while((DMA2_Stream2->CR & DMA_SxCR_EN) != 0U);
@@ -24,9 +30,6 @@ static void llspi_disable(void) {
   SPI4->CR1 &= ~SPI_CR1_SPE;
   register_clear_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN | SPI_CFG1_TXDMAEN);
 }
-
-static uint8_t *llspi_rx_addr;
-static int llspi_rx_len, llspi_tx_len;
 
 void llspi_dma(uint8_t *tx_addr, int tx_len, uint8_t *rx_addr, int rx_len) {
   print("\nLLSPI DMA TX len "); puth(tx_len); print(" RX len "); puth(rx_len); print("\n");
@@ -57,19 +60,23 @@ void llspi_dma(uint8_t *tx_addr, int tx_len, uint8_t *rx_addr, int rx_len) {
 
   register_set(&(DMA2_Stream2->M0AR), (uint32_t)rx_addr, 0xFFFFFFFFU);
   DMA2_Stream2->NDTR = total_len;
-  //SPI4->CR2 = total_len;
-  SPI4->CR2 = 0U;
+  SPI4->CR2 = total_len;
+  //SPI4->CR2 = 0U;
 
   // setup interrupt on EOT
-  //register_set_bits(&(SPI4->IER), SPI_IER_EOTIE);
+  register_set_bits(&(SPI4->IER), SPI_IER_EOTIE);
 
   // enable DMAs + SPI
   DMA2_Stream2->CR |= DMA_SxCR_EN;
   if (tx_len > 0) {
     DMA2_Stream3->CR |= DMA_SxCR_EN;
+    register_set_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
+  } else {
+    register_clear_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
   }
 
-  register_set_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN | SPI_CFG1_RXDMAEN);
+  register_set_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN);
+  llspi_pending = true;
   SPI4->CR1 |= SPI_CR1_SPE;
 
   // TODO: check that the rx buffer is large enough
@@ -81,17 +88,17 @@ static void DMA2_Stream2_IRQ_Handler(void) {
   DMA2->LIFCR = DMA_LIFCR_CTCIF2;
   print("RX DMA done\n");
 
-  llspi_disable();
+  // llspi_disable();
 
-  // shift any received data down in the rx buffer
-  // memcpy(llspi_rx_addr, &((uint8_t *)llspi_rx_addr)[llspi_tx_len], llspi_rx_len);
-  for(uint16_t i = 0U; i < llspi_rx_len; i++) {
-    ((uint8_t *)llspi_rx_addr)[i] = ((uint8_t *)llspi_rx_addr)[i + llspi_tx_len];
-  }
+  // // shift any received data down in the rx buffer
+  // // memcpy(llspi_rx_addr, &((uint8_t *)llspi_rx_addr)[llspi_tx_len], llspi_rx_len);
+  // for(uint16_t i = 0U; i < llspi_rx_len; i++) {
+  //   ((uint8_t *)llspi_rx_addr)[i] = ((uint8_t *)llspi_rx_addr)[i + llspi_tx_len];
+  // }
 
-  print("RX: "); hexdump(llspi_rx_addr, llspi_rx_len);
+  // print("RX: "); hexdump(llspi_rx_addr, llspi_rx_len);
 
-  spi_done();
+  // spi_done();
 }
 
 // panda -> master DMA finished
@@ -102,24 +109,24 @@ static void DMA2_Stream3_IRQ_Handler(void) {
 
 // panda TX finished
 static void SPI4_IRQ_Handler(void) {
-  print("IRQ SR: "); puth(SPI4->SR); print("\n");
-
-  if ((SPI4->SR & SPI_SR_EOT) != 0U) {
-    // llspi_disable();
-
-    // // shift any received data down in the rx buffer
-    // // memcpy(llspi_rx_addr, &((uint8_t *)llspi_rx_addr)[llspi_tx_len], llspi_rx_len);
-    // for(uint16_t i = 0U; i < llspi_rx_len; i++) {
-    //   ((uint8_t *)llspi_rx_addr)[i] = ((uint8_t *)llspi_rx_addr)[i + llspi_tx_len];
-    // }
-
-    // print("RX: "); hexdump(llspi_rx_addr, llspi_rx_len);
-
-    // spi_done();
-  }
-
-  // clear flag
+  uint32_t sr = SPI4->SR;
   SPI4->IFCR |= (0x1FFU << 3U);
+
+  //print("IRQ SR: "); puth(sr); print("\n");
+
+  if (((sr & SPI_SR_EOT) != 0U) && llspi_pending) {
+    llspi_disable();
+
+    // shift any received data down in the rx buffer
+    // memcpy(llspi_rx_addr, &((uint8_t *)llspi_rx_addr)[llspi_tx_len], llspi_rx_len);
+    for(uint16_t i = 0U; i < llspi_rx_len; i++) {
+      ((uint8_t *)llspi_rx_addr)[i] = ((uint8_t *)llspi_rx_addr)[i + llspi_tx_len];
+    }
+
+    print("RX: "); hexdump(llspi_rx_addr, llspi_rx_len);
+
+    spi_done();
+  }
 }
 
 
