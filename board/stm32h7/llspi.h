@@ -11,12 +11,12 @@ void llspi_dump_state(void){
   print("    DMA2 Stream2 CR: "); puth(DMA2_Stream2->CR);
   print(" NDTR: "); puth(DMA2_Stream2->NDTR); print("\n");
   print("    DMA2 Stream3 CR: "); puth(DMA2_Stream3->CR);
-  print(" NDTR: "); puth(DMA2_Stream3->NDTR); 
+  print(" NDTR: "); puth(DMA2_Stream3->NDTR);
   print("\n\n");
 }
 
 static void llspi_disable(void) {
-  // disable DMA + SPI  
+  // disable DMA + SPI
   DMA2_Stream2->CR &= ~DMA_SxCR_EN;
   DMA2_Stream3->CR &= ~DMA_SxCR_EN;
   while((DMA2_Stream2->CR & DMA_SxCR_EN) != 0U);
@@ -25,117 +25,180 @@ static void llspi_disable(void) {
   register_clear_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN | SPI_CFG1_TXDMAEN);
 }
 
-// master -> panda DMA start
-void llspi_mosi_dma(uint8_t *addr, int len) {
+static uint8_t *llspi_rx_addr;
+static int llspi_rx_len, llspi_tx_len;
+
+void llspi_dma(uint8_t *tx_addr, int tx_len, uint8_t *rx_addr, int rx_len) {
+  print("\nLLSPI DMA TX len "); puth(tx_len); print(" RX len "); puth(rx_len); print("\n");
+
+  // set global for later use
+  llspi_rx_addr = rx_addr;
+  llspi_rx_len = rx_len;
+  llspi_tx_len = tx_len;
+
   // drain the bus
-  bool found_any = false;
   while ((SPI4->SR & SPI_SR_RXP) != 0U) {
     volatile uint8_t dat = SPI4->RXDR;
-    puth(dat); print(" ");
     (void)dat;
-    found_any = true;
   }
-  if (found_any)
-    print("\n");
 
   // clear all pending
   SPI4->IFCR |= (0x1FFU << 3U);
   register_clear_bits(&(SPI4->IER), SPI_IER_EOTIE);
 
-  // simplex receive mode
-  register_set(&(SPI4->CFG2), (0b10 << SPI_CFG2_COMM_Pos), SPI_CFG2_COMM_Msk);
+  // setup destinations and length
+  int total_len = tx_len + rx_len;
 
-  // setup destination and length
-  register_set(&(DMA2_Stream2->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
+  if (tx_len > 0) {
+    print("TX: "); hexdump(tx_addr, tx_len);
+    register_set(&(DMA2_Stream3->M0AR), (uint32_t)tx_addr, 0xFFFFFFFFU);
+    DMA2_Stream3->NDTR = tx_len;
+  }
+
+  register_set(&(DMA2_Stream2->M0AR), (uint32_t)rx_addr, 0xFFFFFFFFU);
+  DMA2_Stream2->NDTR = total_len;
+  //SPI4->CR2 = total_len;
   SPI4->CR2 = 0U;
-  DMA2_Stream2->NDTR = len;
 
-  // enable DMA + SPI
+  // setup interrupt on EOT
+  //register_set_bits(&(SPI4->IER), SPI_IER_EOTIE);
+
+  // enable DMAs + SPI
   DMA2_Stream2->CR |= DMA_SxCR_EN;
-  register_set_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN);
+  if (tx_len > 0) {
+    DMA2_Stream3->CR |= DMA_SxCR_EN;
+  }
+
+  register_set_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN | SPI_CFG1_RXDMAEN);
   SPI4->CR1 |= SPI_CR1_SPE;
+
+  // TODO: check that the rx buffer is large enough
 }
 
-// panda -> master DMA start
-void llspi_miso_dma(uint8_t *addr, int len) {
-  // setup source and length
-  register_set(&(DMA2_Stream3->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
-  //print("TX len "); puth(len); print("\n");
-  DMA2_Stream3->NDTR = len;
-  
-  // puth(len); print(" "); puth(SPI4->SR >> 16U); print("\n");
+// // master -> panda DMA start
+// void llspi_mosi_dma(uint8_t *addr, int len) {
+//   // drain the bus
+//   bool found_any = false;
+//   while ((SPI4->SR & SPI_SR_RXP) != 0U) {
+//     volatile uint8_t dat = SPI4->RXDR;
+//     puth(dat); print(" ");
+//     (void)dat;
+//     found_any = true;
+//   }
+//   if (found_any)
+//     print("\n");
 
-  // clear under-run while we were reading
-  SPI4->IFCR |= (0x1FFU << 3U);
+//   // clear all pending
+//   SPI4->IFCR |= (0x1FFU << 3U);
+//   register_clear_bits(&(SPI4->IER), SPI_IER_EOTIE);
 
-  // simplex transmit mode
-  register_set(&(SPI4->CFG2), (0b01 << SPI_CFG2_COMM_Pos), SPI_CFG2_COMM_Msk);
+//   // simplex receive mode
+//   register_set(&(SPI4->CFG2), (0b10 << SPI_CFG2_COMM_Pos), SPI_CFG2_COMM_Msk);
 
-  // setup interrupt on TXC
-  register_set_bits(&(SPI4->IER), SPI_IER_EOTIE);
+//   // setup destination and length
+//   register_set(&(DMA2_Stream2->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
+//   SPI4->CR2 = 0U;
+//   DMA2_Stream2->NDTR = len;
 
-  // enable DMA + SPI
-  DMA2_Stream3->CR |= DMA_SxCR_EN;
-  register_set_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
-  SPI4->CR2 = len;
-  SPI4->CR1 |= SPI_CR1_SPE;
-}
+//   // enable DMA + SPI
+//   DMA2_Stream2->CR |= DMA_SxCR_EN;
+//   register_set_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN);
+//   SPI4->CR1 |= SPI_CR1_SPE;
+// }
 
-static bool spi_tx_dma_done = false;
+// // panda -> master DMA start
+// void llspi_miso_dma(uint8_t *addr, int len) {
+//   // setup source and length
+//   register_set(&(DMA2_Stream3->M0AR), (uint32_t)addr, 0xFFFFFFFFU);
+//   //print("TX len "); puth(len); print("\n");
+//   DMA2_Stream3->NDTR = len;
+
+//   // puth(len); print(" "); puth(SPI4->SR >> 16U); print("\n");
+
+//   // clear under-run while we were reading
+//   SPI4->IFCR |= (0x1FFU << 3U);
+
+//   // simplex transmit mode
+//   register_set(&(SPI4->CFG2), (0b01 << SPI_CFG2_COMM_Pos), SPI_CFG2_COMM_Msk);
+
+//   // setup interrupt on TXC
+//   register_set_bits(&(SPI4->IER), SPI_IER_EOTIE);
+
+//   // enable DMA + SPI
+//   DMA2_Stream3->CR |= DMA_SxCR_EN;
+//   register_set_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
+//   SPI4->CR2 = len;
+//   SPI4->CR1 |= SPI_CR1_SPE;
+// }
+
+//static bool spi_tx_dma_done = false;
 // master -> panda DMA finished
 static void DMA2_Stream2_IRQ_Handler(void) {
   // Clear interrupt flag
   DMA2->LIFCR = DMA_LIFCR_CTCIF2;
+  print("RX DMA done\n");
 
   llspi_disable();
 
-  spi_rx_done();
+  // shift any received data down in the rx buffer
+  // memcpy(llspi_rx_addr, &((uint8_t *)llspi_rx_addr)[llspi_tx_len], llspi_rx_len);
+  for(uint16_t i = 0U; i < llspi_rx_len; i++) {
+    ((uint8_t *)llspi_rx_addr)[i] = ((uint8_t *)llspi_rx_addr)[i + llspi_tx_len];
+  }
+
+  print("RX: "); hexdump(llspi_rx_addr, llspi_rx_len);
+
+  spi_done();
+
+  // llspi_disable();
+
+  // spi_rx_done();
 }
 
 // panda -> master DMA finished
 static void DMA2_Stream3_IRQ_Handler(void) {
-  ENTER_CRITICAL();
+  //ENTER_CRITICAL();
 
   DMA2->LIFCR = DMA_LIFCR_CTCIF3;
-  spi_tx_dma_done = true;
+  print("TX DMA done\n");
+  //spi_tx_dma_done = true;
 
-  EXIT_CRITICAL();
+  //EXIT_CRITICAL();
 }
 
 // panda TX finished
 static void SPI4_IRQ_Handler(void) {
-  //print("IRQ SR: "); puth(SPI4->SR); print("\n");
+  print("IRQ SR: "); puth(SPI4->SR); print("\n");
 
   if ((SPI4->SR & SPI_SR_EOT) != 0U) {
-    if (spi_tx_dma_done) {
-      llspi_disable();
+    // llspi_disable();
 
-      spi_tx_dma_done = false;
-      spi_tx_done(false);
-    } else if (spi_state == SPI_STATE_DATA_TX) {
-      // spurious TXC interrupt
-      #ifdef DEBUG_SPI
-        print("SPI: spurious TXC\n");
-        llspi_dump_state();
-      #endif
-    }
-  } 
-  
-  if ((SPI4->SR & SPI_SR_UDR) != 0U) {
-    // under-run occurred
-    #ifdef DEBUG_SPI
-      print("SPI: underrun "); puth(spi_tx_dma_done); print("\n");
-      llspi_dump_state();
-    #endif
-  } 
-  
-  if ((SPI4->SR & SPI_SR_OVR) != 0U) {
-    // over-run occurred
-    #ifdef DEBUG_SPI
-      print("SPI: overrun\n");
-      llspi_dump_state();
-    #endif
+    // // shift any received data down in the rx buffer
+    // // memcpy(llspi_rx_addr, &((uint8_t *)llspi_rx_addr)[llspi_tx_len], llspi_rx_len);
+    // for(uint16_t i = 0U; i < llspi_rx_len; i++) {
+    //   ((uint8_t *)llspi_rx_addr)[i] = ((uint8_t *)llspi_rx_addr)[i + llspi_tx_len];
+    // }
+
+    // print("RX: "); hexdump(llspi_rx_addr, llspi_rx_len);
+
+    // spi_done();
   }
+
+  // if ((SPI4->SR & SPI_SR_UDR) != 0U) {
+  //   // under-run occurred
+  //   #ifdef DEBUG_SPI
+  //     print("SPI: underrun "); puth(spi_tx_dma_done); print("\n");
+  //     llspi_dump_state();
+  //   #endif
+  // }
+
+  // if ((SPI4->SR & SPI_SR_OVR) != 0U) {
+  //   // over-run occurred
+  //   #ifdef DEBUG_SPI
+  //     print("SPI: overrun\n");
+  //     llspi_dump_state();
+  //   #endif
+  // }
 
   // clear flag
   SPI4->IFCR |= (0x1FFU << 3U);
@@ -158,11 +221,12 @@ void llspi_init(void) {
   register_set(&(DMA2_Stream3->PAR), (uint32_t)&(SPI4->TXDR), 0xFFFFFFFFU);
 
   // Enable SPI
-  register_set(&(SPI4->IER), SPI_IER_OVRIE | SPI_IER_UDRIE, 0x3FFU);
+  register_set(&(SPI4->IER), 0U, 0x3FFU);
   register_set(&(SPI4->CFG1), (7U << SPI_CFG1_DSIZE_Pos), SPI_CFG1_DSIZE_Msk);
-  register_set_bits(&(SPI4->CFG2), SPI_CFG2_AFCNTR);
+  register_set(&(SPI4->CFG2), SPI_CFG2_AFCNTR, 0xF7FE80FFU);
   register_set(&(SPI4->UDRDR), 0xcd, 0xFFFFU);  // set under-run value for debugging
   SPI4->CR2 = 0U;
+  llspi_disable();
 
   NVIC_EnableIRQ(DMA2_Stream2_IRQn);
   NVIC_EnableIRQ(DMA2_Stream3_IRQn);
