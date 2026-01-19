@@ -5,21 +5,20 @@
 
 #include "board/can.h"
 #include "board/health.h"
-#include "board/body/motor_control.h"
+#include "board/body/boards/board_declarations.h"
 #include "board/drivers/can_common_declarations.h"
 #include "opendbc/safety/declarations.h"
+#include "board/body/bldc/bldc.h"
 
-#define BODY_CAN_ADDR_MOTOR_SPEED      0x201U
-#define BODY_CAN_MOTOR_SPEED_PERIOD_US 10000U
-#define BODY_BUS_NUMBER                 0U
+#define BODY_CAN_ADDR_MOTOR_SPEED        0x201U
+#define BODY_CAN_MOTOR_SPEED_PERIOD_US   10000U
+#define BODY_CAN_CMD_TIMEOUT_US          100000U
+#define BODY_BUS_NUMBER                  0U
 
-static struct {
-  bool pending;
-  int32_t left_target_deci_rpm;
-  int32_t right_target_deci_rpm;
-} body_can_command;
+static uint32_t last_can_cmd_timestamp_us = 0U;
 
 void body_can_send_motor_speeds(uint8_t bus, float left_speed_rpm, float right_speed_rpm) {
+  static uint16_t counter = 0U;
   CANPacket_t pkt;
   pkt.bus = bus;
   pkt.addr = BODY_CAN_ADDR_MOTOR_SPEED;
@@ -36,34 +35,33 @@ void body_can_send_motor_speeds(uint8_t bus, float left_speed_rpm, float right_s
   pkt.data[3] = (uint8_t)(right_speed_deci & 0xFFU);
   pkt.data[4] = 0U;
   pkt.data[5] = 0U;
-  pkt.data[6] = 0U;
-  pkt.data[7] = 0U;
+  pkt.data[6] = counter & 0xFFU;
   can_set_checksum(&pkt);
   can_send(&pkt, bus, true);
+  counter++;
 }
 
 void body_can_process_target(int16_t left_target_deci_rpm, int16_t right_target_deci_rpm) {
-  body_can_command.left_target_deci_rpm = (int32_t)left_target_deci_rpm;
-  body_can_command.right_target_deci_rpm = (int32_t)right_target_deci_rpm;
-  body_can_command.pending = true;
+  rpml = (int)(((float)left_target_deci_rpm) * 0.1f);
+  rpmr = (int)(((float)right_target_deci_rpm) * 0.1f);
+  last_can_cmd_timestamp_us = microsecond_timer_get();
 }
 
 void body_can_init(void) {
-  body_can_command.pending = false;
+  last_can_cmd_timestamp_us = 0U;
   can_silent = false;
   can_loopback = false;
   (void)set_safety_hooks(SAFETY_BODY, 0U);
-  set_gpio_output(GPIOD, 2U, 0); // Enable CAN transceiver
+  set_gpio_output(CAN_TRANSCEIVER_EN_PORT, CAN_TRANSCEIVER_EN_PIN, 0); // Enable CAN transceiver
   can_init_all();
 }
 
 void body_can_periodic(uint32_t now) {
-  if (body_can_command.pending) {
-    body_can_command.pending = false;
-    float left_target_rpm = ((float)body_can_command.left_target_deci_rpm) * 0.1f;
-    float right_target_rpm = ((float)body_can_command.right_target_deci_rpm) * 0.1f;
-    motor_speed_controller_set_target_rpm(BODY_MOTOR_LEFT, left_target_rpm);
-    motor_speed_controller_set_target_rpm(BODY_MOTOR_RIGHT, right_target_rpm);
+  if ((last_can_cmd_timestamp_us != 0U) &&
+      ((now - last_can_cmd_timestamp_us) >= BODY_CAN_CMD_TIMEOUT_US)) {
+    rpml = 0;
+    rpmr = 0;
+    last_can_cmd_timestamp_us = 0U;
   }
 
   static uint32_t last_motor_speed_tx_us = 0;

@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "board/body/bldc/bldc_defs.h"
 
 // ******************** Prototypes ********************
 typedef void (*board_init)(void);
@@ -19,3 +20,36 @@ struct board {
 
 // ******************* Definitions ********************
 #define HW_TYPE_BODY 0xB1U
+
+// Pin definitions
+// CAN
+#define CAN_TX_PORT GPIOD
+#define CAN_TX_PIN  1
+#define CAN_RX_PORT GPIOD
+#define CAN_RX_PIN  0
+#define CAN_TRANSCEIVER_EN_PORT GPIOD
+#define CAN_TRANSCEIVER_EN_PIN  12
+
+// Ignition and charging detection
+#define IGNITION_SW_PORT         GPIOC
+#define IGNITION_SW_PIN          15
+#define CHARGING_DETECT_PORT     GPIOC
+#define CHARGING_DETECT_PIN      13
+
+// Dotstar LED
+#define DOTSTAR_CLK_PORT  GPIOB
+#define DOTSTAR_CLK_PIN   3
+#define DOTSTAR_DATA_PORT GPIOB
+#define DOTSTAR_DATA_PIN  5
+
+// Mici Power On
+#define MICI_POWER_ON_PORT GPIOB
+#define MICI_POWER_ON_PIN  12
+
+// GPU Power On
+#define GPU_POWER_ON_PORT GPIOD
+#define GPU_POWER_ON_PIN  8
+
+// Ignition On
+#define IGNITION_ON_PORT GPIOB
+#define IGNITION_ON_PIN  11
