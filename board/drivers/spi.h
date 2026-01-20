@@ -63,7 +63,8 @@ void spi_init(void) {
 
   // Start the first packet!
   spi_state = SPI_STATE_HEADER;
-  llspi_dma(NULL, 0U, spi_buf_rx, SPI_HEADER_SIZE);
+  spi_buf_tx[0] = SPI_NACK;
+  llspi_dma(spi_buf_tx, 1U, spi_buf_rx, SPI_HEADER_SIZE);
 }
 
 static bool validate_checksum(const uint8_t *data, uint16_t len) {
