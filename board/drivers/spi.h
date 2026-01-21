@@ -87,7 +87,6 @@ void spi_done(void) {
   spi_data_len_miso = (spi_buf_rx[5] << 8) | spi_buf_rx[4];
 
   if (memcmp(spi_buf_rx, version_text, 7) == 0) {
-    //print("GOT VERSION REQUEST\n");
     llspi_dma(spi_buf_tx, spi_version_packet(spi_buf_tx), spi_buf_rx, SPI_HEADER_SIZE);
     next_rx_state = SPI_STATE_HEADER;
   } else if (spi_state == SPI_STATE_HEADER) {
@@ -102,7 +101,6 @@ void spi_done(void) {
       // response: NACK and reset state machine
       #ifdef DEBUG_SPI
         print("- incorrect header sync or checksum "); hexdump(spi_buf_rx, SPI_HEADER_SIZE);
-        //llspi_dump_state();
       #endif
       spi_buf_tx[0] = SPI_NACK;
       llspi_dma(NULL, 0U, spi_buf_rx, SPI_HEADER_SIZE);
@@ -163,9 +161,9 @@ void spi_done(void) {
         print("- incorrect data checksum ");
         puth4(spi_data_len_mosi);
         print("\n");
-        // hexdump(spi_buf_rx, SPI_HEADER_SIZE);
-        // hexdump(&(spi_buf_rx[SPI_HEADER_SIZE]), MIN(spi_data_len_mosi, 64));
-        // print("\n");
+        hexdump(spi_buf_rx, SPI_HEADER_SIZE);
+        hexdump(&(spi_buf_rx[SPI_HEADER_SIZE]), MIN(spi_data_len_mosi, 64));
+        print("\n");
       #endif
     }
 
