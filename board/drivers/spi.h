@@ -61,7 +61,7 @@ void spi_init(void) {
   // platform init
   llspi_init();
 
-  // Start the first packet
+  // Start the first packet!
   llspi_dma(NULL, 0U, spi_buf_rx, SPI_HEADER_SIZE);
 }
 
@@ -75,7 +75,6 @@ static bool validate_checksum(const uint8_t *data, uint16_t len) {
 }
 
 void spi_done(void) {
-  //print("SPI DONE\n");
   uint8_t next_rx_state = SPI_STATE_HEADER;
   bool checksum_valid = false;
   static uint8_t spi_endpoint;
