@@ -1,0 +1,471 @@
+{
+  "modules": {
+    "drivers_can_common_declarations": {
+      "files": [
+        "board/drivers/can_common_declarations.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_can_common_declarations"
+    },
+    "drivers_simple_watchdog": {
+      "files": [
+        "board/drivers/simple_watchdog.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_simple_watchdog"
+    },
+    "hal_stm32h7": {
+      "files": [
+        "board/stm32h7/llspi.h",
+        "board/stm32h7/peripherals.h",
+        "board/stm32h7/llfdcan_declarations.h",
+        "board/stm32h7/llusb.h",
+        "board/stm32h7/inc/stm32h7xx.h",
+        "board/stm32h7/inc/stm32h7xx_hal_gpio_ex.h",
+        "board/stm32h7/lladc_declarations.h",
+        "board/stm32h7/inc/cmsis_version.h",
+        "board/stm32h7/inc/system_stm32h7xx.h",
+        "board/stm32h7/inc/stm32h735xx.h",
+        "board/stm32h7/sound.h",
+        "board/stm32h7/lli2c.h",
+        "board/stm32h7/llfdcan.h",
+        "board/stm32h7/clock.h",
+        "board/stm32h7/stm32h7_config.h",
+        "board/stm32h7/lladc.h",
+        "board/stm32h7/inc/stm32h725xx.h",
+        "board/stm32h7/lluart.h",
+        "board/stm32h7/inc/cmsis_compiler.h",
+        "board/stm32h7/llflash.h",
+        "board/stm32h7/llfan.h",
+        "board/stm32h7/interrupt_handlers.h",
+        "board/stm32h7/inc/mpu_armv7.h",
+        "board/stm32h7/inc/cmsis_gcc.h",
+        "board/stm32h7/llusb_declarations.h",
+        "board/stm32h7/inc/core_cm7.h",
+        "board/stm32h7/board.h",
+        "board/stm32h7/inc/stm32h7xx_hal_def.h"
+      ],
+      "dependencies": [],
+      "description": "STM32H7 hardware abstraction layer"
+    },
+    "board_critical_declarations.h": {
+      "files": [
+        "board/critical_declarations.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_critical_declarations.h"
+    },
+    "misc": {
+      "files": [
+        "drivers/spi/spi_panda.h",
+        "drivers/spi/spidev_panda.c"
+      ],
+      "dependencies": [],
+      "description": "Module for misc"
+    },
+    "drivers_led": {
+      "files": [
+        "board/drivers/led.h"
+      ],
+      "dependencies": [],
+      "description": "LED control driver"
+    },
+    "drivers_spi_declarations": {
+      "files": [
+        "board/drivers/spi_declarations.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_spi_declarations"
+    },
+    "board_faults.h": {
+      "files": [
+        "board/faults.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_faults.h"
+    },
+    "board_provision.h": {
+      "files": [
+        "board/provision.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_provision.h"
+    },
+    "drivers_registers": {
+      "files": [
+        "board/drivers/registers.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_registers"
+    },
+    "board_boards": {
+      "files": [
+        "board/boards/unused_funcs.h",
+        "board/boards/tres.h",
+        "board/boards/board_declarations.h",
+        "board/boards/cuatro.h",
+        "board/boards/red.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_boards"
+    },
+    "board_libc.h": {
+      "files": [
+        "board/libc.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_libc.h"
+    },
+    "drivers_can_common": {
+      "files": [
+        "board/drivers/can_common.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_can_common"
+    },
+    "jungle": {
+      "files": [
+        "board/jungle/main.c",
+        "board/jungle/boards/board_v2.h",
+        "board/jungle/boards/board_declarations.h",
+        "board/jungle/jungle_health.h",
+        "board/jungle/stm32h7/board.h",
+        "board/jungle/main_comms.h"
+      ],
+      "dependencies": [],
+      "description": "Jungle-specific functionality"
+    },
+    "board_power_saving_declarations.h": {
+      "files": [
+        "board/power_saving_declarations.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_power_saving_declarations.h"
+    },
+    "drivers_usb": {
+      "files": [
+        "board/drivers/usb.h"
+      ],
+      "dependencies": [],
+      "description": "USB communication driver"
+    },
+    "drivers_spi": {
+      "files": [
+        "board/drivers/spi.h"
+      ],
+      "dependencies": [],
+      "description": "SPI communication driver"
+    },
+    "drivers_harness_declarations": {
+      "files": [
+        "board/drivers/harness_declarations.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_harness_declarations"
+    },
+    "drivers_bootkick_declarations": {
+      "files": [
+        "board/drivers/bootkick_declarations.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_bootkick_declarations"
+    },
+    "drivers_fan_declarations": {
+      "files": [
+        "board/drivers/fan_declarations.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_fan_declarations"
+    },
+    "board_main.c": {
+      "files": [
+        "board/main.c"
+      ],
+      "dependencies": [],
+      "description": "Module for board_main.c"
+    },
+    "board_bootstub_declarations.h": {
+      "files": [
+        "board/bootstub_declarations.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_bootstub_declarations.h"
+    },
+    "board_critical.h": {
+      "files": [
+        "board/critical.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_critical.h"
+    },
+    "drivers_simple_watchdog_declarations": {
+      "files": [
+        "board/drivers/simple_watchdog_declarations.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_simple_watchdog_declarations"
+    },
+    "board_power_saving.h": {
+      "files": [
+        "board/power_saving.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_power_saving.h"
+    },
+    "drivers_clock_source_declarations": {
+      "files": [
+        "board/drivers/clock_source_declarations.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_clock_source_declarations"
+    },
+    "crypto": {
+      "files": [
+        "crypto/sha.c",
+        "crypto/rsa.h",
+        "crypto/rsa.c",
+        "crypto/hash-internal.h",
+        "crypto/sha.h"
+      ],
+      "dependencies": [],
+      "description": "Cryptographic functions"
+    },
+    "board_can_comms.h": {
+      "files": [
+        "board/can_comms.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_can_comms.h"
+    },
+    "drivers_clock_source": {
+      "files": [
+        "board/drivers/clock_source.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_clock_source"
+    },
+    "drivers_usb_declarations": {
+      "files": [
+        "board/drivers/usb_declarations.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_usb_declarations"
+    },
+    "drivers_bootkick": {
+      "files": [
+        "board/drivers/bootkick.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_bootkick"
+    },
+    "board_comms_definitions.h": {
+      "files": [
+        "board/comms_definitions.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_comms_definitions.h"
+    },
+    "drivers_timers": {
+      "files": [
+        "board/drivers/timers.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_timers"
+    },
+    "drivers_fan": {
+      "files": [
+        "board/drivers/fan.h"
+      ],
+      "dependencies": [],
+      "description": "Fan control driver"
+    },
+    "board_early_init.h": {
+      "files": [
+        "board/early_init.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_early_init.h"
+    },
+    "drivers_fdcan_declarations": {
+      "files": [
+        "board/drivers/fdcan_declarations.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_fdcan_declarations"
+    },
+    "board_fake_stm.h": {
+      "files": [
+        "board/fake_stm.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_fake_stm.h"
+    },
+    "drivers_gpio": {
+      "files": [
+        "board/drivers/gpio.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_gpio"
+    },
+    "drivers_fdcan": {
+      "files": [
+        "board/drivers/fdcan.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_fdcan"
+    },
+    "drivers_registers_declarations": {
+      "files": [
+        "board/drivers/registers_declarations.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_registers_declarations"
+    },
+    "board_config.h": {
+      "files": [
+        "board/config.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_config.h"
+    },
+    "drivers_pwm": {
+      "files": [
+        "board/drivers/pwm.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_pwm"
+    },
+    "board_crc.h": {
+      "files": [
+        "board/crc.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_crc.h"
+    },
+    "drivers_harness": {
+      "files": [
+        "board/drivers/harness.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_harness"
+    },
+    "board_health.h": {
+      "files": [
+        "board/health.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_health.h"
+    },
+    "board_can.h": {
+      "files": [
+        "board/can.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_can.h"
+    },
+    "board_main_comms.h": {
+      "files": [
+        "board/main_comms.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_main_comms.h"
+    },
+    "board_main_definitions.h": {
+      "files": [
+        "board/main_definitions.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_main_definitions.h"
+    },
+    "drivers_interrupts": {
+      "files": [
+        "board/drivers/interrupts.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_interrupts"
+    },
+    "drivers_interrupts_declarations": {
+      "files": [
+        "board/drivers/interrupts_declarations.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_interrupts_declarations"
+    },
+    "board_flasher.h": {
+      "files": [
+        "board/flasher.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_flasher.h"
+    },
+    "board_utils.h": {
+      "files": [
+        "board/utils.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_utils.h"
+    },
+    "board_main_declarations.h": {
+      "files": [
+        "board/main_declarations.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_main_declarations.h"
+    },
+    "drivers_fake_siren": {
+      "files": [
+        "board/drivers/fake_siren.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_fake_siren"
+    },
+    "board_bootstub.c": {
+      "files": [
+        "board/bootstub.c"
+      ],
+      "dependencies": [],
+      "description": "Module for board_bootstub.c"
+    },
+    "board_faults_declarations.h": {
+      "files": [
+        "board/faults_declarations.h"
+      ],
+      "dependencies": [],
+      "description": "Module for board_faults_declarations.h"
+    },
+    "drivers_uart": {
+      "files": [
+        "board/drivers/uart.h"
+      ],
+      "dependencies": [],
+      "description": "UART communication driver"
+    },
+    "drivers_uart_declarations": {
+      "files": [
+        "board/drivers/uart_declarations.h"
+      ],
+      "dependencies": [],
+      "description": "Module for drivers_uart_declarations"
+    }
+  },
+  "targets": {
+    "panda_h7": {
+      "main_file": "board/main.c",
+      "dependencies": [
+        "board/main.c"
+      ],
+      "description": "Main panda firmware"
+    },
+    "panda_jungle_h7": {
+      "main_file": "board/jungle/main.c",
+      "dependencies": [
+        "board/jungle/main.c"
+      ],
+      "description": "Jungle firmware"
+    }
+  },
+  "statistics": {
+    "total_files": 99,
+    "total_includes": 0
+  }
+}
