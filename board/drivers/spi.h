@@ -8,8 +8,6 @@ uint8_t spi_buf_tx[SPI_BUF_SIZE];
 
 uint16_t spi_error_count = 0;
 
-static uint8_t spi_state = SPI_STATE_HEADER;
-static uint16_t spi_data_len_mosi;
 static bool spi_can_tx_ready = false;
 static const unsigned char version_text[] = "VERSION";
 
@@ -75,10 +73,12 @@ static bool validate_checksum(const uint8_t *data, uint16_t len) {
 }
 
 void spi_done(void) {
-  uint8_t next_rx_state = SPI_STATE_HEADER;
-  bool checksum_valid = false;
+  static uint8_t spi_state = SPI_STATE_HEADER;
   static uint8_t spi_endpoint;
   static uint16_t spi_data_len_miso;
+  static uint16_t spi_data_len_mosi;
+  uint8_t next_rx_state = SPI_STATE_HEADER;
+  bool checksum_valid = false;
 
   // parse header
   spi_endpoint = spi_buf_rx[1];

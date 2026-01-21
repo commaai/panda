@@ -1,5 +1,6 @@
 static uint8_t *llspi_rx_addr;
-static int llspi_rx_len, llspi_tx_len;
+static int llspi_rx_len;
+static int llspi_tx_len;
 
 static void llspi_disable(void) {
   // disable DMA + SPI
@@ -62,7 +63,7 @@ static void SPI4_IRQ_Handler(void) {
 
   if (((sr & SPI_SR_EOT) != 0U)) {
     // shift any received data down in the rx buffer
-    memcpy(llspi_rx_addr, &((uint8_t *)llspi_rx_addr)[llspi_tx_len], llspi_rx_len);
+    (void)memcpy(llspi_rx_addr, &((uint8_t *)llspi_rx_addr)[llspi_tx_len], llspi_rx_len);
 
     llspi_disable();
     spi_done();
