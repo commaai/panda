@@ -34,7 +34,7 @@ static void llspi_disable(void) {
 }
 
 void llspi_dma(uint8_t *tx_addr, int tx_len, uint8_t *rx_addr, int rx_len) {
-  print("\nLLSPI DMA TX len "); puth(tx_len); print(" RX len "); puth(rx_len); print("\n");
+  //print("\nLLSPI DMA TX len "); puth(tx_len); print(" RX len "); puth(rx_len); print("\n");
 
   // set global for later use
   llspi_rx_addr = rx_addr;

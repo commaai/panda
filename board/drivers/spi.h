@@ -87,7 +87,7 @@ void spi_done(void) {
   spi_data_len_miso = (spi_buf_rx[5] << 8) | spi_buf_rx[4];
 
   if (memcmp(spi_buf_rx, version_text, 7) == 0) {
-    print("GOT VERSION REQUEST\n");
+    //print("GOT VERSION REQUEST\n");
     llspi_dma(spi_buf_tx, spi_version_packet(spi_buf_tx), spi_buf_rx, SPI_HEADER_SIZE);
     next_rx_state = SPI_STATE_HEADER;
   } else if (spi_state == SPI_STATE_HEADER) {
