@@ -102,7 +102,7 @@ void spi_done(void) {
         print("- incorrect header sync or checksum "); hexdump(spi_buf_rx, SPI_HEADER_SIZE);
       #endif
       spi_buf_tx[0] = SPI_NACK;
-      llspi_dma(spi_buf_tx, SPI_NACK, spi_buf_rx, SPI_HEADER_SIZE);
+      llspi_dma(spi_buf_tx, 1U, spi_buf_rx, SPI_HEADER_SIZE);
       next_rx_state = SPI_STATE_HEADER;
     }
   } else if (spi_state == SPI_STATE_DATA) {
