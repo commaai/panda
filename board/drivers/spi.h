@@ -61,10 +61,8 @@ void spi_init(void) {
   // platform init
   llspi_init();
 
-  // Start the first packet!
-  spi_state = SPI_STATE_HEADER;
-  spi_buf_tx[0] = SPI_NACK;
-  llspi_dma(spi_buf_tx, 1U, spi_buf_rx, SPI_HEADER_SIZE);
+  // Start the first packet
+  llspi_dma(NULL, 0U, spi_buf_rx, SPI_HEADER_SIZE);
 }
 
 static bool validate_checksum(const uint8_t *data, uint16_t len) {
@@ -77,7 +75,7 @@ static bool validate_checksum(const uint8_t *data, uint16_t len) {
 }
 
 void spi_done(void) {
-  print("SPI DONE\n");
+  //print("SPI DONE\n");
   uint8_t next_rx_state = SPI_STATE_HEADER;
   bool checksum_valid = false;
   static uint8_t spi_endpoint;
@@ -107,7 +105,7 @@ void spi_done(void) {
         //llspi_dump_state();
       #endif
       spi_buf_tx[0] = SPI_NACK;
-      llspi_dma(spi_buf_tx, 1U, spi_buf_rx, SPI_HEADER_SIZE);
+      llspi_dma(NULL, 0U, spi_buf_rx, SPI_HEADER_SIZE);
       next_rx_state = SPI_STATE_HEADER;
     }
   } else if (spi_state == SPI_STATE_DATA) {
