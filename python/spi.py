@@ -211,7 +211,8 @@ class PandaSpiHandle(BaseHandle):
   def get_protocol_version(self) -> bytes:
     vers_str = b"VERSION"
     def _get_version(spi) -> bytes:
-      spi.writebytes(vers_str)
+      # needs a dummy byte to get in sync
+      spi.writebytes(b"\x00" + vers_str)
 
       logger.debug("- waiting for echo")
       start = time.monotonic()
