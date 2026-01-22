@@ -55,6 +55,8 @@ class Info():
     with open(filename) as inp:
       reader = csv.reader(inp)
       header = next(reader, None)
+      if header is None:
+        return
       if header[0] == 'time':
         self.cabana(reader)
       else:

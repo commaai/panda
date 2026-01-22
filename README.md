@@ -38,7 +38,7 @@ to ensure that the behavior remains unchanged.
 The above tests are themselves tested by:
 * a [mutation test](tests/misra/test_mutation.py) on the MISRA coverage
 
-In addition, we run the [ruff linter](https://github.com/astral-sh/ruff) and [mypy](https://mypy-lang.org/) on panda's Python library.
+In addition, we run the [ruff linter](https://github.com/astral-sh/ruff) and [ty](https://github.com/astral-sh/ty) on panda's Python library.
 
 ## Usage
 

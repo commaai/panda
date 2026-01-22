@@ -11,8 +11,8 @@ source ./setup.sh
 scons -j8
 
 # *** lint ***
+ty check .
 ruff check .
-mypy python/
 
 
 # *** test ***
