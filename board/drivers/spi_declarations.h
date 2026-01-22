@@ -36,4 +36,5 @@ void llspi_dma(uint8_t *tx_addr, int tx_len, uint8_t *rx_addr, int rx_len);
 
 void can_tx_comms_resume_spi(void);
 void spi_init(void);
+void spi_reset(void);
 void spi_done(void);

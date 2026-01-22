@@ -11,6 +11,8 @@ uint16_t spi_error_count = 0;
 static bool spi_can_tx_ready = false;
 static const unsigned char version_text[] = "VERSION";
 
+static uint8_t spi_state = SPI_STATE_HEADER;
+
 static uint16_t spi_version_packet(uint8_t *out) {
   // this protocol version request is a stable portion of
   // the panda's SPI protocol. its contents match that of the
@@ -55,12 +57,17 @@ static uint16_t spi_version_packet(uint8_t *out) {
   return resp_len;
 }
 
+void spi_reset(void) {
+  spi_state = SPI_STATE_HEADER;
+  llspi_dma(NULL, 0U, spi_buf_rx, SPI_HEADER_SIZE);
+}
+
 void spi_init(void) {
   // platform init
   llspi_init();
 
-  // Start the first packet!
-  llspi_dma(NULL, 0U, spi_buf_rx, SPI_HEADER_SIZE);
+  spi_error_count = 0U;
+  spi_reset();
 }
 
 static bool validate_checksum(const uint8_t *data, uint16_t len) {
@@ -73,7 +80,6 @@ static bool validate_checksum(const uint8_t *data, uint16_t len) {
 }
 
 void spi_done(void) {
-  static uint8_t spi_state = SPI_STATE_HEADER;
   static uint8_t spi_endpoint;
   static uint16_t spi_data_len_miso;
   static uint16_t spi_data_len_mosi;
