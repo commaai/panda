@@ -1,0 +1,7 @@
+recursive-include board *.h
+include board/obj/*.bin
+include board/obj/*.signed
+recursive-include certs *
+include README.md
+include LICENSE
+
