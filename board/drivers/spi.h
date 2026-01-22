@@ -59,7 +59,7 @@ static uint16_t spi_version_packet(uint8_t *out) {
 
 void spi_reset(void) {
   spi_state = SPI_STATE_HEADER;
-  llspi_dma(NULL, 0U, spi_buf_rx, SPI_HEADER_SIZE);
+  llspi_dma(spi_buf_tx, 0U, spi_buf_rx, SPI_HEADER_SIZE);
 }
 
 void spi_init(void) {
