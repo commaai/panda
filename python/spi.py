@@ -159,18 +159,15 @@ class PandaSpiHandle(BaseHandle):
       return b""
     else:
       logger.debug("- waiting for data ACK")
-      preread_len = USBPACKET_MAX_SIZE + 1  # read enough for a controlRead
-      dat = self._wait_for_ack(spi, DACK, timeout, 0x13, length=3 + preread_len)
+      dat = self._wait_for_ack(spi, DACK, timeout, 0x13, length=3)
 
-      # get response length, then response
+      # get response length
       response_len = struct.unpack("<H", dat[1:3])[0]
       if response_len > max_rx_len:
         raise PandaSpiException(f"response length greater than max ({max_rx_len} {response_len})")
 
       # read rest
-      remaining = (response_len + 1) - preread_len
-      if remaining > 0:
-        dat += bytes(spi.readbytes(remaining))
+      dat += bytes(spi.readbytes(response_len + 1))
 
       dat = dat[:3 + response_len + 1]
       if self._calc_checksum(dat) != 0:
