@@ -692,7 +692,8 @@ class Panda:
   # The panda will NAK CAN writes when there is CAN congestion.
   # libusb will try to send it again, with a max timeout.
   # Timeout is in ms. If set to 0, the timeout is infinite.
-  CAN_SEND_TIMEOUT_MS = 10
+  CAN_SEND_TIMEOUT_MS = 5  # 5ms like C++ implementation
+  CAN_MAX_RETRIES = 3
 
   def can_reset_communications(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xc0, 0, 0, b'')
@@ -701,8 +702,16 @@ class Panda:
   def can_send_many(self, arr, *, fd=False, timeout=CAN_SEND_TIMEOUT_MS):
     snds = pack_can_buffer(arr, chunk=(not self.spi), fd=fd)
     for tx in snds:
+      retries = 0
       while len(tx) > 0:
         bs = self._handle.bulkWrite(3, tx, timeout=timeout)
+        if bs == 0:
+          retries += 1
+          if retries > self.CAN_MAX_RETRIES:
+            logger.warning("CAN send: no progress after retries, dropping")
+            break
+        else:
+          retries = 0
         tx = tx[bs:]
 
   def can_send(self, addr, dat, bus, *, fd=False, timeout=CAN_SEND_TIMEOUT_MS):
@@ -711,13 +720,16 @@ class Panda:
   @ensure_can_packet_version
   def can_recv(self):
     dat = bytearray()
-    while True:
+    for _ in range(self.CAN_MAX_RETRIES):
       try:
         dat = self._handle.bulkRead(1, 16384) # Max receive batch size + 2 extra reserve frames
         break
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         logger.error("CAN: BAD RECV, RETRYING")
-        time.sleep(0.1)
+        time.sleep(0.01)  # 10ms sleep, not 100ms
+    else:
+      logger.error("CAN: recv failed after retries")
+      return []
     msgs, self.can_rx_overflow_buffer = unpack_can_buffer(self.can_rx_overflow_buffer + dat)
     return msgs
 

@@ -25,7 +25,10 @@ NACK = 0x1F
 CHECKSUM_START = 0xAB
 
 MIN_ACK_TIMEOUT_MS = 100
+MAX_ACK_TIMEOUT_MS = 500  # like C++ SPI_ACK_TIMEOUT
+DEFAULT_TIMEOUT_MS = 500  # default when timeout=0
 MAX_XFER_RETRY_COUNT = 5
+MAX_TIMEOUT_RETRIES = 5  # like C++
 
 SPI_BUF_SIZE = 4096  # from panda/board/drivers/spi.h
 XFER_SIZE = SPI_BUF_SIZE - 0x40 # give some room for SPI protocol overhead
@@ -127,6 +130,8 @@ class PandaSpiHandle(BaseHandle):
     return cksum
 
   def _wait_for_ack(self, spi, ack_val: int, timeout: int, tx: int, length: int = 1) -> bytes:
+    # Original behavior preserved - timeout=0 means wait forever within this function
+    # The caller (_transfer) handles the overall timeout
     timeout_s = max(MIN_ACK_TIMEOUT_MS, timeout) * 1e-3
 
     start = time.monotonic()
@@ -182,10 +187,15 @@ class PandaSpiHandle(BaseHandle):
     logger.debug("starting transfer: endpoint=%d, max_rx_len=%d", endpoint, max_rx_len)
     logger.debug("==============================================")
 
+    # Fix timeout=0 infinite loop: default to DEFAULT_TIMEOUT_MS
+    if timeout == 0:
+      timeout = DEFAULT_TIMEOUT_MS
+
     n = 0
     start_time = time.monotonic()
     exc = PandaSpiException()
-    while (timeout == 0) or (time.monotonic() - start_time) < timeout*1e-3:
+    # Use the timeout for the overall loop, matching original behavior but with timeout=0 fixed
+    while (time.monotonic() - start_time) < timeout * 1e-3:
       n += 1
       logger.debug("\ntry #%d", n)
       with self.dev.acquire() as spi:
@@ -209,6 +219,7 @@ class PandaSpiHandle(BaseHandle):
             except PandaSpiException:
               nack_cnt = 0
 
+    logger.error("SPI transfer failed after %d tries, %.2fms", n, (time.monotonic() - start_time) * 1000)
     raise exc
 
   def get_protocol_version(self) -> bytes:
