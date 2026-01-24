@@ -21,12 +21,12 @@ IGNORED_PATHS = (
   'board/flasher.h',
   'board/bootstub.c',
   'board/bootstub_declarations.h',
-  'board/stm32h7/llflash.h',
+  'board/stm32h7/llflash.c',
 )
 
 mutations = [
   (None, None, False),  # no mods, should pass
-  ("board/stm32h7/llfdcan.h", "s/return ret;/if (true) { return ret; } else { return false; }/g", True),
+  ("board/stm32h7/llfdcan.c", "s/return ret;/if (true) { return ret; } else { return false; }/g", True),
 ]
 
 patterns = [
@@ -54,7 +54,7 @@ patterns = [
 
 all_files = glob.glob('board/**', root_dir=ROOT, recursive=True)
 files = [f for f in all_files if f.endswith(('.c', '.h')) and not f.startswith(IGNORED_PATHS)]
-assert len(files) > 50, all(d in files for d in ('board/main.c', 'board/stm32h7/llfdcan.h'))
+assert len(files) > 50, all(d in files for d in ('board/main.c', 'board/stm32h7/llfdcan.c'))
 
 for p in patterns:
   mutations.append((random.choice(files), p, True))
