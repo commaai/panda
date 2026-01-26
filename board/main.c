@@ -48,8 +48,8 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
     // TERMINAL ERROR: we can't continue if SILENT safety mode isn't succesfully set
     assert_fatal(err == 0, "Error: Failed setting SILENT mode. Hanging\n");
   }
-  safety_tx_blocked = 0;
-  safety_rx_invalid = 0;
+  safety_tx_blocked = false;
+  safety_rx_invalid = false;
 
   switch (mode_copy) {
     case SAFETY_SILENT:
@@ -362,9 +362,9 @@ int main(void) {
 
       #ifdef DEBUG_FAULTS
       } else {
-          led_set(LED_RED, 1);
+          led_set(LED_RED, true);
           delay(512000U);
-          led_set(LED_RED, 0);
+          led_set(LED_RED, false);
           delay(512000U);
         }
       #endif
