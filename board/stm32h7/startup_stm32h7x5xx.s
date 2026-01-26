@@ -343,6 +343,7 @@ g_pfnVectors:
    .weak      SysTick_Handler
    .thumb_set SysTick_Handler,Default_Handler
 
+/* Removed weak link to force linker error if missing
    .weak      WWDG_IRQHandler
    .thumb_set WWDG_IRQHandler,Default_Handler
 
@@ -417,10 +418,12 @@ g_pfnVectors:
 
    .weak      TIM1_BRK_IRQHandler
    .thumb_set TIM1_BRK_IRQHandler,Default_Handler
+*/
 
    .weak      TIM1_UP_IRQHandler
    .thumb_set TIM1_UP_IRQHandler,Default_Handler
 
+/* Removed weak link to force linker error if missing
    .weak      TIM1_TRG_COM_IRQHandler
    .thumb_set TIM1_TRG_COM_IRQHandler,Default_Handler
 
@@ -762,6 +765,6 @@ g_pfnVectors:
 
    .weak      TIM24_IRQHandler
    .thumb_set TIM24_IRQHandler,Default_Handler
-
+*/
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
 

@@ -13,8 +13,7 @@
 #include "board/drivers/can_common.h"
 #include "board/drivers/fdcan.h"
 #include "board/can_comms.h"
-
-extern int _app_start[0xc000];
+#include "board/body/boards/board_body.h"
 
 #include "board/body/main_comms.h"
 

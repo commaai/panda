@@ -3,28 +3,22 @@
 
 #include "board/drivers/led.h"
 #include "board/drivers/pwm.h"
-#include "board/drivers/usb.h"
 #include "board/drivers/simple_watchdog.h"
 #include "board/drivers/bootkick.h"
 
 #include "board/early_init.h"
-#include "board/provision.h"
 
-#include "opendbc/safety/safety.h"
-
-#include "board/health.h"
-
-#include "board/drivers/can_common.h"
-
-#include "board/drivers/fdcan.h"
+#include "board/libc.h"
 
 #include "board/power_saving.h"
+#include "board/globals.h"
 
-#include "board/obj/gitversion.h"
-
-#include "board/can_comms.h"
+#include "opendbc/safety/safety.h"
+#include "board/drivers/can_common.h"
+#include "board/drivers/fdcan.h"
+#include "board/main_declarations.h"
+#include "board/print.h"
 #include "board/main_comms.h"
-
 
 // ********************* Serial debugging *********************
 
@@ -99,6 +93,7 @@ bool is_car_safety_mode(uint16_t mode) {
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 // cppcheck-suppress misra-c2012-8.4
+// cppcheck-suppress misra-c2012-8.7
 void __initialize_hardware_early(void) {
   early_initialization();
 }
