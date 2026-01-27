@@ -84,6 +84,12 @@ void llspi_init(void) {
   REGISTER_INTERRUPT(DMA2_Stream2_IRQn, DMA2_Stream2_IRQ_Handler, SPI_IRQ_RATE, FAULT_INTERRUPT_RATE_SPI_DMA)
   REGISTER_INTERRUPT(DMA2_Stream3_IRQn, DMA2_Stream3_IRQ_Handler, SPI_IRQ_RATE, FAULT_INTERRUPT_RATE_SPI_DMA)
 
+  // Elevate SPI and its DMA above the baseline so they can preempt others
+  // Preempt priority 0 (highest), subpriority 0
+  interrupts_set_priority(SPI4_IRQn, 0U, 0U);
+  interrupts_set_priority(DMA2_Stream2_IRQn, 0U, 0U);
+  interrupts_set_priority(DMA2_Stream3_IRQn, 0U, 0U);
+
   // Setup MOSI DMA
   register_set(&(DMAMUX1_Channel10->CCR), 83U, 0xFFFFFFFFU);
   register_set(&(DMA2_Stream2->CR), (DMA_SxCR_MINC | DMA_SxCR_TCIE), 0x1E077EFEU);
