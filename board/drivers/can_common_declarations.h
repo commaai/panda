@@ -43,8 +43,14 @@ void process_can(uint8_t can_number);
 extern can_ring *can_queues[PANDA_CAN_CNT];
 
 // helpers
-#define WORD_TO_BYTE_ARRAY(dst8, src32) 0[dst8] = ((src32) & 0xFFU); 1[dst8] = (((src32) >> 8U) & 0xFFU); 2[dst8] = (((src32) >> 16U) & 0xFFU); 3[dst8] = (((src32) >> 24U) & 0xFFU)
-#define BYTE_ARRAY_TO_WORD(dst32, src8) ((dst32) = 0[src8] | (1[src8] << 8U) | (2[src8] << 16U) | (3[src8] << 24U))
+#define WORD_TO_BYTE_ARRAY(dst8, src32)                                        \
+  0 [dst8] = ((src32) & 0xFFU);                                                \
+  1 [dst8] = (((src32) >> 8U) & 0xFFU);                                        \
+  2 [dst8] = (((src32) >> 16U) & 0xFFU);                                       \
+  3 [dst8] = (((src32) >> 24U) & 0xFFU)
+#define BYTE_ARRAY_TO_WORD(dst32, src8)                                        \
+  ((dst32) =                                                                   \
+       0 [src8] | (1 [src8] << 8U) | (2 [src8] << 16U) | (3 [src8] << 24U))
 
 // ********************* interrupt safe queue *********************
 bool can_pop(can_ring *q, CANPacket_t *elem);
@@ -61,7 +67,6 @@ void can_set_orientation(bool flipped);
 #ifdef PANDA_JUNGLE
 void can_set_forwarding(uint8_t from, uint8_t to);
 #endif
-void ignition_can_hook(CANPacket_t *to_push);
 bool can_tx_check_min_slots_free(uint32_t min);
 uint8_t calculate_checksum(const uint8_t *dat, uint32_t len);
 void can_set_checksum(CANPacket_t *packet);
