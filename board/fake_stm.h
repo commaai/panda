@@ -27,3 +27,12 @@ extern TIM_TypeDef *MICROSECOND_TIMER;
 uint32_t microsecond_timer_get(void);
 
 typedef uint32_t GPIO_TypeDef;
+typedef int IRQn_Type;
+typedef uint32_t ADC_TypeDef;
+typedef uint32_t USART_TypeDef;
+typedef uint32_t FDCAN_GlobalTypeDef;
+typedef uint32_t SPI_TypeDef;
+typedef uint32_t USB_OTG_GlobalTypeDef;
+typedef uint32_t USB_OTG_DeviceTypeDef;
+
+#define NUM_INTERRUPTS 1

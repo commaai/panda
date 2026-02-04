@@ -15,7 +15,7 @@ void can_tx_comms_resume_spi(void) { };
 #include "faults.h"
 #include "libc.h"
 #include "opendbc/safety/safety.h"
-#include "drivers/can_common.h"
+#include "drivers/drivers.h"
 
 can_ring *rx_q = &can_rx_q;
 can_ring *tx1_q = &can_tx1_q;

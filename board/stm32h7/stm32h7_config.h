@@ -65,7 +65,6 @@ separate IRQs for RX and TX.
 #elif defined(PANDA_BODY)
 #include "board/boards/boot_state.h"
 #include "board/body/stm32h7/board.h"
-#include "board/stm32h7/lladc.h"
 #include "board/stm32h7/sound.h"
 #else
 #include "board/stm32h7/board.h"
