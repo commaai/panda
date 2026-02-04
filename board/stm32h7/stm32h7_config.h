@@ -54,32 +54,15 @@ separate IRQs for RX and TX.
 #include "board/utils.h"
 
 #include "board/drivers/drivers.h"
-#include "board/stm32h7/peripherals.h"
-
-#if !defined(BOOTSTUB)
-  #include "board/stm32h7/lluart.h"
-#endif
+#include "board/stm32h7/lldrivers.h"
 
 #ifdef PANDA_JUNGLE
 #include "board/jungle/stm32h7/board.h"
 #elif defined(PANDA_BODY)
 #include "board/boards/boot_state.h"
 #include "board/body/stm32h7/board.h"
-#include "board/stm32h7/sound.h"
 #else
 #include "board/stm32h7/board.h"
 #endif
-
-#include "board/stm32h7/clock.h"
-
-#ifdef BOOTSTUB
-  #include "board/stm32h7/llflash.h"
-#else
-  #include "board/stm32h7/llfdcan.h"
-#endif
-
-#include "board/stm32h7/llusb.h"
-
-#include "board/stm32h7/llspi.h"
 
 void early_gpio_float(void);

@@ -1,5 +1,5 @@
 #include "drivers.h"
-#include "board/stm32h7/llfan.h"
+#include "board/stm32h7/lldrivers.h"
 #include "board/utils.h"
 #include "board/globals.h"
 

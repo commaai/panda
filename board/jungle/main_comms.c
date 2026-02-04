@@ -7,7 +7,7 @@
 #include "board/provision.h"
 #include "board/early_init.h"
 #include "board/obj/gitversion.h"
-#include "board/stm32h7/llfdcan.h"
+#include "board/stm32h7/lldrivers.h"
 #include "board/libc.h"
 #include "board/print.h"
 

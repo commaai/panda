@@ -3,7 +3,7 @@
 #include "board/boards/unused_funcs.h"
 #include "board/drivers/drivers.h"
 #include "board/boards/tres.h"
-#include "board/stm32h7/lluart.h"
+#include "board/stm32h7/lldrivers.h"
 
 // ////////////////////////// //
 // Cuatro (STM32H7) + Harness //

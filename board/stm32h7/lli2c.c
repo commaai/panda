@@ -1,7 +1,7 @@
 // TODO: this driver relies heavily on polling,
 // if we want it to be more async, we should use interrupts
 
-#include "lli2c.h"
+#include "lldrivers.h"
 
 #define I2C_RETRY_COUNT 10U
 #define I2C_TIMEOUT_US 100000U

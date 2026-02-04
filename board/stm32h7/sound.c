@@ -1,7 +1,7 @@
 #include <stdint.h>
 
 #include "board/globals.h"
-#include "sound.h"
+#include "lldrivers.h"
 
 __attribute__((section(".sram4"))) static uint16_t sound_rx_buf[2][SOUND_RX_BUF_SIZE];
 __attribute__((section(".sram4"))) static uint16_t sound_tx_buf[2][SOUND_TX_BUF_SIZE];
