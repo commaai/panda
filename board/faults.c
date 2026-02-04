@@ -1,5 +1,5 @@
 #include "faults.h"
-#include "board/drivers/registers.h"
+#include "board/drivers/drivers.h"
 #include "print.h"
 
 uint8_t fault_status = FAULT_STATUS_NONE;

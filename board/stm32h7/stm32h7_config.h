@@ -53,14 +53,10 @@ separate IRQs for RX and TX.
 #include "board/faults.h"
 #include "board/utils.h"
 
-#include "board/drivers/registers.h"
-#include "board/drivers/interrupts.h"
-#include "board/drivers/gpio.h"
+#include "board/drivers/drivers.h"
 #include "board/stm32h7/peripherals.h"
-#include "board/drivers/timers.h"
 
 #if !defined(BOOTSTUB)
-  #include "board/drivers/uart.h"
   #include "board/stm32h7/lluart.h"
 #endif
 
@@ -70,7 +66,6 @@ separate IRQs for RX and TX.
 #include "board/boards/boot_state.h"
 #include "board/body/stm32h7/board.h"
 #include "board/stm32h7/lladc.h"
-#include "board/drivers/clock_source.h"
 #include "board/stm32h7/sound.h"
 #else
 #include "board/stm32h7/board.h"
@@ -86,7 +81,6 @@ separate IRQs for RX and TX.
 
 #include "board/stm32h7/llusb.h"
 
-#include "board/drivers/spi.h"
 #include "board/stm32h7/llspi.h"
 
 void early_gpio_float(void);

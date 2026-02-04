@@ -1,10 +1,8 @@
 #include "board/config.h"
 #include "board/board_struct.h"
 #include "board/boards/unused_funcs.h"
-#include "board/drivers/fake_siren.h"
+#include "board/drivers/drivers.h"
 #include "board/boards/tres.h"
-#include "board/drivers/harness.h"
-#include "board/drivers/uart.h"
 #include "board/stm32h7/lluart.h"
 
 // ////////////////////////// //

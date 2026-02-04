@@ -1,6 +1,6 @@
 #pragma once
 
-#include "board/drivers/harness.h"
+#include "board/drivers/drivers.h"
 
 // ///////////////////////////// //
 // Red Panda (STM32H7) + Harness //

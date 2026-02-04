@@ -2,7 +2,7 @@
 
 #include "board/config.h"
 #include "early_init.h"
-#include "drivers/led.h"
+#include "drivers/drivers.h"
 #include "globals.h"
 
 static void jump_to_bootloader(void) {

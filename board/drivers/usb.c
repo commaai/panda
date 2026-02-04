@@ -1,11 +1,10 @@
 
 #include <stdint.h>
 
-#include "usb.h"
+#include "drivers.h"
 #include "board/config.h"
 #include "board/globals.h"
 #include "board/can_comms.h"
-#include "board/drivers/uart.h"
 #include "board/print.h"
 
 static uint8_t response[USBPACKET_MAX_SIZE];

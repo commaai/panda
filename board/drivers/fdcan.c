@@ -1,10 +1,6 @@
-#include "fdcan.h"
-
-#include "can_common.h"
+#include "drivers.h"
 
 #include "board/config.h"
-
-#include "led.h"
 
 FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT] = {FDCAN1, FDCAN2, FDCAN3};
 

@@ -1,9 +1,8 @@
 #include "tres.h"
 #include "red.h"
 
-#include "board/drivers/pwm.h"
+#include "board/drivers/drivers.h"
 #include "board/globals.h"
-#include "board/drivers/uart.h"
 #include "board/stm32h7/lluart.h"
 
 // ///////////////////////////

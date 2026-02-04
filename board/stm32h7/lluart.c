@@ -1,5 +1,5 @@
 #include "board/config.h"
-#include "board/drivers/uart.h"
+#include "board/drivers/drivers.h"
 
 static void uart_rx_ring(uart_ring *q){
   // Do not read out directly if DMA enabled

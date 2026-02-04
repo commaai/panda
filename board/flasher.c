@@ -1,7 +1,7 @@
 #include "flasher.h"
 #include "libc.h"
 #include "board/stm32h7/llflash.h"
-#include "drivers/led.h"
+#include "drivers/drivers.h"
 #include "print.h"
 
 #include "globals.h"

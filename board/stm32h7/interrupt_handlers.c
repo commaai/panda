@@ -1,6 +1,6 @@
 #include "interrupt_handlers.h"
 #include "stm32h7_config.h"
-#include "board/drivers/interrupts.h"
+#include "board/drivers/drivers.h"
 
 void WWDG_IRQHandler(void) {handle_interrupt(WWDG_IRQn);}
 void PVD_AVD_IRQHandler(void) {handle_interrupt(PVD_AVD_IRQn);}

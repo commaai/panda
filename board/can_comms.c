@@ -1,10 +1,8 @@
 #include "can_comms.h"
-#include "drivers/can_common.h"
+#include "drivers/drivers.h"
 #include "utils.h"
 #include "libc.h"
 #include "can.h"
-#include "drivers/usb.h"
-#include "board/drivers/spi.h"
 
 #include "config.h"
 

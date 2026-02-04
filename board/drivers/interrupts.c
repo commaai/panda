@@ -1,4 +1,4 @@
-#include "interrupts.h"
+#include "drivers.h"
 #include "board/libc.h"
 #include "board/print.h"
 

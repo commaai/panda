@@ -2,16 +2,12 @@
 #include <stdbool.h>
 
 #include "board/config.h"
-#include "board/drivers/led.h"
-#include "board/drivers/pwm.h"
-#include "board/drivers/usb.h"
+#include "board/drivers/drivers.h"
 #include "board/early_init.h"
 #include "board/obj/gitversion.h"
 #include "board/body/motor_control.h"
 #include "board/body/can.h"
 #include "opendbc/safety/safety.h"
-#include "board/drivers/can_common.h"
-#include "board/drivers/fdcan.h"
 #include "board/can_comms.h"
 #include "board/body/boards/board_body.h"
 

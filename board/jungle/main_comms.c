@@ -3,14 +3,12 @@
 #include "main_comms.h"
 #include "jungle_health.h"
 #include "board/health.h"
-#include "board/drivers/fdcan.h"
-#include "board/drivers/can_common.h"
+#include "board/drivers/drivers.h"
 #include "board/provision.h"
 #include "board/early_init.h"
 #include "board/obj/gitversion.h"
 #include "board/stm32h7/llfdcan.h"
 #include "board/libc.h"
-#include "board/drivers/uart.h"
 #include "board/print.h"
 
 bool generated_can_traffic = false;

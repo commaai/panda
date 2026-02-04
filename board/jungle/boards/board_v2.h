@@ -4,9 +4,8 @@
 // Jungle board v2 (STM32H7) //
 // ///////////////////////// //
 
-#include "board/drivers/registers.h"
+#include "board/drivers/drivers.h"
 #include "board/board_struct.h"
-#include "board/drivers/gpio.h"
 
 #ifndef PANDA_JUNGLE
 #error This should only be used on Panda Body!

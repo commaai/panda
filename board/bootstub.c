@@ -13,7 +13,7 @@
 
 #include "board/obj/cert.h"
 #include "board/print.h"
-#include "board/drivers/uart.h"
+#include "board/drivers/drivers.h"
 
 #include "globals.h"
 

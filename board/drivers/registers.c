@@ -1,5 +1,5 @@
 #include "board/config.h"
-#include "registers.h"
+#include "drivers.h"
 #include "board/libc.h"
 #include "board/print.h"
 

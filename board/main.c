@@ -1,10 +1,7 @@
 // ********************* Includes *********************
 #include "board/config.h"
 
-#include "board/drivers/led.h"
-#include "board/drivers/pwm.h"
-#include "board/drivers/simple_watchdog.h"
-#include "board/drivers/bootkick.h"
+#include "board/drivers/drivers.h"
 
 #include "board/early_init.h"
 
@@ -14,8 +11,6 @@
 #include "board/globals.h"
 
 #include "opendbc/safety/safety.h"
-#include "board/drivers/can_common.h"
-#include "board/drivers/fdcan.h"
 #include "board/main_declarations.h"
 #include "board/print.h"
 #include "board/main_comms.h"

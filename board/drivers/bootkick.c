@@ -1,7 +1,6 @@
 #include <stdint.h>
 
-#include "board/drivers/harness.h"
-#include "bootkick.h"
+#include "drivers.h"
 #include "board/globals.h"
 
 bool bootkick_reset_triggered = false;

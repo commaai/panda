@@ -3,19 +3,13 @@
 
 #include "opendbc/safety/safety.h"
 
-#include "board/drivers/led.h"
-#include "board/drivers/pwm.h"
-#include "board/drivers/usb.h"
+#include "board/drivers/drivers.h"
 
 #include "board/early_init.h"
 #include "board/provision.h"
 
 #include "board/health.h"
 #include "board/jungle/jungle_health.h"
-
-#include "board/drivers/can_common.h"
-
-#include "board/drivers/fdcan.h"
 
 #include "board/obj/gitversion.h"
 

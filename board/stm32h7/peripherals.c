@@ -1,5 +1,5 @@
 #include "peripherals.h"
-#include "board/drivers/gpio.h"
+#include "board/drivers/drivers.h"
 
 void gpio_usb_init(void) {
   // A11,A12: USB

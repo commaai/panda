@@ -8,7 +8,7 @@
 #include "board/obj/gitversion.h"
 #include "board/stm32h7/llfdcan.h"
 #include "board/libc.h"
-#include "board/drivers/uart.h"
+#include "board/drivers/drivers.h"
 #include "board/body/motor_control.h"
 #include "board/print.h"
 

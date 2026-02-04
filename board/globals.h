@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 #include "board/board_struct.h"
-#include "board/drivers/harness.h"
+#include "board/drivers/drivers.h"
 
 extern uint8_t hw_type;
 extern struct board *current_board;

@@ -3,7 +3,7 @@
 #include "board/power_saving.h"
 #include "board/main_declarations.h"
 #include "board/config.h"
-#include "board/drivers/fdcan.h"
+#include "board/drivers/drivers.h"
 #include "board/globals.h"
 #include "board/print.h"
 

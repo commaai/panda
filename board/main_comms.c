@@ -2,10 +2,8 @@
 #include <stdbool.h>
 
 #include "board/main_declarations.h"
-#include "board/drivers/can_common.h"
+#include "board/drivers/drivers.h"
 #include "board/power_saving.h"
-#include "board/drivers/bootkick.h"
-#include "board/drivers/fdcan.h"
 #include "board/provision.h"
 #include "board/early_init.h"
 #include "board/obj/gitversion.h"
