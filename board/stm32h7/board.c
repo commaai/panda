@@ -2,8 +2,7 @@
 
 #include "board/stm32h7/board.h"
 #include "board/globals.h"
-#include "board/boards/red.h"
-#include "board/boards/tres.h"
+#include "board/boards/boards.h"
 #include "board/print.h"
 
 void detect_board_type(void) {

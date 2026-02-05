@@ -1,6 +1,5 @@
-#include "red.h"
+#include "boards.h"
 
-#include "board/boards/unused_funcs.h"
 #include "board/board_struct.h"
 
 #include "board/globals.h"

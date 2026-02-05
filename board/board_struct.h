@@ -2,7 +2,7 @@
 
 #include "board/config.h"
 #include "board/board_forward.h"
-#include "board/boards/boot_state.h"
+#include "board/boards/boards.h"
 
 typedef struct board {
   struct harness_configuration *harness_config;

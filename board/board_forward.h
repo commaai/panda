@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "board/boards/boot_state.h"
+#include "board/boards/boards.h"
 
 typedef bool (*board_get_button)(void);
 typedef bool (*board_read_som_gpio)(void);

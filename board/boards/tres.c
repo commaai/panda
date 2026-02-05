@@ -1,5 +1,4 @@
-#include "tres.h"
-#include "red.h"
+#include "boards.h"
 
 #include "board/drivers/drivers.h"
 #include "board/globals.h"

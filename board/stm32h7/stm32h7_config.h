@@ -59,7 +59,6 @@ separate IRQs for RX and TX.
 #ifdef PANDA_JUNGLE
 #include "board/jungle/stm32h7/board.h"
 #elif defined(PANDA_BODY)
-#include "board/boards/boot_state.h"
 #include "board/body/stm32h7/board.h"
 #else
 #include "board/stm32h7/board.h"
