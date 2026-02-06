@@ -6,7 +6,7 @@
 
 #include "board/config.h"
 #include "board/early_init.h"
-#include "board/flasher.h"
+#include "board/drivers/drivers.h"
 
 #include "crypto/rsa.h"
 #include "crypto/sha.h"

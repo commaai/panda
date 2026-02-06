@@ -1,15 +1,13 @@
-#include "flasher.h"
-#include "libc.h"
-#include "board/stm32h7/lldrivers.h"
-#include "drivers/drivers.h"
-#include "print.h"
-
-#include "globals.h"
-#include "provision.h"
-#include "early_init.h"
-#include "obj/gitversion.h"
-
 #include "board/config.h"
+#include "board/libc.h"
+#include "board/stm32h7/lldrivers.h"
+#include "board/drivers/drivers.h"
+#include "board/print.h"
+
+#include "board/globals.h"
+#include "board/provision.h"
+#include "board/early_init.h"
+#include "board/obj/gitversion.h"
 
 // flasher state variables
 uint32_t *prog_ptr = NULL;

@@ -12,7 +12,6 @@ void can_tx_comms_resume_usb(void) { };
 void can_tx_comms_resume_spi(void) { };
 
 #include "health.h"
-#include "faults.h"
 #include "libc.h"
 #include "opendbc/safety/safety.h"
 #include "drivers/drivers.h"

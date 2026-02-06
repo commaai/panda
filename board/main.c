@@ -7,11 +7,9 @@
 
 #include "board/libc.h"
 
-#include "board/power_saving.h"
 #include "board/globals.h"
 
 #include "opendbc/safety/safety.h"
-#include "board/main_declarations.h"
 #include "board/print.h"
 #include "board/comms.h"
 

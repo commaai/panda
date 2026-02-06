@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "main_declarations.h"
+#include "globals.h"
 
 // heartbeat state
 uint32_t heartbeat_counter = 0;

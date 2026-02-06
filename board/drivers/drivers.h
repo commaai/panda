@@ -27,6 +27,41 @@ extern volatile bool interrupts_enabled;
 void enable_interrupts(void);
 void disable_interrupts(void);
 
+// ======================= FAULTS =======================
+
+#define FAULT_STATUS_NONE 0U
+#define FAULT_STATUS_TEMPORARY 1U
+#define FAULT_STATUS_PERMANENT 2U
+
+// Fault types, matches cereal.log.PandaState.FaultType
+#define FAULT_RELAY_MALFUNCTION             (1UL << 0)
+#define FAULT_UNUSED_INTERRUPT_HANDLED      (1UL << 1)
+#define FAULT_INTERRUPT_RATE_CAN_1          (1UL << 2)
+#define FAULT_INTERRUPT_RATE_CAN_2          (1UL << 3)
+#define FAULT_INTERRUPT_RATE_CAN_3          (1UL << 4)
+#define FAULT_INTERRUPT_RATE_TACH           (1UL << 5)
+#define FAULT_INTERRUPT_RATE_INTERRUPTS     (1UL << 7)
+#define FAULT_INTERRUPT_RATE_SPI_DMA        (1UL << 8)
+#define FAULT_INTERRUPT_RATE_USB            (1UL << 15)
+#define FAULT_REGISTER_DIVERGENT            (1UL << 18)
+#define FAULT_INTERRUPT_RATE_CLOCK_SOURCE   (1UL << 20)
+#define FAULT_INTERRUPT_RATE_TICK           (1UL << 21)
+#define FAULT_INTERRUPT_RATE_EXTI           (1UL << 22)
+#define FAULT_INTERRUPT_RATE_SPI            (1UL << 23)
+#define FAULT_INTERRUPT_RATE_UART_7         (1UL << 24)
+#define FAULT_SIREN_MALFUNCTION             (1UL << 25)
+#define FAULT_HEARTBEAT_LOOP_WATCHDOG       (1UL << 26)
+#define FAULT_INTERRUPT_RATE_SOUND_DMA      (1UL << 27)
+
+// Permanent faults
+#define PERMANENT_FAULTS 0U
+
+extern uint8_t fault_status;
+extern uint32_t faults;
+
+void fault_occurred(uint32_t fault);
+void fault_recovered(uint32_t fault);
+
 #include "board/can.h"
 #include "board/health.h"
 #include "board/utils.h"
@@ -543,3 +578,27 @@ typedef struct simple_watchdog_state_t {
 
 void simple_watchdog_kick(void);
 void simple_watchdog_init(uint32_t fault, uint32_t threshold);
+
+// ======================= POWER SAVING =======================
+
+// WARNING: To stay in compliance with the SIL2 rules laid out in STM UM1840, we should never implement any of the available hardware low power modes.
+// See rule: CoU_3
+
+#define POWER_SAVE_STATUS_DISABLED 0
+#define POWER_SAVE_STATUS_ENABLED 1
+
+extern int power_save_status;
+
+void set_power_save_state(int state);
+void enable_can_transceivers(bool enabled);
+
+// ======================= FLASHER =======================
+
+// from the linker script
+#define APP_START_ADDRESS 0x8020000U
+
+// flasher state variables
+extern uint32_t *prog_ptr;
+extern bool unlocked;
+
+void soft_flasher_start(void);

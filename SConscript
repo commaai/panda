@@ -127,7 +127,7 @@ def build_project(project_name, project, main, shared, extra_flags):
     "./board/drivers/timers.c",
     "./board/stm32h7/lladc.c",
     "./board/stm32h7/llspi.c",
-    "./board/faults.c",
+    "./board/drivers/faults.c",
     "./board/boards/unused_funcs.c",
     "./board/utils.c",
     "./board/globals.c",
@@ -145,7 +145,7 @@ def build_project(project_name, project, main, shared, extra_flags):
   bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", [
     startup,
     "./board/bootstub.c",
-    "./board/flasher.c",
+    "./board/drivers/flasher.c",
   ] + shared)
   bs_env.Objcopy(f"./board/obj/bootstub.{project_name}.bin", bs_elf)
 
@@ -154,7 +154,7 @@ def build_project(project_name, project, main, shared, extra_flags):
     startup,
     "./board/can_comms.c",
     "./board/drivers/fan.c",
-    "./board/power_saving.c",
+    "./board/drivers/power_saving.c",
     "./board/stm32h7/llfdcan.c",
     "./board/drivers/harness.c",
     "./board/drivers/bootkick.c",

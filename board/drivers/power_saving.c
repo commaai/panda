@@ -1,7 +1,5 @@
 #include <stdint.h>
 
-#include "board/power_saving.h"
-#include "board/main_declarations.h"
 #include "board/config.h"
 #include "board/drivers/drivers.h"
 #include "board/globals.h"
