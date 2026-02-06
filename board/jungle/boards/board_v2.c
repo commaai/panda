@@ -1,4 +1,3 @@
-#include "board/board_struct.h"
 #include "board/jungle/boards/board_v2.h"
 #include "board/print.h"
 

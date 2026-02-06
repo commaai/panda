@@ -5,7 +5,6 @@
 // ///////////////////////// //
 
 #include "board/drivers/drivers.h"
-#include "board/board_struct.h"
 
 #ifndef PANDA_JUNGLE
 #error This should only be used on Panda Body!

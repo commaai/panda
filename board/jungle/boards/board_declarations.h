@@ -2,8 +2,7 @@
 
 #include <stdint.h>
 
-#include "board/config.h"
-#include "board/board_struct.h"
+#include "board/boards/boards.h"
 
 // ********************* Globals **********************
 extern uint8_t harness_orientation;

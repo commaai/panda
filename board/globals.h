@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include "board/board_struct.h"
+#include "board/boards/boards.h"
 #include "board/drivers/drivers.h"
 
 extern uint8_t hw_type;

@@ -1,7 +1,5 @@
 #include "boards.h"
 
-#include "board/board_struct.h"
-
 #include "board/globals.h"
 
 // ///////////////////////////// //
