@@ -8,7 +8,7 @@
 #include "board/early_init.h"
 #include "board/obj/gitversion.h"
 #include "board/globals.h"
-#include "board/main_comms.h"
+#include "board/comms.h"
 #include "board/print.h"
 
 

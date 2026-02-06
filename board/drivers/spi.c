@@ -1,7 +1,6 @@
 #include "drivers.h"
 #include "board/libc.h"
 #include "board/config.h"
-#include "board/can_comms.h"
 #include "board/print.h"
 
 #include "board/globals.h"

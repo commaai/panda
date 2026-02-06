@@ -105,7 +105,7 @@ def build_project(project_name, project, main, shared, extra_flags):
     "./crypto/sha.c",
     "./board/libc.c",
     "./board/early_init.c",
-    "./board/critical.c",
+    "./board/drivers/critical.c",
     "./board/drivers/led.c",
     "./board/drivers/pwm.c",
     "./board/drivers/gpio.c",

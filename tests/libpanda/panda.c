@@ -23,4 +23,3 @@ can_ring *tx2_q = &can_tx2_q;
 can_ring *tx3_q = &can_tx3_q;
 
 #include "comms.h"
-#include "can_comms.h"

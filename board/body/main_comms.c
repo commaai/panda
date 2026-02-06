@@ -1,7 +1,6 @@
 #include "board/body/main_comms.h"
 #include "board/globals.h"
 #include "board/config.h"
-#include "main_comms.h"
 #include "board/health.h"
 #include "board/provision.h"
 #include "board/early_init.h"

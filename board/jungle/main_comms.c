@@ -1,6 +1,6 @@
 #include "board/globals.h"
 #include "board/config.h"
-#include "main_comms.h"
+#include "board/jungle/main_comms.h"
 #include "jungle_health.h"
 #include "board/health.h"
 #include "board/drivers/drivers.h"

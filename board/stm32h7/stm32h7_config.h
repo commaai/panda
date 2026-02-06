@@ -49,7 +49,6 @@ separate IRQs for RX and TX.
 #include "board/comms.h"
 
 #include "board/libc.h"
-#include "board/critical.h"
 #include "board/faults.h"
 #include "board/utils.h"
 

@@ -8,7 +8,6 @@
 #include "board/body/motor_control.h"
 #include "board/body/can.h"
 #include "opendbc/safety/safety.h"
-#include "board/can_comms.h"
 #include "board/body/boards/board_body.h"
 
 #include "board/body/main_comms.h"

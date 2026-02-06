@@ -13,7 +13,6 @@
 
 #include "board/obj/gitversion.h"
 
-#include "board/can_comms.h"
 #include "board/jungle/main_comms.h"
 #include "board/print.h"
 
