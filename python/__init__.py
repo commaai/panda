@@ -212,10 +212,9 @@ class Panda:
     # reset comms
     self.can_reset_communications()
 
-    # disable automatic CAN-FD switching (only supported on H7 devices)
-    if self.get_type() in self.H7_DEVICES:
-      for bus in range(PANDA_CAN_CNT):
-        self.set_canfd_auto(bus, False)
+    # disable automatic CAN-FD switching
+    for bus in range(PANDA_CAN_CNT):
+      self.set_canfd_auto(bus, False)
 
     # set CAN speed
     for bus in range(PANDA_CAN_CNT):
