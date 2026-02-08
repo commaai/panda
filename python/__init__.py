@@ -330,6 +330,8 @@ class Panda:
     return []
 
   def reset(self, enter_bootstub=False, enter_bootloader=False, reconnect=True):
+    assert (hw_type := self.get_type()) in self.SUPPORTED_DEVICES, f"Unknown HW: {hw_type}"
+
     # no response is expected since it resets right away
     timeout = 5000 if isinstance(self._handle, PandaSpiHandle) else 15000
     try:
@@ -409,9 +411,7 @@ class Panda:
       pass
 
   def flash(self, fn=None, code=None, reconnect=True):
-    hw_type = self.get_type()
-    if hw_type not in self.SUPPORTED_DEVICES:
-      raise RuntimeError(f"HW type {hw_type.hex()} is deprecated and can no longer be flashed.")
+    assert (hw_type := self.get_type()) in self.SUPPORTED_DEVICES, f"Unknown HW: {hw_type}"
 
     if self.up_to_date(fn=fn):
       logger.info("flash: already up to date")
@@ -440,6 +440,8 @@ class Panda:
       self.reconnect()
 
   def recover(self, timeout: int | None = 60, reset: bool = True) -> bool:
+    assert (hw_type := self.get_type()) in self.SUPPORTED_DEVICES, f"Unknown HW: {hw_type}"
+
     dfu_serial = self.get_dfu_serial()
 
     if reset:
