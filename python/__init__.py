@@ -441,8 +441,6 @@ class Panda:
       self.reconnect()
 
   def recover(self, timeout: int | None = 60, reset: bool = True) -> bool:
-    assert (hw_type := self.get_type()) in self.SUPPORTED_DEVICES, f"Unknown HW: {hw_type}"
-
     dfu_serial = self.get_dfu_serial()
 
     if reset:
