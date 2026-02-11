@@ -11,6 +11,7 @@ def check_signature(p):
 
 
 def test_dfu(p):
+  app_mcu_type = p.get_mcu_type()
   dfu_serial = p.get_dfu_serial()
 
   p.reset(enter_bootstub=True)
@@ -18,7 +19,7 @@ def test_dfu(p):
   assert Panda.wait_for_dfu(dfu_serial, timeout=19), "failed to enter DFU"
 
   dfu = PandaDFU(dfu_serial)
-  assert dfu.get_mcu_type() == McuType.H7
+  assert dfu.get_mcu_type() == app_mcu_type
 
   assert dfu_serial in PandaDFU.list()
 
@@ -37,9 +38,9 @@ def test_known_bootstub(p):
     McuType.H7: ["bootstub.panda_h7.bin"],
   }
 
-  for kb in known_bootstubs[McuType.H7]:
-    app_serial = p.get_usb_serial()
-    assert app_serial is not None
+  for kb in known_bootstubs[p.get_mcu_type()]:
+    app_ids = (p.get_mcu_type(), p.get_usb_serial())
+    assert None not in app_ids
 
     p.reset(enter_bootstub=True)
     p.reset(enter_bootloader=True)
@@ -56,9 +57,10 @@ def test_known_bootstub(p):
 
     p.connect(claim=False, wait=True)
 
-    # check for serial mismatch
+    # check for MCU or serial mismatch
     with Panda(p._serial, claim=False) as np:
-      assert np.get_usb_serial() == app_serial
+      bootstub_ids = (np.get_mcu_type(), np.get_usb_serial())
+      assert app_ids == bootstub_ids
 
     # ensure we can flash app and it jumps to app
     p.flash()
