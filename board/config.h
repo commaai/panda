@@ -32,11 +32,44 @@
   #endif
 #endif
 
+#define HW_TYPE_UNKNOWN 0U
+#define HW_TYPE_V2 2U
+#define HW_TYPE_RED_PANDA 7U
+#define HW_TYPE_TRES 9U
+#define HW_TYPE_CUATRO 10U
+
+#ifdef PANDA
+
+// CAN modes
+#define CAN_MODE_NORMAL 0U
+#define CAN_MODE_OBD_CAN2 1U
+
+#elif defined(PANDA_JUNGLE)
+
+// CAN modes
+#define CAN_MODE_NORMAL 0U
+#define CAN_MODE_OBD_CAN2 3U
+
+// Harness states
+#define HARNESS_ORIENTATION_NONE 0U
+#define HARNESS_ORIENTATION_1 1U
+#define HARNESS_ORIENTATION_2 2U
+
+#define SBU1 0U
+#define SBU2 1U
+
+#elif defined(PANDA_BODY)
+#elif defined(LIB_PANDA)
+#else
+#error Unknown board type
+#endif
+
 // platform includes
 #ifdef STM32H7
   #include "board/stm32h7/stm32h7_config.h"
 #else
-  // TODO: uncomment this, cppcheck complains
   // building for tests
-  //#include "fake_stm.h"
+  #include "fake_stm.h"
 #endif
+
+void detect_board_type(void);

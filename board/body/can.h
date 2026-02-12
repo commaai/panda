@@ -6,7 +6,7 @@
 #include "board/can.h"
 #include "board/health.h"
 #include "board/body/motor_control.h"
-#include "board/drivers/can_common_declarations.h"
+#include "board/drivers/drivers.h"
 #include "opendbc/safety/declarations.h"
 
 #define BODY_CAN_ADDR_MOTOR_SPEED      0x201U

@@ -2,33 +2,34 @@
 #define MIN_VERSION 2
 
 // ********************* Includes *********************
+#include <stdbool.h>
+
 #include "board/config.h"
-
-#include "board/drivers/led.h"
-#include "board/drivers/pwm.h"
-#include "board/drivers/usb.h"
-
 #include "board/early_init.h"
-#include "board/provision.h"
+#include "board/drivers/drivers.h"
 
 #include "crypto/rsa.h"
 #include "crypto/sha.h"
 
 #include "board/obj/cert.h"
-#include "board/obj/gitversion.h"
-#include "board/flasher.h"
+#include "board/print.h"
+#include "board/drivers/drivers.h"
+
+#include "globals.h"
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {
   early_initialization();
 }
 
-void fail(void) {
-  soft_flasher_start();
+void debug_ring_callback(uart_ring *ring) {
+  char rcv;
+  while (get_char(ring, &rcv)) { } // Intentionally disabled, no uart in bootstub
 }
 
-// know where to sig check
-extern void *_app_start[];
+static void fail(void) {
+  soft_flasher_start();
+}
 
 int main(void) {
   // Init interrupt table
@@ -57,7 +58,7 @@ int main(void) {
 
   // verify version, last bytes in the signed area
   uint32_t vers[2] = {0};
-  memcpy(&vers, ((void*)&_app_start[0]) + len - sizeof(vers), sizeof(vers));
+  (void)memcpy(&vers, ((void*)&_app_start[0]) + len - sizeof(vers), sizeof(vers));
   if (vers[0] != VERS_TAG || vers[1] < MIN_VERSION) {
     goto fail;
   }

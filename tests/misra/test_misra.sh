@@ -49,6 +49,7 @@ cppcheck() {
           -I $PANDA_DIR \
           -I "$(arm-none-eabi-gcc -print-file-name=include)" \
           -I $OPENDBC_ROOT \
+          --suppress=misra-c2012-5.9:$OPENDBC_ROOT/* \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
           --suppress=*:*include/* --error-exitcode=2 --check-level=exhaustive --safety \
           --platform=arm32-wchar_t4 $COMMON_DEFINES --checkers-report=$CHECKLIST.tmp \
@@ -64,14 +65,35 @@ cppcheck() {
   fi
 }
 
-PANDA_OPTS="--enable=all --disable=unusedFunction --addon=misra"
+PANDA_OPTS="--enable=all --addon=misra"
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ $PANDA_DIR/board/main.c
 
-# unused needs to run globally
-#printf "\n${GREEN}** UNUSED ALL CODE **${NC}\n"
-#cppcheck --enable=unusedFunction --quiet $PANDA_DIR/board/
+IGNORED_PATHS=(
+  "$PANDA_DIR/board/obj"
+  "$PANDA_DIR/board/jungle"
+  "$PANDA_DIR/board/body"
+  "$PANDA_DIR/board/stm32h7/inc"
+  "$PANDA_DIR/board/fake_stm.h"
+  "$PANDA_DIR/board/fake_stm.c"
+  "$PANDA_DIR/board/flasher.h"
+  "$PANDA_DIR/board/flasher.c"
+  "$PANDA_DIR/board/bootstub.c"
+  "$PANDA_DIR/board/bootstub_declarations.h"
+  "$PANDA_DIR/board/stm32h7/llflash.h"
+  "$PANDA_DIR/board/stm32h7/llflash.c"
+)
+
+# build the find prune expression
+PRUNE_EXPR=""
+for p in "${IGNORED_PATHS[@]}"; do
+  PRUNE_EXPR="$PRUNE_EXPR -path $p -prune -o"
+done
+
+# find all .c files excluding ignored paths
+C_FILES=$(eval "find $PANDA_DIR/board $PRUNE_EXPR -name '*.c' -print" | sort)
+
+cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ -DPANDA $C_FILES
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 

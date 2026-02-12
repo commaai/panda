@@ -1,3 +1,5 @@
+#pragma once
+
 // When changing these structs, python/__init__.py needs to be kept up to date!
 
 #define HEALTH_PACKET_VERSION 17
