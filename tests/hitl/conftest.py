@@ -126,9 +126,9 @@ def func_fixture_panda(request, module_panda):
   # Check health of each CAN core after test, normal to fail for test_gen2_loopback on OBD bus, so skipping
   mark = request.node.get_closest_marker('panda_expect_can_error')
   expect_can_error = mark is not None
-  if not expect_can_error:
-    for i in range(3):
-      can_health = p.can_health(i)
+  for i in range(3):
+    can_health = p.can_health(i)
+    if not expect_can_error:
       assert can_health['bus_off_cnt'] == 0
       assert can_health['receive_error_cnt'] < 127
       assert can_health['transmit_error_cnt'] < 255
@@ -152,7 +152,6 @@ def fixture_panda_setup(request):
   p.reset(reconnect=True)
 
   p.set_can_loopback(False)
-  p.set_power_save(False)
   for bus, speed in BUS_SPEEDS:
     p.set_can_speed_kbps(bus, speed)
   clear_can_buffers(p)

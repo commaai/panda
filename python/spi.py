@@ -212,8 +212,8 @@ class PandaSpiHandle(BaseHandle):
     raise exc
 
   def get_protocol_version(self) -> bytes:
-    vers_str = b"VERSION"
     def _get_version(spi) -> bytes:
+      vers_str = b"VERSION"
       spi.writebytes(vers_str)
 
       logger.debug("- waiting for echo")
@@ -223,7 +223,7 @@ class PandaSpiHandle(BaseHandle):
         if bytes(version_bytes).startswith(vers_str):
           break
         if (time.monotonic() - start) > 0.001:
-          raise PandaSpiMissingAck
+          raise PandaSpiMissingAck(f"got {version_bytes}")
 
       rlen = struct.unpack("<H", bytes(version_bytes[-2:]))[0]
       if rlen > 1000:
@@ -245,6 +245,9 @@ class PandaSpiHandle(BaseHandle):
         except PandaSpiException as e:
           exc = e
           logger.debug("SPI get protocol version failed, retrying", exc_info=True)
+
+        # ensure slave is in a good state and not stuck TXing a massive buffer
+        spi.readbytes(SPI_BUF_SIZE)
     raise exc
 
   # libusb1 functions
