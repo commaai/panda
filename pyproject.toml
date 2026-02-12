@@ -27,7 +27,6 @@ dev = [
   "pytest-timeout",
   "pytest-randomly",
   "ruff",
-  "mypy",
   "setuptools",
   "spidev; platform_system == 'Linux'",
 ]
@@ -48,18 +47,6 @@ packages = [
 [tool.setuptools.package-dir]
 panda = "."
 
-[tool.mypy]
-# third-party packages
-ignore_missing_imports = true
-
-# helpful warnings
-warn_redundant_casts = true
-warn_unreachable = true
-warn_unused_ignores = true
-
-# restrict dynamic typing
-warn_return_any = true
-
 # https://beta.ruff.rs/docs/configuration/#using-pyprojecttoml
 [tool.ruff]
 line-length = 160
@@ -72,6 +59,12 @@ flake8-implicit-str-concat.allow-multiline=false
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "pytest.main".msg = "pytest.main requires special handling that is easy to mess up!"
+
+[tool.ty.rules]
+# Third-party packages (usb1, opendbc, spidev, etc.) can't be resolved by ty
+unresolved-import = "ignore"
+# Handle is temporarily set to None during reconnection before being reassigned
+invalid-assignment = "ignore"
 
 [tool.pytest.ini_options]
 addopts = "-Werror --strict-config --strict-markers --durations=10 --ignore-glob='*.sh' --ignore=tests/misra --ignore=tests/som --ignore=tests/hitl"
