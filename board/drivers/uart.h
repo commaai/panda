@@ -1,4 +1,5 @@
 #include "uart_declarations.h"
+#include "ringbuffer.h"
 
 // ***************************** Definitions *****************************
 
@@ -46,63 +47,42 @@ uart_ring *get_ring_by_number(int a) {
 
 // ************************* Low-level buffer functions *************************
 bool get_char(uart_ring *q, char *elem) {
-  bool ret = false;
+  bool ret;
 
   ENTER_CRITICAL();
-  if (q->w_ptr_rx != q->r_ptr_rx) {
-    if (elem != NULL) *elem = q->elems_rx[q->r_ptr_rx];
-    q->r_ptr_rx = (q->r_ptr_rx + 1U) % q->rx_fifo_size;
-    ret = true;
-  }
+  ret = ring_pop(&q->w_ptr_rx, &q->r_ptr_rx, q->rx_fifo_size, q->elems_rx, elem, sizeof(char));
   EXIT_CRITICAL();
 
   return ret;
 }
 
 bool injectc(uart_ring *q, char elem) {
-  int ret = false;
-  uint16_t next_w_ptr;
+  bool ret;
 
   ENTER_CRITICAL();
-  next_w_ptr = (q->w_ptr_rx + 1U) % q->rx_fifo_size;
-
-  if ((next_w_ptr == q->r_ptr_rx) && q->overwrite) {
-    // overwrite mode: drop oldest byte
-    q->r_ptr_rx = (q->r_ptr_rx + 1U) % q->rx_fifo_size;
-  }
-
-  if (next_w_ptr != q->r_ptr_rx) {
-    q->elems_rx[q->w_ptr_rx] = elem;
-    q->w_ptr_rx = next_w_ptr;
-    ret = true;
-  }
+  ret = ring_push(&q->w_ptr_rx, &q->r_ptr_rx, q->rx_fifo_size, q->elems_rx, &elem, sizeof(char), q->overwrite);
   EXIT_CRITICAL();
 
   return ret;
 }
 
 bool put_char(uart_ring *q, char elem) {
-  bool ret = false;
-  uint16_t next_w_ptr;
+  bool ret;
 
   ENTER_CRITICAL();
-  next_w_ptr = (q->w_ptr_tx + 1U) % q->tx_fifo_size;
-
-  if ((next_w_ptr == q->r_ptr_tx) && q->overwrite) {
-    // overwrite mode: drop oldest byte
-    q->r_ptr_tx = (q->r_ptr_tx + 1U) % q->tx_fifo_size;
-  }
-
-  if (next_w_ptr != q->r_ptr_tx) {
-    q->elems_tx[q->w_ptr_tx] = elem;
-    q->w_ptr_tx = next_w_ptr;
-    ret = true;
-  }
+  ret = ring_push(&q->w_ptr_tx, &q->r_ptr_tx, q->tx_fifo_size, q->elems_tx, &elem, sizeof(char), q->overwrite);
   EXIT_CRITICAL();
 
   uart_tx_ring(q);
 
   return ret;
+}
+
+void clear_uart_buff(uart_ring *q) {
+  ENTER_CRITICAL();
+  ring_clear(&q->w_ptr_rx, &q->r_ptr_rx);
+  ring_clear(&q->w_ptr_tx, &q->r_ptr_tx);
+  EXIT_CRITICAL();
 }
 
 // ************************ High-level debug functions **********************
