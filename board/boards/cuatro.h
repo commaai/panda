@@ -39,7 +39,7 @@ static void cuatro_set_fan_enabled(bool enabled) {
 
 static void cuatro_set_bootkick(BootState state) {
   set_gpio_output(GPIOA, 0, state != BOOT_BOOTKICK);
-  set_gpio_output(GPIOC, 11, state == BOOT_BOOTKICK);  // DC_IN_EN_N - 0->1 transition wakes SOM from ship mode
+  set_gpio_output(GPIOC, 11, state == BOOT_STANDBY);  // DC_IN_EN_N (OD FET) - 0->1 transition wakes SOM from ship mode
 }
 
 static void cuatro_set_amp_enabled(bool enabled) {
