@@ -13,9 +13,9 @@ from .utils import logger
 
 # No fcntl on Windows
 try:
-    import fcntl
+  import fcntl
 except ImportError:
-    fcntl = None # type: ignore
+  fcntl = None # type: ignore
 
 # No spidev on MacOS/Windows
 try:
