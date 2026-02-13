@@ -369,7 +369,10 @@ int main(void) {
         }
       #endif
     } else {
-      enter_stop_mode();
+      if (!current_board->read_som_gpio()) {
+        enter_stop_mode();  // SOM is off: deep sleep, reboots on wakeup — never returns
+      }
+      __WFI();
     }
   }
 
