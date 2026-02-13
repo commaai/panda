@@ -11,11 +11,7 @@ from .base import BaseHandle, BaseSTBootloaderHandle, TIMEOUT
 from .constants import McuType, MCU_TYPE_BY_IDCODE, USBPACKET_MAX_SIZE
 from .utils import logger
 
-# No fcntl on Windows
-try:
-  import fcntl
-except ImportError:
-  fcntl = None # type: ignore
+import fcntl
 
 # No spidev on MacOS/Windows
 try:
