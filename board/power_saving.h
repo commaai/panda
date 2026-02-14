@@ -67,6 +67,36 @@ static void enter_stop_mode(void) {
     current_board->enable_can_transceiver(i, false);
   }
 
+  // Set all GPIOs to analog to eliminate Schmitt trigger leakage
+  GPIOA->MODER = 0xFFFFFFFFU;
+  GPIOB->MODER = 0xFFFFFFFFU;
+  GPIOC->MODER = 0xFFFFFFFFU;
+  GPIOD->MODER = 0xFFFFFFFFU;
+  GPIOE->MODER = 0xFFFFFFFFU;
+  GPIOF->MODER = 0xFFFFFFFFU;
+  GPIOG->MODER = 0xFFFFFFFFU;
+
+  // Re-assert critical outputs after blanket analog
+  set_gpio_output(GPIOA, 0, true);   // SOM standby
+  set_gpio_output(GPIOC, 11, true);  // DC_IN_EN_N
+  set_gpio_output(GPIOB, 7, true);   // CAN1 XCVR disable
+  set_gpio_output(GPIOB, 10, true);  // CAN2 XCVR disable
+  set_gpio_output(GPIOD, 8, true);   // CAN3 XCVR disable
+  set_gpio_output(GPIOB, 11, true);  // CAN4 XCVR disable
+
+  // ADC deep power-down
+  ADC1->CR &= ~ADC_CR_ADEN;
+  ADC1->CR |= ADC_CR_DEEPPWD;
+  ADC2->CR &= ~ADC_CR_ADEN;
+  ADC2->CR |= ADC_CR_DEEPPWD;
+  ADC3->CR &= ~ADC_CR_ADEN;
+  ADC3->CR |= ADC_CR_DEEPPWD;
+
+  // Disable SRAM retention in Stop mode (content not needed, we reset on wakeup)
+  register_clear_bits(&(RCC->AHB2LPENR), RCC_AHB2LPENR_SRAM1LPEN | RCC_AHB2LPENR_SRAM2LPEN);
+  register_clear_bits(&(RCC->AHB4LPENR), RCC_AHB4LPENR_SRAM4LPEN);
+  register_clear_bits(&(RCC->AHB3LPENR), RCC_AHB3LPENR_AXISRAMLPEN);
+
   // SBU pins to input for EXTI wakeup
   set_gpio_mode(current_board->harness_config->GPIO_SBU1,
                 current_board->harness_config->pin_SBU1, MODE_INPUT);
