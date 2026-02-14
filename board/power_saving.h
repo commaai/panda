@@ -52,21 +52,6 @@ void set_power_save_state(int state) {
 }
 
 static void enter_stop_mode(void) {
-  // keep SOM off
-  current_board->set_bootkick(BOOT_STANDBY);
-
-  // disable outputs
-  led_set(LED_RED, false);
-  led_set(LED_GREEN, false);
-  led_set(LED_BLUE, false);
-  current_board->set_fan_enabled(false);
-  current_board->set_amp_enabled(false);
-
-  // set all transceivers to standby
-  for (uint8_t i = 1U; i <= 4U; i++) {
-    current_board->enable_can_transceiver(i, false);
-  }
-
   // Set all GPIOs to analog to eliminate Schmitt trigger leakage
   GPIOA->MODER = 0xFFFFFFFFU;
   GPIOB->MODER = 0xFFFFFFFFU;
@@ -79,20 +64,26 @@ static void enter_stop_mode(void) {
   // Re-assert critical outputs after blanket analog
   set_gpio_output(GPIOA, 0, true);   // SOM standby
   set_gpio_output(GPIOC, 11, true);  // DC_IN_EN_N
-  set_gpio_output(GPIOB, 7, true);   // CAN1 XCVR disable
-  set_gpio_output(GPIOB, 10, true);  // CAN2 XCVR disable
-  set_gpio_output(GPIOD, 8, true);   // CAN3 XCVR disable
-  set_gpio_output(GPIOB, 11, true);  // CAN4 XCVR disable
+  set_gpio_output(GPIOB, 0, false);  // amp disable
+  set_gpio_output(GPIOB, 7, true);   // CAN1 XCVR standby
+  set_gpio_output(GPIOB, 10, true);  // CAN2 XCVR standby
+  set_gpio_output(GPIOD, 8, true);   // CAN3 XCVR standby
+  set_gpio_output(GPIOB, 11, true);  // CAN4 XCVR standby
 
-  // ADC deep power-down
-  ADC1->CR &= ~ADC_CR_ADEN;
-  ADC1->CR |= ADC_CR_DEEPPWD;
-  ADC2->CR &= ~ADC_CR_ADEN;
-  ADC2->CR |= ADC_CR_DEEPPWD;
-  ADC3->CR &= ~ADC_CR_ADEN;
-  ADC3->CR |= ADC_CR_DEEPPWD;
+  // ADC deep power-down (ADDIS + wait per RM0468)
+  ADC_TypeDef *const adcs[] = {ADC1, ADC2, ADC3};
+  for (uint8_t i = 0U; i < 3U; i++) {
+    if (adcs[i]->CR & ADC_CR_ADEN) {
+      adcs[i]->CR |= ADC_CR_ADDIS;
+      while (adcs[i]->CR & ADC_CR_ADEN);
+    }
+    adcs[i]->CR |= ADC_CR_DEEPPWD;
+  }
 
-  // Disable SRAM retention in Stop mode (content not needed, we reset on wakeup)
+  // disable HSI48 (USB clock, may stay on via KERON)
+  register_clear_bits(&(RCC->CR), RCC_CR_HSI48ON);
+
+  // disable SRAM retention in stop mode (content not needed, we reset on wakeup)
   register_clear_bits(&(RCC->AHB2LPENR), RCC_AHB2LPENR_SRAM1LPEN | RCC_AHB2LPENR_SRAM2LPEN);
   register_clear_bits(&(RCC->AHB4LPENR), RCC_AHB4LPENR_SRAM4LPEN);
   register_clear_bits(&(RCC->AHB3LPENR), RCC_AHB3LPENR_AXISRAMLPEN);
