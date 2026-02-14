@@ -61,18 +61,21 @@ static void enter_stop_mode(void) {
   GPIOF->MODER = 0xFFFFFFFFU;
   GPIOG->MODER = 0xFFFFFFFFU;
 
-  // re-enable GPIO states
+  // init GPIOs to lowest power state
   current_board->set_bootkick(BOOT_STANDBY);
-  led_set(LED_RED, false);
-  led_set(LED_GREEN, false);
-  led_set(LED_BLUE, false);
-  current_board->set_fan_enabled(false);
   current_board->set_amp_enabled(false);
   for (uint8_t i = 1U; i <= 4U; i++) {
     current_board->enable_can_transceiver(i, false);
   }
 
-  // disable SRAM retention in stop mode (content not needed, we reset on wakeup)
+  ADC1->CR &= ~(ADC_CR_ADEN);
+  ADC1->CR |= ADC_CR_DEEPPWD;
+  ADC2->CR &= ~(ADC_CR_ADEN);
+  ADC2->CR |= ADC_CR_DEEPPWD;
+
+  // HSI48 is 48 MHz USB clock
+  register_clear_bits(&(RCC->CR), RCC_CR_HSI48ON);
+
   register_clear_bits(&(RCC->AHB2LPENR), RCC_AHB2LPENR_SRAM1LPEN | RCC_AHB2LPENR_SRAM2LPEN);
   register_clear_bits(&(RCC->AHB4LPENR), RCC_AHB4LPENR_SRAM4LPEN);
   register_clear_bits(&(RCC->AHB3LPENR), RCC_AHB3LPENR_AXISRAMLPEN);
