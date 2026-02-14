@@ -62,8 +62,10 @@ static void enter_stop_mode(void) {
   current_board->set_fan_enabled(false);
   current_board->set_amp_enabled(false);
 
-  // Disable non-main CAN transceivers (main bus stays on for CAN-based ignition wakeup)
-  enable_can_transceivers(false);
+  // set all transceivers to standby
+  for (uint8_t i = 1U; i <= 4U; i++) {
+    current_board->enable_can_transceiver(i, false);
+  }
 
   // Set SBU pins to input mode for EXTI wakeup (wire ignition)
   set_gpio_mode(current_board->harness_config->GPIO_SBU1,
