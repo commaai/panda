@@ -1,7 +1,7 @@
 #include "power_saving_declarations.h"
 
 // CoU_3 (STM UM1840): Hardware low-power modes must NOT be used during safety function execution.
-// Stop mode is only entered from SAFETY_SILENT after heartbeat timeout — no safety function is active.
+// Stop mode is only entered from SAFETY_SILENT when no safety function is active.
 
 int power_save_status = POWER_SAVE_STATUS_DISABLED;
 
@@ -52,10 +52,10 @@ void set_power_save_state(int state) {
 }
 
 static void enter_stop_mode(void) {
-  // Ensure SOM stays off
+  // keep SOM off
   current_board->set_bootkick(BOOT_STANDBY);
 
-  // Turn off power-drawing outputs
+  // disable outputs
   led_set(LED_RED, false);
   led_set(LED_GREEN, false);
   led_set(LED_BLUE, false);
@@ -67,45 +67,42 @@ static void enter_stop_mode(void) {
     current_board->enable_can_transceiver(i, false);
   }
 
-  // Set SBU pins to input mode for EXTI wakeup (wire ignition)
+  // SBU pins to input for EXTI wakeup
   set_gpio_mode(current_board->harness_config->GPIO_SBU1,
                 current_board->harness_config->pin_SBU1, MODE_INPUT);
   set_gpio_mode(current_board->harness_config->GPIO_SBU2,
                 current_board->harness_config->pin_SBU2, MODE_INPUT);
 
-  // Configure SYSCFG EXTI mux: EXTI1 -> Port A (PA1), EXTI4 -> Port C (PC4)
-  register_set(&(SYSCFG->EXTICR[0]), SYSCFG_EXTICR1_EXTI1_PA, SYSCFG_EXTICR1_EXTI1);
-  register_set(&(SYSCFG->EXTICR[1]), SYSCFG_EXTICR2_EXTI4_PC, SYSCFG_EXTICR2_EXTI4);
-
-  // Both edges on SBU pins
+  // SBU EXTI: EXTI1 -> PA1 (SBU2), EXTI4 -> PC4 (SBU1)
+  register_set(&(SYSCFG->EXTICR[0]), SYSCFG_EXTICR1_EXTI1_PA, 0xF0U);
+  register_set(&(SYSCFG->EXTICR[1]), SYSCFG_EXTICR2_EXTI4_PC, 0xFU);
+  register_set_bits(&(EXTI->IMR1), (1U << 1) | (1U << 4));
   register_set_bits(&(EXTI->RTSR1), (1U << 1) | (1U << 4));
   register_set_bits(&(EXTI->FTSR1), (1U << 1) | (1U << 4));
-  register_set_bits(&(EXTI->IMR1), (1U << 1) | (1U << 4));
 
-  // CAN RX pin EXTI for CAN-based ignition wakeup
-  // Normal: main bus = FDCAN1, RX = PB8 (EXTI8)
-  // Flipped: main bus = FDCAN3, RX = PD12 (EXTI12)
+  // CAN RX EXTI for CAN ignition
+  // Normal:  FDCAN1 RX = PB8  (EXTI8)
+  // Flipped: FDCAN3 RX = PD12 (EXTI12)
   uint32_t can_exti_line;
   if (harness.status == HARNESS_STATUS_FLIPPED) {
     set_gpio_mode(GPIOD, 12, MODE_INPUT);
-    register_set(&(SYSCFG->EXTICR[3]), SYSCFG_EXTICR4_EXTI12_PD, SYSCFG_EXTICR4_EXTI12);
+    register_set(&(SYSCFG->EXTICR[3]), SYSCFG_EXTICR4_EXTI12_PD, 0xFU);
     can_exti_line = (1U << 12);
   } else {
     set_gpio_mode(GPIOB, 8, MODE_INPUT);
-    register_set(&(SYSCFG->EXTICR[2]), SYSCFG_EXTICR3_EXTI8_PB, SYSCFG_EXTICR3_EXTI8);
+    register_set(&(SYSCFG->EXTICR[2]), SYSCFG_EXTICR3_EXTI8_PB, 0xFU);
     can_exti_line = (1U << 8);
   }
-  // Falling edge only — CAN SOF is a dominant (low) bit
-  register_set_bits(&(EXTI->FTSR1), can_exti_line);
   register_set_bits(&(EXTI->IMR1), can_exti_line);
+  register_set_bits(&(EXTI->FTSR1), can_exti_line);
 
-  // Disable all NVIC interrupts and clear pending
+  // disable all NVIC interrupts and clear pending
   for (uint32_t i = 0U; i < 8U; i++) {
     NVIC->ICER[i] = 0xFFFFFFFFU;
     NVIC->ICPR[i] = 0xFFFFFFFFU;
   }
 
-  // Enable only wakeup EXTI lines in NVIC
+  // enable only wakeup EXTI lines
   NVIC_EnableIRQ(EXTI1_IRQn);     // SBU2 (PA1)
   NVIC_EnableIRQ(EXTI4_IRQn);     // SBU1 (PC4)
   if (harness.status == HARNESS_STATUS_FLIPPED) {
@@ -114,29 +111,25 @@ static void enter_stop_mode(void) {
     NVIC_EnableIRQ(EXTI9_5_IRQn);    // CAN1 RX (PB8)
   }
 
-  // Clear pending EXTI, then check if ignition is already on
+  // check if ignition is already on
   EXTI->PR1 = (1U << 1) | (1U << 4) | can_exti_line;
   if (harness_check_ignition()) {
     NVIC_SystemReset();
   }
 
-  // Configure PWR for Stop mode: clear PDDS bits (not Standby)
+  // stop mode (not standby)
   register_clear_bits(&(PWR->CPUCR), PWR_CPUCR_PDDS_D1 | PWR_CPUCR_PDDS_D2 | PWR_CPUCR_PDDS_D3);
 
-  // SVOS5 (lowest voltage in Stop) + Flash low-power mode
+  // SVOS5 + flash low-power
   register_set(&(PWR->CR1), PWR_CR1_SVOS_0 | PWR_CR1_FLPS, PWR_CR1_SVOS | PWR_CR1_FLPS);
 
-  // Set SLEEPDEEP for Stop mode entry
+  // enter stop mode on WFI
   SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
 
-  // Mask interrupts at CPU level — WFI still wakes on pending NVIC interrupt
-  // with PRIMASK=1 (ARMv7-M B1.5.2), but ISR won't dispatch
   __disable_irq();
-
   __DSB();
   __ISB();
   __WFI();
 
-  // Woke up — reboot cleanly
   NVIC_SystemReset();
 }
