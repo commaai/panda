@@ -2,7 +2,11 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "../stm32h7/stm32h7_config.h"
+#ifdef STM32H7
+  #include "../stm32h7/stm32h7_config.h"
+#else
+  #include "board/config.h"
+#endif
 
 // ***************************** Definitions *****************************
 #define FIFO_SIZE_INT 0x400U

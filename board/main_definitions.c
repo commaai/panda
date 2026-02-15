@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "board/boards/board_declarations.h"
 #include "board/main_declarations.h"
 #include "board/main_definitions.h"

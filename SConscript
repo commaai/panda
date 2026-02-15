@@ -61,7 +61,9 @@ def to_c_uint32(x):
 
 
 def build_project(project_name, project, extra_sources, extra_flags):
-  project_dir = Dir(f'./board/obj/{project_name}/')
+  base_project_dir = Dir(f'./board/obj/{project_name}/')
+  app_project_dir = Dir(f'./board/obj/{project_name}/app/')
+  bs_project_dir = Dir(f'./board/obj/{project_name}/bootstub/')
 
   flags = project["FLAGS"] + extra_flags + common_flags + [
     "-Wall",
@@ -86,7 +88,7 @@ def build_project(project_name, project, extra_sources, extra_flags):
     AS=PREFIX + 'gcc',
     OBJCOPY=PREFIX + 'objcopy',
     OBJDUMP=PREFIX + 'objdump',
-    OBJPREFIX=project_dir,
+    OBJPREFIX=app_project_dir,
     CFLAGS=flags,
     ASFLAGS=flags,
     LINKFLAGS=flags,
@@ -149,7 +151,9 @@ def build_project(project_name, project, extra_sources, extra_flags):
   # Build bootstub
   bs_env = env.Clone()
   bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
-  bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", [
+  # Use a separate object directory for bootstub
+  bs_env['OBJPREFIX'] = bs_project_dir
+  bs_elf = bs_env.Program(f"{base_project_dir}/bootstub.elf", [
     startup,
     "./crypto/rsa.c",
     "./crypto/sha.c",
@@ -159,11 +163,11 @@ def build_project(project_name, project, extra_sources, extra_flags):
   bs_env.Objcopy(f"./board/obj/bootstub.{project_name}.bin", bs_elf)
 
   # Build + sign main (aka app)
-  main_elf = env.Program(f"{project_dir}/main.elf", [
+  main_elf = env.Program(f"{base_project_dir}/main.elf", [
     startup,
     "./board/main_definitions.c",
   ] + drivers + extra_sources, LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
-  main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
+  main_bin = env.Objcopy(f"{base_project_dir}/main.bin", main_elf)
   sign_py = File(f"./crypto/sign.py").srcnode().relpath
   env.Command(f"./board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
 

@@ -12,6 +12,8 @@
     which is sent by the host on each start of a connection.
 */
 
+#include <stdint.h>
+
 typedef struct {
   uint32_t ptr;
   uint32_t tail_size;
@@ -25,3 +27,7 @@ int comms_can_read(uint8_t *data, uint32_t max_len);
 void comms_can_write(const uint8_t *data, uint32_t len);
 void comms_can_reset(void);
 void refresh_can_tx_slots_available(void);
+
+// Drivers must implement these
+void can_tx_comms_resume_usb(void);
+void can_tx_comms_resume_spi(void);

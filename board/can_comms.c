@@ -1,4 +1,9 @@
+#include "board/config.h"
 #include "board/can_comms.h"
+#include "board/utils.h"
+#include "board/libc.h"
+#include "board/can.h"
+#include "board/drivers/can_common.h"
 
 asm_buffer can_read_buffer = {.ptr = 0U, .tail_size = 0U};
 asm_buffer can_write_buffer = {.ptr = 0U, .tail_size = 0U};

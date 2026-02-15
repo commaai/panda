@@ -1,5 +1,8 @@
 // **** libc ****
+#include <stdint.h>
+#include <stdbool.h>
 
+void print(const char *a);
 __attribute__((aligned(32), noinline)) void delay(uint32_t a);
 void assert_fatal(bool condition, const char *msg);
 void *memset(void *str, int c, unsigned int n);

@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "board/can.h"
+#include "board/health.h"
 
 typedef struct {
   volatile uint32_t w_ptr;
@@ -83,4 +84,4 @@ bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len);
 
 // External dependencies (implemented elsewhere)
 extern void refresh_can_tx_slots_available(void);
-extern int safety_tx_hook(CANPacket_t *to_send);
+extern bool safety_tx_hook(CANPacket_t *to_send);

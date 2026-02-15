@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+typedef struct harness_configuration harness_configuration;
+
 // ******************** Prototypes ********************
 typedef enum {
   BOOT_STANDBY,
