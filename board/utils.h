@@ -1,3 +1,7 @@
+#pragma once
+
+#include <stdint.h>
+
 // cppcheck-suppress-macro misra-c2012-1.2; allow __typeof__ extension
 #define MIN(a, b) ({ \
   __typeof__ (a) _a = (a); \
@@ -40,8 +44,4 @@
 
 #define COMPILE_TIME_ASSERT(pred) ((void)sizeof(char[1 - (2 * (!(pred) ? 1 : 0))]))
 
-// compute the time elapsed (in microseconds) from 2 counter samples
-// case where ts < ts_last is ok: overflow is properly re-casted into uint32_t
-uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
-  return ts - ts_last;
-}
+uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);

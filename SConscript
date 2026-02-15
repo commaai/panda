@@ -60,7 +60,7 @@ def to_c_uint32(x):
   return "{" + 'U,'.join(map(str, nums)) + "U}"
 
 
-def build_project(project_name, project, main, extra_flags):
+def build_project(project_name, project, extra_sources, extra_flags):
   project_dir = Dir(f'./board/obj/{project_name}/')
 
   flags = project["FLAGS"] + extra_flags + common_flags + [
@@ -100,6 +100,52 @@ def build_project(project_name, project, main, extra_flags):
 
   startup = env.Object(project["STARTUP_FILE"])
 
+  drivers = [
+    "./board/can_comms.c",
+    "./board/crc.c",
+    "./board/critical.c",
+    "./board/early_init.c",
+    "./board/faults.c",
+    "./board/flasher.c",
+    "./board/libc.c",
+    "./board/power_saving.c",
+    "./board/provision.c",
+    "./board/utils.c",
+    "./board/boards/cuatro.c",
+    "./board/boards/red.c",
+    "./board/boards/tres.c",
+    "./board/boards/unused_funcs.c",
+    "./board/drivers/bootkick.c",
+    "./board/drivers/can_common.c",
+    "./board/drivers/clock_source.c",
+    "./board/drivers/fan.c",
+    "./board/drivers/fdcan.c",
+    "./board/drivers/gpio.c",
+    "./board/drivers/harness.c",
+    "./board/drivers/interrupts.c",
+    "./board/drivers/led.c",
+    "./board/drivers/pwm.c",
+    "./board/drivers/registers.c",
+    "./board/drivers/simple_watchdog.c",
+    "./board/drivers/spi.c",
+    "./board/drivers/timers.c",
+    "./board/drivers/uart.c",
+    "./board/drivers/usb.c",
+    "./board/drivers/fake_siren.c",
+    "./board/stm32h7/clock.c",
+    "./board/stm32h7/interrupt_handlers.c",
+    "./board/stm32h7/lladc.c",
+    "./board/stm32h7/llfan.c",
+    "./board/stm32h7/llfdcan.c",
+    "./board/stm32h7/llflash.c",
+    "./board/stm32h7/lli2c.c",
+    "./board/stm32h7/llspi.c",
+    "./board/stm32h7/lluart.c",
+    "./board/stm32h7/llusb.c",
+    "./board/stm32h7/peripherals.c",
+    "./board/stm32h7/sound.c",
+  ]
+
   # Build bootstub
   bs_env = env.Clone()
   bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
@@ -108,14 +154,15 @@ def build_project(project_name, project, main, extra_flags):
     "./crypto/rsa.c",
     "./crypto/sha.c",
     "./board/bootstub.c",
-  ])
+    "./board/bootstub_declarations.c",
+  ] + drivers + extra_sources)
   bs_env.Objcopy(f"./board/obj/bootstub.{project_name}.bin", bs_elf)
 
   # Build + sign main (aka app)
   main_elf = env.Program(f"{project_dir}/main.elf", [
     startup,
-    main
-  ], LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
+    "./board/main_definitions.c",
+  ] + drivers + extra_sources, LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
   sign_py = File(f"./crypto/sign.py").srcnode().relpath
   env.Command(f"./board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
@@ -151,7 +198,12 @@ with open("board/obj/cert.h", "w") as f:
     f.write("\n".join(cert) + "\n")
 
 # panda fw
-build_project("panda_h7", base_project_h7, "./board/main.c", [])
+panda_sources = [
+  "./board/main.c",
+  "./board/main_comms.c",
+  "./board/stm32h7/board.c",
+]
+build_project("panda_h7", base_project_h7, panda_sources, [])
 
 # panda jungle fw
 flags = [
@@ -159,10 +211,28 @@ flags = [
 ]
 if os.getenv("FINAL_PROVISIONING"):
   flags += ["-DFINAL_PROVISIONING"]
-build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", flags)
+
+jungle_sources = [
+  "./board/jungle/main.c",
+  "./board/jungle/main_comms.c",
+  "./board/jungle/boards/board_v2.c",
+  "./board/jungle/boards/board_declarations.c",
+  "./board/jungle/stm32h7/board.c",
+]
+build_project("panda_jungle_h7", base_project_h7, jungle_sources, flags)
 
 # body fw
-build_project("body_h7", base_project_h7, "./board/body/main.c", ["-DPANDA_BODY"])
+body_sources = [
+  "./board/body/main.c",
+  "./board/body/can.c",
+  "./board/body/main_comms.c",
+  "./board/body/motor_common.c",
+  "./board/body/motor_control.c",
+  "./board/body/motor_encoder.c",
+  "./board/body/boards/board_body.c",
+  "./board/body/stm32h7/board.c",
+]
+build_project("body_h7", base_project_h7, body_sources, ["-DPANDA_BODY"])
 
 # test files
 if GetOption('extras'):
