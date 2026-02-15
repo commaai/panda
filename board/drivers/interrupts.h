@@ -1,4 +1,4 @@
-#include "drivers.h"
+#include "board/drivers/drivers.h"
 
 void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!
