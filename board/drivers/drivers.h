@@ -75,7 +75,6 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook);
 bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len);
 
 #ifdef STM32H7
-#include "board/can.h"
 
 typedef struct {
   volatile uint32_t header[2];
@@ -93,7 +92,6 @@ void process_can(uint8_t can_number);
 void can_rx(uint8_t can_number);
 bool can_init(uint8_t can_number);
 #endif
-
 
 #define CLOCK_SOURCE_PERIOD_MS           50U
 #define CLOCK_SOURCE_PULSE_LEN_MS        2U
@@ -377,8 +375,6 @@ void interrupt_timer_handler(void);
 void init_interrupts(bool check_rate_limit);
 #endif
 
-
-#include "board/crc.h"
 
 #define SPI_TIMEOUT_US 10000U
 
