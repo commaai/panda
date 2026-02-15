@@ -148,6 +148,7 @@ def fixture_panda_setup(request):
   init_jungle()
 
   # init panda
+  assert Panda.wait_for_panda(_panda_serial, timeout=10), "panda not found"
   p = Panda(serial=_panda_serial)
   p.reset(reconnect=True)
 
