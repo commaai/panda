@@ -1,5 +1,4 @@
-#include "libc.h"
-#include "print.h"
+#include "board/sys/sys.h"
 
 void delay(uint32_t a) {
   // loop is 2.6x faster when 32-byte aligned (ART accelerator prefetches flash in 32-byte chunks)

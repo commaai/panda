@@ -1,11 +1,9 @@
 #include "board/config.h"
-#include "board/libc.h"
+#include "board/sys/sys.h"
 #include "board/stm32h7/lldrivers.h"
 #include "board/drivers/drivers.h"
-#include "board/print.h"
 
 #include "board/globals.h"
-#include "board/provision.h"
 #include "board/early_init.h"
 #include "board/obj/gitversion.h"
 

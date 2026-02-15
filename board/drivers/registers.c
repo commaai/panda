@@ -1,7 +1,5 @@
 #include "board/config.h"
 #include "drivers.h"
-#include "board/libc.h"
-#include "board/print.h"
 
 static reg register_map[REGISTER_MAP_SIZE];
 

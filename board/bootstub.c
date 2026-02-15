@@ -12,7 +12,6 @@
 #include "crypto/sha.h"
 
 #include "board/obj/cert.h"
-#include "board/print.h"
 #include "board/drivers/drivers.h"
 
 #include "globals.h"

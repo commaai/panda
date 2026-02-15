@@ -1,5 +1,5 @@
 #include "board/config.h"
-#include "board/drivers/drivers.h"
+#include "board/sys/sys.h"
 uint8_t global_critical_depth = 0U;
 
 volatile bool interrupts_enabled = false;

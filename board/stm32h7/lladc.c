@@ -1,7 +1,5 @@
 #include "lldrivers.h"
 
-#include "board/libc.h"
-#include "board/print.h"
 
 static uint32_t adc_avdd_mV = 0U;
 

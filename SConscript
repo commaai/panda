@@ -103,9 +103,9 @@ def build_project(project_name, project, main, shared, extra_flags):
   shared += [
     "./crypto/rsa.c",
     "./crypto/sha.c",
-    "./board/libc.c",
+    "./board/sys/libc.c",
     "./board/early_init.c",
-    "./board/drivers/critical.c",
+    "./board/sys/critical.c",
     "./board/drivers/led.c",
     "./board/drivers/pwm.c",
     "./board/drivers/gpio.c",
@@ -119,7 +119,7 @@ def build_project(project_name, project, main, shared, extra_flags):
     "./board/drivers/registers.c",
     "./board/drivers/interrupts.c",
     "./board/stm32h7/interrupt_handlers.c",
-    "./board/provision.c",
+    "./board/sys/provision.c",
     "./board/stm32h7/peripherals.c",
     "./board/stm32h7/llusb.c",
     "./board/drivers/usb.c",
@@ -127,7 +127,7 @@ def build_project(project_name, project, main, shared, extra_flags):
     "./board/drivers/timers.c",
     "./board/stm32h7/lladc.c",
     "./board/stm32h7/llspi.c",
-    "./board/drivers/faults.c",
+    "./board/sys/faults.c",
     "./board/boards/unused_funcs.c",
     "./board/utils.c",
     "./board/globals.c",
@@ -145,7 +145,7 @@ def build_project(project_name, project, main, shared, extra_flags):
   bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", [
     startup,
     "./board/bootstub.c",
-    "./board/drivers/flasher.c",
+    "./board/sys/flasher.c",
   ] + shared)
   bs_env.Objcopy(f"./board/obj/bootstub.{project_name}.bin", bs_elf)
 

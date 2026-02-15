@@ -1,7 +1,6 @@
 #include "comms.h"
 #include "drivers/drivers.h"
 #include "utils.h"
-#include "libc.h"
 #include "can.h"
 
 #include "config.h"

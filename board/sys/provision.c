@@ -1,8 +1,5 @@
-// this is where we manage the dongle ID assigned during our
-// manufacturing. aside from this, there's a UID for the MCU
-
-#include "provision.h"
-#include "config.h"
+#include "board/config.h"
+#include "board/sys/sys.h"
 
 void get_provision_chunk(uint8_t *resp) {
   const unsigned char unprovisioned_text[] = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff";

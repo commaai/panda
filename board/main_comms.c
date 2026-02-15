@@ -2,12 +2,10 @@
 #include <stdbool.h>
 
 #include "board/drivers/drivers.h"
-#include "board/provision.h"
 #include "board/early_init.h"
 #include "board/obj/gitversion.h"
 #include "board/globals.h"
 #include "board/comms.h"
-#include "board/print.h"
 
 
 static int get_health_pkt(void *dat) {

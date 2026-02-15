@@ -5,12 +5,10 @@
 
 #include "board/early_init.h"
 
-#include "board/libc.h"
 
 #include "board/globals.h"
 
 #include "opendbc/safety/safety.h"
-#include "board/print.h"
 #include "board/comms.h"
 
 // ********************* Serial debugging *********************

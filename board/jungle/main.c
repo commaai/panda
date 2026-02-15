@@ -6,7 +6,6 @@
 #include "board/drivers/drivers.h"
 
 #include "board/early_init.h"
-#include "board/provision.h"
 
 #include "board/health.h"
 #include "board/jungle/jungle_health.h"
@@ -14,7 +13,6 @@
 #include "board/obj/gitversion.h"
 
 #include "board/jungle/main_comms.h"
-#include "board/print.h"
 
 // ********************* Serial debugging *********************
 

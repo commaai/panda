@@ -1,6 +1,5 @@
 #include "board/config.h"
-#include "board/drivers/drivers.h"
-#include "board/print.h"
+#include "board/sys/sys.h"
 
 uint8_t fault_status = FAULT_STATUS_NONE;
 uint32_t faults = 0U;

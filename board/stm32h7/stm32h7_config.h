@@ -48,7 +48,6 @@ separate IRQs for RX and TX.
 #include "board/can.h"
 #include "board/comms.h"
 
-#include "board/libc.h"
 #include "board/utils.h"
 
 #include "board/drivers/drivers.h"
