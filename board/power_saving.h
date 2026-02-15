@@ -52,16 +52,16 @@ void set_power_save_state(int state) {
 }
 
 static void enter_stop_mode(void) {
-  // set all to analog mode to reduce leakage current
-  GPIOA->MODER = 0xFFFFFFFFU;
-  GPIOB->MODER = 0xFFFFFFFFU;
-  GPIOC->MODER = 0xFFFFFFFFU;
-  GPIOD->MODER = 0xFFFFFFFFU;
-  GPIOE->MODER = 0xFFFFFFFFU;
-  GPIOF->MODER = 0xFFFFFFFFU;
-  GPIOG->MODER = 0xFFFFFFFFU;
+  // set all GPIO to analog mode to reduce current
+  register_set(&(GPIOA->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOB->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOC->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOD->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOE->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOF->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOG->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
 
-  // init GPIOs to lowest power state
+  // init GPIO to lowest power state
   current_board->set_bootkick(BOOT_STANDBY);
   current_board->set_amp_enabled(false);
   for (uint8_t i = 1U; i <= 4U; i++) {
@@ -73,7 +73,7 @@ static void enter_stop_mode(void) {
   ADC2->CR &= ~(ADC_CR_ADEN);
   ADC2->CR |= ADC_CR_DEEPPWD;
 
-  // HSI48 is 48 MHz USB clock
+  // disable HSI48, 48 MHz USB clock
   register_clear_bits(&(RCC->CR), RCC_CR_HSI48ON);
 
   register_clear_bits(&(RCC->AHB2LPENR), RCC_AHB2LPENR_SRAM1LPEN | RCC_AHB2LPENR_SRAM2LPEN);
