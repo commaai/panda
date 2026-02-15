@@ -1,7 +1,6 @@
 // When changing these structs, python/__init__.py needs to be kept up to date!
 
-#ifndef BOARD_HEALTH_H
-#define BOARD_HEALTH_H
+#pragma once
 
 #define HEALTH_PACKET_VERSION 17
 struct __attribute__((packed)) health_t {
@@ -61,5 +60,3 @@ typedef struct __attribute__((packed)) {
   uint32_t irq2_call_rate;
   uint32_t can_core_reset_cnt;
 } can_health_t;
-
-#endif
