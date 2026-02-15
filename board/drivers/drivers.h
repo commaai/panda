@@ -270,8 +270,7 @@ void init_registers(void);
 
 
 // ***************************** Definitions *****************************
-#if defined(STM32H7) && !defined(BOOTSTUB) && !defined(DRIVERS_UART_RING_DECL)
-#define DRIVERS_UART_RING_DECL
+#if defined(STM32H7) && !defined(BOOTSTUB)
 #define FIFO_SIZE_INT 0x400U
 
 typedef struct uart_ring {

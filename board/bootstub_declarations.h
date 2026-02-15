@@ -6,13 +6,10 @@ void puth4(uint8_t i){ UNUSED(i); }
 void hexdump(const void *a, int l){ UNUSED(a); UNUSED(l); }
 typedef struct board board;
 typedef struct harness_configuration harness_configuration;
+typedef struct uart_ring uart_ring;
+extern uart_ring uart_ring_som_debug;
 void pwm_init(TIM_TypeDef *TIM, uint8_t channel);
 void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
-#ifndef DRIVERS_UART_RING_DECL
-typedef struct uart_ring {} uart_ring;
-#define DRIVERS_UART_RING_DECL
-#endif
-uart_ring uart_ring_som_debug;
 void uart_init(uart_ring *q, int baud) { UNUSED(q); UNUSED(baud); }
 
 // ********************* Globals **********************
