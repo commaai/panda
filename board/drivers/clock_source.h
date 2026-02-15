@@ -1,4 +1,4 @@
-#include "clock_source_declarations.h"
+#include "board/drivers/drivers.h"
 
 void clock_source_set_timer_params(uint16_t param1, uint16_t param2) {
   // Pulse length of each channel

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "board/drivers/spi_declarations.h"
+#include "board/drivers/drivers.h"
 #include "board/crc.h"
 
 uint8_t spi_buf_rx[SPI_BUF_SIZE];
