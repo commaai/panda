@@ -5,15 +5,11 @@
 
 #include "board/config.h"
 
-// ======================= BOOT STATE =======================
-
 typedef enum {
   BOOT_STANDBY,
   BOOT_BOOTKICK,
   BOOT_RESET,
 } BootState;
-
-// ======================= BOARD FUNCTION TYPES =======================
 
 typedef bool (*board_get_button)(void);
 typedef bool (*board_read_som_gpio)(void);
@@ -37,8 +33,6 @@ typedef void (*board_set_ir_power)(uint8_t percentage);
 typedef void (*board_set_panda_individual_power)(uint8_t port_num, bool enabled);
 typedef void (*board_set_panda_power)(bool enabled);
 typedef void (*board_set_siren)(bool enabled);
-
-// ======================= BOARD STRUCT =======================
 
 typedef struct board {
   struct harness_configuration *harness_config;
@@ -73,8 +67,6 @@ typedef struct board {
   board_get_sbu_mV get_sbu_mV;
 } board;
 
-// ======================= UNUSED FUNCS =======================
-
 void unused_init_bootloader(void);
 void unused_set_ir_power(uint8_t percentage);
 void unused_set_fan_enabled(bool enabled);
@@ -84,9 +76,6 @@ void unused_set_bootkick(BootState state);
 bool unused_read_som_gpio(void);
 void unused_set_amp_enabled(bool enabled);
 
-// ======================= RED =======================
-// Red Panda (STM32H7) + Harness
-
 struct harness_configuration;
 
 extern struct harness_configuration red_harness_config;
@@ -94,14 +83,9 @@ extern struct board board_red;
 
 uint32_t red_read_voltage_mV(void);
 
-// ======================= TRES =======================
-
 extern struct board board_tres;
 
 void tres_set_can_mode(uint8_t mode);
 bool tres_read_som_gpio(void);
-
-// ======================= CUATRO =======================
-// Cuatro (STM32H7) + Harness
 
 extern struct board board_cuatro;

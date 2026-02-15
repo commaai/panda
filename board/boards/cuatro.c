@@ -3,10 +3,6 @@
 #include "board/drivers/drivers.h"
 #include "board/stm32h7/lldrivers.h"
 
-// ////////////////////////// //
-// Cuatro (STM32H7) + Harness //
-// ////////////////////////// //
-
 static void cuatro_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver) {
     case 1U:

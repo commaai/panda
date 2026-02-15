@@ -1,12 +1,7 @@
 #include "boards.h"
-
 #include "board/drivers/drivers.h"
 #include "board/globals.h"
 #include "board/stm32h7/lldrivers.h"
-
-// ///////////////////////////
-// Tres (STM32H7) + Harness //
-// ///////////////////////////
 
 static bool tres_ir_enabled;
 static bool tres_fan_enabled;

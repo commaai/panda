@@ -2,10 +2,6 @@
 
 #include "board/globals.h"
 
-// ///////////////////////////// //
-// Red Panda (STM32H7) + Harness //
-// ///////////////////////////// //
-
 static void red_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver) {
     case 1U:
