@@ -7,3 +7,5 @@ DO NOT write hacks to make this happen, such as generic test retries.
 we are looking for good root causes and principled fixes.
 
 to trigger runs without changing code, you can use the jenkins API
+
+write down your own notes in NOTES.md, for example how to trigger and view test results
