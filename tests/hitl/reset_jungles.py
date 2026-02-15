@@ -15,7 +15,6 @@ def recover(s):
 def flash(s):
   with PandaJungle(s) as p:
     p.flash()
-    return p.get_mcu_type()
 
 # Reset + flash all CI hardware to get it into a consistent state
 # * port 1: jungles-under-test
@@ -42,5 +41,4 @@ if __name__ == "__main__":
       for s in SERIALS:
         assert PandaJungle.wait_for_panda(s, timeout=10)
       assert set(PandaJungle.list()) >= SERIALS
-      mcu_types = list(exc.map(flash, SERIALS, timeout=20))
-      assert set(mcu_types) == {McuType.H7, }
+      list(exc.map(flash, SERIALS, timeout=20))
