@@ -4,7 +4,6 @@
 // ********************* Includes *********************
 #include <stdbool.h>
 
-#include "board/config.h"
 #include "board/early_init.h"
 #include "board/drivers/drivers.h"
 
@@ -12,7 +11,6 @@
 #include "crypto/sha.h"
 
 #include "board/obj/cert.h"
-#include "board/drivers/drivers.h"
 
 #include "globals.h"
 

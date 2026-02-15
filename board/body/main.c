@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "board/config.h"
 #include "board/drivers/drivers.h"
 #include "board/early_init.h"
 #include "board/obj/gitversion.h"

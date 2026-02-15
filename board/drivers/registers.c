@@ -1,4 +1,3 @@
-#include "board/config.h"
 #include "drivers.h"
 
 static reg register_map[REGISTER_MAP_SIZE];

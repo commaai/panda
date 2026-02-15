@@ -1,13 +1,10 @@
 // ********************* Includes *********************
-#include "board/config.h"
+#include "board/drivers/drivers.h"
 
 #include "opendbc/safety/safety.h"
 
-#include "board/drivers/drivers.h"
-
 #include "board/early_init.h"
 
-#include "board/health.h"
 #include "board/jungle/jungle_health.h"
 
 #include "board/obj/gitversion.h"

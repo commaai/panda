@@ -1,4 +1,3 @@
-#include "board/config.h"
 #include "board/sys/sys.h"
 #include "board/stm32h7/lldrivers.h"
 #include "board/drivers/drivers.h"

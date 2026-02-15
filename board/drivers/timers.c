@@ -1,5 +1,4 @@
 #include "drivers.h"
-#include "board/config.h"
 
 static void timer_init(TIM_TypeDef *TIM, int psc) {
   register_set(&(TIM->PSC), (psc-1), 0xFFFFU);

@@ -1,4 +1,3 @@
-#include "board/config.h"
 #include "board/sys/sys.h"
 
 void get_provision_chunk(uint8_t *resp) {

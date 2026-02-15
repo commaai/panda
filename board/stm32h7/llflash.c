@@ -1,7 +1,5 @@
 #include "lldrivers.h"
 
-#include "stm32h7_config.h"
-
 bool flash_is_locked(void) {
   return (FLASH->CR1 & FLASH_CR_LOCK);
 }

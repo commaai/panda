@@ -1,5 +1,4 @@
 #include "drivers.h"
-#include "board/config.h"
 
 #include "board/globals.h"
 

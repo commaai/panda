@@ -1,4 +1,3 @@
-#include "board/config.h"
 #include "drivers.h"
 
 #define UART_BUFFER(x, size_rx, size_tx, uart_ptr, callback_ptr, overwrite_mode) \

@@ -1,7 +1,5 @@
 #include "drivers.h"
 
-#include "board/config.h"
-
 FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT] = {FDCAN1, FDCAN2, FDCAN3};
 
 static bool can_set_speed(uint8_t can_number) {

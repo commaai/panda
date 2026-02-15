@@ -2,8 +2,6 @@
 
 #include "drivers.h"
 
-#include "board/utils.h"
-
 static simple_watchdog_state_t wd_state;
 
 void simple_watchdog_kick(void) {
