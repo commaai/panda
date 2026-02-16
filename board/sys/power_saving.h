@@ -3,7 +3,7 @@
 // WARNING: To stay in compliance with the SIL2 rules laid out in STM UM1840, we should never implement any of the available hardware low power modes.
 // See rule: CoU_3
 
-int power_save_status = POWER_SAVE_STATUS_DISABLED;
+bool power_save_enabled = false;
 
 void enable_can_transceivers(bool enabled) {
   // Leave main CAN always on for CAN-based ignition detection
@@ -13,11 +13,9 @@ void enable_can_transceivers(bool enabled) {
   }
 }
 
-void set_power_save_state(int state) {
-  bool is_valid_state = (state == POWER_SAVE_STATUS_ENABLED) || (state == POWER_SAVE_STATUS_DISABLED);
-  if (is_valid_state && (state != power_save_status)) {
-    bool enable = false;
-    if (state == POWER_SAVE_STATUS_ENABLED) {
+void set_power_save_state(bool enable) {
+  if (enable != power_save_enabled) {
+    if (enable) {
       print("enable power savings\n");
 
       // Disable CAN interrupts
@@ -36,17 +34,15 @@ void set_power_save_state(int state) {
         llcan_irq_enable(cans[2]);
       }
       llcan_irq_enable(cans[1]);
-
-      enable = true;
     }
 
-    enable_can_transceivers(enable);
+    enable_can_transceivers(!enable);
 
     // Switch off IR when in power saving
-    if(!enable){
+    if(enable){
       current_board->set_ir_power(0U);
     }
 
-    power_save_status = state;
+    power_save_enabled = enable;
   }
 }
