@@ -241,8 +241,13 @@ void simple_watchdog_init(uint32_t fault, uint32_t threshold);
 
 #define SPI_BUF_SIZE 4096U
 // H7 DMA2 located in D2 domain, so we need to use SRAM1/SRAM2
+#ifdef STM32H7
 __attribute__((section(".sram12"))) extern uint8_t spi_buf_rx[SPI_BUF_SIZE];
 __attribute__((section(".sram12"))) extern uint8_t spi_buf_tx[SPI_BUF_SIZE];
+#else
+extern uint8_t spi_buf_rx[SPI_BUF_SIZE];
+extern uint8_t spi_buf_tx[SPI_BUF_SIZE];
+#endif
 
 #define SPI_CHECKSUM_START 0xABU
 #define SPI_SYNC_BYTE 0x5AU
