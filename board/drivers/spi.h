@@ -2,8 +2,6 @@
 
 #include "board/drivers/drivers.h"
 
-#define SPI_TIMEOUT_US 10000U
-
 // H7 DMA2 located in D2 domain, so we need to use SRAM1/SRAM2
 #ifdef STM32H7
 __attribute__((section(".sram12"))) uint8_t spi_buf_rx[SPI_BUF_SIZE];

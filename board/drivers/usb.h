@@ -25,16 +25,10 @@ typedef union _USB_Setup {
 
 // **** supporting defines ****
 #define  USB_REQ_GET_STATUS                             0x00
-#define  USB_REQ_CLEAR_FEATURE                          0x01
-#define  USB_REQ_SET_FEATURE                            0x03
 #define  USB_REQ_SET_ADDRESS                            0x05
 #define  USB_REQ_GET_DESCRIPTOR                         0x06
-#define  USB_REQ_SET_DESCRIPTOR                         0x07
-#define  USB_REQ_GET_CONFIGURATION                      0x08
 #define  USB_REQ_SET_CONFIGURATION                      0x09
-#define  USB_REQ_GET_INTERFACE                          0x0A
 #define  USB_REQ_SET_INTERFACE                          0x0B
-#define  USB_REQ_SYNCH_FRAME                            0x0C
 
 #define  USB_DESC_TYPE_DEVICE                           0x01
 #define  USB_DESC_TYPE_CONFIGURATION                    0x02
@@ -42,7 +36,6 @@ typedef union _USB_Setup {
 #define  USB_DESC_TYPE_INTERFACE                        0x04
 #define  USB_DESC_TYPE_ENDPOINT                         0x05
 #define  USB_DESC_TYPE_DEVICE_QUALIFIER                 0x06
-#define  USB_DESC_TYPE_OTHER_SPEED_CONFIGURATION        0x07
 #define  USB_DESC_TYPE_BINARY_OBJECT_STORE              0x0f
 
 // offsets for configuration strings
@@ -51,25 +44,13 @@ typedef union _USB_Setup {
 #define  STRING_OFFSET_IPRODUCT                         0x02
 #define  STRING_OFFSET_ISERIAL                          0x03
 #define  STRING_OFFSET_ICONFIGURATION                   0x04
-#define  STRING_OFFSET_IINTERFACE                       0x05
-
-// WebUSB requests
-#define  WEBUSB_REQ_GET_URL                             0x02
-
-// WebUSB types
-#define  WEBUSB_DESC_TYPE_URL                           0x03
-#define  WEBUSB_URL_SCHEME_HTTPS                        0x01
-#define  WEBUSB_URL_SCHEME_HTTP                         0x00
 
 // WinUSB requests
 #define  WINUSB_REQ_GET_COMPATID_DESCRIPTOR             0x04
 #define  WINUSB_REQ_GET_EXT_PROPS_OS                    0x05
 #define  WINUSB_REQ_GET_DESCRIPTOR                      0x07
 
-#define STS_GOUT_NAK                           1
 #define STS_DATA_UPDT                          2
-#define STS_XFER_COMP                          3
-#define STS_SETUP_COMP                         4
 #define STS_SETUP_UPDT                         6
 
 // for the repeating interfaces
@@ -79,8 +60,6 @@ typedef union _USB_Setup {
 #define DSCR_DEVICE_LEN 18
 
 // endpoint types
-#define ENDPOINT_TYPE_CONTROL 0
-#define ENDPOINT_TYPE_ISO 1
 #define ENDPOINT_TYPE_BULK 2
 #define ENDPOINT_TYPE_INT 3
 
