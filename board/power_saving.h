@@ -52,7 +52,7 @@ void set_power_save_state(int state) {
 }
 
 static void enter_stop_mode(void) {
-  // set all GPIO to analog mode to reduce current
+  // set all GPIO to analog mode to reduce power
   register_set(&(GPIOA->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
   register_set(&(GPIOB->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
   register_set(&(GPIOC->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
@@ -68,6 +68,7 @@ static void enter_stop_mode(void) {
     current_board->enable_can_transceiver(i, false);
   }
 
+  // disable ADC
   ADC1->CR &= ~(ADC_CR_ADEN);
   ADC1->CR |= ADC_CR_DEEPPWD;
   ADC2->CR &= ~(ADC_CR_ADEN);
@@ -75,7 +76,7 @@ static void enter_stop_mode(void) {
 
   // disable HSI48, 48 MHz USB clock
   register_clear_bits(&(RCC->CR), RCC_CR_HSI48ON);
-
+  // disable PLLs
   register_clear_bits(&(RCC->AHB2LPENR), RCC_AHB2LPENR_SRAM1LPEN | RCC_AHB2LPENR_SRAM2LPEN);
   register_clear_bits(&(RCC->AHB4LPENR), RCC_AHB4LPENR_SRAM4LPEN);
   register_clear_bits(&(RCC->AHB3LPENR), RCC_AHB3LPENR_AXISRAMLPEN);
@@ -130,7 +131,7 @@ static void enter_stop_mode(void) {
     NVIC_SystemReset();
   }
 
-  // stop mode (not standby)
+  // stop mode
   register_clear_bits(&(PWR->CPUCR), PWR_CPUCR_PDDS_D1 | PWR_CPUCR_PDDS_D2 | PWR_CPUCR_PDDS_D3);
 
   // SVOS5 + flash low-power

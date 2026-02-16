@@ -370,7 +370,7 @@ int main(void) {
       #endif
     } else {
       if ((hw_type == HW_TYPE_CUATRO) && !current_board->read_som_gpio()) {
-        enter_stop_mode();  // deep sleep, reboots on wake
+        enter_stop_mode();  // deep sleep, reboots on ign
       }
       __WFI();
     }
