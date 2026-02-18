@@ -373,6 +373,7 @@ int main(void) {
         enter_stop_mode();  // deep sleep, reboots on ign
       }
       __WFI();
+      SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
     }
   }
 

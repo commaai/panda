@@ -1,7 +1,7 @@
 #include "power_saving_declarations.h"
 
-// CoU_3 (STM UM1840): Hardware low-power modes must NOT be used during safety function execution.
-// Stop mode is only entered from SAFETY_SILENT when no safety function is active.
+// CoU_3 (STM UM2331): Low-power mode state must not be used in safety function(s) implementation.
+// Stop mode is entered from SAFETY_SILENT when no safety function is active and exited via reset which is a safe state.
 
 int power_save_status = POWER_SAVE_STATUS_DISABLED;
 
@@ -68,7 +68,7 @@ static void enter_stop_mode(void) {
     current_board->enable_can_transceiver(i, false);
   }
 
-  // disable ADC
+  // disable ADCs
   ADC1->CR &= ~(ADC_CR_ADEN);
   ADC1->CR |= ADC_CR_DEEPPWD;
   ADC2->CR &= ~(ADC_CR_ADEN);
@@ -76,7 +76,7 @@ static void enter_stop_mode(void) {
 
   // disable HSI48, 48 MHz USB clock
   register_clear_bits(&(RCC->CR), RCC_CR_HSI48ON);
-  // disable PLLs
+  // disable SRAM retention in stop mode
   register_clear_bits(&(RCC->AHB2LPENR), RCC_AHB2LPENR_SRAM1LPEN | RCC_AHB2LPENR_SRAM2LPEN);
   register_clear_bits(&(RCC->AHB4LPENR), RCC_AHB4LPENR_SRAM4LPEN);
   register_clear_bits(&(RCC->AHB3LPENR), RCC_AHB3LPENR_AXISRAMLPEN);
@@ -87,16 +87,17 @@ static void enter_stop_mode(void) {
   set_gpio_mode(current_board->harness_config->GPIO_SBU2,
                 current_board->harness_config->pin_SBU2, MODE_INPUT);
 
-  // SBU EXTI: EXTI1 -> PA1 (SBU2), EXTI4 -> PC4 (SBU1)
+  // EXTI1: PA1 (SBU2)
+  // EXTI4: PC4 (SBU1)
   register_set(&(SYSCFG->EXTICR[0]), SYSCFG_EXTICR1_EXTI1_PA, 0xF0U);
   register_set(&(SYSCFG->EXTICR[1]), SYSCFG_EXTICR2_EXTI4_PC, 0xFU);
   register_set_bits(&(EXTI->IMR1), (1U << 1) | (1U << 4));
   register_set_bits(&(EXTI->RTSR1), (1U << 1) | (1U << 4));
   register_set_bits(&(EXTI->FTSR1), (1U << 1) | (1U << 4));
 
-  // CAN RX EXTI for CAN ignition
-  // Normal:  FDCAN1 RX = PB8  (EXTI8)
-  // Flipped: FDCAN3 RX = PD12 (EXTI12)
+  // EXTI for CAN ignition
+  // normal:  FDCAN1 RX: PB8  (EXTI8)
+  // flipped: FDCAN3 RX: PD12 (EXTI12)
   uint32_t can_exti_line;
   if (harness.status == HARNESS_STATUS_FLIPPED) {
     set_gpio_mode(GPIOD, 12, MODE_INPUT);
@@ -116,16 +117,16 @@ static void enter_stop_mode(void) {
     NVIC->ICPR[i] = 0xFFFFFFFFU;
   }
 
-  // enable only wakeup EXTI lines
-  NVIC_EnableIRQ(EXTI1_IRQn);     // SBU2 (PA1)
-  NVIC_EnableIRQ(EXTI4_IRQn);     // SBU1 (PC4)
+  // enable only wakeup EXTI interrupts
+  NVIC_EnableIRQ(EXTI1_IRQn);     // PA1 (SBU2)
+  NVIC_EnableIRQ(EXTI4_IRQn);     // PC4 (SBU1)
   if (harness.status == HARNESS_STATUS_FLIPPED) {
-    NVIC_EnableIRQ(EXTI15_10_IRQn);  // CAN3 RX (PD12)
+    NVIC_EnableIRQ(EXTI15_10_IRQn);  // PD12 (CAN3 RX)
   } else {
-    NVIC_EnableIRQ(EXTI9_5_IRQn);    // CAN1 RX (PB8)
+    NVIC_EnableIRQ(EXTI9_5_IRQn);    // PB8 (CAN1 RX)
   }
 
-  // check if ignition is already on
+  // reset if ignition just came on before going to sleep
   EXTI->PR1 = (1U << 1) | (1U << 4) | can_exti_line;
   if (harness_check_ignition()) {
     NVIC_SystemReset();
@@ -134,7 +135,7 @@ static void enter_stop_mode(void) {
   // stop mode
   register_clear_bits(&(PWR->CPUCR), PWR_CPUCR_PDDS_D1 | PWR_CPUCR_PDDS_D2 | PWR_CPUCR_PDDS_D3);
 
-  // SVOS5 + flash low-power
+  // set SVOS5 voltage scaling, flash low-power
   register_set(&(PWR->CR1), PWR_CR1_SVOS_0 | PWR_CR1_FLPS, PWR_CR1_SVOS | PWR_CR1_FLPS);
 
   // enter stop mode on WFI

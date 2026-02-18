@@ -1,6 +1,6 @@
 #pragma once
 
-// WARNING: To stay in compliance with the SIL2 rules laid out in STM UM1840, we should never implement any of the available hardware low power modes.
+// WARNING: To stay in compliance with the SIL2 rules laid out in STM UM2331, we should never use any of the available hardware low power modes when executing a safety function.
 // See rule: CoU_3
 
 #define POWER_SAVE_STATUS_DISABLED 0
