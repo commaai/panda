@@ -29,9 +29,8 @@ def test_stop_mode(p, panda_jungle):
       p.enter_stop_mode()
       p.close()
 
-      # verify panda entered stop mode
-      time.sleep(1.0)
-      assert serial not in Panda.list()
+      # wait for panda to enter stop mode
+      time.sleep(0.5)
 
       # wake via ignition or CAN activity
       if wakeup == "ign":
@@ -42,3 +41,4 @@ def test_stop_mode(p, panda_jungle):
       # panda should reset and come back
       assert Panda.wait_for_panda(serial, timeout=10)
       p.reconnect()
+      assert p.health()['uptime'] < 3
