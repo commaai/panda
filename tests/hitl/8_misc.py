@@ -24,10 +24,10 @@ def test_stop_mode(p, panda_jungle):
     for wakeup in "ign", "can":
       print(f"\n--- orientation={orientation} wakeup={wakeup} ---")
       h = p.health()
-      print(f"before stop: uptime={h['uptime']}s, voltage={h['voltage_pkt']}mV, current={h['current_pkt']}mA")
-      print(f"  ignition_line={h['ignition_line_pkt']}, ignition_can={h['ignition_can_pkt']}")
-      print(f"  safety_mode={h['safety_mode_pkt']}, power_save={h['power_save_enabled_pkt']}")
-      print(f"  faults={h['faults_pkt']}, fan={h['fan_power']}")
+      print(f"before stop: uptime={h['uptime']}s, voltage={h['voltage']}mV, current={h['current']}mA")
+      print(f"  ignition_line={h['ignition_line']}, ignition_can={h['ignition_can']}")
+      print(f"  safety_mode={h['safety_mode']}, power_save={h['power_save_enabled']}")
+      print(f"  faults={h['faults']}, fan={h['fan_power']}")
 
       # enter stop mode
       p.set_safety_mode()
@@ -53,9 +53,9 @@ def test_stop_mode(p, panda_jungle):
 
       p.reconnect()
       h = p.health()
-      print(f"after wakeup: uptime={h['uptime']}s, voltage={h['voltage_pkt']}mV, current={h['current_pkt']}mA")
-      print(f"  ignition_line={h['ignition_line_pkt']}, ignition_can={h['ignition_can_pkt']}")
-      print(f"  safety_mode={h['safety_mode_pkt']}, power_save={h['power_save_enabled_pkt']}")
-      print(f"  faults={h['faults_pkt']}, fan={h['fan_power']}")
-      print(f"  harness={h['car_harness_status_pkt']}, sbu1={h['sbu1_voltage_mV']}mV, sbu2={h['sbu2_voltage_mV']}mV")
+      print(f"after wakeup: uptime={h['uptime']}s, voltage={h['voltage']}mV, current={h['current']}mA")
+      print(f"  ignition_line={h['ignition_line']}, ignition_can={h['ignition_can']}")
+      print(f"  safety_mode={h['safety_mode']}, power_save={h['power_save_enabled']}")
+      print(f"  faults={h['faults']}, fan={h['fan_power']}")
+      print(f"  harness={h['car_harness_status']}, sbu1={h['sbu1_voltage_mV']}mV, sbu2={h['sbu2_voltage_mV']}mV")
       assert h['uptime'] < 3
