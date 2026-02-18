@@ -50,7 +50,7 @@ void set_power_save_state(bool enable) {
 }
 
 static void enter_stop_mode(void) {
-  // set all GPIO to analog mode to reduce power
+  // set all GPIO to analog mode to reduce power, analog mode also disables pull resistors
   register_set(&(GPIOA->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
   register_set(&(GPIOB->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
   register_set(&(GPIOC->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
