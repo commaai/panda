@@ -1,7 +1,9 @@
 #include "board/sys/sys.h"
 
-// CoU_3 (STM UM2331): Low-power mode state must not be used in safety function(s) implementation.
-// Stop mode is entered from SAFETY_SILENT when no safety function is active and exited via reset which is a safe state.
+// WARNING: To stay in compliance with the SIL2 rules laid out in STM UM2331, we should never use any of the available hardware low power modes during safety function execution.
+// See rule: CoU_3
+
+// Low power state "stop mode" is only entered from SAFETY_SILENT when no safety function is active and exited via reset which is a safe state.
 
 bool power_save_enabled = false;
 
