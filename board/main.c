@@ -341,6 +341,11 @@ int main(void) {
 
   // LED should keep on blinking all the time
   while (true) {
+    #ifdef ALLOW_DEBUG
+    if (stop_mode_requested) {
+      enter_stop_mode();
+    }
+    #endif
     if (!power_save_enabled) {
       #ifdef DEBUG_FAULTS
       if (fault_status == FAULT_STATUS_NONE) {
