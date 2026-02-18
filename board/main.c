@@ -287,6 +287,13 @@ int main(void) {
   // print hello
   print("\n\n\n************************ MAIN START ************************\n");
 
+  // print wakeup source from stop mode (stored in RTC backup register)
+  PWR->CR1 |= PWR_CR1_DBP;
+  if (RTC->BKP0R != 0U) {
+    print("  Stop mode wakeup EXTI PR1: 0x"); puth(RTC->BKP0R); print("\n");
+    RTC->BKP0R = 0U;
+  }
+
   // check for non-supported board types
   assert_fatal(hw_type != HW_TYPE_UNKNOWN, "Unsupported board type");
 
