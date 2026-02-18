@@ -6,9 +6,6 @@
 // Low power state "stop mode" is only entered from SAFETY_SILENT when no safety function is active and exited via reset which is a safe state.
 
 bool power_save_enabled = false;
-#ifdef ALLOW_DEBUG
-volatile bool stop_mode_requested = false;
-#endif
 
 void enable_can_transceivers(bool enabled) {
   // Leave main CAN always on for CAN-based ignition detection

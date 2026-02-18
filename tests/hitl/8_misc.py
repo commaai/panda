@@ -23,7 +23,7 @@ def test_stop_mode(p, panda_jungle):
 
     for wakeup in "ign", "can":
       print(f"orientation={orientation} wakeup={wakeup}")
-
+      print(f"uptime before stop: {p.health()['uptime']} s")
       # enter stop mode
       p.set_safety_mode()
       p.enter_stop_mode()
@@ -41,4 +41,5 @@ def test_stop_mode(p, panda_jungle):
       # panda should reset and come back
       assert Panda.wait_for_panda(serial, timeout=10)
       p.reconnect()
+      print(f"uptime after wakeup: {p.health()['uptime']} s")
       assert p.health()['uptime'] < 3
