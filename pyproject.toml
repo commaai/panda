@@ -37,7 +37,13 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["panda"]
+packages = [
+  "panda",
+  "panda.python",
+  "panda.board",
+  "panda.board.body",
+  "panda.board.jungle",
+]
 
 [tool.setuptools.package-dir]
 panda = "."

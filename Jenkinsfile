@@ -15,7 +15,7 @@ def docker_run(String step_label, int timeout_mins, String cmd) {
 def phone(String ip, String step_label, String cmd) {
   withCredentials([file(credentialsId: 'id_rsa', variable: 'key_file')]) {
     def ssh_cmd = """
-ssh -tt -o StrictHostKeyChecking=no -i ${key_file} 'comma@${ip}' /usr/bin/bash <<'END'
+ssh -tt -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ConnectionAttempts=3 -o ServerAliveInterval=10 -o ServerAliveCountMax=3 -i ${key_file} 'comma@${ip}' /usr/bin/bash <<'END'
 
 set -e
 

@@ -5,8 +5,6 @@
 uint32_t *prog_ptr = NULL;
 bool unlocked = false;
 
-void spi_init(void);
-
 int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   int resp_len = 0;
 

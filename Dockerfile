@@ -8,7 +8,8 @@ WORKDIR $WORKDIR
 
 # deps install
 COPY pyproject.toml __init__.py setup.sh $WORKDIR
-RUN mkdir -p $WORKDIR/python/ && touch $WORKDIR/__init__.py
+RUN mkdir -p $WORKDIR/python/ $WORKDIR/board/body/ $WORKDIR/board/jungle/ && \
+    touch $WORKDIR/__init__.py $WORKDIR/board/__init__.py $WORKDIR/board/body/__init__.py $WORKDIR/board/jungle/__init__.py
 RUN apt-get update && apt-get install -y --no-install-recommends sudo && DEBIAN_FRONTEND=noninteractive $WORKDIR/setup.sh
 
 # second pass for the opendbc moving tag

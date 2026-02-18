@@ -1,5 +1,28 @@
 #pragma once
 
+// ******************** critical ********************
+
+void enable_interrupts(void);
+void disable_interrupts(void);
+
+extern uint8_t global_critical_depth;
+
+#ifndef ENTER_CRITICAL
+#define ENTER_CRITICAL()                                      \
+  __disable_irq();                                            \
+  global_critical_depth += 1U;
+#endif
+
+#ifndef EXIT_CRITICAL
+#define EXIT_CRITICAL()                                       \
+  global_critical_depth -= 1U;                                \
+  if ((global_critical_depth == 0U) && interrupts_enabled) {  \
+    __enable_irq();                                           \
+  }
+#endif
+
+// ******************** faults ********************
+
 #define FAULT_STATUS_NONE 0U
 #define FAULT_STATUS_TEMPORARY 1U
 #define FAULT_STATUS_PERMANENT 2U
@@ -32,3 +55,12 @@ extern uint32_t faults;
 
 void fault_occurred(uint32_t fault);
 void fault_recovered(uint32_t fault);
+
+// ******************** power_saving ********************
+
+// WARNING: To stay in compliance with the SIL2 rules laid out in STM UM1840, we should never implement any of the available hardware low power modes.
+// See rule: CoU_3
+
+extern bool power_save_enabled;
+
+void set_power_save_state(bool enable);

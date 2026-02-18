@@ -24,7 +24,7 @@ static int get_health_pkt(void *dat) {
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
   health->safety_param_pkt = current_safety_param;
   health->alternative_experience_pkt = alternative_experience;
-  health->power_save_enabled_pkt = power_save_status == POWER_SAVE_STATUS_ENABLED;
+  health->power_save_enabled_pkt = power_save_enabled;
   health->heartbeat_lost_pkt = heartbeat_lost;
   health->safety_rx_checks_invalid_pkt = safety_rx_checks_invalid;
 
@@ -263,7 +263,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xe7: set power save state
     case 0xe7:
-      set_power_save_state(req->param1);
+      set_power_save_state(req->param1 != 0U);
       break;
     // **** 0xe8: set can-fd auto swithing mode
     case 0xe8:
