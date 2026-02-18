@@ -20,11 +20,14 @@ def test_stop_mode(p, panda_jungle):
   serial = p.get_usb_serial()
 
   for orientation in (Panda.HARNESS_STATUS_NORMAL, Panda.HARNESS_STATUS_FLIPPED):
-    panda_jungle.set_ignition(False)
     panda_jungle.set_harness_orientation(orientation)
     time.sleep(0.25)
 
     for wakeup in "ign", "can":
+      # ensure ignition is off before each iteration
+      panda_jungle.set_ignition(False)
+      time.sleep(0.25)
+
       logger.warning(f"--- orientation={orientation} wakeup={wakeup} ---")
       h = p.health()
       logger.warning(f"before stop: uptime={h['uptime']}s, voltage={h['voltage']}mV, current={h['current']}mA")
@@ -39,8 +42,7 @@ def test_stop_mode(p, panda_jungle):
       logger.warning(f"stop mode requested, closed connection")
 
       # wait for panda to enter stop mode
-      time.sleep(3)
-      logger.warning(f"waited 3s, sending wakeup: {wakeup}")
+      time.sleep(1)
 
       # wake via ignition or CAN activity
       t_wake = time.monotonic()
@@ -61,4 +63,5 @@ def test_stop_mode(p, panda_jungle):
       logger.warning(f"  safety_mode={h['safety_mode']}, power_save={h['power_save_enabled']}")
       logger.warning(f"  faults={h['faults']}, fan={h['fan_power']}")
       logger.warning(f"  harness={h['car_harness_status']}, sbu1={h['sbu1_voltage_mV']}mV, sbu2={h['sbu2_voltage_mV']}mV")
-      assert h['uptime'] < 3
+      # uptime < 2 proves panda reset from stop mode (slept 1s, so if it never stopped uptime would be 3+)
+      assert h['uptime'] < 2
