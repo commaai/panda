@@ -50,14 +50,21 @@ void set_power_save_state(bool enable) {
 }
 
 static void enter_stop_mode(void) {
-  // set all GPIO to analog mode to reduce power
+  // set all GPIO to analog mode and disable pulls to reduce power
   register_set(&(GPIOA->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOA->PUPDR), 0x00000000U, 0xFFFFFFFFU);
   register_set(&(GPIOB->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOB->PUPDR), 0x00000000U, 0xFFFFFFFFU);
   register_set(&(GPIOC->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOC->PUPDR), 0x00000000U, 0xFFFFFFFFU);
   register_set(&(GPIOD->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOD->PUPDR), 0x00000000U, 0xFFFFFFFFU);
   register_set(&(GPIOE->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOE->PUPDR), 0x00000000U, 0xFFFFFFFFU);
   register_set(&(GPIOF->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOF->PUPDR), 0x00000000U, 0xFFFFFFFFU);
   register_set(&(GPIOG->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOG->PUPDR), 0x00000000U, 0xFFFFFFFFU);
 
   // init GPIO to lowest power state
   current_board->set_bootkick(BOOT_STANDBY);
