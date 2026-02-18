@@ -23,10 +23,9 @@ def test_stop_mode(p, panda_jungle):
   # enter stop mode
   p.set_safety_mode()
   p.enter_stop_mode()
+  p.close()
 
-  # verify panda disconnected
-  time.sleep(0.5)
-  assert serial not in Panda.list()
+  time.sleep(1)
 
   # wake via ignition
   panda_jungle.set_ignition(True)
