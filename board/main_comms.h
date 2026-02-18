@@ -95,10 +95,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       resp[1] = ((fan_state.rpm & 0xFF00U) >> 8U);
       resp_len = 2;
       break;
-    // **** 0xb5: enter deep sleep, wakes on CAN or SBU
+    // **** 0xb5: request deep sleep, wakes on CAN or SBU
     #ifdef ALLOW_DEBUG
     case 0xb5:
-      enter_stop_mode();
+      stop_mode_requested = true;
       break;
     #endif
     // **** 0xc0: reset communications state
