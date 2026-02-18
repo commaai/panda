@@ -370,7 +370,8 @@ int main(void) {
       #endif
     } else {
       if ((hw_type == HW_TYPE_CUATRO) && !current_board->read_som_gpio()) {
-        enter_stop_mode();  // deep sleep, reboots on ign
+        assert_fatal(current_safety_mode == SAFETY_SILENT, "Error: Entering low power mode while not in SAFETY_SILENT. Hanging\n");
+        enter_stop_mode(); // deep sleep, wakes on CAN or SBU activity
       }
       __WFI();
       SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
