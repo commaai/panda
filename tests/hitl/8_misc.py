@@ -34,13 +34,12 @@ def test_stop_mode(p, panda_jungle):
       logger.warning(f"  ignition_line={h['ignition_line']}, ignition_can={h['ignition_can']}")
       logger.warning(f"  safety_mode={h['safety_mode']}, power_save={h['power_save_enabled']}")
       logger.warning(f"  faults={h['faults']}, fan={h['fan_power']}")
-      assert h['ignition_line'] == 0, "ignition must be off before entering stop mode"
 
       # enter stop mode
       p.set_safety_mode()
       p.enter_stop_mode()
       p.close()
-      logger.warning("stop mode requested, closed connection")
+      logger.warning(f"stop mode requested, closed connection")
 
       # wait for panda to enter stop mode
       time.sleep(1)
@@ -58,19 +57,11 @@ def test_stop_mode(p, panda_jungle):
       logger.warning(f"panda found after {t_found:.2f}s")
 
       p.reconnect()
-
-      # read wakeup source from debug serial (firmware stores EXTI PR1 in RTC backup reg)
-      time.sleep(0.1)
-      dbg = p.serial_read(Panda.SERIAL_DEBUG)
-      if dbg:
-        for line in dbg.decode(errors='replace').strip().split('\n'):
-          if 'wakeup' in line.lower() or 'EXTI' in line:
-            logger.warning(f"  firmware: {line.strip()}")
-
       h = p.health()
       logger.warning(f"after wakeup: uptime={h['uptime']}s, voltage={h['voltage']}mV, current={h['current']}mA")
       logger.warning(f"  ignition_line={h['ignition_line']}, ignition_can={h['ignition_can']}")
       logger.warning(f"  safety_mode={h['safety_mode']}, power_save={h['power_save_enabled']}")
       logger.warning(f"  faults={h['faults']}, fan={h['fan_power']}")
       logger.warning(f"  harness={h['car_harness_status']}, sbu1={h['sbu1_voltage_mV']}mV, sbu2={h['sbu2_voltage_mV']}mV")
-      assert h['uptime'] < 3
+      # uptime < 2 proves panda reset from stop mode (slept 1s, so if it never stopped uptime would be 3+)
+      assert h['uptime'] < 2

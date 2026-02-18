@@ -92,6 +92,9 @@ static void enter_stop_mode(void) {
   // EXTI4: SBU1 (PC4)
   register_set(&(SYSCFG->EXTICR[0]), SYSCFG_EXTICR1_EXTI1_PA, 0xF0U);
   register_set(&(SYSCFG->EXTICR[1]), SYSCFG_EXTICR2_EXTI4_PC, 0xFU);
+  register_set_bits(&(EXTI->IMR1), (1U << 1) | (1U << 4));
+  register_set_bits(&(EXTI->RTSR1), (1U << 1) | (1U << 4));
+  register_set_bits(&(EXTI->FTSR1), (1U << 1) | (1U << 4));
 
   // EXTI for CAN ignition
   // normal  EXTI8:  FDCAN1 RX (PB8)
@@ -106,13 +109,8 @@ static void enter_stop_mode(void) {
     register_set(&(SYSCFG->EXTICR[2]), SYSCFG_EXTICR3_EXTI8_PB, 0xFU);
     can_exti_line = (1UL << 8);
   }
-
-  // clear EXTI config
-  uint32_t sbu_mask = (1U << 1) | (1U << 4);
-  uint32_t wakeup_mask = sbu_mask | can_exti_line;
-  register_set(&(EXTI->IMR1), wakeup_mask, 0xFFFFFFFFU);
-  register_set(&(EXTI->RTSR1), sbu_mask, 0xFFFFFFFFU);
-  register_set(&(EXTI->FTSR1), wakeup_mask, 0xFFFFFFFFU);
+  register_set_bits(&(EXTI->IMR1), can_exti_line);
+  register_set_bits(&(EXTI->FTSR1), can_exti_line);
 
   // disable all NVIC interrupts and clear pending
   for (uint32_t i = 0U; i < 8U; i++) {
@@ -129,8 +127,8 @@ static void enter_stop_mode(void) {
     NVIC_EnableIRQ(EXTI9_5_IRQn);    // CAN1 RX (PB8)
   }
 
-  // clear pending EXTI bits and check ignition
-  EXTI->PR1 = 0xFFFFFFFFU;
+  // reset if ignition just came on before going to sleep
+  EXTI->PR1 = (1U << 1) | (1U << 4) | can_exti_line;
   if (harness_check_ignition()) {
     NVIC_SystemReset();
   }
@@ -147,17 +145,7 @@ static void enter_stop_mode(void) {
   __disable_irq();
   __DSB();
   __ISB();
-
-  // clear pending again right before WFI
-  EXTI->PR1 = 0xFFFFFFFFU;
-
   __WFI();
-
-  // store wakeup source in RTC backup register
-  // enable backup domain access
-  PWR->CR1 |= PWR_CR1_DBP;
-  while (!(PWR->CR1 & PWR_CR1_DBP)) {}
-  RTC->BKP0R = EXTI->PR1;
 
   NVIC_SystemReset();
 }
