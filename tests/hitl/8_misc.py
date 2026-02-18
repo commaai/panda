@@ -21,18 +21,20 @@ def test_stop_mode(p, panda_jungle):
     panda_jungle.set_harness_orientation(orientation)
     time.sleep(0.25)
 
-    for ign_wake in (True, False):
+    for wakeup in "ign", "can":
+      print(f"orientation={orientation} wakeup={wakeup}")
+
       # enter stop mode
       p.set_safety_mode()
       p.enter_stop_mode()
       p.close()
 
       # verify panda entered stop mode
-      time.sleep(0.25)
+      time.sleep(1.0)
       assert serial not in Panda.list()
 
-      # wake via ignition or CAN bus activity
-      if ign_wake:
+      # wake via ignition or CAN activity
+      if wakeup == "ign":
         panda_jungle.set_ignition(True)
       else:
         panda_jungle.can_send(0x123, b'\x01\x02', 0)
