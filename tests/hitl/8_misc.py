@@ -1,7 +1,10 @@
+import logging
 import time
 import pytest
 
 from panda import Panda
+
+logger = logging.getLogger("stop_mode")
 
 def test_boot_time(p):
   # boot time should be instant
@@ -22,22 +25,22 @@ def test_stop_mode(p, panda_jungle):
     time.sleep(0.25)
 
     for wakeup in "ign", "can":
-      print(f"\n--- orientation={orientation} wakeup={wakeup} ---")
+      logger.debug(f"--- orientation={orientation} wakeup={wakeup} ---")
       h = p.health()
-      print(f"before stop: uptime={h['uptime']}s, voltage={h['voltage']}mV, current={h['current']}mA")
-      print(f"  ignition_line={h['ignition_line']}, ignition_can={h['ignition_can']}")
-      print(f"  safety_mode={h['safety_mode']}, power_save={h['power_save_enabled']}")
-      print(f"  faults={h['faults']}, fan={h['fan_power']}")
+      logger.debug(f"before stop: uptime={h['uptime']}s, voltage={h['voltage']}mV, current={h['current']}mA")
+      logger.debug(f"  ignition_line={h['ignition_line']}, ignition_can={h['ignition_can']}")
+      logger.debug(f"  safety_mode={h['safety_mode']}, power_save={h['power_save_enabled']}")
+      logger.debug(f"  faults={h['faults']}, fan={h['fan_power']}")
 
       # enter stop mode
       p.set_safety_mode()
       p.enter_stop_mode()
       p.close()
-      print(f"stop mode requested, closed connection")
+      logger.debug(f"stop mode requested, closed connection")
 
       # wait for panda to enter stop mode
       time.sleep(0.5)
-      print(f"waited 0.5s, sending wakeup: {wakeup}")
+      logger.debug(f"waited 0.5s, sending wakeup: {wakeup}")
 
       # wake via ignition or CAN activity
       t_wake = time.monotonic()
@@ -49,13 +52,13 @@ def test_stop_mode(p, panda_jungle):
       # panda should reset and come back
       assert Panda.wait_for_panda(serial, timeout=10)
       t_found = time.monotonic() - t_wake
-      print(f"panda found after {t_found:.2f}s")
+      logger.debug(f"panda found after {t_found:.2f}s")
 
       p.reconnect()
       h = p.health()
-      print(f"after wakeup: uptime={h['uptime']}s, voltage={h['voltage']}mV, current={h['current']}mA")
-      print(f"  ignition_line={h['ignition_line']}, ignition_can={h['ignition_can']}")
-      print(f"  safety_mode={h['safety_mode']}, power_save={h['power_save_enabled']}")
-      print(f"  faults={h['faults']}, fan={h['fan_power']}")
-      print(f"  harness={h['car_harness_status']}, sbu1={h['sbu1_voltage_mV']}mV, sbu2={h['sbu2_voltage_mV']}mV")
+      logger.debug(f"after wakeup: uptime={h['uptime']}s, voltage={h['voltage']}mV, current={h['current']}mA")
+      logger.debug(f"  ignition_line={h['ignition_line']}, ignition_can={h['ignition_can']}")
+      logger.debug(f"  safety_mode={h['safety_mode']}, power_save={h['power_save_enabled']}")
+      logger.debug(f"  faults={h['faults']}, fan={h['fan_power']}")
+      logger.debug(f"  harness={h['car_harness_status']}, sbu1={h['sbu1_voltage_mV']}mV, sbu2={h['sbu2_voltage_mV']}mV")
       assert h['uptime'] < 3
