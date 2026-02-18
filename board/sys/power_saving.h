@@ -107,20 +107,7 @@ static void enter_stop_mode(void) {
   register_set_bits(&(EXTI->IMR1), can_exti_line);
   register_set_bits(&(EXTI->FTSR1), can_exti_line);
 
-  // disable all NVIC interrupts and clear pending
-  for (uint32_t i = 0U; i < 8U; i++) {
-    NVIC->ICER[i] = 0xFFFFFFFFU;
-    NVIC->ICPR[i] = 0xFFFFFFFFU;
-  }
-
-  // enable only wakeup EXTI interrupts
-  NVIC_EnableIRQ(EXTI1_IRQn);     // SBU2 (PA1)
-  NVIC_EnableIRQ(EXTI4_IRQn);     // SBU1 (PC4)
-  NVIC_EnableIRQ(EXTI9_5_IRQn);    // CAN1 RX (PB8)
-  NVIC_EnableIRQ(EXTI15_10_IRQn);  // CAN3 RX (PD12)
-
   // reset if ignition just came on before going to sleep
-  EXTI->PR1 = (1U << 1) | (1U << 4) | can_exti_line;
   if (harness_check_ignition()) {
     NVIC_SystemReset();
   }
@@ -135,6 +122,19 @@ static void enter_stop_mode(void) {
   SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
 
   __disable_irq();
+
+  // disable all NVIC interrupts and clear pending
+  for (uint32_t i = 0U; i < 8U; i++) {
+    NVIC->ICER[i] = 0xFFFFFFFFU;
+    NVIC->ICPR[i] = 0xFFFFFFFFU;
+  }
+  // enable only wakeup EXTI interrupts
+  NVIC_EnableIRQ(EXTI1_IRQn);     // SBU2 (PA1)
+  NVIC_EnableIRQ(EXTI4_IRQn);     // SBU1 (PC4)
+  NVIC_EnableIRQ(EXTI9_5_IRQn);    // CAN1 RX (PB8)
+  NVIC_EnableIRQ(EXTI15_10_IRQn);  // CAN3 RX (PD12)
+  EXTI->PR1 = (1U << 1) | (1U << 4) | can_exti_line;
+
   __DSB();
   __ISB();
   __WFI();
