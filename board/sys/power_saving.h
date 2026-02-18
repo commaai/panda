@@ -72,7 +72,7 @@ static void enter_stop_mode(void) {
   ADC2->CR &= ~(ADC_CR_ADEN);
   ADC2->CR |= ADC_CR_DEEPPWD;
 
-  // disable HSI48, 48 MHz USB clock
+  // disable HSI48: 48 MHz USB clock
   register_clear_bits(&(RCC->CR), RCC_CR_HSI48ON);
   // disable SRAM retention in stop mode
   register_clear_bits(&(RCC->AHB2LPENR), RCC_AHB2LPENR_SRAM1LPEN | RCC_AHB2LPENR_SRAM2LPEN);
@@ -85,8 +85,8 @@ static void enter_stop_mode(void) {
   set_gpio_mode(current_board->harness_config->GPIO_SBU2,
                 current_board->harness_config->pin_SBU2, MODE_INPUT);
 
-  // EXTI1: PA1 (SBU2)
-  // EXTI4: PC4 (SBU1)
+  // EXTI1: SBU2 (PA1)
+  // EXTI4: SBU1 (PC4)
   register_set(&(SYSCFG->EXTICR[0]), SYSCFG_EXTICR1_EXTI1_PA, 0xF0U);
   register_set(&(SYSCFG->EXTICR[1]), SYSCFG_EXTICR2_EXTI4_PC, 0xFU);
   register_set_bits(&(EXTI->IMR1), (1U << 1) | (1U << 4));
@@ -94,8 +94,8 @@ static void enter_stop_mode(void) {
   register_set_bits(&(EXTI->FTSR1), (1U << 1) | (1U << 4));
 
   // EXTI for CAN ignition
-  // normal:  FDCAN1 RX: PB8  (EXTI8)
-  // flipped: FDCAN3 RX: PD12 (EXTI12)
+  // normal  EXTI8:  FDCAN1 RX (PB8)
+  // flipped EXTI12: FDCAN3 RX (PD12)
   uint32_t can_exti_line;
   if (harness.status == HARNESS_STATUS_FLIPPED) {
     set_gpio_mode(GPIOD, 12, MODE_INPUT);
@@ -116,12 +116,12 @@ static void enter_stop_mode(void) {
   }
 
   // enable only wakeup EXTI interrupts
-  NVIC_EnableIRQ(EXTI1_IRQn);     // PA1 (SBU2)
-  NVIC_EnableIRQ(EXTI4_IRQn);     // PC4 (SBU1)
+  NVIC_EnableIRQ(EXTI1_IRQn);     // SBU2 (PA1)
+  NVIC_EnableIRQ(EXTI4_IRQn);     // SBU1 (PC4)
   if (harness.status == HARNESS_STATUS_FLIPPED) {
-    NVIC_EnableIRQ(EXTI15_10_IRQn);  // PD12 (CAN3 RX)
+    NVIC_EnableIRQ(EXTI15_10_IRQn);  // CAN3 RX (PD12)
   } else {
-    NVIC_EnableIRQ(EXTI9_5_IRQn);    // PB8 (CAN1 RX)
+    NVIC_EnableIRQ(EXTI9_5_IRQn);    // CAN1 RX (PB8)
   }
 
   // reset if ignition just came on before going to sleep
