@@ -22,17 +22,25 @@ def test_stop_mode(p, panda_jungle):
     time.sleep(0.25)
 
     for wakeup in "ign", "can":
-      print(f"orientation={orientation} wakeup={wakeup}")
-      print(f"uptime before stop: {p.health()['uptime']} s")
+      print(f"\n--- orientation={orientation} wakeup={wakeup} ---")
+      h = p.health()
+      print(f"before stop: uptime={h['uptime']}s, voltage={h['voltage_pkt']}mV, current={h['current_pkt']}mA")
+      print(f"  ignition_line={h['ignition_line_pkt']}, ignition_can={h['ignition_can_pkt']}")
+      print(f"  safety_mode={h['safety_mode_pkt']}, power_save={h['power_save_enabled_pkt']}")
+      print(f"  faults={h['faults_pkt']}, fan={h['fan_power']}")
+
       # enter stop mode
       p.set_safety_mode()
       p.enter_stop_mode()
       p.close()
+      print(f"stop mode requested, closed connection")
 
       # wait for panda to enter stop mode
       time.sleep(0.5)
+      print(f"waited 0.5s, sending wakeup: {wakeup}")
 
       # wake via ignition or CAN activity
+      t_wake = time.monotonic()
       if wakeup == "ign":
         panda_jungle.set_ignition(True)
       else:
@@ -40,6 +48,14 @@ def test_stop_mode(p, panda_jungle):
 
       # panda should reset and come back
       assert Panda.wait_for_panda(serial, timeout=10)
+      t_found = time.monotonic() - t_wake
+      print(f"panda found after {t_found:.2f}s")
+
       p.reconnect()
-      print(f"uptime after wakeup: {p.health()['uptime']} s")
-      assert p.health()['uptime'] < 3
+      h = p.health()
+      print(f"after wakeup: uptime={h['uptime']}s, voltage={h['voltage_pkt']}mV, current={h['current_pkt']}mA")
+      print(f"  ignition_line={h['ignition_line_pkt']}, ignition_can={h['ignition_can_pkt']}")
+      print(f"  safety_mode={h['safety_mode_pkt']}, power_save={h['power_save_enabled_pkt']}")
+      print(f"  faults={h['faults_pkt']}, fan={h['fan_power']}")
+      print(f"  harness={h['car_harness_status_pkt']}, sbu1={h['sbu1_voltage_mV']}mV, sbu2={h['sbu2_voltage_mV']}mV")
+      assert h['uptime'] < 3
