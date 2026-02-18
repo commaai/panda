@@ -39,7 +39,7 @@ def test_stop_mode(p, panda_jungle):
       p.set_safety_mode()
       p.enter_stop_mode()
       p.close()
-      logger.warning(f"stop mode requested, closed connection")
+      logger.warning("stop mode requested, closed connection")
 
       # wait for panda to enter stop mode
       time.sleep(1)
