@@ -100,11 +100,11 @@ static void enter_stop_mode(void) {
   if (harness.status == HARNESS_STATUS_FLIPPED) {
     set_gpio_mode(GPIOD, 12, MODE_INPUT);
     register_set(&(SYSCFG->EXTICR[3]), SYSCFG_EXTICR4_EXTI12_PD, 0xFU);
-    can_exti_line = (1U << 12);
+    can_exti_line = (1UL << 12);
   } else {
     set_gpio_mode(GPIOB, 8, MODE_INPUT);
     register_set(&(SYSCFG->EXTICR[2]), SYSCFG_EXTICR3_EXTI8_PB, 0xFU);
-    can_exti_line = (1U << 8);
+    can_exti_line = (1UL << 8);
   }
   register_set_bits(&(EXTI->IMR1), can_exti_line);
   register_set_bits(&(EXTI->FTSR1), can_exti_line);
