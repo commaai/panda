@@ -16,21 +16,27 @@ def test_boot_time(p):
 def test_stop_mode(p, panda_jungle):
   serial = p.get_usb_serial()
 
-  # ignition off so panda can enter stop mode
-  panda_jungle.set_ignition(False)
-  time.sleep(1)
+  for orientation in (Panda.HARNESS_STATUS_NORMAL, Panda.HARNESS_STATUS_FLIPPED):
+    panda_jungle.set_ignition(False)
+    panda_jungle.set_harness_orientation(orientation)
+    time.sleep(0.25)
 
-  # enter stop mode
-  p.set_safety_mode()
-  p.enter_stop_mode()
-  p.close()
+    for ign_wake in (True, False):
+      # enter stop mode
+      p.set_safety_mode()
+      p.enter_stop_mode()
+      p.close()
 
-  time.sleep(1)
+      # verify panda entered stop mode
+      time.sleep(0.25)
+      assert serial not in Panda.list()
 
-  # wake via ignition
-  panda_jungle.set_ignition(True)
+      # wake via ignition or CAN bus activity
+      if ign_wake:
+        panda_jungle.set_ignition(True)
+      else:
+        panda_jungle.can_send(0x123, b'\x01\x02', 0)
 
-  # panda should reset and come back
-  assert Panda.wait_for_panda(serial, timeout=10)
-  p.reconnect()
-
+      # panda should reset and come back
+      assert Panda.wait_for_panda(serial, timeout=10)
+      p.reconnect()
