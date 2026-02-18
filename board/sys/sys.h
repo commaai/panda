@@ -58,9 +58,6 @@ void fault_recovered(uint32_t fault);
 
 // ******************** power_saving ********************
 
-// WARNING: To stay in compliance with the SIL2 rules laid out in STM UM2331, we should never use any of the available hardware low power modes during safety function execution.
-// See rule: CoU_3
-
 extern bool power_save_enabled;
 
 void set_power_save_state(bool enable);
