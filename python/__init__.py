@@ -641,6 +641,9 @@ class Panda:
   def set_power_save(self, power_save_enabled=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe7, int(power_save_enabled), 0, b'')
 
+  def enter_stop_mode(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xb5, 0, 0, b'', expect_disconnect=True)
+
   def set_safety_mode(self, mode=CarParams.SafetyModel.silent, param=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
 
