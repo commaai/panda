@@ -76,6 +76,7 @@ def test_stop_mode(p, panda_jungle):
       assert found, f"panda didn't come back for wakeup={wakeup} orientation={orientation_name} after {t_found:.1f}s"
 
       p.reconnect()
+      p.set_heartbeat_disabled()
       h = p.health()
       logger.warning(f"  after wakeup: uptime={h['uptime']}s, voltage={h['voltage']}mV, current={h['current']}mA")
       logger.warning(f"  ignition_line={h['ignition_line']}, ignition_can={h['ignition_can']}")
