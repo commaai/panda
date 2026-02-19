@@ -28,14 +28,14 @@ def test_stop_mode(p, panda_jungle):
 
     # ORIENTATION_1: SBU1=relay, SBU2=ignition (panda FLIPPED)
     # ORIENTATION_2: SBU1=ignition, SBU2=relay (panda NORMAL)
-    panda_normal = (orientation == PandaJungle.HARNESS_ORIENTATION_2)
+    panda_normal = (orientation == PandaJungle.HARNESS_ORIENTATION_1)
     orientation_name = "NORMAL" if panda_normal else "FLIPPED"
     logger.warning(f"=== orientation={orientation} panda={orientation_name} ===")
 
     # ignition wakeup tests the SBU EXTI line for this orientation:
     #   FLIPPED: ignition on SBU2 (PA1) -> EXTI1
     #   NORMAL:  ignition on SBU1 (PC4) -> EXTI4
-    wakeup_sources = ["ign", "0", "1", "2"]
+    wakeup_sources = ["1", "ign", "0", "2"]
 
     for wakeup in wakeup_sources:
       # ensure ignition is off before each iteration
