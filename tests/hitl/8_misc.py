@@ -22,13 +22,13 @@ def test_stop_mode(p, panda_jungle):
   logger.warning(f"=== test_stop_mode start: serial={serial}, type={p.get_type()}, spi={p.spi} ===")
   logger.warning(f"  fw: {p.get_version()}")
 
-  for orientation in (PandaJungle.HARNESS_ORIENTATION_1, PandaJungle.HARNESS_ORIENTATION_2):
+  for orientation in (PandaJungle.HARNESS_ORIENTATION_2, PandaJungle.HARNESS_ORIENTATION_1):
     panda_jungle.set_harness_orientation(orientation)
     time.sleep(0.5)
 
     # ORIENTATION_1: SBU1=relay, SBU2=ignition (panda FLIPPED)
     # ORIENTATION_2: SBU1=ignition, SBU2=relay (panda NORMAL)
-    panda_normal = (orientation == PandaJungle.HARNESS_ORIENTATION_1)
+    panda_normal = (orientation == PandaJungle.HARNESS_ORIENTATION_2)
     orientation_name = "NORMAL" if panda_normal else "FLIPPED"
     logger.warning(f"=== orientation={orientation} panda={orientation_name} ===")
 
