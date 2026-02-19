@@ -35,9 +35,7 @@ def test_stop_mode(p, panda_jungle):
     # ignition wakeup tests the SBU EXTI line for this orientation:
     #   FLIPPED: ignition on SBU2 (PA1) -> EXTI1
     #   NORMAL:  ignition on SBU1 (PC4) -> EXTI4
-    wakeup_sources = ["ign", "0", "2"]
-    if panda_normal:
-      wakeup_sources.append("can1")
+    wakeup_sources = ["ign", "0", "1", "2"]
 
     for wakeup in wakeup_sources:
       # ensure ignition is off before each iteration
@@ -70,7 +68,6 @@ def test_stop_mode(p, panda_jungle):
       else:
         for i in range(5):
           panda_jungle.can_send(0x123, b'\x01\x02', int(wakeup))
-          time.sleep(0.1)
         logger.warning(f"  CAN bus {wakeup}")
 
       # panda should reset and come back
