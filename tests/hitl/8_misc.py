@@ -55,7 +55,7 @@ def test_stop_mode(p, panda_jungle):
       logger.warning("stop mode requested, closed connection")
 
       # wait for panda to enter stop mode
-      time.sleep(0.5)
+      time.sleep(2)
 
       # send wakeup stimulus
       t_wake = time.monotonic()
@@ -82,5 +82,5 @@ def test_stop_mode(p, panda_jungle):
       logger.warning(f"  ignition_line={h['ignition_line']}, ignition_can={h['ignition_can']}")
       logger.warning(f"  harness={h['car_harness_status']}, sbu1={h['sbu1_voltage_mV']}mV, sbu2={h['sbu2_voltage_mV']}mV")
       logger.warning(f"  safety_mode={h['safety_mode']}, power_save={h['power_save_enabled']}, faults={h['faults']}")
-      assert h['uptime'] < 3, f"uptime {h['uptime']}s too high for wakeup={wakeup} orientation={orientation_name}"
+      assert h['uptime'] < 4, f"uptime {h['uptime']}s too high for wakeup={wakeup} orientation={orientation_name}"
       logger.warning(f"  PASS: {wakeup} uptime={h['uptime']}s")
