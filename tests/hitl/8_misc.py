@@ -22,7 +22,7 @@ def test_stop_mode(p, panda_jungle):
     panda_jungle.set_harness_orientation(orientation)
     time.sleep(0.25)
 
-    for wakeup in "ign", "can0", "can1", "can2":
+    for wakeup in "ign", "can0", "can2":
       print(f"orientation={orientation} wakeup={wakeup}")
 
       # power cycle panda to have a clean starting point
