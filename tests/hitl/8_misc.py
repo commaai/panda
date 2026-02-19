@@ -15,7 +15,7 @@ def test_boot_time(p):
   # USB enumeration is slow, so SPI is faster
   assert time.monotonic() - st < (1.0 if p.spi else 5.0)
 
-@pytest.mark.timeout(120)
+@pytest.mark.panda_expect_can_error
 @pytest.mark.test_panda_types((Panda.HW_TYPE_CUATRO, ))
 def test_stop_mode(p, panda_jungle):
   serial = p.get_usb_serial()
@@ -35,7 +35,7 @@ def test_stop_mode(p, panda_jungle):
     # ignition wakeup tests the SBU EXTI line for this orientation:
     #   FLIPPED: ignition on SBU2 (PA1) -> EXTI1
     #   NORMAL:  ignition on SBU1 (PC4) -> EXTI4
-    wakeup_sources = ["ign", "0", "2"]
+    wakeup_sources = ["ign", "0", "2", "1"]
 
     for wakeup in wakeup_sources:
       # ensure ignition is off before each iteration
@@ -55,7 +55,7 @@ def test_stop_mode(p, panda_jungle):
       logger.warning("stop mode requested, closed connection")
 
       # wait for panda to enter stop mode
-      time.sleep(3)
+      time.sleep(1)
 
       # send wakeup stimulus
       t_wake = time.monotonic()
@@ -81,5 +81,5 @@ def test_stop_mode(p, panda_jungle):
       logger.warning(f"  ignition_line={h['ignition_line']}, ignition_can={h['ignition_can']}")
       logger.warning(f"  harness={h['car_harness_status']}, sbu1={h['sbu1_voltage_mV']}mV, sbu2={h['sbu2_voltage_mV']}mV")
       logger.warning(f"  safety_mode={h['safety_mode']}, power_save={h['power_save_enabled']}, faults={h['faults']}")
-      assert h['uptime'] <= 5, f"uptime {h['uptime']}s too high for wakeup={wakeup} orientation={orientation_name}"
+      assert h['uptime'] < 3, f"uptime {h['uptime']}s too high for wakeup={wakeup} orientation={orientation_name}"
       logger.warning(f"  PASS: {wakeup} uptime={h['uptime']}s")
