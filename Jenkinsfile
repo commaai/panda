@@ -111,6 +111,7 @@ pipeline {
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["flash jungle", "cd board/jungle && ./flash.py --all"],
                   ["test", "cd tests/hitl && pytest -p no:randomly --log-cli-level=WARNING --durations=0 2*.py [5-9]*.py"],
+                  ["test 8 x20", "cd tests/hitl && for i in \$(seq 1 20); do echo \"=== 8_misc.py run \$i/20 ===\"; pytest -p no:randomly --log-cli-level=WARNING --durations=0 8*.py || exit 1; done"],
                 ])
               }
             }
