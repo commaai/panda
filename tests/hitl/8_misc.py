@@ -3,12 +3,6 @@ import pytest
 
 from panda import Panda
 
-def setup_module():
-  from panda.tests.hitl.conftest import _panda_jungle
-  if _panda_jungle is not None:
-    _panda_jungle.set_harness_orientation(1)
-    time.sleep(1)
-
 def test_boot_time(p):
   # boot time should be instant
   st = time.monotonic()
@@ -23,15 +17,16 @@ def test_stop_mode(p, panda_jungle):
   serial = p.get_usb_serial()
 
   for orientation in (Panda.HARNESS_STATUS_FLIPPED, Panda.HARNESS_STATUS_NORMAL):
+    p.reset(reconnect=False)
     panda_jungle.set_ignition(False)
     panda_jungle.set_harness_orientation(orientation)
-    time.sleep(0.25)
+    time.sleep(2)
+    p.reconnect()
 
     for wakeup in "ign", "can0", "can2":
       print(f"orientation={orientation} wakeup={wakeup}")
 
       # enter stop mode
-      p.set_safety_mode()
       p.enter_stop_mode()
       p.close()
 
