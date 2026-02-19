@@ -35,9 +35,7 @@ def test_stop_mode(p, panda_jungle):
     # ignition wakeup tests the SBU EXTI line for this orientation:
     #   FLIPPED: ignition on SBU2 (PA1) -> EXTI1
     #   NORMAL:  ignition on SBU1 (PC4) -> EXTI4
-    wakeup_sources = ["ign", "can0", "can2"]
-    #if panda_normal:
-    #  wakeup_sources.append("can1")  # CAN1 EXTI5 only works when panda NORMAL (FDCAN2 RX on PB5)
+    wakeup_sources = ["ign", "0", "1", "2"]
 
     for wakeup in wakeup_sources:
       # ensure ignition is off before each iteration
@@ -55,7 +53,7 @@ def test_stop_mode(p, panda_jungle):
       p.set_safety_mode()
       p.enter_stop_mode()
       p.close()
-      logger.warning(f"  stop mode requested, closed connection")
+      logger.warning("  stop mode requested, closed connection")
 
       # wait for panda to enter stop mode (3s gives wide margin for uptime assertion)
       time.sleep(3)
@@ -67,17 +65,10 @@ def test_stop_mode(p, panda_jungle):
         panda_jungle.set_ignition(True)
         exti = "EXTI1 (PA1/SBU2)" if not panda_normal else "EXTI4 (PC4/SBU1)"
         logger.warning(f"  ignition -> {exti}")
-      elif wakeup == "can0":
-        panda_jungle.can_send(0x123, b'\x01\x02', 0)
-        logger.warning(f"  CAN bus 0 -> FDCAN1 RX PB8 (EXTI8)")
-      elif wakeup == "can1":
-        panda_jungle.can_send(0x123, b'\x01\x02', 1)
-        time.sleep(0.1)
-        panda_jungle.can_send(0x123, b'\x01\x02', 1)
-        logger.warning(f"  CAN bus 1 -> FDCAN2 RX PB5 (EXTI5)")
-      elif wakeup == "can2":
-        panda_jungle.can_send(0x123, b'\x01\x02', 2)
-        logger.warning(f"  CAN bus 2 -> FDCAN3 RX PD12 (EXTI12)")
+      else:
+        for i in range(5):
+          panda_jungle.can_send(0x123, b'\x01\x02', int(wakeup))
+        logger.warning(f"  CAN bus {wakeup}")
 
       # panda should reset and come back
       found = Panda.wait_for_panda(serial, timeout=10)
