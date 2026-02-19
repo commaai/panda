@@ -17,11 +17,8 @@ def test_stop_mode(p, panda_jungle):
   serial = p.get_usb_serial()
 
   for orientation in (Panda.HARNESS_STATUS_FLIPPED, Panda.HARNESS_STATUS_NORMAL):
-    p.reset(reconnect=False)
     panda_jungle.set_ignition(False)
     panda_jungle.set_harness_orientation(orientation)
-    time.sleep(2)
-    p.reconnect()
 
     for wakeup in "ign", "can0", "can2":
       print(f"orientation={orientation} wakeup={wakeup}")
