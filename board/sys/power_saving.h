@@ -98,7 +98,7 @@ static void enter_stop_mode(void) {
 
   // EXTI for CAN wakeup
   // EXTI8:  FDCAN1 RX (PB8)
-  // EXTI5:  FDCAN2 RX (PB5 normal, PB12 flipped - disabled)
+  // EXTI5:  FDCAN2 RX (PB5)
   // EXTI12: FDCAN3 RX (PD12)
   set_gpio_mode(GPIOB, 8, MODE_INPUT);
   register_set(&(SYSCFG->EXTICR[2]), SYSCFG_EXTICR3_EXTI8_PB, 0xFU);
@@ -137,7 +137,7 @@ static void enter_stop_mode(void) {
   // enable only wakeup EXTI interrupts
   NVIC_EnableIRQ(EXTI1_IRQn);     // SBU2 (PA1)
   NVIC_EnableIRQ(EXTI4_IRQn);     // SBU1 (PC4)
-  NVIC_EnableIRQ(EXTI9_5_IRQn);    // FDCAN1 RX (PB8), FDCAN2 RX (PB5 normal, PB12 flipped - disabled)
+  NVIC_EnableIRQ(EXTI9_5_IRQn);    // FDCAN1 RX (PB8), FDCAN2 RX (PB5)
   NVIC_EnableIRQ(EXTI15_10_IRQn);  // FDCAN3 RX (PD12)
 
   __DSB();
