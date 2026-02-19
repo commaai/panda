@@ -65,8 +65,7 @@ def test_stop_mode(p, panda_jungle):
         exti = "EXTI1 (PA1/SBU2)" if not panda_normal else "EXTI4 (PC4/SBU1)"
         logger.warning(f"  ignition -> {exti}")
       else:
-        for i in range(5):
-          panda_jungle.can_send(0x123, b'\x01\x02', int(wakeup))
+        panda_jungle.can_send(0x123, b'\x01\x02', int(wakeup))
         logger.warning(f"  CAN bus {wakeup}")
 
       # panda should reset and come back
