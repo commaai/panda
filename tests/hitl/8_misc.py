@@ -35,7 +35,7 @@ def test_stop_mode(p, panda_jungle):
       logger.warning("stop mode requested, closed connection")
 
       # wait for panda to enter stop mode
-      time.sleep(0.5)
+      time.sleep(1)
 
       # wake via ignition or CAN activity
       t_wake = time.monotonic()
