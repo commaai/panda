@@ -24,7 +24,7 @@ def test_stop_mode(p, panda_jungle):
 
   for orientation in (Panda.HARNESS_STATUS_FLIPPED, Panda.HARNESS_STATUS_NORMAL):
     panda_jungle.set_harness_orientation(orientation)
-    time.sleep(0.5)
+    time.sleep(0.25)
 
     # ORIENTATION_1: SBU1=relay, SBU2=ignition (panda FLIPPED)
     # ORIENTATION_2: SBU1=ignition, SBU2=relay (panda NORMAL)
@@ -40,7 +40,6 @@ def test_stop_mode(p, panda_jungle):
     for wakeup in wakeup_sources:
       # ensure ignition is off before each iteration
       panda_jungle.set_ignition(False)
-      time.sleep(0.25)
 
       logger.warning(f"--- [{orientation_name}] wakeup={wakeup} ---")
       h = p.health()
@@ -55,7 +54,7 @@ def test_stop_mode(p, panda_jungle):
       logger.warning("stop mode requested, closed connection")
 
       # wait for panda to enter stop mode
-      time.sleep(2)
+      time.sleep(1)
 
       # send wakeup stimulus
       t_wake = time.monotonic()
