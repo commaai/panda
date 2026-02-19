@@ -28,7 +28,6 @@ def test_stop_mode(p, panda_jungle):
 
       p.enter_stop_mode()
       p.close()
-
       # wait for panda to enter stop mode
       time.sleep(1.5)
 
