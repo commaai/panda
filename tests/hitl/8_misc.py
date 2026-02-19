@@ -72,6 +72,8 @@ def test_stop_mode(p, panda_jungle):
         logger.warning(f"  CAN bus 0 -> FDCAN1 RX PB8 (EXTI8)")
       elif wakeup == "can1":
         panda_jungle.can_send(0x123, b'\x01\x02', 1)
+        time.sleep(0.1)
+        panda_jungle.can_send(0x123, b'\x01\x02', 1)
         logger.warning(f"  CAN bus 1 -> FDCAN2 RX PB5 (EXTI5)")
       elif wakeup == "can2":
         panda_jungle.can_send(0x123, b'\x01\x02', 2)
