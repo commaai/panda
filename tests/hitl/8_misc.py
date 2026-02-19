@@ -1,11 +1,7 @@
-import logging
 import time
 import pytest
 
 from panda import Panda
-
-logging.getLogger("panda").setLevel(logging.WARNING)
-logger = logging.getLogger("stop_mode")
 
 def test_boot_time(p):
   # boot time should be instant
@@ -20,25 +16,23 @@ def test_boot_time(p):
 def test_stop_mode(p, panda_jungle):
   serial = p.get_usb_serial()
 
-  for orientation in (Panda.HARNESS_STATUS_NORMAL, Panda.HARNESS_STATUS_FLIPPED):
+  for orientation in (Panda.HARNESS_STATUS_FLIPPED, Panda.HARNESS_STATUS_NORMAL):
     panda_jungle.set_ignition(False)
     panda_jungle.set_harness_orientation(orientation)
     time.sleep(0.25)
 
     for wakeup in "ign", "can0", "can2":
-      logger.warning(f"--- orientation={orientation} wakeup={wakeup} ---")
+      print(f"orientation={orientation} wakeup={wakeup}")
 
       # enter stop mode
       p.set_safety_mode()
       p.enter_stop_mode()
       p.close()
-      logger.warning("stop mode requested, closed connection")
 
       # wait for panda to enter stop mode
       time.sleep(1)
 
       # wake via ignition or CAN activity
-      t_wake = time.monotonic()
       if wakeup == "ign":
         panda_jungle.set_ignition(True)
       else:
@@ -47,11 +41,11 @@ def test_stop_mode(p, panda_jungle):
 
       # panda should reset and come back
       assert Panda.wait_for_panda(serial, timeout=10)
-      t_found = time.monotonic() - t_wake
-      logger.warning(f"panda found after {t_found:.2f}s")
 
       p.reconnect()
-      h = p.health()
-      logger.warning(f"wakeup ok: uptime={h['uptime']}s, harness={h['car_harness_status']}")
-      assert h['uptime'] < 3
+      assert p.health()['uptime'] < 3
       panda_jungle.set_ignition(False)
+      time.sleep(0.25)
+
+  p.reset()
+  assert p.health()['uptime'] < 3
