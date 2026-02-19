@@ -25,13 +25,6 @@ def test_stop_mode(p, panda_jungle):
     for wakeup in "ign", "can0", "can2":
       print(f"orientation={orientation} wakeup={wakeup}")
 
-      # power cycle panda to have a clean starting point
-      panda_jungle.set_panda_power(False)
-      time.sleep(0.5)
-      panda_jungle.set_panda_power(True)
-      assert Panda.wait_for_panda(serial, timeout=10)
-      p.reconnect()
-
       # enter stop mode
       p.set_safety_mode()
       p.enter_stop_mode()
@@ -46,9 +39,7 @@ def test_stop_mode(p, panda_jungle):
         panda_jungle.set_ignition(True)
       else:
         bus = int(wakeup[-1])
-        for _ in range(10):
-          panda_jungle.can_send(0x123, b'\x01\x02', bus)
-          time.sleep(0.1)
+        panda_jungle.can_send(0x123, b'\x01\x02', bus)
 
       # panda should reset and come back
       assert Panda.wait_for_panda(serial, timeout=10)
