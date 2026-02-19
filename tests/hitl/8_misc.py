@@ -21,6 +21,7 @@ def test_stop_mode(p, panda_jungle):
   serial = p.get_usb_serial()
   logger.warning(f"=== test_stop_mode start: serial={serial}, type={p.get_type()}, spi={p.spi} ===")
   logger.warning(f"  fw: {p.get_version()}")
+  panda_jungle.set_obd(True)
 
   for orientation in (Panda.HARNESS_STATUS_FLIPPED, Panda.HARNESS_STATUS_NORMAL):
     panda_jungle.set_harness_orientation(orientation)
@@ -35,7 +36,7 @@ def test_stop_mode(p, panda_jungle):
     # ignition wakeup tests the SBU EXTI line for this orientation:
     #   FLIPPED: ignition on SBU2 (PA1) -> EXTI1
     #   NORMAL:  ignition on SBU1 (PC4) -> EXTI4
-    wakeup_sources = ["ign", "0", "2"]
+    wakeup_sources = ["ign", "0", "1", "2"]
 
     for wakeup in wakeup_sources:
       # ensure ignition is off before each iteration
@@ -54,7 +55,7 @@ def test_stop_mode(p, panda_jungle):
       logger.warning("stop mode requested, closed connection")
 
       # wait for panda to enter stop mode
-      time.sleep(1)
+      time.sleep(2)
 
       # send wakeup stimulus
       t_wake = time.monotonic()
@@ -75,11 +76,10 @@ def test_stop_mode(p, panda_jungle):
       assert found, f"panda didn't come back for wakeup={wakeup} orientation={orientation_name} after {t_found:.1f}s"
 
       p.reconnect()
-      p.set_heartbeat_disabled()
       h = p.health()
       logger.warning(f"  after wakeup: uptime={h['uptime']}s, voltage={h['voltage']}mV, current={h['current']}mA")
       logger.warning(f"  ignition_line={h['ignition_line']}, ignition_can={h['ignition_can']}")
       logger.warning(f"  harness={h['car_harness_status']}, sbu1={h['sbu1_voltage_mV']}mV, sbu2={h['sbu2_voltage_mV']}mV")
       logger.warning(f"  safety_mode={h['safety_mode']}, power_save={h['power_save_enabled']}, faults={h['faults']}")
-      assert h['uptime'] < 4, f"uptime {h['uptime']}s too high for wakeup={wakeup} orientation={orientation_name}"
+      assert h['uptime'] < 3, f"uptime {h['uptime']}s too high for wakeup={wakeup} orientation={orientation_name}"
       logger.warning(f"  PASS: {wakeup} uptime={h['uptime']}s")
