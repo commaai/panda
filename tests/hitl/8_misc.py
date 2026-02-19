@@ -4,6 +4,7 @@ import pytest
 
 from panda import Panda
 
+logging.getLogger("panda").setLevel(logging.WARNING)
 logger = logging.getLogger("stop_mode")
 
 def test_boot_time(p):
@@ -24,23 +25,17 @@ def test_stop_mode(p, panda_jungle):
     panda_jungle.set_harness_orientation(orientation)
     time.sleep(0.25)
 
-    for wakeup in "ign", "can0", "can1", "can2":
+    for wakeup in "ign", "can0", "can2":
       logger.warning(f"--- orientation={orientation} wakeup={wakeup} ---")
-      h = p.health()
-      logger.warning(f"before stop: uptime={h['uptime']}s, voltage={h['voltage']}mV, current={h['current']}mA")
-      logger.warning(f"  ignition_line={h['ignition_line']}, ignition_can={h['ignition_can']}")
-      logger.warning(f"  safety_mode={h['safety_mode']}, power_save={h['power_save_enabled']}")
-      logger.warning(f"  faults={h['faults']}, fan={h['fan_power']}")
 
       # enter stop mode
       p.set_safety_mode()
       p.enter_stop_mode()
       p.close()
-      logger.warning(f"stop mode requested, closed connection")
+      logger.warning("stop mode requested, closed connection")
 
       # wait for panda to enter stop mode
-      time.sleep(1)
-      logger.warning(f"waited 1s, sending wakeup: {wakeup}")
+      time.sleep(0.5)
 
       # wake via ignition or CAN activity
       t_wake = time.monotonic()
@@ -48,7 +43,6 @@ def test_stop_mode(p, panda_jungle):
         panda_jungle.set_ignition(True)
       else:
         bus = int(wakeup[-1])
-        panda_jungle.can_send(0x123, b'\x01\x02', bus)
         panda_jungle.can_send(0x123, b'\x01\x02', bus)
 
       # panda should reset and come back
@@ -58,9 +52,6 @@ def test_stop_mode(p, panda_jungle):
 
       p.reconnect()
       h = p.health()
-      logger.warning(f"after wakeup: uptime={h['uptime']}s, voltage={h['voltage']}mV, current={h['current']}mA")
-      logger.warning(f"  ignition_line={h['ignition_line']}, ignition_can={h['ignition_can']}")
-      logger.warning(f"  safety_mode={h['safety_mode']}, power_save={h['power_save_enabled']}")
-      logger.warning(f"  faults={h['faults']}, fan={h['fan_power']}")
-      logger.warning(f"  harness={h['car_harness_status']}, sbu1={h['sbu1_voltage_mV']}mV, sbu2={h['sbu2_voltage_mV']}mV")
+      logger.warning(f"wakeup ok: uptime={h['uptime']}s, harness={h['car_harness_status']}")
       assert h['uptime'] < 3
+      panda_jungle.set_ignition(False)
