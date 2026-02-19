@@ -111,7 +111,7 @@ pipeline {
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["flash jungle", "cd board/jungle && ./flash.py --all"],
                   ["test", "cd tests/hitl && pytest --log-cli-level=WARNING --durations=0 2*.py [5-9]*.py"],
-                  ["test x20", "cd tests/hitl && for i in \$(seq 1 20); do echo \"=== full suite run \$i/20 ===\"; pytest --durations=0 2*.py [5-9]*.py || exit 1; done"],
+                  ["test x20", "cd tests/hitl && PASS=0; FAIL=0; for i in \$(seq 1 20); do echo \"=== full suite run \$i/20 ===\"; if pytest --durations=0 2*.py [5-9]*.py; then PASS=\$((PASS+1)); else FAIL=\$((FAIL+1)); fi; done; echo \"=== RESULTS: \$PASS passed, \$FAIL failed out of 20 ===\"; [ \$FAIL -eq 0 ]"],
                 ])
               }
             }
