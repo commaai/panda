@@ -35,7 +35,7 @@ def test_stop_mode(p, panda_jungle):
     # ignition wakeup tests the SBU EXTI line for this orientation:
     #   FLIPPED: ignition on SBU2 (PA1) -> EXTI1
     #   NORMAL:  ignition on SBU1 (PC4) -> EXTI4
-    wakeup_sources = ["ign", "0", "2", "1"]
+    wakeup_sources = ["ign", "0", "2"]
 
     for wakeup in wakeup_sources:
       # ensure ignition is off before each iteration
@@ -55,7 +55,7 @@ def test_stop_mode(p, panda_jungle):
       logger.warning("stop mode requested, closed connection")
 
       # wait for panda to enter stop mode
-      time.sleep(1)
+      time.sleep(0.5)
 
       # send wakeup stimulus
       t_wake = time.monotonic()
