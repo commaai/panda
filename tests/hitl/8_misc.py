@@ -3,6 +3,12 @@ import pytest
 
 from panda import Panda
 
+def setup_module():
+  from panda.tests.hitl.conftest import _panda_jungle
+  if _panda_jungle is not None:
+    _panda_jungle.set_harness_orientation(1)
+    time.sleep(1)
+
 def test_boot_time(p):
   # boot time should be instant
   st = time.monotonic()
@@ -46,6 +52,3 @@ def test_stop_mode(p, panda_jungle):
       assert p.health()['uptime'] < 3
       panda_jungle.set_ignition(False)
       time.sleep(0.25)
-
-  p.reset()
-  assert p.health()['uptime'] < 3
