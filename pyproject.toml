@@ -48,6 +48,11 @@ packages = [
 [tool.setuptools.package-dir]
 panda = "."
 
+[tool.setuptools.package-data]
+"panda.board" = ["*.h"]
+"panda.board.body" = ["*.h"]
+"panda.board.jungle" = ["*.h"]
+
 [tool.mypy]
 # third-party packages
 ignore_missing_imports = true

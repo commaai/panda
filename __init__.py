@@ -1,3 +1,5 @@
+import os
+
 from .python.constants import McuType, BASEDIR, FW_PATH, USBPACKET_MAX_SIZE  # noqa: F401
 from .python.spi import PandaSpiException, PandaProtocolMismatch, STBootloaderSPIHandle  # noqa: F401
 from .python.serial import PandaSerial  # noqa: F401
@@ -11,3 +13,7 @@ from .board.jungle import PandaJungle, PandaJungleDFU # noqa: F401
 
 # panda body
 from .board.body import PandaBody  # noqa: F401
+
+# For C/C++ includes: add INCLUDE_PATH to compiler's include path
+# so that `#include "panda/board/health.h"` resolves correctly
+INCLUDE_PATH = os.path.abspath(os.path.join(BASEDIR, ".."))
