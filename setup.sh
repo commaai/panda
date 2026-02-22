@@ -8,8 +8,8 @@ PLATFORM=$(uname -s)
 
 echo "installing dependencies"
 if [[ $PLATFORM == "Darwin" ]]; then
-  export HOMEBREW_NO_AUTO_UPDATE=1
-  brew install python3 gcc@13
+  # pass
+  :
 elif [[ $PLATFORM == "Linux" ]]; then
   # for AGNOS since we clear the apt lists
   if [[ ! -d /"var/lib/apt/" ]]; then
