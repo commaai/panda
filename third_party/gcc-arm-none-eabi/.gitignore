@@ -1,2 +1,7 @@
 arm-gnu-toolchain-*/
 *.tar.xz
+
+# override root .gitignore exclusions for vendored toolchain files
+!**/*.so
+!**/*.o
+!**/*.a
