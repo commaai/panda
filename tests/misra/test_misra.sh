@@ -4,8 +4,7 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PANDA_DIR=$(realpath $DIR/../../)
 
-# vendored gcc toolchain (extracted by setup.sh or scons)
-TOOLCHAIN_BIN="$PANDA_DIR/.bin/bin"
+source $PANDA_DIR/setup.sh
 OPENDBC_ROOT=$(python3 -c "import opendbc; print(opendbc.INCLUDE_PATH)")
 
 GREEN="\e[1;32m"
@@ -50,7 +49,7 @@ cppcheck() {
 
   $CPPCHECK_DIR/cppcheck --inline-suppr \
           -I $PANDA_DIR \
-          -I "$($TOOLCHAIN_BIN/arm-none-eabi-gcc -print-file-name=include)" \
+          -I "$(arm-none-eabi-gcc -print-file-name=include)" \
           -I $OPENDBC_ROOT \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
           --suppress=*:*include/* --error-exitcode=2 --check-level=exhaustive --safety \
