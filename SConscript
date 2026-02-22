@@ -1,8 +1,15 @@
 import os
+import platform
 import opendbc
 import subprocess
 
-PREFIX = "arm-none-eabi-"
+SCRIPT_DIR = Dir('.').srcnode().abspath
+if platform.system() == "Darwin":
+  TOOLCHAIN_ARCH = "Darwin"
+else:
+  TOOLCHAIN_ARCH = platform.machine()
+TOOLCHAIN_DIR = os.path.join(SCRIPT_DIR, "third_party", "gcc-arm-none-eabi", TOOLCHAIN_ARCH)
+PREFIX = os.path.join(TOOLCHAIN_DIR, "bin", "arm-none-eabi-")
 BUILDER = "DEV"
 
 common_flags = []

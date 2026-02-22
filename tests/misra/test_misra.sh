@@ -3,6 +3,11 @@ set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PANDA_DIR=$(realpath $DIR/../../)
+
+# vendored gcc toolchain
+ARCHNAME=$(uname -m)
+if [[ "$OSTYPE" == "darwin"* ]]; then ARCHNAME="Darwin"; fi
+TOOLCHAIN_BIN="$PANDA_DIR/third_party/gcc-arm-none-eabi/$ARCHNAME/bin"
 OPENDBC_ROOT=$(python3 -c "import opendbc; print(opendbc.INCLUDE_PATH)")
 
 GREEN="\e[1;32m"
@@ -47,7 +52,7 @@ cppcheck() {
 
   $CPPCHECK_DIR/cppcheck --inline-suppr \
           -I $PANDA_DIR \
-          -I "$(arm-none-eabi-gcc -print-file-name=include)" \
+          -I "$($TOOLCHAIN_BIN/arm-none-eabi-gcc -print-file-name=include)" \
           -I $OPENDBC_ROOT \
           --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
           --suppress=*:*include/* --error-exitcode=2 --check-level=exhaustive --safety \
