@@ -38,3 +38,18 @@ fi
 export UV_PROJECT_ENVIRONMENT="$DIR/.venv"
 uv sync --all-extras --upgrade
 source "$DIR/.venv/bin/activate"
+
+# extract vendored toolchain
+if [[ "$OSTYPE" == darwin* ]]; then
+  ARCHNAME="Darwin"
+elif [[ "$(uname -m)" == "aarch64" ]]; then
+  ARCHNAME="aarch64"
+else
+  ARCHNAME="x86_64"
+fi
+if [ ! -d "$DIR/.bin" ]; then
+  echo "Extracting gcc-arm-none-eabi toolchain for $ARCHNAME..."
+  tar xf "$DIR/gcc-arm-none-eabi.tar.gz" -C "$DIR" "$ARCHNAME/"
+  mv "$DIR/$ARCHNAME" "$DIR/.bin"
+fi
+export PATH="$DIR/.bin/bin:$PATH"

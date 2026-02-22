@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 import os
-import platform
 import subprocess
 from collections import defaultdict
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_DIR = os.path.dirname(SCRIPT_DIR)
-TOOLCHAIN_ARCH = "Darwin" if platform.system() == "Darwin" else platform.machine()
-# setup toolchain (extracts tarball if needed)
-subprocess.check_call([os.path.join(REPO_DIR, "third_party", "gcc-arm-none-eabi", "setup.sh")])
-ARM_SIZE = os.path.join(REPO_DIR, "third_party", "gcc-arm-none-eabi", TOOLCHAIN_ARCH, "bin", "arm-none-eabi-size")
+ARM_SIZE = os.path.join(REPO_DIR, ".bin", "bin", "arm-none-eabi-size")
 
 
 def check_space(file, mcu):

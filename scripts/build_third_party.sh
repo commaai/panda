@@ -2,7 +2,8 @@
 set -e
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
-cd "$DIR"
+REPO_DIR="$(cd "$DIR/.." && pwd)"
+cd "$REPO_DIR"
 
 TOOLCHAIN_VERSION="13.2.rel1"
 TOOLCHAIN_BASE="arm-gnu-toolchain-${TOOLCHAIN_VERSION}"
@@ -14,7 +15,7 @@ install_toolchain() {
 
   local TARBALL="${TOOLCHAIN_BASE}-${PLATFORM_SUFFIX}-arm-none-eabi.tar.xz"
   local URL="https://developer.arm.com/-/media/Files/downloads/gnu/${TOOLCHAIN_VERSION}/binrel/${TARBALL}"
-  local INSTALL_DIR="$DIR/$ARCHNAME"
+  local INSTALL_DIR="$REPO_DIR/$ARCHNAME"
 
   # download if not cached
   if [ ! -f "$TARBALL" ]; then
@@ -34,7 +35,7 @@ install_toolchain() {
   rm -rf "$INSTALL_DIR"
   mkdir -p "$INSTALL_DIR"
 
-  local SRC="$DIR/$EXTRACT_DIR"
+  local SRC="$REPO_DIR/$EXTRACT_DIR"
 
   # --- bin: only the tools directly used by SConscript ---
   mkdir -p "$INSTALL_DIR/bin"

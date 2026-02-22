@@ -1,6 +1,0 @@
-arm-gnu-toolchain-*/
-
-# extracted platform dirs (created by setup.sh, not checked in)
-x86_64/
-aarch64/
-Darwin/

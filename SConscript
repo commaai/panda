@@ -4,16 +4,19 @@ import opendbc
 import subprocess
 
 SCRIPT_DIR = Dir('.').srcnode().abspath
-if platform.system() == "Darwin":
-  TOOLCHAIN_ARCH = "Darwin"
-else:
-  TOOLCHAIN_ARCH = platform.machine()
-TOOLCHAIN_BASE = os.path.join(SCRIPT_DIR, "third_party", "gcc-arm-none-eabi")
-TOOLCHAIN_DIR = os.path.join(TOOLCHAIN_BASE, TOOLCHAIN_ARCH)
+TOOLCHAIN_DIR = os.path.join(SCRIPT_DIR, ".bin")
 PREFIX = os.path.join(TOOLCHAIN_DIR, "bin", "arm-none-eabi-")
 
 # extract vendored toolchain if needed
-subprocess.check_call([os.path.join(TOOLCHAIN_BASE, "setup.sh")])
+if not os.path.isdir(TOOLCHAIN_DIR):
+  if platform.system() == "Darwin":
+    archname = "Darwin"
+  else:
+    archname = platform.machine()
+  subprocess.check_call(["tar", "xf",
+    os.path.join(SCRIPT_DIR, "gcc-arm-none-eabi.tar.gz"),
+    "-C", SCRIPT_DIR, archname + "/"])
+  os.rename(os.path.join(SCRIPT_DIR, archname), TOOLCHAIN_DIR)
 BUILDER = "DEV"
 
 common_flags = []
