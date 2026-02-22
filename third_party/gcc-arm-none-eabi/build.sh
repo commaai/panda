@@ -117,8 +117,8 @@ install_toolchain "darwin-arm64" "Darwin"
 
 # --- Create single compressed tarball ---
 echo "Creating compressed tarball..."
-tar -cJf gcc-arm-none-eabi.tar.xz x86_64/ aarch64/ Darwin/
+tar -czf gcc-arm-none-eabi.tar.gz x86_64/ aarch64/ Darwin/
 rm -rf x86_64 aarch64 Darwin
 
 echo "Done."
-ls -lh gcc-arm-none-eabi.tar.xz
+ls -lh gcc-arm-none-eabi.tar.gz
