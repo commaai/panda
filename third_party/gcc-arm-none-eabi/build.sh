@@ -58,7 +58,7 @@ install_toolchain() {
   local ARM_SRC="$SRC/arm-none-eabi"
   local ARM_DST="$INSTALL_DIR/arm-none-eabi"
   mkdir -p "$ARM_DST/bin"
-  for tool in as ld.bfd; do
+  for tool in as ld ld.bfd; do
     if [ -f "$ARM_SRC/bin/$tool" ]; then
       cp "$ARM_SRC/bin/$tool" "$ARM_DST/bin/"
     fi
