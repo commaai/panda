@@ -53,7 +53,7 @@ def phone_steps(String device_type, steps) {
     timeout(time: 20, unit: 'MINUTES') {
       retry (3) {
         def date = sh(script: 'date', returnStdout: true).trim()
-        phone(device_ip, "set time", "sudo date -s '${date}'")
+        phone(device_ip, "set time", "date -s '${date}'")
         phone(device_ip, "git checkout", readFile("tests/setup_device_ci.sh"))
       }
       steps.each { item ->
