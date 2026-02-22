@@ -47,7 +47,7 @@ elif [[ "$(uname -m)" == "aarch64" ]]; then
 else
   ARCHNAME="x86_64"
 fi
-if [ ! -d "$DIR/.bin" ]; then
+if [ ! -d "$DIR/.bin" ] && [ -f "$DIR/gcc-arm-none-eabi.tar.gz" ]; then
   echo "Extracting gcc-arm-none-eabi toolchain for $ARCHNAME..."
   tar xf "$DIR/gcc-arm-none-eabi.tar.gz" -C "$DIR" "$ARCHNAME/"
   mv "$DIR/$ARCHNAME" "$DIR/.bin"
