@@ -33,7 +33,13 @@ dev = [
 ]
 
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = [
+  "setuptools>=61",
+  "wheel",
+  "scons",
+  "pycryptodome>=3.9.8",
+  "opendbc @ git+https://github.com/commaai/opendbc.git@master#egg=opendbc",
+]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
@@ -44,6 +50,9 @@ packages = [
   "panda.board.body",
   "panda.board.jungle",
 ]
+
+[tool.setuptools.package-data]
+"panda.board" = ["obj/*.bin", "obj/*.bin.signed"]
 
 [tool.setuptools.package-dir]
 panda = "."
