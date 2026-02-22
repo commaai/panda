@@ -14,7 +14,7 @@ if not os.path.isdir(TOOLCHAIN_DIR):
   else:
     archname = platform.machine()
   subprocess.check_call(["tar", "xf",
-    os.path.join(SCRIPT_DIR, "gcc-arm-none-eabi.tar.gz"),
+    os.path.join(SCRIPT_DIR, "gcc-arm-none-eabi.tar.xz"),
     "-C", SCRIPT_DIR, archname + "/"])
   os.rename(os.path.join(SCRIPT_DIR, archname), TOOLCHAIN_DIR)
 BUILDER = "DEV"
