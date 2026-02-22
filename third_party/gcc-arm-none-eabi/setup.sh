@@ -15,5 +15,5 @@ fi
 # extract if not already present
 if [ ! -d "$DIR/$ARCHNAME" ]; then
   echo "Extracting gcc-arm-none-eabi toolchain for $ARCHNAME..."
-  tar xf "$DIR/$ARCHNAME.tar.xz" -C "$DIR"
+  tar xf "$DIR/gcc-arm-none-eabi.tar.xz" -C "$DIR" "$ARCHNAME/"
 fi

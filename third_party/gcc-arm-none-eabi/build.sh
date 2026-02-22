@@ -115,16 +115,10 @@ install_toolchain "x86_64" "x86_64"
 install_toolchain "aarch64" "aarch64"
 install_toolchain "darwin-arm64" "Darwin"
 
-# --- Create compressed tarballs ---
-echo "Creating compressed tarballs..."
-for arch in x86_64 aarch64 Darwin; do
-  tar -cJf "$arch.tar.xz" "$arch"/
-  echo "$arch.tar.xz: $(du -sh "$arch.tar.xz" | cut -f1)"
-  rm -rf "$arch"
-done
+# --- Create single compressed tarball ---
+echo "Creating compressed tarball..."
+tar -cJf gcc-arm-none-eabi.tar.xz x86_64/ aarch64/ Darwin/
+rm -rf x86_64 aarch64 Darwin
 
-echo ""
-echo "Done. Tarball sizes:"
-ls -lh *.tar.xz
-echo "Total:"
-du -sh "$DIR" --exclude='.git'
+echo "Done."
+ls -lh gcc-arm-none-eabi.tar.xz
