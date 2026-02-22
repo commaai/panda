@@ -38,7 +38,5 @@ tests/safety/coverage.info
 *.profdata
 mull.yml
 
-.context/
 .claude/
-PLAN.md
 TASK.md

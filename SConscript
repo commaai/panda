@@ -3,7 +3,6 @@ import opendbc
 import subprocess
 import gcc_arm_none_eabi
 
-SCRIPT_DIR = Dir('.').srcnode().abspath
 PREFIX = os.path.join(gcc_arm_none_eabi.TOOLCHAIN_DIR, "bin", "arm-none-eabi-")
 BUILDER = "DEV"
 
