@@ -51,7 +51,11 @@ END"""
 def phone_steps(String device_type, steps) {
   lock(resource: "", label: device_type, inversePrecedence: true, variable: 'device_ip', quantity: 1) {
     timeout(time: 20, unit: 'MINUTES') {
-      phone(device_ip, "git checkout", readFile("tests/setup_device_ci.sh"),)
+      retry (3) {
+        def date = sh(script: 'date', returnStdout: true).trim()
+        phone(device_ip, "set time", "date -s '${date}'")
+        phone(device_ip, "git checkout", readFile("tests/setup_device_ci.sh"))
+      }
       steps.each { item ->
         phone(device_ip, item[0], item[1])
       }
