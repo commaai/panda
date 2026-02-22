@@ -18,7 +18,7 @@ elif [[ $PLATFORM == "Linux" ]]; then
 
   sudo apt-get install -y --no-install-recommends \
     curl ca-certificates \
-    make g++ git xz-utils \
+    make g++ git \
     libusb-1.0-0 \
     python3-dev python3-pip python3-venv
 else
