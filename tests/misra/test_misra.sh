@@ -5,6 +5,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PANDA_DIR=$(realpath $DIR/../../)
 
 # vendored gcc toolchain
+"$PANDA_DIR/third_party/gcc-arm-none-eabi/setup.sh"
 ARCHNAME=$(uname -m)
 if [[ "$OSTYPE" == "darwin"* ]]; then ARCHNAME="Darwin"; fi
 TOOLCHAIN_BIN="$PANDA_DIR/third_party/gcc-arm-none-eabi/$ARCHNAME/bin"

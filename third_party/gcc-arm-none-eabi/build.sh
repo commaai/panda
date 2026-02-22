@@ -22,7 +22,7 @@ install_toolchain() {
     curl -fSL -o "$TARBALL" "$URL"
   fi
 
-  # extract (find extracted dir by glob since ARM uses mixed case in dir name)
+  # extract
   local EXTRACT_GLOB="arm-gnu-toolchain-*-${PLATFORM_SUFFIX}-arm-none-eabi"
   if ! ls -d $EXTRACT_GLOB 1>/dev/null 2>&1; then
     echo "[$ARCHNAME] Extracting ..."
@@ -31,21 +31,20 @@ install_toolchain() {
   local EXTRACT_DIR
   EXTRACT_DIR=$(ls -d $EXTRACT_GLOB)
 
-  # install: copy only what we need
   rm -rf "$INSTALL_DIR"
   mkdir -p "$INSTALL_DIR"
 
   local SRC="$DIR/$EXTRACT_DIR"
 
-  # --- bin: only the tools we actually use ---
+  # --- bin: only the tools directly used by SConscript ---
   mkdir -p "$INSTALL_DIR/bin"
-  for tool in gcc as ld ld.bfd ar objcopy objdump size ranlib nm strip readelf; do
+  for tool in gcc objcopy size; do
     if [ -f "$SRC/bin/arm-none-eabi-$tool" ]; then
       cp "$SRC/bin/arm-none-eabi-$tool" "$INSTALL_DIR/bin/"
     fi
   done
 
-  # --- libexec: compiler internals (cc1, collect2) ---
+  # --- libexec: cc1 and collect2 (needed by gcc driver) ---
   local LIBEXEC_SRC="$SRC/libexec/gcc/arm-none-eabi/$GCC_VERSION"
   local LIBEXEC_DST="$INSTALL_DIR/libexec/gcc/arm-none-eabi/$GCC_VERSION"
   mkdir -p "$LIBEXEC_DST"
@@ -55,59 +54,53 @@ install_toolchain() {
     fi
   done
 
-  # --- lib/gcc: compiler support libraries ---
-  local LIB_GCC_SRC="$SRC/lib/gcc/arm-none-eabi/$GCC_VERSION"
-  local LIB_GCC_DST="$INSTALL_DIR/lib/gcc/arm-none-eabi/$GCC_VERSION"
-  mkdir -p "$LIB_GCC_DST"
-
-  # compiler-provided headers (stdint.h, stdbool.h, stddef.h, etc.)
-  cp -r "$LIB_GCC_SRC/include" "$LIB_GCC_DST/"
-  if [ -d "$LIB_GCC_SRC/include-fixed" ]; then
-    cp -r "$LIB_GCC_SRC/include-fixed" "$LIB_GCC_DST/"
-  fi
-
-  # target multilib: only thumb/v7e-m+dp/hard (cortex-m7 hard-float)
-  local MULTILIB="thumb/v7e-m+dp/hard"
-  mkdir -p "$LIB_GCC_DST/$MULTILIB"
-  cp "$LIB_GCC_SRC/$MULTILIB"/*.a "$LIB_GCC_DST/$MULTILIB/" 2>/dev/null || true
-  cp "$LIB_GCC_SRC/$MULTILIB"/*.o "$LIB_GCC_DST/$MULTILIB/" 2>/dev/null || true
-
-  # base crt files and libgcc
-  cp "$LIB_GCC_SRC"/*.o "$LIB_GCC_DST/" 2>/dev/null || true
-  cp "$LIB_GCC_SRC"/*.a "$LIB_GCC_DST/" 2>/dev/null || true
-
-  # --- arm-none-eabi/: newlib and binutils support ---
+  # --- arm-none-eabi/bin: only tools gcc calls internally ---
   local ARM_SRC="$SRC/arm-none-eabi"
   local ARM_DST="$INSTALL_DIR/arm-none-eabi"
   mkdir -p "$ARM_DST/bin"
-
-  # binutils bare names (gcc calls these internally)
-  for tool in as ld ld.bfd ar nm objcopy objdump ranlib strip readelf; do
+  for tool in as ld.bfd; do
     if [ -f "$ARM_SRC/bin/$tool" ]; then
       cp "$ARM_SRC/bin/$tool" "$ARM_DST/bin/"
     fi
   done
 
-  # newlib C headers only (needed for MISRA analysis; build uses -nostdlib so libs aren't needed)
+  # --- newlib C headers (needed for #include_next from GCC's stdint.h etc.) ---
   mkdir -p "$ARM_DST/include"
   find "$ARM_SRC/include" -maxdepth 1 -not -name 'c++' | while read -r item; do
     [ "$item" = "$ARM_SRC/include" ] && continue
     cp -r "$item" "$ARM_DST/include/"
   done
 
-  # --- remove unused libraries (C-only project, no C++/Fortran) ---
-  find "$INSTALL_DIR" -name 'libstdc++*' -delete 2>/dev/null || true
-  find "$INSTALL_DIR" -name 'libsupc++*' -delete 2>/dev/null || true
-  find "$INSTALL_DIR" -name 'libgfortran*' -delete 2>/dev/null || true
-  find "$INSTALL_DIR" -name 'libatomic*' -delete 2>/dev/null || true
-  # remove large unused compiler headers
-  rm -f "$LIB_GCC_DST/include/arm_mve.h" 2>/dev/null || true
+  # --- lib/gcc: compiler support (only the multilib we use) ---
+  local LIB_GCC_SRC="$SRC/lib/gcc/arm-none-eabi/$GCC_VERSION"
+  local LIB_GCC_DST="$INSTALL_DIR/lib/gcc/arm-none-eabi/$GCC_VERSION"
+  local MULTILIB="thumb/v7e-m+dp/hard"
+  mkdir -p "$LIB_GCC_DST/$MULTILIB"
 
-  # --- strip host binaries to reduce size ---
-  find "$INSTALL_DIR/bin" -type f -executable -exec strip {} + 2>/dev/null || true
-  strip "$LIBEXEC_DST/cc1" 2>/dev/null || true
-  strip "$LIBEXEC_DST/collect2" 2>/dev/null || true
-  find "$ARM_DST/bin" -type f -executable -exec strip {} + 2>/dev/null || true
+  # compiler-provided headers
+  cp -r "$LIB_GCC_SRC/include" "$LIB_GCC_DST/"
+  if [ -d "$LIB_GCC_SRC/include-fixed" ]; then
+    cp -r "$LIB_GCC_SRC/include-fixed" "$LIB_GCC_DST/"
+  fi
+
+  # target multilib: only thumb/v7e-m+dp/hard (cortex-m7 hard-float)
+  cp "$LIB_GCC_SRC/$MULTILIB"/libgcc.a "$LIB_GCC_DST/$MULTILIB/"
+  cp "$LIB_GCC_SRC/$MULTILIB"/crt*.o "$LIB_GCC_DST/$MULTILIB/" 2>/dev/null || true
+
+  # --- remove unused headers ---
+  rm -f "$LIB_GCC_DST/include/arm_neon.h"
+  rm -f "$LIB_GCC_DST/include/arm_mve_types.h"
+  rm -f "$LIB_GCC_DST/include/mmintrin.h"
+  rm -f "$LIB_GCC_DST/include/ISO_Fortran_binding.h"
+  rm -f "$LIB_GCC_DST/include/gcov.h"
+  rm -f "$LIB_GCC_DST/include/arm_cde.h"
+
+  # --- strip host binaries (use llvm-strip for cross-platform support) ---
+  local STRIP_CMD="strip"
+  if [ "$ARCHNAME" != "$(uname -m)" ] && [ "$ARCHNAME" != "Darwin" ] && command -v llvm-strip &>/dev/null; then
+    STRIP_CMD="llvm-strip"
+  fi
+  find "$INSTALL_DIR" -type f \( -executable -o -name '*.so' \) -exec $STRIP_CMD {} + 2>/dev/null || true
 
   # --- clean up download artifacts ---
   rm -rf "$EXTRACT_DIR"
@@ -121,3 +114,17 @@ install_toolchain() {
 install_toolchain "x86_64" "x86_64"
 install_toolchain "aarch64" "aarch64"
 install_toolchain "darwin-arm64" "Darwin"
+
+# --- Create compressed tarballs ---
+echo "Creating compressed tarballs..."
+for arch in x86_64 aarch64 Darwin; do
+  tar -cJf "$arch.tar.xz" "$arch"/
+  echo "$arch.tar.xz: $(du -sh "$arch.tar.xz" | cut -f1)"
+  rm -rf "$arch"
+done
+
+echo ""
+echo "Done. Tarball sizes:"
+ls -lh *.tar.xz
+echo "Total:"
+du -sh "$DIR" --exclude='.git'

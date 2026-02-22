@@ -1,7 +1,6 @@
 arm-gnu-toolchain-*/
-*.tar.xz
 
-# override root .gitignore exclusions for vendored toolchain files
-!**/*.so
-!**/*.o
-!**/*.a
+# extracted platform dirs (created by setup.sh, not checked in)
+x86_64/
+aarch64/
+Darwin/

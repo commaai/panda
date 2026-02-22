@@ -8,8 +8,12 @@ if platform.system() == "Darwin":
   TOOLCHAIN_ARCH = "Darwin"
 else:
   TOOLCHAIN_ARCH = platform.machine()
-TOOLCHAIN_DIR = os.path.join(SCRIPT_DIR, "third_party", "gcc-arm-none-eabi", TOOLCHAIN_ARCH)
+TOOLCHAIN_BASE = os.path.join(SCRIPT_DIR, "third_party", "gcc-arm-none-eabi")
+TOOLCHAIN_DIR = os.path.join(TOOLCHAIN_BASE, TOOLCHAIN_ARCH)
 PREFIX = os.path.join(TOOLCHAIN_DIR, "bin", "arm-none-eabi-")
+
+# extract vendored toolchain if needed
+subprocess.check_call([os.path.join(TOOLCHAIN_BASE, "setup.sh")])
 BUILDER = "DEV"
 
 common_flags = []
