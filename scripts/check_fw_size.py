@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
-import os
 import subprocess
 from collections import defaultdict
-import gcc_arm_none_eabi
-
-ARM_SIZE = os.path.join(gcc_arm_none_eabi.TOOLCHAIN_DIR, "bin", "arm-none-eabi-size")
 
 
 def check_space(file, mcu):
@@ -49,7 +45,7 @@ def check_space(file, mcu):
   result = {}
   calcs = defaultdict(int)
 
-  output = str(subprocess.check_output(f"{ARM_SIZE} -x --format=sysv {file}", shell=True), 'utf-8')
+  output = str(subprocess.check_output(f"arm-none-eabi-size -x --format=sysv {file}", shell=True), 'utf-8')
 
   for row in output.split('\n'):
     pop = False
