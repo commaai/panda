@@ -2,10 +2,9 @@
 import os
 import subprocess
 from collections import defaultdict
+import gcc_arm_none_eabi
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-REPO_DIR = os.path.dirname(SCRIPT_DIR)
-ARM_SIZE = os.path.join(REPO_DIR, ".bin", "bin", "arm-none-eabi-size")
+ARM_SIZE = os.path.join(gcc_arm_none_eabi.TOOLCHAIN_DIR, "bin", "arm-none-eabi-size")
 
 
 def check_space(file, mcu):

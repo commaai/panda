@@ -19,7 +19,7 @@ elif [[ $PLATFORM == "Linux" ]]; then
   sudo apt-get install -y --no-install-recommends \
     curl ca-certificates \
     make g++ git \
-    libusb-1.0-0 xz-utils \
+    libusb-1.0-0 \
     python3-dev python3-pip python3-venv
 else
   echo "WARNING: unsupported platform. skipping apt/brew install."
@@ -38,18 +38,3 @@ fi
 export UV_PROJECT_ENVIRONMENT="$DIR/.venv"
 uv sync --all-extras --upgrade
 source "$DIR/.venv/bin/activate"
-
-# extract vendored toolchain
-if [[ "$OSTYPE" == darwin* ]]; then
-  ARCHNAME="Darwin"
-elif [[ "$(uname -m)" == "aarch64" ]]; then
-  ARCHNAME="aarch64"
-else
-  ARCHNAME="x86_64"
-fi
-if [ ! -d "$DIR/.bin" ] && [ -f "$DIR/gcc-arm-none-eabi.tar.xz" ]; then
-  echo "Extracting gcc-arm-none-eabi toolchain for $ARCHNAME..."
-  tar xf "$DIR/gcc-arm-none-eabi.tar.xz" -C "$DIR" "$ARCHNAME/"
-  mv "$DIR/$ARCHNAME" "$DIR/.bin"
-fi
-export PATH="$DIR/.bin/bin:$PATH"

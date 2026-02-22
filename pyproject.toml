@@ -19,6 +19,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "scons",
+  "gcc-arm-none-eabi @ git+https://github.com/commaai/dependencies.git@gcc-arm-none-eabi#subdirectory=gcc-arm-none-eabi",
   "pycryptodome >= 3.9.8",
   "cffi",
   "flaky",

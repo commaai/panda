@@ -38,8 +38,6 @@ tests/safety/coverage.info
 *.profdata
 mull.yml
 
-.bin/
-
 .context/
 .claude/
 PLAN.md
