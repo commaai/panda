@@ -31,6 +31,7 @@ dev = [
   "setuptools",
   "spidev; platform_system == 'Linux'",
   "gcc-arm-none-eabi @ git+https://github.com/commaai/dependencies.git@releases#subdirectory=gcc-arm-none-eabi",
+  "cppcheck @ git+https://github.com/commaai/dependencies.git@releases#subdirectory=cppcheck",
 ]
 
 [build-system]
