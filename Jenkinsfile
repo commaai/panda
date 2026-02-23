@@ -1,17 +1,3 @@
-def docker_run(String step_label, int timeout_mins, String cmd) {
-  timeout(time: timeout_mins, unit: 'MINUTES') {
-    sh script: "docker run --rm --privileged \
-          --env PYTHONWARNINGS=error \
-          --volume /dev/bus/usb:/dev/bus/usb \
-          --volume /var/run/dbus:/var/run/dbus \
-          --net host \
-          ${env.DOCKER_IMAGE_TAG} \
-          bash -c 'scons -j8 && ${cmd}'", \
-        label: step_label
-  }
-}
-
-
 def phone(String ip, String step_label, String cmd) {
   withCredentials([file(credentialsId: 'id_rsa', variable: 'key_file')]) {
     def ssh_cmd = """
@@ -70,7 +56,6 @@ pipeline {
   environment {
     CI = "1"
     PYTHONWARNINGS= "error"
-    DOCKER_IMAGE_TAG = "panda:build-${env.GIT_COMMIT}"
 
     TEST_DIR = "/data/panda"
     SOURCE_DIR = "/data/panda_source/"
@@ -86,20 +71,22 @@ pipeline {
         lock(resource: "pandas")
       }
       stages {
-        stage('Build Docker Image') {
-          steps {
-            timeout(time: 20, unit: 'MINUTES') {
-              script {
-                dockerImage = docker.build("${env.DOCKER_IMAGE_TAG}", "--build-arg CACHEBUST=${env.GIT_COMMIT} .")
-              }
+        stage('jungle tests') {
+          agent {
+            docker {
+              image 'python:3'
+              args '--privileged --net host -v /dev/bus/usb:/dev/bus/usb -v /var/run/dbus:/var/run/dbus'
             }
           }
-        }
-        stage('jungle tests') {
           steps {
+            timeout(time: 20, unit: 'MINUTES') {
+              sh script: './setup.sh', label: 'setup'
+            }
             script {
               retry (3) {
-                docker_run("reset hardware", 3, "python3 ./tests/hitl/reset_jungles.py")
+                timeout(time: 3, unit: 'MINUTES') {
+                  sh script: 'source .venv/bin/activate && scons -j8 && python3 ./tests/hitl/reset_jungles.py', label: 'reset hardware'
+                }
               }
             }
           }
@@ -130,16 +117,6 @@ pipeline {
                 ])
               }
             }
-
-            /*
-            stage('bootkick tests') {
-              steps {
-                script {
-                  docker_run("test", 10, "pytest ./tests/som/test_bootkick.py")
-                }
-              }
-            }
-            */
           }
         }
       }
