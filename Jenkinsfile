@@ -88,9 +88,12 @@ pipeline {
       stages {
         stage('checkout') {
           steps {
-            // fix root-owned files left by previous docker builds
-            sh 'docker run --rm --privileged -v "$(pwd)":/w python:3 find /w -mindepth 1 -delete || true'
-            checkout scm
+            checkout([
+              $class: 'GitSCM',
+              branches: scm.branches,
+              extensions: [],
+              userRemoteConfigs: scm.userRemoteConfigs
+            ])
           }
         }
         stage('jungle tests') {
@@ -108,7 +111,12 @@ pipeline {
             stage('test cuatro') {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
-                checkout scm
+                checkout([
+                  $class: 'GitSCM',
+                  branches: scm.branches,
+                  extensions: [],
+                  userRemoteConfigs: scm.userRemoteConfigs
+                ])
                 phone_steps("panda-cuatro", [
                   ["build", "scons -j4"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
@@ -121,7 +129,12 @@ pipeline {
             stage('test tres') {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
-                checkout scm
+                checkout([
+                  $class: 'GitSCM',
+                  branches: scm.branches,
+                  extensions: [],
+                  userRemoteConfigs: scm.userRemoteConfigs
+                ])
                 phone_steps("panda-tres", [
                   ["build", "scons -j4"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
