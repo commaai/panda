@@ -93,7 +93,7 @@ pipeline {
           }
           post {
             always {
-              sh 'chmod -R 777 .venv || true'
+              sh 'chmod -R 777 . || true'
             }
           }
         }
