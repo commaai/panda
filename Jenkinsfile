@@ -75,7 +75,7 @@ pipeline {
           agent {
             docker {
               image 'python:3'
-              args '--privileged --net host -v /dev/bus/usb:/dev/bus/usb -v /var/run/dbus:/var/run/dbus'
+              args '--user=root --privileged --net host -v /dev/bus/usb:/dev/bus/usb -v /var/run/dbus:/var/run/dbus'
             }
           }
           steps {
