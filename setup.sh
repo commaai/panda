@@ -6,7 +6,8 @@ cd $DIR
 
 # libusb is needed at runtime by python-libusb1
 if [ -f /etc/debian_version ]; then
-  apt-get update && apt-get install -y --no-install-recommends libusb-1.0-0
+  SUDO=$(if [ "$(id -u)" -ne 0 ]; then echo "sudo"; fi)
+  $SUDO apt-get update && $SUDO apt-get install -y --no-install-recommends libusb-1.0-0
 elif [ -f /etc/alpine-release ]; then
   apk add --no-cache libusb
 fi
