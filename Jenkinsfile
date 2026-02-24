@@ -101,6 +101,7 @@ pipeline {
             stage('test cuatro') {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
+                sh 'rm -rf .venv pandacan.egg-info .eggs || true'
                 checkout scm
                 phone_steps("panda-cuatro", [
                   ["build", "scons -j4"],
@@ -114,6 +115,7 @@ pipeline {
             stage('test tres') {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
+                sh 'rm -rf .venv pandacan.egg-info .eggs || true'
                 checkout scm
                 phone_steps("panda-tres", [
                   ["build", "scons -j4"],
