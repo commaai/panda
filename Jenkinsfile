@@ -89,7 +89,7 @@ pipeline {
         stage('checkout') {
           steps {
             // fix root-owned files left by previous docker builds
-            sh 'docker run --rm -v "$(pwd)":/w python:3 chmod -R 777 /w || true'
+            sh 'docker run --rm --privileged -v "$(pwd)":/w python:3 bash -c "rm -rf /w/* /w/.??*" || true'
             checkout scm
           }
         }
