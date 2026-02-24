@@ -36,3 +36,21 @@ if GetOption('ubsan'):
 
 panda = env.SharedObject("panda.os", "panda.c")
 libpanda = env.SharedLibrary("libpanda.so", [panda])
+
+# GPIO initialization test library
+gpio_env = Environment(
+  CC=CC,
+  CFLAGS=[
+    '-nostdlib',
+    '-fno-builtin',
+    '-std=gnu11',
+    '-Wfatal-errors',
+    '-Wno-pointer-to-int-cast',
+  ],
+  CPPPATH=[".", "../../", "../../board/"],
+)
+if system == "Darwin":
+  gpio_env.PrependENVPath('PATH', '/opt/homebrew/bin')
+
+panda_gpio = gpio_env.SharedObject("panda_gpio.os", "panda_gpio.c")
+libpanda_gpio = gpio_env.SharedLibrary("libpanda_gpio.so", [panda_gpio])
