@@ -76,6 +76,7 @@ pipeline {
             docker {
               image 'python:3'
               args '--user=root --privileged --net host -v /dev/bus/usb:/dev/bus/usb -v /var/run/dbus:/var/run/dbus'
+              reuseNode true
             }
           }
           steps {
@@ -88,6 +89,11 @@ pipeline {
                   sh script: 'source .venv/bin/activate && scons -j8 && python3 ./tests/hitl/reset_jungles.py', label: 'reset hardware'
                 }
               }
+            }
+          }
+          post {
+            always {
+              sh 'chmod -R 777 .venv || true'
             }
           }
         }
