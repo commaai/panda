@@ -58,7 +58,7 @@ def docker_run(String step_label, int timeout_mins, String cmd) {
           --volume /var/run/dbus:/var/run/dbus \
           --net host \
           python:3 \
-          bash -c 'apt-get update && apt-get install -y --no-install-recommends libusb-1.0-0 && cd /tmp && git clone --depth=1 https://github.com/commaai/panda.git -b ${branch} panda && cd panda && PYTHONWARNINGS= ./setup.sh && . .venv/bin/activate && scons -j8 && ${cmd}'", \
+          bash -c 'cd /tmp && git clone --depth=1 https://github.com/commaai/panda.git -b ${branch} panda && cd panda && PYTHONWARNINGS= ./setup.sh && . .venv/bin/activate && scons -j8 && ${cmd}'", \
         label: step_label
   }
 }

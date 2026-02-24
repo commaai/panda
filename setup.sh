@@ -4,6 +4,13 @@ set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
 cd $DIR
 
+# libusb is needed at runtime by python-libusb1
+if [ -f /etc/debian_version ]; then
+  sudo apt-get update && sudo apt-get install -y --no-install-recommends libusb-1.0-0
+elif [ -f /etc/alpine-release ]; then
+  apk add --no-cache libusb
+fi
+
 if ! command -v uv &>/dev/null; then
   echo "'uv' is not installed. Installing 'uv'..."
   curl -LsSf https://astral.sh/uv/install.sh | sh
