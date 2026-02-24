@@ -51,14 +51,14 @@ def phone_steps(String device_type, steps) {
 
 def docker_run(String step_label, int timeout_mins, String cmd) {
   timeout(time: timeout_mins, unit: 'MINUTES') {
+    def branch = env.CHANGE_BRANCH ?: env.BRANCH_NAME
     sh script: "docker run --rm --privileged \
           --env PYTHONWARNINGS=error \
           --volume /dev/bus/usb:/dev/bus/usb \
           --volume /var/run/dbus:/var/run/dbus \
-          --volume \$(pwd):/src:ro \
           --net host \
           python:3 \
-          bash -c 'cp -r /src /tmp/panda && cd /tmp/panda && PYTHONWARNINGS= ./setup.sh && . .venv/bin/activate && scons -j8 && ${cmd}'", \
+          bash -c 'cd /tmp && git clone --depth=1 https://github.com/commaai/panda.git -b ${branch} panda && cd panda && PYTHONWARNINGS= ./setup.sh && . .venv/bin/activate && scons -j8 && ${cmd}'", \
         label: step_label
   }
 }
@@ -86,16 +86,6 @@ pipeline {
         lock(resource: "pandas")
       }
       stages {
-        stage('checkout') {
-          steps {
-            checkout([
-              $class: 'GitSCM',
-              branches: scm.branches,
-              extensions: [],
-              userRemoteConfigs: scm.userRemoteConfigs
-            ])
-          }
-        }
         stage('jungle tests') {
           steps {
             script {
@@ -111,12 +101,7 @@ pipeline {
             stage('test cuatro') {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
-                checkout([
-                  $class: 'GitSCM',
-                  branches: scm.branches,
-                  extensions: [],
-                  userRemoteConfigs: scm.userRemoteConfigs
-                ])
+                checkout scm
                 phone_steps("panda-cuatro", [
                   ["build", "scons -j4"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
@@ -129,12 +114,7 @@ pipeline {
             stage('test tres') {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
-                checkout([
-                  $class: 'GitSCM',
-                  branches: scm.branches,
-                  extensions: [],
-                  userRemoteConfigs: scm.userRemoteConfigs
-                ])
+                checkout scm
                 phone_steps("panda-tres", [
                   ["build", "scons -j4"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
