@@ -49,6 +49,20 @@ def phone_steps(String device_type, steps) {
   }
 }
 
+def docker_run(String step_label, int timeout_mins, String cmd) {
+  timeout(time: timeout_mins, unit: 'MINUTES') {
+    sh script: "docker run --rm --privileged \
+          --env PYTHONWARNINGS=error \
+          --volume /dev/bus/usb:/dev/bus/usb \
+          --volume /var/run/dbus:/var/run/dbus \
+          --volume \$(pwd):/src:ro \
+          --net host \
+          python:3 \
+          bash -c 'cp -r /src /tmp/panda && cd /tmp/panda && PYTHONWARNINGS= ./setup.sh && . .venv/bin/activate && scons -j8 && ${cmd}'", \
+        label: step_label
+  }
+}
+
 
 
 pipeline {
@@ -63,6 +77,7 @@ pipeline {
   options {
     timeout(time: 3, unit: 'HOURS')
     disableConcurrentBuilds(abortPrevious: env.BRANCH_NAME != 'master')
+    skipDefaultCheckout()
   }
 
   stages {
@@ -71,29 +86,19 @@ pipeline {
         lock(resource: "pandas")
       }
       stages {
-        stage('jungle tests') {
-          agent {
-            docker {
-              image 'python:3'
-              args '--user=root --privileged --net host -v /dev/bus/usb:/dev/bus/usb -v /var/run/dbus:/var/run/dbus'
-              reuseNode true
-            }
-          }
+        stage('checkout') {
           steps {
-            timeout(time: 20, unit: 'MINUTES') {
-              sh script: 'PYTHONWARNINGS= ./setup.sh', label: 'setup'
-            }
+            // fix root-owned files left by previous docker builds
+            sh 'docker run --rm -v "$(pwd)":/w python:3 chmod -R 777 /w || true'
+            checkout scm
+          }
+        }
+        stage('jungle tests') {
+          steps {
             script {
               retry (3) {
-                timeout(time: 3, unit: 'MINUTES') {
-                  sh script: '. .venv/bin/activate && scons -j8 && python3 ./tests/hitl/reset_jungles.py', label: 'reset hardware'
-                }
+                docker_run("reset hardware", 3, "python3 ./tests/hitl/reset_jungles.py")
               }
-            }
-          }
-          post {
-            always {
-              sh 'chmod -R 777 . || true'
             }
           }
         }
@@ -103,6 +108,7 @@ pipeline {
             stage('test cuatro') {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
+                checkout scm
                 phone_steps("panda-cuatro", [
                   ["build", "scons -j4"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
@@ -115,6 +121,7 @@ pipeline {
             stage('test tres') {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
+                checkout scm
                 phone_steps("panda-tres", [
                   ["build", "scons -j4"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
