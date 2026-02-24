@@ -102,7 +102,11 @@ pipeline {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
                 sh 'rm -rf .venv pandacan.egg-info .eggs || true'
-                checkout scm
+                script {
+                  def scmVars = checkout scm
+                  env.GIT_COMMIT = scmVars.GIT_COMMIT
+                  env.GIT_BRANCH = scmVars.GIT_BRANCH
+                }
                 phone_steps("panda-cuatro", [
                   ["build", "scons -j4"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
@@ -116,7 +120,11 @@ pipeline {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
                 sh 'rm -rf .venv pandacan.egg-info .eggs || true'
-                checkout scm
+                script {
+                  def scmVars = checkout scm
+                  env.GIT_COMMIT = scmVars.GIT_COMMIT
+                  env.GIT_BRANCH = scmVars.GIT_BRANCH
+                }
                 phone_steps("panda-tres", [
                   ["build", "scons -j4"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
