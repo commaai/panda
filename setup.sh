@@ -18,7 +18,8 @@ elif [[ $PLATFORM == "Linux" ]]; then
 
   sudo apt-get install -y --no-install-recommends \
     curl ca-certificates \
-    git python3-dev
+    make g++ git \
+    python3-dev python3-pip python3-venv
 else
   echo "WARNING: unsupported platform. skipping apt/brew install."
 fi
