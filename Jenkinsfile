@@ -80,7 +80,7 @@ pipeline {
           }
           steps {
             timeout(time: 20, unit: 'MINUTES') {
-              sh script: './setup.sh', label: 'setup'
+              sh script: 'PYTHONWARNINGS= ./setup.sh', label: 'setup'
             }
             script {
               retry (3) {
