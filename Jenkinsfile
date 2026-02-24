@@ -86,7 +86,7 @@ pipeline {
             script {
               retry (3) {
                 timeout(time: 3, unit: 'MINUTES') {
-                  sh script: 'source .venv/bin/activate && scons -j8 && python3 ./tests/hitl/reset_jungles.py', label: 'reset hardware'
+                  sh script: '. .venv/bin/activate && scons -j8 && python3 ./tests/hitl/reset_jungles.py', label: 'reset hardware'
                 }
               }
             }
