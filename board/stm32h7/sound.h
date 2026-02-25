@@ -75,6 +75,7 @@ static void BDMA_Channel0_IRQ_Handler(void) {
   // process samples (shift to 12b and bias to be unsigned)
   bool sound_playing = false;
   uint32_t sum = 0U;
+  int16_t val = 0;
 
   for (uint16_t i=0U; i < SOUND_RX_BUF_SIZE; i += 2U) {
     // since we are playing mono and receiving stereo, we take every other sample
