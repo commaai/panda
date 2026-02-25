@@ -13,17 +13,22 @@ __attribute__((section(".sram4"))) static uint16_t mic_tx_buf[2][MIC_TX_BUF_SIZE
 static uint8_t sound_idle_count;
 static uint8_t mic_idle_count;
 static uint8_t mic_buffer_count;
-static uint16_t sound_peak_current;
+static uint32_t sound_abs_sum;
+static uint16_t sound_buf_count;
 uint16_t sound_output_level;
 
 void sound_tick(void) {
-  static uint8_t sound_peak_counter;
-  // update sound_output_level with peak of the last ~1 second
-  sound_peak_counter++;
-  if (sound_peak_counter >= SOUND_PEAK_TICKS) {
-    sound_output_level = sound_peak_current;
-    sound_peak_current = 0U;
-    sound_peak_counter = 0U;
+  static uint8_t sound_level_counter = 0U;
+  sound_level_counter++;
+  if (sound_level_counter >= SOUND_PEAK_TICKS) {
+    if (sound_buf_count > 0U) {
+      sound_output_level = (uint16_t)(sound_abs_sum / ((uint32_t)sound_buf_count * (SOUND_RX_BUF_SIZE / 2U)));
+    } else {
+      sound_output_level = 0U;
+    }
+    sound_abs_sum = 0U;
+    sound_buf_count = 0U;
+    sound_level_counter = 0U;
   }
 
   if (sound_idle_count > 0U) {
@@ -90,10 +95,13 @@ static void BDMA_Channel0_IRQ_Handler(void) {
     if (sound_rx_buf[rx_buf_idx][i] > 0U) {
       sound_playing = true;
     }
-    if (sound_rx_buf[rx_buf_idx][i] > sound_peak_current) {
-      sound_peak_current = sound_rx_buf[rx_buf_idx][i];
+    if (sound_rx_buf[rx_buf_idx][i] > (1U << 14)) {
+      sound_abs_sum += sound_rx_buf[rx_buf_idx][i] - (1U << 14);
+    } else {
+      sound_abs_sum += (1U << 14) - sound_rx_buf[rx_buf_idx][i];
     }
   }
+  sound_buf_count++;
 
   // manage amp state
   if (sound_playing) {
