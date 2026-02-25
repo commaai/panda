@@ -20,13 +20,14 @@ IGNORED_PATHS = (
   # bootstub only files
   'board/flasher.h',
   'board/bootstub.c',
-  'board/bootstub_declarations.h',
+  'board/bootstub_globals.h',
+  'board/bootstub_globals.c',
   'board/stm32h7/llflash.h',
 )
 
 mutations = [
   (None, None, False),  # no mods, should pass
-  ("board/stm32h7/llfdcan.h", "s/return ret;/if (true) { return ret; } else { return false; }/g", True),
+  ("board/utils.h", "$a void test(int tmp) { if (true && tmp++) {;} }", True),
 ]
 
 patterns = [
@@ -53,7 +54,9 @@ patterns = [
 ]
 
 all_files = glob.glob('board/**', root_dir=ROOT, recursive=True)
-files = [f for f in all_files if f.endswith(('.c', '.h')) and not f.startswith(IGNORED_PATHS)]
+# cppcheck only analyzes main.c (which #includes all .h files), so only .h files
+# and main.c itself are eligible for mutation testing
+files = [f for f in all_files if (f.endswith('.h') or f == 'board/main.c') and not f.startswith(IGNORED_PATHS)]
 assert len(files) > 50, all(d in files for d in ('board/main.c', 'board/stm32h7/llfdcan.h'))
 
 for p in patterns:

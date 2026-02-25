@@ -35,4 +35,10 @@ if GetOption('ubsan'):
   env['LINKFLAGS'] += flags
 
 panda = env.SharedObject("panda.os", "panda.c")
-libpanda = env.SharedLibrary("libpanda.so", [panda])
+libc = env.SharedObject("libc.os", "../../board/libc.c")
+crc = env.SharedObject("crc.os", "../../board/crc.c")
+provision = env.SharedObject("provision.os", "../../board/provision.c")
+critical = env.SharedObject("critical.os", "../../board/sys/critical.c")
+faults = env.SharedObject("faults.os", "../../board/sys/faults.c")
+main_globals = env.SharedObject("main_globals.os", "../../board/main_globals.c")
+libpanda = env.SharedLibrary("libpanda.so", [panda, libc, crc, provision, critical, faults, main_globals])

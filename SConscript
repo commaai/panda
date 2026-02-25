@@ -60,7 +60,109 @@ def to_c_uint32(x):
   return "{" + 'U,'.join(map(str, nums)) + "U}"
 
 
-def build_project(project_name, project, main, extra_flags):
+common_driver_sources = [
+  "./board/stm32h7/interrupt_handlers.c",
+  "./board/stm32h7/peripherals.c",
+  "./board/stm32h7/clock.c",
+  "./board/stm32h7/llfdcan.c",
+  "./board/stm32h7/llusb.c",
+  "./board/stm32h7/llspi.c",
+  "./board/stm32h7/lluart.c",
+  "./board/stm32h7/lladc.c",
+  "./board/drivers/gpio.c",
+  "./board/drivers/registers.c",
+  "./board/drivers/interrupts.c",
+  "./board/drivers/timers.c",
+  "./board/drivers/pwm.c",
+  "./board/drivers/led.c",
+  "./board/drivers/can_common.c",
+  "./board/drivers/fdcan.c",
+  "./board/drivers/uart.c",
+  "./board/drivers/spi.c",
+  "./board/drivers/usb.c",
+  "./board/can_comms.c",
+]
+
+panda_extra_driver_sources = [
+  "./board/stm32h7/board.c",
+  "./board/stm32h7/llfan.c",
+  "./board/stm32h7/lli2c.c",
+  "./board/stm32h7/sound.c",
+  "./board/boards/unused_funcs.c",
+  "./board/boards/red.c",
+  "./board/boards/tres.c",
+  "./board/boards/cuatro.c",
+  "./board/drivers/simple_watchdog.c",
+  "./board/drivers/bootkick.c",
+  "./board/drivers/clock_source.c",
+  "./board/drivers/fan.c",
+  "./board/drivers/harness.c",
+  "./board/drivers/fake_siren.c",
+  "./board/sys/power_saving.c",
+  "./board/main_comms.c",
+]
+
+jungle_extra_driver_sources = [
+  "./board/jungle/stm32h7/board.c",
+  "./board/jungle/boards/board_v2.c",
+  "./board/jungle/main_comms.c",
+]
+
+body_extra_driver_sources = [
+  "./board/body/stm32h7/board.c",
+  "./board/body/boards/board_body.c",
+  "./board/body/motor_encoder.c",
+  "./board/body/motor_control.c",
+  "./board/body/can.c",
+  "./board/body/main_comms.c",
+]
+
+bootstub_common_driver_sources = [
+  "./board/stm32h7/interrupt_handlers.c",
+  "./board/stm32h7/peripherals.c",
+  "./board/stm32h7/clock.c",
+  "./board/stm32h7/llflash.c",
+  "./board/stm32h7/llusb.c",
+  "./board/stm32h7/llspi.c",
+  "./board/stm32h7/lladc.c",
+  "./board/drivers/gpio.c",
+  "./board/drivers/registers.c",
+  "./board/drivers/interrupts.c",
+  "./board/drivers/timers.c",
+  "./board/drivers/pwm.c",
+  "./board/drivers/led.c",
+  "./board/drivers/spi.c",
+  "./board/drivers/usb.c",
+]
+
+panda_extra_bootstub_driver_sources = [
+  "./board/stm32h7/board.c",
+  "./board/stm32h7/llfan.c",
+  "./board/stm32h7/lli2c.c",
+  "./board/stm32h7/sound.c",
+  "./board/boards/unused_funcs.c",
+  "./board/boards/red.c",
+  "./board/boards/tres.c",
+  "./board/boards/cuatro.c",
+  "./board/drivers/harness.c",
+  "./board/drivers/fan.c",
+  "./board/drivers/fake_siren.c",
+  "./board/drivers/clock_source.c",
+]
+
+jungle_extra_bootstub_driver_sources = [
+  "./board/jungle/stm32h7/board.c",
+  "./board/jungle/boards/board_v2.c",
+]
+
+body_extra_bootstub_driver_sources = [
+  "./board/body/stm32h7/board.c",
+  "./board/body/boards/board_body.c",
+  "./board/body/motor_encoder.c",
+  "./board/body/motor_control.c",
+]
+
+def build_project(project_name, project, main, extra_flags, extra_driver_sources=None, extra_bootstub_driver_sources=None):
   project_dir = Dir(f'./board/obj/{project_name}/')
 
   flags = project["FLAGS"] + extra_flags + common_flags + [
@@ -99,21 +201,58 @@ def build_project(project_name, project, main, extra_flags):
   )
 
   startup = env.Object(project["STARTUP_FILE"])
+  libc_obj = env.Object("./board/libc.c")
+  crc_obj = env.Object("./board/crc.c")
+  provision_obj = env.Object("./board/provision.c")
+  critical_obj = env.Object("./board/sys/critical.c")
+  faults_obj = env.Object("./board/sys/faults.c")
+  main_globals_obj = env.Object("./board/main_globals.c")
+  gitversion_obj = env.Object("./board/obj/gitversion.c")
+
+  drv_env = env.Clone()
+  drv_env.Append(CFLAGS="-DDRIVER_BUILD")
+  early_init_obj = drv_env.Object("./board/early_init.c")
 
   # Build bootstub
   bs_env = env.Clone()
   bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
+  bs_env['OBJPREFIX'] = Dir(f'{project_dir}/bs_')
+  bs_drv_env = bs_env.Clone()
+  bs_drv_env.Append(CFLAGS="-DDRIVER_BUILD")
+  bs_all_driver_sources = bootstub_common_driver_sources + (extra_bootstub_driver_sources or [])
+  bs_driver_objs = [bs_drv_env.Object(src) for src in bs_all_driver_sources]
   bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", [
     startup,
     "./crypto/rsa.c",
     "./crypto/sha.c",
+    libc_obj,
+    crc_obj,
+    provision_obj,
+    critical_obj,
+    faults_obj,
+    gitversion_obj,
+    bs_env.Object("./board/bootstub_globals.c"),
+    bs_drv_env.Object("./board/early_init.c"),
+    bs_drv_env.Object("./board/flasher.c"),
+  ] + bs_driver_objs + [
     "./board/bootstub.c",
   ])
   bs_env.Objcopy(f"./board/obj/bootstub.{project_name}.bin", bs_elf)
 
   # Build + sign main (aka app)
+  driver_sources = common_driver_sources + (extra_driver_sources or [])
+  driver_objs = [drv_env.Object(src) for src in driver_sources]
   main_elf = env.Program(f"{project_dir}/main.elf", [
     startup,
+    libc_obj,
+    crc_obj,
+    provision_obj,
+    critical_obj,
+    faults_obj,
+    main_globals_obj,
+    gitversion_obj,
+    early_init_obj,
+  ] + driver_objs + [
     main
   ], LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
@@ -140,6 +279,10 @@ base_project_h7 = {
 with open("board/obj/gitversion.h", "w") as f:
   version = get_version(BUILDER, BUILD_TYPE)
   f.write(f'extern const uint8_t gitversion[{len(version)+1}];\n')
+
+with open("board/obj/gitversion.c", "w") as f:
+  version = get_version(BUILDER, BUILD_TYPE)
+  f.write(f'#include <stdint.h>\n')
   f.write(f'const uint8_t gitversion[{len(version)+1}] = "{version}";\n')
 
 with open("board/obj/version", "w") as f:
@@ -151,7 +294,9 @@ with open("board/obj/cert.h", "w") as f:
     f.write("\n".join(cert) + "\n")
 
 # panda fw
-build_project("panda_h7", base_project_h7, "./board/main.c", [])
+build_project("panda_h7", base_project_h7, "./board/main.c", [],
+              extra_driver_sources=panda_extra_driver_sources,
+              extra_bootstub_driver_sources=panda_extra_bootstub_driver_sources)
 
 # panda jungle fw
 flags = [
@@ -159,10 +304,14 @@ flags = [
 ]
 if os.getenv("FINAL_PROVISIONING"):
   flags += ["-DFINAL_PROVISIONING"]
-build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", flags)
+build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", flags,
+              extra_driver_sources=jungle_extra_driver_sources,
+              extra_bootstub_driver_sources=jungle_extra_bootstub_driver_sources)
 
 # body fw
-build_project("body_h7", base_project_h7, "./board/body/main.c", ["-DPANDA_BODY"])
+build_project("body_h7", base_project_h7, "./board/body/main.c", ["-DPANDA_BODY"],
+              extra_driver_sources=body_extra_driver_sources,
+              extra_bootstub_driver_sources=body_extra_bootstub_driver_sources)
 
 # test files
 if GetOption('extras'):

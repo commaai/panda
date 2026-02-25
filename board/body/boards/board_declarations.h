@@ -17,5 +17,7 @@ struct board {
   const bool has_spi;
 };
 
+extern struct board board_body;
+
 // ******************* Definitions ********************
 #define HW_TYPE_BODY 0xB1U
