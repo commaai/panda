@@ -19,6 +19,4 @@ void puth4(unsigned int i);
 void puthx(uint32_t i, uint8_t len);
 void hexdump(const void *a, int l);
 void putch(const char a);
-void pwm_init(TIM_TypeDef *TIM, uint8_t channel);
-void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
 void uart_init(uart_ring *q, unsigned int baud);

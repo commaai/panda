@@ -2,7 +2,9 @@
 #include "stm32h7xx.h"
 #else
 // Stubs for native builds
+// cppcheck-suppress misra-c2012-21.1 ; CMSIS-compatible stubs for non-STM32 builds
 #define __enable_irq()
+// cppcheck-suppress misra-c2012-21.1
 #define __disable_irq()
 #endif
 

@@ -33,8 +33,8 @@ void *memcpy(void *dest, const void *src, unsigned int len) {
   const uint8_t *s8 = src;
 
   if ((n >= 4U) && !UNALIGNED(s8, d8)) {
-    uint32_t *d32 = (uint32_t *)d8;
-    const uint32_t *s32 = (const uint32_t *)s8;
+    uint32_t *d32 = (uint32_t *)d8;  // cppcheck-suppress misra-c2012-11.3 ; performance-optimized memcpy
+    const uint32_t *s32 = (const uint32_t *)s8;  // cppcheck-suppress misra-c2012-11.3 ; performance-optimized memcpy
 
     while(n >= 16U) {
       *d32 = *s32; d32++; s32++;

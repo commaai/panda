@@ -1,8 +1,5 @@
 #ifndef BOOTSTUB
-#include <stdint.h>
-#include <stdbool.h>
-
-typedef struct board board;
+#include "board/main_globals.h"
 
 uint8_t hw_type = 0;
 board *current_board;

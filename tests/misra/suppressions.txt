@@ -12,8 +12,12 @@ misra-c2012-20.10
 # needed since not all of these suppressions are applicable to all builds
 unmatchedSuppression
 
+# static arrays in external opendbc headers included across TUs
+misra-c2012-5.9:*opendbc/*
+
 # All interrupt handlers are defined, including ones we don't use
 unusedFunction:*/interrupt_handlers*.h
+unusedFunction:*/interrupt_handlers*.c
 
 # all of the below suppressions are from new checks introduced after updating
 # cppcheck from 2.5 -> 2.13 -> 2.16. they are listed here to separate the update from
@@ -21,6 +25,8 @@ unusedFunction:*/interrupt_handlers*.h
 misra-c2012-2.3   # type aliases used across TUs but cppcheck single-file analysis can't see usage
 misra-c2012-2.4   # struct tags used across TUs but cppcheck single-file analysis can't see usage
 misra-c2012-2.5   # unused macros. a few legit, rest aren't common between F4/H7 builds. should we do this in the unusedFunction pass?
+misra-c2012-8.5   # multi-TU: extern declarations in shared headers seen by multiple translation units
+misra-c2012-8.6   # multi-TU: external definitions seen across translation units in single cppcheck run
 misra-c2012-8.7   # functions need external linkage for multi-TU builds
 misra-c2012-20.1  # conditional includes after code are structurally needed
 misra-c2012-21.2  # intentional bare-metal libc reimplementation

@@ -81,9 +81,9 @@ static void usb_reset(void) {
   USBx->DIEPTXF[0] = (0x40UL << 16) | 0x80U;
 
   USBx->GRSTCTL = USB_OTG_GRSTCTL_TXFFLSH | USB_OTG_GRSTCTL_TXFNUM_4;
-  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH) == USB_OTG_GRSTCTL_TXFFLSH);
+  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH) == USB_OTG_GRSTCTL_TXFFLSH) {}
   USBx->GRSTCTL = USB_OTG_GRSTCTL_RXFFLSH;
-  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_RXFFLSH) == USB_OTG_GRSTCTL_RXFFLSH);
+  while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_RXFFLSH) == USB_OTG_GRSTCTL_RXFFLSH) {}
 
   USBx_DEVICE->DCTL |= USB_OTG_DCTL_CGINAK;
 
@@ -402,6 +402,7 @@ static void usb_setup(void) {
           break;
         default:
           USB_WritePacket_EP0(0, 0);
+          break;
       }
       break;
     default:
@@ -413,6 +414,7 @@ static void usb_setup(void) {
       resp_len = comms_control_handler(&control_req, response);
       USB_WritePacket(response, MIN(resp_len, setup.b.wLength.w), 0);
       USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
+      break;
   }
 }
 

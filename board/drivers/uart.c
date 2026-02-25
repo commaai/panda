@@ -43,7 +43,9 @@ bool get_char(uart_ring *q, char *elem) {
 
   ENTER_CRITICAL();
   if (q->w_ptr_rx != q->r_ptr_rx) {
-    if (elem != NULL) *elem = q->elems_rx[q->r_ptr_rx];
+    if (elem != NULL) {
+      *elem = q->elems_rx[q->r_ptr_rx];
+    }
     q->r_ptr_rx = (q->r_ptr_rx + 1U) % q->rx_fifo_size;
     ret = true;
   }
@@ -102,7 +104,9 @@ void putch(const char a) {
 
 void print(const char *a) {
   for (const char *in = a; *in; in++) {
-    if (*in == '\n') putch('\r');
+    if (*in == '\n') {
+      putch('\r');
+    }
     putch(*in);
   }
 }
@@ -125,7 +129,9 @@ void puth4(unsigned int i) {
 void hexdump(const void *a, int l) {
   if (a != NULL) {
     for (int i=0; i < l; i++) {
-      if ((i != 0) && ((i & 0xf) == 0)) print("\n");
+      if ((i != 0) && ((i & 0xf) == 0)) {
+        print("\n");
+      }
       puthx(((const unsigned char*)a)[i], 2U);
       print(" ");
     }

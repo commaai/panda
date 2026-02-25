@@ -68,6 +68,7 @@ separate IRQs for RX and TX.
 #include "board/health.h"
 #include "board/crc.h"
 #include "board/drivers/led.h"
+#include "board/drivers/pwm.h"
 #include "board/stm32h7/lladc.h"
 #include "board/drivers/can_common.h"
 #include "board/drivers/fdcan.h"

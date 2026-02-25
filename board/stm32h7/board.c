@@ -1,4 +1,5 @@
 #include "board/config.h"
+#include "board/stm32h7/board.h"
 #include "board/drivers/gpio.h"
 
 void detect_board_type(void) {
