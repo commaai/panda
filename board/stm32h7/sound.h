@@ -74,7 +74,6 @@ static void BDMA_Channel0_IRQ_Handler(void) {
   // process samples (shift to 12b and bias to be unsigned)
   bool sound_playing = false;
   uint32_t abs_sum = 0U;
-  uint16_t abs_peak = 0U;
   for (uint16_t i=0U; i < SOUND_RX_BUF_SIZE; i += 2U) {
     // since we are playing mono and receiving stereo, we take every other sample
     sound_tx_buf[playback_buf][i/2U] = ((sound_rx_buf[rx_buf_idx][i] + (1UL << 14)) >> 3);
@@ -86,11 +85,15 @@ static void BDMA_Channel0_IRQ_Handler(void) {
     uint16_t val = sound_rx_buf[rx_buf_idx][i];
     if (val >= 32768U) { val = (uint16_t)(0U - val); }
     abs_sum += val;
-    if (val > abs_peak) { abs_peak = val; }
   }
 
-  // DEBUG: report peak absolute value per buffer
-  sound_output_level = abs_peak;
+  // VU meter: fast attack, slow decay (~460ms half-life at ~96Hz ISR rate)
+  uint16_t level = (uint16_t)(abs_sum / (SOUND_RX_BUF_SIZE / 2U));
+  if (level >= sound_output_level) {
+    sound_output_level = level;
+  } else {
+    sound_output_level = sound_output_level - (sound_output_level >> 6U);
+  }
 
   // manage amp state
   if (sound_playing) {
