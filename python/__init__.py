@@ -118,9 +118,9 @@ class Panda:
   HW_TYPE_BODY = b'\xb1'
 
   CAN_PACKET_VERSION = 4
-  HEALTH_PACKET_VERSION = 17
+  HEALTH_PACKET_VERSION = 18
   CAN_HEALTH_PACKET_VERSION = 5
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBHBBBHfBBHHHB")
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBHBBBHfBBHHHBH")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
 
   H7_DEVICES = [HW_TYPE_RED_PANDA, HW_TYPE_TRES, HW_TYPE_CUATRO, HW_TYPE_BODY]
@@ -524,6 +524,7 @@ class Panda:
       "sbu1_voltage_mV": a[22],
       "sbu2_voltage_mV": a[23],
       "som_reset_triggered": a[24],
+      "sound_output_level": a[25],
     }
 
   @ensure_can_health_packet_version

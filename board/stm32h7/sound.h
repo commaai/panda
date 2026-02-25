@@ -9,11 +9,23 @@ __attribute__((section(".sram4"))) static uint16_t mic_tx_buf[2][MIC_TX_BUF_SIZE
 
 #define SOUND_IDLE_TIMEOUT 4U
 #define MIC_SKIP_BUFFERS 2U // Skip first 2 buffers (1024 samples = ~21ms at 48kHz)
+#define SOUND_PEAK_TICKS 8U
 static uint8_t sound_idle_count;
 static uint8_t mic_idle_count;
 static uint8_t mic_buffer_count;
+static uint16_t sound_peak_current;
+uint16_t sound_output_level;
 
 void sound_tick(void) {
+  static uint8_t sound_peak_counter;
+  // update sound_output_level with peak of the last ~1 second
+  sound_peak_counter++;
+  if (sound_peak_counter >= SOUND_PEAK_TICKS) {
+    sound_output_level = sound_peak_current;
+    sound_peak_current = 0U;
+    sound_peak_counter = 0U;
+  }
+
   if (sound_idle_count > 0U) {
     sound_idle_count--;
     if (sound_idle_count == 0U) {
@@ -77,6 +89,9 @@ static void BDMA_Channel0_IRQ_Handler(void) {
     sound_tx_buf[playback_buf][i/2U] = ((sound_rx_buf[rx_buf_idx][i] + (1UL << 14)) >> 3);
     if (sound_rx_buf[rx_buf_idx][i] > 0U) {
       sound_playing = true;
+    }
+    if (sound_rx_buf[rx_buf_idx][i] > sound_peak_current) {
+      sound_peak_current = sound_rx_buf[rx_buf_idx][i];
     }
   }
 
