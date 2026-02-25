@@ -95,11 +95,9 @@ static void BDMA_Channel0_IRQ_Handler(void) {
     if (sound_rx_buf[rx_buf_idx][i] > 0U) {
       sound_playing = true;
     }
-    if (sound_rx_buf[rx_buf_idx][i] > (1U << 14)) {
-      sound_abs_sum += sound_rx_buf[rx_buf_idx][i] - (1U << 14);
-    } else {
-      sound_abs_sum += (1U << 14) - sound_rx_buf[rx_buf_idx][i];
-    }
+    uint16_t val = sound_rx_buf[rx_buf_idx][i];
+    if (val >= 32768U) { val = (uint16_t)(0U - val); }
+    sound_abs_sum += val;
   }
   sound_buf_count++;
 
