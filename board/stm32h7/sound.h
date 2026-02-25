@@ -125,8 +125,6 @@ static void BDMA_Channel0_IRQ_Handler(void) {
     DFSDM1_Filter0->FLTCR1 |= DFSDM_FLTCR1_RSWSTART;
   }
   mic_idle_count = SOUND_IDLE_TIMEOUT;
-
-  sound_tick();
 }
 
 void sound_init_dac(void) {
