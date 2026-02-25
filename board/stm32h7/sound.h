@@ -18,7 +18,6 @@ void sound_tick(void) {
   if (sound_idle_count > 0U) {
     sound_idle_count--;
     if (sound_idle_count == 0U) {
-      sound_output_level = 0U;
       current_board->set_amp_enabled(false);
       register_clear_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
     }
@@ -82,9 +81,9 @@ static void BDMA_Channel0_IRQ_Handler(void) {
       sound_playing = true;
     }
 
-    // vu metering
+    // vu metering: unsigned PCM centered at 32768
     uint16_t val = sound_rx_buf[rx_buf_idx][i];
-    if (val >= 32768U) { val = (uint16_t)(0U - val); }
+    if (val >= 32768U) { val = val - 32768U; } else { val = 32768U - val; }
     abs_sum += val;
   }
 
