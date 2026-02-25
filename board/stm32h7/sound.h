@@ -9,31 +9,16 @@ __attribute__((section(".sram4"))) static uint16_t mic_tx_buf[2][MIC_TX_BUF_SIZE
 
 #define SOUND_IDLE_TIMEOUT 4U
 #define MIC_SKIP_BUFFERS 2U // Skip first 2 buffers (1024 samples = ~21ms at 48kHz)
-#define SOUND_PEAK_TICKS 8U
 static uint8_t sound_idle_count;
 static uint8_t mic_idle_count;
 static uint8_t mic_buffer_count;
-static uint32_t sound_abs_sum;
-static uint16_t sound_buf_count;
 uint16_t sound_output_level;
 
 void sound_tick(void) {
-  static uint8_t sound_level_counter = 0U;
-  sound_level_counter++;
-  if (sound_level_counter >= SOUND_PEAK_TICKS) {
-    if (sound_buf_count > 0U) {
-      sound_output_level = (uint16_t)(sound_abs_sum / ((uint32_t)sound_buf_count * (SOUND_RX_BUF_SIZE / 2U)));
-    } else {
-      sound_output_level = 0U;
-    }
-    sound_abs_sum = 0U;
-    sound_buf_count = 0U;
-    sound_level_counter = 0U;
-  }
-
   if (sound_idle_count > 0U) {
     sound_idle_count--;
     if (sound_idle_count == 0U) {
+      sound_output_level = 0U;
       current_board->set_amp_enabled(false);
       register_clear_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
     }
@@ -89,17 +74,26 @@ static void BDMA_Channel0_IRQ_Handler(void) {
 
   // process samples (shift to 12b and bias to be unsigned)
   bool sound_playing = false;
+  uint16_t peak = 0U;
   for (uint16_t i=0U; i < SOUND_RX_BUF_SIZE; i += 2U) {
     // since we are playing mono and receiving stereo, we take every other sample
     sound_tx_buf[playback_buf][i/2U] = ((sound_rx_buf[rx_buf_idx][i] + (1UL << 14)) >> 3);
     if (sound_rx_buf[rx_buf_idx][i] > 0U) {
       sound_playing = true;
     }
+
+    // vu metering
     uint16_t val = sound_rx_buf[rx_buf_idx][i];
     if (val >= 32768U) { val = (uint16_t)(0U - val); }
-    sound_abs_sum += val;
+    if (val > peak) { peak = val; }
   }
-  sound_buf_count++;
+
+  // fast attack, slow decay (~460ms half-life at ~96Hz ISR rate)
+  if (peak > sound_output_level) {
+    sound_output_level = peak;
+  } else {
+    sound_output_level = sound_output_level - (sound_output_level >> 6U);
+  }
 
   // manage amp state
   if (sound_playing) {
