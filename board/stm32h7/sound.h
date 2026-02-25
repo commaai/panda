@@ -74,10 +74,10 @@ static void BDMA_Channel0_IRQ_Handler(void) {
   bool sound_playing = false;
   for (uint16_t i=0U; i < SOUND_RX_BUF_SIZE; i += 2U) {
     // first bit is the channel, get rid of that
-    int16_t val = ((int16_t)((sound_rx_buf[rx_buf_idx][i] & 0x7FFFU) << 1U) >> 1U);
+    int16_t val = sound_rx_buf[rx_buf_idx][i] & 0xFFFFU;
 
     // since we are playing mono and receiving stereo, we take every other sample
-    sound_tx_buf[playback_buf][i/2U] = ((val + (1UL << 14)) >> 3);
+    sound_tx_buf[playback_buf][i/2U] = ((val + (1U << 14)) >> 3);
     if (sound_rx_buf[rx_buf_idx][i] > 0U) {
       sound_playing = true;
     }
@@ -162,7 +162,7 @@ void sound_init(void) {
   register_set(&SAI4_Block_B->CR1, SAI_xCR1_DMAEN | (0b00UL << SAI_xCR1_SYNCEN_Pos) | (0b100U << SAI_xCR1_DS_Pos) | (0b11U << SAI_xCR1_MODE_Pos), 0x0FFB3FEFU);
   register_set(&SAI4_Block_B->CR2, (0b001U << SAI_xCR2_FTH_Pos), 0xFFFBU);
   register_set(&SAI4_Block_B->FRCR, (31U << SAI_xFRCR_FRL_Pos), 0x7FFFFU);
-  register_set(&SAI4_Block_B->SLOTR, (0b11UL << SAI_xSLOTR_SLOTEN_Pos) | (1UL << SAI_xSLOTR_NBSLOT_Pos) | (0b01UL << SAI_xSLOTR_SLOTSZ_Pos), 0xFFFF0FDFU); // NBSLOT definition is vague
+  register_set(&SAI4_Block_B->SLOTR, (0b11UL << SAI_xSLOTR_SLOTEN_Pos) | (1UL << SAI_xSLOTR_NBSLOT_Pos) | (0b01UL << SAI_xSLOTR_SLOTSZ_Pos) | (1U << SAI_xSLOTR_FBOFF_Pos), 0xFFFF0FDFU); // NBSLOT definition is vague
 
   // init sound DMA (SAI4_B -> memory, double buffers)
   register_set(&BDMA_Channel0->CPAR, (uint32_t) &(SAI4_Block_B->DR), 0xFFFFFFFFU);
