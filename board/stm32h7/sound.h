@@ -73,8 +73,11 @@ static void BDMA_Channel0_IRQ_Handler(void) {
   // process samples (shift to 12b and bias to be unsigned)
   bool sound_playing = false;
   for (uint16_t i=0U; i < SOUND_RX_BUF_SIZE; i += 2U) {
+    // first bit is the channel, get rid of that
+    int16_t val = ((int16_t)((sound_rx_buf[rx_buf_idx][i] & 0x7FFFU) << 1U) >> 1U);
+
     // since we are playing mono and receiving stereo, we take every other sample
-    sound_tx_buf[playback_buf][i/2U] = ((sound_rx_buf[rx_buf_idx][i] + (1UL << 14)) >> 3);
+    sound_tx_buf[playback_buf][i/2U] = ((val + (1UL << 14)) >> 3);
     if (sound_rx_buf[rx_buf_idx][i] > 0U) {
       sound_playing = true;
     }
@@ -102,8 +105,6 @@ static void BDMA_Channel0_IRQ_Handler(void) {
     DFSDM1_Filter0->FLTCR1 |= DFSDM_FLTCR1_RSWSTART;
   }
   mic_idle_count = SOUND_IDLE_TIMEOUT;
-
-  sound_tick();
 }
 
 void sound_init_dac(void) {
