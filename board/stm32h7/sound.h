@@ -20,6 +20,7 @@ void sound_tick(void) {
     if (sound_idle_count == 0U) {
       current_board->set_amp_enabled(false);
       register_clear_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
+      sound_output_level = 0U;
     }
   }
 
