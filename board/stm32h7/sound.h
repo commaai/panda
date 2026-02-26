@@ -84,6 +84,7 @@ static void BDMA_Channel0_IRQ_Handler(void) {
       sound_playing = true;
     }
 
+    // this assumes all audio is "zero" centered
     if (sample > 0x7FFU) {
       abs_sum += (uint32_t)sample - 0x7FFU;
     } else {
