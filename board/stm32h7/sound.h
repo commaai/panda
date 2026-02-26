@@ -85,9 +85,9 @@ static void BDMA_Channel0_IRQ_Handler(void) {
     }
 
     if (sample > 0x7FFU) {
-      abs_sum += sample - 0x7FFU;
+      abs_sum += (uint32_t)sample - 0x7FFU;
     } else {
-      abs_sum += 0x7FFU - sample;
+      abs_sum += 0x7FFU - (uint32_t)sample;
     }
   }
 
@@ -95,6 +95,7 @@ static void BDMA_Channel0_IRQ_Handler(void) {
   uint16_t level = (uint16_t)(abs_sum / (SOUND_RX_BUF_SIZE / 2U));
   if (level >= sound_output_level) {
     sound_output_level = level;
+  }
   sound_output_level -= (sound_output_level >> 6U);
 
   // manage amp state
