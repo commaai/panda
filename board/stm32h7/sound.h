@@ -75,22 +75,22 @@ static void BDMA_Channel0_IRQ_Handler(void) {
   // process samples (shift to 12b and bias to be unsigned)
   bool sound_playing = false;
   uint32_t sum = 0U;
-  int16_t val = 0;
 
   for (uint16_t i=0U; i < SOUND_RX_BUF_SIZE; i += 2U) {
     // since we are playing mono and receiving stereo, we take every other sample
-    val = ((int16_t)((sound_rx_buf[rx_buf_idx][i] & 0x7FFFU) << 1U) >> 1U);
-
-    sound_tx_buf[playback_buf][i/2U] = ((val + (1UL << 14)) >> 3);
+    uint16_t sample = ((sound_rx_buf[rx_buf_idx][i] + (1UL << 14)) >> 3) & 0xFFFU;
+    sound_tx_buf[playback_buf][i/2U] = sample;
     if (sound_rx_buf[rx_buf_idx][i] > 0U) {
       sound_playing = true;
     }
 
     // vu metering: signed PCM centered at 0
-    sum += val;
+    if (sample > 0x7FFU) {
+      sum += sample - 0x7FFU;
+    } else {
+      sum += 0x7FFU - sample;
+    }
   }
-
-  puth(val); print(" "); puth(sound_tx_buf[playback_buf][5U]); print("\n");
 
   // VU meter: fast attack, slow decay (~460ms half-life at ~96Hz ISR rate)
   uint16_t level = (uint16_t)(sum / (SOUND_RX_BUF_SIZE / 2U));
