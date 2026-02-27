@@ -39,6 +39,8 @@ static void cuatro_set_fan_enabled(bool enabled) {
 
 static void cuatro_set_bootkick(BootState state) {
   set_gpio_output(GPIOA, 0, state != BOOT_BOOTKICK);
+  // DC_IN rising edge wakes SOM from ship mode
+  set_gpio_output(GPIOC, 11, state != BOOT_BOOTKICK);
 }
 
 static void cuatro_set_amp_enabled(bool enabled) {
@@ -50,7 +52,7 @@ static void cuatro_init(void) {
 
   // open drain
   set_gpio_output_type(GPIOD, 3, OUTPUT_TYPE_OPEN_DRAIN); // FAN_EN
-  set_gpio_output_type(GPIOC, 12, OUTPUT_TYPE_OPEN_DRAIN); // VBAT_EN
+  set_gpio_output_type(GPIOC, 11, OUTPUT_TYPE_OPEN_DRAIN); // DC_IN_EN_N
 
   // Power readout
   set_gpio_mode(GPIOC, 5, MODE_ANALOG);

@@ -18,7 +18,7 @@
 
 #include "board/drivers/fdcan.h"
 
-#include "board/power_saving.h"
+#include "board/sys/power_saving.h"
 
 #include "board/obj/gitversion.h"
 
@@ -148,7 +148,7 @@ static void tick_handler(void) {
       // re-init everything that uses harness status
       can_init_all();
       set_safety_mode(current_safety_mode, current_safety_param);
-      set_power_save_state(power_save_status);
+      set_power_save_state(power_save_enabled);
     }
 
     // decimated to 1Hz
@@ -167,7 +167,7 @@ static void tick_handler(void) {
 
       // turn off the blue LED, turned on by CAN
       // unless we are in power saving mode
-      led_set(LED_BLUE, (uptime_cnt & 1U) && (power_save_status == POWER_SAVE_STATUS_ENABLED));
+      led_set(LED_BLUE, (uptime_cnt & 1U) && power_save_enabled);
 
       const bool recent_heartbeat = heartbeat_counter == 0U;
 
@@ -231,8 +231,8 @@ static void tick_handler(void) {
             set_safety_mode(SAFETY_SILENT, 0U);
           }
 
-          if (power_save_status != POWER_SAVE_STATUS_ENABLED) {
-            set_power_save_state(POWER_SAVE_STATUS_ENABLED);
+          if (!power_save_enabled) {
+            set_power_save_state(true);
           }
 
           // Also disable IR when the heartbeat goes missing
@@ -341,7 +341,12 @@ int main(void) {
 
   // LED should keep on blinking all the time
   while (true) {
-    if (power_save_status == POWER_SAVE_STATUS_DISABLED) {
+    #ifdef ALLOW_DEBUG
+    if (stop_mode_requested) {
+      enter_stop_mode();
+    }
+    #endif
+    if (!power_save_enabled) {
       #ifdef DEBUG_FAULTS
       if (fault_status == FAULT_STATUS_NONE) {
       #endif
@@ -369,6 +374,11 @@ int main(void) {
         }
       #endif
     } else {
+      if ((hw_type == HW_TYPE_CUATRO) && !current_board->read_som_gpio()) {
+        assert_fatal(current_safety_mode == SAFETY_SILENT, "Error: Entering low power mode while not in SAFETY_SILENT. Hanging\n");
+        enter_stop_mode(); // deep sleep, wakes on CAN or SBU activity
+        assert_fatal(false, "Error: enter_stop_mode returned after system reset. Hanging\n");
+      }
       __WFI();
       SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
     }

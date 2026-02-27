@@ -15,7 +15,7 @@ def docker_run(String step_label, int timeout_mins, String cmd) {
 def phone(String ip, String step_label, String cmd) {
   withCredentials([file(credentialsId: 'id_rsa', variable: 'key_file')]) {
     def ssh_cmd = """
-ssh -tt -o StrictHostKeyChecking=no -i ${key_file} 'comma@${ip}' /usr/bin/bash <<'END'
+ssh -tt -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ConnectionAttempts=3 -o ServerAliveInterval=10 -o ServerAliveCountMax=3 -i ${key_file} 'comma@${ip}' /usr/bin/bash <<'END'
 
 set -e
 
@@ -51,7 +51,11 @@ END"""
 def phone_steps(String device_type, steps) {
   lock(resource: "", label: device_type, inversePrecedence: true, variable: 'device_ip', quantity: 1) {
     timeout(time: 20, unit: 'MINUTES') {
-      phone(device_ip, "git checkout", readFile("tests/setup_device_ci.sh"),)
+      retry (3) {
+        def date = sh(script: 'date', returnStdout: true).trim()
+        phone(device_ip, "set time", "date -s '${date}'")
+        phone(device_ip, "git checkout", readFile("tests/setup_device_ci.sh"))
+      }
       steps.each { item ->
         phone(device_ip, item[0], item[1])
       }

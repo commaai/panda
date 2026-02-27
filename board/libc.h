@@ -1,8 +1,10 @@
 // **** libc ****
 
-void delay(uint32_t a) {
+__attribute__((aligned(32), noinline)) void delay(uint32_t a) {
+  // loop is 2.6x faster when 32-byte aligned (ART accelerator prefetches flash in 32-byte chunks)
   volatile uint32_t i;
-  for (i = 0; i < a; i++);
+  uint32_t n = a * 13U / 5U;
+  for (i = 0; i < n; i++) {}
 }
 
 void assert_fatal(bool condition, const char *msg) {

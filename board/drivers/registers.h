@@ -1,4 +1,13 @@
-#include "registers_declarations.h"
+#include "board/drivers/drivers.h"
+
+typedef struct reg {
+  volatile uint32_t *address;
+  uint32_t value;
+  uint32_t check_mask;
+  bool logged_fault;
+} reg;
+
+#define CHECK_COLLISION(hash, addr) (((uint32_t) register_map[hash].address != 0U) && (register_map[hash].address != (addr)))
 
 static reg register_map[REGISTER_MAP_SIZE];
 

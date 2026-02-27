@@ -30,6 +30,8 @@ dev = [
   "mypy",
   "setuptools",
   "spidev; platform_system == 'Linux'",
+  "gcc-arm-none-eabi @ git+https://github.com/commaai/dependencies.git@releases#subdirectory=gcc-arm-none-eabi",
+  "cppcheck @ git+https://github.com/commaai/dependencies.git@releases#subdirectory=cppcheck",
 ]
 
 [build-system]
@@ -37,7 +39,13 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["panda"]
+packages = [
+  "panda",
+  "panda.python",
+  "panda.board",
+  "panda.board.body",
+  "panda.board.jungle",
+]
 
 [tool.setuptools.package-dir]
 panda = "."

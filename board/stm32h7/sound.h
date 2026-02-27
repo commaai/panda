@@ -12,6 +12,7 @@ __attribute__((section(".sram4"))) static uint16_t mic_tx_buf[2][MIC_TX_BUF_SIZE
 static uint8_t sound_idle_count;
 static uint8_t mic_idle_count;
 static uint8_t mic_buffer_count;
+uint16_t sound_output_level;
 
 void sound_tick(void) {
   if (sound_idle_count > 0U) {
@@ -19,6 +20,7 @@ void sound_tick(void) {
     if (sound_idle_count == 0U) {
       current_board->set_amp_enabled(false);
       register_clear_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
+      sound_output_level = 0U;
     }
   }
 
@@ -72,13 +74,30 @@ static void BDMA_Channel0_IRQ_Handler(void) {
 
   // process samples (shift to 12b and bias to be unsigned)
   bool sound_playing = false;
+  uint32_t abs_sum = 0U;
+
   for (uint16_t i=0U; i < SOUND_RX_BUF_SIZE; i += 2U) {
     // since we are playing mono and receiving stereo, we take every other sample
-    sound_tx_buf[playback_buf][i/2U] = ((sound_rx_buf[rx_buf_idx][i] + (1UL << 14)) >> 3);
+    uint16_t sample = ((sound_rx_buf[rx_buf_idx][i] + (1UL << 14)) >> 3) & 0xFFFU;
+    sound_tx_buf[playback_buf][i/2U] = sample;
     if (sound_rx_buf[rx_buf_idx][i] > 0U) {
       sound_playing = true;
     }
+
+    // this assumes all audio is "zero" centered
+    if (sample > 0x7FFU) {
+      abs_sum += (uint32_t)sample - 0x7FFU;
+    } else {
+      abs_sum += 0x7FFU - (uint32_t)sample;
+    }
   }
+
+  // VU meter: fast attack, slow decay (~460ms half-life at ~96Hz ISR rate)
+  uint16_t level = (uint16_t)(abs_sum / (SOUND_RX_BUF_SIZE / 2U));
+  if (level >= sound_output_level) {
+    sound_output_level = level;
+  }
+  sound_output_level -= (sound_output_level >> 6U);
 
   // manage amp state
   if (sound_playing) {
@@ -102,8 +121,6 @@ static void BDMA_Channel0_IRQ_Handler(void) {
     DFSDM1_Filter0->FLTCR1 |= DFSDM_FLTCR1_RSWSTART;
   }
   mic_idle_count = SOUND_IDLE_TIMEOUT;
-
-  sound_tick();
 }
 
 void sound_init_dac(void) {
