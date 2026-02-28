@@ -3,6 +3,19 @@
   a certain number of CANPacket_t. The transaction is split
   into multiple transfers or chunks.
 
+  CAN packet byte layout:
+  +--------+--------+--------+--------+--------+--------+-----+----------------------------+
+  | byte 0 | byte 1 | byte 2 | byte 3 | byte 4 | byte 5 | ... | byte 12 (CAN BX) / byte 68 |
+  +--------+--------+--------+--------+--------+--------+-----+----------------------------+
+  | DLC    | addr   | addr   | addr   | ext/r/r| data 0 | ... | data 7 (CAN BX) / data 63  |
+  | bus    |        |        |        |        |        |     | (CAN FD)                   |
+  | rsvd   |        |        |        |        |        |     |                            |
+  +--------+--------+--------+--------+--------+--------+-----+----------------------------+
+  Byte/bit fields:
+    byte 0: DLC[7:4], bus[3:1], reserved[0]
+    bytes 1..4: address (max 29 bits) + flags (extended, returned, rejected)
+    bytes 5..12 (CAN BX) / bytes 5..68 (CAN FD): payload bytes
+
   * comms_can_read outputs this buffer in chunks of a specified length.
     chunks are always the given length, except the last one.
   * comms_can_write reads in this buffer in chunks.
