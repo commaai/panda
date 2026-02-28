@@ -3,7 +3,7 @@ name = "pandacan"
 version = "0.0.10"
 description = "Code powering the comma.ai panda"
 readme = "README.md"
-requires-python = ">=3.11,<3.13"  # macOS doesn't work with 3.13 due to pycapnp from opendbc
+requires-python = ">=3.11,<4"
 license = {text = "MIT"}
 authors = [{name = "comma.ai"}]
 classifiers = [
