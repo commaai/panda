@@ -196,9 +196,9 @@ void sound_init(void) {
   register_set(&SAI4_Block_A->SLOTR, (0b11UL << SAI_xSLOTR_SLOTEN_Pos) | (1UL << SAI_xSLOTR_NBSLOT_Pos) | (0b01U << SAI_xSLOTR_SLOTSZ_Pos), 0xFFFF0FDFU); // NBSLOT definition is vague
 
   // init DFSDM for PDM mic
-  register_set(&DFSDM1_Channel0->CHCFGR1, (76UL << DFSDM_CHCFGR1_CKOUTDIV_Pos) | DFSDM_CHCFGR1_CHEN, 0xC0FFF1EFU); // CH0 controls the clock
+  register_set(&DFSDM1_Channel0->CHCFGR1, (90UL << DFSDM_CHCFGR1_CKOUTDIV_Pos) | DFSDM_CHCFGR1_CHEN, 0xC0FFF1EFU); // CH0 controls the clock
   register_set(&DFSDM1_Channel3->CHCFGR1, (0b01UL << DFSDM_CHCFGR1_SPICKSEL_Pos) | (0b00U << DFSDM_CHCFGR1_SITP_Pos) | DFSDM_CHCFGR1_CHEN, 0x0000F1EFU); // SITP determines sample edge
-  register_set(&DFSDM1_Filter0->FLTFCR, (0U << DFSDM_FLTFCR_IOSR_Pos) | (64UL << DFSDM_FLTFCR_FOSR_Pos) | (4UL << DFSDM_FLTFCR_FORD_Pos), 0xE3FF00FFU);
+  register_set(&DFSDM1_Filter0->FLTFCR, (0U << DFSDM_FLTFCR_IOSR_Pos) | (54UL << DFSDM_FLTFCR_FOSR_Pos) | (4UL << DFSDM_FLTFCR_FORD_Pos), 0xE3FF00FFU);
   register_set(&DFSDM1_Filter0->FLTCR1, DFSDM_FLTCR1_FAST | (3UL << DFSDM_FLTCR1_RCH_Pos) | DFSDM_FLTCR1_RDMAEN | DFSDM_FLTCR1_RCONT | DFSDM_FLTCR1_DFEN, 0x672E7F3BU);
 
   // DMA (DFSDM1 -> memory)
