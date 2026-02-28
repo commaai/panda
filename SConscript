@@ -157,8 +157,6 @@ build_project("panda_h7", base_project_h7, "./board/main.c", [])
 flags = [
   "-DPANDA_JUNGLE",
 ]
-if os.getenv("FINAL_PROVISIONING"):
-  flags += ["-DFINAL_PROVISIONING"]
 build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", flags)
 
 # body fw
