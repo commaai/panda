@@ -3,26 +3,27 @@
   a certain number of CANPacket_t. The transaction is split
   into multiple transfers or chunks.
 
-  CAN packet byte layout:
-  +--------+--------+--------+--------+--------+--------+-----+----------------------------+
-  | byte 0 | byte 1 | byte 2 | byte 3 | byte 4 | byte 5 | ... | byte 12 (CAN BX) / byte 68 |
-  +--------+--------+--------+--------+--------+--------+-----+----------------------------+
-  | DLC    | addr   | addr   | addr   | ext/r/r| data 0 | ... | data 7 (CAN BX) / data 63  |
-  | bus    |        |        |        |        |        |     | (CAN FD)                   |
-  | rsvd   |        |        |        |        |        |     |                            |
-  +--------+--------+--------+--------+--------+--------+-----+----------------------------+
+  CAN packet byte layout (wire format used by comms_can_{read,write}):
+  +--------+--------+--------+--------+--------+--------+--------+------------------------------+
+  | byte 0 | byte 1 | byte 2 | byte 3 | byte 4 | byte 5 | byte 6 | ... byte 13 / byte 69        |
+  +--------+--------+--------+--------+--------+--------+--------+------------------------------+
+  | DLC    | addr   | addr   | addr   | flags  | cksum  | data0  | ... data7 / data63           |
+  | bus    |        |        |        |        |        |        | (classic CAN / CAN FD)       |
+  | fd     |        |        |        |        |        |        |                              |
+  +--------+--------+--------+--------+--------+--------+--------+------------------------------+
   Byte/bit fields:
-    byte 0: DLC[7:4], bus[3:1], reserved[0]
-    bytes 1..4: address (max 29 bits) + flags (extended, returned, rejected)
-    bytes 5..12 (CAN BX) / bytes 5..68 (CAN FD): payload bytes
+    byte 0: DLC[7:4], bus[3:1], fd[0]
+    bytes 1..4: (addr << 3) | (extended << 2) | (returned << 1) | rejected
+    byte 5: checksum = XOR(header[0..4] + payload)
+    bytes 6..13 (classic CAN, up to 8 bytes) / bytes 6..69 (CAN FD, up to 64 bytes): payload
 
-  USB data frame stream layout (64-byte chunks):
-      USB data frame 0 (64 bytes)                 USB data frame N (64 bytes)
-  +--------+-------------------------------+   ...   +--------+-------------------------------+
-  | byte 0 | byte 1 .. byte 63             |         | byte 0 | byte 1 .. byte 63             |
-  |counter0| payload                       |         |counterN| payload                       |
-  +--------+-------------------------------+         +--------+-------------------------------+
-  Bit numbering for each byte: 7 6 5 4 3 2 1 0
+  USB/SPI transfer chunking used by this file:
+  +--------------------------------------------+   ...   +--------------------------------------------+
+  | transport chunk 0                          |         | transport chunk N                          |
+  +--------------------------------------------+         +--------------------------------------------+
+  | concatenated CANPacket_t bytes             |         | continuation and/or next CANPacket_t bytes |
+  | (no per-64-byte counter/header in protocol)|         |                                            |
+  +--------------------------------------------+         +--------------------------------------------+
 
   * comms_can_read outputs this buffer in chunks of a specified length.
     chunks are always the given length, except the last one.
