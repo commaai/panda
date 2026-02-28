@@ -16,6 +16,14 @@
     bytes 1..4: address (max 29 bits) + flags (extended, returned, rejected)
     bytes 5..12 (CAN BX) / bytes 5..68 (CAN FD): payload bytes
 
+  USB data frame stream layout (64-byte chunks):
+      USB data frame 0 (64 bytes)                 USB data frame N (64 bytes)
+  +--------+-------------------------------+   ...   +--------+-------------------------------+
+  | byte 0 | byte 1 .. byte 63             |         | byte 0 | byte 1 .. byte 63             |
+  |counter0| payload                       |         |counterN| payload                       |
+  +--------+-------------------------------+         +--------+-------------------------------+
+  Bit numbering for each byte: 7 6 5 4 3 2 1 0
+
   * comms_can_read outputs this buffer in chunks of a specified length.
     chunks are always the given length, except the last one.
   * comms_can_write reads in this buffer in chunks.
