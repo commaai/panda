@@ -26,7 +26,7 @@ jobs:
       - name: Build debug FW
         run: ${{ env.RUN }} "scons"
       - name: Build release FW
-        run: ${{ env.RUN }} "CERT=certs/debug RELEASE=1 scons"
+        run: ${{ env.RUN }} "CERT=board/certs/debug RELEASE=1 scons"
 
   test:
     name: ./test.sh
