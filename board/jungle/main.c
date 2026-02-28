@@ -75,11 +75,6 @@ void tick_handler(void) {
       // turn off the blue LED, turned on by CAN
       led_set(LED_BLUE, false);
 
-      // Blink and OBD CAN
-#ifdef FINAL_PROVISIONING
-      current_board->set_can_mode(can_mode == CAN_MODE_NORMAL ? CAN_MODE_OBD_CAN2 : CAN_MODE_NORMAL);
-#endif
-
       // on to the next one
       uptime_cnt += 1U;
     }
@@ -91,33 +86,12 @@ void tick_handler(void) {
       current_board->set_panda_power(!panda_power);
     }
 
-#ifdef FINAL_PROVISIONING
-    // Ignition blinking
-    uint8_t ignition_bitmask = 0U;
-    for (uint8_t i = 0U; i < 6U; i++) {
-      ignition_bitmask |= ((loop_counter % 12U) < ((uint32_t) i + 2U)) << i;
-    }
-    current_board->set_individual_ignition(ignition_bitmask);
-
-    // SBU voltage reporting
-    for (uint8_t i = 0U; i < 6U; i++) {
-      CANPacket_t pkt = { 0 };
-      pkt.data_len_code = 8U;
-      pkt.addr = 0x100U + i;
-      *(uint16_t *) &pkt.data[0] = current_board->get_sbu_mV(i + 1U, SBU1);
-      *(uint16_t *) &pkt.data[2] = current_board->get_sbu_mV(i + 1U, SBU2);
-      pkt.data[4] = (ignition_bitmask >> i) & 1U;
-      can_set_checksum(&pkt);
-      can_send(&pkt, 0U, false);
-    }
-#else
     // toggle ignition on button press
     static bool prev_button_status = false;
     if (!current_button_status && prev_button_status && button_press_cnt < 10){
       current_board->set_ignition(!ignition);
     }
     prev_button_status = current_button_status;
-#endif
 
     button_press_cnt = current_button_status ? button_press_cnt + 1 : 0;
 
@@ -180,12 +154,6 @@ int main(void) {
 
   can_init_all();
   current_board->set_harness_orientation(HARNESS_ORIENTATION_1);
-
-#ifdef FINAL_PROVISIONING
-  print("---- FINAL PROVISIONING BUILD ---- \n");
-  can_set_forwarding(0, 2);
-  can_set_forwarding(1, 2);
-#endif
 
   // LED should keep on blinking all the time
   uint32_t cnt = 0;
