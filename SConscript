@@ -163,5 +163,4 @@ build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", flags
 build_project("body_h7", base_project_h7, "./board/body/main.c", ["-DPANDA_BODY"])
 
 # test files
-if GetOption('extras'):
-  SConscript('tests/libpanda/SConscript')
+SConscript('tests/libpanda/SConscript')
