@@ -13,6 +13,7 @@ classifiers = [
 ]
 dependencies = [
   "libusb1",
+  "libusb-package",
   "opendbc @ git+https://github.com/commaai/opendbc.git@master#egg=opendbc",
 
   # runtime dependency on comma four

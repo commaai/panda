@@ -18,7 +18,6 @@ elif [[ $PLATFORM == "Linux" ]]; then
 
   sudo apt-get install -y --no-install-recommends \
     curl ca-certificates gcc git \
-    libusb-1.0-0 \
     python3-dev
 else
   echo "WARNING: unsupported platform. skipping apt/brew install."
