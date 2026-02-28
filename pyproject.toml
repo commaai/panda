@@ -77,6 +77,10 @@ flake8-implicit-str-concat.allow-multiline=false
 
 [tool.pytest.ini_options]
 addopts = "-Werror --strict-config --strict-markers --durations=10 --ignore-glob='*.sh' --ignore=tests/misra --ignore=tests/som --ignore=tests/hitl"
+filterwarnings = [
+  "error",
+  "ignore::DeprecationWarning:usb1._libusb1",
+]
 python_files = "test_*.py"
 testpaths = [
   "tests/"
