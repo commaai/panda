@@ -44,8 +44,8 @@ void clock_source_init(bool enable_channel1) {
 
   // Sync with slave
   register_set(&(TIM1->SMCR), TIM_SMCR_MSM , 0xFFFFU);
-  register_set(&(TIM1->CR2), (0b0111 << TIM_CR2_MMS_Pos), 0xFFFFU);
-  register_set(&(TIM8->SMCR), (0b0100 << TIM_SMCR_SMS_Pos) | (0b000 << TIM_SMCR_TS_Pos), 0xFFFFU);
+  register_set(&(TIM1->CR2), (0b0111U << TIM_CR2_MMS_Pos), 0xFFFFU);
+  register_set(&(TIM8->SMCR), (0b0100U << TIM_SMCR_SMS_Pos) | (0b000U << TIM_SMCR_TS_Pos), 0xFFFFU);
 
   // Setup slave timer (TIM8)
   register_set(&(TIM8->PSC), TIM1->PSC, 0xFFFFU);
