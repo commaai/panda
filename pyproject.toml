@@ -1,4 +1,4 @@
-[ project]
+[project]
 name = "pandacan"
 version = "0.0.10"
 description = "Code powering the comma.ai panda"
