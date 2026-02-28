@@ -24,7 +24,7 @@ fi
 
 cd $PANDA_DIR
 if [ -z "${SKIP_BUILD}" ]; then
-  scons -j8
+  scons
 fi
 
 CHECKLIST=$DIR/checkers.txt

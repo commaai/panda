@@ -6,7 +6,7 @@ def docker_run(String step_label, int timeout_mins, String cmd) {
           --volume /var/run/dbus:/var/run/dbus \
           --net host \
           ${env.DOCKER_IMAGE_TAG} \
-          bash -c 'scons -j8 && ${cmd}'", \
+          bash -c 'scons && ${cmd}'", \
         label: step_label
   }
 }
@@ -111,7 +111,7 @@ pipeline {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
                 phone_steps("panda-cuatro", [
-                  ["build", "scons -j4"],
+                  ["build", "scons"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["flash jungle", "cd board/jungle && ./flash.py --all"],
                   ["test", "cd tests/hitl && pytest --durations=0 2*.py [5-9]*.py"],
@@ -123,7 +123,7 @@ pipeline {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
                 phone_steps("panda-tres", [
-                  ["build", "scons -j4"],
+                  ["build", "scons"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["flash jungle", "cd board/jungle && ./flash.py --all"],
                   ["test", "cd tests/hitl && pytest --durations=0 2*.py [5-9]*.py"],

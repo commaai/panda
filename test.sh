@@ -8,7 +8,7 @@ cd $DIR
 source ./setup.sh
 
 # *** build ***
-scons -j8
+scons
 
 # *** lint ***
 ruff check .
