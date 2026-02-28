@@ -61,8 +61,8 @@ rng = random.Random(len(files))
 for p in patterns:
   mutations.append((rng.choice(files), p, True))
 
-# TODO: remove sampling once test_misra.sh is faster
-#mutations = random.sample(mutations, 2)
+# sample to keep CI fast, but always include the no-mutation case
+mutations = [mutations[0]] + rng.sample(mutations[1:], min(2, len(mutations) - 1))
 
 @pytest.mark.parametrize("fn, patch, should_fail", mutations)
 def test_misra_mutation(fn, patch, should_fail):

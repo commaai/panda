@@ -31,6 +31,7 @@ def random_can_messages(n, bus=None):
 
 class TestPandaComms(unittest.TestCase):
   def setUp(self):
+    lpp.set_safety_hooks(CarParams.SafetyModel.allOutput, 0)
     lpp.comms_can_reset()
 
   def test_tx_queues(self):
@@ -102,8 +103,6 @@ class TestPandaComms(unittest.TestCase):
 
 
   def test_can_send_usb(self):
-    lpp.set_safety_hooks(CarParams.SafetyModel.allOutput, 0)
-
     for bus in range(3):
       with self.subTest(bus=bus):
         for _ in range(100):
