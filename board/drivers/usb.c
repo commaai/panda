@@ -37,6 +37,7 @@ static void USB_WritePacket(const void *src, uint16_t len, uint32_t ep) {
 
   if (src != NULL) {
     const uint32_t *src_copy = (const uint32_t *)src;
+    // load the FIFO
     for (uint32_t i = 0; i < count32b; i++) {
       USBx_DFIFO(ep) = *src_copy;
       src_copy++;
@@ -72,21 +73,30 @@ static void usb_reset(void) {
   USBx_INEP(0U)->DIEPINT = 0xFF;
   USBx_OUTEP(0U)->DOEPINT = 0xFF;
 
+  // unset the address
   USBx_DEVICE->DCFG &= ~USB_OTG_DCFG_DAD;
 
+  // set up USB FIFOs
+  // RX start address is fixed to 0
   USBx->GRXFSIZ = 0x40;
 
+  // 0x100 to offset past GRXFSIZ
   USBx->DIEPTXF0_HNPTXFSIZ = (0x40UL << 16) | 0x40U;
 
+  // EP1, massive
   USBx->DIEPTXF[0] = (0x40UL << 16) | 0x80U;
 
+  // flush TX fifo
   USBx->GRSTCTL = USB_OTG_GRSTCTL_TXFFLSH | USB_OTG_GRSTCTL_TXFNUM_4;
   while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH) == USB_OTG_GRSTCTL_TXFFLSH) {}
+  // flush RX FIFO
   USBx->GRSTCTL = USB_OTG_GRSTCTL_RXFFLSH;
   while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_RXFFLSH) == USB_OTG_GRSTCTL_RXFFLSH) {}
 
+  // no global NAK
   USBx_DEVICE->DCTL |= USB_OTG_DCTL_CGINAK;
 
+  // ready to receive setup packets
   USBx_OUTEP(0U)->DOEPTSIZ = USB_OTG_DOEPTSIZ_STUPCNT | (USB_OTG_DOEPTSIZ_PKTCNT & (1UL << 19)) | (3U << 3);
 }
 

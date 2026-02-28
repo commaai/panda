@@ -5,12 +5,15 @@ const uint32_t data_speeds[DATA_SPEEDS_ARRAY_SIZE] = {100U, 200U, 500U, 1000U, 1
 
 static bool fdcan_request_init(FDCAN_GlobalTypeDef *FDCANx) {
   bool ret = true;
+  // Exit from sleep mode
   FDCANx->CCCR &= ~(FDCAN_CCCR_CSR);
   while ((FDCANx->CCCR & FDCAN_CCCR_CSA) == FDCAN_CCCR_CSA) {}
 
+  // Request init
   uint32_t timeout_counter = 0U;
   FDCANx->CCCR |= FDCAN_CCCR_INIT;
   while ((FDCANx->CCCR & FDCAN_CCCR_INIT) == 0U) {
+    // Delay for about 1ms
     delay(10000);
     timeout_counter++;
 
@@ -28,6 +31,7 @@ static bool fdcan_exit_init(FDCAN_GlobalTypeDef *FDCANx) {
   FDCANx->CCCR &= ~(FDCAN_CCCR_INIT);
   uint32_t timeout_counter = 0U;
   while ((FDCANx->CCCR & FDCAN_CCCR_INIT) != 0U) {
+    // Delay for about 1ms
     delay(10000);
     timeout_counter++;
 
@@ -44,8 +48,10 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_t data_
   bool ret = fdcan_request_init(FDCANx);
 
   if (ret) {
+    // Enable config change
     FDCANx->CCCR |= FDCAN_CCCR_CCE;
 
+    // Reset operation mode to Normal
     FDCANx->CCCR &= ~(FDCAN_CCCR_TEST);
     FDCANx->TEST &= ~(FDCAN_TEST_LBCK);
     FDCANx->CCCR &= ~(FDCAN_CCCR_MON);
@@ -54,6 +60,7 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_t data_
 
     uint8_t prescaler = BITRATE_PRESCALER;
     if (speed < 2500U) {
+      // The only way to support speeds lower than 250Kbit/s (down to 10Kbit/s)
       prescaler = BITRATE_PRESCALER * 16U;
     }
 
@@ -63,8 +70,10 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_t data_
     uint32_t seg2 = CAN_SEG2(tq, sp);
     uint8_t sjw = MIN(127U, seg2);
 
+    // Set the nominal bit timing values
     FDCANx->NBTP = (((sjw & 0x7FUL)-1U)<<FDCAN_NBTP_NSJW_Pos) | (((seg1 & 0xFFU)-1U)<<FDCAN_NBTP_NTSEG1_Pos) | (((seg2 & 0x7FU)-1U)<<FDCAN_NBTP_NTSEG2_Pos) | (((prescaler & 0x1FFUL)-1U)<<FDCAN_NBTP_NBRP_Pos);
 
+    // Set the data bit timing values
     if (data_speed == 50000U) {
       sp = CAN_SP_DATA_5M;
     } else {
@@ -78,14 +87,17 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_t data_
     FDCANx->DBTP = (((sjw & 0xFUL)-1U)<<FDCAN_DBTP_DSJW_Pos) | (((seg1 & 0x1FU)-1U)<<FDCAN_DBTP_DTSEG1_Pos) | (((seg2 & 0xFU)-1U)<<FDCAN_DBTP_DTSEG2_Pos) | (((prescaler & 0x1FUL)-1U)<<FDCAN_DBTP_DBRP_Pos);
 
     if (non_iso) {
+      // FD non-ISO mode
       FDCANx->CCCR |= FDCAN_CCCR_NISO;
     }
 
+    // Silent loopback is known as internal loopback in the docs
     if (loopback) {
       FDCANx->CCCR |= FDCAN_CCCR_TEST;
       FDCANx->TEST |= FDCAN_TEST_LBCK;
       FDCANx->CCCR |= FDCAN_CCCR_MON;
     }
+    // Silent is known as bus monitoring in the docs
     if (silent) {
       FDCANx->CCCR |= FDCAN_CCCR_MON;
     }

@@ -8,8 +8,7 @@
 #include "board/drivers/spi.h"
 #include "board/drivers/gpio.h"
 #include "board/stm32h7/peripherals.h"
-
-extern const uint8_t gitversion[];
+#include "board/obj/gitversion.h"
 
 
 
@@ -79,8 +78,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       }
       break;
     case 0xd6:
-      for (resp_len = 0; gitversion[resp_len] != 0U; resp_len++) {}
-      memcpy(resp, gitversion, (uint32_t)resp_len);
+      COMPILE_TIME_ASSERT(sizeof(gitversion) <= USBPACKET_MAX_SIZE);
+      (void)memcpy(resp, gitversion, sizeof(gitversion));
+      resp_len = sizeof(gitversion) - 1U;
       break;
     case 0xd8:
       flush_write_buffer();
