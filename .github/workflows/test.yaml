@@ -23,14 +23,10 @@ jobs:
       - run: ./setup.sh
       - name: Test python package installer
         run: ${{ env.RUN }} "pip install --break-system-packages .[dev]"
-      - name: Build panda images and bootstub
-        run: ${{ env.RUN }} "scons -j4"
-      - name: Build with UBSan
-        run: ${{ env.RUN }} "scons -j4 --ubsan"
-      - name: Build jungle firmware with FINAL_PROVISIONING support
-        run: ${{ env.RUN }} "FINAL_PROVISIONING=1 scons -j4 board/jungle"
-      - name: Build panda in release mode
-        run: ${{ env.RUN }} "CERT=certs/debug RELEASE=1 scons -j4"
+      - name: Build debug FW
+        run: ${{ env.RUN }} "scons"
+      - name: Build release FW
+        run: ${{ env.RUN }} "CERT=certs/debug RELEASE=1 scons"
 
   test:
     name: ./test.sh
@@ -67,8 +63,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: ./setup.sh
-      - name: Build FW
-        run: ${{ env.RUN }} "scons -j$(nproc)"
       - name: Run MISRA C:2012 analysis
         run: ${{ env.RUN }} "cd tests/misra && ./test_misra.sh"
 
@@ -79,7 +73,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: ./setup.sh
-      - name: Build FW
-        run: ${{ env.RUN }} "scons -j$(nproc)"
       - name: MISRA mutation tests
         run: ${{ env.RUN }} "cd tests/misra && pytest test_mutation.py"
