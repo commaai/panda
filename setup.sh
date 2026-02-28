@@ -36,5 +36,6 @@ if ! command -v uv &>/dev/null; then
 fi
 
 export UV_PROJECT_ENVIRONMENT="$DIR/.venv"
-uv sync --all-extras --upgrade
+rm -f uv.lock
+uv sync --all-extras
 source "$DIR/.venv/bin/activate"

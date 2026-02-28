@@ -154,16 +154,10 @@ with open("board/obj/cert.h", "w") as f:
 build_project("panda_h7", base_project_h7, "./board/main.c", [])
 
 # panda jungle fw
-flags = [
-  "-DPANDA_JUNGLE",
-]
-if os.getenv("FINAL_PROVISIONING"):
-  flags += ["-DFINAL_PROVISIONING"]
-build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", flags)
+build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", ["-DPANDA_JUNGLE"])
 
 # body fw
 build_project("body_h7", base_project_h7, "./board/body/main.c", ["-DPANDA_BODY"])
 
 # test files
-if GetOption('extras'):
-  SConscript('tests/libpanda/SConscript')
+SConscript('tests/libpanda/SConscript')

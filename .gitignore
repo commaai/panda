@@ -8,6 +8,7 @@
 *.os
 *.d
 *.dump
+*.ctu-info
 a.out
 *~
 .#*
