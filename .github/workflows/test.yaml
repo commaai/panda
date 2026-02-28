@@ -23,8 +23,9 @@ jobs:
       - run: ./setup.sh
       - name: Test python package installer
         run: ${{ env.RUN }} "pip install --break-system-packages .[dev]"
-      - name: Build panda images and bootstub
+      - name: Build debug FW
         run: ${{ env.RUN }} "scons"
+      - name: Build release FW
         run: ${{ env.RUN }} "CERT=certs/debug RELEASE=1 scons"
 
   test:
