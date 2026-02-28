@@ -14,7 +14,7 @@ if os.getenv("RELEASE"):
   assert os.path.exists(cert_fn), 'Certificate file not found. Please specify absolute path'
 else:
   BUILD_TYPE = "DEBUG"
-  cert_fn = File("./certs/debug").srcnode().relpath
+  cert_fn = File("./board/certs/debug").srcnode().relpath
   common_flags += ["-DALLOW_DEBUG"]
 
   if os.getenv("DEBUG"):
@@ -33,7 +33,7 @@ def get_version(builder, build_type):
 def get_key_header(name):
   from Crypto.PublicKey import RSA
 
-  public_fn = File(f'./certs/{name}.pub').srcnode().get_path()
+  public_fn = File(f'./board/certs/{name}.pub').srcnode().get_path()
   with open(public_fn) as f:
     rsa = RSA.importKey(f.read())
   assert(rsa.size_in_bits() == 1024)
@@ -105,8 +105,8 @@ def build_project(project_name, project, main, extra_flags):
   bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
   bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", [
     startup,
-    "./crypto/rsa.c",
-    "./crypto/sha.c",
+    "./board/crypto/rsa.c",
+    "./board/crypto/sha.c",
     "./board/bootstub.c",
   ])
   bs_env.Objcopy(f"./board/obj/bootstub.{project_name}.bin", bs_elf)
@@ -117,7 +117,7 @@ def build_project(project_name, project, main, extra_flags):
     main
   ], LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
-  sign_py = File(f"./crypto/sign.py").srcnode().relpath
+  sign_py = File(f"./board/crypto/sign.py").srcnode().relpath
   env.Command(f"./board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
 
 
