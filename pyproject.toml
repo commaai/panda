@@ -14,6 +14,9 @@ classifiers = [
 dependencies = [
   "libusb1",
   "opendbc @ git+https://github.com/commaai/opendbc.git@master#egg=opendbc",
+
+  # runtime dependency on comma four
+  #"spidev; platform_system == 'Linux'",
 ]
 
 [project.optional-dependencies]
@@ -29,7 +32,6 @@ dev = [
   "ruff",
   "mypy",
   "setuptools",
-  "spidev; platform_system == 'Linux'",
   "gcc-arm-none-eabi @ git+https://github.com/commaai/dependencies.git@releases#subdirectory=gcc-arm-none-eabi",
   "cppcheck @ git+https://github.com/commaai/dependencies.git@releases#subdirectory=cppcheck",
 ]
