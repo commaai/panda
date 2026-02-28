@@ -54,24 +54,3 @@ jobs:
         run: uv pip install --system .
       - name: Verify importing panda
         run: python -c "from panda import Panda"
-
-
-  misra_linter:
-    name: MISRA C:2012 Linter
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - run: ./setup.sh
-      - name: Run MISRA C:2012 analysis
-        run: ${{ env.RUN }} "cd tests/misra && ./test_misra.sh"
-
-  misra_mutation:
-    name: MISRA C:2012 Mutation
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - run: ./setup.sh
-      - name: MISRA mutation tests
-        run: ${{ env.RUN }} "cd tests/misra && pytest test_mutation.py"

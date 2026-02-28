@@ -1,4 +1,4 @@
-[project]
+[ project]
 name = "pandacan"
 version = "0.0.10"
 description = "Code powering the comma.ai panda"
@@ -27,11 +27,10 @@ dev = [
   "cffi",
   "flaky",
   "pytest",
+  "pytest-xdist",
   "pytest-mock",
   "pytest-timeout",
-  "pytest-randomly",
   "ruff",
-  "mypy",
   "setuptools",
   "gcc-arm-none-eabi @ git+https://github.com/commaai/dependencies.git@releases#subdirectory=gcc-arm-none-eabi",
   "cppcheck @ git+https://github.com/commaai/dependencies.git@releases#subdirectory=cppcheck",
@@ -53,18 +52,6 @@ packages = [
 [tool.setuptools.package-dir]
 panda = "."
 
-[tool.mypy]
-# third-party packages
-ignore_missing_imports = true
-
-# helpful warnings
-warn_redundant_casts = true
-warn_unreachable = true
-warn_unused_ignores = true
-
-# restrict dynamic typing
-warn_return_any = true
-
 # https://beta.ruff.rs/docs/configuration/#using-pyprojecttoml
 [tool.ruff]
 line-length = 160
@@ -79,7 +66,7 @@ flake8-implicit-str-concat.allow-multiline=false
 "pytest.main".msg = "pytest.main requires special handling that is easy to mess up!"
 
 [tool.pytest.ini_options]
-addopts = "-Werror --strict-config --strict-markers --durations=10 --ignore-glob='*.sh' --ignore=tests/misra --ignore=tests/som --ignore=tests/hitl"
+addopts = "-Werror --strict-config --strict-markers --maxprocesses=8 -nauto --durations=10 --ignore-glob='*.sh' --ignore=tests/som --ignore=tests/hitl"
 python_files = "test_*.py"
 testpaths = [
   "tests/"

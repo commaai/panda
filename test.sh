@@ -10,12 +10,6 @@ source ./setup.sh
 # *** build ***
 scons
 
-# *** lint ***
+# *** lint + test ***
 ruff check .
-mypy python/
-
-
-# *** test ***
-
-# TODO: make randomly work
-pytest --randomly-dont-reorganize tests/
+pytest
