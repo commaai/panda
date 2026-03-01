@@ -10,6 +10,7 @@ import random
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT = os.path.join(HERE, "../../")
 
+# skip mutating these paths
 IGNORED_PATHS = (
   'board/obj',
   'board/jungle',
@@ -69,7 +70,7 @@ def test_misra_mutation(fn, patch, should_fail):
   with tempfile.TemporaryDirectory() as tmp:
     shutil.copytree(ROOT, tmp + "/panda", dirs_exist_ok=True)
 
-    # apply patch (pure Python to avoid macOS sed -i incompatibility)
+    # apply patch
     if fn is not None:
       fpath = os.path.join(tmp, "panda", fn)
       with open(fpath) as f:
