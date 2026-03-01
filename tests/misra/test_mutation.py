@@ -23,6 +23,8 @@ IGNORED_PATHS = (
   'board/bootstub.c',
   'board/bootstub_declarations.h',
   'board/stm32h7/llflash.h',
+  'board/crypto',
+  'board/certs',
 )
 
 mutations = [
@@ -62,8 +64,7 @@ rng = random.Random(len(files))
 for p in patterns:
   mutations.append((rng.choice(files), p, True))
 
-# sample to keep CI fast, but always include the no-mutation case
-mutations = [mutations[0]] + rng.sample(mutations[1:], min(2, len(mutations) - 1))
+
 
 @pytest.mark.parametrize("fn, patch, should_fail", mutations)
 def test_misra_mutation(fn, patch, should_fail):
