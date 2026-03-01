@@ -59,7 +59,12 @@ cppcheck() {
   fi
 }
 
-PANDA_OPTS="--enable=all --disable=unusedFunction --addon=misra"
+if [ -n "$MISRA_ONLY" ]; then
+  # MISRA addon only (--enable=style needed for misra output severity)
+  PANDA_OPTS="--enable=style --addon=misra"
+else
+  PANDA_OPTS="--enable=all --disable=unusedFunction --addon=misra"
+fi
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
 cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ $PANDA_DIR/board/main.c

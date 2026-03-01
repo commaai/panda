@@ -68,7 +68,9 @@ mutations = [mutations[0]] + rng.sample(mutations[1:], min(2, len(mutations) - 1
 @pytest.mark.parametrize("fn, patch, should_fail", mutations)
 def test_misra_mutation(fn, patch, should_fail):
   with tempfile.TemporaryDirectory() as tmp:
-    shutil.copytree(ROOT, tmp + "/panda", dirs_exist_ok=True)
+    SKIP = {'.venv', '.git', '__pycache__', '.mypy_cache', '.ruff_cache', '.pytest_cache', 'pandacan.egg-info'}
+    shutil.copytree(ROOT, tmp + "/panda", dirs_exist_ok=True,
+                    ignore=lambda d, files: [f for f in files if f in SKIP])
 
     # apply patch
     if fn is not None:
@@ -83,7 +85,9 @@ def test_misra_mutation(fn, patch, should_fail):
       with open(fpath, "w") as f:
         f.write(content)
 
-    # run test
-    r = subprocess.run("SKIP_TABLES_DIFF=1 panda/tests/misra/test_misra.sh", cwd=tmp, shell=True)
+    # run test (SKIP_BUILD: cppcheck doesn't need firmware binaries,
+    #           MISRA_ONLY: skip non-misra checkers for speed)
+    env = "SKIP_TABLES_DIFF=1 SKIP_BUILD=1 MISRA_ONLY=1"
+    r = subprocess.run(f"{env} panda/tests/misra/test_misra.sh", cwd=tmp, shell=True)
     failed = r.returncode != 0
     assert failed == should_fail
