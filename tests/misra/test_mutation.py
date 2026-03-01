@@ -69,10 +69,18 @@ def test_misra_mutation(fn, patch, should_fail):
   with tempfile.TemporaryDirectory() as tmp:
     shutil.copytree(ROOT, tmp + "/panda", dirs_exist_ok=True)
 
-    # apply patch
+    # apply patch (pure Python to avoid macOS sed -i incompatibility)
     if fn is not None:
-      r = os.system(f"cd {tmp}/panda && sed -i '{patch}' {fn}")
-      assert r == 0
+      fpath = os.path.join(tmp, "panda", fn)
+      with open(fpath) as f:
+        content = f.read()
+      if patch.startswith("s/"):
+        old, new = patch[2:].rsplit("/g", 1)[0].split("/", 1)
+        content = content.replace(old, new)
+      elif patch.startswith("$a "):
+        content += patch[3:].replace(r"\n", "\n")
+      with open(fpath, "w") as f:
+        f.write(content)
 
     # run test
     r = subprocess.run("SKIP_TABLES_DIFF=1 panda/tests/misra/test_misra.sh", cwd=tmp, shell=True)
