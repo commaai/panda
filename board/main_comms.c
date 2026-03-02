@@ -46,6 +46,8 @@ static int get_health_pkt(void *dat) {
 
   health->som_reset_triggered = bootkick_reset_triggered;
 
+  health->sound_output_level_pkt = sound_output_level;
+
   return sizeof(*health);
 }
 

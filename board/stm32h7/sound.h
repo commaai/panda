@@ -12,3 +12,5 @@ void sound_tick(void);
 void sound_init_dac(void);
 void sound_stop_dac(void);
 void sound_init(void);
+
+extern uint16_t sound_output_level;
