@@ -1,5 +1,6 @@
 #include "board/config.h"
 
+// ***************************** Definitions *****************************
 #define UART_BUFFER(x, size_rx, size_tx, uart_ptr, callback_ptr, overwrite_mode) \
   static uint8_t elems_rx_##x[size_rx]; \
   static uint8_t elems_tx_##x[size_tx]; \
@@ -18,8 +19,11 @@
     .overwrite = (overwrite_mode) \
   };
 
+// ******************************** UART buffers ********************************
+// debug = USART2
 UART_BUFFER(debug, FIFO_SIZE_INT, FIFO_SIZE_INT, USART2, debug_ring_callback, true)
 
+// SOM debug = UART7
 UART_BUFFER(som_debug, FIFO_SIZE_INT, FIFO_SIZE_INT, UART7, NULL, true)
 
 uart_ring *get_ring_by_number(int a) {
@@ -38,6 +42,7 @@ uart_ring *get_ring_by_number(int a) {
   return ring;
 }
 
+// ************************* Low-level buffer functions *************************
 bool get_char(uart_ring *q, char *elem) {
   bool ret = false;
 
@@ -62,6 +67,7 @@ bool injectc(uart_ring *q, char elem) {
   next_w_ptr = (q->w_ptr_rx + 1U) % q->rx_fifo_size;
 
   if ((next_w_ptr == q->r_ptr_rx) && q->overwrite) {
+    // overwrite mode: drop oldest byte
     q->r_ptr_rx = (q->r_ptr_rx + 1U) % q->rx_fifo_size;
   }
 
@@ -83,6 +89,7 @@ bool put_char(uart_ring *q, char elem) {
   next_w_ptr = (q->w_ptr_tx + 1U) % q->tx_fifo_size;
 
   if ((next_w_ptr == q->r_ptr_tx) && q->overwrite) {
+    // overwrite mode: drop oldest byte
     q->r_ptr_tx = (q->r_ptr_tx + 1U) % q->tx_fifo_size;
   }
 
@@ -98,7 +105,9 @@ bool put_char(uart_ring *q, char elem) {
   return ret;
 }
 
+// ************************ High-level debug functions **********************
 void putch(const char a) {
+  // misra-c2012-17.7: serial debug function, ok to ignore output
   (void)injectc(&uart_ring_debug, a);
 }
 

@@ -9,6 +9,7 @@
 #define SPI_DACK 0x85U
 #define SPI_NACK 0x1FU
 
+// SPI states
 enum {
   SPI_STATE_HEADER,
   SPI_STATE_HEADER_ACK,
@@ -35,6 +36,7 @@ void spi_init(void);
 void spi_rx_done(void);
 void spi_tx_done(bool reset);
 
+// low level SPI prototypes
 void llspi_init(void);
 void llspi_mosi_dma(uint8_t *addr, int len);
 void llspi_miso_dma(uint8_t *addr, int len);

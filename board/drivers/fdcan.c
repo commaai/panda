@@ -22,9 +22,10 @@ void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number) {
   static uint32_t last_reset = 0U;
   uint32_t time = microsecond_timer_get();
 
-  if (get_ts_elapsed(time, last_reset) > 100000U) {
+  // Resetting CAN core is a slow blocking operation, limit frequency
+  if (get_ts_elapsed(time, last_reset) > 100000U) {  // 10 Hz
     can_health[can_number].can_core_reset_cnt += 1U;
-    can_health[can_number].total_tx_lost_cnt += (FDCAN_TX_FIFO_EL_CNT - (FDCANx->TXFQS & FDCAN_TXFQS_TFFL));
+    can_health[can_number].total_tx_lost_cnt += (FDCAN_TX_FIFO_EL_CNT - (FDCANx->TXFQS & FDCAN_TXFQS_TFFL));  // TX FIFO msgs will be lost after reset
     llcan_clear_send(FDCANx);
     last_reset = time;
   }
@@ -63,11 +64,16 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   can_health[can_number].irq1_call_rate = interrupts[can_irq_number[can_number][1]].call_rate;
 
   if (ir_reg != 0U) {
+    // Clear error interrupts
     FDCANx->IR |= (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EP | FDCAN_IR_BO | FDCAN_IR_RF0L);
     can_health[can_number].total_error_cnt += 1U;
+    // Check for RX FIFO overflow
     if ((ir_reg & (FDCAN_IR_RF0L)) != 0U) {
       can_health[can_number].total_rx_lost_cnt += 1U;
     }
+    // Cases:
+    // 1. while multiplexing between buses 1 and 3 we are getting ACK errors that overwhelm CAN core, by resetting it recovers faster
+    // 2. H7 gets stuck in bus off recovery state indefinitely
     if ((((can_health[can_number].last_error == CAN_ACK_ERROR) || (can_health[can_number].last_data_error == CAN_ACK_ERROR)) && (can_health[can_number].transmit_error_cnt > 127U)) ||
      ((ir_reg & FDCAN_IR_BO) != 0U)) {
       can_clear_send(FDCANx, can_number);
@@ -75,6 +81,8 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   }
 }
 
+// ***************************** CAN *****************************
+// FDFDCANx_IT1 IRQ Handler (TX)
 void process_can(uint8_t can_number) {
   if (can_number != 0xffU) {
     ENTER_CRITICAL();
@@ -82,7 +90,7 @@ void process_can(uint8_t can_number) {
     FDCAN_GlobalTypeDef *FDCANx = CANIF_FROM_CAN_NUM(can_number);
     uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
 
-    FDCANx->IR |= FDCAN_IR_TFE;
+    FDCANx->IR |= FDCAN_IR_TFE;  // Clear Tx FIFO Empty flag
 
     if ((FDCANx->TXFQS & FDCAN_TXFQS_TFQF) == 0U) {
       CANPacket_t to_send;
@@ -91,12 +99,15 @@ void process_can(uint8_t can_number) {
           can_health[can_number].total_tx_cnt += 1U;
 
           uint32_t TxFIFOSA = FDCAN_START_ADDRESS + (can_number * FDCAN_OFFSET) + (FDCAN_RX_FIFO_0_EL_CNT * FDCAN_RX_FIFO_0_EL_SIZE);
+          // get the index of the next TX FIFO element (0 to FDCAN_TX_FIFO_EL_CNT - 1)
           uint32_t tx_index = (FDCANx->TXFQS >> FDCAN_TXFQS_TFQPI_Pos) & 0x1FU;
+          // only send if we have received a packet
           canfd_fifo *fifo;
           fifo = (canfd_fifo *)(TxFIFOSA + (tx_index * FDCAN_TX_FIFO_EL_SIZE));
 
           fifo->header[0] = (to_send.extended << 30) | ((to_send.extended != 0U) ? (to_send.addr) : (to_send.addr << 18));
 
+          // If canfd_auto is set, outgoing packets will be automatically sent as CAN-FD if an incoming CAN-FD packet was seen
           bool fd = bus_config[can_number].canfd_auto ? bus_config[can_number].canfd_enabled : (bool)(to_send.fd > 0U);
           uint32_t canfd_enabled_header = fd ? (1UL << 21) : 0UL;
 
@@ -111,6 +122,7 @@ void process_can(uint8_t can_number) {
 
           FDCANx->TXBAR = (1UL << tx_index);
 
+          // Send back to USB
           CANPacket_t to_push;
 
           to_push.fd = fd;
@@ -135,26 +147,32 @@ void process_can(uint8_t can_number) {
   }
 }
 
+// FDFDCANx_IT0 IRQ Handler (RX and errors)
+// blink blue when we are receiving CAN messages
 void can_rx(uint8_t can_number) {
   FDCAN_GlobalTypeDef *FDCANx = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
 
   uint32_t ir_reg = FDCANx->IR;
 
+  // Clear all new messages from Rx FIFO 0
   FDCANx->IR |= FDCAN_IR_RF0N;
   while ((FDCANx->RXF0S & FDCAN_RXF0S_F0FL) != 0U) {
     can_health[can_number].total_rx_cnt += 1U;
+    // get the index of the next RX FIFO element (0 to FDCAN_RX_FIFO_0_EL_CNT - 1)
     uint32_t rx_fifo_idx = (uint8_t)((FDCANx->RXF0S >> FDCAN_RXF0S_F0GI_Pos) & 0x3FU);
 
+    // Recommended to offset get index by at least +1 if RX FIFO is in overwrite mode and full (datasheet)
     if ((FDCANx->RXF0S & FDCAN_RXF0S_F0F) == FDCAN_RXF0S_F0F) {
       rx_fifo_idx = ((rx_fifo_idx + 1U) >= FDCAN_RX_FIFO_0_EL_CNT) ? 0U : (rx_fifo_idx + 1U);
-      can_health[can_number].total_rx_lost_cnt += 1U;
+      can_health[can_number].total_rx_lost_cnt += 1U;  // At least one message was lost
     }
 
     uint32_t RxFIFO0SA = FDCAN_START_ADDRESS + (can_number * FDCAN_OFFSET);
     CANPacket_t to_push;
     canfd_fifo *fifo;
 
+    // getting address
     fifo = (canfd_fifo *)(RxFIFO0SA + (rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE));
 
     bool canfd_frame = ((fifo->header[1] >> 21) & 0x1U);
@@ -175,6 +193,7 @@ void can_rx(uint8_t can_number) {
     }
     can_set_checksum(&to_push);
 
+    // forwarding (panda only)
     int bus_fwd_num = safety_fwd_hook(bus_number, to_push.addr);
     if (bus_fwd_num < 0) {
       bus_fwd_num = bus_config[can_number].forwarding_bus;
@@ -202,6 +221,7 @@ void can_rx(uint8_t can_number) {
     led_set(LED_BLUE, true);
     rx_buffer_overflow += can_push(&can_rx_q, &to_push) ? 0U : 1U;
 
+    // Enable CAN FD and BRS if CAN FD message was received
     if (!(bus_config[can_number].canfd_enabled) && (canfd_frame)) {
       bus_config[can_number].canfd_enabled = true;
     }
@@ -209,9 +229,11 @@ void can_rx(uint8_t can_number) {
       bus_config[can_number].brs_enabled = true;
     }
 
+    // update read index
     FDCANx->RXF0A = rx_fifo_idx;
   }
 
+  // Error handling
   if ((ir_reg & (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EP | FDCAN_IR_BO | FDCAN_IR_RF0L)) != 0U) {
     update_can_health_pkt(can_number, ir_reg);
   }
@@ -240,6 +262,7 @@ bool can_init(uint8_t can_number) {
     FDCAN_GlobalTypeDef *FDCANx = CANIF_FROM_CAN_NUM(can_number);
     ret &= can_set_speed(can_number);
     ret &= llcan_init(FDCANx);
+    // in case there are queued up messages
     process_can(can_number);
   }
   return ret;
