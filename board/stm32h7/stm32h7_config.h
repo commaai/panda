@@ -59,6 +59,7 @@ separate IRQs for RX and TX.
 
 #include "board/drivers/registers.h"
 #include "board/drivers/interrupts.h"
+#include "board/drivers/drivers.h"
 
 #ifdef BOOTSTUB
 uart_ring uart_ring_som_debug;
