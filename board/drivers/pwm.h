@@ -2,7 +2,8 @@
 #define DRIVERS_PWM_H
 
 #include <stdint.h>
-#include "stm32fx_def.h"
+
+#define PWM_COUNTER_OVERFLOW 4800U // To get ~25kHz
 
 // TODO: Implement for 32-bit timers
 

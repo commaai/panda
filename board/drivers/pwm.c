@@ -1,6 +1,6 @@
 // PWM driver implementation
+#include "board/drivers/drivers.h"
 #include "drivers/pwm.h"
-#include "drivers/registers.h"
 
 #define PWM_COUNTER_OVERFLOW 4800U // To get ~25kHz
 
