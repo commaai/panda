@@ -1,21 +1,8 @@
-#ifndef DRIVERS_FAN_H
-#define DRIVERS_FAN_H
+#include "board/drivers/drivers.h"
 
-#include <stdint.h>
-
-struct fan_state_t {
-  uint16_t tach_counter;
-  uint16_t rpm;
-  uint8_t power;
-  float error_integral;
-  uint8_t cooldown_counter;
-};
-extern struct fan_state_t fan_state;
-
+// Function declarations
 void fan_set_power(uint8_t percentage);
 void llfan_init(void);
 void fan_init(void);
 // Call this at FAN_TICK_FREQ
 void fan_tick(void);
-
-#endif
