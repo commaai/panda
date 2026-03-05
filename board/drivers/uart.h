@@ -20,6 +20,10 @@ typedef struct uart_ring {
   bool overwrite;
 } uart_ring;
 
+// UART ring buffers (defined in uart.c)
+extern uart_ring uart_ring_debug;
+extern uart_ring uart_ring_som_debug;
+
 void debug_ring_callback(uart_ring *ring);
 void uart_tx_ring(uart_ring *q);
 uart_ring *get_ring_by_number(int a);

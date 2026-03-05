@@ -2,6 +2,9 @@
 #define DRIVERS_INTERRUPTS_H
 
 #include <stdbool.h>
+#include <stdint.h>
+
+#ifdef STM32H7
 
 typedef struct interrupt {
   IRQn_Type irq_type;
@@ -24,9 +27,13 @@ extern interrupt interrupts[NUM_INTERRUPTS];
 
 extern float interrupt_load;
 
+void interrupt_timer_init(void);
+uint32_t microsecond_timer_get(void);
 void unused_interrupt_handler(void);
 void handle_interrupt(IRQn_Type irq_type);
 void interrupt_timer_handler(void);
 void init_interrupts(bool check_rate_limit);
+
+#endif // STM32H7
 
 #endif
