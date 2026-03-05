@@ -100,6 +100,27 @@ def build_project(project_name, project, main, extra_flags):
 
   startup = env.Object(project["STARTUP_FILE"])
 
+  # Driver source files (split from header-only)
+  driver_sources = [
+    "./board/drivers/bootkick.c",
+    "./board/drivers/can_common.c",
+    "./board/drivers/clock_source.c",
+    "./board/drivers/fake_siren.c",
+    "./board/drivers/fan.c",
+    "./board/drivers/fdcan.c",
+    "./board/drivers/gpio.c",
+    "./board/drivers/harness.c",
+    "./board/drivers/interrupts.c",
+    "./board/drivers/led.c",
+    "./board/drivers/pwm.c",
+    "./board/drivers/registers.c",
+    "./board/drivers/simple_watchdog.c",
+    "./board/drivers/spi.c",
+    "./board/drivers/timers.c",
+    "./board/drivers/uart.c",
+    "./board/drivers/usb.c",
+  ]
+
   # Build bootstub
   bs_env = env.Clone()
   bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
@@ -108,14 +129,14 @@ def build_project(project_name, project, main, extra_flags):
     "./board/crypto/rsa.c",
     "./board/crypto/sha.c",
     "./board/bootstub.c",
-  ])
+  ] + driver_sources)
   bs_env.Objcopy(f"./board/obj/bootstub.{project_name}.bin", bs_elf)
 
   # Build + sign main (aka app)
   main_elf = env.Program(f"{project_dir}/main.elf", [
     startup,
     main
-  ], LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
+  ] + driver_sources, LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
   sign_py = File(f"./board/crypto/sign.py").srcnode().relpath
   env.Command(f"./board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
