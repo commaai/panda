@@ -124,19 +124,23 @@ def build_project(project_name, project, main, extra_flags):
   # Build bootstub
   bs_env = env.Clone()
   bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
+  # Use separate object directory for bootstub driver objects
+  bs_env['OBJPREFIX'] = Dir(f'./board/obj/{project_name}/bootstub/')
+  bs_driver_objs = bs_env.Object(driver_sources)
   bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", [
     startup,
     "./board/crypto/rsa.c",
     "./board/crypto/sha.c",
     "./board/bootstub.c",
-  ] + driver_sources)
+  ] + bs_driver_objs)
   bs_env.Objcopy(f"./board/obj/bootstub.{project_name}.bin", bs_elf)
 
   # Build + sign main (aka app)
+  main_driver_objs = env.Object(driver_sources)
   main_elf = env.Program(f"{project_dir}/main.elf", [
     startup,
     main
-  ] + driver_sources, LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
+  ] + main_driver_objs, LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
   sign_py = File(f"./board/crypto/sign.py").srcnode().relpath
   env.Command(f"./board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
