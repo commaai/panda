@@ -138,7 +138,28 @@ void spi_rx_done(void);
 void spi_tx_done(bool reset);
 
 // ******************** uart ********************
-// Type definitions and function declarations moved to drivers/uart.h
+
+#define FIFO_SIZE_INT 0x400U
+
+typedef struct uart_ring {
+  volatile uint16_t w_ptr_tx;
+  volatile uint16_t r_ptr_tx;
+  uint8_t *elems_tx;
+  uint32_t tx_fifo_size;
+  volatile uint16_t w_ptr_rx;
+  volatile uint16_t r_ptr_rx;
+  uint8_t *elems_rx;
+  uint32_t rx_fifo_size;
+  USART_TypeDef *uart;
+  void (*callback)(struct uart_ring*);
+  bool overwrite;
+} uart_ring;
+
+// UART ring buffers (defined in uart.c or stm32h7_config.h for BOOTSTUB)
+extern uart_ring uart_ring_debug;
+extern uart_ring uart_ring_som_debug;
+
+// Function declarations in drivers/uart.h
 
 // ******************** usb ********************
 // Function declarations moved to drivers/usb.h

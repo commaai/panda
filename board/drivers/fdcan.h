@@ -1,9 +1,7 @@
 #ifndef DRIVERS_FDCAN_H
 #define DRIVERS_FDCAN_H
 
-#include <stdint.h>
-#include <stdbool.h>
-#include "stm32h7xx_hal_fdcan.h"
+#include "board/drivers/drivers.h"
 
 void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number);
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg);
