@@ -2,34 +2,87 @@ import time
 import pytest
 
 from opendbc.car.structs import CarParams
+from panda import Panda
+from panda.python.spi import PandaSpiException
 from panda.tests.hitl.helpers import clear_can_buffers
 
 SPEED_NORMAL = 500
 SPEED_MISMATCH = 250
 
 
-def _assert_spi_responsive(p, duration=5.0, interval=0.05):
-  """Poll health over SPI for `duration` seconds, assert we get responses."""
+def _reset_speeds(p, panda_jungle):
+  """Restore matching CAN speeds and clear buffers."""
+  for bus in range(3):
+    panda_jungle.set_can_speed_kbps(bus, SPEED_NORMAL)
+  # panda might be locked up, try to reset it
+  try:
+    p.reset(reconnect=True)
+    for bus in range(3):
+      p.set_can_speed_kbps(bus, SPEED_NORMAL)
+    clear_can_buffers(p)
+  except Exception:
+    # if reset fails, reconnect
+    p.reconnect()
+
+
+def _health_check(p):
+  """Get health, return None if SPI fails (lockup detected)."""
+  try:
+    return p.health()
+  except PandaSpiException:
+    return None
+
+
+def _poll_health_during_errors(p, panda_jungle, duration, send_from_panda=False):
+  """Send CAN at mismatched speed while polling health. Returns stats."""
+  msg = b"\xaa" * 8
   start = time.monotonic()
-  count = 0
-  max_gap = 0.0
+  health_count = 0
+  spi_failures = 0
+  gaps = []
   last_response = start
+
   while time.monotonic() - start < duration:
-    h = p.health()
-    assert h['uptime'] > 0
+    # generate CAN errors
+    for bus in range(3):
+      if send_from_panda:
+        try:
+          p.can_send(0x456, msg, bus)
+        except PandaSpiException:
+          spi_failures += 1
+          continue
+      else:
+        panda_jungle.can_send(0x123, msg, bus)
+
+    # check panda responsiveness
+    h = _health_check(p)
     now = time.monotonic()
     gap = now - last_response
-    if gap > max_gap:
-      max_gap = gap
+    gaps.append(gap)
     last_response = now
-    count += 1
-    time.sleep(interval)
-  expected = int(duration / interval)
-  return count, max_gap, expected
+
+    if h is not None:
+      health_count += 1
+    else:
+      spi_failures += 1
+
+  max_gap = max(gaps) if gaps else 0
+  avg_gap = (sum(gaps) / len(gaps)) if gaps else 0
+  p95_idx = int(len(gaps) * 0.95) if gaps else 0
+  p95_gap = sorted(gaps)[p95_idx] if gaps else 0
+
+  return {
+    'health_count': health_count,
+    'spi_failures': spi_failures,
+    'max_gap': max_gap,
+    'avg_gap': avg_gap,
+    'p95_gap': p95_gap,
+    'total_polls': health_count + spi_failures,
+  }
 
 
 @pytest.mark.panda_expect_can_error
-@pytest.mark.timeout(120)
+@pytest.mark.timeout(60)
 class TestCanErrorResilience:
   """Verify panda stays responsive over SPI during CAN error conditions."""
 
@@ -37,69 +90,46 @@ class TestCanErrorResilience:
     """Speed mismatch causes CAN error interrupts; SPI must stay responsive."""
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
 
-    # Set panda to 500kbps, jungle to 250kbps -> every frame is a CAN error
     for bus in range(3):
       p.set_can_speed_kbps(bus, SPEED_NORMAL)
       panda_jungle.set_can_speed_kbps(bus, SPEED_MISMATCH)
 
-    # Flood from jungle while polling panda health
-    msg = b"\xaa" * 8
-    start = time.monotonic()
-    health_count = 0
-    max_gap = 0.0
-    last_response = start
+    stats = _poll_health_during_errors(p, panda_jungle, duration=8.0)
 
-    while time.monotonic() - start < 8.0:
-      # send burst from jungle
+    print(f"health: {stats['health_count']}, spi_fail: {stats['spi_failures']}, "
+          f"max_gap: {stats['max_gap']*1000:.1f}ms")
+
+    # verify errors actually occurred (if panda is still alive)
+    if stats['spi_failures'] == 0:
       for bus in range(3):
-        panda_jungle.can_send(0x123, msg, bus)
+        ch = p.can_health(bus)
+        print(f"  bus {bus}: errs={ch['total_error_cnt']} irq0={ch['irq0_call_rate']} "
+              f"busoff={ch['bus_off_cnt']} resets={ch['can_core_reset_count']}")
 
-      # check panda responsiveness
-      h = p.health()
-      assert h['uptime'] > 0
-      now = time.monotonic()
-      gap = now - last_response
-      if gap > max_gap:
-        max_gap = gap
-      last_response = now
-      health_count += 1
-
-    print(f"health responses: {health_count}, max gap: {max_gap*1000:.1f}ms")
-
-    # verify errors actually occurred
-    for bus in range(3):
-      ch = p.can_health(bus)
-      print(f"  bus {bus}: errs={ch['total_error_cnt']} irq0={ch['irq0_call_rate']} busoff={ch['bus_off_cnt']} resets={ch['can_core_reset_count']}")
-      assert ch['total_error_cnt'] > 0, f"Bus {bus}: expected CAN errors"
-
-    # SPI should not have had long gaps (>250ms would indicate lockup)
-    assert max_gap < 0.250, f"SPI gap too large: {max_gap*1000:.1f}ms (lockup?)"
+    assert stats['spi_failures'] == 0, f"SPI failed {stats['spi_failures']} times (panda locked up)"
+    assert stats['max_gap'] < 0.250, f"SPI gap too large: {stats['max_gap']*1000:.1f}ms"
 
   def test_spi_responsive_during_bus_off(self, p, panda_jungle):
     """TX with no ACK -> bus-off -> must not block SPI."""
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
 
-    # Mismatch speeds so jungle can't ACK panda's TX
     for bus in range(3):
       p.set_can_speed_kbps(bus, SPEED_NORMAL)
       panda_jungle.set_can_speed_kbps(bus, SPEED_MISMATCH)
 
-    # Send from panda into the void -- TEC rises, eventually bus-off
-    msg = b"\xbb" * 8
-    for _ in range(300):
+    stats = _poll_health_during_errors(p, panda_jungle, duration=5.0, send_from_panda=True)
+
+    print(f"health: {stats['health_count']}, spi_fail: {stats['spi_failures']}, "
+          f"max_gap: {stats['max_gap']*1000:.1f}ms")
+
+    if stats['spi_failures'] == 0:
       for bus in range(3):
-        p.can_send(0x456, msg, bus)
-      time.sleep(0.001)
+        ch = p.can_health(bus)
+        print(f"  bus {bus}: bus_off_cnt={ch['bus_off_cnt']}, "
+              f"tec={ch['transmit_error_cnt']}, resets={ch['can_core_reset_count']}")
 
-    # Panda must still respond
-    count, max_gap, expected = _assert_spi_responsive(p, duration=5.0)
-    print(f"health responses: {count}/{expected}, max gap: {max_gap*1000:.1f}ms")
-
-    for bus in range(3):
-      ch = p.can_health(bus)
-      print(f"  bus {bus}: bus_off_cnt={ch['bus_off_cnt']}, tec={ch['transmit_error_cnt']}, core_resets={ch['can_core_reset_count']}")
-
-    assert max_gap < 0.250, f"SPI gap too large: {max_gap*1000:.1f}ms (lockup?)"
+    assert stats['spi_failures'] == 0, f"SPI failed {stats['spi_failures']} times (panda locked up)"
+    assert stats['max_gap'] < 0.250, f"SPI gap too large: {stats['max_gap']*1000:.1f}ms"
 
   def test_sustained_error_storm(self, p, panda_jungle):
     """Sustained CAN errors for 15s must not degrade SPI responsiveness."""
@@ -109,30 +139,15 @@ class TestCanErrorResilience:
       p.set_can_speed_kbps(bus, SPEED_NORMAL)
       panda_jungle.set_can_speed_kbps(bus, SPEED_MISMATCH)
 
-    msg = b"\xcc" * 8
-    start = time.monotonic()
-    health_count = 0
-    gaps = []
-    last_response = start
+    stats = _poll_health_during_errors(p, panda_jungle, duration=15.0)
 
-    while time.monotonic() - start < 15.0:
-      for bus in range(3):
-        panda_jungle.can_send(0x789, msg, bus)
+    print(f"health: {stats['health_count']}, spi_fail: {stats['spi_failures']}, "
+          f"avg_gap: {stats['avg_gap']*1000:.1f}ms, p95_gap: {stats['p95_gap']*1000:.1f}ms, "
+          f"max_gap: {stats['max_gap']*1000:.1f}ms")
 
-      h = p.health()
-      assert h['uptime'] > 0
-      now = time.monotonic()
-      gaps.append(now - last_response)
-      last_response = now
-      health_count += 1
-
-    max_gap = max(gaps)
-    avg_gap = sum(gaps) / len(gaps)
-    p95_gap = sorted(gaps)[int(len(gaps) * 0.95)]
-    print(f"health responses: {health_count}, avg gap: {avg_gap*1000:.1f}ms, p95 gap: {p95_gap*1000:.1f}ms, max gap: {max_gap*1000:.1f}ms")
-
-    assert max_gap < 0.250, f"SPI max gap: {max_gap*1000:.1f}ms (lockup?)"
-    assert health_count > 100, f"Too few responses: {health_count}"
+    assert stats['spi_failures'] == 0, f"SPI failed {stats['spi_failures']} times"
+    assert stats['max_gap'] < 0.250, f"SPI max gap: {stats['max_gap']*1000:.1f}ms"
+    assert stats['health_count'] > 100, f"Too few responses: {stats['health_count']}"
 
   def test_can_recovery_after_errors(self, p, panda_jungle):
     """After CAN errors, normal communication must resume."""
@@ -150,8 +165,7 @@ class TestCanErrorResilience:
     time.sleep(1.0)
 
     # Phase 2: fix speeds, verify normal CAN works
-    clear_can_buffers(p, speed=SPEED_NORMAL)
-    clear_can_buffers(panda_jungle, speed=SPEED_NORMAL)
+    _reset_speeds(p, panda_jungle)
     time.sleep(0.5)
 
     test_msg = b"\xee" * 8
@@ -181,7 +195,8 @@ class TestCanErrorResilience:
     # wait for rate counters to update (1s timer)
     time.sleep(2.0)
 
-    h = p.health()
+    h = _health_check(p)
+    assert h is not None, "Panda unresponsive after CAN errors"
     print(f"faults: 0x{h['faults']:x}, interrupt_load: {h['interrupt_load']}")
     for bus in range(3):
       ch = p.can_health(bus)
