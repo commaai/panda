@@ -1,4 +1,4 @@
-#include "drivers/can_common.h"
+#include "board/drivers/can_common.h"
 #include "board/drivers/drivers.h"
 #include "board/drivers/interrupts.h"
 #include "board/drivers/registers.h"

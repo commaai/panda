@@ -1,4 +1,4 @@
-#include "drivers/gpio.h"
+#include "board/drivers/gpio.h"
 #include "board/drivers/drivers.h"
 #include "board/drivers/interrupts.h"
 #include "board/drivers/registers.h"

@@ -1,4 +1,4 @@
-#include "drivers/interrupts.h"
+#include "board/drivers/interrupts.h"
 #include "board/drivers/drivers.h"
 
 interrupt interrupts[NUM_INTERRUPTS];

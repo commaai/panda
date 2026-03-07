@@ -1,4 +1,4 @@
-#include "drivers/usb.h"
+#include "board/drivers/usb.h"
 #include "board/drivers/drivers.h"
 
 typedef union {

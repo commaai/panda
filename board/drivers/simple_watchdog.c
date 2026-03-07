@@ -1,4 +1,4 @@
-#include "drivers/simple_watchdog.h"
+#include "board/drivers/simple_watchdog.h"
 #include "board/drivers/drivers.h"
 
 static simple_watchdog_state_t wd_state;

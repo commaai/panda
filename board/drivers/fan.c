@@ -1,4 +1,4 @@
-#include "drivers/fan.h"
+#include "board/drivers/fan.h"
 #include "board/drivers/drivers.h"
 
 struct fan_state_t fan_state;

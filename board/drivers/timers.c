@@ -1,4 +1,4 @@
-#include "drivers/timers.h"
+#include "board/drivers/timers.h"
 #include "board/drivers/drivers.h"
 
 static void timer_init(TIM_TypeDef *TIM, int psc) {

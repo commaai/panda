@@ -1,4 +1,4 @@
-#include "drivers/uart.h"
+#include "board/drivers/uart.h"
 #include "board/drivers/drivers.h"
 #include "board/drivers/interrupts.h"
 

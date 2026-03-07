@@ -1,8 +1,8 @@
 // LED driver implementation
 #include "board/drivers/drivers.h"
-#include "drivers/led.h"
-#include "drivers/pwm.h"
-#include "drivers/gpio.h"
+#include "board/drivers/led.h"
+#include "board/drivers/pwm.h"
+#include "board/drivers/gpio.h"
 
 void led_set(uint8_t color, bool enabled) {
   if (color < 3U) {

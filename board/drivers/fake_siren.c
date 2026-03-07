@@ -1,4 +1,4 @@
-#include "drivers/fake_siren.h"
+#include "board/drivers/fake_siren.h"
 #include "board/drivers/drivers.h"
 #include "board/drivers/registers.h"
 #include "board/stm32h7/lli2c.h"
