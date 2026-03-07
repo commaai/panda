@@ -69,7 +69,7 @@ class TestCanErrorResilience:
     # verify errors actually occurred
     for bus in range(3):
       ch = p.can_health(bus)
-      print(f"  bus {bus}: total_error_cnt={ch['total_error_cnt']}, irq0_rate={ch['irq0_call_rate']}, bus_off_cnt={ch['bus_off_cnt']}, core_resets={ch['can_core_reset_count']}")
+      print(f"  bus {bus}: errs={ch['total_error_cnt']} irq0={ch['irq0_call_rate']} busoff={ch['bus_off_cnt']} resets={ch['can_core_reset_count']}")
       assert ch['total_error_cnt'] > 0, f"Bus {bus}: expected CAN errors"
 
     # SPI should not have had long gaps (>250ms would indicate lockup)
