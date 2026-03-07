@@ -14,14 +14,12 @@ def _reset_speeds(p, panda_jungle):
   """Restore matching CAN speeds and clear buffers."""
   for bus in range(3):
     panda_jungle.set_can_speed_kbps(bus, SPEED_NORMAL)
-  # panda might be locked up, try to reset it
   try:
     p.reset(reconnect=True)
     for bus in range(3):
       p.set_can_speed_kbps(bus, SPEED_NORMAL)
     clear_can_buffers(p)
   except Exception:
-    # if reset fails, reconnect
     p.reconnect()
 
 
@@ -43,7 +41,6 @@ def _poll_health_during_errors(p, panda_jungle, duration, send_from_panda=False)
   last_response = start
 
   while time.monotonic() - start < duration:
-    # generate CAN errors
     for bus in range(3):
       if send_from_panda:
         try:
@@ -54,7 +51,6 @@ def _poll_health_during_errors(p, panda_jungle, duration, send_from_panda=False)
       else:
         panda_jungle.can_send(0x123, msg, bus)
 
-    # check panda responsiveness
     h = _health_check(p)
     now = time.monotonic()
     gap = now - last_response
@@ -81,6 +77,19 @@ def _poll_health_during_errors(p, panda_jungle, duration, send_from_panda=False)
   }
 
 
+def _print_stats(stats):
+  mg = stats['max_gap'] * 1000
+  ag = stats['avg_gap'] * 1000
+  p95 = stats['p95_gap'] * 1000
+  print(f"health={stats['health_count']} spi_fail={stats['spi_failures']} max_gap={mg:.1f}ms avg={ag:.1f}ms p95={p95:.1f}ms")
+
+
+def _print_can_health(p):
+  for bus in range(3):
+    ch = p.can_health(bus)
+    print(f"  bus {bus}: errs={ch['total_error_cnt']} irq0={ch['irq0_call_rate']} busoff={ch['bus_off_cnt']} resets={ch['can_core_reset_count']}")
+
+
 @pytest.mark.panda_expect_can_error
 @pytest.mark.timeout(60)
 class TestCanErrorResilience:
@@ -95,16 +104,10 @@ class TestCanErrorResilience:
       panda_jungle.set_can_speed_kbps(bus, SPEED_MISMATCH)
 
     stats = _poll_health_during_errors(p, panda_jungle, duration=8.0)
+    _print_stats(stats)
 
-    print(f"health: {stats['health_count']}, spi_fail: {stats['spi_failures']}, "
-          f"max_gap: {stats['max_gap']*1000:.1f}ms")
-
-    # verify errors actually occurred (if panda is still alive)
     if stats['spi_failures'] == 0:
-      for bus in range(3):
-        ch = p.can_health(bus)
-        print(f"  bus {bus}: errs={ch['total_error_cnt']} irq0={ch['irq0_call_rate']} "
-              f"busoff={ch['bus_off_cnt']} resets={ch['can_core_reset_count']}")
+      _print_can_health(p)
 
     assert stats['spi_failures'] == 0, f"SPI failed {stats['spi_failures']} times (panda locked up)"
     assert stats['max_gap'] < 0.250, f"SPI gap too large: {stats['max_gap']*1000:.1f}ms"
@@ -118,15 +121,10 @@ class TestCanErrorResilience:
       panda_jungle.set_can_speed_kbps(bus, SPEED_MISMATCH)
 
     stats = _poll_health_during_errors(p, panda_jungle, duration=5.0, send_from_panda=True)
-
-    print(f"health: {stats['health_count']}, spi_fail: {stats['spi_failures']}, "
-          f"max_gap: {stats['max_gap']*1000:.1f}ms")
+    _print_stats(stats)
 
     if stats['spi_failures'] == 0:
-      for bus in range(3):
-        ch = p.can_health(bus)
-        print(f"  bus {bus}: bus_off_cnt={ch['bus_off_cnt']}, "
-              f"tec={ch['transmit_error_cnt']}, resets={ch['can_core_reset_count']}")
+      _print_can_health(p)
 
     assert stats['spi_failures'] == 0, f"SPI failed {stats['spi_failures']} times (panda locked up)"
     assert stats['max_gap'] < 0.250, f"SPI gap too large: {stats['max_gap']*1000:.1f}ms"
@@ -140,10 +138,7 @@ class TestCanErrorResilience:
       panda_jungle.set_can_speed_kbps(bus, SPEED_MISMATCH)
 
     stats = _poll_health_during_errors(p, panda_jungle, duration=15.0)
-
-    print(f"health: {stats['health_count']}, spi_fail: {stats['spi_failures']}, "
-          f"avg_gap: {stats['avg_gap']*1000:.1f}ms, p95_gap: {stats['p95_gap']*1000:.1f}ms, "
-          f"max_gap: {stats['max_gap']*1000:.1f}ms")
+    _print_stats(stats)
 
     assert stats['spi_failures'] == 0, f"SPI failed {stats['spi_failures']} times"
     assert stats['max_gap'] < 0.250, f"SPI max gap: {stats['max_gap']*1000:.1f}ms"
@@ -153,7 +148,6 @@ class TestCanErrorResilience:
     """After CAN errors, normal communication must resume."""
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
 
-    # Phase 1: induce errors
     for bus in range(3):
       p.set_can_speed_kbps(bus, SPEED_NORMAL)
       panda_jungle.set_can_speed_kbps(bus, SPEED_MISMATCH)
@@ -164,7 +158,6 @@ class TestCanErrorResilience:
         panda_jungle.can_send(0xabc, msg, bus)
     time.sleep(1.0)
 
-    # Phase 2: fix speeds, verify normal CAN works
     _reset_speeds(p, panda_jungle)
     time.sleep(0.5)
 
@@ -192,7 +185,6 @@ class TestCanErrorResilience:
         panda_jungle.can_send(0x555, msg, bus)
       time.sleep(0.001)
 
-    # wait for rate counters to update (1s timer)
     time.sleep(2.0)
 
     h = _health_check(p)
