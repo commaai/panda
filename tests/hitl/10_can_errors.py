@@ -28,18 +28,6 @@ def _assert_spi_responsive(p, duration=5.0, interval=0.05):
   return count, max_gap, expected
 
 
-def _flood_jungle_can(panda_jungle, duration=3.0, buses=(0, 1, 2)):
-  """Send CAN messages from jungle continuously for `duration` seconds."""
-  msg = b"\xaa" * 8
-  start = time.monotonic()
-  sent = 0
-  while time.monotonic() - start < duration:
-    for bus in buses:
-      panda_jungle.can_send(0x123, msg, bus)
-      sent += 1
-  return sent
-
-
 @pytest.mark.panda_expect_can_error
 @pytest.mark.timeout(120)
 class TestCanErrorResilience:
@@ -81,10 +69,7 @@ class TestCanErrorResilience:
     # verify errors actually occurred
     for bus in range(3):
       ch = p.can_health(bus)
-      print(f"  bus {bus}: total_error_cnt={ch['total_error_cnt']}, "
-            f"irq0_rate={ch['irq0_call_rate']}, "
-            f"bus_off_cnt={ch['bus_off_cnt']}, "
-            f"core_resets={ch['can_core_reset_count']}")
+      print(f"  bus {bus}: total_error_cnt={ch['total_error_cnt']}, irq0_rate={ch['irq0_call_rate']}, bus_off_cnt={ch['bus_off_cnt']}, core_resets={ch['can_core_reset_count']}")
       assert ch['total_error_cnt'] > 0, f"Bus {bus}: expected CAN errors"
 
     # SPI should not have had long gaps (>250ms would indicate lockup)
@@ -112,9 +97,7 @@ class TestCanErrorResilience:
 
     for bus in range(3):
       ch = p.can_health(bus)
-      print(f"  bus {bus}: bus_off_cnt={ch['bus_off_cnt']}, "
-            f"tec={ch['transmit_error_cnt']}, "
-            f"core_resets={ch['can_core_reset_count']}")
+      print(f"  bus {bus}: bus_off_cnt={ch['bus_off_cnt']}, tec={ch['transmit_error_cnt']}, core_resets={ch['can_core_reset_count']}")
 
     assert max_gap < 0.250, f"SPI gap too large: {max_gap*1000:.1f}ms (lockup?)"
 
@@ -146,10 +129,7 @@ class TestCanErrorResilience:
     max_gap = max(gaps)
     avg_gap = sum(gaps) / len(gaps)
     p95_gap = sorted(gaps)[int(len(gaps) * 0.95)]
-    print(f"health responses: {health_count}, "
-          f"avg gap: {avg_gap*1000:.1f}ms, "
-          f"p95 gap: {p95_gap*1000:.1f}ms, "
-          f"max gap: {max_gap*1000:.1f}ms")
+    print(f"health responses: {health_count}, avg gap: {avg_gap*1000:.1f}ms, p95 gap: {p95_gap*1000:.1f}ms, max gap: {max_gap*1000:.1f}ms")
 
     assert max_gap < 0.250, f"SPI max gap: {max_gap*1000:.1f}ms (lockup?)"
     assert health_count > 100, f"Too few responses: {health_count}"
@@ -182,8 +162,7 @@ class TestCanErrorResilience:
     msgs = p.can_recv()
     buses_received = {m[2] for m in msgs if m[0] == 0x100}
     print(f"Received on buses: {buses_received}")
-    assert len(buses_received) == 3, \
-      f"CAN didn't recover on all buses, only got: {buses_received}"
+    assert len(buses_received) == 3, f"CAN didn't recover on all buses, only got: {buses_received}"
 
   def test_no_faults_during_errors(self, p, panda_jungle):
     """CAN errors should not trigger interrupt rate faults."""
@@ -206,7 +185,6 @@ class TestCanErrorResilience:
     print(f"faults: 0x{h['faults']:x}, interrupt_load: {h['interrupt_load']}")
     for bus in range(3):
       ch = p.can_health(bus)
-      print(f"  bus {bus}: irq0_rate={ch['irq0_call_rate']}, "
-            f"irq1_rate={ch['irq1_call_rate']}")
+      print(f"  bus {bus}: irq0_rate={ch['irq0_call_rate']}, irq1_rate={ch['irq1_call_rate']}")
 
     assert h['faults'] == 0, f"Faults during CAN errors: 0x{h['faults']:x}"
