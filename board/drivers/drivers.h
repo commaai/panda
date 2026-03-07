@@ -3,6 +3,7 @@
 #include "board/can.h"
 #include "board/health.h"
 #include "board/crc.h"
+#include "board/drivers/can_common.h"
 #ifdef STM32H7
 #include "board/stm32h7/lladc_declarations.h"
 #endif
