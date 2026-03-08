@@ -6,6 +6,9 @@
 #include "board/drivers/bootkick.h"
 #include "board/drivers/drivers.h"
 
+// uart_ring_som_debug is defined in stm32h7_config.h for BOOTSTUB, or uart.c for main
+extern uart_ring uart_ring_som_debug;
+
 bool bootkick_reset_triggered = false;
 
 void bootkick_tick(bool ignition, bool recent_heartbeat) {
