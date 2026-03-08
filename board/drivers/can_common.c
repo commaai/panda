@@ -1,4 +1,5 @@
 #include "board/config.h"
+#include "opendbc/safety/safety.h"
 #include "board/drivers/can_common.h"
 #include "board/drivers/drivers.h"
 #include "board/drivers/interrupts.h"
