@@ -10,10 +10,14 @@
 #endif
 
 // ******************** bootkick ********************
+// bootkick is only available on regular panda, not on BODY or JUNGLE variants
+#if !defined(PANDA_BODY) && !defined(PANDA_JUNGLE)
 
 extern bool bootkick_reset_triggered;
 
 void bootkick_tick(bool ignition, bool recent_heartbeat);
+
+#endif // !PANDA_BODY && !PANDA_JUNGLE
 
 // ******************** can_common ********************
 // Type definitions and function declarations moved to drivers/can_common.h
@@ -91,6 +95,38 @@ bool harness_check_ignition(void);
 void harness_tick(void);
 void harness_init(void);
 
+// ******************** interrupts ********************
+
+typedef struct interrupt {
+  IRQn_Type irq_type;
+  void (*handler)(void);
+  uint32_t call_counter;
+  uint32_t call_rate;
+  uint32_t max_call_rate;   // Call rate is defined as the amount of calls each second
+  uint32_t call_rate_fault;
+} interrupt;
+
+void interrupt_timer_init(void);
+uint32_t microsecond_timer_get(void);
+void unused_interrupt_handler(void);
+
+extern interrupt interrupts[NUM_INTERRUPTS];
+
+#define REGISTER_INTERRUPT(irq_num, func_ptr, call_rate_max, rate_fault) \
+  interrupts[irq_num].irq_type = (irq_num); \
+  interrupts[irq_num].handler = (func_ptr);  \
+  interrupts[irq_num].call_counter = 0U;   \
+  interrupts[irq_num].call_rate = 0U;   \
+  interrupts[irq_num].max_call_rate = (call_rate_max); \
+  interrupts[irq_num].call_rate_fault = (rate_fault);
+
+extern float interrupt_load;
+
+void handle_interrupt(IRQn_Type irq_type);
+// Every second
+void interrupt_timer_handler(void);
+void init_interrupts(bool check_rate_limit);
+
 #endif // STM32H7
 
 // ******************** registers ********************
@@ -140,7 +176,9 @@ void spi_rx_done(void);
 void spi_tx_done(bool reset);
 
 // ******************** uart ********************
+#ifdef STM32H7
 
+// ***************************** Definitions *****************************
 #define FIFO_SIZE_INT 0x400U
 
 typedef struct uart_ring {
@@ -157,11 +195,28 @@ typedef struct uart_ring {
   bool overwrite;
 } uart_ring;
 
-// UART ring buffers (defined in uart.c or stm32h7_config.h for BOOTSTUB)
-extern uart_ring uart_ring_debug;
-extern uart_ring uart_ring_som_debug;
+// ***************************** Function prototypes *****************************
+void debug_ring_callback(uart_ring *ring);
+void uart_tx_ring(uart_ring *q);
+uart_ring *get_ring_by_number(int a);
+// ************************* Low-level buffer functions *************************
+bool get_char(uart_ring *q, char *elem);
+bool injectc(uart_ring *q, char elem);
+bool put_char(uart_ring *q, char elem);
+void clear_uart_buff(uart_ring *q);
+// ************************ High-level debug functions **********************
+void putch(const char a);
+void print(const char *a);
+void puthx(uint32_t i, uint8_t len);
+void puth(unsigned int i);
+#if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
+static void puth4(unsigned int i);
+#endif
+#if defined(DEBUG_SPI) || defined(DEBUG_USB) || defined(DEBUG_COMMS)
+static void hexdump(const void *a, int l);
+#endif
 
-// Function declarations in drivers/uart.h
+#endif // STM32H7
 
 // ******************** usb ********************
 
