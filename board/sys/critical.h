@@ -3,8 +3,6 @@
 // ********************* Critical section helpers *********************
 // global_critical_depth is declared extern in sys.h
 
-static volatile bool interrupts_enabled = false;
-
 static inline void enable_interrupts(void) {
   interrupts_enabled = true;
   __enable_irq();
