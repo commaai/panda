@@ -1,6 +1,7 @@
 #pragma once
 
 #include "board/can.h"
+#include "board/boards/board_declarations.h"
 #include "board/health.h"
 #include "board/crc.h"
 #include "board/drivers/can_common.h"
@@ -163,4 +164,7 @@ extern uart_ring uart_ring_som_debug;
 // Function declarations in drivers/uart.h
 
 // ******************** usb ********************
-// Function declarations moved to drivers/usb.h
+
+void usb_init(void);
+void refresh_can_tx_slots_available(void);
+void can_tx_comms_resume_usb(void);
