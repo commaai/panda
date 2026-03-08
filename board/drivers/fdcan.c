@@ -7,6 +7,7 @@
 #include "board/drivers/fdcan.h"
 #include "opendbc/safety/safety.h"
 #include "board/drivers/drivers.h"
+#include "board/drivers/led.h"
 
 // Note: llfdcan.h is included by stm32h7_config.h, don't include it here
 // to avoid redefinition of speeds/data_speeds arrays
