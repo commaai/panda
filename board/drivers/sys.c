@@ -1,5 +1,4 @@
 #include "board/sys/sys.h"
-#include "board/can.h"
 
 // Global critical section depth
 uint8_t global_critical_depth = 0U;
