@@ -1,4 +1,10 @@
 #include "board/config.h"
+
+// UART is only fully functional in main builds, not BOOTSTUB
+// BOOTSTUB uses stubs from bootstub_declarations.h
+
+#ifndef BOOTSTUB
+
 #include "board/drivers/uart.h"
 #include "board/drivers/drivers.h"
 #include "board/drivers/interrupts.h"
@@ -120,7 +126,7 @@ void puth(unsigned int i) {
   puthx(i, 8U);
 }
 
-#if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
+#if defined(DEBUG_SPI) || defined(DEBUG)
 void puth4(unsigned int i) {
   puthx(i, 4U);
 }
@@ -138,3 +144,5 @@ void hexdump(const void *a, int l) {
   print("\n");
 }
 #endif
+
+#endif // BOOTSTUB
