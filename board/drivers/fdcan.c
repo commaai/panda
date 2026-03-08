@@ -5,6 +5,7 @@
 
 #include "board/stm32h7/llfdcan_declarations.h"
 #include "board/drivers/fdcan.h"
+#include "opendbc/safety/safety.h"
 #include "board/drivers/drivers.h"
 
 // Note: llfdcan.h is included by stm32h7_config.h, don't include it here
