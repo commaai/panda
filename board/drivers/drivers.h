@@ -1,7 +1,7 @@
 #pragma once
 
+#include "board/boot_state.h"
 #include "board/can.h"
-#include "board/boards/board_declarations.h"
 #include "board/health.h"
 #include "board/crc.h"
 #include "board/drivers/can_common.h"
