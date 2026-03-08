@@ -95,6 +95,7 @@ bool harness_check_ignition(void);
 void harness_tick(void);
 void harness_init(void);
 
+#endif // STM32H7
 // ******************** registers ********************
 
 // 10 bit hash with 23 as a prime
