@@ -24,9 +24,11 @@ static uint32_t busy_time = 0U;
 void handle_interrupt(IRQn_Type irq_type){
   static uint8_t interrupt_depth = 0U;
   static uint32_t last_time = 0U;
+  uint32_t time;
+  
   ENTER_CRITICAL();
   if (interrupt_depth == 0U) {
-    uint32_t time = microsecond_timer_get();
+    time = microsecond_timer_get();
     idle_time += get_ts_elapsed(time, last_time);
     last_time = time;
   }
@@ -41,8 +43,9 @@ void handle_interrupt(IRQn_Type irq_type){
   ENTER_CRITICAL();
 
   if (interrupt_depth == 0U) {
-    last_time = microsecond_timer_get();
-    busy_time += get_ts_elapsed(last_time, time);
+    time = microsecond_timer_get();
+    busy_time += get_ts_elapsed(time, last_time);
+    last_time = time;
   }
 }
 
