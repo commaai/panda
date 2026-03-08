@@ -3,10 +3,12 @@
 // FDCAN is only used in main builds, not BOOTSTUB
 #ifndef BOOTSTUB
 
-#include "board/stm32h7/llfdcan.h"
 #include "board/stm32h7/llfdcan_declarations.h"
 #include "board/drivers/fdcan.h"
 #include "board/drivers/drivers.h"
+
+// Note: llfdcan.h is included by stm32h7_config.h, don't include it here
+// to avoid redefinition of speeds/data_speeds arrays
 
 FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT] = {FDCAN1, FDCAN2, FDCAN3};
 
