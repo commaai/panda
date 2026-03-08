@@ -123,7 +123,7 @@ def build_project(project_name, project, main, extra_flags):
 
   # bootkick is only for regular panda (has SOM support), not body/jungle
   if "-DPANDA_BODY" in extra_flags or "-DPANDA_JUNGLE" in extra_flags:
-    driver_sources = [s for s in driver_sources if s != "./board/drivers/bootkick.c"]
+    driver_sources = [s for s in driver_sources if s not in ["./board/drivers/bootkick.c", "./board/drivers/fan.c", "./board/drivers/fake_siren.c", "./board/drivers/harness.c"]]
   # Build bootstub
   bs_env = env.Clone()
   bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
