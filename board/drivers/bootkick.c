@@ -1,4 +1,8 @@
 #include "board/config.h"
+
+// bootkick is only used on regular panda, not on BODY or JUNGLE variants
+#if !defined(PANDA_BODY) && !defined(PANDA_JUNGLE)
+
 #include "board/drivers/bootkick.h"
 #include "board/drivers/drivers.h"
 
@@ -68,3 +72,5 @@ void bootkick_tick(bool ignition, bool recent_heartbeat) {
   }
   current_board->set_bootkick(boot_state);
 }
+
+#endif // !PANDA_BODY && !PANDA_JUNGLE
