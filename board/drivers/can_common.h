@@ -45,6 +45,12 @@ extern bool can_silent;
 extern bool can_loopback;
 
 extern can_ring *can_queues[PANDA_CAN_CNT];
+
+// CAN ring buffers - defined in can_common.c
+extern can_ring can_rx_q;
+extern can_ring can_tx1_q;
+extern can_ring can_tx2_q;
+extern can_ring can_tx3_q;
 extern bus_config_t bus_config[PANDA_CAN_CNT];
 
 #define CANIF_FROM_CAN_NUM(num) (cans[num])
