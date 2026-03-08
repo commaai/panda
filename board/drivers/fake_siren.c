@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "board/drivers/fake_siren.h"
 #include "board/drivers/drivers.h"
 #include "board/drivers/registers.h"

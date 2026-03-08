@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "board/drivers/simple_watchdog.h"
 #include "board/drivers/drivers.h"
 

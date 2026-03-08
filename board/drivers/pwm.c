@@ -1,3 +1,4 @@
+#include "board/config.h"
 // PWM driver implementation
 #include "board/drivers/drivers.h"
 #include "board/drivers/pwm.h"

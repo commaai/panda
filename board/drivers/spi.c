@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "board/drivers/spi.h"
 #include "board/drivers/drivers.h"
 

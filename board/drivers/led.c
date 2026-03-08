@@ -1,3 +1,4 @@
+#include "board/config.h"
 // LED driver implementation
 #include "board/drivers/drivers.h"
 #include "board/drivers/led.h"

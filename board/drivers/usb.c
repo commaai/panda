@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "board/drivers/usb.h"
 #include "board/drivers/drivers.h"
 

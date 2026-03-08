@@ -1,3 +1,4 @@
+#include "board/config.h"
 #include "board/drivers/bootkick.h"
 #include "board/drivers/drivers.h"
 
