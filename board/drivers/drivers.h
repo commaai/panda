@@ -1,6 +1,6 @@
 #pragma once
 
-#include "board/boot_state.h"
+#include "board/drivers/boot_state.h"
 #include "board/can.h"
 #include "board/health.h"
 #include "board/crc.h"
