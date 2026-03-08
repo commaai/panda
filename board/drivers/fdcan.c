@@ -15,7 +15,7 @@ FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT] = {FDCAN1, FDCAN2, FDCAN3};
 static bool can_set_speed(uint8_t can_number) {
   bool ret = true;
   FDCAN_GlobalTypeDef *FDCANx = CANIF_FROM_CAN_NUM(can_number);
-  uint8_t bus_number = BUS_NUM_FROM_BUS_NUM(can_number);
+  uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
 
   ret &= llcan_set_speed(
     FDCANx,
