@@ -8,6 +8,27 @@
 #include "board/drivers/pwm.h"
 #include "board/drivers/usb.h"
 
+// Globals for BOOTSTUB mode
+uint8_t hw_type = 0;
+board *current_board;
+
+// UART ring buffers for BOOTSTUB mode (uart.c not compiled in BOOTSTUB)
+static uint8_t elems_rx_som_debug[FIFO_SIZE_INT];
+static uint8_t elems_tx_som_debug[FIFO_SIZE_INT];
+uart_ring uart_ring_som_debug = {
+  .w_ptr_tx = 0,
+  .r_ptr_tx = 0,
+  .elems_tx = ((uint8_t *)&(elems_tx_som_debug)),
+  .tx_fifo_size = FIFO_SIZE_INT,
+  .w_ptr_rx = 0,
+  .r_ptr_rx = 0,
+  .elems_rx = ((uint8_t *)&(elems_rx_som_debug)),
+  .rx_fifo_size = FIFO_SIZE_INT,
+  .uart = UART7,
+  .callback = NULL,
+  .overwrite = true
+};
+
 #include "board/early_init.h"
 #include "board/provision.h"
 

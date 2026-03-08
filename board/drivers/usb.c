@@ -2,6 +2,9 @@
 #include "board/drivers/usb.h"
 #include "board/drivers/drivers.h"
 
+// USB peripheral pointer - defined here, declared extern in llusb.h
+USB_OTG_GlobalTypeDef *USBx = USB_OTG_HS;
+
 typedef union {
   uint16_t w;
   struct BW {

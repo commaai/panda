@@ -1,14 +1,14 @@
 #include "main_declarations.h"
 
 // ********************* Globals **********************
-uint8_t hw_type = 0;
-board *current_board;
-uint32_t uptime_cnt = 0;
+extern uint8_t hw_type;
+extern board *current_board;
+extern uint32_t uptime_cnt;
 
 // heartbeat state
-uint32_t heartbeat_counter = 0;
-bool heartbeat_lost = false;
-bool heartbeat_disabled = false;            // set over USB
+extern uint32_t heartbeat_counter;
+extern bool heartbeat_lost;
+extern bool heartbeat_disabled;
 
 // siren state
-bool siren_enabled = false;
+extern bool siren_enabled;

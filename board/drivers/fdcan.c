@@ -12,6 +12,10 @@
 // Note: llfdcan.h is included by stm32h7_config.h, don't include it here
 // to avoid redefinition of speeds/data_speeds arrays
 
+// kbps multiplied by 10 - defined here, declared extern in llfdcan_declarations.h
+const uint32_t speeds[SPEEDS_ARRAY_SIZE] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};
+const uint32_t data_speeds[DATA_SPEEDS_ARRAY_SIZE] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U, 20000U, 50000U};
+
 FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT] = {FDCAN1, FDCAN2, FDCAN3};
 
 static bool can_set_speed(uint8_t can_number) {

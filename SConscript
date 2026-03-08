@@ -116,6 +116,7 @@ def build_project(project_name, project, main, extra_flags):
     "./board/drivers/registers.c",
     "./board/drivers/simple_watchdog.c",
     "./board/drivers/spi.c",
+    "./board/drivers/sys.c",
     "./board/drivers/timers.c",
     "./board/drivers/uart.c",
     "./board/drivers/usb.c",

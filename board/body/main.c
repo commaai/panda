@@ -16,6 +16,13 @@
 
 extern int _app_start[0xc000];
 
+#include "board/body/boards/board_body.h"
+board board_body = {
+  .led_GPIO = {GPIOC, GPIOC, GPIOC},
+  .led_pin = {7, 7, 7},
+  .init = board_body_init,
+};
+
 #include "board/body/main_comms.h"
 
 void debug_ring_callback(uart_ring *ring) {

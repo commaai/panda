@@ -62,7 +62,7 @@ separate IRQs for RX and TX.
 #include "board/drivers/drivers.h"
 
 #ifdef BOOTSTUB
-uart_ring uart_ring_som_debug;
+extern uart_ring uart_ring_som_debug;
 #endif
 #include "board/drivers/gpio.h"
 #include "board/stm32h7/peripherals.h"
@@ -94,7 +94,7 @@ uart_ring uart_ring_som_debug;
 #include "board/drivers/spi.h"
 #include "board/stm32h7/llspi.h"
 
-void early_gpio_float(void) {
+static inline void early_gpio_float(void) {
   RCC->AHB4ENR = RCC_AHB4ENR_GPIOAEN | RCC_AHB4ENR_GPIOBEN | RCC_AHB4ENR_GPIOCEN | RCC_AHB4ENR_GPIODEN | RCC_AHB4ENR_GPIOEEN | RCC_AHB4ENR_GPIOFEN | RCC_AHB4ENR_GPIOGEN | RCC_AHB4ENR_GPIOHEN;
   GPIOA->MODER = 0xAB000000U; GPIOB->MODER = 0; GPIOC->MODER = 0; GPIOD->MODER = 0; GPIOE->MODER = 0; GPIOF->MODER = 0; GPIOG->MODER = 0; GPIOH->MODER = 0;
   GPIOA->ODR = 0; GPIOB->ODR = 0; GPIOC->ODR = 0; GPIOD->ODR = 0; GPIOE->ODR = 0; GPIOF->ODR = 0; GPIOG->ODR = 0; GPIOH->ODR = 0;
