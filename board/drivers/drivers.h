@@ -198,6 +198,12 @@ typedef struct uart_ring {
 // ***************************** Function prototypes *****************************
 void debug_ring_callback(uart_ring *ring);
 void uart_tx_ring(uart_ring *q);
+
+// ******************** UART rings ********************
+// These are defined in uart.c (main build) or stm32h7_config.h (BOOTSTUB)
+extern uart_ring uart_ring_debug;
+extern uart_ring uart_ring_som_debug;
+
 uart_ring *get_ring_by_number(int a);
 // ************************* Low-level buffer functions *************************
 bool get_char(uart_ring *q, char *elem);
