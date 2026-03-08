@@ -1,39 +1,78 @@
 #ifndef DRIVERS_INTERRUPTS_H
 #define DRIVERS_INTERRUPTS_H
 
-#include <stdbool.h>
-#include <stdint.h>
+#include "board/drivers/drivers.h"
 
-#ifdef STM32H7
+// interrupt struct and related macros are now defined in drivers.h
+// This file only contains the implementation
 
-typedef struct interrupt {
-  IRQn_Type irq_type;
-  void (*handler)(void);
-  uint32_t call_counter;
-  uint32_t call_rate;
-  uint32_t max_call_rate;   // Call rate is defined as the amount of calls each second
-  uint32_t call_rate_fault;
-} interrupt;
+void unused_interrupt_handler(void) {
+  // Something is wrong if this handler is called!
+  print("Unused interrupt handler called!\n");
+  fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
+}
 
-extern interrupt interrupts[NUM_INTERRUPTS];
+// Global interrupt array - defined here, declared in drivers.h
+interrupt interrupts[NUM_INTERRUPTS];
 
-#define REGISTER_INTERRUPT(irq_num, func_ptr, call_rate_max, rate_fault) \
-  interrupts[irq_num].irq_type = (irq_num); \
-  interrupts[irq_num].handler = (func_ptr);  \
-  interrupts[irq_num].call_counter = 0U;   \
-  interrupts[irq_num].call_rate = 0U;   \
-  interrupts[irq_num].max_call_rate = (call_rate_max); \
-  interrupts[irq_num].call_rate_fault = (rate_fault);
+static bool check_interrupt_rate = false;
 
-extern float interrupt_load;
+static uint32_t idle_time = 0U;
+static uint32_t busy_time = 0U;
+// interrupt_load is declared in drivers.h
 
-void interrupt_timer_init(void);
-uint32_t microsecond_timer_get(void);
-void unused_interrupt_handler(void);
-void handle_interrupt(IRQn_Type irq_type);
-void interrupt_timer_handler(void);
-void init_interrupts(bool check_rate_limit);
+void handle_interrupt(IRQn_Type irq_type){
+  static uint8_t interrupt_depth = 0U;
+  static uint32_t last_time = 0U;
+  ENTER_CRITICAL();
+  if (interrupt_depth == 0U) {
+    uint32_t time = microsecond_timer_get();
+    idle_time += get_ts_elapsed(time, last_time);
+    last_time = time;
+  }
+  interrupt_depth += 1U;
+  EXIT_CRITICAL();
 
-#endif // STM32H7
+  interrupts[irq_type].call_counter++;
+  interrupts[irq_type].handler();
+
+  EXIT_CRITICAL();
+  interrupt_depth -= 1U;
+  ENTER_CRITICAL();
+
+  if (interrupt_depth == 0U) {
+    last_time = microsecond_timer_get();
+    busy_time += get_ts_elapsed(last_time, time);
+  }
+}
+
+void interrupt_timer_handler(void) {
+  static uint32_t call_rate_counters[NUM_INTERRUPTS] = {0};
+  uint32_t i;
+
+  for (i = 0U; i < NUM_INTERRUPTS; i++) {
+    if (interrupts[i].handler != unused_interrupt_handler) {
+      call_rate_counters[i] += interrupts[i].call_counter;
+      if (check_interrupt_rate && (call_rate_counters[i] > interrupts[i].max_call_rate)) {
+        interrupts[i].call_rate_fault += 1U;
+      }
+      interrupts[i].call_counter = 0U;
+    }
+  }
+  interrupt_load = ((float)busy_time) / ((float)(busy_time + idle_time));
+  busy_time = 0U;
+  idle_time = 0U;
+}
+
+void init_interrupts(bool check_rate_limit) {
+  uint32_t i;
+  check_interrupt_rate = check_rate_limit;
+  for (i = 0U; i < NUM_INTERRUPTS; i++) {
+    interrupts[i].handler = unused_interrupt_handler;
+    interrupts[i].call_counter = 0U;
+    interrupts[i].call_rate = 0U;
+    interrupts[i].call_rate_fault = 0U;
+  }
+}
 
 #endif
