@@ -25,6 +25,15 @@
 #include "board/can_comms.h"
 #include "board/main_comms.h"
 
+// ********************* Globals (defined here, extern in main_definitions.h) **********************
+uint8_t hw_type = 0;
+board *current_board = NULL;
+uint32_t uptime_cnt = 0;
+uint32_t heartbeat_counter = 0;
+bool heartbeat_lost = false;
+bool heartbeat_disabled = false;
+bool siren_enabled = false;
+
 
 // ********************* Serial debugging *********************
 

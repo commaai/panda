@@ -1,11 +1,10 @@
 #pragma once
 
 // ******************** critical ********************
-
-void enable_interrupts(void);
-void disable_interrupts(void);
+// enable_interrupts/disable_interrupts are defined as static inline in critical.h
 
 extern uint8_t global_critical_depth;
+extern volatile bool interrupts_enabled;
 
 #ifndef ENTER_CRITICAL
 #define ENTER_CRITICAL()                                      \

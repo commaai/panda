@@ -13,5 +13,6 @@ typedef struct uart_ring uart_ring;
 void uart_init(uart_ring *q, int baud) { UNUSED(q); UNUSED(baud); }
 
 // ********************* Globals **********************
-uint8_t hw_type = 0;
-board *current_board;
+// hw_type and current_board are defined in bootstub.c
+extern uint8_t hw_type;
+extern board *current_board;

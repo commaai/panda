@@ -1,6 +1,6 @@
 #include "llusb_declarations.h"
 
-USB_OTG_GlobalTypeDef *USBx = USB_OTG_HS;
+extern USB_OTG_GlobalTypeDef *USBx;
 
 static void OTG_HS_IRQ_Handler(void) {
   NVIC_DisableIRQ(OTG_HS_IRQn);

@@ -4,11 +4,7 @@
 #include <stdbool.h>
 
 // ******************** Prototypes ********************
-typedef enum {
-  BOOT_STANDBY,
-  BOOT_BOOTKICK,
-  BOOT_RESET,
-} BootState;
+#include "board/drivers/boot_state.h"
 
 typedef void (*board_init)(void);
 typedef void (*board_init_bootloader)(void);

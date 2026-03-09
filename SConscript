@@ -90,7 +90,7 @@ def build_project(project_name, project, main, extra_flags):
     CFLAGS=flags,
     ASFLAGS=flags,
     LINKFLAGS=flags,
-    CPPPATH=[Dir("./"), "./board/stm32h7/inc", opendbc.INCLUDE_PATH],
+    CPPPATH=[Dir("./"), "./board/stm32h7/inc", opendbc.DBC_PATH],
     ASCOM="$AS $ASFLAGS -o $TARGET -c $SOURCES",
     BUILDERS={
       'Objcopy': Builder(generator=objcopy, suffix='.bin', src_suffix='.elf')
@@ -100,22 +100,51 @@ def build_project(project_name, project, main, extra_flags):
 
   startup = env.Object(project["STARTUP_FILE"])
 
+  # Driver source files (split from header-only)
+  driver_sources = [
+    "./board/drivers/bootkick.c",
+    "./board/drivers/can_common.c",
+    "./board/drivers/clock_source.c",
+    "./board/drivers/fake_siren.c",
+    "./board/drivers/fan.c",
+    "./board/drivers/fdcan.c",
+    "./board/drivers/gpio.c",
+    "./board/drivers/harness.c",
+    "./board/drivers/interrupts.c",
+    "./board/drivers/led.c",
+    "./board/drivers/pwm.c",
+    "./board/drivers/registers.c",
+    "./board/drivers/simple_watchdog.c",
+    "./board/drivers/spi.c",
+    "./board/drivers/sys.c",
+    "./board/drivers/timers.c",
+    "./board/drivers/uart.c",
+    "./board/drivers/usb.c",
+  ]
+
+  # bootkick is only for regular panda (has SOM support), not body/jungle
+  if "-DPANDA_BODY" in extra_flags or "-DPANDA_JUNGLE" in extra_flags:
+    driver_sources = [s for s in driver_sources if s not in ["./board/drivers/bootkick.c", "./board/drivers/fan.c", "./board/drivers/fake_siren.c", "./board/drivers/harness.c"]]
   # Build bootstub
   bs_env = env.Clone()
   bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
+  # Use separate object directory for bootstub driver objects
+  bs_env['OBJPREFIX'] = Dir(f'./board/obj/{project_name}/bootstub/')
+  bs_driver_objs = bs_env.Object(driver_sources)
   bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", [
     startup,
     "./board/crypto/rsa.c",
     "./board/crypto/sha.c",
     "./board/bootstub.c",
-  ])
+  ] + bs_driver_objs)
   bs_env.Objcopy(f"./board/obj/bootstub.{project_name}.bin", bs_elf)
 
   # Build + sign main (aka app)
+  main_driver_objs = env.Object(driver_sources)
   main_elf = env.Program(f"{project_dir}/main.elf", [
     startup,
     main
-  ], LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
+  ] + main_driver_objs, LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
   sign_py = File(f"./board/crypto/sign.py").srcnode().relpath
   env.Command(f"./board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")

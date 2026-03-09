@@ -1,6 +1,6 @@
 #include "board/body/motor_control.h"
 
-void board_body_init(void) {
+static inline void board_body_init(void) {
   motor_init();
   motor_encoder_init();
   motor_speed_controller_init();
@@ -14,8 +14,5 @@ void board_body_init(void) {
   set_gpio_alternate(GPIOD, 1, GPIO_AF9_FDCAN1);
 }
 
-board board_body = {
-  .led_GPIO = {GPIOC, GPIOC, GPIOC},
-  .led_pin = {7, 7, 7},
-  .init = board_body_init,
-};
+// board_body is defined in board/body/main.c
+extern board board_body;

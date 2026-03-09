@@ -34,6 +34,12 @@
     which is sent by the host on each start of a connection.
 */
 
+// External CAN RX queue defined in drivers/can_common.c
+extern can_ring can_rx_q;
+
+// Forward declaration
+void refresh_can_tx_slots_available(void);
+
 typedef struct {
   uint32_t ptr;
   uint32_t tail_size;

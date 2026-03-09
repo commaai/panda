@@ -1,9 +1,9 @@
 #include "board/sys/sys.h"
 
-uint8_t fault_status = FAULT_STATUS_NONE;
-uint32_t faults = 0U;
+extern uint8_t fault_status;
+extern uint32_t faults;
 
-void fault_occurred(uint32_t fault) {
+static inline void fault_occurred(uint32_t fault) {
   if ((faults & fault) == 0U) {
     if ((PERMANENT_FAULTS & fault) != 0U) {
       print("Permanent fault occurred: 0x"); puth(fault); print("\n");
@@ -16,7 +16,7 @@ void fault_occurred(uint32_t fault) {
   faults |= fault;
 }
 
-void fault_recovered(uint32_t fault) {
+static inline void fault_recovered(uint32_t fault) {
   if ((PERMANENT_FAULTS & fault) == 0U) {
     faults &= ~fault;
   } else {

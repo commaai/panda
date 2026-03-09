@@ -143,7 +143,7 @@ void sound_init_dac(void) {
   DMA1_Stream1->CR = DMA_SxCR_DBM | (0b11UL << DMA_SxCR_PL_Pos) | (0b01UL << DMA_SxCR_MSIZE_Pos) | (0b01UL << DMA_SxCR_PSIZE_Pos) | DMA_SxCR_MINC | (1U << DMA_SxCR_DIR_Pos);
 }
 
-static void sound_stop_dac(void) {
+__attribute__((unused)) static void sound_stop_dac(void) {
   register_clear_bits(&BDMA_Channel0->CCR, BDMA_CCR_EN);
   BDMA->IFCR = 0xFFFFFFFFU;
 
