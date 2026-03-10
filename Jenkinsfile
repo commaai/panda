@@ -114,7 +114,7 @@ pipeline {
                   ["build", "scons"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["flash jungle", "cd board/jungle && ./flash.py --all"],
-                  ["test", "cd tests/hitl && pytest --durations=0 2*.py [5-9]*.py"],
+                  ["test", "cd tests/hitl && pytest -o 'addopts=' --durations=0 2*.py [5-9]*.py"],
                 ])
               }
             }
@@ -126,7 +126,7 @@ pipeline {
                   ["build", "scons"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["flash jungle", "cd board/jungle && ./flash.py --all"],
-                  ["test", "cd tests/hitl && pytest --durations=0 2*.py [5-9]*.py"],
+                  ["test", "cd tests/hitl && pytest -o 'addopts=' --durations=0 2*.py [5-9]*.py"],
                 ])
               }
             }
