@@ -1,4 +1,5 @@
 import os
+import glob
 import opendbc
 import subprocess
 
@@ -60,7 +61,7 @@ def to_c_uint32(x):
   return "{" + 'U,'.join(map(str, nums)) + "U}"
 
 
-def build_project(project_name, project, main, extra_flags):
+def build_project(project_name, project, main_file, extra_flags, extra_sources=None):
   project_dir = Dir(f'./board/obj/{project_name}/')
 
   flags = project["FLAGS"] + extra_flags + common_flags + [
@@ -100,7 +101,34 @@ def build_project(project_name, project, main, extra_flags):
 
   startup = env.Object(project["STARTUP_FILE"])
 
-  # Build bootstub
+  # Collect all board source files
+  sources = [main_file]
+  
+  # Add board-level .c files (excluding bootstub.c and main.c which are handled separately)
+  board_c_files = [
+    "./board/critical.c",
+    "./board/faults.c",
+    "./board/health.c",
+  ]
+  
+  # Add driver .c files
+  driver_c_files = [
+    "./board/drivers/pwm.c",
+    "./board/drivers/led.c",
+    "./board/drivers/gpio.c",
+    "./board/drivers/registers.c",
+    "./board/drivers/interrupts.c",
+    "./board/drivers/simple_watchdog.c",
+    "./board/drivers/timers.c",
+  ]
+  
+  sources.extend(board_c_files)
+  sources.extend(driver_c_files)
+  
+  if extra_sources:
+    sources.extend(extra_sources)
+
+  # Build bootstub (minimal build without most drivers)
   bs_env = env.Clone()
   bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
   bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", [
@@ -112,10 +140,9 @@ def build_project(project_name, project, main, extra_flags):
   bs_env.Objcopy(f"./board/obj/bootstub.{project_name}.bin", bs_elf)
 
   # Build + sign main (aka app)
-  main_elf = env.Program(f"{project_dir}/main.elf", [
-    startup,
-    main
-  ], LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
+  main_elf = env.Program(f"{project_dir}/main.elf", 
+    [startup] + sources,
+    LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
   sign_py = File(f"./board/crypto/sign.py").srcnode().relpath
   env.Command(f"./board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
