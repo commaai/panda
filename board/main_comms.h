@@ -226,7 +226,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xdc:
       set_safety_mode(req->param1, (uint16_t)req->param2);
       break;
-    // **** 0xdd: get healthpacket and CANPacket version hashes
+    // **** 0xdd: get health and CAN packet versions
     case 0xdd: {
       uint32_t versions[2] = {HEALTH_PACKET_VERSION, CAN_PACKET_VERSION_HASH};
       (void)memcpy(resp, (uint8_t *)versions, sizeof(versions));

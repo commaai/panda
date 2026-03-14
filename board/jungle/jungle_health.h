@@ -1,6 +1,3 @@
-// JUNGLE_HEALTH_PACKET_VERSION is auto-generated as a compile flag
-// from a hash of this file (see SConscript).
-
 struct __attribute__((packed)) jungle_health_t {
   uint32_t uptime_pkt;
   float ch1_power;

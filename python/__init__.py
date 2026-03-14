@@ -36,7 +36,6 @@ LEN_TO_DLC = {length: dlc for (dlc, length) in enumerate(DLC_TO_LEN)}
 PANDA_CAN_CNT = 3
 
 
-
 def calculate_checksum(data):
   res = 0
   for b in data:
