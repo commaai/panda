@@ -226,13 +226,13 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xdc:
       set_safety_mode(req->param1, (uint16_t)req->param2);
       break;
-    // **** 0xdd: get healthpacket and CANPacket versions
-    case 0xdd:
-      resp[0] = HEALTH_PACKET_VERSION;
-      resp[1] = CAN_PACKET_VERSION;
-      resp[2] = CAN_HEALTH_PACKET_VERSION;
-      resp_len = 3;
+    // **** 0xdd: get health and CAN packet versions
+    case 0xdd: {
+      uint32_t versions[2] = {HEALTH_PACKET_VERSION, CAN_PACKET_VERSION_HASH};
+      (void)memcpy(resp, (uint8_t *)versions, sizeof(versions));
+      resp_len = sizeof(versions);
       break;
+    }
     // **** 0xde: set can bitrate
     case 0xde:
       if ((req->param1 < PANDA_CAN_CNT) && is_speed_valid(req->param2, speeds, sizeof(speeds)/sizeof(speeds[0]))) {

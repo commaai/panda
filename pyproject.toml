@@ -49,6 +49,10 @@ packages = [
   "panda.board.jungle",
 ]
 
+[tool.setuptools.package-data]
+"panda.board" = ["health.h"]
+"panda.board.jungle" = ["jungle_health.h"]
+
 [tool.setuptools.package-dir]
 panda = "."
 

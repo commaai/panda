@@ -1,9 +1,14 @@
 import os
 import enum
+import hashlib
 from typing import NamedTuple
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 FW_PATH = os.path.join(BASEDIR, "board/obj/")
+
+def compute_version_hash(filepath):
+  with open(filepath, "rb") as f:
+    return int.from_bytes(hashlib.sha256(f.read()).digest()[:4], 'little')
 
 USBPACKET_MAX_SIZE = 0x40
 

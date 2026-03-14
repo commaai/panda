@@ -89,13 +89,13 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     }
 
-    // **** 0xdd: get healthpacket and CANPacket versions
-    case 0xdd:
-      resp[0] = HEALTH_PACKET_VERSION;
-      resp[1] = CAN_PACKET_VERSION;
-      resp[2] = CAN_HEALTH_PACKET_VERSION;
-      resp_len = 3U;
+    // **** 0xdd: get healthpacket and CANPacket version hashes
+    case 0xdd: {
+      uint32_t versions[2] = {HEALTH_PACKET_VERSION, CAN_PACKET_VERSION_HASH};
+      (void)memcpy(resp, (uint8_t *)versions, sizeof(versions));
+      resp_len = sizeof(versions);
       break;
+    }
 
     default:
       // Ignore unhandled requests
