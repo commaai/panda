@@ -1,6 +1,6 @@
-// When changing these structs, python/__init__.py needs to be kept up to date!
+// JUNGLE_HEALTH_PACKET_VERSION is auto-generated as a compile flag
+// from a hash of this file (see SConscript).
 
-#define JUNGLE_HEALTH_PACKET_VERSION 1
 struct __attribute__((packed)) jungle_health_t {
   uint32_t uptime_pkt;
   float ch1_power;

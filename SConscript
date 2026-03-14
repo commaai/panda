@@ -1,4 +1,5 @@
 import os
+import hashlib
 import opendbc
 import subprocess
 
@@ -149,6 +150,14 @@ certs = [get_key_header(n) for n in ["debug", "release"]]
 with open("board/obj/cert.h", "w") as f:
   for cert in certs:
     f.write("\n".join(cert) + "\n")
+
+# Packet version defines: SHA hash of the struct header files
+def version_hash(path):
+  with open(path, "rb") as f:
+    return int.from_bytes(hashlib.sha256(f.read()).digest()[:4], 'little')
+hh, ch, jh = version_hash("board/health.h"), version_hash(os.path.join(opendbc.INCLUDE_PATH, "opendbc/safety/can.h")), version_hash("board/jungle/jungle_health.h")
+common_flags += [f"-DHEALTH_PACKET_VERSION=0x{hh:08X}U", f"-DCAN_PACKET_VERSION_HASH=0x{ch:08X}U",
+                 f"-DJUNGLE_HEALTH_PACKET_VERSION=0x{jh:08X}U"]
 
 # panda fw
 build_project("panda_h7", base_project_h7, "./board/main.c", [])
