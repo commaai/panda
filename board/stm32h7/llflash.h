@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdbool.h>
+#include <stdint.h>
+
 bool flash_is_locked(void);
 void flash_unlock(void);
 bool flash_erase_sector(uint8_t sector, bool unlocked);
