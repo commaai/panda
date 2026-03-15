@@ -32,8 +32,8 @@ dev = [
   "pytest-timeout",
   "ruff",
   "setuptools",
-  "gcc-arm-none-eabi @ git+https://github.com/commaai/dependencies.git@releases#subdirectory=gcc-arm-none-eabi",
-  "cppcheck @ git+https://github.com/commaai/dependencies.git@releases#subdirectory=cppcheck",
+  "gcc-arm-none-eabi @ git+https://github.com/commaai/dependencies.git@release-gcc-arm-none-eabi#subdirectory=gcc-arm-none-eabi",
+  "cppcheck @ git+https://github.com/commaai/dependencies.git@release-cppcheck#subdirectory=cppcheck",
 ]
 
 [build-system]
@@ -48,6 +48,10 @@ packages = [
   "panda.board.body",
   "panda.board.jungle",
 ]
+
+[tool.setuptools.package-data]
+"panda.board" = ["health.h"]
+"panda.board.jungle" = ["jungle_health.h"]
 
 [tool.setuptools.package-dir]
 panda = "."

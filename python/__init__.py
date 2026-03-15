@@ -10,10 +10,11 @@ import ctypes
 from functools import wraps, partial
 from itertools import accumulate
 
+import opendbc
 from opendbc.car.structs import CarParams
 
 from .base import BaseHandle
-from .constants import FW_PATH, McuType
+from .constants import BASEDIR, FW_PATH, McuType, compute_version_hash
 from .dfu import PandaDFU
 from .spi import PandaSpiHandle, PandaSpiException, PandaProtocolMismatch
 from .usb import PandaUsbHandle
@@ -104,7 +105,6 @@ def ensure_version(desc, lib_field, panda_field, fn):
     return fn(self, *args, **kwargs)
   return wrapper
 ensure_can_packet_version = partial(ensure_version, "CAN", "CAN_PACKET_VERSION", "can_version")
-ensure_can_health_packet_version = partial(ensure_version, "CAN health", "CAN_HEALTH_PACKET_VERSION", "can_health_version")
 ensure_health_packet_version = partial(ensure_version, "health", "HEALTH_PACKET_VERSION", "health_version")
 
 
@@ -126,9 +126,8 @@ class Panda:
   HW_TYPE_CUATRO = b'\x0a'
   HW_TYPE_BODY = b'\xb1'
 
-  CAN_PACKET_VERSION = 4
-  HEALTH_PACKET_VERSION = 18
-  CAN_HEALTH_PACKET_VERSION = 5
+  CAN_PACKET_VERSION = compute_version_hash(os.path.join(opendbc.INCLUDE_PATH, "opendbc/safety/can.h"))
+  HEALTH_PACKET_VERSION = compute_version_hash(os.path.join(BASEDIR, "board/health.h"))
   HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBHBBBHfBBHHHBH")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
 
@@ -210,7 +209,7 @@ class Panda:
     self._serial = serial
     self._connect_serial = serial
     self._handle_open = True
-    self.health_version, self.can_version, self.can_health_version = self.get_packets_versions()
+    self.health_version, self.can_version = self.get_packets_versions()
     logger.debug("connected")
 
     # disable openpilot's heartbeat checks
@@ -536,7 +535,7 @@ class Panda:
       "sound_output_level": a[25],
     }
 
-  @ensure_can_health_packet_version
+  @ensure_health_packet_version
   def can_health(self, can_number):
     LEC_ERROR_CODE = {
       0: "No error",
@@ -598,14 +597,11 @@ class Panda:
   def get_type(self):
     return self._handle.controlRead(Panda.REQUEST_IN, 0xc1, 0, 0, 0x40)
 
-  # Returns tuple with health packet version and CAN packet/USB packet version
   def get_packets_versions(self):
-    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xdd, 0, 0, 3)
-    if dat and len(dat) == 3:
-      a = struct.unpack("BBB", dat)
-      return (a[0], a[1], a[2])
-    else:
-      return (0, 0, 0)
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xdd, 0, 0, 8)
+    if dat and len(dat) == 8:
+      return struct.unpack("<II", dat)
+    return (0, 0)
 
   def is_internal(self):
     return self.get_type() in Panda.INTERNAL_DEVICES
