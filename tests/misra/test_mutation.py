@@ -20,6 +20,7 @@ IGNORED_PATHS = (
 
   # bootstub only files
   'board/flasher.h',
+  'board/flasher.c',
   'board/bootstub.c',
   'board/bootstub_globals.h',
   'board/bootstub_globals.c',

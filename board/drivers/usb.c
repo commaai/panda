@@ -250,6 +250,14 @@ static void usb_setup(void) {
     '{',0, 'c',0, 'c',0, 'e',0, '5',0, '2',0, '9',0, '1',0, 'c',0, '-',0, 'a',0, '6',0, '9',0, 'f',0, '-',0, '4',0 ,'9',0 ,'9',0 ,'5',0 ,'-',0, 'a',0, '4',0, 'c',0, '2',0, '-',0, '2',0, 'a',0, 'e',0, '5',0, '7',0, 'a',0, '5',0, '1',0, 'a',0, 'd',0, 'e',0, '9',0, '}',0, 0, 0,  // bPropertyData ({CCE5291C-A69F-4995-A4C2-2AE57A51ADE9})
   };
 
+  /*
+  Binary Object Store descriptor used to expose WebUSB (and more WinUSB) metadata
+  comments are from the wicg spec
+  References used:
+    https://wicg.github.io/webusb/#webusb-platform-capability-descriptor
+    https://github.com/sowbug/weblight/blob/192ad7a0e903542e2aa28c607d98254a12a6399d/firmware/webusb.c
+    https://os.mbed.com/users/larsgk/code/USBDevice_WebUSB/file/1d8a6665d607/WebUSBDevice/
+  */
   static uint8_t binary_object_store_desc[] = {
     // BOS header
     BINARY_OBJECT_STORE_DESCRIPTOR_LENGTH,  // bLength, this is only the length of the header

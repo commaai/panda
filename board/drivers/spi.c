@@ -25,13 +25,6 @@ static uint16_t spi_version_packet(uint8_t *out) {
   // the response is:
   // VERSION + 2 byte data length + data + CRC8
   // echo "VERSION"
-  // this protocol version request is a stable portion of
-  // the panda's SPI protocol. its contents match that of the
-  // panda USB descriptors and are sufficent to list/enumerate
-  // a panda, determine panda type, and bootstub status.
-  // the response is:
-  // VERSION + 2 byte data length + data + CRC8
-  // echo "VERSION"
   (void)memcpy(out, version_text, 7);
 
   // write response
