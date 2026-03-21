@@ -1,7 +1,0 @@
-spidev.c
-*.ko
-*.cmd
-*.mod
-*.symvers
-*.order
-*.mod.c

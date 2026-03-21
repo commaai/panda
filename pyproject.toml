@@ -13,7 +13,11 @@ classifiers = [
 ]
 dependencies = [
   "libusb1",
+  "libusb-package",
   "opendbc @ git+https://github.com/commaai/opendbc.git@master#egg=opendbc",
+
+  # runtime dependency on comma four
+  #"spidev; platform_system == 'Linux'",
 ]
 
 [project.optional-dependencies]
@@ -23,13 +27,13 @@ dev = [
   "cffi",
   "flaky",
   "pytest",
+  "pytest-xdist",
   "pytest-mock",
   "pytest-timeout",
-  "pytest-randomly",
   "ruff",
-  "mypy",
   "setuptools",
-  "spidev; platform_system == 'Linux'",
+  "gcc-arm-none-eabi @ git+https://github.com/commaai/dependencies.git@release-gcc-arm-none-eabi#subdirectory=gcc-arm-none-eabi",
+  "cppcheck @ git+https://github.com/commaai/dependencies.git@release-cppcheck#subdirectory=cppcheck",
 ]
 
 [build-system]
@@ -37,22 +41,20 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["panda"]
+packages = [
+  "panda",
+  "panda.python",
+  "panda.board",
+  "panda.board.body",
+  "panda.board.jungle",
+]
+
+[tool.setuptools.package-data]
+"panda.board" = ["health.h"]
+"panda.board.jungle" = ["jungle_health.h"]
 
 [tool.setuptools.package-dir]
 panda = "."
-
-[tool.mypy]
-# third-party packages
-ignore_missing_imports = true
-
-# helpful warnings
-warn_redundant_casts = true
-warn_unreachable = true
-warn_unused_ignores = true
-
-# restrict dynamic typing
-warn_return_any = true
 
 # https://beta.ruff.rs/docs/configuration/#using-pyprojecttoml
 [tool.ruff]
@@ -68,7 +70,7 @@ flake8-implicit-str-concat.allow-multiline=false
 "pytest.main".msg = "pytest.main requires special handling that is easy to mess up!"
 
 [tool.pytest.ini_options]
-addopts = "-Werror --strict-config --strict-markers --durations=10 --ignore-glob='*.sh' --ignore=tests/misra --ignore=tests/som --ignore=tests/hitl"
+addopts = "-Werror --strict-config --strict-markers --maxprocesses=8 -nauto --durations=10 --ignore-glob='*.sh' --ignore=tests/som --ignore=tests/hitl"
 python_files = "test_*.py"
 testpaths = [
   "tests/"

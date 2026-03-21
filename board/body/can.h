@@ -7,6 +7,7 @@
 #include "board/health.h"
 #include "board/body/boards/board_declarations.h"
 #include "board/drivers/can_common_declarations.h"
+#include "board/drivers/drivers.h"
 #include "opendbc/safety/declarations.h"
 #include "board/body/bldc/bldc.h"
 

@@ -53,6 +53,9 @@ def pytest_configure(config):
   config.addinivalue_line(
     "markers", "panda_expect_can_error: mark test to ignore CAN health errors"
   )
+  config.addinivalue_line(
+    "markers", "timeout: set test timeout in seconds"
+  )
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(items):
@@ -148,6 +151,7 @@ def fixture_panda_setup(request):
   init_jungle()
 
   # init panda
+  assert Panda.wait_for_panda(_panda_serial, timeout=10), "panda not found"
   p = Panda(serial=_panda_serial)
   p.reset(reconnect=True)
 

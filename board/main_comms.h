@@ -24,7 +24,7 @@ static int get_health_pkt(void *dat) {
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
   health->safety_param_pkt = current_safety_param;
   health->alternative_experience_pkt = alternative_experience;
-  health->power_save_enabled_pkt = power_save_status == POWER_SAVE_STATUS_ENABLED;
+  health->power_save_enabled_pkt = power_save_enabled;
   health->heartbeat_lost_pkt = heartbeat_lost;
   health->safety_rx_checks_invalid_pkt = safety_rx_checks_invalid;
 
@@ -41,6 +41,8 @@ static int get_health_pkt(void *dat) {
   health->sbu2_voltage_mV = harness.sbu2_voltage_mV;
 
   health->som_reset_triggered = bootkick_reset_triggered;
+
+  health->sound_output_level_pkt = sound_output_level;
 
   return sizeof(*health);
 }
@@ -95,6 +97,14 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       resp[1] = ((fan_state.rpm & 0xFF00U) >> 8U);
       resp_len = 2;
       break;
+    // **** 0xb5: request deep sleep, wakes on CAN or SBU
+    #ifdef ALLOW_DEBUG
+    case 0xb5:
+      set_safety_mode(SAFETY_SILENT, 0U);
+      set_power_save_state(true);
+      stop_mode_requested = true;
+      break;
+    #endif
     // **** 0xc0: reset communications state
     case 0xc0:
       comms_can_reset();
@@ -216,13 +226,13 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xdc:
       set_safety_mode(req->param1, (uint16_t)req->param2);
       break;
-    // **** 0xdd: get healthpacket and CANPacket versions
-    case 0xdd:
-      resp[0] = HEALTH_PACKET_VERSION;
-      resp[1] = CAN_PACKET_VERSION;
-      resp[2] = CAN_HEALTH_PACKET_VERSION;
-      resp_len = 3;
+    // **** 0xdd: get health and CAN packet versions
+    case 0xdd: {
+      uint32_t versions[2] = {HEALTH_PACKET_VERSION, CAN_PACKET_VERSION_HASH};
+      (void)memcpy(resp, (uint8_t *)versions, sizeof(versions));
+      resp_len = sizeof(versions);
       break;
+    }
     // **** 0xde: set can bitrate
     case 0xde:
       if ((req->param1 < PANDA_CAN_CNT) && is_speed_valid(req->param2, speeds, sizeof(speeds)/sizeof(speeds[0]))) {
@@ -263,7 +273,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xe7: set power save state
     case 0xe7:
-      set_power_save_state(req->param1);
+      set_power_save_state(req->param1 != 0U);
       break;
     // **** 0xe8: set can-fd auto swithing mode
     case 0xe8:
