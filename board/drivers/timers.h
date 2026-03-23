@@ -5,7 +5,7 @@ static void timer_init(TIM_TypeDef *TIM, int psc) {
   TIM->SR = 0;
 }
 
-static void timer_init_with_arr(TIM_TypeDef *TIM, uint16_t psc, uint32_t arr) {
+static void timer_init_with_arr(TIM_TypeDef *TIM, uint32_t psc, uint32_t arr) {
   register_set(&(TIM->PSC), (psc - 1U), 0xFFFFU);
   register_set(&(TIM->ARR), arr, 0xFFFFFFFFU);
   TIM->EGR = TIM_EGR_UG;
@@ -40,6 +40,6 @@ void tick_timer_init(void) {
 }
 
 void isotp_timer_init(void) {
-  timer_init_with_arr(ISOTP_TIMER, (uint16_t)APB1_TIMER_FREQ, 999U);
+  timer_init_with_arr(ISOTP_TIMER, APB1_TIMER_FREQ, 999U);
   NVIC_EnableIRQ(ISOTP_TIMER_IRQ);
 }

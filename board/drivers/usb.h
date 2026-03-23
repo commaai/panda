@@ -820,6 +820,8 @@ void usb_irqhandler(void) {
         puth(USBx_OUTEP(5U)->DOEPINT);
         print("\n");
       #endif
+    } else {
+      // USBx_OUTEP(5U)->DOEPINT is 0, ok to skip
     }
 
     if ((USBx_OUTEP(0U)->DOEPINT & USB_OTG_DIEPINT_XFRC) != 0U) {
