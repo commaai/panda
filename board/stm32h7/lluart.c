@@ -1,3 +1,12 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+#include "board/drivers/drivers.h"
+#include "board/utils.h"
+
+// lluart functions are needed by all targets for uart support
+
 static void uart_rx_ring(uart_ring *q){
   // Do not read out directly if DMA enabled
   ENTER_CRITICAL();
@@ -100,3 +109,5 @@ void uart_init(uart_ring *q, unsigned int baud) {
     NVIC_EnableIRQ(UART7_IRQn);
   }
 }
+
+// end of lluart.c

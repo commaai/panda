@@ -1,4 +1,32 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
 #include "board/drivers/drivers.h"
+#include "board/comms_definitions.h"
+#include "board/libc.h"
+#include "board/utils.h"
+#include "board/stm32h7/llusb_declarations.h"
+
+// Constants from config.h
+#define USB_VID 0x3801U
+#define USBPACKET_MAX_SIZE 0x40U
+#ifdef PANDA_JUNGLE
+  #ifdef BOOTSTUB
+    #define USB_PID 0xDDEFU
+  #else
+    #define USB_PID 0xDDCFU
+  #endif
+#else
+  #ifdef BOOTSTUB
+    #define USB_PID 0xDDEEU
+  #else
+    #define USB_PID 0xDDCCU
+  #endif
+#endif
+
+// from main/bootstub
+extern uint8_t hw_type;
 
 // IRQs: OTG_FS
 

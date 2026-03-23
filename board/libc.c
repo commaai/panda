@@ -1,3 +1,9 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+#include "board/drivers/drivers.h"
+
 // **** libc ****
 
 __attribute__((aligned(32), noinline)) void delay(uint32_t a) {

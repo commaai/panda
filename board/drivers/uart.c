@@ -1,3 +1,11 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include <stddef.h>
+#include "board/utils.h"
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+
+// uart functions are needed by all targets
 #include "board/drivers/drivers.h"
 
 // ***************************** Definitions *****************************
@@ -138,14 +146,11 @@ void puth(unsigned int i) {
   puthx(i, 8U);
 }
 
-#if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
-static void puth4(unsigned int i) {
+void puth4(unsigned int i) {
   puthx(i, 4U);
 }
-#endif
 
-#if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG_USB) || defined(DEBUG_COMMS)
-static void hexdump(const void *a, int l) {
+void hexdump(const void *a, int l) {
   if (a != NULL) {
     for (int i=0; i < l; i++) {
       if ((i != 0) && ((i & 0xf) == 0)) print("\n");
@@ -155,4 +160,5 @@ static void hexdump(const void *a, int l) {
   }
   print("\n");
 }
-#endif
+
+// end of uart.c

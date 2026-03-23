@@ -1,3 +1,10 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+#include "board/drivers/drivers.h"
+#include "board/drivers/gpio.h"
+
 #ifdef BOOTSTUB
 void gpio_usb_init(void) {
 #else

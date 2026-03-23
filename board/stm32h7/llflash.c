@@ -1,3 +1,7 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+
 bool flash_is_locked(void) {
   return (FLASH->CR1 & FLASH_CR_LOCK);
 }

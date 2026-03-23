@@ -1,4 +1,16 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+
+
 #include "board/drivers/drivers.h"
+#include "board/drivers/gpio.h"
+
+// Constants from stm32h7_config.h
+#define CORE_FREQ 240U
+#define APB2_FREQ (CORE_FREQ/4U)
+#define APB2_TIMER_FREQ (APB2_FREQ*2U)
 
 #define CLOCK_SOURCE_PERIOD_MS           50U
 #define CLOCK_SOURCE_PULSE_LEN_MS        2U
@@ -64,3 +76,5 @@ void clock_source_init(bool enable_channel1) {
   register_set(&(TIM1->CR1), TIM_CR1_CEN, 0x3FU);
   register_set(&(TIM8->CR1), TIM_CR1_CEN, 0x3FU);
 }
+
+

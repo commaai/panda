@@ -1,4 +1,15 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+
+
 #include "board/drivers/drivers.h"
+#include "board/utils.h"
+#include "board/drivers/gpio.h"
+#include "board/boards/board_declarations.h"
+
+extern struct board *current_board;
 
 struct fan_state_t fan_state;
 
@@ -46,3 +57,5 @@ void fan_tick(void) {
     current_board->set_fan_enabled((fan_state.power > 0U) || (fan_state.cooldown_counter > 0U));
   }
 }
+
+

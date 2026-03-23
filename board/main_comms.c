@@ -1,6 +1,64 @@
+#include <stdbool.h>
+#include <stdint.h>
+
+// main_comms is only compiled for the regular panda build (see SConscript)
+
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+#include "board/drivers/drivers.h"
+#include "board/boards/board_declarations.h"
+#include "board/utils.h"
+#include "board/libc.h"
+#include "board/comms_definitions.h"
+
+// Constants from config.h
+#define USBPACKET_MAX_SIZE 0x40U
+#define DEVICE_SERIAL_NUMBER_ADDRESS 0x080FFFC0U
+#define PROVISION_CHUNK_ADDRESS 0x080FFFE0U
+#define CAN_MODE_NORMAL 0U
+#define CAN_MODE_OBD_CAN2 1U
+
+// from llfdcan_declarations.h
+#include "board/stm32h7/llfdcan_declarations.h"
+#include "board/provision.h"
+// gitversion - definition is in main.c via gitversion.h
+extern const uint8_t gitversion[];
+
+// from main_declarations.h
+extern struct board *current_board;
+extern uint8_t hw_type;
+extern uint32_t uptime_cnt;
+extern uint32_t heartbeat_counter;
+extern bool heartbeat_lost;
+extern bool heartbeat_disabled;
+extern bool siren_enabled;
+extern uint16_t sound_output_level;
+
+// fault_status and faults now come from sys.h via drivers.h
+
+// from early_init
+#define ENTER_BOOTLOADER_MAGIC 0xdeadbeefU
+#define ENTER_SOFTLOADER_MAGIC 0xdeadc0deU
+extern uint32_t enter_bootloader_mode;
+
+// from opendbc/safety/safety.h
+extern bool controls_allowed;
+extern uint16_t current_safety_mode;
+extern uint16_t current_safety_param;
+extern int alternative_experience;
+extern bool safety_rx_checks_invalid;
+extern bool heartbeat_engaged;
+#include "opendbc/safety/declarations.h"  // for SAFETY_SILENT, etc.
+
+// from sys/power_saving.h
+extern bool power_save_enabled;
+extern volatile bool stop_mode_requested;
+void set_power_save_state(bool enable);
+
+// from linker script
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
-// Prototypes
+// Prototypes from main.c
 void set_safety_mode(uint16_t mode, uint16_t param);
 bool is_car_safety_mode(uint16_t mode);
 
@@ -210,9 +268,13 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xd6: get version
     case 0xd6:
-      COMPILE_TIME_ASSERT(sizeof(gitversion) <= USBPACKET_MAX_SIZE);
-      (void)memcpy(resp, gitversion, sizeof(gitversion));
-      resp_len = sizeof(gitversion) - 1U;
+      {
+        uint32_t git_len = 0;
+        while (gitversion[git_len] != 0U) { git_len++; }
+        git_len++; // include null terminator
+        (void)memcpy(resp, gitversion, git_len);
+        resp_len = git_len - 1U;
+      }
       break;
     // **** 0xd8: reset ST
     case 0xd8:
@@ -337,3 +399,5 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   }
   return resp_len;
 }
+
+// end of main_comms.c

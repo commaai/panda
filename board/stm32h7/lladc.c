@@ -1,3 +1,11 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+#include "board/drivers/drivers.h"
+
+
+
 #include "lladc_declarations.h"
 
 static uint32_t adc_avdd_mV = 0U;
@@ -78,3 +86,5 @@ uint16_t adc_get_mV(const adc_signal_t *signal) {
   } else {}
   return ret;
 }
+
+

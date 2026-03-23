@@ -1,3 +1,37 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+#include "board/drivers/drivers.h"
+
+// Forward declarations for functions defined in headers included by main.c
+#define LED_RED 0U
+#define LED_GREEN 1U
+#define LED_BLUE 2U
+void led_init(void);
+void led_set(uint8_t color, bool enabled);
+void early_gpio_float(void);
+void detect_board_type(void);
+
+// Board struct definitions (needed for current_board->init_bootloader())
+#ifdef PANDA_JUNGLE
+  #include "board/jungle/boards/board_declarations.h"
+#elif defined(PANDA_BODY)
+  #include "board/body/boards/board_declarations.h"
+#else
+  #include "board/boards/board_declarations.h"
+#endif
+extern struct board *current_board;
+
+// Forward declarations from sys/critical.h
+void enable_interrupts(void);
+void disable_interrupts(void);
+extern uint8_t global_critical_depth;
+
+// Constants from stm32h7_config.h
+#define BOOTLOADER_ADDRESS 0x1FF09804U
+#define MCU_IDCODE 0x483U
+
 // Early bringup
 #define ENTER_BOOTLOADER_MAGIC 0xdeadbeefU
 #define ENTER_SOFTLOADER_MAGIC 0xdeadc0deU

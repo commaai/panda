@@ -1,3 +1,11 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+#include "board/drivers/drivers.h"
+
+
+
 // TACH interrupt handler
 static void EXTI2_IRQ_Handler(void) {
   volatile unsigned int pr = EXTI->PR1 & (1U << 2);
@@ -21,3 +29,5 @@ void llfan_init(void) {
   register_set_bits(&(EXTI->FTSR1), (1U << 2));
   NVIC_EnableIRQ(EXTI2_IRQn);
 }
+
+

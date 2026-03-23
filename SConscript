@@ -61,7 +61,9 @@ def to_c_uint32(x):
   return "{" + 'U,'.join(map(str, nums)) + "U}"
 
 
-def build_project(project_name, project, main, extra_flags):
+def build_project(project_name, project, main, extra_flags, extra_main_sources=None):
+  if extra_main_sources is None:
+    extra_main_sources = []
   project_dir = Dir(f'./board/obj/{project_name}/')
 
   flags = project["FLAGS"] + extra_flags + common_flags + [
@@ -115,26 +117,21 @@ def build_project(project_name, project, main, extra_flags):
     "./board/stm32h7/clock.c",
     "./board/stm32h7/llusb.c",
     "./board/stm32h7/llspi.c",
+    "./board/stm32h7/lladc.c",
+    "./board/stm32h7/sound.c",
+    "./board/drivers/harness.c",
+    "./board/drivers/clock_source.c",
   ]
 
-  # Main-only source files (not used in bootstub)
+  # Main-only source files used by ALL targets (not used in bootstub)
   main_only_sources = [
-    "./board/drivers/simple_watchdog.c",
-    "./board/drivers/fan.c",
-    "./board/drivers/clock_source.c",
-    "./board/drivers/bootkick.c",
-    "./board/drivers/harness.c",
     "./board/drivers/uart.c",
     "./board/drivers/can_common.c",
     "./board/drivers/fdcan.c",
     "./board/can_comms.c",
-    "./board/main_comms.c",
     "./board/stm32h7/lluart.c",
-    "./board/stm32h7/llfan.c",
     "./board/stm32h7/llfdcan.c",
-    "./board/stm32h7/lladc.c",
-    "./board/stm32h7/sound.c",
-  ]
+  ] + extra_main_sources
 
   # Bootstub-only source files
   bootstub_only_sources = [
@@ -209,8 +206,17 @@ hh, ch, jh = version_hash("board/health.h"), version_hash(os.path.join(opendbc.I
 common_flags += [f"-DHEALTH_PACKET_VERSION=0x{hh:08X}U", f"-DCAN_PACKET_VERSION_HASH=0x{ch:08X}U",
                  f"-DJUNGLE_HEALTH_PACKET_VERSION=0x{jh:08X}U"]
 
+# Panda-specific main sources (not needed by body or jungle)
+panda_main_sources = [
+  "./board/drivers/simple_watchdog.c",
+  "./board/drivers/fan.c",
+  "./board/drivers/bootkick.c",
+  "./board/main_comms.c",
+  "./board/stm32h7/llfan.c",
+]
+
 # panda fw
-build_project("panda_h7", base_project_h7, "./board/main.c", [])
+build_project("panda_h7", base_project_h7, "./board/main.c", [], extra_main_sources=panda_main_sources)
 
 # panda jungle fw
 flags = [

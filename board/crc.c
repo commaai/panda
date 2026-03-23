@@ -1,3 +1,9 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+#include "board/drivers/drivers.h"
+
 uint8_t crc_checksum(const uint8_t *dat, int len, const uint8_t poly) {
   uint8_t crc = 0xFFU;
   int i;

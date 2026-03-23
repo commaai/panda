@@ -1,4 +1,11 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+
+
 #include "board/drivers/drivers.h"
+#include "board/utils.h"
 
 static simple_watchdog_state_t wd_state;
 
@@ -19,3 +26,5 @@ void simple_watchdog_init(uint32_t fault, uint32_t threshold) {
   wd_state.threshold = threshold;
   wd_state.last_ts = microsecond_timer_get();
 }
+
+

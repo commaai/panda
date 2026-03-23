@@ -1,3 +1,9 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+#include "board/drivers/drivers.h"
+
 // master -> panda DMA start
 void llspi_mosi_dma(uint8_t *addr, int len) {
   // disable DMA + SPI

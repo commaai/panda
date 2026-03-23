@@ -1,7 +1,15 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+#include "board/drivers/drivers.h"
+#include "board/libc.h"
+
 // this is where we manage the dongle ID assigned during our
 // manufacturing. aside from this, there's a UID for the MCU
 
 #define PROVISION_CHUNK_LEN 0x20
+#define PROVISION_CHUNK_ADDRESS 0x080FFFE0U
 
 void get_provision_chunk(uint8_t *resp) {
   const unsigned char unprovisioned_text[] = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff";

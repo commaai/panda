@@ -1,4 +1,13 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+
+
 #include "board/drivers/drivers.h"
+#include "board/boards/board_declarations.h"
+
+extern struct board *current_board;
 
 bool bootkick_reset_triggered = false;
 
@@ -66,3 +75,5 @@ void bootkick_tick(bool ignition, bool recent_heartbeat) {
   }
   current_board->set_bootkick(boot_state);
 }
+
+

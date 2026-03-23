@@ -6,6 +6,7 @@ void enable_interrupts(void);
 void disable_interrupts(void);
 
 extern uint8_t global_critical_depth;
+extern volatile bool interrupts_enabled;
 
 #ifndef ENTER_CRITICAL
 #define ENTER_CRITICAL()                                      \

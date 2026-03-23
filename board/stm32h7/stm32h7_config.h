@@ -62,6 +62,8 @@ separate IRQs for RX and TX.
 
 #ifdef BOOTSTUB
 uart_ring uart_ring_som_debug;
+#else
+extern uart_ring uart_ring_som_debug;
 #endif
 #include "board/drivers/gpio.h"
 #include "board/stm32h7/peripherals.h"

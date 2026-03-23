@@ -1,4 +1,5 @@
 #include "board/stm32h7/lli2c.h"
+#include "board/stm32h7/sound.h"
 
 #define CODEC_I2C_ADDR 0x10
 

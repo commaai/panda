@@ -1,4 +1,16 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
 #include "board/drivers/drivers.h"
+#include "board/utils.h"
+
+// Constants from stm32h7_config.h
+#define TICK_TIMER_IRQ TIM8_BRK_TIM12_IRQn
+#define TICK_TIMER TIM12
+#define MICROSECOND_TIMER TIM2
+#define INTERRUPT_TIMER_IRQ TIM6_DAC_IRQn
+#define INTERRUPT_TIMER TIM6
 
 void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!

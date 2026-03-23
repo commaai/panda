@@ -1,4 +1,23 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
 #include "board/drivers/drivers.h"
+#include "board/stm32h7/llfdcan_declarations.h"
+#include "board/utils.h"
+#include "board/libc.h"
+
+// Constants from stm32h7_config.h
+#define CAN_INTERRUPT_RATE 16000U
+#define CAN_INIT_TIMEOUT_MS 500U
+
+// Forward declarations from opendbc/safety/safety.h
+int safety_fwd_hook(int bus_num, int addr);
+int safety_rx_hook(CANPacket_t *to_push);
+
+// Forward declarations from other headers
+#define LED_BLUE 2U
+void led_set(uint8_t color, bool enabled);
 
 FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT] = {FDCAN1, FDCAN2, FDCAN3};
 

@@ -1,3 +1,12 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+#include "board/drivers/drivers.h"
+#include "board/drivers/gpio.h"
+#include "board/libc.h"
+#include "board/utils.h"
+
 #include "llusb_declarations.h"
 
 USB_OTG_GlobalTypeDef *USBx = USB_OTG_HS;

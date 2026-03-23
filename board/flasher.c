@@ -1,3 +1,51 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include <stddef.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+#include "board/drivers/drivers.h"
+#include "board/provision.h"
+#include "board/comms_definitions.h"
+#include "board/libc.h"
+#include "board/utils.h"
+#include "board/stm32h7/llflash.h"
+
+// Forward declarations for functions defined in headers included by bootstub.c
+#define LED_RED 0U
+#define LED_GREEN 1U
+#define LED_BLUE 2U
+void led_init(void);
+void led_set(uint8_t color, bool enabled);
+void flasher_peripherals_init(void);
+void gpio_usart2_init(void);
+void gpio_usb_init(void);
+void gpio_spi_init(void);
+void enable_interrupts(void);
+
+// gitversion - definition is in bootstub.c via gitversion.h
+// Only include the extern declaration, not the definition
+extern const uint8_t gitversion[];
+
+// from main/bootstub
+extern uint8_t hw_type;
+#ifdef PANDA_JUNGLE
+  #include "board/jungle/boards/board_declarations.h"
+#elif defined(PANDA_BODY)
+  #include "board/body/boards/board_declarations.h"
+#else
+  #include "board/boards/board_declarations.h"
+#endif
+extern struct board *current_board;
+
+// Constants from config.h / stm32h7_config.h
+#define USBPACKET_MAX_SIZE 0x40U
+#define DEVICE_SERIAL_NUMBER_ADDRESS 0x080FFFC0U
+
+// from early_init
+#define ENTER_BOOTLOADER_MAGIC 0xdeadbeefU
+#define ENTER_SOFTLOADER_MAGIC 0xdeadc0deU
+extern uint32_t enter_bootloader_mode;
+
 // from the linker script
 #define APP_START_ADDRESS 0x8020000U
 
@@ -79,9 +127,14 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xd6: get version
     case 0xd6:
-      COMPILE_TIME_ASSERT(sizeof(gitversion) <= USBPACKET_MAX_SIZE);
-      memcpy(resp, gitversion, sizeof(gitversion));
-      resp_len = sizeof(gitversion) - 1U;
+      {
+        // gitversion is a null-terminated string defined in bootstub.c
+        uint32_t git_len = 0;
+        while (gitversion[git_len] != 0U) { git_len++; }
+        git_len++; // include null terminator
+        memcpy(resp, gitversion, git_len);
+        resp_len = git_len - 1U;
+      }
       break;
     // **** 0xd8: reset ST
     case 0xd8:

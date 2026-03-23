@@ -1,3 +1,7 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
 #include "board/drivers/drivers.h"
 
 typedef struct reg {

@@ -1,4 +1,31 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
 #include "board/drivers/drivers.h"
+#include "board/libc.h"
+#include "board/comms_definitions.h"
+#include "board/utils.h"
+
+// Constants from config.h
+#define USBPACKET_MAX_SIZE 0x40U
+#define USB_VID 0x3801U
+#ifdef PANDA_JUNGLE
+  #ifdef BOOTSTUB
+    #define USB_PID 0xDDEFU
+  #else
+    #define USB_PID 0xDDCFU
+  #endif
+#else
+  #ifdef BOOTSTUB
+    #define USB_PID 0xDDEEU
+  #else
+    #define USB_PID 0xDDCCU
+  #endif
+#endif
+
+// from main/bootstub
+extern uint8_t hw_type;
 
 // H7 DMA2 located in D2 domain, so we need to use SRAM1/SRAM2
 #ifdef STM32H7

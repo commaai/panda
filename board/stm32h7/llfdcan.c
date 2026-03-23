@@ -1,4 +1,14 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+#include "board/drivers/drivers.h"
+
 #include "llfdcan_declarations.h"
+#include "board/libc.h"
+#include "board/utils.h"
+
+#define CAN_INIT_TIMEOUT_MS 500U
 
 // kbps multiplied by 10
 const uint32_t speeds[SPEEDS_ARRAY_SIZE] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};

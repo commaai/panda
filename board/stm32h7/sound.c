@@ -1,3 +1,23 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+#include "board/drivers/drivers.h"
+#include "board/drivers/gpio.h"
+#include "board/utils.h"
+
+// Board declarations for current_board access
+#ifdef PANDA_JUNGLE
+  #include "board/jungle/boards/board_declarations.h"
+#elif defined(PANDA_BODY)
+  #include "board/body/boards/board_declarations.h"
+#else
+  #include "board/boards/board_declarations.h"
+#endif
+extern struct board *current_board;
+
+
+
 #define SOUND_RX_BUF_SIZE 1000U
 #define SOUND_TX_BUF_SIZE (SOUND_RX_BUF_SIZE/2U)
 #define MIC_RX_BUF_SIZE 512U
@@ -18,7 +38,9 @@ void sound_tick(void) {
   if (sound_idle_count > 0U) {
     sound_idle_count--;
     if (sound_idle_count == 0U) {
+#if !defined(PANDA_BODY) && !defined(PANDA_JUNGLE)
       current_board->set_amp_enabled(false);
+#endif
       register_clear_bits(&DMA1_Stream1->CR, DMA_SxCR_EN);
       sound_output_level = 0U;
     }
@@ -102,7 +124,9 @@ static void BDMA_Channel0_IRQ_Handler(void) {
   // manage amp state
   if (sound_playing) {
     if (sound_idle_count == 0U) {
+#if !defined(PANDA_BODY) && !defined(PANDA_JUNGLE)
       current_board->set_amp_enabled(true);
+#endif
 
       // empty the other buf and start playing that
       for (uint16_t i=0U; i < SOUND_TX_BUF_SIZE; i++) {
@@ -143,7 +167,7 @@ void sound_init_dac(void) {
   DMA1_Stream1->CR = DMA_SxCR_DBM | (0b11UL << DMA_SxCR_PL_Pos) | (0b01UL << DMA_SxCR_MSIZE_Pos) | (0b01UL << DMA_SxCR_PSIZE_Pos) | DMA_SxCR_MINC | (1U << DMA_SxCR_DIR_Pos);
 }
 
-static void sound_stop_dac(void) {
+void sound_stop_dac(void) {
   register_clear_bits(&BDMA_Channel0->CCR, BDMA_CCR_EN);
   BDMA->IFCR = 0xFFFFFFFFU;
 
@@ -226,3 +250,5 @@ void sound_init(void) {
   NVIC_EnableIRQ(BDMA_Channel0_IRQn);
   NVIC_EnableIRQ(DMA1_Stream0_IRQn);
 }
+
+

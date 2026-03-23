@@ -1,4 +1,11 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
 #include "board/drivers/drivers.h"
+
+// Forward declaration from opendbc/safety/safety.h
+int safety_tx_hook(CANPacket_t *to_send);
 
 uint32_t safety_tx_blocked = 0;
 uint32_t safety_rx_invalid = 0;

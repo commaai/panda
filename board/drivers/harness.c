@@ -1,4 +1,16 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal_gpio_ex.h"
+
+
 #include "board/drivers/drivers.h"
+#include "board/drivers/gpio.h"
+#include "board/boards/board_declarations.h"
+#include "board/utils.h"
+#include "board/stm32h7/lladc.h"
+
+extern struct board *current_board;
 
 struct harness_t harness;
 
@@ -104,3 +116,5 @@ void harness_init(void) {
   // keep buses connected by default
   set_intercept_relay(false, false);
 }
+
+
