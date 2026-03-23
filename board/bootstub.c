@@ -4,6 +4,10 @@
 // ********************* Includes *********************
 #include "board/config.h"
 
+// ********************* Globals (from bootstub_declarations.h) **********************
+uint8_t hw_type = 0;
+board *current_board;
+
 #include "board/drivers/led.h"
 #include "board/drivers/pwm.h"
 #include "board/drivers/usb.h"

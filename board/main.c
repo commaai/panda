@@ -1,6 +1,20 @@
 // ********************* Includes *********************
 #include "board/config.h"
 
+// ********************* Globals (from main_definitions.h) **********************
+// These are defined in main_declarations.h as extern
+uint8_t hw_type = 0;
+board *current_board;
+uint32_t uptime_cnt = 0;
+
+// heartbeat state
+uint32_t heartbeat_counter = 0;
+bool heartbeat_lost = false;
+bool heartbeat_disabled = false;            // set over USB
+
+// siren state
+bool siren_enabled = false;
+
 #include "board/drivers/led.h"
 #include "board/drivers/pwm.h"
 #include "board/drivers/usb.h"
