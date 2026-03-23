@@ -215,7 +215,11 @@ void can_rx(uint8_t can_number) {
       can_health[can_number].total_fwd_cnt += 1U;
     }
 
-    safety_rx_invalid += safety_rx_hook(&to_push) ? 0U : 1U;
+    bool rx_ok = safety_rx_hook(&to_push);
+    safety_rx_invalid += rx_ok ? 0U : 1U;
+    if (rx_ok) {
+      isotp_rx_hook(&to_push, microsecond_timer_get());
+    }
     ignition_can_hook(&to_push);
 
     led_set(LED_BLUE, true);

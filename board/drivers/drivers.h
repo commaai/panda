@@ -81,6 +81,7 @@ void can_set_checksum(CANPacket_t *packet);
 bool can_check_checksum(CANPacket_t *packet);
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook);
 bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len);
+void isotp_rx_hook(const CANPacket_t *msg, uint32_t now_us);
 
 // ******************** clock_source ********************
 
@@ -233,6 +234,7 @@ extern uint8_t spi_buf_tx[SPI_BUF_SIZE];
 extern uint16_t spi_error_count;
 
 void can_tx_comms_resume_spi(void);
+void isotp_tx_comms_resume_spi(void);
 void spi_init(void);
 void spi_rx_done(void);
 void spi_tx_done(bool reset);
@@ -285,3 +287,4 @@ static void hexdump(const void *a, int l);
 void usb_init(void);
 void refresh_can_tx_slots_available(void);
 void can_tx_comms_resume_usb(void);
+void isotp_tx_comms_resume_usb(void);

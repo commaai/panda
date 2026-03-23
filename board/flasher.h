@@ -103,6 +103,28 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
   return 0;
 }
 
+int comms_isotp_read(uint8_t *data, uint32_t max_len) {
+  UNUSED(data);
+  UNUSED(max_len);
+  return 0;
+}
+
+void comms_isotp_write(const uint8_t *data, uint32_t len) {
+  UNUSED(data);
+  UNUSED(len);
+}
+
+void comms_isotp_reset(void) {}
+
+bool comms_isotp_can_write_usb(void) {
+  return true;
+}
+
+bool comms_isotp_can_write_spi(uint32_t len) {
+  UNUSED(len);
+  return true;
+}
+
 void refresh_can_tx_slots_available(void) {}
 
 void comms_endpoint2_write(const uint8_t *data, uint32_t len) {

@@ -34,6 +34,7 @@ CANPACKET_HEAD_SIZE = 0x6
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
 LEN_TO_DLC = {length: dlc for (dlc, length) in enumerate(DLC_TO_LEN)}
 PANDA_CAN_CNT = 3
+ISOTP_MAX_LEN = 0xFFF
 
 
 def calculate_checksum(data):
@@ -95,6 +96,52 @@ def unpack_can_buffer(dat):
   return (ret, dat)
 
 
+def pack_isotp_arb_id(arb_id: int, extended: bool | None = None) -> int:
+  if arb_id < 0:
+    raise ValueError(f"invalid ISO-TP arbitration ID: {arb_id}")
+
+  if extended is None:
+    extended = arb_id > 0x7FF
+
+  if extended:
+    if arb_id > 0x1FFFFFFF:
+      raise ValueError(f"invalid extended ISO-TP arbitration ID: {hex(arb_id)}")
+  elif arb_id > 0x7FF:
+    raise ValueError(f"invalid standard ISO-TP arbitration ID: {hex(arb_id)}")
+
+  return arb_id | (int(extended) << 31)
+
+
+def pack_isotp_buffer(payloads):
+  tx = bytearray()
+  for payload in payloads:
+    payload_bytes = bytes(payload)
+    if not (0 < len(payload_bytes) <= ISOTP_MAX_LEN):
+      raise ValueError(f"invalid ISO-TP payload length: {len(payload_bytes)}")
+
+    tx.extend(struct.pack("<H", len(payload_bytes)))
+    tx.extend(payload_bytes)
+  return tx
+
+
+def unpack_isotp_buffer(dat):
+  ret = []
+
+  while len(dat) >= 2:
+    payload_len = struct.unpack_from("<H", dat)[0]
+    if not (0 < payload_len <= ISOTP_MAX_LEN):
+      raise ValueError(f"invalid ISO-TP payload length in stream: {payload_len}")
+
+    record_len = payload_len + 2
+    if len(dat) < record_len:
+      break
+
+    ret.append(bytes(dat[2:record_len]))
+    dat = dat[record_len:]
+
+  return (ret, dat)
+
+
 def ensure_version(desc, lib_field, panda_field, fn):
   @wraps(fn)
   def wrapper(self, *args, **kwargs):
@@ -146,6 +193,7 @@ class Panda:
     self._handle: BaseHandle
     self._handle_open = False
     self.can_rx_overflow_buffer = b''
+    self.isotp_rx_overflow_buffer = b''
     self._can_speed_kbps = can_speed_kbps
 
     if cli and serial is None:
@@ -677,14 +725,14 @@ class Panda:
       self._handle.controlWrite(Panda.REQUEST_OUT, 0xe8, bus, int(auto), b'')
 
   def set_uart_baud(self, uart, rate):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe4, uart, int(rate / 300), b'')
+    logger.warning("UART configuration control requests are unsupported and now reserved for ISO-TP")
 
   def set_uart_parity(self, uart, parity):
     # parity, 0=off, 1=even, 2=odd
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe2, uart, parity, b'')
+    logger.warning("UART configuration control requests are unsupported and now reserved for ISO-TP")
 
   def set_uart_callback(self, uart, install):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe3, uart, int(install), b'')
+    logger.warning("UART configuration control requests are unsupported and now reserved for ISO-TP")
 
   # ******************* can *******************
 
@@ -694,6 +742,8 @@ class Panda:
   CAN_SEND_TIMEOUT_MS = 10
 
   def can_reset_communications(self):
+    self.can_rx_overflow_buffer = b''
+    self.isotp_rx_overflow_buffer = b''
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xc0, 0, 0, b'')
 
   @ensure_can_packet_version
@@ -730,6 +780,75 @@ class Panda:
 
     """
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf1, bus, 0, b'')
+
+  # ******************* ISO-TP *******************
+
+  ISOTP_SEND_TIMEOUT_MS = 10
+
+  def set_isotp_bus(self, bus: int):
+    if not (0 <= bus < PANDA_CAN_CNT):
+      raise ValueError(f"invalid ISO-TP bus: {bus}")
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe1, int(bus), 0, b'')
+
+  def set_isotp_tx_arb_id(self, arb_id: int, extended: bool | None = None):
+    packed = pack_isotp_arb_id(arb_id, extended)
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe2, packed & 0xFFFF, packed >> 16, b'')
+
+  def set_isotp_rx_arb_id(self, arb_id: int, extended: bool | None = None):
+    packed = pack_isotp_arb_id(arb_id, extended)
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe3, packed & 0xFFFF, packed >> 16, b'')
+
+  def set_isotp_ext_addr(self, tx_addr: int | None = None, rx_addr: int | None = None):
+    tx_cfg = 0 if tx_addr is None else (0x100 | int(tx_addr))
+    rx_cfg = 0 if rx_addr is None else (0x100 | int(rx_addr))
+
+    if not (0 <= tx_cfg <= 0x1FF):
+      raise ValueError(f"invalid ISO-TP TX extended address: {tx_addr}")
+    if not (0 <= rx_cfg <= 0x1FF):
+      raise ValueError(f"invalid ISO-TP RX extended address: {rx_addr}")
+
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe4, tx_cfg, rx_cfg, b'')
+
+  def set_isotp_tx_timeouts(self, message_timeout_ms: int, transfer_timeout_ms: int):
+    if message_timeout_ms <= 0 or transfer_timeout_ms <= 0:
+      raise ValueError("ISO-TP timeouts must be positive")
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe9, int(message_timeout_ms), int(transfer_timeout_ms), b'')
+
+  def configure_isotp(self, bus: int, tx_arb_id: int, rx_arb_id: int, *, tx_extended: bool | None = None,
+                      rx_extended: bool | None = None, tx_ext_addr: int | None = None,
+                      rx_ext_addr: int | None = None, message_timeout_ms: int | None = None,
+                      transfer_timeout_ms: int | None = None):
+    self.set_isotp_bus(bus)
+    self.set_isotp_tx_arb_id(tx_arb_id, tx_extended)
+    self.set_isotp_rx_arb_id(rx_arb_id, rx_extended)
+    self.set_isotp_ext_addr(tx_ext_addr, rx_ext_addr)
+
+    if (message_timeout_ms is None) != (transfer_timeout_ms is None):
+      raise ValueError("ISO-TP timeouts must be configured together")
+    if message_timeout_ms is not None and transfer_timeout_ms is not None:
+      self.set_isotp_tx_timeouts(message_timeout_ms, transfer_timeout_ms)
+
+  def isotp_send_many(self, payloads, *, timeout=ISOTP_SEND_TIMEOUT_MS):
+    tx = pack_isotp_buffer(payloads)
+    while len(tx) > 0:
+      bs = self._handle.bulkWrite(5, tx, timeout=timeout)
+      tx = tx[bs:]
+
+  def isotp_send(self, payload, *, timeout=ISOTP_SEND_TIMEOUT_MS):
+    self.isotp_send_many([payload], timeout=timeout)
+
+  def isotp_recv(self):
+    dat = bytearray()
+    while True:
+      try:
+        dat = self._handle.bulkRead(4, 16384)
+        break
+      except (usb1.USBErrorIO, usb1.USBErrorOverflow):
+        logger.error("ISO-TP: BAD RECV, RETRYING")
+        time.sleep(0.1)
+
+    msgs, self.isotp_rx_overflow_buffer = unpack_isotp_buffer(self.isotp_rx_overflow_buffer + dat)
+    return msgs
 
   # ******************* serial *******************
 

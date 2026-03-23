@@ -3,9 +3,7 @@ class PandaSerial:
   def __init__(self, panda, port, baud):
     self.panda = panda
     self.port = port
-    self.panda.set_uart_parity(self.port, 0)
     self._baudrate = baud
-    self.panda.set_uart_baud(self.port, baud)
     self.buf = b""
 
   def read(self, l=1):
@@ -31,5 +29,4 @@ class PandaSerial:
 
   @baudrate.setter
   def baudrate(self, value):
-    self.panda.set_uart_baud(self.port, value)
     self._baudrate = value

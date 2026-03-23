@@ -16,6 +16,7 @@
 
 #include "board/drivers/can_common.h"
 
+#include "board/isotp.h"
 #include "board/drivers/fdcan.h"
 
 #include "board/sys/power_saving.h"
@@ -267,6 +268,13 @@ static void tick_handler(void) {
   TICK_TIMER->SR = 0;
 }
 
+static void isotp_tick_handler(void) {
+  if (ISOTP_TIMER->SR != 0U) {
+    isotp_periodic_handler(microsecond_timer_get());
+  }
+  ISOTP_TIMER->SR = 0U;
+}
+
 int main(void) {
   // Init interrupt table
   init_interrupts(true);
@@ -320,6 +328,8 @@ int main(void) {
   // 8Hz timer
   REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK)
   tick_timer_init();
+  REGISTER_INTERRUPT(ISOTP_TIMER_IRQ, isotp_tick_handler, 1500U, FAULT_INTERRUPT_RATE_ISOTP)
+  isotp_timer_init();
 
 #ifdef DEBUG
   print("DEBUG ENABLED\n");

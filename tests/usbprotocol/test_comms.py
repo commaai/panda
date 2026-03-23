@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import random
+import struct
 import unittest
 
 from opendbc.car.structs import CarParams
@@ -33,6 +34,31 @@ class TestPandaComms(unittest.TestCase):
   def setUp(self):
     lpp.set_safety_hooks(CarParams.SafetyModel.allOutput, 0)
     lpp.comms_can_reset()
+    lpp.comms_isotp_reset()
+    lpp.set_microsecond_timer(0)
+    pkt = libpanda_py.ffi.new('CANPacket_t *')
+    for q in TX_QUEUES + (lpp.rx_q,):
+      while lpp.can_pop(q, pkt):
+        pass
+
+  def send_control(self, request, param1=0, param2=0, length=0):
+    req = libpanda_py.ffi.new('ControlPacket_t *')
+    req[0].request = request
+    req[0].param1 = param1
+    req[0].param2 = param2
+    req[0].length = length
+    resp = libpanda_py.ffi.new('uint8_t[64]')
+    return lpp.comms_control_handler(req, resp), bytes(resp)
+
+  def configure_isotp(self, bus=0, tx_addr=0x700, rx_addr=0x708):
+    self.send_control(0xe1, bus)
+    self.send_control(0xe2, tx_addr & 0xFFFF, (tx_addr >> 16) & 0xFFFF)
+    self.send_control(0xe3, rx_addr & 0xFFFF, (rx_addr >> 16) & 0xFFFF)
+
+  def read_isotp_bulk(self, max_len=64):
+    dat = libpanda_py.ffi.new(f"uint8_t[{max_len}]")
+    rx_len = lpp.comms_isotp_read(dat, max_len)
+    return bytes(dat[0:rx_len])
 
   def test_tx_queues(self):
     for bus in range(len(TX_QUEUES)):
@@ -154,6 +180,60 @@ class TestPandaComms(unittest.TestCase):
 
     self.assertEqual(len(rx_msgs), len(msgs))
     self.assertEqual(rx_msgs, msgs)
+
+  def test_isotp_send_single_frame(self):
+    self.configure_isotp()
+    payload = b"abcdef"
+    record = struct.pack("<H", len(payload)) + payload
+
+    lpp.comms_isotp_write(record[:3], 3)
+    lpp.comms_isotp_write(record[3:], len(record) - 3)
+    lpp.isotp_periodic_handler(0)
+
+    pkt = libpanda_py.ffi.new('CANPacket_t *')
+    assert lpp.can_pop(TX_QUEUES[0], pkt), "ISO-TP single frame was not queued"
+    assert unpackage_can_msg(pkt) == (0x700, b"\x06abcdef", 0)
+
+  def test_isotp_receive_single_frame(self):
+    self.configure_isotp()
+    msg = libpanda_py.make_CANPacket(0x708, 0, b"\x03xyz")
+
+    lpp.isotp_rx_hook(msg, 0)
+
+    assert self.read_isotp_bulk() == struct.pack("<H", 3) + b"xyz"
+
+  def test_isotp_send_multi_frame_after_fc(self):
+    self.configure_isotp()
+    payload = b"0123456789"
+    record = struct.pack("<H", len(payload)) + payload
+
+    lpp.comms_isotp_write(record, len(record))
+    lpp.isotp_periodic_handler(0)
+
+    pkt = libpanda_py.ffi.new('CANPacket_t *')
+    assert lpp.can_pop(TX_QUEUES[0], pkt), "ISO-TP first frame was not queued"
+    assert unpackage_can_msg(pkt) == (0x700, b"\x10\x0a012345", 0)
+
+    fc = libpanda_py.make_CANPacket(0x708, 0, b"\x30\x00\x00")
+    lpp.isotp_rx_hook(fc, 0)
+
+    assert lpp.can_pop(TX_QUEUES[0], pkt), "ISO-TP consecutive frame was not queued"
+    assert unpackage_can_msg(pkt) == (0x700, b"\x216789", 0)
+
+  def test_isotp_receive_multi_frame(self):
+    self.configure_isotp()
+    ff = libpanda_py.make_CANPacket(0x708, 0, b"\x10\x0a012345")
+    cf = libpanda_py.make_CANPacket(0x708, 0, b"\x216789")
+
+    lpp.isotp_rx_hook(ff, 0)
+
+    pkt = libpanda_py.ffi.new('CANPacket_t *')
+    assert lpp.can_pop(TX_QUEUES[0], pkt), "ISO-TP flow control was not queued"
+    assert unpackage_can_msg(pkt) == (0x700, b"\x30\x00\x00", 0)
+
+    lpp.isotp_rx_hook(cf, 0)
+
+    assert self.read_isotp_bulk() == struct.pack("<H", 10) + b"0123456789"
 
 
 if __name__ == "__main__":

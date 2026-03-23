@@ -37,12 +37,7 @@ I would not call the ISO-TP RX hook on frames that failed `safety_rx_hook()`. Ot
 To keep the implementation simple, both entry points should feed one shared internal engine instead of each carrying separate logic:
 
 ```c
-enum isotp_event {
-  ISOTP_EV_TIMER,
-  ISOTP_EV_RX,
-};
-
-static void isotp_kick(uint32_t now_us, enum isotp_event ev);
+static void isotp_kick(uint32_t now_us);
 ```
 
 Recommended split:
@@ -372,7 +367,7 @@ FC actions:
   - `tx.block_cf_sent = 0`
   - `tx.next_cf_us = now_us`
   - `tx.state = ISOTP_TX_WAIT_STMIN`
-  - call `isotp_kick(now_us, ISOTP_EV_RX)` so zero-`STmin` CF transmission can start immediately
+  - call `isotp_kick(now_us)` so zero-`STmin` CF transmission can start immediately
 - `WAIT`:
   - increment `tx.wait_fc_count`
   - if count exceeds `N_WFTmax`, abort TX

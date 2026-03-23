@@ -39,6 +39,7 @@ void llspi_miso_dma(uint8_t *addr, int len);
 static uint8_t spi_state = SPI_STATE_HEADER;
 static uint16_t spi_data_len_mosi;
 static bool spi_can_tx_ready = false;
+static bool spi_isotp_tx_ready = true;
 static const unsigned char version_text[] = "VERSION";
 
 static uint16_t spi_version_packet(uint8_t *out) {
@@ -92,6 +93,7 @@ void spi_init(void) {
   // Start the first packet!
   spi_state = SPI_STATE_HEADER;
   llspi_mosi_dma(spi_buf_rx, SPI_HEADER_SIZE);
+  spi_isotp_tx_ready = true;
 }
 
 static bool validate_checksum(const uint8_t *data, uint16_t len) {
@@ -155,6 +157,13 @@ void spi_rx_done(void) {
         } else {
           print("SPI: did not expect data for can_read\n");
         }
+      } else if ((spi_endpoint == 4U) || (spi_endpoint == 0x84U)) {
+        if (spi_data_len_mosi == 0U) {
+          response_len = comms_isotp_read(&(spi_buf_tx[3]), spi_data_len_miso);
+          response_ack = true;
+        } else {
+          print("SPI: did not expect data for isotp_read\n");
+        }
       } else if (spi_endpoint == 2U) {
         comms_endpoint2_write(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi);
         response_ack = true;
@@ -170,6 +179,19 @@ void spi_rx_done(void) {
           }
         } else {
           print("SPI: did expect data for can_write\n");
+        }
+      } else if (spi_endpoint == 5U) {
+        if (spi_data_len_mosi > 0U) {
+          if (spi_isotp_tx_ready && comms_isotp_can_write_spi(spi_data_len_mosi)) {
+            spi_isotp_tx_ready = false;
+            comms_isotp_write(&spi_buf_rx[SPI_HEADER_SIZE], spi_data_len_mosi);
+            response_ack = true;
+          } else {
+            response_ack = false;
+            print("SPI: ISOTP NACK\n");
+          }
+        } else {
+          print("SPI: did expect data for isotp_write\n");
         }
       } else if (spi_endpoint == 0xABU) {
         // test endpoint: mimics panda -> device transfer
@@ -255,4 +277,8 @@ void spi_tx_done(bool reset) {
 
 void can_tx_comms_resume_spi(void) {
   spi_can_tx_ready = true;
+}
+
+void isotp_tx_comms_resume_spi(void) {
+  spi_isotp_tx_ready = true;
 }

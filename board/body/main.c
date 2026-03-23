@@ -11,6 +11,7 @@
 #include "board/body/can.h"
 #include "opendbc/safety/safety.h"
 #include "board/drivers/can_common.h"
+#include "board/isotp_stubs.h"
 #include "board/drivers/fdcan.h"
 #include "board/can_comms.h"
 

@@ -15,6 +15,7 @@
 
 #include "board/drivers/can_common.h"
 
+#include "board/isotp_stubs.h"
 #include "board/drivers/fdcan.h"
 
 #include "board/obj/gitversion.h"

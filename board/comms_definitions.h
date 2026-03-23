@@ -10,3 +10,8 @@ void comms_endpoint2_write(const uint8_t *data, uint32_t len);
 void comms_can_write(const uint8_t *data, uint32_t len);
 int comms_can_read(uint8_t *data, uint32_t max_len);
 void comms_can_reset(void);
+int comms_isotp_read(uint8_t *data, uint32_t max_len);
+void comms_isotp_write(const uint8_t *data, uint32_t len);
+void comms_isotp_reset(void);
+bool comms_isotp_can_write_usb(void);
+bool comms_isotp_can_write_spi(uint32_t len);
