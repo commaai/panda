@@ -6,7 +6,6 @@ bool can_init(uint8_t can_number) { return true; }
 void process_can(uint8_t can_number) { }
 //int safety_tx_hook(CANPacket_t *to_send) { return 1; }
 
-void refresh_can_tx_slots_available(void);
 void can_tx_comms_resume_usb(void) { };
 void can_tx_comms_resume_spi(void) { };
 
@@ -35,6 +34,12 @@ can_ring *rx_q = &can_rx_q;
 can_ring *tx1_q = &can_tx1_q;
 can_ring *tx2_q = &can_tx2_q;
 can_ring *tx3_q = &can_tx3_q;
+
+bus_config_t bus_config[PANDA_CAN_CNT] = {
+  { .bus_lookup = 0U, .can_num_lookup = 0U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U },
+  { .bus_lookup = 1U, .can_num_lookup = 1U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U },
+  { .bus_lookup = 2U, .can_num_lookup = 2U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U },
+};
 
 #include "comms_definitions.h"
 #include "can_comms.h"
@@ -192,4 +197,13 @@ void comms_can_reset(void) {
   can_write_buffer.tail_size = 0U;
   can_read_buffer.ptr = 0U;
   can_read_buffer.tail_size = 0U;
+}
+
+void refresh_can_tx_slots_available(void) {
+  if (can_tx_check_min_slots_free(MAX_CAN_MSGS_PER_USB_BULK_TRANSFER)) {
+    can_tx_comms_resume_usb();
+  }
+  if (can_tx_check_min_slots_free(MAX_CAN_MSGS_PER_SPI_BULK_TRANSFER)) {
+    can_tx_comms_resume_spi();
+  }
 }
