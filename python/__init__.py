@@ -725,14 +725,14 @@ class Panda:
       self._handle.controlWrite(Panda.REQUEST_OUT, 0xe8, bus, int(auto), b'')
 
   def set_uart_baud(self, uart, rate):
-    logger.warning("UART configuration control requests are unsupported and now reserved for ISO-TP")
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe4, uart, int(rate / 300), b'')
 
   def set_uart_parity(self, uart, parity):
     # parity, 0=off, 1=even, 2=odd
-    logger.warning("UART configuration control requests are unsupported and now reserved for ISO-TP")
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe2, uart, parity, b'')
 
   def set_uart_callback(self, uart, install):
-    logger.warning("UART configuration control requests are unsupported and now reserved for ISO-TP")
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe3, uart, int(install), b'')
 
   # ******************* can *******************
 
@@ -788,15 +788,15 @@ class Panda:
   def set_isotp_bus(self, bus: int):
     if not (0 <= bus < PANDA_CAN_CNT):
       raise ValueError(f"invalid ISO-TP bus: {bus}")
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe1, int(bus), 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xea, int(bus), 0, b'')
 
   def set_isotp_tx_arb_id(self, arb_id: int, extended: bool | None = None):
     packed = pack_isotp_arb_id(arb_id, extended)
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe2, packed & 0xFFFF, packed >> 16, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xeb, packed & 0xFFFF, packed >> 16, b'')
 
   def set_isotp_rx_arb_id(self, arb_id: int, extended: bool | None = None):
     packed = pack_isotp_arb_id(arb_id, extended)
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe3, packed & 0xFFFF, packed >> 16, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xec, packed & 0xFFFF, packed >> 16, b'')
 
   def set_isotp_ext_addr(self, tx_addr: int | None = None, rx_addr: int | None = None):
     tx_cfg = 0 if tx_addr is None else (0x100 | int(tx_addr))
@@ -807,12 +807,12 @@ class Panda:
     if not (0 <= rx_cfg <= 0x1FF):
       raise ValueError(f"invalid ISO-TP RX extended address: {rx_addr}")
 
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe4, tx_cfg, rx_cfg, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xed, tx_cfg, rx_cfg, b'')
 
   def set_isotp_tx_timeouts(self, message_timeout_ms: int, transfer_timeout_ms: int):
     if message_timeout_ms <= 0 or transfer_timeout_ms <= 0:
       raise ValueError("ISO-TP timeouts must be positive")
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe9, int(message_timeout_ms), int(transfer_timeout_ms), b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xee, int(message_timeout_ms), int(transfer_timeout_ms), b'')
 
   def configure_isotp(self, bus: int, tx_arb_id: int, rx_arb_id: int, *, tx_extended: bool | None = None,
                       rx_extended: bool | None = None, tx_ext_addr: int | None = None,

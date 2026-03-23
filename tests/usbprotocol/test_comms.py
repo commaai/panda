@@ -51,9 +51,9 @@ class TestPandaComms(unittest.TestCase):
     return lpp.comms_control_handler(req, resp), bytes(resp)
 
   def configure_isotp(self, bus=0, tx_addr=0x700, rx_addr=0x708):
-    self.send_control(0xe1, bus)
-    self.send_control(0xe2, tx_addr & 0xFFFF, (tx_addr >> 16) & 0xFFFF)
-    self.send_control(0xe3, rx_addr & 0xFFFF, (rx_addr >> 16) & 0xFFFF)
+    self.send_control(0xea, bus)
+    self.send_control(0xeb, tx_addr & 0xFFFF, (tx_addr >> 16) & 0xFFFF)
+    self.send_control(0xec, rx_addr & 0xFFFF, (rx_addr >> 16) & 0xFFFF)
 
   def read_isotp_bulk(self, max_len=64):
     dat = libpanda_py.ffi.new(f"uint8_t[{max_len}]")

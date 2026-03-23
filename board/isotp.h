@@ -560,7 +560,7 @@ static uint32_t isotp_decode_stmin_us(uint8_t stmin_raw) {
   } else if ((stmin_raw >= 0xF1U) && (stmin_raw <= 0xF9U)) {
     ret = 1000U;
   } else {
-    // All other values are treated as zero for v1.
+    ret = 127000U;
   }
 
   return ret;
@@ -728,10 +728,14 @@ static void isotp_try_start_next_tx(uint32_t now_us) {
     isotp_session.tx.transfer_deadline_us = isotp_deadline_from_ms(now_us, isotp_session.tx_transfer_timeout_ms);
 
     if (isotp_session.tx.len <= single_cap) {
+      bool sent_ok;
       frame[0] = isotp_session.tx.len & 0x0FU;
       (void)memcpy(&frame[1], isotp_session.tx.buf, isotp_session.tx.len);
 
-      (void)isotp_send_can_frame(frame, (uint8_t)(isotp_session.tx.len + 1U));
+      sent_ok = isotp_send_can_frame(frame, (uint8_t)(isotp_session.tx.len + 1U));
+      if (!sent_ok) {
+        // Safety rejected the SF. Drop the active PDU like any other TX failure.
+      }
       isotp_abort_tx();
     } else {
       frame[0] = 0x10U | ((isotp_session.tx.len >> 8U) & 0x0FU);
@@ -803,7 +807,6 @@ static void isotp_handle_flow_control(const isotp_parsed_frame_t *parsed, uint32
       isotp_session.tx.stmin_us = isotp_decode_stmin_us(parsed->stmin_raw);
       isotp_session.tx.next_cf_us = now_us;
       isotp_session.tx.state = ISOTP_TX_WAIT_STMIN;
-      isotp_kick(now_us);
       break;
     case 1U:
       isotp_session.tx.wait_fc_count += 1U;

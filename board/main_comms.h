@@ -263,8 +263,8 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         ++resp_len;
       }
       break;
-    // **** 0xe1: set ISO-TP bus
-    case 0xe1:
+    // **** 0xea: set ISO-TP bus
+    case 0xea:
       if ((req->length == 0U) &&
           (req->param2 == 0U) &&
           ((req->param1 & 0xFF00U) == 0U) &&
@@ -272,20 +272,20 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         isotp_set_bus((uint8_t)req->param1);
       }
       break;
-    // **** 0xe2: set ISO-TP TX arbitration ID
-    case 0xe2:
+    // **** 0xeb: set ISO-TP TX arbitration ID
+    case 0xeb:
       if (req->length == 0U) {
         (void)isotp_set_tx_arb_id(((uint32_t)req->param2 << 16U) | req->param1);
       }
       break;
-    // **** 0xe3: set ISO-TP RX arbitration ID
-    case 0xe3:
+    // **** 0xec: set ISO-TP RX arbitration ID
+    case 0xec:
       if (req->length == 0U) {
         (void)isotp_set_rx_arb_id(((uint32_t)req->param2 << 16U) | req->param1);
       }
       break;
-    // **** 0xe4: set ISO-TP extended addressing
-    case 0xe4:
+    // **** 0xed: set ISO-TP extended addressing
+    case 0xed:
       if ((req->length == 0U) &&
           ((req->param1 & 0xFE00U) == 0U) &&
           ((req->param2 & 0xFE00U) == 0U)) {
@@ -309,8 +309,8 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xe8:
       bus_config[req->param1].canfd_auto = req->param2 > 0U;
       break;
-    // **** 0xe9: set ISO-TP TX timeouts
-    case 0xe9:
+    // **** 0xee: set ISO-TP TX timeouts
+    case 0xee:
       if ((req->length == 0U) &&
           (req->param1 != 0U) &&
           (req->param2 != 0U)) {

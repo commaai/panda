@@ -130,11 +130,11 @@ I would add five new handlers and extend the existing comms reset:
 | Request | Name | Purpose | Params |
 | --- | --- | --- | --- |
 | `0xc0` | `COMMS_RESET` | Reset ISO-TP comms state and buffers | none |
-| `0xe1` | `ISOTP_SET_BUS` | Select panda CAN bus for the ISO-TP session | `param1[7:0] = bus` |
-| `0xe2` | `ISOTP_SET_TX_ARB_ID` | Set packed TX arbitration ID | `param1/param2 = packed 32-bit ID` |
-| `0xe3` | `ISOTP_SET_RX_ARB_ID` | Set packed RX arbitration ID | `param1/param2 = packed 32-bit ID` |
-| `0xe4` | `ISOTP_SET_EXT_ADDR` | Configure TX/RX extended addressing bytes | `param1 = TX`, `param2 = RX` |
-| `0xe9` | `ISOTP_SET_TX_TIMEOUT` | Configure TX message and transfer timeouts | `param1 = msg timeout ms`, `param2 = transfer timeout ms` |
+| `0xea` | `ISOTP_SET_BUS` | Select panda CAN bus for the ISO-TP session | `param1[7:0] = bus` |
+| `0xeb` | `ISOTP_SET_TX_ARB_ID` | Set packed TX arbitration ID | `param1/param2 = packed 32-bit ID` |
+| `0xec` | `ISOTP_SET_RX_ARB_ID` | Set packed RX arbitration ID | `param1/param2 = packed 32-bit ID` |
+| `0xed` | `ISOTP_SET_EXT_ADDR` | Configure TX/RX extended addressing bytes | `param1 = TX`, `param2 = RX` |
+| `0xee` | `ISOTP_SET_TX_TIMEOUT` | Configure TX message and transfer timeouts | `param1 = msg timeout ms`, `param2 = transfer timeout ms` |
 
 ### `0xc0` `COMMS_RESET`
 
@@ -149,7 +149,7 @@ Existing behavior stays, but also reset all ISO-TP comms state:
 
 `0xc0` should be treated as an optional recovery/reset command, not a required part of normal host startup.
 
-### `0xe1` `ISOTP_SET_BUS`
+### `0xea` `ISOTP_SET_BUS`
 
 - `param1[7:0]`: panda bus number (`0..PANDA_CAN_CNT-1`)
 - `param1[15:8]`: reserved, must be zero
@@ -162,7 +162,7 @@ Semantics:
 - aborts any active ISO-TP transfer
 - clears both ISO-TP rings
 
-### `0xe2` `ISOTP_SET_TX_ARB_ID`
+### `0xeb` `ISOTP_SET_TX_ARB_ID`
 
 - `param1`: packed arbitration ID bits `[15:0]`
 - `param2`: packed arbitration ID bits `[31:16]`
@@ -178,16 +178,16 @@ Semantics:
 - updates the ID used for all outgoing ISO-TP frames, including outgoing flow-control frames
 - aborts active TX/RX state and clears both ISO-TP rings
 
-### `0xe3` `ISOTP_SET_RX_ARB_ID`
+### `0xec` `ISOTP_SET_RX_ARB_ID`
 
-Same layout as `0xe2`.
+Same layout as `0xeb`.
 
 Semantics:
 
 - updates the ID matched by `isotp_rx_hook()` for incoming data and incoming flow-control frames
 - aborts active TX/RX state and clears both ISO-TP rings
 
-### `0xe4` `ISOTP_SET_EXT_ADDR`
+### `0xed` `ISOTP_SET_EXT_ADDR`
 
 - `param1[7:0]`: TX extended address byte
 - `param1[8]`: TX extended address enabled
@@ -203,7 +203,7 @@ Semantics:
 - when RX extended addressing is enabled, incoming frames must start with `rx_ext_addr`
 - aborts active TX/RX state and clears both ISO-TP rings
 
-### `0xe9` `ISOTP_SET_TX_TIMEOUT`
+### `0xee` `ISOTP_SET_TX_TIMEOUT`
 
 - `param1`: per-message TX timeout in milliseconds
 - `param2`: full-transfer TX timeout in milliseconds
@@ -314,7 +314,7 @@ When `tx.state == ISOTP_TX_IDLE`, `isotp_periodic_handler()`:
 If the PDU fits in a single frame:
 
 - queue the SF with `can_send()`
-- if `can_send()` rejects it, abort TX as `TX_REJECTED`
+- if `can_send()` rejects it, abort TX
 - otherwise the ISO-TP transfer is complete immediately
 - `tx.state` remains `ISOTP_TX_IDLE`
 - no FC wait state is entered for an SF
@@ -394,7 +394,7 @@ For each CF that is queued:
   - 7 payload bytes without extended address
   - 6 payload bytes with extended address
 - call `can_send()`
-- if `packet.rejected != 0`, abort TX as `TX_REJECTED`
+- if `packet.rejected != 0`, abort TX
 - increments `offset`
 - increments and wraps `next_sn` on 0x0F -> 0x00
 - increments `block_cf_sent`
@@ -493,6 +493,8 @@ Recommended behavior:
 - unexpected SF while already in `ISOTP_RX_WAIT_CF`: ignore
 - FC frames received while RX is active: ignore unless TX is waiting for FC
 
+Ignoring an unexpected SF in `ISOTP_RX_WAIT_CF` is a deliberate v1 deviation from ISO 15765-2. The standard behavior would be to abort the in-progress segmented RX and process the new SF.
+
 ## Periodic Handler Logic
 
 `isotp_periodic_handler()` should do three things:
@@ -510,12 +512,12 @@ void isotp_periodic_handler(uint32_t now_us) {
 
   if ((session.tx.state != ISOTP_TX_IDLE) &&
       timeout_expired(now_us, session.tx.transfer_deadline_us)) {
-    isotp_abort_tx(ISOTP_ERR_TIMEOUT_TRANSFER);
+    isotp_abort_tx();
   }
 
   if ((session.tx.state == ISOTP_TX_WAIT_FC) &&
       timeout_expired(now_us, session.tx.deadline_us)) {
-    isotp_abort_tx(ISOTP_ERR_TIMEOUT_MESSAGE);
+    isotp_abort_tx();
   }
 
   if (session.tx.state == ISOTP_TX_IDLE) {
@@ -556,7 +558,7 @@ void isotp_rx_hook(const CANPacket_t *msg, uint32_t now_us) {
     case ISOTP_RX_WAIT_CF:
       if (parsed.type == CONSECUTIVE) isotp_handle_cf(parsed, now_us);
       else if (parsed.type == FIRST) {
-        isotp_abort_rx(ISOTP_ERR_RESTARTED);
+        isotp_abort_rx();
         isotp_handle_ff(parsed, now_us);
       }
       break;
@@ -593,11 +595,11 @@ Those timeout defaults are engineering choices, not protocol quotes. They are co
 
 ## Minimal Host Flow
 
-1. Send `0xe1` to set the bus
-2. Send `0xe2` to set TX ID
-3. Send `0xe3` to set RX ID
-4. Send `0xe4` to set TX/RX extended address bytes
-5. Send `0xe9` to set TX message and transfer timeouts
+1. Send `0xea` to set the bus
+2. Send `0xeb` to set TX ID
+3. Send `0xec` to set RX ID
+4. Send `0xed` to set TX/RX extended address bytes
+5. Send `0xee` to set TX message and transfer timeouts
 6. Write one or more length-value records to ISO-TP OUT bulk
 7. Read completed length-value records from ISO-TP IN bulk
 
