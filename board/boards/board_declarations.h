@@ -23,6 +23,7 @@ typedef void (*board_set_bootkick)(BootState state);
 typedef bool (*board_read_som_gpio)(void);
 typedef void (*board_set_amp_enabled)(bool enabled);
 
+typedef struct harness_configuration harness_configuration;
 struct board {
   harness_configuration *harness_config;
   GPIO_TypeDef * const led_GPIO[3];
