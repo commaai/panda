@@ -41,6 +41,7 @@ bool siren_enabled = false;
 
 // ********************* Serial debugging *********************
 
+// cppcheck-suppress misra-c2012-8.7; used as callback in uart.c
 void debug_ring_callback(uart_ring *ring) {
   char rcv;
   while (get_char(ring, &rcv)) {

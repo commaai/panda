@@ -121,6 +121,7 @@ void fan_tick(void);
 // ******************** fdcan ********************
 #ifdef STM32H7
 
+// cppcheck-suppress [misra-c2012-2.3, misra-c2012-2.4]; used in fdcan.c
 typedef struct {
   volatile uint32_t header[2];
   volatile uint32_t data_word[CANPACKET_DATA_SIZE_MAX/4U];
@@ -230,6 +231,7 @@ void init_registers(void);
 
 // ******************** simple_watchdog ********************
 
+// cppcheck-suppress [misra-c2012-2.3, misra-c2012-2.4]; used in simple_watchdog.c
 typedef struct simple_watchdog_state_t {
   uint32_t fault;
   uint32_t last_ts;

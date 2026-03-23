@@ -15,6 +15,7 @@ uint32_t microsecond_timer_get(void) {
   return MICROSECOND_TIMER->CNT;
 }
 
+// cppcheck-suppress misra-c2012-8.7; called from interrupts.c
 void interrupt_timer_init(void) {
   enable_interrupt_timer();
   REGISTER_INTERRUPT(INTERRUPT_TIMER_IRQ, interrupt_timer_handler, 2U, FAULT_INTERRUPT_RATE_INTERRUPTS)

@@ -1,5 +1,6 @@
 #pragma once
 
+// cppcheck-suppress misra-c2012-2.4; used in main_comms.c
 struct __attribute__((packed)) health_t {
   uint32_t uptime_pkt;
   uint32_t voltage_pkt;
