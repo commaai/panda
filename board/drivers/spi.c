@@ -1,5 +1,3 @@
-#pragma once
-
 #include "board/drivers/drivers.h"
 
 // H7 DMA2 located in D2 domain, so we need to use SRAM1/SRAM2
