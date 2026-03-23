@@ -60,11 +60,6 @@ separate IRQs for RX and TX.
 #include "board/drivers/registers.h"
 #include "board/drivers/interrupts.h"
 
-#ifdef BOOTSTUB
-uart_ring uart_ring_som_debug;
-#else
-extern uart_ring uart_ring_som_debug;
-#endif
 #include "board/drivers/gpio.h"
 #include "board/stm32h7/peripherals.h"
 #include "board/stm32h7/interrupt_handlers.h"
@@ -94,6 +89,10 @@ extern uart_ring uart_ring_som_debug;
 
 #include "board/drivers/spi.h"
 #include "board/stm32h7/llspi.h"
+
+#ifdef BOOTSTUB
+uart_ring uart_ring_som_debug;
+#endif
 
 void early_gpio_float(void) {
   RCC->AHB4ENR = RCC_AHB4ENR_GPIOAEN | RCC_AHB4ENR_GPIOBEN | RCC_AHB4ENR_GPIOCEN | RCC_AHB4ENR_GPIODEN | RCC_AHB4ENR_GPIOEEN | RCC_AHB4ENR_GPIOFEN | RCC_AHB4ENR_GPIOGEN | RCC_AHB4ENR_GPIOHEN;

@@ -20,6 +20,3 @@ extern bool heartbeat_disabled;
 
 // siren state
 extern bool siren_enabled;
-
-// sound
-extern uint16_t sound_output_level;

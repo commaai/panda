@@ -19,6 +19,19 @@ void can_tx_comms_resume_spi(void) { };
 #include "main_definitions.h"
 #include "drivers/can_common.h"
 
+// CAN queue definitions for libpanda test build
+// (in the firmware these are defined in board/drivers/can_common.c)
+#define CAN_RX_BUFFER_SIZE 4096U
+#define CAN_TX_BUFFER_SIZE 416U
+static CANPacket_t elems_rx_q[CAN_RX_BUFFER_SIZE];
+can_ring can_rx_q = { .w_ptr = 0, .r_ptr = 0, .fifo_size = CAN_RX_BUFFER_SIZE, .elems = (CANPacket_t *)&elems_rx_q };
+static CANPacket_t elems_tx1_q[CAN_TX_BUFFER_SIZE];
+can_ring can_tx1_q = { .w_ptr = 0, .r_ptr = 0, .fifo_size = CAN_TX_BUFFER_SIZE, .elems = (CANPacket_t *)&elems_tx1_q };
+static CANPacket_t elems_tx2_q[CAN_TX_BUFFER_SIZE];
+can_ring can_tx2_q = { .w_ptr = 0, .r_ptr = 0, .fifo_size = CAN_TX_BUFFER_SIZE, .elems = (CANPacket_t *)&elems_tx2_q };
+static CANPacket_t elems_tx3_q[CAN_TX_BUFFER_SIZE];
+can_ring can_tx3_q = { .w_ptr = 0, .r_ptr = 0, .fifo_size = CAN_TX_BUFFER_SIZE, .elems = (CANPacket_t *)&elems_tx3_q };
+
 can_ring *rx_q = &can_rx_q;
 can_ring *tx1_q = &can_tx1_q;
 can_ring *tx2_q = &can_tx2_q;

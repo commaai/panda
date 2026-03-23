@@ -152,7 +152,6 @@ struct harness_t {
 };
 extern struct harness_t harness;
 
-typedef struct harness_configuration harness_configuration;
 struct harness_configuration {
   GPIO_TypeDef * const GPIO_SBU1;
   GPIO_TypeDef * const GPIO_SBU2;
