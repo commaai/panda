@@ -1,4 +1,5 @@
 #include "board/config.h"
+#include "board/stm32h7/lluart.h"
 
 extern uart_ring uart_ring_som_debug;
 

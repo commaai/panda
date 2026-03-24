@@ -1,4 +1,5 @@
 #include "board/config.h"
+#include "board/stm32h7/lladc.h"
 
 static uint32_t adc_avdd_mV = 0U;
 

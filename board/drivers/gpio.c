@@ -1,4 +1,5 @@
 #include "board/config.h"
+#include "board/drivers/gpio.h"
 
 #define PULL_EFFECTIVE_DELAY 4096
 

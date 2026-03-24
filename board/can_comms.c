@@ -1,4 +1,5 @@
 #include "board/config.h"
+#include "board/can_comms.h"
 
 /*
   CAN transactions to and from the host come in the form of

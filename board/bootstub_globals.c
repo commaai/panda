@@ -3,6 +3,7 @@
 // which doesn't have -DDRIVER_BUILD in its CFLAGS. Other bootstub driver files use bs_drv_env.
 #define DRIVER_BUILD
 #include "board/config.h"
+#include "board/bootstub_globals.h"
 
 uint8_t hw_type = 0;
 board *current_board;

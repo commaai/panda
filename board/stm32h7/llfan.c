@@ -1,4 +1,5 @@
 #include "board/config.h"
+#include "board/stm32h7/llfan.h"
 
 // TACH interrupt handler
 static void EXTI2_IRQ_Handler(void) {

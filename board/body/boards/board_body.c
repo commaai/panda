@@ -1,4 +1,5 @@
 #include "board/config.h"
+#include "board/body/boards/board_body.h"
 #include "board/body/motor_control.h"
 #include "board/body/motor_encoder.h"
 

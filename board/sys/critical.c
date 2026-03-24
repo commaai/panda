@@ -8,7 +8,8 @@
 #define __disable_irq()
 #endif
 
-#include "sys.h"
+#include "board/sys/sys.h"
+#include "board/sys/critical.h"
 
 uint8_t global_critical_depth = 0U;
 volatile bool interrupts_enabled = false;

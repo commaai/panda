@@ -1,5 +1,5 @@
-#include "provision.h"
-#include "libc.h"
+#include "board/provision.h"
+#include "board/libc.h"
 
 #ifdef STM32H7
 #define PROVISION_CHUNK_ADDRESS 0x080FFFE0U

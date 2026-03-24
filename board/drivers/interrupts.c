@@ -1,4 +1,5 @@
 #include "board/config.h"
+#include "board/drivers/interrupts.h"
 
 void unused_interrupt_handler(void) {
   print("Unused interrupt handler called!\n");

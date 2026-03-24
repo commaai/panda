@@ -1,4 +1,5 @@
 #include "board/config.h"
+#include "board/body/main_comms.h"
 #include "board/early_init.h"
 #include "board/health.h"
 #include "board/body/motor_control.h"

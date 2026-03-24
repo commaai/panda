@@ -1,4 +1,5 @@
 #include "board/config.h"
+#include "board/stm32h7/llspi.h"
 
 void spi_rx_done(void);
 void spi_tx_done(bool);

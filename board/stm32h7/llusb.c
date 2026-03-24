@@ -1,4 +1,5 @@
 #include "board/config.h"
+#include "board/stm32h7/llusb.h"
 
 USB_OTG_GlobalTypeDef *USBx = USB_OTG_HS;
 

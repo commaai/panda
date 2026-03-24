@@ -1,4 +1,5 @@
 #include "board/config.h"
+#include "board/drivers/harness.h"
 
 struct harness_t harness;
 

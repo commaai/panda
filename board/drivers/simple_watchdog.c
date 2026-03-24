@@ -1,4 +1,5 @@
 #include "board/config.h"
+#include "board/drivers/simple_watchdog.h"
 
 static simple_watchdog_state_t wd_state;
 

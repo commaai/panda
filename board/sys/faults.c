@@ -1,4 +1,5 @@
-#include "sys.h"
+#include "board/sys/sys.h"
+#include "board/sys/faults.h"
 #include "board/libc.h"
 
 uint8_t fault_status = FAULT_STATUS_NONE;

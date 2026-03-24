@@ -1,4 +1,5 @@
 #include "board/config.h"
+#include "board/drivers/registers.h"
 
 typedef struct reg {
   volatile uint32_t *address;
