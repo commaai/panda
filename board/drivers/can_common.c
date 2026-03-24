@@ -1,5 +1,7 @@
 #include "board/config.h"
 #include "board/drivers/can_common.h"
+#include "board/can_comms.h"
+#include "board/drivers/fdcan.h"
 
 uint32_t safety_tx_blocked = 0;
 uint32_t safety_rx_invalid = 0;

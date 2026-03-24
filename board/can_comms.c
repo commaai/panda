@@ -1,5 +1,7 @@
 #include "board/config.h"
 #include "board/can_comms.h"
+#include "board/drivers/can_common.h"
+#include "board/libc.h"
 
 /*
   CAN transactions to and from the host come in the form of
