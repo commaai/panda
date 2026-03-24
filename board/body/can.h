@@ -11,6 +11,7 @@
 #include "board/body/bldc/bldc.h"
 
 #define BODY_CAN_ADDR_MOTOR_SPEED        0x201U
+#define BODY_CAN_ADDR_BLDC_ID            0x301U
 #define BODY_CAN_MOTOR_SPEED_PERIOD_US   10000U
 #define BODY_CAN_CMD_TIMEOUT_US          100000U
 #define BODY_BUS_NUMBER                  0U
@@ -69,6 +70,16 @@ void body_can_periodic(uint32_t now) {
     float left_speed_rpm = motor_encoder_get_speed_rpm(BODY_MOTOR_LEFT);
     float right_speed_rpm = motor_encoder_get_speed_rpm(BODY_MOTOR_RIGHT);
     body_can_send_motor_speeds(BODY_BUS_NUMBER, left_speed_rpm, right_speed_rpm);
+
+    // Send message on 0x301 to identify as BLDC body (v2)
+    CANPacket_t id_pkt = {0};
+    id_pkt.bus = BODY_BUS_NUMBER;
+    id_pkt.addr = BODY_CAN_ADDR_BLDC_ID;
+    id_pkt.data_len_code = 1;
+    id_pkt.data[0] = 1U;
+    can_set_checksum(&id_pkt);
+    can_send(&id_pkt, BODY_BUS_NUMBER, true);
+
     last_motor_speed_tx_us = now;
   }
 }
