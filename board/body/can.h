@@ -52,7 +52,7 @@ void body_can_init(void) {
   last_can_cmd_timestamp_us = 0U;
   can_silent = false;
   can_loopback = false;
-  (void)set_safety_hooks(SAFETY_BODY, 0U);
+  (void)set_safety_hooks(SAFETY_BODY, 1U);
   set_gpio_output(CAN_TRANSCEIVER_EN_PORT, CAN_TRANSCEIVER_EN_PIN, 0); // Enable CAN transceiver
   can_init_all();
 }
