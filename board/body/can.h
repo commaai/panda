@@ -11,7 +11,7 @@
 #include "board/body/bldc/bldc.h"
 
 #define BODY_CAN_ADDR_MOTOR_SPEED        0x201U
-#define BODY_CAN_ADDR_BLDC_ID            0x301U
+#define BODY_CAN_ADDR_BLDC_ID            0x396U
 #define BODY_CAN_MOTOR_SPEED_PERIOD_US   10000U
 #define BODY_CAN_CMD_TIMEOUT_US          100000U
 #define BODY_BUS_NUMBER                  0U
