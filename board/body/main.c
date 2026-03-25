@@ -133,6 +133,8 @@ int main(void) {
     if (ignition) {
       motor_set_enable(true);
       body_can_periodic(now);
+    } else {
+      motor_set_enable(false);
     }
 
     dotstar_show();
