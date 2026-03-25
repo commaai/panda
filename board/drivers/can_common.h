@@ -156,14 +156,8 @@ void can_set_forwarding(uint8_t from, uint8_t to) {
 #endif
 
 void ignition_can_hook(CANPacket_t *msg) {
-  if ((msg->bus == 0U) || (msg->bus == 2U)) {
+  if (msg->bus == 0U) {
     int len = GET_LEN(msg);
-
-    // Body exception
-    if (msg->addr == 0x201U) {
-      ignition_can = true;
-      ignition_can_cnt = 0U;
-    }
 
     // GM exception
     if ((msg->addr == 0x1F1U) && (len == 8)) {
@@ -206,7 +200,11 @@ void ignition_can_hook(CANPacket_t *msg) {
       ignition_can = (msg->data[0] >> 5) == 0x6U;
       ignition_can_cnt = 0U;
     }
+  }
 
+  if ((msg->bus == 2U) && (msg->addr == 0x201U)) {
+    ignition_can = true;
+    ignition_can_cnt = 0U;
   }
 }
 
