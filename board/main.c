@@ -119,6 +119,7 @@ static void tick_handler(void) {
   static uint8_t prev_harness_status = HARNESS_STATUS_NC;
   static uint8_t loop_counter = 0U;
   static bool relay_malfunction_prev = false;
+  static uint16_t last_active_safety_mode = 0;
 
   if (TICK_TIMER->SR != 0U) {
 
@@ -214,7 +215,12 @@ static void tick_handler(void) {
           puth(heartbeat_counter);
           print(" seconds. Safety is set to SILENT mode.\n");
 
-          if (controls_allowed_countdown > 0U) {
+          if (current_safety_mode != SAFETY_SILENT) {
+            last_active_safety_mode = current_safety_mode;
+          }
+
+          // do not play siren on comma body
+          if ((controls_allowed_countdown > 0U) && (last_active_safety_mode != SAFETY_BODY)) {
             siren_countdown = 3U;
             controls_allowed_countdown = 0U;
           }
