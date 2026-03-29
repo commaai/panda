@@ -44,12 +44,13 @@ def calculate_checksum(data):
   return res
 
 def _parse_c_struct(path, name):
+  type_to_format = {"uint8_t": "B", "uint16_t": "H", "uint32_t": "I", "float": "f"}
   with open(path) as f:
     lines = [l.strip() for l in f.read().split(f"struct __attribute__((packed)) {name} {{", 1)[1].split("};", 1)[0].splitlines() if l.strip()]
-  fields = [re.fullmatch(r"(uint(?:8|16|32)_t|float)\s+\w+;", l) for l in lines]
+  fields = [re.fullmatch(rf"({'|'.join(type_to_format)})\s+\w+;", l) for l in lines]
   if not all(fields):
     raise ValueError(f"unsupported {name} layout in {path}")
-  return struct.Struct("<" + "".join({"uint8_t": "B", "uint16_t": "H", "uint32_t": "I", "float": "f"}[m[1]] for m in fields))
+  return struct.Struct("<" + "".join(type_to_format[m[1]] for m in fields))
 
 def pack_can_buffer(arr, chunk=False, fd=False):
   snds = [bytearray(), ]
