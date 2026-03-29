@@ -128,7 +128,7 @@ class Panda:
 
   CAN_PACKET_VERSION = compute_version_hash(os.path.join(opendbc.INCLUDE_PATH, "opendbc/safety/can.h"))
   HEALTH_PACKET_VERSION = compute_version_hash(os.path.join(BASEDIR, "board/health.h"))
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBHBBBHfBBHHHBH")
+  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBHBBBHfBBHHHBHBB")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
 
   H7_DEVICES = [HW_TYPE_RED_PANDA, HW_TYPE_TRES, HW_TYPE_CUATRO, HW_TYPE_BODY]
@@ -533,6 +533,8 @@ class Panda:
       "sbu2_voltage_mV": a[23],
       "som_reset_triggered": a[24],
       "sound_output_level": a[25],
+      "controls_allowed_reserved_1": a[26],
+      "controls_allowed_reserved_2": a[27],
     }
 
   @ensure_health_packet_version
