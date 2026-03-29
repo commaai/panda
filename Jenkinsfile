@@ -6,7 +6,7 @@ def docker_run(String step_label, int timeout_mins, String cmd) {
           --volume /var/run/dbus:/var/run/dbus \
           --net host \
           ${env.DOCKER_IMAGE_TAG} \
-          bash -c 'scons -j8 && ${cmd}'", \
+          bash -c 'scons && ${cmd}'", \
         label: step_label
   }
 }
@@ -15,7 +15,7 @@ def docker_run(String step_label, int timeout_mins, String cmd) {
 def phone(String ip, String step_label, String cmd) {
   withCredentials([file(credentialsId: 'id_rsa', variable: 'key_file')]) {
     def ssh_cmd = """
-ssh -tt -o StrictHostKeyChecking=no -i ${key_file} 'comma@${ip}' /usr/bin/bash <<'END'
+ssh -tt -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ConnectionAttempts=3 -o ServerAliveInterval=10 -o ServerAliveCountMax=3 -i ${key_file} 'comma@${ip}' /usr/bin/bash <<'END'
 
 set -e
 
@@ -51,7 +51,11 @@ END"""
 def phone_steps(String device_type, steps) {
   lock(resource: "", label: device_type, inversePrecedence: true, variable: 'device_ip', quantity: 1) {
     timeout(time: 20, unit: 'MINUTES') {
-      phone(device_ip, "git checkout", readFile("tests/setup_device_ci.sh"),)
+      retry (3) {
+        def date = sh(script: 'date', returnStdout: true).trim()
+        phone(device_ip, "set time", "date -s '${date}'")
+        phone(device_ip, "git checkout", readFile("tests/setup_device_ci.sh"))
+      }
       steps.each { item ->
         phone(device_ip, item[0], item[1])
       }
@@ -107,7 +111,7 @@ pipeline {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
                 phone_steps("panda-cuatro", [
-                  ["build", "scons -j4"],
+                  ["build", "scons"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["flash jungle", "cd board/jungle && ./flash.py --all"],
                   ["test", "cd tests/hitl && pytest --durations=0 2*.py [5-9]*.py"],
@@ -119,7 +123,7 @@ pipeline {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
                 phone_steps("panda-tres", [
-                  ["build", "scons -j4"],
+                  ["build", "scons"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["flash jungle", "cd board/jungle && ./flash.py --all"],
                   ["test", "cd tests/hitl && pytest --durations=0 2*.py [5-9]*.py"],
@@ -127,15 +131,6 @@ pipeline {
               }
             }
 
-            /*
-            stage('bootkick tests') {
-              steps {
-                script {
-                  docker_run("test", 10, "pytest ./tests/som/test_bootkick.py")
-                }
-              }
-            }
-            */
           }
         }
       }
