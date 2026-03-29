@@ -1,5 +1,6 @@
 # python library to interface with panda
 import os
+import re
 import sys
 import time
 import usb1
@@ -41,6 +42,12 @@ def calculate_checksum(data):
   for b in data:
     res ^= b
   return res
+
+def _parse_c_struct(path, name):
+  with open(path) as f:
+    body = f.read().split(f"struct __attribute__((packed)) {name} {{", 1)[1].split("};", 1)[0]
+  fmt = "".join({"uint8_t": "B", "uint16_t": "H", "uint32_t": "I", "float": "f"}[t] for t in re.findall(r"^\s*(uint(?:8|16|32)_t|float)\s+\w+;", body, re.M))
+  return struct.Struct("<" + fmt)
 
 def pack_can_buffer(arr, chunk=False, fd=False):
   snds = [bytearray(), ]
@@ -128,7 +135,7 @@ class Panda:
 
   CAN_PACKET_VERSION = compute_version_hash(os.path.join(opendbc.INCLUDE_PATH, "opendbc/safety/can.h"))
   HEALTH_PACKET_VERSION = compute_version_hash(os.path.join(BASEDIR, "board/health.h"))
-  HEALTH_STRUCT = struct.Struct("<IIIIIIIIBBBBBHBBBHfBBHHHBH")
+  HEALTH_STRUCT = _parse_c_struct(os.path.join(BASEDIR, "board/health.h"), "health_t")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
 
   H7_DEVICES = [HW_TYPE_RED_PANDA, HW_TYPE_TRES, HW_TYPE_CUATRO, HW_TYPE_BODY]
