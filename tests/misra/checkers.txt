@@ -5,7 +5,7 @@ Cppcheck checkers list from test_misra.sh:
 
 
 TEST variant options:
---enable=all --disable=unusedFunction --addon=misra -DSTM32H7 -DSTM32H725xx -I /board/stm32h7/inc/ /board/main.c
+--enable=all --disable=unusedFunction --addon=misra -DSTM32H7 -DSTM32H725xx -I /board/stm32h7/inc/ /board/main.c -DDRIVER_BUILD /board/stm32h7/interrupt_handlers.c /board/stm32h7/peripherals.c /board/stm32h7/clock.c /board/stm32h7/llfdcan.c /board/stm32h7/llusb.c /board/stm32h7/llspi.c /board/stm32h7/lluart.c /board/stm32h7/lladc.c /board/stm32h7/board.c /board/stm32h7/llfan.c /board/stm32h7/lli2c.c /board/stm32h7/sound.c /board/stm32h7/llflash.c /board/drivers/gpio.c /board/drivers/registers.c /board/drivers/interrupts.c /board/drivers/timers.c /board/drivers/pwm.c /board/drivers/led.c /board/drivers/can_common.c /board/drivers/fdcan.c /board/drivers/uart.c /board/drivers/spi.c /board/drivers/usb.c /board/drivers/simple_watchdog.c /board/drivers/bootkick.c /board/drivers/clock_source.c /board/drivers/fan.c /board/drivers/harness.c /board/drivers/fake_siren.c /board/can_comms.c /board/sys/power_saving.c /board/sys/critical.c /board/sys/faults.c /board/main_comms.c /board/libc.c /board/crc.c /board/provision.c /board/main_globals.c /board/early_init.c /board/boards/unused_funcs.c /board/boards/red.c /board/boards/tres.c /board/boards/cuatro.c
 
 
 Critical errors
