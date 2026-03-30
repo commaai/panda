@@ -1,0 +1,94 @@
+name: package
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref != 'refs/heads/master' && github.ref || github.run_id }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  build-wheel:
+    name: build wheel
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup environment
+        run: ./setup.sh
+
+      - name: Build wheel
+        run: |
+          source .venv/bin/activate
+          pip install build
+          python -m build --wheel
+
+      - name: Verify wheel contents
+        run: |
+          source .venv/bin/activate
+          python scripts/check_wheel.py dist/*.whl
+
+      - name: Test wheel install
+        run: |
+          source .venv/bin/activate
+          pip install dist/*.whl
+          python -c "
+from panda import FW_PATH
+import os
+REQUIRED = [
+    'panda_h7.bin.signed',
+    'bootstub.panda_h7.bin',
+    'panda_jungle_h7.bin.signed',
+    'bootstub.panda_jungle_h7.bin',
+    'body_h7.bin.signed',
+    'bootstub.body_h7.bin',
+]
+missing = [f for f in REQUIRED if not os.path.exists(os.path.join(FW_PATH, f))]
+assert not missing, f'Missing firmware: {missing}'
+print(f'All {len(REQUIRED)} firmware files present in {FW_PATH}')
+"
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel
+          path: dist/*.whl
+
+  editable-install:
+    name: editable install
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup environment
+        run: ./setup.sh
+
+      - name: Editable install
+        run: |
+          source .venv/bin/activate
+          pip install -e . -v 2>&1 | tee install.log
+          grep -q "build_firmware" install.log || { echo "ERROR: build_firmware not in log"; exit 1; }
+
+      - name: Verify firmware path
+        run: |
+          source .venv/bin/activate
+          python -c "
+from panda import FW_PATH
+import os
+REQUIRED = [
+    'panda_h7.bin.signed',
+    'bootstub.panda_h7.bin',
+    'panda_jungle_h7.bin.signed',
+    'bootstub.panda_jungle_h7.bin',
+    'body_h7.bin.signed',
+    'bootstub.body_h7.bin',
+]
+missing = [f for f in REQUIRED if not os.path.exists(os.path.join(FW_PATH, f))]
+assert not missing, f'Missing firmware: {missing}'
+print(f'All {len(REQUIRED)} firmware files present in {FW_PATH}')
+"
