@@ -216,6 +216,9 @@ void can_rx(uint8_t can_number) {
     }
 
     safety_rx_invalid += safety_rx_hook(&to_push) ? 0U : 1U;
+    #ifdef PANDA_BODY
+    body_can_rx(&to_push);
+    #endif
     ignition_can_hook(&to_push);
 
     led_set(LED_BLUE, true);

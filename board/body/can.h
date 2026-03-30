@@ -48,6 +48,14 @@ void body_can_process_target(int16_t left_target_deci_rpm, int16_t right_target_
   last_can_cmd_timestamp_us = microsecond_timer_get();
 }
 
+void body_can_rx(CANPacket_t *msg) {
+  if ((msg->addr == 0x250U) && (GET_LEN(msg) >= 4U)) {
+    int16_t left_target_deci_rpm = (int16_t)((msg->data[0] << 8U) | msg->data[1]);
+    int16_t right_target_deci_rpm = (int16_t)((msg->data[2] << 8U) | msg->data[3]);
+    body_can_process_target(left_target_deci_rpm, right_target_deci_rpm);
+  }
+}
+
 void body_can_init(void) {
   last_can_cmd_timestamp_us = 0U;
   can_silent = false;
