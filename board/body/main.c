@@ -132,7 +132,7 @@ int main(void) {
 
     if (ignition) {
       motor_set_enable(true);
-      body_can_periodic(now);
+      body_can_periodic(now, ignition, plug_charging);
     } else {
       motor_set_enable(false);
     }

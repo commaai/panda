@@ -11,7 +11,9 @@
 #include "board/body/bldc/bldc.h"
 
 #define BODY_CAN_ADDR_MOTOR_SPEED        0x201U
-#define BODY_CAN_ADDR_BLDC_ID            0x396U
+#define BODY_CAN_ADDR_VAR_VALUES         0x202U
+#define BODY_CAN_ADDR_BODY_DATA          0x203U
+#define BODY_CAN_ADDR_V2_ID              0x002U
 #define BODY_CAN_MOTOR_SPEED_PERIOD_US   10000U
 #define BODY_CAN_CMD_TIMEOUT_US          100000U
 #define BODY_BUS_NUMBER                  0U
@@ -42,6 +44,39 @@ void body_can_send_motor_speeds(uint8_t bus, float left_speed_rpm, float right_s
   counter++;
 }
 
+void body_can_send_var_values(uint8_t bus, bool ignition, bool enable_motors, uint8_t fault, uint8_t left_z_errcode, uint8_t right_z_errcode) {
+  CANPacket_t pkt;
+  pkt.bus = bus;
+  pkt.addr = BODY_CAN_ADDR_VAR_VALUES;
+  pkt.returned = 0;
+  pkt.rejected = 0;
+  pkt.extended = 0;
+  pkt.fd = 0;
+  pkt.data_len_code = 3;
+  pkt.data[0] = (ignition ? 1U : 0U) | ((enable_motors ? 1U : 0U) << 1U) | ((fault & 0x3FU) << 2U);
+  pkt.data[1] = left_z_errcode;
+  pkt.data[2] = right_z_errcode;
+  can_set_checksum(&pkt);
+  can_send(&pkt, bus, true);
+}
+
+void body_can_send_body_data(uint8_t bus, uint8_t mcu_temp_raw, uint16_t batt_voltage_raw, uint8_t batt_percentage, bool charger_connected) {
+  CANPacket_t pkt;
+  pkt.bus = bus;
+  pkt.addr = BODY_CAN_ADDR_BODY_DATA;
+  pkt.returned = 0;
+  pkt.rejected = 0;
+  pkt.extended = 0;
+  pkt.fd = 0;
+  pkt.data_len_code = 4;
+  pkt.data[0] = mcu_temp_raw;
+  pkt.data[1] = (uint8_t)((batt_voltage_raw >> 8) & 0xFFU);
+  pkt.data[2] = (uint8_t)(batt_voltage_raw & 0xFFU);
+  pkt.data[3] = (charger_connected ? 1U : 0U) | ((batt_percentage & 0x7FU) << 1U);
+  can_set_checksum(&pkt);
+  can_send(&pkt, bus, true);
+}
+
 void body_can_process_target(int16_t left_target_deci_rpm, int16_t right_target_deci_rpm) {
   rpml = (int)(((float)left_target_deci_rpm) * 0.1f);
   rpmr = (int)(((float)right_target_deci_rpm) * 0.1f);
@@ -65,7 +100,7 @@ void body_can_init(void) {
   can_init_all();
 }
 
-void body_can_periodic(uint32_t now) {
+void body_can_periodic(uint32_t now, bool ignition, bool plug_charging) {
   if ((last_can_cmd_timestamp_us != 0U) &&
       ((now - last_can_cmd_timestamp_us) >= BODY_CAN_CMD_TIMEOUT_US)) {
     rpml = 0;
@@ -78,11 +113,13 @@ void body_can_periodic(uint32_t now) {
     float left_speed_rpm = motor_encoder_get_speed_rpm(BODY_MOTOR_LEFT);
     float right_speed_rpm = motor_encoder_get_speed_rpm(BODY_MOTOR_RIGHT);
     body_can_send_motor_speeds(BODY_BUS_NUMBER, left_speed_rpm, right_speed_rpm);
+    body_can_send_var_values(BODY_BUS_NUMBER, ignition, enable_motors, 0U, rtY_Left.z_errCode, rtY_Right.z_errCode);
+    body_can_send_body_data(BODY_BUS_NUMBER, 0U, batt_voltage_raw, batt_percentage, plug_charging);
 
-    // Send message on 0x301 to identify as BLDC body (v2)
+    // Send message on 0x002 to identify as body v2
     CANPacket_t id_pkt = {0};
     id_pkt.bus = BODY_BUS_NUMBER;
-    id_pkt.addr = BODY_CAN_ADDR_BLDC_ID;
+    id_pkt.addr = BODY_CAN_ADDR_V2_ID;
     id_pkt.data_len_code = 1;
     id_pkt.data[0] = 1U;
     can_set_checksum(&id_pkt);

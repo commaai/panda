@@ -35,6 +35,9 @@ static P    rtP_Right;                  /* Parameters */
 static int16_t curL_phaA = 0, curL_phaC = 0, curL_DC = 0;
 static int16_t curR_phaA = 0, curR_phaC = 0, curR_DC = 0;
 
+volatile uint16_t batt_voltage_raw = 0;
+volatile uint16_t batt_percentage = 0;
+
 volatile int rpml = 0;
 volatile int rpmr = 0;
 
@@ -59,7 +62,7 @@ const adc_signal_t adc_curL_DC = ADC_CHANNEL_BLDC(ADC2, 18);
 const adc_signal_t adc_curR_phaA = ADC_CHANNEL_BLDC(ADC1, 7);
 const adc_signal_t adc_curR_phaC = ADC_CHANNEL_BLDC(ADC1, 15);
 const adc_signal_t adc_curR_DC = ADC_CHANNEL_BLDC(ADC1, 5);
-//const adc_signal_t adc_batVoltage = ADC_CHANNEL_BLDC(ADC1, 4);
+const adc_signal_t adc_batVoltage = ADC_CHANNEL_BLDC(ADC1, 4);
 
 void motor_set_enable(bool enable) {
   enable_motors = enable;
@@ -121,7 +124,7 @@ void bldc_init(void) {
   // Setup the model pointers for Right motor
   rtP_Right = rtP_Left; // copy parameters
   // Right motor measured current phases A & C (based on adc_curR_phaA/C definitions)
-  rtP_Right.z_selPhaCurMeasABC  = 2; 
+  rtP_Right.z_selPhaCurMeasABC  = 2;
   rtM_Right->defaultParam = &rtP_Right;
   rtM_Right->inputs = &rtU_Right;
   rtM_Right->outputs = &rtY_Right;
@@ -252,6 +255,12 @@ void bldc_step(void) {
     RIGHT_TIM->BDTR |= TIM_BDTR_MOE;
   }
 
+  // read battery voltage
+  batt_voltage_raw = adc_get_raw(&adc_batVoltage);
+
+  int16_t batVoltageCalib = batt_voltage_raw * BAT_CALIB_REAL_VOLTAGE / BAT_CALIB_ADC;
+  batt_percentage = 100 - (((420 * BAT_CELLS) - batVoltageCalib) / BAT_CELLS / VOLTS_PER_PERCENT / 100);
+
   // ========================= LEFT MOTOR ===========================
   rtU_Left.b_motEna      = enableFin;
   rtU_Left.z_ctrlModReq  = CTRL_MOD_REQ; // Speed Mode
@@ -283,7 +292,7 @@ void bldc_step(void) {
     deadband_rpmr = 0;
   }
   rtU_Right.r_inpTgt      = (int16_t)(CLAMP(deadband_rpmr, -MAX_RPM, MAX_RPM) * RPM_TO_UNIT);
-  
+
   rtU_Right.i_phaAB       = curR_phaA;
   rtU_Right.i_phaBC       = curR_phaC;
   rtU_Right.i_DCLink      = curR_DC;

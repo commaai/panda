@@ -42,6 +42,14 @@
 #define FIELD_WEAK_HI   1000            // Input target High threshold
 #define FIELD_WEAK_LO   750             // Input target Low threshold
 
+// Battery configuration
+#define BAT_CELLS               3       // 3 sets in series
+#define BAT_CELL_FULL_MV        4200U   // mV per cell at 100%
+#define BAT_CELL_EMPTY_MV       3386U   // mV per cell at 0% (from V1: 4200 - 100 * 8.14)
+#define VOLTS_PER_PERCENT       0.00814 // Volts per percent, for conversion of volts to percentage
+#define BAT_CALIB_REAL_VOLTAGE  1260U   // multimeter voltage
+#define BAT_CALIB_ADC           1275U   // adc reading voltage
+
 void bldc_init(void);
 void bldc_step(void);
 
