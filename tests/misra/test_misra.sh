@@ -59,10 +59,19 @@ cppcheck() {
   fi
 }
 
-PANDA_OPTS="--enable=all --disable=unusedFunction --addon=misra"
+CPPCHECK_COMMON="-DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/"
+
+if [ -n "$MISRA_ONLY" ]; then
+  # fast path for mutation testing: use fail-fast misra addon that exits on
+  # first violation. cppcheck reports this as "Failed to execute addon" error,
+  # which the grep below catches. saves ~10s per mutation test.
+  PANDA_OPTS="--enable=style --addon=$DIR/misra_failfast.py"
+else
+  PANDA_OPTS="--enable=all --disable=unusedFunction --addon=misra"
+fi
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ $PANDA_DIR/board/main.c
+cppcheck $PANDA_OPTS $CPPCHECK_COMMON $PANDA_DIR/board/main.c
 
 # unused needs to run globally
 #printf "\n${GREEN}** UNUSED ALL CODE **${NC}\n"
