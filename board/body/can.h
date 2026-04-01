@@ -19,9 +19,9 @@
 #define BODY_BUS_NUMBER                  0U
 
 static uint32_t last_can_cmd_timestamp_us = 0U;
+static uint16_t counter = 0U;
 
 void body_can_send_motor_speeds(uint8_t bus, float left_speed_rpm, float right_speed_rpm) {
-  static uint16_t counter = 0U;
   CANPacket_t pkt;
   pkt.bus = bus;
   pkt.addr = BODY_CAN_ADDR_MOTOR_SPEED;
@@ -30,8 +30,8 @@ void body_can_send_motor_speeds(uint8_t bus, float left_speed_rpm, float right_s
   pkt.extended = 0;
   pkt.fd = 0;
   pkt.data_len_code = 8;
-  int16_t left_speed_deci = left_speed_rpm * 10;
-  int16_t right_speed_deci = right_speed_rpm * 10;
+  int16_t left_speed_deci = left_speed_rpm;
+  int16_t right_speed_deci = -(right_speed_rpm);
   pkt.data[0] = (uint8_t)((left_speed_deci >> 8) & 0xFFU);
   pkt.data[1] = (uint8_t)(left_speed_deci & 0xFFU);
   pkt.data[2] = (uint8_t)((right_speed_deci >> 8) & 0xFFU);

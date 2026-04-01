@@ -1228,7 +1228,7 @@ void BLDC_controller_step(RT_MODEL *const rtM)
   /* End of Switch: '<S13>/Switch2' */
 
   /* Deadband on measured speed to prevent drift at zero */
-  #define SPEED_MEAS_DEADBAND (2 * 16) // RPM_DEADBAND * RPM_TO_UNIT
+  #define SPEED_MEAS_DEADBAND (RPM_DEADBAND * 16) // RPM_DEADBAND * RPM_TO_UNIT
   if ((Switch2 > -SPEED_MEAS_DEADBAND) && (Switch2 < SPEED_MEAS_DEADBAND)) {
     Switch2 = 0;
   }

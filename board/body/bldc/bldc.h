@@ -268,7 +268,7 @@ void bldc_step(void) {
   if (ABS(deadband_rpml) < RPM_DEADBAND) {
     deadband_rpml = 0;
   }
-  rtU_Left.r_inpTgt      = (int16_t)(CLAMP(-deadband_rpml, -MAX_RPM, MAX_RPM) * RPM_TO_UNIT);
+  rtU_Left.r_inpTgt      = (CLAMP((int)deadband_rpml, -MAX_RPM, MAX_RPM) * RPM_TO_UNIT);
 
   rtU_Left.i_phaAB       = curL_phaA;
   rtU_Left.i_phaBC       = curL_phaC;
@@ -291,7 +291,7 @@ void bldc_step(void) {
   if (ABS(deadband_rpmr) < RPM_DEADBAND) {
     deadband_rpmr = 0;
   }
-  rtU_Right.r_inpTgt      = (int16_t)(CLAMP(deadband_rpmr, -MAX_RPM, MAX_RPM) * RPM_TO_UNIT);
+  rtU_Right.r_inpTgt      = -(CLAMP((int)deadband_rpmr, -MAX_RPM, MAX_RPM) * RPM_TO_UNIT);
 
   rtU_Right.i_phaAB       = curR_phaA;
   rtU_Right.i_phaBC       = curR_phaC;

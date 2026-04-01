@@ -13,9 +13,9 @@
 #define PWM_FREQ 32000
 #define PWM_MARGIN 100
 #define CF_SPEED_COEF (PWM_FREQ / 3)
-#define MAX_RPM 250
+#define MAX_RPM 1000
 #define RPM_TO_UNIT 16
-#define RPM_DEADBAND 2
+#define RPM_DEADBAND 1
 
 #define BODY_MOTOR_LEFT 1U
 #define BODY_MOTOR_RIGHT 2U
