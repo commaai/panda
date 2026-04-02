@@ -71,9 +71,9 @@ void motor_set_enable(bool enable) {
 float motor_encoder_get_speed_rpm(uint8_t motor) {
   float speed_rpm = 0.0f;
   if (motor == BODY_MOTOR_LEFT) {
-    speed_rpm = (float)rtY_Left.n_mot / RPM_TO_UNIT;
+    speed_rpm = (float)rtY_Left.n_mot;
   } else if (motor == BODY_MOTOR_RIGHT) {
-    speed_rpm = (float)rtY_Right.n_mot / RPM_TO_UNIT;
+    speed_rpm = (float)rtY_Right.n_mot;
   }
 
   if (ABS(speed_rpm) < RPM_DEADBAND) {
