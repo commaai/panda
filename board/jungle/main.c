@@ -19,6 +19,11 @@
 
 #include "board/obj/gitversion.h"
 
+#ifdef STM32H7
+  #include "board/jungle/stm32h7/llsdmmc.h"
+  #include "board/jungle/stm32h7/sd_replay.h"
+#endif
+
 #include "board/can_comms.h"
 #include "board/jungle/main_comms.h"
 
@@ -155,9 +160,24 @@ int main(void) {
   can_init_all();
   current_board->set_harness_orientation(HARNESS_ORIENTATION_1);
 
+#ifdef STM32H7
+  gpio_sdmmc_init();
+  if (sdmmc_reset() == sd_err_ok) {
+    sd_replay_init();
+  } else {
+    print("SD card not detected\n");
+  }
+#endif
+
   // LED should keep on blinking all the time
   uint32_t cnt = 0;
   for (cnt=0;;cnt++) {
+#ifdef STM32H7
+    if (sd_replay_state == SD_REPLAY_ACTIVE) {
+      sd_replay_tick();
+      continue;
+    }
+#endif
     if (generated_can_traffic) {
       // fill up all the queues
       can_ring *qs[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q};

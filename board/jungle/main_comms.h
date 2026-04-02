@@ -68,6 +68,33 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xa4:
       generated_can_traffic = (req->param1 > 0U);
       break;
+    // **** 0xa5: SD card CAN replay control (param1: 0=stop, 1=start)
+    case 0xa5:
+#ifdef STM32H7
+      if (req->param1 == 1U) {
+        sd_replay_start();
+      } else {
+        sd_replay_stop();
+      }
+#endif
+      break;
+    // **** 0xa6: Get SD card replay status
+    case 0xa6:
+#ifdef STM32H7
+      {
+        struct __attribute__((packed)) {
+          uint8_t  state;
+          uint32_t total_records;
+          uint32_t current_record;
+        } status;
+        status.state          = (uint8_t)sd_replay_state;
+        status.total_records  = sd_replay_total_records;
+        status.current_record = sd_replay_current_record;
+        (void)memcpy(resp, &status, sizeof(status));
+        resp_len = sizeof(status);
+      }
+#endif
+      break;
     // **** 0xa8: get microsecond timer
     case 0xa8:
       time = microsecond_timer_get();

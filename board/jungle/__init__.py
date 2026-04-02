@@ -149,3 +149,16 @@ class PandaJungle(Panda):
 
   def set_header_pin(self, pin_num, enabled):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, int(pin_num), int(enabled), b'')
+
+  # ******************* SD card CAN replay *******************
+
+  def sd_replay_start(self):
+    self._handle.controlWrite(PandaJungle.REQUEST_OUT, 0xa5, 1, 0, b'')
+
+  def sd_replay_stop(self):
+    self._handle.controlWrite(PandaJungle.REQUEST_OUT, 0xa5, 0, 0, b'')
+
+  def sd_replay_status(self):
+    dat = self._handle.controlRead(PandaJungle.REQUEST_IN, 0xa6, 0, 0, 9)
+    state, total, current = struct.unpack("<BII", dat)
+    return {"state": state, "total_records": total, "current_record": current}
