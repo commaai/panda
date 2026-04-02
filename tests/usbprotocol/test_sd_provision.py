@@ -21,7 +21,7 @@ RECORD_FMT    = _mod.RECORD_FMT
 RECORD_SIZE   = _mod.RECORD_SIZE
 SECTOR_SIZE   = _mod.SECTOR_SIZE
 
-# One nanosecond in microseconds
+# nanoseconds per microsecond
 _US = 1000
 
 
@@ -120,6 +120,16 @@ class TestSDRecord(unittest.TestCase):
       pad = _unpack_record(raw[i * RECORD_SIZE:(i + 1) * RECORD_SIZE])[5]
       self.assertEqual(pad, 0)
 
+  def test_sort_order(self):
+    # Reverse-order input must produce ascending timestamps in output
+    msgs = [(2_000_000, 0x100, 0, b'\x00' * 8),
+            (1_000_000, 0x101, 0, b'\x00' * 8),
+            (0,         0x102, 0, b'\x00' * 8)]
+    raw = build_records(msgs)
+    times = [_unpack_record(raw[i * RECORD_SIZE:(i + 1) * RECORD_SIZE])[0] for i in range(3)]
+    self.assertEqual(times, sorted(times))
+    self.assertEqual(times[0], 0)
+
   def test_addr_preserved(self):
     msgs = [(0, 0x1FFFFFFF, 0, b'\x00' * 8)]  # max 29-bit address
     raw = build_records(msgs)
@@ -129,11 +139,14 @@ class TestSDRecord(unittest.TestCase):
 
 class TestSDImage(unittest.TestCase):
   def _write_tmp(self, msgs):
+    import os
     records = build_records(msgs)
     header = build_header(len(msgs))
     with tempfile.NamedTemporaryFile(delete=False) as f:
-      write_image(f.name, header, records)
-      return f.name
+      path = f.name
+    write_image(path, header, records)
+    self.addCleanup(os.unlink, path)
+    return path
 
   def test_output_sector_aligned(self):
     import os

@@ -84,7 +84,14 @@ def read_can_messages(rlog_path):
 
 
 def build_records(messages):
-  """Convert (mono_time_ns, addr, bus, data) list to binary record bytes."""
+  """Convert (mono_time_ns, addr, bus, data) list to binary record bytes.
+
+  messages must be non-empty. Records are sorted by timestamp before encoding
+  so that firmware replay timing is correct regardless of input order.
+  """
+  if not messages:
+    raise ValueError("messages must not be empty")
+  messages = sorted(messages, key=lambda m: m[0])
   t0_ns = messages[0][0]
   records = bytearray()
   for mono_time_ns, addr, bus, data in messages:
@@ -129,7 +136,6 @@ def main():
   records = build_records(messages)
   num_records = len(messages)
 
-  duration_s = (messages[-1][0] - messages[-1][0]) // 1_000_000_000 if len(messages) > 1 else 0
   elapsed_us = (messages[-1][0] - messages[0][0]) // 1000
   duration_s = elapsed_us / 1_000_000
 

@@ -85,6 +85,7 @@ static bool sd_replay_fill_buffer(void) {
 }
 
 void sd_replay_init(void) {
+  COMPILE_TIME_ASSERT(sizeof(sd_can_record_t) == SD_RECORD_SIZE);
   // Read header from sector 0
   sd_error err = sdmmc_read_idma(idmabuf, SD_HEADER_SECTOR, 1U);
   if (err != sd_err_ok) {
@@ -152,20 +153,20 @@ void sd_replay_tick(void) {
     }
 
     if (rec->bus < PANDA_CAN_CNT) {
-      uint8_t dlc = rec->len;  // for standard CAN, len == DLC for 0-8
-      if (dlc > 8U) {
-        dlc = 8U;
+      uint8_t data_len = rec->len;
+      if (data_len > 8U) {
+        data_len = 8U;
       }
 
       CANPacket_t pkt = {0};
       pkt.fd       = 0U;
       pkt.bus      = rec->bus;
-      pkt.data_len_code = dlc;
+      pkt.data_len_code = data_len;
       pkt.returned = 0U;
       pkt.rejected = 0U;
       pkt.extended = (rec->addr >= 0x800U) ? 1U : 0U;
       pkt.addr     = rec->addr;
-      (void)memcpy(pkt.data, rec->data, dlc);
+      (void)memcpy(pkt.data, rec->data, data_len);
       can_set_checksum(&pkt);
       can_send(&pkt, pkt.bus, true);
     }
