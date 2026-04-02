@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import importlib.util
+import os
 import pathlib
 import struct
 import tempfile
@@ -139,7 +140,6 @@ class TestSDRecord(unittest.TestCase):
 
 class TestSDImage(unittest.TestCase):
   def _write_tmp(self, msgs):
-    import os
     records = build_records(msgs)
     header = build_header(len(msgs))
     with tempfile.NamedTemporaryFile(delete=False) as f:
