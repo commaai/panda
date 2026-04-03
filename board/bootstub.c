@@ -4,6 +4,15 @@
 // ********************* Includes *********************
 #include "board/config.h"
 
+// ********************* Globals (from bootstub_declarations.h) **********************
+uint8_t hw_type = 0;
+board *current_board;
+#ifdef PANDA_JUNGLE
+uint8_t harness_orientation = 0U;
+uint8_t can_mode = 0U;
+uint8_t ignition = 0U;
+#endif
+
 #include "board/drivers/led.h"
 #include "board/drivers/pwm.h"
 #include "board/drivers/usb.h"

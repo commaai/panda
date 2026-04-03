@@ -4,7 +4,6 @@
 void print(const char *a);
 void puth(unsigned int i);
 typedef struct board board;
-typedef struct harness_configuration harness_configuration;
 void pwm_init(TIM_TypeDef *TIM, uint8_t channel);
 void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
 
@@ -20,6 +19,3 @@ extern bool heartbeat_disabled;
 
 // siren state
 extern bool siren_enabled;
-
-// sound
-extern uint16_t sound_output_level;

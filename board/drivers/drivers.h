@@ -1,11 +1,20 @@
 #pragma once
 
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "board/sys/sys.h"
 #include "board/can.h"
 #include "board/health.h"
 #include "board/crc.h"
 #ifdef STM32H7
 #include "board/stm32h7/lladc_declarations.h"
 #endif
+
+// ******************** pwm ********************
+
+void pwm_init(TIM_TypeDef *TIM, uint8_t channel);
+void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
 
 // ******************** bootkick ********************
 
@@ -53,6 +62,10 @@ bool can_init(uint8_t can_number);
 void process_can(uint8_t can_number);
 
 // ********************* instantiate queues *********************
+extern can_ring can_rx_q;
+extern can_ring can_tx1_q;
+extern can_ring can_tx2_q;
+extern can_ring can_tx3_q;
 extern can_ring *can_queues[PANDA_CAN_CNT];
 
 // helpers
@@ -63,6 +76,7 @@ extern can_ring *can_queues[PANDA_CAN_CNT];
 bool can_pop(can_ring *q, CANPacket_t *elem);
 bool can_push(can_ring *q, const CANPacket_t *elem);
 uint32_t can_slots_empty(const can_ring *q);
+void can_clear(can_ring *q);
 extern bus_config_t bus_config[PANDA_CAN_CNT];
 
 #define CANIF_FROM_CAN_NUM(num) (cans[num])
@@ -107,6 +121,7 @@ void fan_tick(void);
 // ******************** fdcan ********************
 #ifdef STM32H7
 
+// cppcheck-suppress [misra-c2012-2.3, misra-c2012-2.4]; used in fdcan.c
 typedef struct {
   volatile uint32_t header[2];
   volatile uint32_t data_word[CANPACKET_DATA_SIZE_MAX/4U];
@@ -158,6 +173,11 @@ void harness_tick(void);
 void harness_init(void);
 
 // ******************** interrupts ********************
+
+// There are 163 external interrupt sources (see stm32h725xx.h)
+#ifndef NUM_INTERRUPTS
+#define NUM_INTERRUPTS 163U
+#endif
 
 typedef struct interrupt {
   IRQn_Type irq_type;
@@ -211,6 +231,7 @@ void init_registers(void);
 
 // ******************** simple_watchdog ********************
 
+// cppcheck-suppress [misra-c2012-2.3, misra-c2012-2.4]; used in simple_watchdog.c
 typedef struct simple_watchdog_state_t {
   uint32_t fault;
   uint32_t last_ts;
@@ -257,6 +278,10 @@ typedef struct uart_ring {
   bool overwrite;
 } uart_ring;
 
+// ***************************** UART ring instances *****************************
+extern uart_ring uart_ring_debug;
+extern uart_ring uart_ring_som_debug;
+
 // ***************************** Function prototypes *****************************
 void debug_ring_callback(uart_ring *ring);
 void uart_tx_ring(uart_ring *q);
@@ -271,12 +296,8 @@ void putch(const char a);
 void print(const char *a);
 void puthx(uint32_t i, uint8_t len);
 void puth(unsigned int i);
-#if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
-static void puth4(unsigned int i);
-#endif
-#if defined(DEBUG_SPI) || defined(DEBUG_USB) || defined(DEBUG_COMMS)
-static void hexdump(const void *a, int l);
-#endif
+void puth4(unsigned int i);
+void hexdump(const void *a, int l);
 
 #endif // STM32H7
 

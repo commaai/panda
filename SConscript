@@ -61,7 +61,9 @@ def to_c_uint32(x):
   return "{" + 'U,'.join(map(str, nums)) + "U}"
 
 
-def build_project(project_name, project, main, extra_flags):
+def build_project(project_name, project, main, extra_flags, extra_main_sources=None):
+  if extra_main_sources is None:
+    extra_main_sources = []
   project_dir = Dir(f'./board/obj/{project_name}/')
 
   flags = project["FLAGS"] + extra_flags + common_flags + [
@@ -101,22 +103,67 @@ def build_project(project_name, project, main, extra_flags):
 
   startup = env.Object(project["STARTUP_FILE"])
 
+  # Shared source files (compiled separately for bootstub and main)
+  shared_sources = [
+    "./board/libc.c",
+    "./board/crc.c",
+    "./board/provision.c",
+    "./board/early_init.c",
+    "./board/drivers/registers.c",
+    "./board/drivers/interrupts.c",
+    "./board/drivers/spi.c",
+    "./board/drivers/usb.c",
+    "./board/stm32h7/peripherals.c",
+    "./board/stm32h7/clock.c",
+    "./board/stm32h7/llusb.c",
+    "./board/stm32h7/llspi.c",
+    "./board/stm32h7/lladc.c",
+    "./board/stm32h7/sound.c",
+    "./board/drivers/harness.c",
+    "./board/drivers/clock_source.c",
+  ]
+
+  # Main-only source files used by ALL targets (not used in bootstub)
+  main_only_sources = [
+    "./board/drivers/uart.c",
+    "./board/drivers/can_common.c",
+    "./board/drivers/fdcan.c",
+    "./board/can_comms.c",
+    "./board/stm32h7/lluart.c",
+    "./board/stm32h7/llfdcan.c",
+  ] + extra_main_sources
+
+  # Bootstub-only source files
+  bootstub_only_sources = [
+    "./board/flasher.c",
+    "./board/stm32h7/llflash.c",
+  ]
+
   # Build bootstub
   bs_env = env.Clone()
   bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
+
+  # Build shared sources with bootstub flags (unique object names to avoid conflicts)
+  bs_shared_objs = [bs_env.Object(f"{project_dir}/bs_{os.path.basename(s)}.o", s) for s in shared_sources]
+  bs_only_objs = [bs_env.Object(s) for s in bootstub_only_sources]
+
   bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", [
     startup,
     "./board/crypto/rsa.c",
     "./board/crypto/sha.c",
     "./board/bootstub.c",
-  ])
+  ] + bs_shared_objs + bs_only_objs)
   bs_env.Objcopy(f"./board/obj/bootstub.{project_name}.bin", bs_elf)
+
+  # Build main-only and shared sources for main
+  main_shared_objs = [env.Object(s) for s in shared_sources]
+  main_only_objs = [env.Object(s) for s in main_only_sources]
 
   # Build + sign main (aka app)
   main_elf = env.Program(f"{project_dir}/main.elf", [
     startup,
-    main
-  ], LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
+    main,
+  ] + main_shared_objs + main_only_objs, LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
   sign_py = File(f"./board/crypto/sign.py").srcnode().relpath
   env.Command(f"./board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
@@ -159,8 +206,17 @@ hh, ch, jh = version_hash("board/health.h"), version_hash(os.path.join(opendbc.I
 common_flags += [f"-DHEALTH_PACKET_VERSION=0x{hh:08X}U", f"-DCAN_PACKET_VERSION_HASH=0x{ch:08X}U",
                  f"-DJUNGLE_HEALTH_PACKET_VERSION=0x{jh:08X}U"]
 
+# Panda-specific main sources (not needed by body or jungle)
+panda_main_sources = [
+  "./board/drivers/simple_watchdog.c",
+  "./board/drivers/fan.c",
+  "./board/drivers/bootkick.c",
+  "./board/main_comms.c",
+  "./board/stm32h7/llfan.c",
+]
+
 # panda fw
-build_project("panda_h7", base_project_h7, "./board/main.c", [])
+build_project("panda_h7", base_project_h7, "./board/main.c", [], extra_main_sources=panda_main_sources)
 
 # panda jungle fw
 flags = [

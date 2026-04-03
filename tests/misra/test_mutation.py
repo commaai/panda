@@ -27,7 +27,7 @@ IGNORED_PATHS = (
 
 mutations = [
   (None, None, False),  # no mods, should pass
-  ("board/stm32h7/llfdcan.h", "s/return ret;/if (true) { return ret; } else { return false; }/g", True),
+  ("board/drivers/gpio.h", "s/return ret;/if (true) { return ret; } else { return false; }/g", True),
 ]
 
 patterns = [
@@ -55,12 +55,17 @@ patterns = [
 
 all_files = glob.glob('board/**', root_dir=ROOT, recursive=True)
 files = sorted(f for f in all_files if f.endswith(('.c', '.h')) and not f.startswith(IGNORED_PATHS))
-assert len(files) > 50, all(d in files for d in ('board/main.c', 'board/stm32h7/llfdcan.h'))
+assert len(files) > 50, all(d in files for d in ('board/main.c', 'board/drivers/gpio.h'))
+
+# cppcheck only analyzes main.c and its header includes, so mutations
+# to standalone .c files won't be detected. Filter to .h files only
+# for pattern-based mutations (which append code that must be visible to cppcheck)
+header_files = sorted(f for f in files if f.endswith('.h'))
 
 # fixed seed so every xdist worker collects the same test params
-rng = random.Random(len(files))
+rng = random.Random(len(header_files))
 for p in patterns:
-  mutations.append((rng.choice(files), p, True))
+  mutations.append((rng.choice(header_files), p, True))
 
 # sample to keep CI fast, but always include the no-mutation case
 mutations = [mutations[0]] + rng.sample(mutations[1:], min(2, len(mutations) - 1))
