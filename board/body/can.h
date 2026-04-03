@@ -13,7 +13,7 @@
 #define BODY_CAN_ADDR_MOTOR_SPEED        0x201U
 #define BODY_CAN_ADDR_VAR_VALUES         0x202U
 #define BODY_CAN_ADDR_BODY_DATA          0x203U
-#define BODY_CAN_ADDR_V2_ID              0x002U
+#define BODY_CAN_ADDR_V2_ID              0x222U
 #define BODY_CAN_MOTOR_SPEED_PERIOD_US   10000U
 #define BODY_CAN_CMD_TIMEOUT_US          100000U
 #define BODY_BUS_NUMBER                  0U
@@ -116,7 +116,7 @@ void body_can_periodic(uint32_t now, bool ignition, bool plug_charging) {
     body_can_send_var_values(BODY_BUS_NUMBER, ignition, enable_motors, 0U, rtY_Left.z_errCode, rtY_Right.z_errCode);
     body_can_send_body_data(BODY_BUS_NUMBER, 0U, batt_voltage_raw, batt_percentage, plug_charging);
 
-    // Send message on 0x002 to identify as body v2
+    // Send message on 0x222 to identify as body v2
     CANPacket_t id_pkt = {0};
     id_pkt.bus = BODY_BUS_NUMBER;
     id_pkt.addr = BODY_CAN_ADDR_V2_ID;
