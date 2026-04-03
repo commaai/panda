@@ -48,7 +48,11 @@ def flasher(p, addr, file):
       return
   raise RuntimeError(f"Flash failed after {retries} attempts")
 
-def update_routine(p, addr=0x250, file="./body.bin.signed"):
+def update(addr=0x250, file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "body.bin.signed")):
+  params = Params()
+  p = Panda()
+  _thread.start_new_thread(heartbeat_thread, (p,))
+
   p.set_safety_mode(structs.CarParams.SafetyModel.elm327)
   params.put_bool("BodyFirmwareFlashing", True)
 
@@ -79,8 +83,4 @@ if __name__ == "__main__":
   parser.add_argument("fn", type=str, nargs='?', help="flash file")
   args = parser.parse_args()
 
-  params = Params()
-  p = Panda()
-  _thread.start_new_thread(heartbeat_thread, (p,))
-
-  update_routine(p, 0x250, args.fn)
+  update(0x250, args.fn)
