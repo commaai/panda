@@ -48,39 +48,44 @@ def flasher(p, addr, file):
       return
   raise RuntimeError(f"Flash failed after {retries} attempts")
 
-def update(addr=0x250, file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "body.bin.signed")):
+def update(addr=0x250, file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "body.bin.signed"), skip_version_check=False):
   params = Params()
   p = Panda()
   _thread.start_new_thread(heartbeat_thread, (p,))
 
-  p.set_safety_mode(structs.CarParams.SafetyModel.elm327)
-  params.put_bool("BodyFirmwareFlashing", True)
+  if not skip_version_check:
+    p.set_safety_mode(structs.CarParams.SafetyModel.elm327)
+    params.put_bool("BodyFirmwareFlashing", True)
 
-  print("checking firmware version")
-  current_version = get_body_firmware_version(p)
+    print("checking firmware version")
+    current_version = get_body_firmware_version(p)
 
-  with open(file, "rb") as f:
-    f.seek(0x1D8)
-    try:
-      expected_version = f.read(8).decode("ascii")
-    except (UnicodeDecodeError, ValueError):
-      expected_version = None
-    f.close()
+    with open(file, "rb") as f:
+      f.seek(0x1D8)
+      try:
+        expected_version = f.read(8).decode("ascii")
+      except (UnicodeDecodeError, ValueError):
+        expected_version = None
+      f.close()
 
-  print(f"expected body version: {expected_version}, current body version: {current_version}")
-  if current_version != expected_version:
-    try:
-      print("Flashing motherboard")
-      flasher(p, addr, args.fn)
-    finally:
-      params.put_bool("BodyFirmwareFlashing", False)
+    print(f"expected body version: {expected_version}, current body version: {current_version}")
+
+  if skip_version_check or current_version != expected_version:
+    p.set_safety_mode(structs.CarParams.SafetyModel.body)
+    print("Flashing motherboard")
+    flasher(p, addr, file)
   else:
     print("body firmware is up to date")
-    params.put_bool("BodyFirmwareFlashing", False)
+
+  params.put_bool("BodyFirmwareFlashing", False)
+  p.close()
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Flash body over can')
   parser.add_argument("fn", type=str, nargs='?', help="flash file")
+  parser.add_argument("--skip", action="store_true", help="skip firmware version check and force flash")
   args = parser.parse_args()
 
-  update(0x250, args.fn)
+  assert os.path.exists(args.fn), f"file not found: {args.fn}"
+
+  update(0x250, args.fn, args.skip)
