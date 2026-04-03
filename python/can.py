@@ -44,8 +44,6 @@ class CanHandle(BaseHandle):
     return self.transact(dat)
 
   def bulkWrite(self, endpoint, data, timeout=0):
-    if len(data) > 0x10:
-      raise ValueError("Data must not be longer than 0x10")
     dat = struct.pack("HH", endpoint, len(data)) + data
     return self.transact(dat)
 

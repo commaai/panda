@@ -10,6 +10,7 @@ import _thread
 from panda import Panda, McuType  # pylint: disable=import-error
 from panda.python.can import CanHandle  # pylint: disable=import-error
 from opendbc.car import structs
+from openpilot.common.params import Params
 
 
 def heartbeat_thread(p):
@@ -54,9 +55,14 @@ if __name__ == "__main__":
 
   addr = 0x250 if args.board == "base" else 0x350
 
+  params = Params()
   p = Panda()
   _thread.start_new_thread(heartbeat_thread, (p,))
   p.set_safety_mode(structs.CarParams.SafetyModel.body)
 
-  print("Flashing motherboard")
-  flasher(p, addr, args.fn)
+  params.put_bool("BodyFirmwareFlashing", True)
+  try:
+    print("Flashing motherboard")
+    flasher(p, addr, args.fn)
+  finally:
+    params.put_bool("BodyFirmwareFlashing", False)
