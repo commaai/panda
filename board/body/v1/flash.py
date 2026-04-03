@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
-# connects to PANDA on BOARD the comma and then sends CAN commands through that COMMA to flash the STM32F4 on the body v1 board
-
 import os
 import time
 import argparse
 import _thread
 import subprocess
-from panda import Panda, McuType  # pylint: disable=import-error
-from panda.python.can import CanHandle  # pylint: disable=import-error
+from panda import Panda, McuType
+from panda.python.can import CanHandle
 from opendbc.car import structs
 from opendbc.car.uds import UdsClient, DATA_IDENTIFIER_TYPE
 from openpilot.common.params import Params
@@ -77,7 +75,7 @@ def update(addr=0x250, file=BIN_PATH, skip_version_check=False):
       f.seek(0x1D8)
       expected_version = f.read(8).decode("ascii")
       f.close()
-  except (FileNotFoundError, UnicodeDecodeError):
+  except (FileNotFoundError, UnicodeDecodeError, ValueError):
     expected_version = None
 
   if expected_version is None or expected_version != FIRMWARE_COMMIT:
