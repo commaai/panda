@@ -7,14 +7,31 @@ import os
 import time
 import argparse
 import _thread
+import subprocess
 from panda import Panda, McuType  # pylint: disable=import-error
 from panda.python.can import CanHandle  # pylint: disable=import-error
 from opendbc.car import structs
 from opendbc.car.uds import UdsClient, DATA_IDENTIFIER_TYPE
 from openpilot.common.params import Params
 
-def get_body_firmware_version(p) -> bytes:
-  """Read the git commit hash from a body board via UDS ReadDataByIdentifier (DID 0xF181)."""
+FIRMWARE_VERSION = "v0.3.0"
+BIN_URL = f"https://github.com/commaai/body/releases/download/{FIRMWARE_VERSION}/body.bin.signed"
+
+BIN_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "body.bin.signed")
+
+def fetch_bin():
+  result = subprocess.run(
+    ["curl", "-L", "-o", BIN_PATH, "-w", "%{http_code}", "--silent", BIN_URL],
+    capture_output=True, text=True
+  )
+  status = result.stdout.strip()
+  if status == "200":
+    print("downloaded latest body firmware binary")
+  else:
+    raise RuntimeError(f"download failed with HTTP {status}")
+
+def get_body_firmware_version(p):
+  """Read the git commit hash from a body board via UDS ReadDataByIdentifier"""
   uds_client = UdsClient(p, 0x721, 0x729, bus=0, timeout=1)
   return uds_client.read_data_by_identifier(DATA_IDENTIFIER_TYPE.APPLICATION_SOFTWARE_IDENTIFICATION).decode("ascii")
 
@@ -48,14 +65,15 @@ def flasher(p, addr, file):
       return
   raise RuntimeError(f"Flash failed after {retries} attempts")
 
-def update(addr=0x250, file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "body.bin.signed"), skip_version_check=False):
+def update(addr=0x250, file=BIN_PATH, skip_version_check=False):
   params = Params()
   p = Panda()
   _thread.start_new_thread(heartbeat_thread, (p,))
 
+  params.put_bool("BodyFirmwareFlashing", True)
+
   if not skip_version_check:
     p.set_safety_mode(structs.CarParams.SafetyModel.elm327)
-    params.put_bool("BodyFirmwareFlashing", True)
 
     print("checking firmware version")
     current_version = get_body_firmware_version(p)
@@ -70,7 +88,11 @@ def update(addr=0x250, file=os.path.join(os.path.dirname(os.path.abspath(__file_
 
     print(f"expected body version: {expected_version}, current body version: {current_version}")
 
-  if skip_version_check or current_version != expected_version:
+    if current_version != expected_version:
+      fetch_bin()
+      version_mismatch = True
+
+  if skip_version_check or version_mismatch:
     p.set_safety_mode(structs.CarParams.SafetyModel.body)
     print("Flashing motherboard")
     flasher(p, addr, file)
@@ -78,7 +100,6 @@ def update(addr=0x250, file=os.path.join(os.path.dirname(os.path.abspath(__file_
     print("body firmware is up to date")
 
   params.put_bool("BodyFirmwareFlashing", False)
-  p.close()
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Flash body over can')
