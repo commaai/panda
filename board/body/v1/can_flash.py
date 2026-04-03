@@ -32,16 +32,16 @@ def flasher(p, addr, file):
   print("flashing", file)
   flush_panda(p)
   code = open(file, "rb").read()
-  retries = 3 # How many times to retry on timeout error
-  while(retries+1>0):
+  retries = 3
+  for i in range(retries):
     try:
       Panda.flash_static(CanHandle(p, 0), code, McuType.F4)
-    except TimeoutError:
-      print("Timeout, trying again...")
-      retries -= 1
+    except (TimeoutError):
+      print(f"Flash failed (attempt {i + 1}/{retries}), trying again...")
     else:
       print("Successfully flashed")
-      break
+      return
+  raise RuntimeError(f"Flash failed after {retries} attempts")
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@ from itertools import accumulate
 
 import opendbc
 from opendbc.car.structs import CarParams
+from panda.python.can import CanHandle
 
 from .base import BaseHandle
 from .constants import BASEDIR, FW_PATH, McuType, compute_version_hash
@@ -417,7 +418,7 @@ class Panda:
       handle.controlWrite(Panda.REQUEST_IN, 0xb2, i, 0, b'')
 
     # flash over EP2
-    STEP = 0x200
+    STEP = 0x10 if type(handle) is CanHandle else 0x200
     logger.info("flash: flashing")
     for i in range(0, len(code), STEP):
       handle.bulkWrite(2, code[i:i + STEP])

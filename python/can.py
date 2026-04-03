@@ -16,7 +16,7 @@ class CanHandle(BaseHandle):
       raise TimeoutError
 
     signal.signal(signal.SIGALRM, _handle_timeout)
-    signal.alarm(1)
+    signal.alarm(2)
 
     try:
       isotp_send(self.p, dat, 1, self.bus, recvaddr=2)
@@ -24,7 +24,7 @@ class CanHandle(BaseHandle):
       signal.alarm(0)
 
     signal.signal(signal.SIGALRM, _handle_timeout)
-    signal.alarm(1)
+    signal.alarm(2)
     try:
       ret = isotp_recv(self.p, 2, self.bus, sendaddr=1)
     finally:
