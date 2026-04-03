@@ -1,4 +1,10 @@
-import opendbc
+# Try to import opendbc, fallback to relative path if not available
+try:
+    import opendbc
+    OPENDBC_PATH = opendbc.INCLUDE_PATH
+except ImportError:
+    import os
+    OPENDBC_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'opendbc')
 
 env = Environment(
   CFLAGS=[
@@ -8,7 +14,7 @@ env = Environment(
     '-Wfatal-errors',
     '-Wno-pointer-to-int-cast',
   ],
-  CPPPATH=[".", "../../", "../../board/", opendbc.INCLUDE_PATH],
+  CPPPATH=[".", "../../", "../../board/", OPENDBC_PATH],
 )
 
 panda = env.SharedObject("panda.os", "panda.c")
