@@ -71,25 +71,23 @@ def update(addr=0x250, file=BIN_PATH, skip_version_check=False):
 
   params.put_bool("BodyFirmwareFlashing", True)
 
-  if not skip_version_check:
-    p.set_safety_mode(structs.CarParams.SafetyModel.elm327) # needed for UDS
-
-    print("checking local bin firmware version")
+  print("checking local bin firmware version")
+  try:
     with open(file, "rb") as f:
       f.seek(0x1D8)
-      try:
-        expected_version = f.read(8).decode("ascii")
-      except (UnicodeDecodeError, ValueError):
-        expected_version = None
+      expected_version = f.read(8).decode("ascii")
       f.close()
+  except (FileNotFoundError, UnicodeDecodeError):
+    expected_version = None
 
-    if expected_version is None or expected_version != FIRMWARE_COMMIT:
-      print("local bin is not up-to-date, fetching latest")
-      fetch_bin()
+  if expected_version is None or expected_version != FIRMWARE_COMMIT:
+    print("local bin is not up-to-date, fetching latest")
+    fetch_bin()
 
+  if not skip_version_check:
+    p.set_safety_mode(structs.CarParams.SafetyModel.elm327) # needed for UDS
     print("checking body firmware version")
     current_version = get_body_firmware_version(p)
-
     print(f"expected body version: {expected_version}, current body version: {current_version}")
 
   if skip_version_check or current_version != expected_version:
@@ -107,6 +105,7 @@ if __name__ == "__main__":
   parser.add_argument("--skip", action="store_true", help="skip firmware version check and force flash")
   args = parser.parse_args()
 
-  assert os.path.exists(args.fn), f"file not found: {args.fn}"
+  if not args.fn:
+    args.fn = BIN_URL
 
   update(0x250, args.fn, args.skip)
