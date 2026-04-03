@@ -83,7 +83,7 @@ def update(addr=0x250, file=BIN_PATH, skip_version_check=False):
         expected_version = None
       f.close()
 
-    if expected_version != FIRMWARE_COMMIT:
+    if expected_version is None or expected_version != FIRMWARE_COMMIT:
       print("local bin is not up-to-date, fetching latest")
       fetch_bin()
 
