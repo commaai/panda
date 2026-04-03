@@ -1,32 +1,18 @@
-#pragma once
+#ifndef PANDA_BOARDS_UNUSED_FUNCS_H
+#define PANDA_BOARDS_UNUSED_FUNCS_H
 
-void unused_init_bootloader(void) {
-}
+#include <stdbool.h>
+#include <stdint.h>
+#include "board_declarations.h"
 
-void unused_set_ir_power(uint8_t percentage) {
-  UNUSED(percentage);
-}
+void unused_set_fan_enabled(bool enabled);
+void unused_set_siren(bool enabled);
+void unused_set_bootkick(BootState state);
+void unused_set_ir_power(uint8_t percentage);
+bool unused_read_som_gpio(void);
+void unused_set_amp_enabled(bool enabled);
+uint32_t unused_read_voltage_mV(void);
+uint32_t unused_read_current_mA(void);
+int unused_comms_control_handler(ControlPacket_t *req, uint8_t *resp);
 
-void unused_set_fan_enabled(bool enabled) {
-  UNUSED(enabled);
-}
-
-void unused_set_siren(bool enabled) {
-  UNUSED(enabled);
-}
-
-uint32_t unused_read_current(void) {
-  return 0U;
-}
-
-void unused_set_bootkick(BootState state) {
-  UNUSED(state);
-}
-
-bool unused_read_som_gpio(void) {
-  return false;
-}
-
-void unused_set_amp_enabled(bool enabled) {
-  UNUSED(enabled);
-}
+#endif

@@ -1,21 +1,17 @@
-#include "board/drivers/drivers.h"
+#ifndef SIMPLE_WATCHDOG_H
+#define SIMPLE_WATCHDOG_H
 
-static simple_watchdog_state_t wd_state;
+#include <stdint.h>
 
-void simple_watchdog_kick(void) {
-  uint32_t ts = microsecond_timer_get();
+// cppcheck-suppress misra-c2012-2.3 ; used in driver implementations
+// cppcheck-suppress misra-c2012-2.4 ; used in driver implementations
+typedef struct simple_watchdog_state_t {
+  uint32_t fault;
+  uint32_t last_ts;
+  uint32_t threshold;
+} simple_watchdog_state_t;
 
-  uint32_t et = get_ts_elapsed(ts, wd_state.last_ts);
-  if (et > wd_state.threshold) {
-    print("WD timeout 0x"); puth(et); print("\n");
-    fault_occurred(wd_state.fault);
-  }
+void simple_watchdog_kick(void);
+void simple_watchdog_init(uint32_t fault, uint32_t threshold);
 
-  wd_state.last_ts = ts;
-}
-
-void simple_watchdog_init(uint32_t fault, uint32_t threshold) {
-  wd_state.fault = fault;
-  wd_state.threshold = threshold;
-  wd_state.last_ts = microsecond_timer_get();
-}
+#endif

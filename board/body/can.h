@@ -7,7 +7,9 @@
 #include "board/health.h"
 #include "board/body/motor_control.h"
 #include "board/drivers/drivers.h"
+#ifndef CPPCHECK
 #include "opendbc/safety/declarations.h"
+#endif
 
 #define BODY_CAN_ADDR_MOTOR_SPEED      0x201U
 #define BODY_CAN_MOTOR_SPEED_PERIOD_US 10000U

@@ -12,4 +12,13 @@ env = Environment(
 )
 
 panda = env.SharedObject("panda.os", "panda.c")
-libpanda = env.SharedLibrary("libpanda.so", [panda])
+fake_stm = env.SharedObject("fake_stm.os", "../../board/fake_stm.c")
+can_common = env.SharedObject("can_common.os", "../../board/drivers/can_common.c")
+can_comms = env.SharedObject("can_comms.os", "../../board/can_comms.c")
+main_definitions = env.SharedObject("main_definitions.os", "../../board/main_definitions.c")
+utils = env.SharedObject("utils.os", "../../board/utils.c")
+libc = env.SharedObject("libc.os", "../../board/libc.c")
+safety_definitions = env.SharedObject("safety_definitions.os", "../../board/safety_definitions.c")
+safety_mode_wrapper = env.SharedObject("safety_mode_wrapper.os", "../../board/safety_mode_wrapper.c")
+
+libpanda = env.SharedLibrary("libpanda.so", [panda, fake_stm, can_common, can_comms, main_definitions, utils, libc, safety_definitions, safety_mode_wrapper])

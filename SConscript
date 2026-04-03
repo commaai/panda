@@ -60,6 +60,53 @@ def to_c_uint32(x):
     x //= (2**32)
   return "{" + 'U,'.join(map(str, nums)) + "U}"
 
+common_srcs = [
+  "./board/main_definitions.c",
+  "./board/utils.c",
+  "./board/libc.c",
+  "./board/crc.c",
+  "./board/gitversion.c",
+  "./board/safety_definitions.c",
+  "./board/stm32h7/lladc.c",
+  "./board/sys/critical.c",
+  "./board/sys/faults.c",
+  "./board/early_init.c",
+  "./board/provision.c",
+  "./board/drivers/can_common.c",
+  "./board/drivers/gpio.c",
+  "./board/drivers/led.c",
+  "./board/drivers/pwm.c",
+  "./board/drivers/simple_watchdog.c",
+  "./board/drivers/uart.c",
+  "./board/drivers/usb.c",
+  "./board/drivers/spi.c",
+  "./board/drivers/timers.c",
+  "./board/drivers/fdcan.c",
+  "./board/drivers/registers.c",
+  "./board/drivers/interrupts.c",
+  "./board/can_comms.c",
+]
+
+panda_srcs = [
+  "./board/main_comms.c",
+  "./board/safety_mode_wrapper.c",
+  "./board/sys/power_saving.c",
+  "./board/drivers/fan.c",
+  "./board/drivers/bootkick.c",
+  "./board/drivers/harness.c",
+  "./board/drivers/fake_siren.c",
+  "./board/stm32h7/sound.c",
+  "./board/drivers/clock_source.c",
+  "./board/stm32h7/llfan.c",
+]
+
+panda_board_srcs = [
+  "./board/stm32h7/board.c",
+  "./board/boards/red.c",
+  "./board/boards/tres.c",
+  "./board/boards/cuatro.c",
+  "./board/boards/unused_funcs.c",
+]
 
 def build_project(project_name, project, main, extra_flags):
   project_dir = Dir(f'./board/obj/{project_name}/')
@@ -87,7 +134,6 @@ def build_project(project_name, project, main, extra_flags):
     AS=PREFIX + 'gcc',
     OBJCOPY=PREFIX + 'objcopy',
     OBJDUMP=PREFIX + 'objdump',
-    OBJPREFIX=project_dir,
     CFLAGS=flags,
     ASFLAGS=flags,
     LINKFLAGS=flags,
@@ -99,24 +145,65 @@ def build_project(project_name, project, main, extra_flags):
     tools=["default", "compilation_db"],
   )
 
-  startup = env.Object(project["STARTUP_FILE"])
+  def make_objs(srcs, environment, suffix=""):
+    objs = []
+    for s in srcs:
+      # Create a unique object path: board/obj/panda_h7/board/utils.bootstub.o
+      target_path = s.replace('.c', f'{suffix}.o').replace('.s', f'{suffix}.o')
+      target = project_dir.File(target_path)
+      objs.append(environment.Object(target, s))
+    return objs
+
+  startup = env.Object(project_dir.File(project["STARTUP_FILE"].replace('.s', '.o')), project["STARTUP_FILE"])
 
   # Build bootstub
   bs_env = env.Clone()
   bs_env.Append(CFLAGS="-DBOOTSTUB", ASFLAGS="-DBOOTSTUB", LINKFLAGS="-DBOOTSTUB")
-  bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", [
-    startup,
+
+  bs_srcs = [
     "./board/crypto/rsa.c",
     "./board/crypto/sha.c",
     "./board/bootstub.c",
-  ])
+    "./board/flasher.c",
+    "./board/stm32h7/llflash.c",
+    "./board/bootstub_declarations.c",
+    "./board/main_definitions.c",
+    "./board/utils.c",
+    "./board/libc.c",
+    "./board/crc.c",
+    "./board/gitversion.c",
+    "./board/sys/critical.c",
+    "./board/drivers/gpio.c",
+    "./board/stm32h7/clock.c",
+    "./board/stm32h7/peripherals.c",
+    "./board/drivers/registers.c",
+    "./board/drivers/interrupts.c",
+    "./board/drivers/led.c",
+    "./board/drivers/pwm.c",
+    "./board/drivers/uart.c",
+    "./board/drivers/usb.c",
+    "./board/drivers/spi.c",
+    "./board/drivers/timers.c",
+    "./board/stm32h7/llusb.c",
+    "./board/stm32h7/llspi.c",
+    "./board/stm32h7/lladc.c",
+    "./board/early_init.c",
+    "./board/provision.c",
+  ]
+  if project_name == "panda_h7":
+    bs_srcs += panda_board_srcs
+  elif project_name == "body_h7":
+    bs_srcs += ["./board/body/stm32h7/board.c"]
+  elif project_name == "panda_jungle_h7":
+    bs_srcs += ["board/jungle/boards/main_definitions.c", "./board/jungle/boards/board_v2.c", "./board/jungle/stm32h7/board.c"]
+
+  bs_elf = bs_env.Program(f"{project_dir}/bootstub.elf", [startup] + make_objs(bs_srcs, bs_env, suffix=".bootstub"))
   bs_env.Objcopy(f"./board/obj/bootstub.{project_name}.bin", bs_elf)
 
   # Build + sign main (aka app)
-  main_elf = env.Program(f"{project_dir}/main.elf", [
-    startup,
-    main
-  ], LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
+  main_srcs = [main] + common_srcs + project.get("SOURCES", [])
+  main_elf = env.Program(f"{project_dir}/main.elf", [startup] + make_objs(main_srcs, env, suffix=".app"),
+                         LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
   sign_py = File(f"./board/crypto/sign.py").srcnode().relpath
   env.Command(f"./board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
@@ -135,12 +222,27 @@ base_project_h7 = {
     "-Iboard/stm32h7/inc",
     "-mfpu=fpv5-d16",
   ],
+  "SOURCES": [
+    "./board/stm32h7/lluart.c",
+    "./board/stm32h7/llusb.c",
+    "./board/stm32h7/llspi.c",
+    "./board/stm32h7/clock.c",
+    "./board/stm32h7/llfdcan.c",
+    "./board/stm32h7/peripherals.c",
+    "./board/stm32h7/interrupt_handlers.c",
+  ],
 }
 
 # Common autogenerated includes
+if not os.path.exists("board/obj"):
+  os.makedirs("board/obj")
+
+version = get_version(BUILDER, BUILD_TYPE)
 with open("board/obj/gitversion.h", "w") as f:
-  version = get_version(BUILDER, BUILD_TYPE)
   f.write(f'extern const uint8_t gitversion[{len(version)+1}];\n')
+
+with open("board/gitversion.c", "w") as f:
+  f.write('#include <stdint.h>\n')
   f.write(f'const uint8_t gitversion[{len(version)+1}] = "{version}";\n')
 
 with open("board/obj/version", "w") as f:
@@ -160,16 +262,22 @@ common_flags += [f"-DHEALTH_PACKET_VERSION=0x{hh:08X}U", f"-DCAN_PACKET_VERSION_
                  f"-DJUNGLE_HEALTH_PACKET_VERSION=0x{jh:08X}U"]
 
 # panda fw
-build_project("panda_h7", base_project_h7, "./board/main.c", [])
+panda_project_h7 = base_project_h7.copy()
+panda_project_h7["SOURCES"] = base_project_h7["SOURCES"] + panda_srcs + panda_board_srcs
+build_project("panda_h7", panda_project_h7, "./board/main.c", [])
 
 # panda jungle fw
 flags = [
   "-DPANDA_JUNGLE",
 ]
-build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", flags)
+jungle_project_h7 = base_project_h7.copy()
+jungle_project_h7["SOURCES"] = base_project_h7["SOURCES"] + ["board/jungle/boards/main_definitions.c", "./board/jungle/boards/board_v2.c", "./board/jungle/stm32h7/board.c"]
+build_project("panda_jungle_h7", jungle_project_h7, "./board/jungle/main.c", flags)
 
 # body fw
-build_project("body_h7", base_project_h7, "./board/body/main.c", ["-DPANDA_BODY"])
+body_project_h7 = base_project_h7.copy()
+body_project_h7["SOURCES"] = base_project_h7["SOURCES"] + ["board/body/main_definitions.c", "./board/body/motor_encoder.c", "./board/body/motor_control.c", "./board/body/boards/board_body.c", "./board/body/stm32h7/board.c"]
+build_project("body_h7", body_project_h7, "./board/body/main.c", ["-DPANDA_BODY"])
 
 # test files
 SConscript('tests/libpanda/SConscript')
