@@ -10,8 +10,13 @@ import _thread
 from panda import Panda, McuType  # pylint: disable=import-error
 from panda.python.can import CanHandle  # pylint: disable=import-error
 from opendbc.car import structs
+from opendbc.car.uds import UdsClient, DATA_IDENTIFIER_TYPE
 from openpilot.common.params import Params
 
+def get_body_firmware_version(p) -> bytes:
+  """Read the git commit hash from a body board via UDS ReadDataByIdentifier (DID 0xF181)."""
+  uds_client = UdsClient(p, 0x721, 0x729, bus=0, timeout=1)
+  return uds_client.read_data_by_identifier(DATA_IDENTIFIER_TYPE.APPLICATION_SOFTWARE_IDENTIFICATION).decode("ascii")
 
 def heartbeat_thread(p):
   while True:
@@ -43,26 +48,39 @@ def flasher(p, addr, file):
       return
   raise RuntimeError(f"Flash failed after {retries} attempts")
 
+def update_routine(p, addr=0x250, file="./body.bin.signed"):
+  p.set_safety_mode(structs.CarParams.SafetyModel.elm327)
+  params.put_bool("BodyFirmwareFlashing", True)
+
+  print("checking firmware version")
+  current_version = get_body_firmware_version(p)
+
+  with open(file, "rb") as f:
+    f.seek(0x1D8)
+    try:
+      expected_version = f.read(8).decode("ascii")
+    except (UnicodeDecodeError, ValueError):
+      expected_version = None
+    f.close()
+
+  print(f"expected body version: {expected_version}, current body version: {current_version}")
+  if current_version != expected_version:
+    try:
+      print("Flashing motherboard")
+      flasher(p, addr, args.fn)
+    finally:
+      params.put_bool("BodyFirmwareFlashing", False)
+  else:
+    print("body firmware is up to date")
+    params.put_bool("BodyFirmwareFlashing", False)
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Flash body over can')
-  parser.add_argument("board", type=str, nargs='?', help="choose base or knee")
   parser.add_argument("fn", type=str, nargs='?', help="flash file")
   args = parser.parse_args()
-
-  assert args.board in ["base", "knee"]
-  assert os.path.isfile(args.fn)
-
-  addr = 0x250 if args.board == "base" else 0x350
 
   params = Params()
   p = Panda()
   _thread.start_new_thread(heartbeat_thread, (p,))
-  p.set_safety_mode(structs.CarParams.SafetyModel.body)
 
-  params.put_bool("BodyFirmwareFlashing", True)
-  try:
-    print("Flashing motherboard")
-    flasher(p, addr, args.fn)
-  finally:
-    params.put_bool("BodyFirmwareFlashing", False)
+  update_routine(p, 0x250, args.fn)
