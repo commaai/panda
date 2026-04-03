@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 # connects to PANDA on BOARD the comma and then sends CAN commands through that COMMA to flash the STM32F4 on the body v1 board
 
 import os
@@ -14,8 +13,8 @@ from opendbc.car import structs
 from opendbc.car.uds import UdsClient, DATA_IDENTIFIER_TYPE
 from openpilot.common.params import Params
 
-FIRMWARE_VERSION = "v0.3.0"
-BIN_URL = f"https://github.com/commaai/body/releases/download/{FIRMWARE_VERSION}/body.bin.signed"
+FIRMWARE_COMMIT = "c433da94"
+BIN_URL = f"https://github.com/commaai/body/releases/download/{FIRMWARE_COMMIT}/body.bin.signed"
 
 BIN_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "body.bin.signed")
 
@@ -73,11 +72,9 @@ def update(addr=0x250, file=BIN_PATH, skip_version_check=False):
   params.put_bool("BodyFirmwareFlashing", True)
 
   if not skip_version_check:
-    p.set_safety_mode(structs.CarParams.SafetyModel.elm327)
+    p.set_safety_mode(structs.CarParams.SafetyModel.elm327) # needed for UDS
 
-    print("checking firmware version")
-    current_version = get_body_firmware_version(p)
-
+    print("checking local bin firmware version")
     with open(file, "rb") as f:
       f.seek(0x1D8)
       try:
@@ -86,14 +83,17 @@ def update(addr=0x250, file=BIN_PATH, skip_version_check=False):
         expected_version = None
       f.close()
 
+    if expected_version != FIRMWARE_COMMIT:
+      print("local bin is not up-to-date, fetching latest")
+      fetch_bin()
+
+    print("checking body firmware version")
+    current_version = get_body_firmware_version(p)
+
     print(f"expected body version: {expected_version}, current body version: {current_version}")
 
-    if current_version != expected_version:
-      fetch_bin()
-      version_mismatch = True
-
-  if skip_version_check or version_mismatch:
-    p.set_safety_mode(structs.CarParams.SafetyModel.body)
+  if skip_version_check or current_version != expected_version:
+    p.set_safety_mode(structs.CarParams.SafetyModel.body) # needed for CAN Flash
     print("Flashing motherboard")
     flasher(p, addr, file)
   else:
