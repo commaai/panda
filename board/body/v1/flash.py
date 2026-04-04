@@ -8,13 +8,12 @@ import subprocess
 from panda import Panda, McuType
 from panda.python.can import CanHandle
 from opendbc.car import structs
-from opendbc.car.uds import UdsClient, DATA_IDENTIFIER_TYPE
+from opendbc.car.uds import UdsClient, DATA_IDENTIFIER_TYPE, MessageTimeoutError
 from openpilot.common.params import Params
 
-FIRMWARE_COMMIT = "c433da94"
-BIN_URL = f"https://github.com/commaai/body/releases/download/{FIRMWARE_COMMIT}/body.bin.signed"
-
-BIN_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "body.bin.signed")
+FIRMWARE_VERSION = "v0.3.0"
+BIN_URL = f"https://github.com/commaai/body/releases/download/{FIRMWARE_VERSION}/body.bin.signed"
+BIN_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"body-{FIRMWARE_VERSION}.bin.signed")
 
 def fetch_bin():
   result = subprocess.run(
@@ -27,10 +26,14 @@ def fetch_bin():
   else:
     raise RuntimeError(f"download failed with HTTP {status}")
 
-def get_body_firmware_version(p):
-  """Read the git commit hash from a body board via UDS ReadDataByIdentifier"""
-  uds_client = UdsClient(p, 0x721, 0x729, bus=0, timeout=1)
-  return uds_client.read_data_by_identifier(DATA_IDENTIFIER_TYPE.APPLICATION_SOFTWARE_IDENTIFICATION).decode("ascii")
+def get_body_firmware_signature(p, bus=0):
+  """Read the 128-byte RSA firmware signature from a body board via UDS ReadDataByIdentifier (DID F184)"""
+  tx_addr, rx_addr = (0x720, 0x728) if bus == 0 else (0x730, 0x738)
+  uds_client = UdsClient(p, tx_addr, rx_addr, bus=bus, timeout=2)
+  try:
+    return uds_client.read_data_by_identifier(DATA_IDENTIFIER_TYPE.APPLICATION_SOFTWARE_FINGERPRINT)
+  except MessageTimeoutError:
+    return b""
 
 def heartbeat_thread(p):
   while True:
@@ -62,33 +65,27 @@ def flasher(p, addr, file):
       return
   raise RuntimeError(f"Flash failed after {retries} attempts")
 
-def update(addr=0x250, file=BIN_PATH, skip_version_check=False):
+def update(addr=0x250, file=BIN_PATH, skip_check=False):
   params = Params()
   p = Panda()
   _thread.start_new_thread(heartbeat_thread, (p,))
-
   params.put_bool("BodyFirmwareFlashing", True)
 
-  print("checking local bin firmware version")
-  try:
-    with open(file, "rb") as f:
-      f.seek(0x1D8)
-      expected_version = f.read(8).decode("ascii")
-      f.close()
-  except (FileNotFoundError, UnicodeDecodeError, ValueError):
-    expected_version = None
-
-  if expected_version is None or expected_version != FIRMWARE_COMMIT:
+  if not os.path.exists(file):
     print("local bin is not up-to-date, fetching latest")
     fetch_bin()
+    file = BIN_PATH # revert to default version
 
-  if not skip_version_check:
+  if not skip_check:
     p.set_safety_mode(structs.CarParams.SafetyModel.elm327) # needed for UDS
-    print("checking body firmware version")
-    current_version = get_body_firmware_version(p)
-    print(f"expected body version: {expected_version}, current body version: {current_version}")
+    print("checking body firmware signature")
+    current_signature = get_body_firmware_signature(p)
+    with open(file, "rb") as f:
+      expected_signature = f.read()[-128:]
+    print(f"expected body signature: {expected_signature.hex()}")
+    print(f"current body signature: {current_signature.hex()}")
 
-  if skip_version_check or current_version != expected_version:
+  if skip_check or current_signature != expected_signature:
     p.set_safety_mode(structs.CarParams.SafetyModel.body) # needed for CAN Flash
     print("Flashing motherboard")
     flasher(p, addr, file)
