@@ -101,6 +101,6 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   if not args.fn:
-    args.fn = BIN_URL
+    args.fn = BIN_PATH
 
   update(0x250, args.fn, args.skip)
