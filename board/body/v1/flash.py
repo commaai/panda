@@ -11,7 +11,7 @@ from opendbc.car import structs
 from opendbc.car.uds import UdsClient, DATA_IDENTIFIER_TYPE, MessageTimeoutError
 from openpilot.common.params import Params
 
-FIRMWARE_VERSION = "v0.3.0"
+FIRMWARE_VERSION = "v0.3.1"
 BIN_URL = f"https://github.com/commaai/body/releases/download/{FIRMWARE_VERSION}/body.bin.signed"
 BIN_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"body-{FIRMWARE_VERSION}.bin.signed")
 
