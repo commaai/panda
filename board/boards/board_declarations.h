@@ -2,6 +2,13 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "board/comms_definitions.h"
+
+#ifdef STM32H7
+#include "stm32h7xx.h"
+#else
+#include "board/fake_stm.h"
+#endif
 
 // ******************** Prototypes ********************
 typedef enum {
@@ -22,6 +29,10 @@ typedef void (*board_set_siren)(bool enabled);
 typedef void (*board_set_bootkick)(BootState state);
 typedef bool (*board_read_som_gpio)(void);
 typedef void (*board_set_amp_enabled)(bool enabled);
+typedef int (*board_comms_control_handler)(ControlPacket_t *req, uint8_t *resp);
+
+void common_init_gpio(void);
+void gpio_uart7_init(void);
 
 struct board {
   harness_configuration *harness_config;
@@ -44,6 +55,7 @@ struct board {
   board_set_bootkick set_bootkick;
   board_read_som_gpio read_som_gpio;
   board_set_amp_enabled set_amp_enabled;
+  board_comms_control_handler board_comms_handler;
 };
 
 // ******************* Definitions ********************

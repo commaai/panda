@@ -1,3 +1,4 @@
+// cppcheck-suppress-file misra-c2012-2.3
 // ********************* Includes *********************
 #include "board/config.h"
 
@@ -10,7 +11,8 @@
 #include "board/early_init.h"
 #include "board/provision.h"
 
-#include "opendbc/safety/safety.h"
+// cppcheck-suppress [misra-c2012-2.3]
+#include "opendbc/safety/declarations.h"
 
 #include "board/health.h"
 
@@ -24,10 +26,12 @@
 
 #include "board/can_comms.h"
 #include "board/main_comms.h"
+#include "board/safety_mode_wrapper.h"
 
 
 // ********************* Serial debugging *********************
 
+// cppcheck-suppress misra-c2012-8.7 ; external linkage required for UART_BUFFER macro
 void debug_ring_callback(uart_ring *ring) {
   char rcv;
   while (get_char(ring, &rcv)) {
@@ -38,67 +42,12 @@ void debug_ring_callback(uart_ring *ring) {
 // ****************************** safety mode ******************************
 
 // this is the only way to leave silent mode
-void set_safety_mode(uint16_t mode, uint16_t param) {
-  uint16_t mode_copy = mode;
-  int err = set_safety_hooks(mode_copy, param);
-  if (err == -1) {
-    print("Error: safety set mode failed. Falling back to SILENT\n");
-    mode_copy = SAFETY_SILENT;
-    err = set_safety_hooks(mode_copy, 0U);
-    // TERMINAL ERROR: we can't continue if SILENT safety mode isn't succesfully set
-    assert_fatal(err == 0, "Error: Failed setting SILENT mode. Hanging\n");
-  }
-  safety_tx_blocked = 0;
-  safety_rx_invalid = 0;
 
-  switch (mode_copy) {
-    case SAFETY_SILENT:
-      set_intercept_relay(false, false);
-      current_board->set_can_mode(CAN_MODE_NORMAL);
-      can_silent = true;
-      break;
-    case SAFETY_NOOUTPUT:
-      set_intercept_relay(false, false);
-      current_board->set_can_mode(CAN_MODE_NORMAL);
-      can_silent = false;
-      break;
-    case SAFETY_ELM327:
-      set_intercept_relay(false, false);
-      heartbeat_counter = 0U;
-      heartbeat_lost = false;
-
-      // Clear any pending messages in the can core (i.e. sending while comma power is unplugged)
-      // TODO: rewrite using hardware queues rather than fifo to cancel specific messages
-      can_clear_send(CANIF_FROM_CAN_NUM(1), 1);
-      if (param == 0U) {
-        current_board->set_can_mode(CAN_MODE_OBD_CAN2);
-      } else {
-        current_board->set_can_mode(CAN_MODE_NORMAL);
-      }
-      can_silent = false;
-      break;
-    default:
-      set_intercept_relay(true, false);
-      heartbeat_counter = 0U;
-      heartbeat_lost = false;
-      current_board->set_can_mode(CAN_MODE_NORMAL);
-      can_silent = false;
-      break;
-  }
-  can_init_all();
-}
-
-bool is_car_safety_mode(uint16_t mode) {
-  return (mode != SAFETY_SILENT) &&
-         (mode != SAFETY_NOOUTPUT) &&
-         (mode != SAFETY_ALLOUTPUT) &&
-         (mode != SAFETY_ELM327);
-}
 
 // ***************************** main code *****************************
 
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-// cppcheck-suppress misra-c2012-8.4
+// early hardware initialization
+// cppcheck-suppress misra-c2012-8.7 ; called from startup code
 void __initialize_hardware_early(void) {
   early_initialization();
 }
@@ -114,7 +63,6 @@ static void __attribute__ ((noinline)) enable_fpu(void) {
 
 // called at 8Hz
 static void tick_handler(void) {
-  static uint32_t siren_countdown = 0; // siren plays while countdown > 0
   static uint32_t controls_allowed_countdown = 0;
   static uint8_t prev_harness_status = HARNESS_STATUS_NC;
   static uint8_t loop_counter = 0U;

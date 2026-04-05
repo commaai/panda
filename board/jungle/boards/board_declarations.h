@@ -1,3 +1,12 @@
+#pragma once
+
+#include <stdint.h>
+#include <stdbool.h>
+
+#ifdef STM32H7
+#include "stm32h7xx.h"
+#endif
+
 // ******************** Prototypes ********************
 typedef void (*board_init)(void);
 typedef void (*board_board_tick)(void);
@@ -13,6 +22,8 @@ typedef void (*board_enable_can_transceiver)(uint8_t transceiver, bool enabled);
 typedef void (*board_enable_header_pin)(uint8_t pin_num, bool enabled);
 typedef float (*board_get_channel_power)(uint8_t channel);
 typedef uint16_t (*board_get_sbu_mV)(uint8_t channel, uint8_t sbu);
+
+void common_init_gpio(void);
 
 struct board {
   GPIO_TypeDef * const led_GPIO[3];
@@ -55,6 +66,8 @@ struct board {
 #define SBU2 1U
 
 // ********************* Globals **********************
-uint8_t harness_orientation = HARNESS_ORIENTATION_NONE;
-uint8_t can_mode = CAN_MODE_NORMAL;
-uint8_t ignition = 0U;
+extern uint8_t harness_orientation;
+extern uint8_t can_mode;
+extern uint8_t ignition;
+extern bool panda_power;
+extern uint8_t panda_power_bitmask;
