@@ -52,8 +52,8 @@ def flasher(p, addr, file):
   p.can_send(addr, b"\xce\xfa\xad\xde\x1e\x0b\xb0\x0a", 0)
   time.sleep(0.1)
   msgs = p.can_recv()
-  for id, _, bus in msgs:
-    if id == addr and bus == 128:
+  for ids, _, bus in msgs:
+    if ids == addr and bus == 128:
       raise RuntimeError("Flash failed: device likely did not enter bootloader")
 
   print("flashing", file)
