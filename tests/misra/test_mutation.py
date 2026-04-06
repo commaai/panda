@@ -20,14 +20,16 @@ IGNORED_PATHS = (
 
   # bootstub only files
   'board/flasher.h',
+  'board/flasher.c',
   'board/bootstub.c',
-  'board/bootstub_declarations.h',
+  'board/bootstub_globals.h',
+  'board/bootstub_globals.c',
   'board/stm32h7/llflash.h',
 )
 
 mutations = [
   (None, None, False),  # no mods, should pass
-  ("board/stm32h7/llfdcan.h", "s/return ret;/if (true) { return ret; } else { return false; }/g", True),
+  ("board/utils.h", "$a void test(int tmp) { if (true && tmp++) {;} }", True),
 ]
 
 patterns = [

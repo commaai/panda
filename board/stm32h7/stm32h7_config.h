@@ -44,12 +44,12 @@ separate IRQs for RX and TX.
 #define DEVICE_SERIAL_NUMBER_ADDRESS 0x080FFFC0U
 
 #include "board/can.h"
-#include "board/comms_definitions.h"
+#include "board/comms.h"
 
 #ifndef BOOTSTUB
-  #include "board/main_definitions.h"
+  #include "board/main_globals.h"
 #else
-  #include "board/bootstub_declarations.h"
+  #include "board/bootstub_globals.h"
 #endif
 
 #include "board/libc.h"
@@ -57,45 +57,48 @@ separate IRQs for RX and TX.
 #include "board/sys/faults.h"
 #include "board/utils.h"
 
+#ifdef PANDA_JUNGLE
+#include "board/jungle/boards/board_declarations.h"
+#elif defined(PANDA_BODY)
+#include "board/body/boards/board_declarations.h"
+#else
+#include "board/boards/board_declarations.h"
+#endif
+
+#include "board/health.h"
+#include "board/crc.h"
+#include "board/drivers/led.h"
+#include "board/drivers/pwm.h"
+#include "board/stm32h7/lladc.h"
+#include "board/drivers/can_common.h"
+#include "board/drivers/fdcan.h"
+#include "board/drivers/harness.h"
+#include "board/drivers/bootkick.h"
+#include "board/drivers/clock_source.h"
+#include "board/drivers/fan.h"
+#include "board/drivers/simple_watchdog.h"
+#include "board/drivers/usb.h"
+#include "board/stm32h7/sound.h"
+#include "board/drivers/fake_siren.h"
+
 #include "board/drivers/registers.h"
 #include "board/drivers/interrupts.h"
 
-#ifdef BOOTSTUB
-uart_ring uart_ring_som_debug;
-#endif
 #include "board/drivers/gpio.h"
-#include "board/stm32h7/peripherals.h"
-#include "board/stm32h7/interrupt_handlers.h"
 #include "board/drivers/timers.h"
 
-#if !defined(BOOTSTUB)
-  #include "board/drivers/uart.h"
-  #include "board/stm32h7/lluart.h"
-#endif
-
-#ifdef PANDA_JUNGLE
-#include "board/jungle/stm32h7/board.h"
-#elif defined(PANDA_BODY)
-#include "board/body/stm32h7/board.h"
-#else
-#include "board/stm32h7/board.h"
-#endif
-#include "board/stm32h7/clock.h"
-
-#ifdef BOOTSTUB
-  #include "board/stm32h7/llflash.h"
-#else
-  #include "board/stm32h7/llfdcan.h"
-#endif
-
-#include "board/stm32h7/llusb.h"
+#include "board/drivers/uart.h"
 
 #include "board/drivers/spi.h"
-#include "board/stm32h7/llspi.h"
 
-void early_gpio_float(void) {
-  RCC->AHB4ENR = RCC_AHB4ENR_GPIOAEN | RCC_AHB4ENR_GPIOBEN | RCC_AHB4ENR_GPIOCEN | RCC_AHB4ENR_GPIODEN | RCC_AHB4ENR_GPIOEEN | RCC_AHB4ENR_GPIOFEN | RCC_AHB4ENR_GPIOGEN | RCC_AHB4ENR_GPIOHEN;
-  GPIOA->MODER = 0xAB000000U; GPIOB->MODER = 0; GPIOC->MODER = 0; GPIOD->MODER = 0; GPIOE->MODER = 0; GPIOF->MODER = 0; GPIOG->MODER = 0; GPIOH->MODER = 0;
-  GPIOA->ODR = 0; GPIOB->ODR = 0; GPIOC->ODR = 0; GPIOD->ODR = 0; GPIOE->ODR = 0; GPIOF->ODR = 0; GPIOG->ODR = 0; GPIOH->ODR = 0;
-  GPIOA->PUPDR = 0; GPIOB->PUPDR = 0; GPIOC->PUPDR = 0; GPIOD->PUPDR = 0; GPIOE->PUPDR = 0; GPIOF->PUPDR = 0; GPIOG->PUPDR = 0; GPIOH->PUPDR = 0;
-}
+#include "board/stm32h7/llfdcan.h"
+#include "board/stm32h7/llusb.h"
+#include "board/stm32h7/llspi.h"
+#include "board/stm32h7/lluart.h"
+#include "board/stm32h7/llflash.h"
+#include "board/stm32h7/llfan.h"
+#include "board/stm32h7/lli2c.h"
+
+#include "board/stm32h7/peripherals.h"
+#include "board/stm32h7/interrupt_handlers.h"
+#include "board/stm32h7/clock.h"
