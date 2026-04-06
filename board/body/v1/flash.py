@@ -51,18 +51,27 @@ def flush_panda(p):
 def flasher(p, addr, file):
   p.can_send(addr, b"\xce\xfa\xad\xde\x1e\x0b\xb0\x0a", 0)
   time.sleep(0.1)
+  msgs = p.can_recv()
+  for id, _, bus in msgs:
+    if id == addr and bus == 128:
+      raise RuntimeError("Flash failed: device likely did not enter bootloader")
+
   print("flashing", file)
   flush_panda(p)
   code = open(file, "rb").read()
+  handle = CanHandle(p, 0)
   retries = 3
   for i in range(retries):
     try:
-      Panda.flash_static(CanHandle(p, 0), code, McuType.F4)
+      Panda.flash_static(handle, code, McuType.F4)
     except (TimeoutError):
       print(f"Flash failed (attempt {i + 1}/{retries}), trying again...")
     else:
       print("Successfully flashed")
       return
+
+  # on fail attempt to exit bootloader
+  handle.controlWrite(Panda.REQUEST_IN, 0xd8, 0, 0, b'', expect_disconnect=True)
   raise RuntimeError(f"Flash failed after {retries} attempts")
 
 def update(addr=0x250, file=BIN_PATH, skip_check=False):
