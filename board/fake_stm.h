@@ -1,4 +1,6 @@
 // minimal code to fake a panda for tests
+#pragma once
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -10,24 +12,17 @@
 #define ENTER_CRITICAL() 0
 #define EXIT_CRITICAL() 0
 
-void print(const char *a) {
-  printf("%s", a);
-}
-
-void puth(unsigned int i) {
-  printf("%u", i);
-}
+// Function declarations only
+void print(const char *a);
+void puth(unsigned int i);
 
 typedef struct {
   uint32_t CNT;
 } TIM_TypeDef;
 
-TIM_TypeDef timer;
-TIM_TypeDef *MICROSECOND_TIMER = &timer;
-uint32_t microsecond_timer_get(void);
+extern TIM_TypeDef timer;
+extern TIM_TypeDef *MICROSECOND_TIMER;
 
-uint32_t microsecond_timer_get(void) {
-  return MICROSECOND_TIMER->CNT;
-}
+uint32_t microsecond_timer_get(void);
 
 typedef uint32_t GPIO_TypeDef;
