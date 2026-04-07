@@ -8,7 +8,8 @@ FW_PATH = os.path.join(BASEDIR, "board/obj/")
 
 def compute_version_hash(filepath):
   with open(filepath, "rb") as f:
-    return int.from_bytes(hashlib.sha256(f.read()).digest()[:4], 'little')
+    # Normalize line endings on Windows
+    return int.from_bytes(hashlib.sha256(f.read().replace(b'\r', b'')).digest()[:4], 'little')
 
 USBPACKET_MAX_SIZE = 0x40
 
