@@ -41,15 +41,12 @@ def flash(addr=FLASH_ADDR, file=BIN_PATH, skip_check=False):
     return [[CanData(address=addr, dat=dat, src=bus) for addr, dat, bus in msgs]]
 
   update(
+    can_send=can_send,
+    can_recv=can_recv,
     bootloader_addr=addr,
     bootloader_bus=BUS,
     file=file,
     update_url=BIN_URL,
-    can_send=can_send,
-    can_recv=can_recv,
-    uds_tx=uds_tx,
-    uds_rx=uds_rx,
-    uds_bus=uds_bus,
   )
 
 
