@@ -29,6 +29,7 @@ class McuConfig(NamedTuple):
     # assume bootstub is in sector 0
     return self.bootstub_address + sum(self.sector_sizes[:i])
 
+
 H7Config = McuConfig(
   "STM32H7",
   0x483,
