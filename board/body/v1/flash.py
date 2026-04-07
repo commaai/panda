@@ -10,7 +10,7 @@ from panda import Panda
 from opendbc.car import structs
 from opendbc.car.can_definitions import CanData
 from opendbc.car.body.flash import update
-from opendbc.car.body.values import FLASH_ADDR, BUS, UDS_TX, UDS_RX, BIN_URL, BIN_PATH
+from opendbc.car.body.values import FLASH_ADDR, BUS, BIN_URL, BIN_PATH
 
 def heartbeat_thread(p):
   while True:
@@ -26,10 +26,6 @@ def flash(addr=FLASH_ADDR, file=BIN_PATH, skip_check=False):
   _thread.start_new_thread(heartbeat_thread, (p,))
 
   p.set_safety_mode(structs.CarParams.SafetyModel.body)
-
-  uds_tx = None if skip_check else UDS_TX
-  uds_rx = None if skip_check else UDS_RX
-  uds_bus = None if skip_check else BUS
 
   def can_send(msgs: list[CanData]):
     return p.can_send(msgs[0].address, msgs[0].dat, msgs[0].src)
