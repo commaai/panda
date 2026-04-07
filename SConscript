@@ -154,7 +154,8 @@ with open("board/obj/cert.h", "w") as f:
 # Packet version defines: SHA hash of the struct header files
 def version_hash(path):
   with open(path, "rb") as f:
-    return int.from_bytes(hashlib.sha256(f.read()).digest()[:4], 'little')
+    # Normalize line endings on Windows
+    return int.from_bytes(hashlib.sha256(f.read().replace(b'\r', b'')).digest()[:4], 'little')
 hh, ch, jh = version_hash("board/health.h"), version_hash(os.path.join(opendbc.INCLUDE_PATH, "opendbc/safety/can.h")), version_hash("board/jungle/jungle_health.h")
 common_flags += [f"-DHEALTH_PACKET_VERSION=0x{hh:08X}U", f"-DCAN_PACKET_VERSION_HASH=0x{ch:08X}U",
                  f"-DJUNGLE_HEALTH_PACKET_VERSION=0x{jh:08X}U"]
