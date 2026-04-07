@@ -27,18 +27,9 @@ def flash(addr=FLASH_ADDR, file=BIN_PATH):
 
   p.set_safety_mode(structs.CarParams.SafetyModel.body)
 
-  def can_send(msgs: list[CanData]):
-    return p.can_send(msgs[0].address, msgs[0].dat, msgs[0].src)
-
-  def can_recv():
-    msgs = p.can_recv()
-    if not msgs:
-      return []
-    return [[CanData(address=addr, dat=dat, src=bus) for addr, dat, bus in msgs]]
-
   update(
-    can_send=can_send,
-    can_recv=can_recv,
+    can_send=p.can_send,
+    can_recv=p.can_recv,
     addr=addr,
     bus=BUS,
     file=file,
