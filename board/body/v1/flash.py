@@ -8,7 +8,6 @@ from subprocess import check_output, CalledProcessError
 
 from panda import Panda
 from opendbc.car import structs
-from opendbc.car.can_definitions import CanData
 from opendbc.car.body.flash import update
 from opendbc.car.body.values import FLASH_ADDR, BUS, BIN_URL, BIN_PATH
 
