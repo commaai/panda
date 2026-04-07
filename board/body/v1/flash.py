@@ -39,8 +39,8 @@ def flash(addr=FLASH_ADDR, file=BIN_PATH, skip_check=False):
   update(
     can_send=can_send,
     can_recv=can_recv,
-    bootloader_addr=addr,
-    bootloader_bus=BUS,
+    addr=addr,
+    bus=BUS,
     file=file,
     update_url=BIN_URL,
   )
