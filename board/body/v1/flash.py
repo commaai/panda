@@ -11,8 +11,6 @@ from opendbc.car import structs
 from opendbc.car.can_definitions import CanData
 from opendbc.car.body.flash import update
 from opendbc.car.body.values import FLASH_ADDR, BUS, UDS_TX, UDS_RX, BIN_URL, BIN_PATH
-from openpilot.common.params import Params
-
 
 def heartbeat_thread(p):
   while True:
@@ -24,7 +22,6 @@ def heartbeat_thread(p):
 
 
 def flash(addr=FLASH_ADDR, file=BIN_PATH, skip_check=False):
-  params = Params()
   p = Panda()
   _thread.start_new_thread(heartbeat_thread, (p,))
 
