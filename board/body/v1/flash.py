@@ -21,7 +21,7 @@ def heartbeat_thread(p):
       continue
 
 
-def flash(addr=FLASH_ADDR, file=BIN_PATH, skip_check=False):
+def flash(addr=FLASH_ADDR, file=BIN_PATH):
   p = Panda()
   _thread.start_new_thread(heartbeat_thread, (p,))
 
@@ -49,7 +49,6 @@ def flash(addr=FLASH_ADDR, file=BIN_PATH, skip_check=False):
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description="Flash body v2 over CAN")
   parser.add_argument("fn", type=str, nargs="?", help="flash file")
-  parser.add_argument("--skip", action="store_true", help="skip firmware version check and force flash")
   parser.add_argument("--kill-pandad", action="store_true", help="kill pandad processes before flashing")
   args = parser.parse_args()
 
@@ -73,4 +72,4 @@ if __name__ == "__main__":
   if not args.fn:
     args.fn = BIN_PATH
 
-  flash(FLASH_ADDR, args.fn, args.skip)
+  flash(FLASH_ADDR, args.fn)
