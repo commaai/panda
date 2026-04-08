@@ -10,26 +10,26 @@ class PandaBody(Panda):
 
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
-    self._rpml: int = 0
-    self._rpmr: int = 0
+    self._rpm_left: int = 0
+    self._rpm_right: int = 0
 
   @property
-  def rpml(self) -> int:
-    return self._rpml
+  def rpm_left(self) -> int:
+    return self._rpm_left
 
-  @rpml.setter
-  def rpml(self, value: int) -> None:
-    self._rpml = int(value)
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xb3, self._rpml, self._rpmr, b'')
+  @rpm_left.setter
+  def rpm_left(self, value: int) -> None:
+    self._rpm_left = int(value)
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xb3, self._rpm_left, self._rpm_right, b'')
 
   @property
-  def rpmr(self) -> int:
-    return self._rpmr
+  def rpm_right(self) -> int:
+    return self._rpm_right
 
-  @rpmr.setter
-  def rpmr(self, value: int) -> None:
-    self._rpmr = int(value)
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xb3, self._rpml, self._rpmr, b'')
+  @rpm_right.setter
+  def rpm_right(self, value: int) -> None:
+    self._rpm_right = int(value)
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xb3, self._rpm_left, self._rpm_right, b'')
 
   # ****************** Motor Control *****************
   @staticmethod

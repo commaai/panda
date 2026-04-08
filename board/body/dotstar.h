@@ -26,12 +26,6 @@ static dotstar_state_t dotstar_state = {
   .global_brightness = DOTSTAR_GLOBAL_BRIGHTNESS_MAX,
 };
 
-static inline void dotstar_delay(void) {
-  for (volatile uint32_t i = 0U; i < 40U; i++) {
-    __asm__ volatile("nop");
-  }
-}
-
 static inline void dotstar_set_clk(bool high) {
   if (high) {
     DOTSTAR_CLK_PORT->BSRR = (uint32_t)(1U << DOTSTAR_CLK_PIN);
@@ -51,11 +45,11 @@ static inline void dotstar_set_data(bool high) {
 static inline void dotstar_write_byte(uint8_t value) {
   for (int8_t bit = 7; bit >= 0; bit--) {
     dotstar_set_data(((value >> bit) & 0x1U) != 0U);
-    dotstar_delay();
+    delay(15);
     dotstar_set_clk(true);
-    dotstar_delay();
+    delay(15);
     dotstar_set_clk(false);
-    dotstar_delay();
+    delay(15);
   }
 }
 

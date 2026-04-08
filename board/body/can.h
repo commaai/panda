@@ -22,13 +22,9 @@ static uint32_t last_can_cmd_timestamp_us = 0U;
 static uint16_t counter = 0U;
 
 void body_can_send_motor_speeds(uint8_t bus, float left_speed_rpm, float right_speed_rpm) {
-  CANPacket_t pkt;
+  CANPacket_t pkt = {0};
   pkt.bus = bus;
   pkt.addr = BODY_CAN_ADDR_MOTOR_SPEED;
-  pkt.returned = 0;
-  pkt.rejected = 0;
-  pkt.extended = 0;
-  pkt.fd = 0;
   pkt.data_len_code = 8;
   int16_t left_speed_deci = left_speed_rpm;
   int16_t right_speed_deci = -(right_speed_rpm);
@@ -45,13 +41,9 @@ void body_can_send_motor_speeds(uint8_t bus, float left_speed_rpm, float right_s
 }
 
 void body_can_send_var_values(uint8_t bus, bool ignition, bool enable_motors, uint8_t fault, uint8_t left_z_errcode, uint8_t right_z_errcode) {
-  CANPacket_t pkt;
+  CANPacket_t pkt = {0};
   pkt.bus = bus;
   pkt.addr = BODY_CAN_ADDR_VAR_VALUES;
-  pkt.returned = 0;
-  pkt.rejected = 0;
-  pkt.extended = 0;
-  pkt.fd = 0;
   pkt.data_len_code = 3;
   pkt.data[0] = (ignition ? 1U : 0U) | ((enable_motors ? 1U : 0U) << 1U) | ((fault & 0x3FU) << 2U);
   pkt.data[1] = left_z_errcode;
@@ -61,13 +53,9 @@ void body_can_send_var_values(uint8_t bus, bool ignition, bool enable_motors, ui
 }
 
 void body_can_send_body_data(uint8_t bus, uint8_t mcu_temp_raw, uint16_t batt_voltage_raw, uint8_t batt_percentage, bool charger_connected) {
-  CANPacket_t pkt;
+  CANPacket_t pkt = {0};
   pkt.bus = bus;
   pkt.addr = BODY_CAN_ADDR_BODY_DATA;
-  pkt.returned = 0;
-  pkt.rejected = 0;
-  pkt.extended = 0;
-  pkt.fd = 0;
   pkt.data_len_code = 4;
   pkt.data[0] = mcu_temp_raw;
   pkt.data[1] = (uint8_t)((batt_voltage_raw >> 8) & 0xFFU);
@@ -78,8 +66,8 @@ void body_can_send_body_data(uint8_t bus, uint8_t mcu_temp_raw, uint16_t batt_vo
 }
 
 void body_can_process_target(int16_t left_target_deci_rpm, int16_t right_target_deci_rpm) {
-  rpml = (int)(((float)left_target_deci_rpm) * 0.1f);
-  rpmr = (int)(((float)right_target_deci_rpm) * 0.1f);
+  rpm_left = (int)(((float)left_target_deci_rpm) * 0.1f);
+  rpm_right = (int)(((float)right_target_deci_rpm) * 0.1f);
   last_can_cmd_timestamp_us = microsecond_timer_get();
 }
 
@@ -103,8 +91,8 @@ void body_can_init(void) {
 void body_can_periodic(uint32_t now, bool ignition, bool plug_charging) {
   if ((last_can_cmd_timestamp_us != 0U) &&
       ((now - last_can_cmd_timestamp_us) >= BODY_CAN_CMD_TIMEOUT_US)) {
-    rpml = 0;
-    rpmr = 0;
+    rpm_left = 0;
+    rpm_right = 0;
     last_can_cmd_timestamp_us = 0U;
   }
 

@@ -38,8 +38,8 @@ static int16_t curR_phaA = 0, curR_phaC = 0, curR_DC = 0;
 volatile uint16_t batt_voltage_raw = 0;
 volatile uint16_t batt_percentage = 0;
 
-volatile int rpml = 0;
-volatile int rpmr = 0;
+volatile int rpm_left = 0;
+volatile int rpm_right = 0;
 
 volatile bool enable_motors = 0;        // initially motors are disabled for safety
 static bool enableFin = 0;
@@ -264,11 +264,11 @@ void bldc_step(void) {
   // ========================= LEFT MOTOR ===========================
   rtU_Left.b_motEna      = enableFin;
   rtU_Left.z_ctrlModReq  = CTRL_MOD_REQ; // Speed Mode
-  int deadband_rpml = rpml;
-  if (ABS(deadband_rpml) < RPM_DEADBAND) {
-    deadband_rpml = 0;
+  int deadband_rpm_left = rpm_left;
+  if (ABS(deadband_rpm_left) < RPM_DEADBAND) {
+    deadband_rpm_left = 0;
   }
-  rtU_Left.r_inpTgt      = (CLAMP((int)deadband_rpml, -MAX_RPM, MAX_RPM) * RPM_TO_UNIT);
+  rtU_Left.r_inpTgt      = (CLAMP((int)deadband_rpm_left, -MAX_RPM, MAX_RPM) * RPM_TO_UNIT);
 
   rtU_Left.i_phaAB       = curL_phaA;
   rtU_Left.i_phaBC       = curL_phaC;
@@ -287,11 +287,11 @@ void bldc_step(void) {
   // ========================= RIGHT MOTOR ===========================
   rtU_Right.b_motEna      = enableFin;
   rtU_Right.z_ctrlModReq  = CTRL_MOD_REQ; // Speed Mode
-  int deadband_rpmr = rpmr;
-  if (ABS(deadband_rpmr) < RPM_DEADBAND) {
-    deadband_rpmr = 0;
+  int deadband_rpm_right = rpm_right;
+  if (ABS(deadband_rpm_right) < RPM_DEADBAND) {
+    deadband_rpm_right = 0;
   }
-  rtU_Right.r_inpTgt      = -(CLAMP((int)deadband_rpmr, -MAX_RPM, MAX_RPM) * RPM_TO_UNIT);
+  rtU_Right.r_inpTgt      = -(CLAMP((int)deadband_rpm_right, -MAX_RPM, MAX_RPM) * RPM_TO_UNIT);
 
   rtU_Right.i_phaAB       = curR_phaA;
   rtU_Right.i_phaBC       = curR_phaC;

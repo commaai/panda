@@ -64,16 +64,16 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
 
     // **** 0xb3: set motor speeds
     case 0xb3:
-      rpml = (int16_t)req->param1;
-      rpmr = (int16_t)req->param2;
+      rpm_left = (int16_t)req->param1;
+      rpm_right = (int16_t)req->param2;
       break;
 
     // **** 0xb4: enable/disable motors
     case 0xb4:
       enable_motors = (req->param1 == 1U);
       if (enable_motors == 0) {
-        rpml = 0;
-        rpmr = 0;
+        rpm_left = 0;
+        rpm_right = 0;
       }
       break;
 

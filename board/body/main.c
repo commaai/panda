@@ -80,7 +80,7 @@ static void exti15_10_handler(void) {
         last_press_event_us = now;
         ignition_press_timestamp_us = now;
         ignition = !ignition;
-        set_gpio_output(IGNITION_ON_PORT, IGNITION_ON_PIN, ignition);
+        set_gpio_output(OBDC_IGNITION_ON_PORT, OBDC_IGNITION_ON_PIN, ignition);
       }
     }
   }

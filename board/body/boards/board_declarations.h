@@ -43,13 +43,13 @@ struct board {
 #define DOTSTAR_DATA_PIN  5
 
 // Mici Power On
-#define MICI_POWER_ON_PORT GPIOB
-#define MICI_POWER_ON_PIN  12
+#define OBDC_POWER_ON_PORT GPIOB
+#define OBDC_POWER_ON_PIN  12
 
 // GPU Power On
 #define GPU_POWER_ON_PORT GPIOD
 #define GPU_POWER_ON_PIN  8
 
 // Ignition On
-#define IGNITION_ON_PORT GPIOB
-#define IGNITION_ON_PIN  11
+#define OBDC_IGNITION_ON_PORT GPIOB
+#define OBDC_IGNITION_ON_PIN  11

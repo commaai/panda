@@ -27,16 +27,16 @@ void board_body_init(void) {
   EXTI->IMR1 |= (1U << 13);
 
   // Initialize and turn on mici power
-  set_gpio_mode(MICI_POWER_ON_PORT, MICI_POWER_ON_PIN, MODE_OUTPUT);
-  set_gpio_output(MICI_POWER_ON_PORT, MICI_POWER_ON_PIN, 1);
+  set_gpio_mode(OBDC_POWER_ON_PORT, OBDC_POWER_ON_PIN, MODE_OUTPUT);
+  set_gpio_output(OBDC_POWER_ON_PORT, OBDC_POWER_ON_PIN, 1);
 
   // Initialize and turn off gpu power
   set_gpio_mode(GPU_POWER_ON_PORT, GPU_POWER_ON_PIN, MODE_OUTPUT);
   set_gpio_output(GPU_POWER_ON_PORT, GPU_POWER_ON_PIN, 0);
 
   // Initialize and turn off ignition output
-  set_gpio_mode(IGNITION_ON_PORT, IGNITION_ON_PIN, MODE_OUTPUT);
-  set_gpio_output(IGNITION_ON_PORT, IGNITION_ON_PIN, 0);
+  set_gpio_mode(OBDC_IGNITION_ON_PORT, OBDC_IGNITION_ON_PIN, MODE_OUTPUT);
+  set_gpio_output(OBDC_IGNITION_ON_PORT, OBDC_IGNITION_ON_PIN, 0);
 }
 
 board board_body = {
