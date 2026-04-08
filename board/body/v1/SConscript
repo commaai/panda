@@ -6,7 +6,7 @@ PREFIX = "arm-none-eabi-"
 BUILDER = "DEV"
 
 LOCAL_OBJ_DIR = Dir("./obj")
-PUBLIC_OBJ_DIR = Dir("#/board/obj")
+PUBLIC_OBJ_DIR = Dir("../../obj")
 
 common_flags = []
 
@@ -17,7 +17,7 @@ if os.getenv("RELEASE"):
   assert os.path.exists(cert_fn), "Certificate file not found. Please specify absolute path"
 else:
   BUILD_TYPE = "DEBUG"
-  cert_fn = File("#/board/certs/debug").srcnode().abspath
+  cert_fn = File("../../certs/debug").srcnode().relpath
   common_flags += ["-DALLOW_DEBUG"]
 
 if os.getenv("DEBUG"):
@@ -63,7 +63,7 @@ def to_c_uint32(x):
 def get_key_header(name):
   from Crypto.PublicKey import RSA
 
-  public_fn = File(f"#/board/certs/{name}.pub").srcnode().abspath
+  public_fn = File(f"../../certs/{name}.pub").srcnode().get_path()
   with open(public_fn) as f:
     rsa = RSA.importKey(f.read())
   assert rsa.size_in_bits() == 1024
@@ -82,13 +82,13 @@ def get_key_header(name):
   ]
 
 includes = [
-  Dir("#").abspath,
+  Dir("../../..").abspath,
   Dir(".").abspath,
   Dir("..").abspath,
   Dir("../bldc").abspath,
   Dir("./inc").abspath,
   Dir("./inc/STM32F4xx_HAL_Driver/Inc").abspath,
-  Dir("#/board").abspath,
+  Dir("../..").abspath,
 ]
 
 c_sources = [
@@ -191,12 +191,12 @@ bootstub_objects = [startup]
 for obj_name, source_path in c_bootstub_sources:
   bootstub_objects.append(env.Object(f"{obj_path(obj_name, source_path)}-bootstub", source_path))
 bootstub_objects += [
-  env.Object("obj/rsa-bootstub", "#/board/crypto/rsa.c"),
-  env.Object("obj/sha-bootstub", "#/board/crypto/sha.c"),
+  env.Object("obj/rsa-bootstub", "../../crypto/rsa.c"),
+  env.Object("obj/sha-bootstub", "../../crypto/sha.c"),
   env.Object("obj/body_v1_bootstub", "bootstub.c"),
 ]
 bootstub_elf = env.Program("obj/bootstub.body_v1_f4.elf", bootstub_objects + [libgcc])
-env.Objcopy("#/board/obj/bootstub.body_v1_f4.bin", bootstub_elf)
+env.Objcopy("../../obj/bootstub.body_v1_f4.bin", bootstub_elf)
 
 main_objects = [startup, env.Object("obj/body_v1_main", "main.c")]
 for obj_name, source_path in c_sources:
@@ -208,5 +208,5 @@ main_elf = env.Program(
   LINKFLAGS=[f"-Wl,--section-start,.isr_vector=0x08004000"] + flags,
 )
 main_bin = env.Objcopy("obj/body_v1_f4.bin", main_elf)
-sign_py = File("#/board/crypto/sign.py").srcnode().abspath
-env.Command("#/board/obj/body_v1_f4.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
+sign_py = File("../../crypto/sign.py").srcnode().relpath
+env.Command("../../obj/body_v1_f4.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
