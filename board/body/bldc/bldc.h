@@ -13,7 +13,6 @@
 #include "BLDC_controller.h"           /* Model's header file */
 #include "BLDC_controller.c"
 #include "BLDC_controller_data.c"
-#include "rtwtypes.h"
 
 static RT_MODEL rtM_Left_Obj;
 static RT_MODEL rtM_Right_Obj;

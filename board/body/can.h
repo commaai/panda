@@ -5,15 +5,11 @@
 
 #include "board/can.h"
 #include "board/health.h"
+#include "board/body/body_common.h"
 #include "board/body/boards/board_declarations.h"
 #include "board/drivers/drivers.h"
 #include "opendbc/safety/declarations.h"
 #include "board/body/bldc/bldc.h"
-
-#define BODY_CAN_ADDR_MOTOR_SPEED        0x201U
-#define BODY_CAN_ADDR_VAR_VALUES         0x202U
-#define BODY_CAN_ADDR_BODY_DATA          0x203U
-#define BODY_CAN_ADDR_V2_ID              0x222U
 #define BODY_CAN_MOTOR_SPEED_PERIOD_US   10000U
 #define BODY_CAN_CMD_TIMEOUT_US          100000U
 #define BODY_BUS_NUMBER                  0U
@@ -26,15 +22,9 @@ void body_can_send_motor_speeds(uint8_t bus, float left_speed_rpm, float right_s
   pkt.bus = bus;
   pkt.addr = BODY_CAN_ADDR_MOTOR_SPEED;
   pkt.data_len_code = 8;
-  int16_t left_speed_deci = left_speed_rpm;
-  int16_t right_speed_deci = -(right_speed_rpm);
-  pkt.data[0] = (uint8_t)((left_speed_deci >> 8) & 0xFFU);
-  pkt.data[1] = (uint8_t)(left_speed_deci & 0xFFU);
-  pkt.data[2] = (uint8_t)((right_speed_deci >> 8) & 0xFFU);
-  pkt.data[3] = (uint8_t)(right_speed_deci & 0xFFU);
-  pkt.data[4] = 0U;
-  pkt.data[5] = 0U;
-  pkt.data[6] = counter & 0xFFU;
+  int16_t left_speed = (int16_t)left_speed_rpm;
+  int16_t right_speed = (int16_t)(-right_speed_rpm);
+  body_pack_motor_speed_data(pkt.data, left_speed, right_speed, (uint8_t)(counter & 0xFFU));
   can_set_checksum(&pkt);
   can_send(&pkt, bus, true);
   counter++;
@@ -45,9 +35,7 @@ void body_can_send_var_values(uint8_t bus, bool ignition, bool enable_motors, ui
   pkt.bus = bus;
   pkt.addr = BODY_CAN_ADDR_VAR_VALUES;
   pkt.data_len_code = 3;
-  pkt.data[0] = (ignition ? 1U : 0U) | ((enable_motors ? 1U : 0U) << 1U) | ((fault & 0x3FU) << 2U);
-  pkt.data[1] = left_z_errcode;
-  pkt.data[2] = right_z_errcode;
+  body_pack_var_values_data(pkt.data, ignition, enable_motors, fault, left_z_errcode, right_z_errcode);
   can_set_checksum(&pkt);
   can_send(&pkt, bus, true);
 }
@@ -57,10 +45,7 @@ void body_can_send_body_data(uint8_t bus, uint8_t mcu_temp_raw, uint16_t batt_vo
   pkt.bus = bus;
   pkt.addr = BODY_CAN_ADDR_BODY_DATA;
   pkt.data_len_code = 4;
-  pkt.data[0] = mcu_temp_raw;
-  pkt.data[1] = (uint8_t)((batt_voltage_raw >> 8) & 0xFFU);
-  pkt.data[2] = (uint8_t)(batt_voltage_raw & 0xFFU);
-  pkt.data[3] = (charger_connected ? 1U : 0U) | ((batt_percentage & 0x7FU) << 1U);
+  body_pack_body_data(pkt.data, mcu_temp_raw, batt_voltage_raw, batt_percentage, charger_connected);
   can_set_checksum(&pkt);
   can_send(&pkt, bus, true);
 }
@@ -72,9 +57,10 @@ void body_can_process_target(int16_t left_target_deci_rpm, int16_t right_target_
 }
 
 void body_can_rx(CANPacket_t *msg) {
-  if ((msg->addr == 0x250U) && (GET_LEN(msg) >= 4U)) {
-    int16_t left_target_deci_rpm = (int16_t)((msg->data[0] << 8U) | msg->data[1]);
-    int16_t right_target_deci_rpm = (int16_t)((msg->data[2] << 8U) | msg->data[3]);
+  if ((msg->addr == BODY_CAN_ADDR_TORQUE_CMD) && (GET_LEN(msg) >= 4U)) {
+    int16_t left_target_deci_rpm;
+    int16_t right_target_deci_rpm;
+    body_unpack_rpm_targets(msg->data, &left_target_deci_rpm, &right_target_deci_rpm);
     body_can_process_target(left_target_deci_rpm, right_target_deci_rpm);
   }
 }

@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "board/body/body_common.h"
 #include "board/body/bldc/bldc_defs.h"
 
 // ******************** Prototypes ********************
@@ -19,8 +20,6 @@ struct board {
 };
 
 // ******************* Definitions ********************
-#define HW_TYPE_BODY 0xB1U
-
 // Pin definitions
 // CAN
 #define CAN_TX_PORT GPIOD

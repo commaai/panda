@@ -13,6 +13,9 @@ class PandaBody(Panda):
     self._rpm_left: int = 0
     self._rpm_right: int = 0
 
+  def _write_rpm(self) -> None:
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xb3, self._rpm_left, self._rpm_right, b'')
+
   @property
   def rpm_left(self) -> int:
     return self._rpm_left
@@ -20,7 +23,7 @@ class PandaBody(Panda):
   @rpm_left.setter
   def rpm_left(self, value: int) -> None:
     self._rpm_left = int(value)
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xb3, self._rpm_left, self._rpm_right, b'')
+    self._write_rpm()
 
   @property
   def rpm_right(self) -> int:
@@ -29,7 +32,7 @@ class PandaBody(Panda):
   @rpm_right.setter
   def rpm_right(self, value: int) -> None:
     self._rpm_right = int(value)
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xb3, self._rpm_left, self._rpm_right, b'')
+    self._write_rpm()
 
   # ****************** Motor Control *****************
   @staticmethod
