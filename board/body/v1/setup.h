@@ -3,6 +3,7 @@
 #define SETUP_H
 
 #include "stm32f4xx_hal.h"
+#include "board/body/bldc/v1/bldc_defs.h"
 
 TIM_HandleTypeDef htim_right;
 TIM_HandleTypeDef htim_left;

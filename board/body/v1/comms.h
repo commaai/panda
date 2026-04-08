@@ -3,6 +3,7 @@
 #define COMMS_H
 
 #include "../body_common.h"
+#include "board/body/bldc/v1/bldc_defs.h"
 
 #define OFFSET            0x8U
 #define BROADCAST_ADDR    0x7DFU

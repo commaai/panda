@@ -111,7 +111,7 @@ c_sources = [
   ["it", "inc/stm32f4xx_it.c"],
   ["bldc", "bldc/bldc.c"],
   ["bldc_data", "bldc/BLDC_controller_data.c"],
-  ["bldc_ctrl", "bldc/BLDC_controller.c"],
+  ["bldc_ctrl", "../bldc/BLDC_controller.c"],
   ["util", "util.c"],
 ]
 
@@ -178,22 +178,29 @@ with open(File("./obj/cert.h").srcnode().abspath, "w") as f:
   for cert in certs:
     f.write("\n".join(cert) + "\n")
 
-startup = env.Object("startup_stm32f413xx.s")
+def obj_path(name, source_path):
+  if name.startswith("hal"):
+    return f"obj/hal/{name}"
+  if name in ("bldc", "bldc_data", "bldc_ctrl"):
+    return f"obj/bldc/{name}"
+  return f"obj/{name}"
+
+startup = env.Object("obj/startup_stm32f413xx", "startup_stm32f413xx.s")
 
 bootstub_objects = [startup]
 for obj_name, source_path in c_bootstub_sources:
-  bootstub_objects.append(env.Object(f"{obj_name}-bootstub", source_path))
+  bootstub_objects.append(env.Object(f"{obj_path(obj_name, source_path)}-bootstub", source_path))
 bootstub_objects += [
-  env.Object("rsa-bootstub", "#/board/crypto/rsa.c"),
-  env.Object("sha-bootstub", "#/board/crypto/sha.c"),
-  env.Object("body_v1_bootstub", "bootstub.c"),
+  env.Object("obj/rsa-bootstub", "#/board/crypto/rsa.c"),
+  env.Object("obj/sha-bootstub", "#/board/crypto/sha.c"),
+  env.Object("obj/body_v1_bootstub", "bootstub.c"),
 ]
 bootstub_elf = env.Program("obj/bootstub.body_v1_f4.elf", bootstub_objects + [libgcc])
 env.Objcopy("#/board/obj/bootstub.body_v1_f4.bin", bootstub_elf)
 
-main_objects = [startup, env.Object("body_v1_main", "main.c")]
+main_objects = [startup, env.Object("obj/body_v1_main", "main.c")]
 for obj_name, source_path in c_sources:
-  main_objects.append(env.Object(f"{obj_name}-main", source_path))
+  main_objects.append(env.Object(f"{obj_path(obj_name, source_path)}-main", source_path))
 
 main_elf = env.Program(
   "obj/body_v1_f4.elf",

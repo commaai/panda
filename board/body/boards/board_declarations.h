@@ -2,8 +2,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "stm32h7xx.h"
 #include "board/body/body_common.h"
-#include "board/body/bldc/bldc_defs.h"
 
 // ******************** Prototypes ********************
 typedef void (*board_init)(void);
