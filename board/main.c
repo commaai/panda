@@ -214,7 +214,6 @@ static void tick_handler(void) {
           puth(heartbeat_counter);
           print(" seconds. Safety is set to SILENT mode.\n");
 
-          // do not play siren on comma body
           if (controls_allowed_countdown > 0U) {
             siren_countdown = 3U;
             controls_allowed_countdown = 0U;
