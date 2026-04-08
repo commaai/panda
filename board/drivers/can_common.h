@@ -202,8 +202,8 @@ void ignition_can_hook(CANPacket_t *msg) {
     }
   }
 
-  // Body V2 exception
-  if ((msg->bus == 2U) && (msg->addr == 0x201U)) {
+  // body exception
+  if (((msg->bus == 0U) || (msg->bus == 2U)) && (msg->addr == 0x201U)) {
     ignition_can = true;
     ignition_can_cnt = 0U;
   }
