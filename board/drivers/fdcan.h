@@ -214,6 +214,7 @@ void can_rx(uint8_t can_number) {
       can_send(&to_send, bus_fwd_num, true);
       can_health[can_number].total_fwd_cnt += 1U;
     }
+
     #ifdef PANDA_BODY
     body_can_rx(&to_push);
     #endif
