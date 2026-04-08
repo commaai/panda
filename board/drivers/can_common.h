@@ -7,9 +7,11 @@ uint32_t rx_buffer_overflow = 0;
 
 can_health_t can_health[PANDA_CAN_CNT] = {{0}, {0}, {0}};
 
+#ifndef SAFETY_IGNITION_CAN_HOOKS
 // Ignition detected from CAN meessages
 bool ignition_can = false;
 uint32_t ignition_can_cnt = 0U;
+#endif
 
 bool can_silent = true;
 bool can_loopback = false;
@@ -155,9 +157,10 @@ void can_set_forwarding(uint8_t from, uint8_t to) {
 }
 #endif
 
-void ignition_can_hook(CANPacket_t *msg) {
+#ifndef SAFETY_IGNITION_CAN_HOOKS
+void ignition_can_hook(const CANPacket_t *msg) {
   if (msg->bus == 0U) {
-    int len = GET_LEN(msg);
+    const int len = GET_LEN(msg);
 
     // GM exception
     if ((msg->addr == 0x1F1U) && (len == 8)) {
@@ -169,7 +172,7 @@ void ignition_can_hook(CANPacket_t *msg) {
     // Rivian R1S/T GEN1 exception
     if ((msg->addr == 0x152U) && (len == 8)) {
       // 0x152 overlaps with Subaru pre-global which has this bit as the high beam
-      int counter = msg->data[1] & 0xFU;  // max is only 14
+      const int counter = msg->data[1] & 0xFU;  // max is only 14
 
       static int prev_counter_rivian = -1;
       if ((counter == ((prev_counter_rivian + 1) % 15)) && (prev_counter_rivian != -1)) {
@@ -183,13 +186,13 @@ void ignition_can_hook(CANPacket_t *msg) {
     // Tesla Model 3/Y exception
     if ((msg->addr == 0x221U) && (len == 8)) {
       // 0x221 overlaps with Rivian which has random data on byte 0
-      int counter = msg->data[6] >> 4;
+      const int counter = msg->data[6] >> 4U;
 
       static int prev_counter_tesla = -1;
       if ((counter == ((prev_counter_tesla + 1) % 16)) && (prev_counter_tesla != -1)) {
         // VCFRONT_LVPowerState->VCFRONT_vehiclePowerState
-        int power_state = (msg->data[0] >> 5U) & 0x3U;
-        ignition_can = power_state == 0x3;  // VEHICLE_POWER_STATE_DRIVE=3
+        const uint8_t power_state = (msg->data[0] >> 5U) & 0x3U;
+        ignition_can = power_state == 0x3U;  // VEHICLE_POWER_STATE_DRIVE=3
         ignition_can_cnt = 0U;
       }
       prev_counter_tesla = counter;
@@ -197,7 +200,7 @@ void ignition_can_hook(CANPacket_t *msg) {
 
     // Mazda exception
     if ((msg->addr == 0x9EU) && (len == 8)) {
-      ignition_can = (msg->data[0] >> 5) == 0x6U;
+      ignition_can = (msg->data[0] >> 5U) == 0x6U;
       ignition_can_cnt = 0U;
     }
   }
@@ -208,6 +211,7 @@ void ignition_can_hook(CANPacket_t *msg) {
     ignition_can_cnt = 0U;
   }
 }
+#endif
 
 bool can_tx_check_min_slots_free(uint32_t min) {
   return
