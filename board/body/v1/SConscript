@@ -12,7 +12,8 @@ common_flags = []
 
 if os.getenv("RELEASE"):
   BUILD_TYPE = "RELEASE"
-  cert_fn = os.path.abspath(os.path.join("../../", os.getenv("CERT")))
+  cert_fn = os.path.abspath(os.path.join("../../../", os.getenv("CERT")))
+  print(cert_fn)
   assert cert_fn is not None, "No certificate file specified. Please set CERT env variable"
   assert os.path.exists(cert_fn), "Certificate file not found. Please specify absolute path"
 else:
