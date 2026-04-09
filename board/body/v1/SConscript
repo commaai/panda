@@ -92,21 +92,15 @@ includes = [
 ]
 
 c_sources = [
-  ["hal_flash", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c"],
-  ["hal_pwr", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c"],
   ["hal_rcc", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c"],
-  ["hal_i2c", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c.c"],
-  ["hal_i2c_ex", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c_ex.c"],
   ["hal_tim", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c"],
   ["hal_tim_ex", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c"],
   ["hal_adc_ex", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc_ex.c"],
   ["hal_cortex", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c"],
-  ["hal_flash_ex", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c"],
   ["hal_gpio", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c"],
   ["hal_rcc_ex", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c"],
   ["hal", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c"],
   ["hal_adc", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc.c"],
-  ["hal_dma", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma.c"],
   ["system", "inc/system_stm32f4xx.c"],
   ["it", "inc/stm32f4xx_it.c"],
   ["bldc", "bldc/bldc.c"],
@@ -116,7 +110,6 @@ c_sources = [
 ]
 
 c_bootstub_sources = [
-  ["hal_pwr", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c"],
   ["hal_rcc", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c"],
   ["hal_cortex", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c"],
   ["hal_gpio", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c"],
