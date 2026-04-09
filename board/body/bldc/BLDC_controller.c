@@ -26,10 +26,10 @@
 #define IN_SPEED_MODE                  ((uint8_T)1U)
 #define IN_TORQUE_MODE                 ((uint8_T)2U)
 #define IN_VOLTAGE_MODE                ((uint8_T)3U)
-#define OPEN_MODE                      ((uint8_T)0U)
-#define SPD_MODE                       ((uint8_T)2U)
-#define TRQ_MODE                       ((uint8_T)3U)
-#define VLT_MODE                       ((uint8_T)1U)
+#define OPEN_MODE 0
+#define VLT_MODE 1
+#define SPD_MODE 2
+#define TRQ_MODE 3
 #ifndef UCHAR_MAX
 #include <limits.h>
 #endif
@@ -1227,11 +1227,14 @@ void BLDC_controller_step(RT_MODEL *const rtM)
 
   /* End of Switch: '<S13>/Switch2' */
 
-  /* Deadband on measured speed to prevent drift at zero */
+#ifdef STM32F4
+#else
+ /* Deadband on measured speed to prevent drift at zero */
   #define SPEED_MEAS_DEADBAND (RPM_DEADBAND * 16) // RPM_DEADBAND * RPM_TO_UNIT
   if ((Switch2 > -SPEED_MEAS_DEADBAND) && (Switch2 < SPEED_MEAS_DEADBAND)) {
     Switch2 = 0;
   }
+#endif
 
   /* Abs: '<S13>/Abs5' */
   if (Switch2 < 0) {
@@ -1269,7 +1272,11 @@ void BLDC_controller_step(RT_MODEL *const rtM)
   /* DataTypeConversion: '<S1>/Data Type Conversion2' incorporates:
    *  Inport: '<Root>/r_inpTgt'
    */
+#ifdef STM32F4
+      DataTypeConversion2 = (int16_T)(rtU->r_inpTgt << 4);
+#else
       DataTypeConversion2 = rtU->r_inpTgt;
+#endif
 
   /* Saturate: '<S1>/Saturation' incorporates:
    *  Inport: '<Root>/i_phaAB'
@@ -1693,19 +1700,34 @@ void BLDC_controller_step(RT_MODEL *const rtM)
        *  UnitDelay: '<S20>/UnitDelay'
        *  UnitDelay: '<S8>/UnitDelay4'
        */
+#ifdef STM32F4
+      if ((rtDW->UnitDelay_DSTATE_e & 4) != 0) {
+        rtb_RelationalOperator1_mv = true;
+      } else {
+        if (rtDW->UnitDelay4_DSTATE_eu < 0) {
+          /* Abs: '<S20>/Abs4' incorporates:
+           *  UnitDelay: '<S8>/UnitDelay4'
+           */
+          rtb_Saturation1 = (int16_T)-rtDW->UnitDelay4_DSTATE_eu;
+        } else {
+          /* Abs: '<S20>/Abs4' incorporates:
+           *  UnitDelay: '<S8>/UnitDelay4'
+           */
+          rtb_Saturation1 = rtDW->UnitDelay4_DSTATE_eu;
+        }
+
+        rtb_RelationalOperator1_mv = (rtU->b_motEna && (Abs5 <
+          rtP->n_stdStillDet) && (rtb_Saturation1 > rtP->r_errInpTgtThres));
+      }
+#else
       if (rtDW->UnitDelay4_DSTATE_eu < 0) {
-        /* Abs: '<S20>/Abs4' incorporates:
-         *  UnitDelay: '<S8>/UnitDelay4'
-         */
         rtb_Saturation1 = (int16_T)-rtDW->UnitDelay4_DSTATE_eu;
       } else {
-        /* Abs: '<S20>/Abs4' incorporates:
-         *  UnitDelay: '<S8>/UnitDelay4'
-         */
         rtb_Saturation1 = rtDW->UnitDelay4_DSTATE_eu;
       }
       rtb_RelationalOperator1_mv = (rtU->b_motEna && (Abs5 <
         rtP->n_stdStillDet) && (rtb_Saturation1 > rtP->r_errInpTgtThres));
+#endif
 
       /* End of Switch: '<S20>/Switch3' */
 
@@ -2612,6 +2634,14 @@ void BLDC_controller_step(RT_MODEL *const rtM)
             }
           }
 
+#ifdef STM32F4
+          /* Outputs for Atomic SubSystem: '<S61>/PI_clamp_fixdt' */
+          PI_clamp_fixdt_l((int16_T)rtb_Gain3, rtP->cf_nKp, rtP->cf_nKi,
+                           rtDW->UnitDelay4_DSTATE_eu,
+                           rtb_TmpSignalConversionAtLow_Pa[0],
+                           rtb_TmpSignalConversionAtLow_Pa[1], rtDW->Divide1,
+                           &rtDW->Merge, &rtDW->PI_clamp_fixdt_l4);
+#else
           /* Feedforward: Add term proportional to target speed */
           int32_t ff = (rtb_Saturation * 3) >> 2; // Approx 0.75 * TargetSpeed
 
@@ -2631,9 +2661,94 @@ void BLDC_controller_step(RT_MODEL *const rtM)
              }
              rtDW->Merge = (int16_T)out;
           }
+#endif
 
           /* End of Outputs for SubSystem: '<S61>/PI_clamp_fixdt' */
+
           /* End of Outputs for SubSystem: '<S59>/Speed_Mode' */
+          break;
+
+         case 2:
+          if (UnitDelay3 != rtb_Sum2_h) {
+            /* SystemReset for IfAction SubSystem: '<S59>/Torque_Mode' incorporates:
+             *  ActionPort: '<S62>/Action Port'
+             */
+
+            /* SystemReset for Atomic SubSystem: '<S62>/PI_clamp_fixdt' */
+
+            /* SystemReset for SwitchCase: '<S59>/Switch Case' */
+            PI_clamp_fixdt_g_Reset(&rtDW->PI_clamp_fixdt_kh);
+
+            /* End of SystemReset for SubSystem: '<S62>/PI_clamp_fixdt' */
+
+            /* End of SystemReset for SubSystem: '<S59>/Torque_Mode' */
+          }
+
+          /* Outputs for IfAction SubSystem: '<S59>/Torque_Mode' incorporates:
+           *  ActionPort: '<S62>/Action Port'
+           */
+          /* Gain: '<S62>/Gain4' */
+          rtb_Saturation = (int16_T)-rtDW->Switch2_i;
+
+          /* Switch: '<S70>/Switch2' incorporates:
+           *  RelationalOperator: '<S70>/LowerRelop1'
+           *  RelationalOperator: '<S70>/UpperRelop'
+           *  Switch: '<S70>/Switch'
+           */
+          if (rtDW->Merge1 > rtDW->Divide1_n) {
+            rtb_Saturation1 = rtDW->Divide1_n;
+          } else if (rtDW->Merge1 < rtDW->Gain1) {
+            /* Switch: '<S70>/Switch' */
+            rtb_Saturation1 = rtDW->Gain1;
+          } else {
+            rtb_Saturation1 = rtDW->Merge1;
+          }
+
+          /* End of Switch: '<S70>/Switch2' */
+
+          /* Sum: '<S62>/Sum2' */
+          rtb_Gain3 = rtb_Saturation1 - rtDW->DataTypeConversion[0];
+          if (rtb_Gain3 > 32767) {
+            rtb_Gain3 = 32767;
+          } else {
+            if (rtb_Gain3 < -32768) {
+              rtb_Gain3 = -32768;
+            }
+          }
+
+          /* MinMax: '<S62>/MinMax1' */
+          if (rtDW->Vq_max_M1 < rtDW->Switch2_i) {
+            rtb_Saturation1 = rtDW->Vq_max_M1;
+          } else {
+            rtb_Saturation1 = rtDW->Switch2_i;
+          }
+
+          /* End of MinMax: '<S62>/MinMax1' */
+
+          /* MinMax: '<S62>/MinMax2' */
+          if (!(rtb_Saturation > rtDW->Gain5)) {
+            rtb_Saturation = rtDW->Gain5;
+          }
+
+          /* End of MinMax: '<S62>/MinMax2' */
+
+          /* Outputs for Atomic SubSystem: '<S62>/PI_clamp_fixdt' */
+
+          /* SignalConversion: '<S62>/Signal Conversion2' incorporates:
+           *  Constant: '<S62>/cf_iqKi'
+           *  Constant: '<S62>/cf_iqKp'
+           *  Constant: '<S62>/constant2'
+           *  Sum: '<S62>/Sum2'
+           *  UnitDelay: '<S8>/UnitDelay4'
+           */
+          PI_clamp_fixdt_k((int16_T)rtb_Gain3, rtP->cf_iqKp, rtP->cf_iqKi,
+                           rtDW->UnitDelay4_DSTATE_eu, rtb_Saturation1,
+                           rtb_Saturation, 0, &rtDW->Merge,
+                           &rtDW->PI_clamp_fixdt_kh);
+
+          /* End of Outputs for SubSystem: '<S62>/PI_clamp_fixdt' */
+
+          /* End of Outputs for SubSystem: '<S59>/Torque_Mode' */
           break;
 
          case 3:

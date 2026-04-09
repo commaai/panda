@@ -25,6 +25,7 @@
 #include "stm32f4xx_hal.h"
 #include "defines.h"
 #include "config.h"
+#include "board/body/v1/bldc_defs.h"
 #include "util.h"
 
 // Matlab includes and defines - from auto-code generation
@@ -80,9 +81,6 @@ static int16_t offsetdcr    = 2000;
 
 int16_t        batVoltage       = (400 * BAT_CELLS * BAT_CALIB_ADC) / BAT_CALIB_REAL_VOLTAGE;
 static int32_t batVoltageFixdt  = (400 * BAT_CELLS * BAT_CALIB_ADC) / BAT_CALIB_REAL_VOLTAGE << 16;  // Fixed-point filter output initialized at 400 V*100/cell = 4 V/cell converted to fixed-point
-
-int32_t motPosL = 0;
-int32_t motPosR = 0;
 
 // DMA interrupt frequency =~ 16 kHz
 void DMA2_Stream0_IRQHandler(void) {
@@ -226,44 +224,4 @@ void DMA2_Stream0_IRQHandler(void) {
   // =================================================================
 
   OverrunFlag = false;
-
-  static int16_t motAngleLeftLast = 0;
-  static int16_t motAngleRightLast = 0;
-  static int32_t cycleDegsL = 0;  // wheel encoder roll over count in deg
-  static int32_t cycleDegsR = 0;  // wheel encoder roll over count in deg
-  int16_t diffL = 0;
-  int16_t diffR = 0;
-  static int16_t cnt = 0;
-
-  if (enable_motors == 0) { // Reset everything if motors are disabled
-    cycleDegsL = 0;
-    cycleDegsR = 0;
-    diffL = 0;
-    diffR = 0;
-    cnt = 0;
-  }
-  if (cnt == 0) {
-    motAngleLeftLast = rtY_Left.a_elecAngle;
-    motAngleRightLast = rtY_Right.a_elecAngle;
-  }
-
-  diffL = rtY_Left.a_elecAngle - motAngleLeftLast;
-  if (diffL < -180) {
-    cycleDegsL = cycleDegsL - 360;
-  } else if (diffL > 180) {
-    cycleDegsL = cycleDegsL  + 360;
-  }
-  motPosL = cycleDegsL + (360 - rtY_Left.a_elecAngle);
-
-  diffR = rtY_Right.a_elecAngle - motAngleRightLast;
-  if (diffR < -180) {
-    cycleDegsR = cycleDegsR - 360;
-  } else if (diffR > 180) {
-    cycleDegsR = cycleDegsR  + 360;
-  }
-  motPosR = cycleDegsR + (360 - rtY_Right.a_elecAngle);
-
-  motAngleLeftLast = rtY_Left.a_elecAngle;
-  motAngleRightLast = rtY_Right.a_elecAngle;
-  cnt++;
 }

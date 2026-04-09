@@ -6,7 +6,7 @@ PREFIX = "arm-none-eabi-"
 BUILDER = "DEV"
 
 LOCAL_OBJ_DIR = Dir("./obj")
-PUBLIC_OBJ_DIR = Dir("#/board/obj")
+PUBLIC_OBJ_DIR = Dir("../../obj")
 
 common_flags = []
 
@@ -17,7 +17,7 @@ if os.getenv("RELEASE"):
   assert os.path.exists(cert_fn), "Certificate file not found. Please specify absolute path"
 else:
   BUILD_TYPE = "DEBUG"
-  cert_fn = File("#/board/certs/debug").srcnode().abspath
+  cert_fn = File("../../certs/debug").srcnode().relpath
   common_flags += ["-DALLOW_DEBUG"]
 
 if os.getenv("DEBUG"):
@@ -63,7 +63,7 @@ def to_c_uint32(x):
 def get_key_header(name):
   from Crypto.PublicKey import RSA
 
-  public_fn = File(f"#/board/certs/{name}.pub").srcnode().abspath
+  public_fn = File(f"../../certs/{name}.pub").srcnode().get_path()
   with open(public_fn) as f:
     rsa = RSA.importKey(f.read())
   assert rsa.size_in_bits() == 1024
@@ -82,41 +82,34 @@ def get_key_header(name):
   ]
 
 includes = [
-  Dir("#").abspath,
+  Dir("../../..").abspath,
   Dir(".").abspath,
   Dir("..").abspath,
   Dir("../bldc").abspath,
   Dir("./inc").abspath,
   Dir("./inc/STM32F4xx_HAL_Driver/Inc").abspath,
-  Dir("#/board").abspath,
+  Dir("../..").abspath,
 ]
 
 c_sources = [
-  ["hal_flash", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c"],
-  ["hal_pwr", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c"],
   ["hal_rcc", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c"],
-  ["hal_i2c", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c.c"],
-  ["hal_i2c_ex", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c_ex.c"],
   ["hal_tim", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c"],
   ["hal_tim_ex", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c"],
   ["hal_adc_ex", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc_ex.c"],
   ["hal_cortex", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c"],
-  ["hal_flash_ex", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c"],
   ["hal_gpio", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c"],
   ["hal_rcc_ex", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c"],
   ["hal", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c"],
   ["hal_adc", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc.c"],
-  ["hal_dma", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma.c"],
   ["system", "inc/system_stm32f4xx.c"],
   ["it", "inc/stm32f4xx_it.c"],
-  ["bldc", "bldc/bldc.c"],
-  ["bldc_data", "bldc/BLDC_controller_data.c"],
-  ["bldc_ctrl", "bldc/BLDC_controller.c"],
+  ["bldc", "bldc.c"],
+  ["bldc_data", "../bldc/BLDC_controller_data.c"],
+  ["bldc_ctrl", "../bldc/BLDC_controller.c"],
   ["util", "util.c"],
 ]
 
 c_bootstub_sources = [
-  ["hal_pwr", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c"],
   ["hal_rcc", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c"],
   ["hal_cortex", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c"],
   ["hal_gpio", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c"],
@@ -169,6 +162,9 @@ env = Environment(
   },
 )
 
+obj_dir = os.path.dirname(File("./obj/gitversion.h").srcnode().abspath)
+os.makedirs(obj_dir, exist_ok=True)
+
 git_ver = get_version(BUILDER, BUILD_TYPE)
 with open(File("./obj/gitversion.h").srcnode().abspath, "w") as f:
   f.write(f'const uint8_t gitversion[9] = "{git_ver}";\n')
@@ -178,22 +174,29 @@ with open(File("./obj/cert.h").srcnode().abspath, "w") as f:
   for cert in certs:
     f.write("\n".join(cert) + "\n")
 
-startup = env.Object("startup_stm32f413xx.s")
+def obj_path(name, source_path):
+  if name.startswith("hal"):
+    return f"obj/hal/{name}"
+  if name in ("bldc", "bldc_data", "bldc_ctrl"):
+    return f"obj/bldc/{name}"
+  return f"obj/{name}"
+
+startup = env.Object("obj/startup_stm32f413xx", "startup_stm32f413xx.s")
 
 bootstub_objects = [startup]
 for obj_name, source_path in c_bootstub_sources:
-  bootstub_objects.append(env.Object(f"{obj_name}-bootstub", source_path))
+  bootstub_objects.append(env.Object(f"{obj_path(obj_name, source_path)}-bootstub", source_path))
 bootstub_objects += [
-  env.Object("rsa-bootstub", "#/board/crypto/rsa.c"),
-  env.Object("sha-bootstub", "#/board/crypto/sha.c"),
-  env.Object("body_v1_bootstub", "bootstub.c"),
+  env.Object("obj/rsa-bootstub", "../../crypto/rsa.c"),
+  env.Object("obj/sha-bootstub", "../../crypto/sha.c"),
+  env.Object("obj/body_v1_bootstub", "bootstub.c"),
 ]
 bootstub_elf = env.Program("obj/bootstub.body_v1_f4.elf", bootstub_objects + [libgcc])
-env.Objcopy("#/board/obj/bootstub.body_v1_f4.bin", bootstub_elf)
+env.Objcopy("../../obj/bootstub.body_v1_f4.bin", bootstub_elf)
 
-main_objects = [startup, env.Object("body_v1_main", "main.c")]
+main_objects = [startup, env.Object("obj/body_v1_main", "main.c")]
 for obj_name, source_path in c_sources:
-  main_objects.append(env.Object(f"{obj_name}-main", source_path))
+  main_objects.append(env.Object(f"{obj_path(obj_name, source_path)}-main", source_path))
 
 main_elf = env.Program(
   "obj/body_v1_f4.elf",
@@ -201,5 +204,5 @@ main_elf = env.Program(
   LINKFLAGS=[f"-Wl,--section-start,.isr_vector=0x08004000"] + flags,
 )
 main_bin = env.Objcopy("obj/body_v1_f4.bin", main_elf)
-sign_py = File("#/board/crypto/sign.py").srcnode().abspath
-env.Command("#/board/obj/body_v1_f4.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
+sign_py = File("../../crypto/sign.py").srcnode().relpath
+env.Command("../../obj/body_v1_f4.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")

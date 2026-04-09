@@ -71,11 +71,6 @@
 #define CHARGER_PIN GPIO_PIN_12
 #define CHARGER_PORT GPIOA
 
-#define SW_I2C1_SCL_GPIO  GPIOB
-#define SW_I2C1_SDA_GPIO  GPIOB
-#define SW_I2C1_SCL_PIN   GPIO_PIN_3
-#define SW_I2C1_SDA_PIN   GPIO_PIN_4
-
 // UID pins
 #define KEY1_PIN GPIO_PIN_10
 #define KEY1_PORT GPIOB
@@ -128,7 +123,6 @@
 #define TRANSCEIVER 5
 
 #define HW_TYPE_BASE 0
-#define HW_TYPE_KNEE 3
 
 typedef struct {
   uint32_t rrB;
@@ -178,12 +172,5 @@ typedef struct {
   uint16_t led_pinB;
 
 } board_t;
-
-typedef struct {
-    uint8_t left_i2c : 1;
-    uint8_t left_angle : 1;
-    uint8_t right_i2c : 1;
-    uint8_t right_angle : 1;
-} fault_status_t;
 
 #endif // DEFINES_H

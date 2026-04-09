@@ -3,6 +3,7 @@
 #include "crc.h"
 #include "defines.h"
 #include "config.h"
+#include "board/body/v1/bldc_defs.h"
 #include "util.h"
 #include "bldc/BLDC_controller.h"
 

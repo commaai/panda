@@ -1,18 +1,20 @@
 #ifndef BLDC_H
 #define BLDC_H
 
-#include "board/body/bldc/bldc_defs.h"
-#include "board/body/boards/board_declarations.h"
-
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "board/body/bldc/bldc_defs.h"
+#include "board/body/boards/board_declarations.h"
 #include "board/stm32h7/lladc.h"
 
 // Matlab includes and defines - from auto-code generation
 #include "BLDC_controller.h"           /* Model's header file */
 #include "BLDC_controller.c"
 #include "BLDC_controller_data.c"
+
+void bldc_init(void);
+void bldc_step(void);
 
 static RT_MODEL rtM_Left_Obj;
 static RT_MODEL rtM_Right_Obj;

@@ -7,6 +7,7 @@ void print(const char *a);
 #include "stm32f4xx_hal.h"
 
 #include "config.h"
+#include "board/body/v1/bldc_defs.h"
 #include "defines.h"
 #include "setup.h"
 #include "util.h"
@@ -228,6 +229,7 @@ int main(void) {
                      4U);
 
         out_enable(LED_BLUE, false);
+        out_enable(LED_GREEN, true);
 
         if (ignition != 0U) {
           ignition_off_counter = 0U;

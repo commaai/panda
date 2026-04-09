@@ -1,0 +1,44 @@
+#pragma once
+
+#define COM_CTRL 0
+#define SIN_CTRL 1
+#define FOC_CTRL 2
+
+#define OPEN_MODE 0
+#define VLT_MODE 1
+#define SPD_MODE 2
+#define TRQ_MODE 3
+
+#define DIAG_ENA 1
+
+#define FIELD_WEAK_MAX 5
+#define PHASE_ADV_MAX 25
+#define FIELD_WEAK_HI 1000
+#define FIELD_WEAK_LO 750
+
+#define VOLTS_PER_PERCENT 0.00814
+
+#define PWM_FREQ 16000
+#define A2BIT_CONV 50
+
+#define BAT_CALIB_REAL_VOLTAGE 3192
+#define BAT_CALIB_ADC 1275
+#define BAT_CELLS 7
+#define BAT_LVL2 ((358 * BAT_CELLS * BAT_CALIB_ADC) / BAT_CALIB_REAL_VOLTAGE)
+#define BAT_LVL1 ((351 * BAT_CELLS * BAT_CALIB_ADC) / BAT_CALIB_REAL_VOLTAGE)
+#define BAT_DEAD ((339 * BAT_CELLS * BAT_CALIB_ADC) / BAT_CALIB_REAL_VOLTAGE)
+
+#define MOTOR_LEFT_ENA
+#define MOTOR_RIGHT_ENA
+
+#define CTRL_TYP_SEL FOC_CTRL
+#define CTRL_MOD_REQ TRQ_MODE
+
+#define I_MOT_MAX 15
+#define I_DC_MAX 17
+#define N_MOT_MAX 100
+#define TORQUE_BASE_MAX 1000
+
+#define FIELD_WEAK_ENA 0
+
+#define SPEED_COEFFICIENT 16384
