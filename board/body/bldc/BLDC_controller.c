@@ -1224,8 +1224,9 @@ void BLDC_controller_step(RT_MODEL *const rtM)
 
   /* End of Switch: '<S13>/Switch2' */
 
-#ifdef PANDA_BODY
-  /* Deadband on measured speed to prevent drift at zero */
+#ifdef STM32F4
+#else
+ /* Deadband on measured speed to prevent drift at zero */
   #define SPEED_MEAS_DEADBAND (RPM_DEADBAND * 16) // RPM_DEADBAND * RPM_TO_UNIT
   if ((Switch2 > -SPEED_MEAS_DEADBAND) && (Switch2 < SPEED_MEAS_DEADBAND)) {
     Switch2 = 0;
@@ -1268,10 +1269,10 @@ void BLDC_controller_step(RT_MODEL *const rtM)
   /* DataTypeConversion: '<S1>/Data Type Conversion2' incorporates:
    *  Inport: '<Root>/r_inpTgt'
    */
-#ifdef PANDA_BODY
-      DataTypeConversion2 = rtU->r_inpTgt;
-#else
+#ifdef STM32F4
       DataTypeConversion2 = (int16_T)(rtU->r_inpTgt << 4);
+#else
+      DataTypeConversion2 = rtU->r_inpTgt;
 #endif
 
   /* Saturate: '<S1>/Saturation' incorporates:
@@ -1696,15 +1697,7 @@ void BLDC_controller_step(RT_MODEL *const rtM)
        *  UnitDelay: '<S20>/UnitDelay'
        *  UnitDelay: '<S8>/UnitDelay4'
        */
-#ifdef PANDA_BODY
-      if (rtDW->UnitDelay4_DSTATE_eu < 0) {
-        rtb_Saturation1 = (int16_T)-rtDW->UnitDelay4_DSTATE_eu;
-      } else {
-        rtb_Saturation1 = rtDW->UnitDelay4_DSTATE_eu;
-      }
-      rtb_RelationalOperator1_mv = (rtU->b_motEna && (Abs5 <
-        rtP->n_stdStillDet) && (rtb_Saturation1 > rtP->r_errInpTgtThres));
-#else
+#ifdef STM32F4
       if ((rtDW->UnitDelay_DSTATE_e & 4) != 0) {
         rtb_RelationalOperator1_mv = true;
       } else {
@@ -1723,6 +1716,14 @@ void BLDC_controller_step(RT_MODEL *const rtM)
         rtb_RelationalOperator1_mv = (rtU->b_motEna && (Abs5 <
           rtP->n_stdStillDet) && (rtb_Saturation1 > rtP->r_errInpTgtThres));
       }
+#else
+      if (rtDW->UnitDelay4_DSTATE_eu < 0) {
+        rtb_Saturation1 = (int16_T)-rtDW->UnitDelay4_DSTATE_eu;
+      } else {
+        rtb_Saturation1 = rtDW->UnitDelay4_DSTATE_eu;
+      }
+      rtb_RelationalOperator1_mv = (rtU->b_motEna && (Abs5 <
+        rtP->n_stdStillDet) && (rtb_Saturation1 > rtP->r_errInpTgtThres));
 #endif
 
       /* End of Switch: '<S20>/Switch3' */
@@ -2630,7 +2631,14 @@ void BLDC_controller_step(RT_MODEL *const rtM)
             }
           }
 
-#ifdef PANDA_BODY
+#ifdef STM32F4
+          /* Outputs for Atomic SubSystem: '<S61>/PI_clamp_fixdt' */
+          PI_clamp_fixdt_l((int16_T)rtb_Gain3, rtP->cf_nKp, rtP->cf_nKi,
+                           rtDW->UnitDelay4_DSTATE_eu,
+                           rtb_TmpSignalConversionAtLow_Pa[0],
+                           rtb_TmpSignalConversionAtLow_Pa[1], rtDW->Divide1,
+                           &rtDW->Merge, &rtDW->PI_clamp_fixdt_l4);
+#else
           /* Feedforward: Add term proportional to target speed */
           int32_t ff = (rtb_Saturation * 3) >> 2; // Approx 0.75 * TargetSpeed
 
@@ -2650,13 +2658,6 @@ void BLDC_controller_step(RT_MODEL *const rtM)
              }
              rtDW->Merge = (int16_T)out;
           }
-#else
-          /* Outputs for Atomic SubSystem: '<S61>/PI_clamp_fixdt' */
-          PI_clamp_fixdt_l((int16_T)rtb_Gain3, rtP->cf_nKp, rtP->cf_nKi,
-                           rtDW->UnitDelay4_DSTATE_eu,
-                           rtb_TmpSignalConversionAtLow_Pa[0],
-                           rtb_TmpSignalConversionAtLow_Pa[1], rtDW->Divide1,
-                           &rtDW->Merge, &rtDW->PI_clamp_fixdt_l4);
 #endif
 
           /* End of Outputs for SubSystem: '<S61>/PI_clamp_fixdt' */

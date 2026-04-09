@@ -162,6 +162,9 @@ env = Environment(
   },
 )
 
+obj_dir = os.path.dirname(File("./obj/gitversion.h").srcnode().abspath)
+os.makedirs(obj_dir, exist_ok=True)
+
 git_ver = get_version(BUILDER, BUILD_TYPE)
 with open(File("./obj/gitversion.h").srcnode().abspath, "w") as f:
   f.write(f'const uint8_t gitversion[9] = "{git_ver}";\n')
