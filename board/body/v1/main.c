@@ -7,7 +7,7 @@ void print(const char *a);
 #include "stm32f4xx_hal.h"
 
 #include "config.h"
-#include "board/body/bldc/v1/bldc_defs.h"
+#include "board/body/v1/bldc_defs.h"
 #include "defines.h"
 #include "setup.h"
 #include "util.h"

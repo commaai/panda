@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "board/body/bldc/v2/bldc_defs.h"
+#include "board/body/bldc/bldc_defs.h"
 #include "board/body/boards/board_declarations.h"
 #include "board/stm32h7/lladc.h"
 

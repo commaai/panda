@@ -17,7 +17,6 @@
  * Validation result: Not run
  */
 
-#include "board/body/bldc/shared_defs.h"
 #include "BLDC_controller.h"
 
 /* Named constants for Chart: '<S5>/F03_02_Control_Mode_Manager' */
@@ -27,6 +26,10 @@
 #define IN_SPEED_MODE                  ((uint8_T)1U)
 #define IN_TORQUE_MODE                 ((uint8_T)2U)
 #define IN_VOLTAGE_MODE                ((uint8_T)3U)
+#define OPEN_MODE 0
+#define VLT_MODE 1
+#define SPD_MODE 2
+#define TRQ_MODE 3
 #ifndef UCHAR_MAX
 #include <limits.h>
 #endif

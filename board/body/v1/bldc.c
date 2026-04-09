@@ -25,7 +25,7 @@
 #include "stm32f4xx_hal.h"
 #include "defines.h"
 #include "config.h"
-#include "board/body/bldc/v1/bldc_defs.h"
+#include "board/body/v1/bldc_defs.h"
 #include "util.h"
 
 // Matlab includes and defines - from auto-code generation
