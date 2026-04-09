@@ -26,10 +26,10 @@
 #define IN_SPEED_MODE                  ((uint8_T)1U)
 #define IN_TORQUE_MODE                 ((uint8_T)2U)
 #define IN_VOLTAGE_MODE                ((uint8_T)3U)
-#define OPEN_MODE 0
-#define VLT_MODE 1
-#define SPD_MODE 2
-#define TRQ_MODE 3
+#define OPEN_MODE                      ((uint8_T)0U)
+#define SPD_MODE                       ((uint8_T)2U)
+#define TRQ_MODE                       ((uint8_T)3U)
+#define VLT_MODE                       ((uint8_T)1U)
 #ifndef UCHAR_MAX
 #include <limits.h>
 #endif
