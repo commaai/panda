@@ -229,6 +229,7 @@ int main(void) {
                      4U);
 
         out_enable(LED_BLUE, false);
+        out_enable(LED_GREEN, true);
 
         if (ignition != 0U) {
           ignition_off_counter = 0U;
