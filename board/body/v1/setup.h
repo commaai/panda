@@ -221,7 +221,7 @@ void MX_TIM_Init(void) {
 
   sTimConfig.InputTrigger = TIM_TS_ITR0;
   sTimConfig.SlaveMode    = TIM_SLAVEMODE_GATED;
-  HAL_TIM_SlaveConfigSynchronization(&htim_left, &sTimConfig);
+  HAL_TIM_SlaveConfigSynchro(&htim_left, &sTimConfig);
 
   // Start counting >0 to effectively offset timers by the time it takes for one ADC conversion to complete.
   // This method allows that the Phase currents ADC measurements are properly aligned with LOW-FET ON region for both motors
