@@ -128,7 +128,6 @@
 #define TRANSCEIVER 5
 
 #define HW_TYPE_BASE 0
-#define HW_TYPE_KNEE 3
 
 typedef struct {
   uint32_t rrB;
