@@ -52,16 +52,12 @@ void process_uds(uint32_t addr, uint32_t dlr) {
       case 0x031002U:
         can_send_msg(ENGINE_R_ADDR + board.uds_offset, 0x0U, 0x035002U, 8U);
         break;
-      // FIRMWARE SIGNATURE : F181 (used for fingerprinting)
-      case 0x81F12203U: {
-        uint32_t code_len = (uint32_t)_app_start[0];
-        (void)memcpy(sig_buf, ((char *)_app_start) + code_len, 128U);
-        sig_idx = 3U;
-        uint32_t dhr = ((uint32_t)sig_buf[2] << 24U) | ((uint32_t)sig_buf[1] << 16U) | ((uint32_t)sig_buf[0] << 8U) | 0x81U;
-        can_send_msg(ENGINE_R_ADDR + board.uds_offset, dhr, 0xF1628310U, 8U);
+      // APPLICATION SOFTWARE IDENTIFICATION : F181 (used for fingerprinting, firmware version)
+      case 0x81F12203U:
+        COMPILE_TIME_ASSERT(sizeof(version) == 6U);
+        can_send_msg(ENGINE_R_ADDR + board.uds_offset, ((version[2] << 24U) | (version[1] << 16U) | (version[0] << 8U) | 0x81U), 0xF1620A10U, 8U);
         uds_engine_request = 0xF181U;
         break;
-      }
       // ECU SERIAL NUMBER : F18C
       case 0x8CF12203U:
         can_send_msg(ENGINE_R_ADDR + board.uds_offset, ((uid[2] << 24U) | (uid[1] << 16U) | (uid[0] << 8U) | 0x8CU), 0xF1620D10U, 8U);
@@ -72,14 +68,40 @@ void process_uds(uint32_t addr, uint32_t dlr) {
         can_send_msg(ENGINE_R_ADDR + board.uds_offset, 0x4D4F4390U, 0xF1621410U, 8U);
         uds_engine_request = 0xF190U;
         break;
+      // FIRMWARE SIGNATURE : F184
+      case 0x84F12203U: {
+        uint32_t code_len = (uint32_t)_app_start[0];
+        (void)memcpy(sig_buf, ((char *)_app_start) + code_len, 128U);
+        sig_idx = 3U;
+        uint32_t dhr = ((uint32_t)sig_buf[2] << 24U) | ((uint32_t)sig_buf[1] << 16U) | ((uint32_t)sig_buf[0] << 8U) | 0x84U;
+        can_send_msg(ENGINE_R_ADDR + board.uds_offset, dhr, 0xF1628310U, 8U);
+        uds_engine_request = 0xF184U;
+        break;
+      }
       // FLOW CONTROL MESSAGE
       default:
         if ((dlr & 0xFF) == 0x30U) {
           sep_time = (dlr >> 16U) & 0xFF;
           delay(sep_time);
           switch(uds_engine_request) {
-            // FIRMWARE SIGNATURE : F181
-            case 0xF181U: {
+            // APPLICATION SOFTWARE IDENTIFICATION : F181
+            case 0xF181U:
+              can_send_msg(ENGINE_R_ADDR + board.uds_offset, 0x61U, ((version[5] << 24U) | (version[4] << 16U) | (version[3] << 8U) | 0x21U), 8U);
+              uds_engine_request = 0;
+              break;
+            // ECU SERIAL NUMBER : F18C
+            case 0xF18CU:
+              can_send_msg(ENGINE_R_ADDR + board.uds_offset, ((uid[9] << 24U) | (uid[8] << 16U) | (uid[7]<< 8U) | uid[6]), ((uid[5] << 24U) | (uid[4] << 16U) | (uid[3] << 8U) | 0x21U), 8U);
+              uds_engine_request = 0;
+              break;
+            // VIN : F190
+            case 0xF190U:
+              can_send_msg(ENGINE_R_ADDR + board.uds_offset, 0x5659444FU, 0x42414D21U, 8U);
+              can_send_msg(ENGINE_R_ADDR + board.uds_offset, 0x314E4F49U, 0x53524522U, 8U);
+              uds_engine_request = 0;
+              break;
+            // FIRMWARE SIGNATURE : F184
+            case 0xF184U: {
               uint8_t sn = 1U;
               while (sig_idx < 128U) {
                 uint8_t frame[8] = {0};
@@ -96,17 +118,6 @@ void process_uds(uint32_t addr, uint32_t dlr) {
               uds_engine_request = 0;
               break;
             }
-            // ECU SERIAL NUMBER : F18C
-            case 0xF18CU:
-              can_send_msg(ENGINE_R_ADDR + board.uds_offset, ((uid[9] << 24U) | (uid[8] << 16U) | (uid[7]<< 8U) | uid[6]), ((uid[5] << 24U) | (uid[4] << 16U) | (uid[3] << 8U) | 0x21U), 8U);
-              uds_engine_request = 0;
-              break;
-            // VIN : F190
-            case 0xF190U:
-              can_send_msg(ENGINE_R_ADDR + board.uds_offset, 0x5659444FU, 0x42414D21U, 8U);
-              can_send_msg(ENGINE_R_ADDR + board.uds_offset, 0x314E4F49U, 0x53524522U, 8U);
-              uds_engine_request = 0;
-              break;
           }
         }
         break;
