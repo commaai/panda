@@ -103,7 +103,7 @@ c_sources = [
   ["hal_adc", "inc/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc.c"],
   ["system", "inc/system_stm32f4xx.c"],
   ["it", "inc/stm32f4xx_it.c"],
-  ["bldc", "bldc/bldc.c"],
+  ["bldc", "bldc.c"],
   ["bldc_data", "../bldc/BLDC_controller_data.c"],
   ["bldc_ctrl", "../bldc/BLDC_controller.c"],
   ["util", "util.c"],
