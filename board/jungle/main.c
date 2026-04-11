@@ -1,6 +1,8 @@
 // ********************* Includes *********************
 #include "board/config.h"
 
+#include "board/jungle/stm32h7/board.h"
+
 #include "opendbc/safety/safety.h"
 
 #include "board/drivers/led.h"
