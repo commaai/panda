@@ -137,6 +137,7 @@ class Panda:
   F4_DEVICES = [HW_TYPE_WHITE, HW_TYPE_BLACK]
   H7_DEVICES = [HW_TYPE_RED_PANDA, HW_TYPE_TRES, HW_TYPE_CUATRO, HW_TYPE_BODY]
   SUPPORTED_DEVICES = H7_DEVICES
+  DEPRECATED_DEVICES = F4_DEVICES  # C3_F4: F4/DOS (BLACK_PANDA hw_type 0x03) panda support
 
   INTERNAL_DEVICES = (HW_TYPE_TRES, HW_TYPE_CUATRO)
 
@@ -347,7 +348,8 @@ class Panda:
 
   def reset(self, enter_bootstub=False, enter_bootloader=False, reconnect=True):
     if enter_bootstub or enter_bootloader:
-      assert (hw_type := self.get_type()) in self.SUPPORTED_DEVICES, f"Unknown HW: {hw_type}"
+      hw_type = self.get_type()
+      assert hw_type in self.SUPPORTED_DEVICES or hw_type in self.DEPRECATED_DEVICES, f"Unknown HW: {hw_type}"
 
     # no response is expected since it resets right away
     timeout = 5000 if isinstance(self._handle, PandaSpiHandle) else 15000
@@ -428,14 +430,18 @@ class Panda:
       pass
 
   def flash(self, fn=None, code=None, reconnect=True):
-    assert (hw_type := self.get_type()) in self.SUPPORTED_DEVICES, f"Unknown HW: {hw_type}"
+    hw_type = self.get_type()
+    assert hw_type in self.SUPPORTED_DEVICES or hw_type in self.DEPRECATED_DEVICES, f"Unknown HW: {hw_type}"
+
+    # C3_F4: determine MCU type from hw_type so F4 uses correct sector sizes
+    mcu_type = self.get_mcu_type()
 
     if self.up_to_date(fn=fn):
       logger.info("flash: already up to date")
       return
 
     if not fn:
-      fn = os.path.join(FW_PATH, McuType.H7.config.app_fn)
+      fn = os.path.join(FW_PATH, mcu_type.config.app_fn)
     assert os.path.isfile(fn)
     logger.debug("flash: main version is %s", self.get_version())
     if not self.bootstub:
@@ -450,7 +456,7 @@ class Panda:
     logger.debug("flash: bootstub version is %s", self.get_version())
 
     # do flash
-    Panda.flash_static(self._handle, code, mcu_type=McuType.H7)
+    Panda.flash_static(self._handle, code, mcu_type=mcu_type)
 
     # reconnect
     if reconnect:

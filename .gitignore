@@ -15,6 +15,9 @@ dist/
 build/
 pandacan.egg-info/
 obj/
+# Pre-built F4 firmware for C3 (STM32F413) — tracked for easy C3 setup
+!board/obj/panda.bin.signed
+!board/obj/bootstub.panda.bin
 examples/output.csv
 .DS_Store
 .vscode*
