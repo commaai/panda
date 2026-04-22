@@ -202,11 +202,12 @@ void ignition_can_hook(CANPacket_t *msg) {
     }
   }
 
+  // TODO: this is too loose, Teslas have 0x222
   // body v2 exception
-  if (((msg->bus == 0U) || (msg->bus == 2U)) && (msg->addr == 0x222U)) {
-    ignition_can = true;
-    ignition_can_cnt = 0U;
-  }
+  // if (((msg->bus == 0U) || (msg->bus == 2U)) && (msg->addr == 0x222U)) {
+  //   ignition_can = true;
+  //   ignition_can_cnt = 0U;
+  // }
 }
 
 bool can_tx_check_min_slots_free(uint32_t min) {
