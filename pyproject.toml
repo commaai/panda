@@ -1,6 +1,6 @@
 [project]
 name = "pandacan"
-version = "0.0.10"
+version = "0.0.11"
 description = "Code powering the comma.ai panda"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"  # macOS doesn't work with 3.13 due to pycapnp from opendbc
@@ -50,8 +50,10 @@ packages = [
 ]
 
 [tool.setuptools.package-data]
-"panda.board" = ["health.h"]
-"panda.board.jungle" = ["jungle_health.h"]
+"panda" = ["SConscript", "py.typed"]
+"panda.board" = ["**"]
+"panda.board.body" = ["**"]
+"panda.board.jungle" = ["**"]
 
 [tool.setuptools.package-dir]
 panda = "."
