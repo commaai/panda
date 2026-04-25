@@ -173,7 +173,8 @@ static void tick_handler(void) {
 
       // tick drivers at 1Hz
       bool started = harness_check_ignition() || ignition_can;
-      bootkick_tick(started, recent_heartbeat);
+      bool wake_up = started || wake_on_can;
+      bootkick_tick(wake_up, recent_heartbeat);
 
       // increase heartbeat counter and cap it at the uint32 limit
       if (heartbeat_counter < UINT32_MAX) {
@@ -251,11 +252,15 @@ static void tick_handler(void) {
       if (ignition_can_cnt > 2U) {
         ignition_can = false;
       }
+      if (wake_on_can_cnt > 2U) {
+        wake_on_can = false;
+      }
 
       // on to the next one
       uptime_cnt += 1U;
       safety_mode_cnt += 1U;
       ignition_can_cnt += 1U;
+      wake_on_can_cnt += 1U;
 
       // synchronous safety check
       safety_tick(&current_safety_config);

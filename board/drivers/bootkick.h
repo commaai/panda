@@ -2,18 +2,18 @@
 
 bool bootkick_reset_triggered = false;
 
-void bootkick_tick(bool ignition, bool recent_heartbeat) {
+void bootkick_tick(bool wake_up, bool recent_heartbeat) {
   static uint16_t bootkick_last_serial_ptr = 0;
   static uint8_t waiting_to_boot_countdown = 0;
   static uint8_t boot_reset_countdown = 0;
   static uint8_t bootkick_harness_status_prev = HARNESS_STATUS_NC;
-  static bool bootkick_ign_prev = false;
+  static bool bootkick_wake_up_prev = false;
   static BootState boot_state = BOOT_BOOTKICK;
   BootState boot_state_prev = boot_state;
   const bool harness_inserted = (harness.status != bootkick_harness_status_prev) && (harness.status != HARNESS_STATUS_NC);
 
-  if ((ignition && !bootkick_ign_prev) || harness_inserted) {
-    // bootkick on rising edge of ignition or harness insertion
+  if ((wake_up && !bootkick_wake_up_prev) || harness_inserted) {
+    // bootkick on rising edge of wake-up or harness insertion
     boot_state = BOOT_BOOTKICK;
   } else if (recent_heartbeat) {
     // disable bootkick once openpilot is up
@@ -55,7 +55,7 @@ void bootkick_tick(bool ignition, bool recent_heartbeat) {
   }
 
   // update state
-  bootkick_ign_prev = ignition;
+  bootkick_wake_up_prev = wake_up;
   bootkick_harness_status_prev = harness.status;
   bootkick_last_serial_ptr = uart_ring_som_debug.w_ptr_tx;
   if (waiting_to_boot_countdown > 0U) {
