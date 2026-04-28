@@ -200,6 +200,12 @@ void ignition_can_hook(CANPacket_t *msg) {
       ignition_can = (msg->data[0] >> 5) == 0x6U;
       ignition_can_cnt = 0U;
     }
+
+    // Volkswagen MEB exception
+    if ((msg->addr == 0x3C0U) && (len == 4)) {
+      ignition_can = (msg->data[2] >> 1) & 1U;
+      ignition_can_cnt = 0U;
+    }
   }
 
   // TODO: this is too loose, Teslas have 0x222
