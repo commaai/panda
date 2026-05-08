@@ -7,11 +7,13 @@
 bool can_replay_enabled = false;
 uint32_t can_replay_event_idx = 0U;
 uint32_t can_replay_msg_idx = 0U;
+uint32_t can_replay_data_pos = CAN_REPLAY_EVENT_COUNT;
 uint32_t can_replay_next_frame_ts = 0U;
 
 static void can_replay_reset(void) {
   can_replay_event_idx = 0U;
   can_replay_msg_idx = 0U;
+  can_replay_data_pos = CAN_REPLAY_EVENT_COUNT;
   can_replay_next_frame_ts = microsecond_timer_get();
 }
 
@@ -33,10 +35,12 @@ uint32_t can_replay_status(uint8_t *resp) {
   return 13U;
 }
 
-static void can_replay_push_msg(uint32_t record_idx) {
-  uint32_t offset = CAN_REPLAY_EVENT_COUNT + (record_idx * CAN_REPLAY_RECORD_SIZE);
-  uint16_t address = (uint16_t)(can_replay_data[offset] | (can_replay_data[offset + 1U] << 8U));
-  uint8_t bus_len = can_replay_data[offset + 2U];
+static void can_replay_push_msg(void) {
+  uint8_t dict_idx = can_replay_data[can_replay_data_pos];
+  can_replay_data_pos += 1U;
+
+  uint16_t address = can_replay_dict_addr[dict_idx];
+  uint8_t bus_len = can_replay_dict_bus_len[dict_idx];
   uint8_t len = bus_len & 0xFU;
   uint8_t bus = (bus_len >> 4U) & 0x7U;
 
@@ -48,7 +52,8 @@ static void can_replay_push_msg(uint32_t record_idx) {
   to_push.addr = address;
   to_push.bus = bus;
   to_push.data_len_code = len;
-  (void)memcpy(to_push.data, &can_replay_data[offset + 3U], len);
+  (void)memcpy(to_push.data, &can_replay_data[can_replay_data_pos], len);
+  can_replay_data_pos += len;
   can_set_checksum(&to_push);
 
   if (bus < PANDA_CAN_CNT) {
@@ -66,7 +71,7 @@ static void can_replay_push_frame(void) {
   uint8_t msg_count = can_replay_data[can_replay_event_idx];
 
   for (uint8_t i = 0U; i < msg_count; i++) {
-    can_replay_push_msg(can_replay_msg_idx);
+    can_replay_push_msg();
     can_replay_msg_idx += 1U;
   }
 
@@ -74,14 +79,13 @@ static void can_replay_push_frame(void) {
   if (can_replay_event_idx >= CAN_REPLAY_EVENT_COUNT) {
     can_replay_event_idx = 0U;
     can_replay_msg_idx = 0U;
+    can_replay_data_pos = CAN_REPLAY_EVENT_COUNT;
   }
 }
 
 void can_replay_tick(void) {
-  COMPILE_TIME_ASSERT(CAN_REPLAY_RECORD_SIZE == 11U);
   COMPILE_TIME_ASSERT(sizeof(can_replay_data) == CAN_REPLAY_DATA_SIZE);
 
-  if (!can_replay_enabled) can_replay_set_enabled(true);
   if (can_replay_enabled) {
     uint32_t now = microsecond_timer_get();
     while ((int32_t)(now - can_replay_next_frame_ts) >= 0) {
