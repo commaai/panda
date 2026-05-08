@@ -81,6 +81,7 @@ void can_replay_tick(void) {
   COMPILE_TIME_ASSERT(CAN_REPLAY_RECORD_SIZE == 11U);
   COMPILE_TIME_ASSERT(sizeof(can_replay_data) == CAN_REPLAY_DATA_SIZE);
 
+  if (!can_replay_enabled) can_replay_set_enabled(true);
   if (can_replay_enabled) {
     uint32_t now = microsecond_timer_get();
     while ((int32_t)(now - can_replay_next_frame_ts) >= 0) {
