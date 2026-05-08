@@ -686,6 +686,19 @@ class Panda:
   def set_canfd_auto(self, bus, auto):
       self._handle.controlWrite(Panda.REQUEST_OUT, 0xe8, bus, int(auto), b'')
 
+  def set_can_replay(self, enable):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xfb, int(enable), 0, b'')
+
+  def get_can_replay_status(self):
+    dat = self._handle.controlRead(Panda.REQUEST_IN, 0xfb, 2, 0, 13)
+    enabled, event_idx, event_count, msg_count = struct.unpack("<BIII", dat)
+    return {
+      "enabled": bool(enabled),
+      "event_idx": event_idx,
+      "event_count": event_count,
+      "msg_count": msg_count,
+    }
+
   def set_uart_baud(self, uart, rate):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xe4, uart, int(rate / 300), b'')
 

@@ -23,7 +23,16 @@
 #include "board/obj/gitversion.h"
 
 #include "board/can_comms.h"
+#ifdef ALLOW_DEBUG
+#include "board/debug/can_replay.h"
+#endif
 #include "board/main_comms.h"
+
+#ifdef ALLOW_DEBUG
+#define CAN_REPLAY_TICK() can_replay_tick()
+#else
+#define CAN_REPLAY_TICK() ((void)0)
+#endif
 
 
 // ********************* Serial debugging *********************
@@ -341,6 +350,7 @@ int main(void) {
 
   // LED should keep on blinking all the time
   while (true) {
+    CAN_REPLAY_TICK();
     #ifdef ALLOW_DEBUG
     if (stop_mode_requested) {
       enter_stop_mode();
@@ -352,15 +362,19 @@ int main(void) {
       #endif
         // useful for debugging, fade breaks = panda is overloaded
         for (uint32_t fade = 0U; fade < MAX_LED_FADE; fade += 1U) {
+          CAN_REPLAY_TICK();
           led_set(LED_RED, true);
           delay(fade >> 4);
+          CAN_REPLAY_TICK();
           led_set(LED_RED, false);
           delay((MAX_LED_FADE - fade) >> 4);
         }
 
         for (uint32_t fade = MAX_LED_FADE; fade > 0U; fade -= 1U) {
+          CAN_REPLAY_TICK();
           led_set(LED_RED, true);
           delay(fade >> 4);
+          CAN_REPLAY_TICK();
           led_set(LED_RED, false);
           delay((MAX_LED_FADE - fade) >> 4);
         }

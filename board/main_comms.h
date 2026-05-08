@@ -321,6 +321,19 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         UNUSED(ret);
       }
       break;
+    #ifdef ALLOW_DEBUG
+    // **** 0xfb: DEBUG: set/get embedded CAN replay mode
+    case 0xfb:
+      if (req->param1 == 0U) {
+        can_replay_set_enabled(false);
+      } else if (req->param1 == 1U) {
+        can_replay_set_enabled(true);
+      } else if (req->param1 == 2U) {
+        resp_len = can_replay_status(resp);
+      } else {
+      }
+      break;
+    #endif
     // **** 0xfc: set CAN FD non-ISO mode
     case 0xfc:
       if (req->param1 < PANDA_CAN_CNT) {
