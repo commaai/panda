@@ -11,6 +11,13 @@ from openpilot.tools.lib.logreader import LogReader
 DEFAULT_ROUTE = "77611a1fac303767/2020-03-24--09-50-38/3"
 DEFAULT_PREFIX_EVENTS = 300
 
+# Live fingerprinting enables Toyota BSM when 0x3f6 is present on bus 0.
+# The logged CarParams for this old route has enableBsm unset, so the parser
+# derived from the log alone does not keep it.
+EXTRA_KEEP_ADDRS = {
+  (0, 0x3F6),
+}
+
 
 def parser_used_addrs(CI, RI):
   used = set()
@@ -44,6 +51,8 @@ def build_payload(route, prefix_events):
   CP = lr.first("carParams").as_builder()
   CP.carFingerprint = str(MIGRATION.get(CP.carFingerprint, CP.carFingerprint))
   events, used = load_events_and_used_addrs(lr, CP)
+  seen = {(bus, address) for _, event in events for address, _, bus in event}
+  used |= EXTRA_KEEP_ADDRS & seen
 
   counts = bytearray()
   records = bytearray()

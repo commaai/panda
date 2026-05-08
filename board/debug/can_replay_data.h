@@ -6,8 +6,8 @@
 #pragma once
 
 #define CAN_REPLAY_EVENT_COUNT 6000U
-#define CAN_REPLAY_MSG_COUNT 70373U
-#define CAN_REPLAY_DATA_SIZE 634178U
+#define CAN_REPLAY_MSG_COUNT 70430U
+#define CAN_REPLAY_DATA_SIZE 634691U
 #define CAN_REPLAY_MAX_MSGS_PER_EVENT 51U
 #define CAN_REPLAY_DICT_COUNT 166U
 
@@ -50,7 +50,7 @@ __asm__(
   ".type can_replay_data, %object\n"
   "can_replay_data:\n"
   ".incbin \"board/debug/can_replay_data.bin\"\n"
-  ".size can_replay_data, 634178\n"
+  ".size can_replay_data, 634691\n"
   ".balign 4\n"
   ".previous\n"
 );
