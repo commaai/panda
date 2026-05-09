@@ -115,7 +115,14 @@ def build_project(project_name, project, main, extra_flags):
   # Build + sign main (aka app)
   main_elf = env.Program(f"{project_dir}/main.elf", [
     startup,
-    main
+    main,
+    "./board/drivers/bootkick.c",
+    "./board/drivers/clock_source.c",
+    "./board/drivers/fan.c",
+    "./board/drivers/led.c",
+    "./board/drivers/pwm.c",
+    "./board/drivers/registers.c",
+    "./board/drivers/simple_watchdog.c",
   ], LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
   sign_py = File(f"./board/crypto/sign.py").srcnode().relpath
