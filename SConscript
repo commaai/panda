@@ -61,7 +61,9 @@ def to_c_uint32(x):
   return "{" + 'U,'.join(map(str, nums)) + "U}"
 
 
-def build_project(project_name, project, main, extra_flags):
+def build_project(project_name, project, main, extra_flags, extra_sources=None):
+  if extra_sources is None:
+    extra_sources = []
   project_dir = Dir(f'./board/obj/{project_name}/')
 
   flags = project["FLAGS"] + extra_flags + common_flags + [
@@ -115,7 +117,8 @@ def build_project(project_name, project, main, extra_flags):
   # Build + sign main (aka app)
   main_elf = env.Program(f"{project_dir}/main.elf", [
     startup,
-    main
+    main,
+    *extra_sources,
   ], LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
   sign_py = File(f"./board/crypto/sign.py").srcnode().relpath
@@ -161,7 +164,10 @@ common_flags += [f"-DHEALTH_PACKET_VERSION=0x{hh:08X}U", f"-DCAN_PACKET_VERSION_
                  f"-DJUNGLE_HEALTH_PACKET_VERSION=0x{jh:08X}U"]
 
 # panda fw
-build_project("panda_h7", base_project_h7, "./board/main.c", [])
+build_project("panda_h7", base_project_h7, "./board/main.c", [], [
+  "./board/drivers/bootkick.c",
+  "./board/drivers/simple_watchdog.c",
+])
 
 # panda jungle fw
 flags = [

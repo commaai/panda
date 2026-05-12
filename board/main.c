@@ -4,8 +4,6 @@
 #include "board/drivers/led.h"
 #include "board/drivers/pwm.h"
 #include "board/drivers/usb.h"
-#include "board/drivers/simple_watchdog.h"
-#include "board/drivers/bootkick.h"
 
 #include "board/early_init.h"
 #include "board/provision.h"

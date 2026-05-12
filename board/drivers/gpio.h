@@ -53,7 +53,9 @@ void set_gpio_alternate(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode)
 void set_gpio_pullup(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
   ENTER_CRITICAL();
   uint32_t tmp = GPIO->PUPDR;
+  // cppcheck-suppress misra-c2012-12.2; pin is a GPIO pin index
   tmp &= ~(3U << (pin * 2U));
+  // cppcheck-suppress misra-c2012-12.2; pin is a GPIO pin index
   tmp |= (mode << (pin * 2U));
   register_set(&(GPIO->PUPDR), tmp, 0xFFFFFFFFU);
   EXIT_CRITICAL();
