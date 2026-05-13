@@ -44,6 +44,9 @@ extern can_health_t can_health[PANDA_CAN_CNT];
 extern bool can_silent;
 extern bool can_loopback;
 
+extern bool ignition_can;
+extern uint32_t ignition_can_cnt;
+
 // ******************* functions prototypes *********************
 bool can_init(uint8_t can_number);
 void process_can(uint8_t can_number);
