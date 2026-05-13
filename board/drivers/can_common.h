@@ -8,10 +8,6 @@ uint32_t rx_buffer_overflow = 0;
 
 can_health_t can_health[PANDA_CAN_CNT] = {{0}, {0}, {0}};
 
-// Ignition detected from CAN messages
-bool ignition_can = false;
-uint32_t ignition_can_cnt = 0U;
-
 bool can_silent = true;
 bool can_loopback = false;
 

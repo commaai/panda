@@ -220,7 +220,7 @@ void can_rx(uint8_t can_number) {
     #endif
 
     safety_rx_invalid += safety_rx_hook(&to_push) ? 0U : 1U;
-    ignition_can_hook(&to_push, &ignition_can, &ignition_can_cnt);
+    ignition_can_hook(&to_push);
 
     led_set(LED_BLUE, true);
     rx_buffer_overflow += can_push(&can_rx_q, &to_push) ? 0U : 1U;
