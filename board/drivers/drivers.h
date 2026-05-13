@@ -41,11 +41,12 @@ extern uint32_t rx_buffer_overflow;
 
 extern can_health_t can_health[PANDA_CAN_CNT];
 
-extern bool can_silent;
-extern bool can_loopback;
-
+// Ignition detected from CAN messages
 extern bool ignition_can;
 extern uint32_t ignition_can_cnt;
+
+extern bool can_silent;
+extern bool can_loopback;
 
 // ******************* functions prototypes *********************
 bool can_init(uint8_t can_number);
