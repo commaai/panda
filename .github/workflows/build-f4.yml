@@ -33,7 +33,11 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             gcc-arm-none-eabi \
             scons \
-            python3-pycryptodome
+            python3-pip
+          # apt python3-pycryptodome on Ubuntu 24.04 installs under
+          # 'Cryptodome' namespace, but crypto/sign.py imports 'Crypto'.
+          # Use pip's pycryptodome which keeps the 'Crypto' namespace.
+          pip3 install --break-system-packages pycryptodome
 
       - name: Show toolchain versions
         run: |
