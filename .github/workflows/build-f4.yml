@@ -1,0 +1,81 @@
+name: build-f4
+
+# Build the STM32F4 panda firmware (re-introduced after upstream commaai/panda
+# removed F4 support in 1ce986f7 "bye bye f4", Aug 2025). Required for Tesla
+# Model S Pre-AP (2014) running on comma 3 ("dos" board, F413 internal panda).
+#
+# Triggers: every push and PR. Artifacts uploaded for 30 days so anyone can
+# download a fresh binary without running a local build.
+
+on:
+  push:
+    branches:
+      - nap-c3-dev-f4-rebuild
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: F4 firmware
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc-arm-none-eabi \
+            scons \
+            python3-pycryptodome
+
+      - name: Show toolchain versions
+        run: |
+          arm-none-eabi-gcc --version | head -1
+          scons --version | head -1
+          python3 -c "from Crypto.PublicKey import RSA; print('pycryptodome OK')"
+
+      - name: Build F4 firmware
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          scons -Q --cache-disable -j$(nproc) \
+            board/obj/panda.bin.signed \
+            board/obj/bootstub.panda.bin
+
+      - name: Show build output
+        run: |
+          ls -l board/obj/panda.bin.signed board/obj/bootstub.panda.bin
+          md5sum board/obj/panda.bin.signed board/obj/bootstub.panda.bin
+          echo "gitversion: $(cat board/obj/version)"
+
+      - name: Summary
+        run: |
+          {
+            echo "## F4 firmware build"
+            echo ""
+            echo "| File | Size | md5 |"
+            echo "|------|------|-----|"
+            for f in board/obj/panda.bin.signed board/obj/bootstub.panda.bin; do
+              echo "| \`$f\` | $(stat -c %s "$f") B | \`$(md5sum "$f" | awk '{print $1}')\` |"
+            done
+            echo ""
+            echo "**gitversion baked in firmware:** \`$(cat board/obj/version)\`"
+          } >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: panda-f4-firmware-${{ github.sha }}
+          path: |
+            board/obj/panda.bin.signed
+            board/obj/bootstub.panda.bin
+            board/obj/version
+          retention-days: 30
+          if-no-files-found: error
