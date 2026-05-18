@@ -41,6 +41,7 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
+include-package-data = false
 packages = [
   "panda",
   "panda.python",
@@ -50,7 +51,12 @@ packages = [
 ]
 
 [tool.setuptools.package-data]
-"panda.board" = ["health.h"]
+"panda.board" = [
+  "health.h",
+  "obj/*.bin",
+  "obj/*.bin.signed",
+  "obj/version",
+]
 "panda.board.jungle" = ["jungle_health.h"]
 
 [tool.setuptools.package-dir]

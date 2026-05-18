@@ -1,0 +1,1 @@
+recursive-include board/obj *.bin *.bin.signed version
