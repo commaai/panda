@@ -1,4 +1,4 @@
-#include "board/drivers/drivers.h"
+#include "bootkick_declarations.h"
 
 bool bootkick_reset_triggered = false;
 

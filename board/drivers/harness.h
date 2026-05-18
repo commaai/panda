@@ -1,4 +1,4 @@
-#include "board/drivers/drivers.h"
+#include "harness_declarations.h"
 
 struct harness_t harness;
 

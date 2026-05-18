@@ -53,16 +53,12 @@ separate IRQs for RX and TX.
 #endif
 
 #include "board/libc.h"
-#include "board/sys/critical.h"
-#include "board/sys/faults.h"
+#include "board/critical.h"
+#include "board/faults.h"
 #include "board/utils.h"
 
 #include "board/drivers/registers.h"
 #include "board/drivers/interrupts.h"
-
-#ifdef BOOTSTUB
-uart_ring uart_ring_som_debug;
-#endif
 #include "board/drivers/gpio.h"
 #include "board/stm32h7/peripherals.h"
 #include "board/stm32h7/interrupt_handlers.h"
@@ -75,8 +71,6 @@ uart_ring uart_ring_som_debug;
 
 #ifdef PANDA_JUNGLE
 #include "board/jungle/stm32h7/board.h"
-#elif defined(PANDA_BODY)
-#include "board/body/stm32h7/board.h"
 #else
 #include "board/stm32h7/board.h"
 #endif

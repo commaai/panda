@@ -34,10 +34,11 @@ class PandaJungle(Panda):
   USB_PIDS = (0xddef, 0xddcf)
 
   HW_TYPE_UNKNOWN = b'\x00'
+  HW_TYPE_V1 = b'\x01'
   HW_TYPE_V2 = b'\x02'
 
+  F4_DEVICES = [HW_TYPE_V1, ]
   H7_DEVICES = [HW_TYPE_V2, ]
-  SUPPORTED_DEVICES = H7_DEVICES
 
   HEALTH_PACKET_VERSION = 1
   HEALTH_STRUCT = struct.Struct("<IffffffHHHHHHHHHHHH")
@@ -48,11 +49,11 @@ class PandaJungle(Panda):
 
   @classmethod
   def spi_connect(cls, serial, ignore_version=False):
-    return None, None, None, None
+    return None, None, None, None, None
 
   def flash(self, fn=None, code=None, reconnect=True):
     if not fn:
-      fn = os.path.join(FW_PATH, McuType.H7.config.app_fn.replace("panda", "panda_jungle"))
+      fn = os.path.join(FW_PATH, self._mcu_type.config.app_fn.replace("panda", "panda_jungle"))
     super().flash(fn=fn, code=code, reconnect=reconnect)
 
   def recover(self, timeout: int | None = 60, reset: bool = True) -> bool:
@@ -73,9 +74,23 @@ class PandaJungle(Panda):
     self.flash()
     return True
 
+  def get_mcu_type(self) -> McuType:
+    hw_type = self.get_type()
+    if hw_type in PandaJungle.F4_DEVICES:
+      return McuType.F4
+    elif hw_type in PandaJungle.H7_DEVICES:
+      return McuType.H7
+    else:
+      # have to assume F4, see comment in Panda.connect
+      # initially Jungle V1 has HW type: bytearray(b'')
+      if hw_type == b'' or self._assume_f4_mcu:
+        return McuType.F4
+
+    raise ValueError(f"unknown HW type: {hw_type}")
+
   def up_to_date(self, fn=None) -> bool:
     if fn is None:
-      fn = os.path.join(FW_PATH, McuType.H7.config.app_fn.replace("panda", "panda_jungle"))
+      fn = os.path.join(FW_PATH, self.get_mcu_type().config.app_fn.replace("panda", "panda_jungle"))
     return super().up_to_date(fn=fn)
 
   # ******************* health *******************

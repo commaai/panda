@@ -5,6 +5,7 @@
 
 #include "utils.h"
 
+#define CANFD
 #define ALLOW_DEBUG
 
 #define ENTER_CRITICAL() 0

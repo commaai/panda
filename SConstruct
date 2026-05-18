@@ -1,5 +1,7 @@
 import os
 
+AddOption('--extras', dest='extras', action='store_true', default=False, help='Build extra targets (tests)')
+
 env = Environment(
   COMPILATIONDB_USE_ABSPATH=True,
   tools=["default", "compilation_db"],

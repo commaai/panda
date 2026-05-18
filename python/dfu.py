@@ -97,13 +97,15 @@ class PandaDFU:
     return []
 
   @staticmethod
-  def st_serial_to_dfu_serial(st: str, mcu_type: McuType = McuType.H7):
+  def st_serial_to_dfu_serial(st: str, mcu_type: McuType = McuType.F4):
     if st is None or st == "none":
       return None
     try:
       uid_base = struct.unpack("H" * 6, bytes.fromhex(st))
       if mcu_type == McuType.H7:
         return binascii.hexlify(struct.pack("!HHH", uid_base[1] + uid_base[5], uid_base[0] + uid_base[4], uid_base[3])).upper().decode("utf-8")
+      else:
+        return binascii.hexlify(struct.pack("!HHH", uid_base[1] + uid_base[5], uid_base[0] + uid_base[4] + 0xA, uid_base[3])).upper().decode("utf-8")
     except struct.error:
       return None
 
@@ -116,11 +118,10 @@ class PandaDFU:
   def program_bootstub(self, code_bootstub):
     self._handle.clear_status()
 
-    # erase bootstub + app sectors
-    for i in (0, 1):
+    # erase all sectors
+    for i in range(len(self._mcu_type.config.sector_sizes)):
       self._handle.erase_sector(i)
 
-    # write bootstub
     self._handle.program(self._mcu_type.config.bootstub_address, code_bootstub)
 
   def recover(self):

@@ -1,9 +1,15 @@
 // from the linker script
-#define APP_START_ADDRESS 0x8020000U
+#ifdef STM32H7
+  #define APP_START_ADDRESS 0x8020000U
+#elif defined(STM32F4)
+  #define APP_START_ADDRESS 0x8004000U
+#endif
 
 // flasher state variables
 uint32_t *prog_ptr = NULL;
 bool unlocked = false;
+
+void spi_init(void);
 
 int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   int resp_len = 0;
@@ -81,7 +87,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xd6:
       COMPILE_TIME_ASSERT(sizeof(gitversion) <= USBPACKET_MAX_SIZE);
       memcpy(resp, gitversion, sizeof(gitversion));
-      resp_len = sizeof(gitversion) - 1U;
+      resp_len = sizeof(gitversion);
       break;
     // **** 0xd8: reset ST
     case 0xd8:
