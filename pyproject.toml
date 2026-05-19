@@ -1,6 +1,6 @@
 [project]
 name = "pandacan"
-version = "0.0.10"
+version = "0.0.11"
 description = "Code powering the comma.ai panda"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"  # macOS doesn't work with 3.13 due to pycapnp from opendbc
@@ -15,9 +15,7 @@ dependencies = [
   "libusb1",
   "libusb-package",
   "opendbc @ git+https://github.com/commaai/opendbc.git@master#egg=opendbc",
-
-  # runtime dependency on comma four
-  #"spidev; platform_system == 'Linux'",
+  "spidev; platform_system == 'Linux'",
 ]
 
 [project.optional-dependencies]
@@ -50,8 +48,13 @@ packages = [
 ]
 
 [tool.setuptools.package-data]
-"panda.board" = ["health.h"]
-"panda.board.jungle" = ["jungle_health.h"]
+"panda" = [
+  "board/health.h",
+  "board/jungle/jungle_health.h",
+  "board/obj/*.bin.signed",
+  "board/obj/bootstub.*.bin",
+  "board/obj/version",
+]
 
 [tool.setuptools.package-dir]
 panda = "."

@@ -29,7 +29,7 @@ except ImportError:
   # TODO: remove this on next AGNOS update
   pass
 
-__version__ = '0.0.10'
+__version__ = '0.0.11'
 
 CANPACKET_HEAD_SIZE = 0x6
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
