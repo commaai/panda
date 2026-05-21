@@ -42,10 +42,21 @@
 #include "board/can.h"
 #include "board/can_comms.h"
 #include "board/comms_constants.h"
-#include "board/drivers/can_common_declarations.h"
 
 void *memcpy(void *dest, const void *src, unsigned int len);
 
+typedef struct {
+  volatile uint32_t w_ptr;
+  volatile uint32_t r_ptr;
+  uint32_t fifo_size;
+  CANPacket_t *elems;
+} can_ring;
+
+extern can_ring can_rx_q;
+
+bool can_pop(can_ring *q, CANPacket_t *elem);
+void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook);
+bool can_tx_check_min_slots_free(uint32_t min);
 void can_tx_comms_resume_usb(void);
 void can_tx_comms_resume_spi(void);
 
