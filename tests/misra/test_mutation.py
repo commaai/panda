@@ -27,6 +27,7 @@ IGNORED_PATHS = (
 
 mutations = [
   (None, None, False),  # no mods, should pass
+  ("board/drivers/can_common.h", "$a bool tx = 0;", True),
   ("board/stm32h7/llfdcan.h", "s/return ret;/if (true) { return ret; } else { return false; }/g", True),
 ]
 
@@ -62,8 +63,8 @@ rng = random.Random(len(files))
 for p in patterns:
   mutations.append((rng.choice(files), p, True))
 
-# sample to keep CI fast, but always include the no-mutation case
-mutations = [mutations[0]] + rng.sample(mutations[1:], min(2, len(mutations) - 1))
+# sample to keep CI fast, but always include the no-mutation and local addon cases
+mutations = mutations[:2] + rng.sample(mutations[2:], min(1, len(mutations) - 2))
 
 @pytest.mark.parametrize("fn, patch, should_fail", mutations)
 def test_misra_mutation(fn, patch, should_fail):

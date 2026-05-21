@@ -41,8 +41,8 @@ volatile uint16_t batt_percentage = 0;
 volatile int rpm_left = 0;
 volatile int rpm_right = 0;
 
-volatile bool enable_motors = 0;        // initially motors are disabled for safety
-static bool enableFin = 0;
+volatile bool enable_motors = false;    // initially motors are disabled for safety
+static bool enableFin = false;
 
 static const uint16_t pwm_res = ( (uint32_t)CORE_FREQ * 1000000U / 2U ) / PWM_FREQ;
 
@@ -233,9 +233,9 @@ void bldc_step(void) {
 
   // Safety: Don't enable if offsets are bogus (e.g. ADC failed)
   if (offsetrrA == 0 || offsetrrC == 0 || !enable_motors) {
-    enableFin = 0;
+    enableFin = false;
   } else {
-    enableFin = 1;
+    enableFin = true;
   }
 
   // Read Hall Sensors

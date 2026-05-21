@@ -38,7 +38,7 @@ can_ring *can_queues[PANDA_CAN_CNT] = {&can_tx1_q, &can_tx2_q, &can_tx3_q};
 
 // ********************* interrupt safe queue *********************
 bool can_pop(can_ring *q, CANPacket_t *elem) {
-  bool ret = 0;
+  bool ret = false;
 
   ENTER_CRITICAL();
   if (q->w_ptr != q->r_ptr) {
@@ -48,7 +48,7 @@ bool can_pop(can_ring *q, CANPacket_t *elem) {
     } else {
       q->r_ptr += 1U;
     }
-    ret = 1;
+    ret = true;
   }
   EXIT_CRITICAL();
 

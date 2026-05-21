@@ -59,7 +59,7 @@ cppcheck() {
   fi
 }
 
-PANDA_OPTS="--enable=all --disable=unusedFunction --addon=misra"
+PANDA_OPTS="--enable=all --disable=unusedFunction --addon=misra --addon=tests/misra/bool_literals.py"
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
 cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ $PANDA_DIR/board/main.c
