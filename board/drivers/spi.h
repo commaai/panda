@@ -253,6 +253,7 @@ void spi_tx_done(bool reset) {
   }
 }
 
+// cppcheck-suppress misra-c2012-8.7 ; used from can_comms.c
 void can_tx_comms_resume_spi(void) {
   spi_can_tx_ready = true;
 }

@@ -868,6 +868,7 @@ void usb_irqhandler(void) {
   //USBx->GINTMSK = 0xFFFFFFFF & ~(USB_OTG_GINTMSK_NPTXFEM | USB_OTG_GINTMSK_PTXFEM | USB_OTG_GINTSTS_SOF | USB_OTG_GINTSTS_EOPF);
 }
 
+// cppcheck-suppress misra-c2012-8.7 ; used from can_comms.c
 void can_tx_comms_resume_usb(void) {
   ENTER_CRITICAL();
   if (!outep3_processing && (USBx_OUTEP(3U)->DOEPCTL & USB_OTG_DOEPCTL_NAKSTS) != 0U) {

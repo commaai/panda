@@ -152,6 +152,7 @@ void can_set_forwarding(uint8_t from, uint8_t to) {
 }
 #endif
 
+// cppcheck-suppress misra-c2012-8.7 ; used from can_comms.c
 bool can_tx_check_min_slots_free(uint32_t min) {
   return
     (can_slots_empty(&can_tx1_q) >= min) &&
