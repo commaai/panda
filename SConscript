@@ -61,7 +61,9 @@ def to_c_uint32(x):
   return "{" + 'U,'.join(map(str, nums)) + "U}"
 
 
-def build_project(project_name, project, main, extra_flags):
+def build_project(project_name, project, main, extra_flags, extra_sources=None):
+  if extra_sources is None:
+    extra_sources = []
   project_dir = Dir(f'./board/obj/{project_name}/')
 
   flags = project["FLAGS"] + extra_flags + common_flags + [
@@ -115,8 +117,8 @@ def build_project(project_name, project, main, extra_flags):
   # Build + sign main (aka app)
   main_elf = env.Program(f"{project_dir}/main.elf", [
     startup,
-    main
-  ], LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
+    main,
+  ] + extra_sources, LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
   sign_py = File(f"./board/crypto/sign.py").srcnode().relpath
   env.Command(f"./board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
@@ -161,16 +163,16 @@ common_flags += [f"-DHEALTH_PACKET_VERSION=0x{hh:08X}U", f"-DCAN_PACKET_VERSION_
                  f"-DJUNGLE_HEALTH_PACKET_VERSION=0x{jh:08X}U"]
 
 # panda fw
-build_project("panda_h7", base_project_h7, "./board/main.c", [])
+build_project("panda_h7", base_project_h7, "./board/main.c", [], ["./board/main_state.c", "./board/can_comms.c"])
 
 # panda jungle fw
 flags = [
   "-DPANDA_JUNGLE",
 ]
-build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", flags)
+build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", flags, ["./board/main_state.c", "./board/can_comms.c"])
 
 # body fw
-build_project("body_h7", base_project_h7, "./board/body/main.c", ["-DPANDA_BODY"])
+build_project("body_h7", base_project_h7, "./board/body/main.c", ["-DPANDA_BODY"], ["./board/main_state.c", "./board/can_comms.c"])
 
 # test files
 SConscript('tests/libpanda/SConscript')

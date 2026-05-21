@@ -12,4 +12,6 @@ env = Environment(
 )
 
 panda = env.SharedObject("panda.os", "panda.c")
-libpanda = env.SharedLibrary("libpanda.so", [panda])
+main_state = env.SharedObject("main_state.os", "../../board/main_state.c")
+can_comms = env.SharedObject("can_comms.os", "../../board/can_comms.c")
+libpanda = env.SharedLibrary("libpanda.so", [panda, main_state, can_comms])

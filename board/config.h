@@ -12,8 +12,7 @@
 
 #define CAN_INIT_TIMEOUT_MS 500U
 #define USBPACKET_MAX_SIZE 0x40U
-#define MAX_CAN_MSGS_PER_USB_BULK_TRANSFER 51U
-#define MAX_CAN_MSGS_PER_SPI_BULK_TRANSFER 170U
+#include "board/comms_constants.h"
 
 // USB definitions
 #define USB_VID 0x3801U
