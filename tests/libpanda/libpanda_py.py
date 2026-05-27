@@ -29,6 +29,22 @@ int set_safety_hooks(uint16_t mode, uint16_t param);
 
 ffi.cdef("""
 typedef struct {
+  uint32_t MODER;
+  uint32_t OTYPER;
+  uint32_t OSPEEDR;
+  uint32_t PUPDR;
+  uint32_t IDR;
+  uint32_t ODR;
+  uint32_t AFR[2];
+} GPIO_TypeDef;
+
+void fake_stm_reset_gpio(void);
+GPIO_TypeDef *fake_stm_get_gpio(uint8_t port);
+void fake_stm_set_gpio_output(uint8_t port, uint8_t pin, bool enabled);
+""")
+
+ffi.cdef("""
+typedef struct {
   volatile uint32_t w_ptr;
   volatile uint32_t r_ptr;
   uint32_t fifo_size;
