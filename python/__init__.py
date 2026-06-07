@@ -150,8 +150,10 @@ class Panda:
   HARNESS_STATUS_NORMAL = 1
   HARNESS_STATUS_FLIPPED = 2
 
-  def __init__(self, serial: str | None = None, claim: bool = True, disable_checks: bool = True, can_speed_kbps: int = 500, cli: bool = True):
+  def __init__(self, serial: str | None = None, claim: bool = True, disable_checks: bool = True,
+               can_speed_kbps: int = 500, cli: bool = True, spi_only: bool = False):
     self._disable_checks = disable_checks
+    self._spi_only = spi_only
 
     self._handle: BaseHandle
     self._handle_open = False
@@ -207,7 +209,10 @@ class Panda:
     self._handle = None
     while self._handle is None:
       # try USB first, then SPI
-      self._context, self._handle, serial, self.bootstub = self.usb_connect(self._connect_serial, claim=claim, no_error=wait)
+      if self._spi_only:
+        self._context, self._handle, serial, self.bootstub = None, None, None, False
+      else:
+        self._context, self._handle, serial, self.bootstub = self.usb_connect(self._connect_serial, claim=claim, no_error=wait)
       if self._handle is None:
         self._context, self._handle, serial, self.bootstub = self.spi_connect(self._connect_serial)
       if not wait:

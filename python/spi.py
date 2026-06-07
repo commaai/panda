@@ -30,7 +30,9 @@ DACK = 0x85
 NACK = 0x1F
 CHECKSUM_START = 0xAB
 
-MIN_ACK_TIMEOUT_MS = 100
+MIN_ACK_TIMEOUT_MS = 20
+SPI_ACK_TIMEOUT_MS = 500
+SPI_CLEANUP_TIMEOUT_MS = 1
 MAX_XFER_RETRY_COUNT = 5
 
 SPI_BUF_SIZE = 4096  # from panda/board/drivers/spi.h
@@ -124,6 +126,8 @@ class PandaSpiHandle(BaseHandle):
   def __init__(self) -> None:
     self.dev = SpiDevice()
     self.no_retry = "NO_RETRY" in os.environ
+    self.connected = True
+    self.comms_healthy = True
 
   # helpers
   def _calc_checksum(self, data: bytes) -> int:
@@ -133,10 +137,12 @@ class PandaSpiHandle(BaseHandle):
     return cksum
 
   def _wait_for_ack(self, spi, ack_val: int, timeout: int, tx: int, length: int = 1) -> bytes:
-    timeout_s = max(MIN_ACK_TIMEOUT_MS, timeout) * 1e-3
+    if timeout == 0:
+      timeout = SPI_ACK_TIMEOUT_MS
+    timeout_s = timeout * 1e-3
 
     start = time.monotonic()
-    while (timeout == 0) or ((time.monotonic() - start) < timeout_s):
+    while (time.monotonic() - start) < timeout_s:
       dat = spi.xfer2([tx, ] * length)
       if dat[0] == ack_val:
         return bytes(dat)
@@ -154,7 +160,7 @@ class PandaSpiHandle(BaseHandle):
     spi.xfer2(packet)
 
     logger.debug("- waiting for header ACK")
-    self._wait_for_ack(spi, HACK, MIN_ACK_TIMEOUT_MS, 0x11)
+    self._wait_for_ack(spi, HACK, timeout, 0x11)
 
     logger.debug("- sending data")
     packet = bytes([*data, self._calc_checksum(data)])
@@ -165,18 +171,14 @@ class PandaSpiHandle(BaseHandle):
       return b""
     else:
       logger.debug("- waiting for data ACK")
-      preread_len = USBPACKET_MAX_SIZE + 1  # read enough for a controlRead
-      dat = self._wait_for_ack(spi, DACK, timeout, 0x13, length=3 + preread_len)
+      dat = self._wait_for_ack(spi, DACK, timeout, 0x13, length=3)
 
       # get response length, then response
       response_len = struct.unpack("<H", dat[1:3])[0]
       if response_len > max_rx_len:
         raise PandaSpiException(f"response length greater than max ({max_rx_len} {response_len})")
 
-      # read rest
-      remaining = (response_len + 1) - preread_len
-      if remaining > 0:
-        dat += bytes(spi.readbytes(remaining))
+      dat += bytes(spi.readbytes(response_len + 1))
 
       dat = dat[:3 + response_len + 1]
       if self._calc_checksum(dat) != 0:
@@ -189,32 +191,46 @@ class PandaSpiHandle(BaseHandle):
     logger.debug("==============================================")
 
     n = 0
-    start_time = time.monotonic()
+    nack_count = 0
+    timeout_count = 0
     exc = PandaSpiException()
-    while (timeout == 0) or (time.monotonic() - start_time) < timeout*1e-3:
+    while self.connected:
       n += 1
       logger.debug("\ntry #%d", n)
       with self.dev.acquire() as spi:
         try:
-          return self._transfer_spidev(spi, endpoint, data, timeout, max_rx_len, expect_disconnect)
+          ret = self._transfer_spidev(spi, endpoint, data, timeout, max_rx_len, expect_disconnect)
+          self.comms_healthy = True
+          return ret
         except PandaSpiException as e:
           exc = e
           logger.debug("SPI transfer failed, retrying", exc_info=True)
           if self.no_retry:
             break
 
+          if isinstance(e, PandaSpiMissingAck):
+            timeout_count += 1
+            if timeout != 0 and timeout_count > MAX_XFER_RETRY_COUNT:
+              break
+
+          if isinstance(e, PandaSpiNackResponse):
+            nack_count += 1
+            if nack_count > 3:
+              time.sleep(min(max(nack_count * 10, 200), 2000) * 1e-6)
+
           # ensure slave is in a consistent state and ready for the next transfer
           # (e.g. slave TX buffer isn't stuck full)
-          nack_cnt = 0
+          cleanup_nack_count = 0
           attempts = 5
-          while (nack_cnt <= 3) and (attempts > 0):
+          while (cleanup_nack_count <= 3) and (attempts > 0):
             attempts -= 1
             try:
-              self._wait_for_ack(spi, NACK, MIN_ACK_TIMEOUT_MS, 0x11, length=XFER_SIZE//2)
-              nack_cnt += 1
+              self._wait_for_ack(spi, NACK, SPI_CLEANUP_TIMEOUT_MS, 0x14, length=XFER_SIZE//2)
+              cleanup_nack_count += 1
             except PandaSpiException:
-              nack_cnt = 0
+              cleanup_nack_count = 0
 
+    self.comms_healthy = False
     raise exc
 
   def get_protocol_version(self) -> bytes:
@@ -255,6 +271,7 @@ class PandaSpiHandle(BaseHandle):
 
   # libusb1 functions
   def close(self):
+    self.connected = False
     self.dev.close()
 
   def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = TIMEOUT, expect_disconnect: bool = False):
