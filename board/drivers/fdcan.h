@@ -170,10 +170,10 @@ void can_rx(uint8_t can_number) {
 
     uint32_t RxFIFO0SA = FDCAN_START_ADDRESS + (can_number * FDCAN_OFFSET);
     CANPacket_t to_push;
-    canfd_fifo *fifo;
+    const canfd_fifo *fifo;
 
     // getting address
-    fifo = (canfd_fifo *)(RxFIFO0SA + (rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE));
+    fifo = (const canfd_fifo *)(RxFIFO0SA + (rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE));
 
     bool canfd_frame = ((fifo->header[1] >> 21) & 0x1U);
     bool brs_frame = ((fifo->header[1] >> 20) & 0x1U);
