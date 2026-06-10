@@ -53,6 +53,9 @@ def pytest_configure(config):
   config.addinivalue_line(
     "markers", "panda_expect_can_error: mark test to ignore CAN health errors"
   )
+  config.addinivalue_line(
+    "markers", "timeout: set test timeout in seconds"
+  )
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(items):

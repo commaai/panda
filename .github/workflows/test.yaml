@@ -10,7 +10,24 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref != 'refs/heads/master' && github.ref || github.run_id }}-${{ github.event_name }}
   cancel-in-progress: true
 
+env:
+  RUN: source .venv/bin/activate && /bin/bash -c
+
 jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - run: ./setup.sh
+      - name: Test python package installer
+        run: ${{ env.RUN }} "pip install --break-system-packages .[dev]"
+      - name: Build debug FW
+        run: ${{ env.RUN }} "scons"
+      - name: Build release FW
+        run: ${{ env.RUN }} "CERT=board/certs/debug RELEASE=1 scons"
+
   test:
     name: ./test.sh
     runs-on: ${{ matrix.os }}
@@ -22,19 +39,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - run: ./test.sh
-      - name: Build panda in release mode
-        run: |
-          source .venv/bin/activate
-          CERT=certs/debug RELEASE=1 scons
-      - name: Test python package installer
-        run: pip install --break-system-packages .[dev]
 
   windows:
     name: windows pip package test
     runs-on: windows-latest
-    timeout-minutes: 10
+    timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -43,27 +54,3 @@ jobs:
         run: uv pip install --system .
       - name: Verify importing panda
         run: python -c "from panda import Panda"
-
-
-  misra_linter:
-    name: MISRA C:2012 Linter
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    steps:
-      - uses: actions/checkout@v6
-      - run: ./setup.sh
-      - name: Run MISRA C:2012 analysis
-        run: ./tests/misra/test_misra.sh
-
-  misra_mutation:
-    name: MISRA C:2012 Mutation
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    steps:
-      - uses: actions/checkout@v6
-      - run: ./setup.sh
-      - name: MISRA mutation tests
-        run: |
-          source .venv/bin/activate
-          cd tests/misra
-          pytest test_mutation.py

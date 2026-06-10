@@ -4,7 +4,7 @@ import struct
 from functools import wraps
 
 from panda import Panda, PandaDFU
-from panda.python.constants import McuType
+from panda.python.constants import McuType, compute_version_hash
 
 BASEDIR = os.path.dirname(os.path.realpath(__file__))
 FW_PATH = os.path.join(BASEDIR, "../obj/")
@@ -39,7 +39,7 @@ class PandaJungle(Panda):
   H7_DEVICES = [HW_TYPE_V2, ]
   SUPPORTED_DEVICES = H7_DEVICES
 
-  HEALTH_PACKET_VERSION = 1
+  HEALTH_PACKET_VERSION = compute_version_hash(os.path.join(BASEDIR, "jungle_health.h"))
   HEALTH_STRUCT = struct.Struct("<IffffffHHHHHHHHHHHH")
 
   HARNESS_ORIENTATION_NONE = 0
@@ -108,13 +108,11 @@ class PandaJungle(Panda):
 
   # ******************* control *******************
 
-  # Returns tuple with health packet version and CAN packet/USB packet version
   def get_packets_versions(self):
-    dat = self._handle.controlRead(PandaJungle.REQUEST_IN, 0xdd, 0, 0, 3)
-    if dat and len(dat) == 3:
-      a = struct.unpack("BBB", dat)
-      return (a[0], a[1], a[2])
-    return (-1, -1, -1)
+    dat = self._handle.controlRead(PandaJungle.REQUEST_IN, 0xdd, 0, 0, 8)
+    if dat and len(dat) == 8:
+      return struct.unpack("<II", dat)
+    return (0, 0)
 
   # ******************* jungle stuff *******************
 

@@ -3,6 +3,28 @@
   a certain number of CANPacket_t. The transaction is split
   into multiple transfers or chunks.
 
+  CAN packet byte layout (wire format used by comms_can_{read,write}):
+  +--------+--------+--------+--------+--------+--------+--------+------------------------------+
+  | byte 0 | byte 1 | byte 2 | byte 3 | byte 4 | byte 5 | byte 6 | ... byte 13 / byte 69        |
+  +--------+--------+--------+--------+--------+--------+--------+------------------------------+
+  | DLC    | addr   | addr   | addr   | flags  | cksum  | data0  | ... data7 / data63           |
+  | bus    |        |        |        |        |        |        | (classic CAN / CAN FD)       |
+  | fd     |        |        |        |        |        |        |                              |
+  +--------+--------+--------+--------+--------+--------+--------+------------------------------+
+  Byte/bit fields:
+    byte 0: DLC[7:4], bus[3:1], fd[0]
+    bytes 1..4: (addr << 3) | (extended << 2) | (returned << 1) | rejected
+    byte 5: checksum = XOR(header[0..4] + payload)
+    bytes 6..13 (classic CAN, up to 8 bytes) / bytes 6..69 (CAN FD, up to 64 bytes): payload
+
+  USB/SPI transfer chunking used by this file:
+  +--------------------------------------------+   ...   +--------------------------------------------+
+  | transport chunk 0                          |         | transport chunk N                          |
+  +--------------------------------------------+         +--------------------------------------------+
+  | concatenated CANPacket_t bytes             |         | continuation and/or next CANPacket_t bytes |
+  | (no per-64-byte counter/header in protocol)|         |                                            |
+  +--------------------------------------------+         +--------------------------------------------+
+
   * comms_can_read outputs this buffer in chunks of a specified length.
     chunks are always the given length, except the last one.
   * comms_can_write reads in this buffer in chunks.

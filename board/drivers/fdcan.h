@@ -215,6 +215,10 @@ void can_rx(uint8_t can_number) {
       can_health[can_number].total_fwd_cnt += 1U;
     }
 
+    #ifdef PANDA_BODY
+    body_can_rx(&to_push);
+    #endif
+
     safety_rx_invalid += safety_rx_hook(&to_push) ? 0U : 1U;
     ignition_can_hook(&to_push);
 
