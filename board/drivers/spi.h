@@ -34,7 +34,7 @@ uint16_t spi_error_count = 0;
 // low level SPI prototypes
 void llspi_init(void);
 void llspi_mosi_dma(uint8_t *addr, int len);
-void llspi_miso_dma(uint8_t *addr, int len);
+void llspi_miso_dma(const uint8_t *addr, int len);
 
 static uint8_t spi_state = SPI_STATE_HEADER;
 static uint16_t spi_data_len_mosi;
