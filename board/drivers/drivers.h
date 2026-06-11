@@ -118,9 +118,7 @@ extern FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT];
 void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number);
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg);
 
-void process_can(uint8_t can_number);
 void can_rx(uint8_t can_number);
-bool can_init(uint8_t can_number);
 
 // ******************** harness ********************
 
@@ -267,9 +265,7 @@ bool put_char(uart_ring *q, char elem);
 void clear_uart_buff(uart_ring *q);
 // ************************ High-level debug functions **********************
 void putch(const char a);
-void print(const char *a);
 void puthx(uint32_t i, uint8_t len);
-void puth(unsigned int i);
 #if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
 static void puth4(unsigned int i);
 #endif

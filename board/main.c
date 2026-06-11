@@ -379,6 +379,7 @@ int main(void) {
         enter_stop_mode(); // deep sleep, wakes on CAN or SBU activity
         assert_fatal(false, "Error: enter_stop_mode returned after system reset. Hanging\n");
       }
+      // cppcheck-suppress misra-c2012-17.3 ; CMSIS __WFI macro expands to inline asm
       __WFI();
       SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
     }

@@ -142,6 +142,7 @@ static void enter_stop_mode(void) {
 
   __DSB();
   __ISB();
+  // cppcheck-suppress misra-c2012-17.3 ; CMSIS __WFI macro expands to inline asm
   __WFI();
 
   NVIC_SystemReset();
