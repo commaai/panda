@@ -26,8 +26,7 @@ These are the [CI regression tests](https://github.com/commaai/panda/actions) we
 * A generic static code analysis is performed by [cppcheck](https://github.com/danmar/cppcheck/).
 * In addition, [cppcheck](https://github.com/danmar/cppcheck/) has a specific addon to check for [MISRA C:2012](https://misra.org.uk/) violations. See [current coverage](https://github.com/commaai/panda/blob/master/tests/misra/coverage_table).
 * Compiler options are strict: the flags `-Wall -Wextra -Wstrict-prototypes -Werror` are enforced.
-* The [safety logic](https://github.com/commaai/panda/tree/master/opendbc/safety) is tested and verified by [unit tests](https://github.com/commaai/panda/tree/master/opendbc/safety/tests) for each supported car variant.
-to ensure that the behavior remains unchanged.
+* The [safety logic](https://github.com/commaai/panda/tree/master/opendbc/safety) is tested and verified by [unit tests](https://github.com/commaai/panda/tree/master/opendbc/safety/tests) for each supported car variant to ensure that the behavior remains unchanged.
 * A hardware-in-the-loop test verifies panda's functionalities on all active panda variants, including:
   * additional safety model checks
   * compiling and flashing the bootstub and app code
