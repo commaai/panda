@@ -1,8 +1,8 @@
 #pragma once
 
+#include "board/drivers/drivers.h"
+
 // ******************** Prototypes ********************
-void print(const char *a);
-void puth(unsigned int i);
 typedef struct board board;
 typedef struct harness_configuration harness_configuration;
 void pwm_init(TIM_TypeDef *TIM, uint8_t channel);
@@ -20,3 +20,6 @@ extern bool heartbeat_disabled;
 
 // siren state
 extern bool siren_enabled;
+
+// sound
+extern uint16_t sound_output_level;

@@ -11,8 +11,8 @@
 #include "board/early_init.h"
 #include "board/provision.h"
 
-#include "crypto/rsa.h"
-#include "crypto/sha.h"
+#include "board/crypto/rsa.h"
+#include "board/crypto/sha.h"
 
 #include "board/obj/cert.h"
 #include "board/obj/gitversion.h"

@@ -9,14 +9,18 @@
 
 #define OUTPUT_TYPE_PUSH_PULL 0U
 #define OUTPUT_TYPE_OPEN_DRAIN 1U
+#define GPIO_PIN_COUNT 16U
 
 void set_gpio_mode(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
-  ENTER_CRITICAL();
-  uint32_t tmp = GPIO->MODER;
-  tmp &= ~(3U << (pin * 2U));
-  tmp |= (mode << (pin * 2U));
-  register_set(&(GPIO->MODER), tmp, 0xFFFFFFFFU);
-  EXIT_CRITICAL();
+  if (pin < GPIO_PIN_COUNT) {
+    ENTER_CRITICAL();
+    uint32_t shift = pin * 2U;
+    uint32_t tmp = GPIO->MODER;
+    tmp &= ~(3UL << shift);
+    tmp |= (mode << shift);
+    register_set(&(GPIO->MODER), tmp, 0xFFFFFFFFU);
+    EXIT_CRITICAL();
+  }
 }
 
 void set_gpio_output(GPIO_TypeDef *GPIO, unsigned int pin, bool enabled) {
@@ -51,12 +55,15 @@ void set_gpio_alternate(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode)
 }
 
 void set_gpio_pullup(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
-  ENTER_CRITICAL();
-  uint32_t tmp = GPIO->PUPDR;
-  tmp &= ~(3U << (pin * 2U));
-  tmp |= (mode << (pin * 2U));
-  register_set(&(GPIO->PUPDR), tmp, 0xFFFFFFFFU);
-  EXIT_CRITICAL();
+  if (pin < GPIO_PIN_COUNT) {
+    ENTER_CRITICAL();
+    uint32_t shift = pin * 2U;
+    uint32_t tmp = GPIO->PUPDR;
+    tmp &= ~(3UL << shift);
+    tmp |= (mode << shift);
+    register_set(&(GPIO->PUPDR), tmp, 0xFFFFFFFFU);
+    EXIT_CRITICAL();
+  }
 }
 
 int get_gpio_input(const GPIO_TypeDef *GPIO, unsigned int pin) {
