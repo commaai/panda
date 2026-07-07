@@ -4,7 +4,7 @@ import unittest
 
 from opendbc.car.structs import CarParams
 from panda import DLC_TO_LEN, USBPACKET_MAX_SIZE, pack_can_buffer, unpack_can_buffer
-from panda.tests.libpanda import libpanda_py
+from tests.libpanda import libpanda_py
 
 lpp = libpanda_py.libpanda
 

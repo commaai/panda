@@ -1,0 +1,4 @@
+include SConstruct SConscript
+graft board
+prune board/obj
+global-exclude __pycache__ *.pyc *.o *.os *.d *.elf *.bin *.so

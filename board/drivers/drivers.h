@@ -1,7 +1,7 @@
 #pragma once
 
 #include "board/can.h"
-#include "board/health.h"
+#include "panda/health.h"
 #include "board/crc.h"
 #ifdef STM32H7
 #include "board/stm32h7/lladc_declarations.h"

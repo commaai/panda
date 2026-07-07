@@ -53,7 +53,7 @@ patterns = [
   r"$a #define TEST 1\n#undef TEST\n",
 ]
 
-all_files = glob.glob('board/**', root_dir=ROOT, recursive=True)
+all_files = glob.glob('board/**', root_dir=ROOT, recursive=True) + ['panda/health.h']
 files = sorted(f for f in all_files if f.endswith(('.c', '.h')) and not f.startswith(IGNORED_PATHS))
 assert len(files) > 50, all(d in files for d in ('board/main.c', 'board/stm32h7/llfdcan.h'))
 

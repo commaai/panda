@@ -2,7 +2,7 @@ import os
 import pytest
 
 from panda import Panda, PandaDFU, PandaJungle
-from panda.tests.hitl.helpers import clear_can_buffers
+from tests.hitl.helpers import clear_can_buffers
 
 SPEED_NORMAL = 500
 BUS_SPEEDS = [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL)]

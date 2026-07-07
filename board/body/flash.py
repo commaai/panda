@@ -8,12 +8,12 @@ from panda import Panda
 BODY_DIR = os.path.dirname(os.path.realpath(__file__))
 BOARD_DIR = os.path.abspath(os.path.join(BODY_DIR, ".."))
 REPO_ROOT = os.path.abspath(os.path.join(BOARD_DIR, ".."))
-DEFAULT_FIRMWARE = os.path.join(BOARD_DIR, "obj", "body_h7.bin.signed")
+DEFAULT_FIRMWARE = os.path.join(REPO_ROOT, "panda", "fw", "body_h7.bin.signed")
 
 
 def build_body() -> None:
   subprocess.check_call(
-    f"scons -C {REPO_ROOT} -j$(nproc) board/obj/body_h7.bin.signed",
+    f"scons -C {REPO_ROOT} -j$(nproc) panda/fw/body_h7.bin.signed",
     shell=True,
   )
 

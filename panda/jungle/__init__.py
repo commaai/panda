@@ -4,10 +4,9 @@ import struct
 from functools import wraps
 
 from panda import Panda, PandaDFU
-from panda.python.constants import McuType, compute_version_hash
+from panda.constants import FW_PATH, McuType, compute_version_hash
 
 BASEDIR = os.path.dirname(os.path.realpath(__file__))
-FW_PATH = os.path.join(BASEDIR, "../obj/")
 
 
 def ensure_jungle_health_packet_version(fn):

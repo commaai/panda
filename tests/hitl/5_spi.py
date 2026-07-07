@@ -4,7 +4,7 @@ import random
 from unittest.mock import patch
 
 from panda import Panda
-from panda.python.spi import PandaProtocolMismatch, PandaSpiNackResponse
+from panda.spi import PandaProtocolMismatch, PandaSpiNackResponse
 
 
 class TestSpi:
@@ -18,7 +18,7 @@ class TestSpi:
   def test_protocol_version_check(self, p):
     for bootstub in (False, True):
       p.reset(enter_bootstub=bootstub)
-      with patch('panda.python.spi.PandaSpiHandle.PROTOCOL_VERSION', return_value="abc"):
+      with patch('panda.spi.PandaSpiHandle.PROTOCOL_VERSION', return_value="abc"):
         # list should still work with wrong version
         assert p._serial in Panda.list()
 
@@ -54,14 +54,14 @@ class TestSpi:
     assert spy.call_count == 2*4
 
   def test_bad_header(self, mocker, p):
-    with patch('panda.python.spi.SYNC', return_value=0):
+    with patch('panda.spi.SYNC', return_value=0):
       with pytest.raises(PandaSpiNackResponse):
         p._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, p.HEALTH_STRUCT.size, timeout=50)
     self._ping(mocker, p)
 
   def test_bad_checksum(self, mocker, p):
     cnt = p.health()['spi_error_count']
-    with patch('panda.python.spi.PandaSpiHandle._calc_checksum', return_value=0):
+    with patch('panda.spi.PandaSpiHandle._calc_checksum', return_value=0):
       with pytest.raises(PandaSpiNackResponse):
         p._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, p.HEALTH_STRUCT.size, timeout=50)
     self._ping(mocker, p)

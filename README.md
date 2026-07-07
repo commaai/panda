@@ -7,7 +7,7 @@ panda speaks CAN and CAN FD, and it runs on the [STM32H725](https://www.st.com/r
 ```
 .
 ├── board           # Code that runs on the STM32
-├── python          # Python userspace library for interfacing with the panda
+├── panda           # Python userspace library for interfacing with the panda
 ├── tests           # Tests for panda
 ├── scripts         # Miscellaneous used for panda development and debugging
 ├── examples        # Example scripts for using a panda in a car
@@ -50,7 +50,7 @@ cd panda
 ./test.sh
 ```
 
-See [the Panda class](https://github.com/commaai/panda/blob/master/python/__init__.py) for how to interact with the panda.
+See [the Panda class](https://github.com/commaai/panda/blob/master/panda/__init__.py) for how to interact with the panda.
 
 For example, to receive CAN messages:
 ``` python

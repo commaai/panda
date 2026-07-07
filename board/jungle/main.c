@@ -10,8 +10,8 @@
 #include "board/early_init.h"
 #include "board/provision.h"
 
-#include "board/health.h"
-#include "board/jungle/jungle_health.h"
+#include "panda/health.h"
+#include "panda/jungle/jungle_health.h"
 
 #include "board/drivers/can_common.h"
 
