@@ -15,9 +15,7 @@ dependencies = [
   "libusb1",
   "libusb-package",
   "opendbc @ git+https://github.com/commaai/opendbc.git@master#egg=opendbc",
-
-  # runtime dependency on comma four
-  #"spidev; platform_system == 'Linux'",
+  "spidev; platform_system == 'Linux'",  # runtime dependency on comma four
 ]
 
 [project.optional-dependencies]
