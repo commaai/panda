@@ -6,6 +6,7 @@
 
 // ///// Board definition and detection ///// //
 #include "board/stm32h7/lladc.h"
+#include "board/stm32h7/lldts.h"
 #include "board/drivers/harness.h"
 #include "board/drivers/fan.h"
 #include "board/stm32h7/llfan.h"
