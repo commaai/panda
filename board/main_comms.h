@@ -44,6 +44,8 @@ static int get_health_pkt(void *dat) {
 
   health->sound_output_level_pkt = sound_output_level;
 
+  health->temperature_c = dts_get_temperature_c();
+
   return sizeof(*health);
 }
 

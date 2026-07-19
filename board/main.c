@@ -283,6 +283,7 @@ int main(void) {
   led_set(LED_RED, true);
   led_set(LED_GREEN, true);
   adc_init(ADC1);
+  dts_init();
 
   // print hello
   print("\n\n\n************************ MAIN START ************************\n");
