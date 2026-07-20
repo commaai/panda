@@ -78,9 +78,7 @@ static void enter_stop_mode(void) {
   // disable DTS
   register_clear_bits(&(DTS->CFGR1), DTS_CFGR1_TS1_START);
   register_clear_bits(&(DTS->CFGR1), DTS_CFGR1_TS1_EN);
-  register_set(&(DTS->CFGR1), 0U,
-              (DTS_CFGR1_TS1_SMP_TIME_Msk | DTS_CFGR1_REFCLK_SEL_Msk | DTS_CFGR1_Q_MEAS_OPT_Msk |
-               DTS_CFGR1_HSREF_CLK_DIV_Msk | DTS_CFGR1_TS1_INTRIG_SEL_Msk));
+  register_set(&(DTS->CFGR1), 0U, (DTS_CFGR1_TS1_SMP_TIME_Msk | DTS_CFGR1_REFCLK_SEL_Msk | DTS_CFGR1_Q_MEAS_OPT_Msk | DTS_CFGR1_HSREF_CLK_DIV_Msk | DTS_CFGR1_TS1_INTRIG_SEL_Msk));
   RCC->APB4ENR &= ~(RCC_APB4ENR_DTSEN);
 
   // disable HSI48: 48 MHz USB clock
