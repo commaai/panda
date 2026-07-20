@@ -207,6 +207,11 @@ static void tick_handler(void) {
         heartbeat_engaged_mismatches = 0U;
       }
 
+      // MADS lateral authorization has the same heartbeat fail-safe as normal controls.
+      if (controls_allowed_lateral && !heartbeat_engaged) {
+        controls_allowed_lateral = false;
+      }
+
       if (!heartbeat_disabled) {
         // if the heartbeat has been gone for a while, go to SILENT safety mode and enter power save
         if (heartbeat_counter >= (started ? HEARTBEAT_IGNITION_CNT_ON : HEARTBEAT_IGNITION_CNT_OFF)) {
