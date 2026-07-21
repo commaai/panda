@@ -7,7 +7,7 @@
 #include "board/health.h"
 #include "board/body/boards/board_declarations.h"
 #include "board/drivers/drivers.h"
-#include "opendbc/safety/declarations.h"
+#include "opendbc/safety/api.h"
 #include "board/body/bldc/bldc.h"
 
 #define BODY_CAN_ADDR_MOTOR_SPEED        0x201U

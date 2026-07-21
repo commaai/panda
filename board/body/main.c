@@ -1,3 +1,5 @@
+#define OPENDBC_SAFETY_API_ONLY
+
 #include <stdint.h>
 #include <stdbool.h>
 
