@@ -21,7 +21,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "scons",
-  "pycryptodome >= 3.9.8",
   "cffi",
   "flaky",
   "pytest",
