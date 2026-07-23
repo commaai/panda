@@ -20,7 +20,7 @@ void dts_init(void) {
   print("  DTS cal: T0VALR1 0x"); puth(DTS->T0VALR1); print(", RAMPVALR 0x"); puth(DTS->RAMPVALR); print("\n");
 }
 
-float dts_get_temperature_c(void) {
+float dts_get_temperature(void) {
   // formula with pclk used
   float ret = 0.0f;
   uint32_t measurement_cycles = DTS->DR & DTS_DR_TS1_MFREQ_Msk;
