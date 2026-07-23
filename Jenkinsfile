@@ -1,17 +1,3 @@
-def docker_run(String step_label, int timeout_mins, String cmd) {
-  timeout(time: timeout_mins, unit: 'MINUTES') {
-    sh script: "docker run --rm --privileged \
-          --env PYTHONWARNINGS=error \
-          --volume /dev/bus/usb:/dev/bus/usb \
-          --volume /var/run/dbus:/var/run/dbus \
-          --net host \
-          ${env.DOCKER_IMAGE_TAG} \
-          bash -c 'scons && ${cmd}'", \
-        label: step_label
-  }
-}
-
-
 def phone(String ip, String step_label, String cmd) {
   withCredentials([file(credentialsId: 'id_rsa', variable: 'key_file')]) {
     def ssh_cmd = """
@@ -69,8 +55,6 @@ pipeline {
   agent any
   environment {
     CI = "1"
-    PYTHONWARNINGS= "error"
-    DOCKER_IMAGE_TAG = "panda:build-${env.GIT_COMMIT}"
 
     TEST_DIR = "/data/panda"
     SOURCE_DIR = "/data/panda_source/"
@@ -86,21 +70,24 @@ pipeline {
         lock(resource: "pandas")
       }
       stages {
-        stage('Build Docker Image') {
+        stage('jungle tests') {
+          agent {
+            docker {
+              image 'python:3.12'
+              args '--user=root --privileged --volume /dev/bus/usb:/dev/bus/usb --volume /var/run/dbus:/var/run/dbus --net host'
+              reuseNode true
+            }
+          }
           steps {
-            timeout(time: 20, unit: 'MINUTES') {
-              script {
-                dockerImage = docker.build("${env.DOCKER_IMAGE_TAG}", "--build-arg CACHEBUST=${env.GIT_COMMIT} .")
+            timeout(time: 10, unit: 'MINUTES') {
+              retry (3) {
+                sh './setup.sh && . .venv/bin/activate && export PYTHONWARNINGS=error && scons && python3 ./tests/hitl/reset_jungles.py'
               }
             }
           }
-        }
-        stage('jungle tests') {
-          steps {
-            script {
-              retry (3) {
-                docker_run("reset hardware", 3, "python3 ./tests/hitl/reset_jungles.py")
-              }
+          post {
+            always {
+              sh 'chmod -R 777 . || true'
             }
           }
         }
@@ -108,7 +95,7 @@ pipeline {
         stage('parallel tests') {
           parallel {
             stage('test cuatro') {
-              agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
+              agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root'; reuseNode true } }
               steps {
                 phone_steps("panda-cuatro", [
                   ["build", "scons"],
@@ -120,7 +107,7 @@ pipeline {
             }
 
             stage('test tres') {
-              agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
+              agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root'; reuseNode true } }
               steps {
                 phone_steps("panda-tres", [
                   ["build", "scons"],
