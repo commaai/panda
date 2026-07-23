@@ -45,8 +45,10 @@ sleep infinity
 EOF
 chmod +x $CONTINUE_PATH
 
-
 # set up environment
+cd /data/openpilot
+git pull origin master --recurse-submodules
+
 if [ ! -d "$SOURCE_DIR" ]; then
   git clone https://github.com/commaai/panda.git $SOURCE_DIR
 fi
