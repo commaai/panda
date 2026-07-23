@@ -11,7 +11,7 @@ void refresh_can_tx_slots_available(void);
 void can_tx_comms_resume_usb(void) { };
 void can_tx_comms_resume_spi(void) { };
 
-#include "health.h"
+#include "panda/health.h"
 #include "sys/faults.h"
 #include "libc.h"
 #include "boards/board_declarations.h"

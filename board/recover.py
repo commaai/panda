@@ -8,7 +8,7 @@ from panda import Panda, PandaDFU
 board_path = os.path.dirname(os.path.realpath(__file__))
 
 if __name__ == "__main__":
-  subprocess.check_call(f"scons -C {board_path}/.. -j$(nproc) {board_path}", shell=True)
+  subprocess.check_call(f"scons -C {board_path}/.. -j$(nproc) panda/fw", shell=True)
 
   for s in Panda.list():
     with Panda(serial=s) as p:

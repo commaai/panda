@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 import os
+import sys
 import time
 import random
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from collections import defaultdict
 from opendbc.car.structs import CarParams
 from panda import Panda, calculate_checksum, DLC_TO_LEN
 from panda import PandaJungle
-from panda.tests.hitl.helpers import time_many_sends
+from tests.hitl.helpers import time_many_sends
 
 H7_HW_TYPES = [Panda.HW_TYPE_RED_PANDA, Panda.HW_TYPE_RED_PANDA_V2]
 JUNGLE_SERIAL = os.getenv("JUNGLE")

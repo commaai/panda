@@ -13,8 +13,9 @@ a.out
 .#*
 dist/
 build/
-pandacan.egg-info/
+*.egg-info/
 obj/
+panda/fw/
 examples/output.csv
 .DS_Store
 .vscode*

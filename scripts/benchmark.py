@@ -6,8 +6,11 @@ import pstats
 import cProfile
 from contextlib import contextmanager
 
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 from panda import Panda, PandaDFU
-from panda.tests.hitl.helpers import get_random_can_messages
+from tests.hitl.helpers import get_random_can_messages
 
 
 PROFILE = "PROFILE" in os.environ

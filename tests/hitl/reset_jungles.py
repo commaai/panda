@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 import concurrent.futures
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from panda import PandaJungle, PandaJungleDFU, McuType
-from panda.tests.libs.resetter import Resetter
+from tests.libs.resetter import Resetter
 
 SERIALS = {
   '180019001451313236343430',  # jungle v2

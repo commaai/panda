@@ -1,5 +1,5 @@
 [project]
-name = "pandacan"
+name = "panda"
 version = "0.0.10"
 description = "Code powering the comma.ai panda"
 readme = "README.md"
@@ -34,24 +34,22 @@ dev = [
 ]
 
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = [
+  "setuptools>=64",
+  # setup.py builds the firmware into the wheel (not supported on Windows)
+  "scons; platform_system != 'Windows'",
+  "pycryptodome >= 3.9.8; platform_system != 'Windows'",
+  "opendbc @ git+https://github.com/commaai/opendbc.git@master ; platform_system != 'Windows'",
+  "gcc-arm-none-eabi @ git+https://github.com/commaai/dependencies.git@release-gcc-arm-none-eabi#subdirectory=gcc-arm-none-eabi ; platform_system != 'Windows'",
+]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = [
-  "panda",
-  "panda.python",
-  "panda.board",
-  "panda.board.body",
-  "panda.board.jungle",
-]
+[tool.setuptools.packages.find]
+include = ["panda", "panda.*"]
 
 [tool.setuptools.package-data]
-"panda.board" = ["health.h"]
-"panda.board.jungle" = ["jungle_health.h"]
-
-[tool.setuptools.package-dir]
-panda = "."
+panda = ["health.h", "fw/*"]
+"panda.jungle" = ["jungle_health.h"]
 
 # https://beta.ruff.rs/docs/configuration/#using-pyprojecttoml
 [tool.ruff]
@@ -68,6 +66,7 @@ flake8-implicit-str-concat.allow-multiline=false
 
 [tool.pytest.ini_options]
 addopts = "-Werror --strict-config --strict-markers --maxprocesses=8 -nauto --durations=10 --ignore-glob='*.sh' --ignore=tests/som --ignore=tests/hitl"
+pythonpath = ["."]
 python_files = "test_*.py"
 testpaths = [
   "tests/"

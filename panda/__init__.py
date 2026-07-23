@@ -15,9 +15,9 @@ import opendbc
 from opendbc.car.structs import CarParams
 
 from .base import BaseHandle
-from .constants import BASEDIR, FW_PATH, McuType, compute_version_hash
+from .constants import BASEDIR, FW_PATH, McuType, USBPACKET_MAX_SIZE, compute_version_hash  # noqa: F401
 from .dfu import PandaDFU
-from .spi import PandaSpiHandle, PandaSpiException, PandaProtocolMismatch
+from .spi import PandaSpiHandle, PandaSpiException, PandaProtocolMismatch, STBootloaderSPIHandle  # noqa: F401
 from .usb import PandaUsbHandle
 from .utils import logger
 
@@ -137,8 +137,8 @@ class Panda:
   HW_TYPE_BODY = b'\xb1'
 
   CAN_PACKET_VERSION = compute_version_hash(os.path.join(opendbc.INCLUDE_PATH, "opendbc/safety/can.h"))
-  HEALTH_PACKET_VERSION = compute_version_hash(os.path.join(BASEDIR, "board/health.h"))
-  HEALTH_STRUCT = _parse_c_struct(os.path.join(BASEDIR, "board/health.h"), "health_t")
+  HEALTH_PACKET_VERSION = compute_version_hash(os.path.join(os.path.dirname(__file__), "health.h"))
+  HEALTH_STRUCT = _parse_c_struct(os.path.join(os.path.dirname(__file__), "health.h"), "health_t")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
 
   H7_DEVICES = [HW_TYPE_RED_PANDA, HW_TYPE_TRES, HW_TYPE_CUATRO, HW_TYPE_BODY]
@@ -805,3 +805,8 @@ class Panda:
   def read_som_gpio(self) -> bool:
     r = self._handle.controlRead(Panda.REQUEST_IN, 0xc6, 0, 0, 1)
     return r[0] == 1
+
+
+from .serial import PandaSerial  # noqa: F401
+from .jungle import PandaJungle, PandaJungleDFU  # noqa: F401
+from .body import PandaBody  # noqa: F401

@@ -12,7 +12,7 @@
 
 #include "opendbc/safety/safety.h"
 
-#include "board/health.h"
+#include "panda/health.h"
 
 #include "board/drivers/can_common.h"
 
