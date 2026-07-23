@@ -1,5 +1,6 @@
 import os
 import hashlib
+import base64
 import opendbc
 import subprocess
 
@@ -32,23 +33,28 @@ def get_version(builder, build_type):
   return f"{builder}-{git}-{build_type}"
 
 def get_key_header(name):
-  from Crypto.PublicKey import RSA
-
   public_fn = File(f'./board/certs/{name}.pub').srcnode().get_path()
-  with open(public_fn) as f:
-    rsa = RSA.importKey(f.read())
-  assert(rsa.size_in_bits() == 1024)
+  with open(public_fn, "rb") as f:
+    key = base64.b64decode(f.read().split()[1])
+  values = []
+  for _ in range(3):
+    length = int.from_bytes(key[:4], "big")
+    values.append(key[4:4 + length])
+    key = key[4 + length:]
+  _, e, n = values
+  e, n = int.from_bytes(e, "big"), int.from_bytes(n, "big")
+  assert n.bit_length() == 1024
 
-  rr = pow(2**1024, 2, rsa.n)
-  n0inv = 2**32 - pow(rsa.n, -1, 2**32)
+  rr = pow(2**1024, 2, n)
+  n0inv = 2**32 - pow(n, -1, 2**32)
 
   r = [
     f"RSAPublicKey {name}_rsa_key = {{",
     f"  .len = 0x20,",
     f"  .n0inv = {n0inv}U,",
-    f"  .n = {to_c_uint32(rsa.n)},",
+    f"  .n = {to_c_uint32(n)},",
     f"  .rr = {to_c_uint32(rr)},",
-    f"  .exponent = {rsa.e},",
+    f"  .exponent = {e},",
     f"}};",
   ]
   return r
