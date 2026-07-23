@@ -47,6 +47,7 @@ chmod +x $CONTINUE_PATH
 
 # set up environment
 cd /data/openpilot
+git reset --hard
 git pull origin master --recurse-submodules
 
 if [ ! -d "$SOURCE_DIR" ]; then
