@@ -75,6 +75,9 @@ static void enter_stop_mode(void) {
   ADC2->CR &= ~(ADC_CR_ADEN);
   ADC2->CR |= ADC_CR_DEEPPWD;
 
+  // disable DACs
+  sound_stop_dac();
+
   // disable HSI48: 48 MHz USB clock
   register_clear_bits(&(RCC->CR), RCC_CR_HSI48ON);
   // disable SRAM retention in stop mode
