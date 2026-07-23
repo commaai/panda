@@ -7,8 +7,6 @@
 #define DTS_HSREF_DIV 64U // calibration counter must run below 1MHz
 
 void dts_init(void) {
-  RCC->APB4ENR |= RCC_APB4ENR_DTSEN;
-
   // set sampling time, pclk reference, software trigger, calibrated measurement, calibration clock prescaler
   register_set(&(DTS->CFGR1), (((uint32_t) DTS_SMP_TIME << DTS_CFGR1_TS1_SMP_TIME_Pos) | ((uint32_t) DTS_HSREF_DIV << DTS_CFGR1_HSREF_CLK_DIV_Pos)),
     (DTS_CFGR1_TS1_SMP_TIME_Msk | DTS_CFGR1_REFCLK_SEL_Msk | DTS_CFGR1_Q_MEAS_OPT_Msk | DTS_CFGR1_HSREF_CLK_DIV_Msk | DTS_CFGR1_TS1_INTRIG_SEL_Msk));
