@@ -16,6 +16,7 @@ static int get_health_pkt(void *dat) {
   health->ignition_can_pkt = ignition_can;
 
   health->controls_allowed_pkt = controls_allowed;
+  health->controls_allowed_lateral_pkt = controls_allowed_lateral;
   health->safety_tx_blocked_pkt = safety_tx_blocked;
   health->safety_rx_invalid_pkt = safety_rx_invalid;
   health->tx_buffer_overflow_pkt = tx_buffer_overflow;
@@ -298,6 +299,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         heartbeat_lost = false;
         heartbeat_disabled = false;
         heartbeat_engaged = (req->param1 == 1U);
+        if (!heartbeat_engaged) {
+          controls_allowed_lateral = false;
+        }
         break;
       }
     // **** 0xf6: set siren enabled
