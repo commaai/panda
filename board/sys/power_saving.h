@@ -76,7 +76,7 @@ static void enter_stop_mode(void) {
   ADC2->CR |= ADC_CR_DEEPPWD;
 
   // disable DACs
-  register_clear_bits(&DAC1->CR, DAC_CR_EN1 | DAC_CR_EN2);
+  sound_stop_dac();
 
   // disable HSI48: 48 MHz USB clock
   register_clear_bits(&(RCC->CR), RCC_CR_HSI48ON);
