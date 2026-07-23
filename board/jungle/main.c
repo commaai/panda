@@ -1,4 +1,6 @@
 // ********************* Includes *********************
+#define OPENDBC_SAFETY_API_ONLY
+
 #include "board/config.h"
 
 #include "opendbc/safety/safety.h"

@@ -7,6 +7,7 @@ bool is_car_safety_mode(uint16_t mode);
 static int get_health_pkt(void *dat) {
   COMPILE_TIME_ASSERT(sizeof(struct health_t) <= USBPACKET_MAX_SIZE);
   struct health_t * health = (struct health_t*)dat;
+  const safety_state safety = safety_get_state();
 
   health->uptime_pkt = uptime_cnt;
   health->voltage_pkt = current_board->read_voltage_mV();
@@ -15,18 +16,18 @@ static int get_health_pkt(void *dat) {
   health->ignition_line_pkt = (uint8_t)(harness_check_ignition());
   health->ignition_can_pkt = ignition_can;
 
-  health->controls_allowed_pkt = controls_allowed;
+  health->controls_allowed_pkt = safety.controls_allowed;
   health->safety_tx_blocked_pkt = safety_tx_blocked;
   health->safety_rx_invalid_pkt = safety_rx_invalid;
   health->tx_buffer_overflow_pkt = tx_buffer_overflow;
   health->rx_buffer_overflow_pkt = rx_buffer_overflow;
   health->car_harness_status_pkt = harness.status;
-  health->safety_mode_pkt = (uint8_t)(current_safety_mode);
-  health->safety_param_pkt = current_safety_param;
-  health->alternative_experience_pkt = alternative_experience;
+  health->safety_mode_pkt = (uint8_t)(safety.mode);
+  health->safety_param_pkt = safety.param;
+  health->alternative_experience_pkt = safety.alternative_experience;
   health->power_save_enabled_pkt = power_save_enabled;
   health->heartbeat_lost_pkt = heartbeat_lost;
-  health->safety_rx_checks_invalid_pkt = safety_rx_checks_invalid;
+  health->safety_rx_checks_invalid_pkt = safety.rx_checks_invalid;
 
   health->spi_error_count_pkt = spi_error_count;
 
@@ -244,8 +245,8 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // **** 0xdf: set alternative experience
     case 0xdf:
       // you can only set this if you are in a non car safety mode
-      if (!is_car_safety_mode(current_safety_mode)) {
-        alternative_experience = req->param1;
+      if (!is_car_safety_mode(safety_get_state().mode)) {
+        safety_set_alternative_experience(req->param1);
       }
       break;
     // **** 0xe0: uart read
@@ -297,7 +298,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         heartbeat_counter = 0U;
         heartbeat_lost = false;
         heartbeat_disabled = false;
-        heartbeat_engaged = (req->param1 == 1U);
+        safety_set_heartbeat_engaged(req->param1 == 1U);
         break;
       }
     // **** 0xf6: set siren enabled
@@ -306,7 +307,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xf8: disable heartbeat checks
     case 0xf8:
-      if (!is_car_safety_mode(current_safety_mode)) {
+      if (!is_car_safety_mode(safety_get_state().mode)) {
         heartbeat_disabled = true;
       }
       break;

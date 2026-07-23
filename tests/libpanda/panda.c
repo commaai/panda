@@ -1,3 +1,5 @@
+#define OPENDBC_SAFETY_API_ONLY
+
 #include "fake_stm.h"
 #include "config.h"
 #include "can.h"
