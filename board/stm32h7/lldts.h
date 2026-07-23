@@ -16,8 +16,6 @@ void dts_init(void) {
   while ((DTS->SR & DTS_SR_TS1_RDY) == 0U);
   // continuous measurements w/ sw trigger
   register_set_bits(&(DTS->CFGR1), DTS_CFGR1_TS1_START);
-
-  print("  DTS cal: T0VALR1 0x"); puth(DTS->T0VALR1); print(", RAMPVALR 0x"); puth(DTS->RAMPVALR); print("\n");
 }
 
 float dts_get_temperature(void) {
