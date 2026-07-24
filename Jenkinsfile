@@ -30,10 +30,13 @@ export TEST_DIR=${env.TEST_DIR}
 export SOURCE_DIR=${env.SOURCE_DIR}
 export GIT_BRANCH=${env.GIT_BRANCH}
 export GIT_COMMIT=${env.GIT_COMMIT}
-export PYTHONPATH=${env.TEST_DIR}/../
 export PYTHONWARNINGS=error
 export LOGLEVEL=debug
-ln -sf /data/openpilot/opendbc_repo/opendbc /data/opendbc
+
+unset PYTHONPATH
+if [ -f "${env.TEST_DIR}/.venv/bin/activate" ]; then
+  source "${env.TEST_DIR}/.venv/bin/activate"
+fi
 
 # TODO: this is an agnos issue
 export PYTEST_ADDOPTS="-p no:asyncio"

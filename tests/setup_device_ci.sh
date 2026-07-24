@@ -45,8 +45,6 @@ sleep infinity
 EOF
 chmod +x $CONTINUE_PATH
 
-
-# set up environment
 if [ ! -d "$SOURCE_DIR" ]; then
   git clone https://github.com/commaai/panda.git $SOURCE_DIR
 fi
@@ -71,6 +69,12 @@ git clean -xdff
 echo "git checkout done, t=$SECONDS"
 du -hs $SOURCE_DIR $SOURCE_DIR/.git
 
-rsync -a --delete $SOURCE_DIR $TEST_DIR
+rsync -a --delete "$SOURCE_DIR" "$TEST_DIR"
+
+# /usr/comma/shims/uv wraps uv in sudo, which roots the venv — use the real binary
+UV=$(type -ap uv | grep -vF /usr/comma/shims | head -n1)
+# use panda's environment so dependencies come from its pyproject.toml
+PYTHONWARNINGS=default "$UV" sync --project "$TEST_DIR" --cache-dir="/data/uv_cache" --all-extras --upgrade-package opendbc
+"$UV" cache prune --cache-dir=/data/uv_cache
 
 echo "$TEST_DIR synced with $GIT_COMMIT, t=$SECONDS"
