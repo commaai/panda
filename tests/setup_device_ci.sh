@@ -72,6 +72,6 @@ du -hs $SOURCE_DIR $SOURCE_DIR/.git
 rsync -a --delete --exclude '.venv/' "$SOURCE_DIR" "$TEST_DIR"
 
 # use panda's environment so dependencies come from its pyproject.toml
-PYTHONWARNINGS=default uv sync --project "$TEST_DIR" --all-extras --cache-dir="$TEST_DIR/.cache" --upgrade-package opendbc
+PYTHONWARNINGS=default uv sync --project "$TEST_DIR" --cache-dir="/data/uv_cache" --all-extras --upgrade-package opendbc
 
 echo "$TEST_DIR synced with $GIT_COMMIT, t=$SECONDS"
