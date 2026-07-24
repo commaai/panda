@@ -75,5 +75,6 @@ rsync -a --delete "$SOURCE_DIR" "$TEST_DIR"
 UV=$(type -ap uv | grep -vF /usr/comma/shims | head -n1)
 # use panda's environment so dependencies come from its pyproject.toml
 PYTHONWARNINGS=default "$UV" sync --project "$TEST_DIR" --cache-dir="/data/uv_cache" --all-extras --upgrade-package opendbc
+"$UV" cache prune --cache-dir=/data/uv_cache
 
 echo "$TEST_DIR synced with $GIT_COMMIT, t=$SECONDS"
