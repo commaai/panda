@@ -45,11 +45,6 @@ sleep infinity
 EOF
 chmod +x $CONTINUE_PATH
 
-# set up environment
-cd /data/openpilot
-git reset --hard
-git pull origin master --recurse-submodules
-
 if [ ! -d "$SOURCE_DIR" ]; then
   git clone https://github.com/commaai/panda.git $SOURCE_DIR
 fi
@@ -74,6 +69,9 @@ git clean -xdff
 echo "git checkout done, t=$SECONDS"
 du -hs $SOURCE_DIR $SOURCE_DIR/.git
 
-rsync -a --delete $SOURCE_DIR $TEST_DIR
+rsync -a --delete --exclude '.venv/' "$SOURCE_DIR" "$TEST_DIR"
+
+# use panda's environment so dependencies come from its pyproject.toml
+uv sync --project "$TEST_DIR" --all-extras --upgrade-package opendbc
 
 echo "$TEST_DIR synced with $GIT_COMMIT, t=$SECONDS"
