@@ -69,7 +69,7 @@ git clean -xdff
 echo "git checkout done, t=$SECONDS"
 du -hs $SOURCE_DIR $SOURCE_DIR/.git
 
-rsync -a --delete --exclude '.venv/' "$SOURCE_DIR" "$TEST_DIR"
+rsync -a --delete "$SOURCE_DIR" "$TEST_DIR"
 
 # /usr/comma/shims/uv wraps uv in sudo, which roots the venv — use the real binary
 UV=$(type -ap uv | grep -vF /usr/comma/shims | head -n1)
