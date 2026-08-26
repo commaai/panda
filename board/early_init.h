@@ -62,3 +62,19 @@ void early_initialization(void) {
     jump_to_bootloader();
   }
 }
+
+// we might hit NMI / HardFault close to brown-out.
+// we don't want to infinitely loop, so let's set a logging cookie and reset.
+#define NMI_COOKIE 0x4E4D4921U
+#define HARDFAULT_COOKIE 0x48464C54U
+extern uint32_t fault_cookie;
+
+void NMI_Handler(void) {
+  fault_cookie = NMI_COOKIE;
+  NVIC_SystemReset();
+}
+
+void HardFault_Handler(void) {
+  fault_cookie = HARDFAULT_COOKIE;
+  NVIC_SystemReset();
+}

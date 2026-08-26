@@ -4,6 +4,7 @@
 uint8_t hw_type = 0;
 board *current_board;
 uint32_t uptime_cnt = 0;
+uint16_t reset_flags = 0U;
 
 // heartbeat state
 uint32_t heartbeat_counter = 0;
