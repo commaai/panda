@@ -141,6 +141,14 @@ class Panda:
   HEALTH_STRUCT = _parse_c_struct(os.path.join(BASEDIR, "board/health.h"), "health_t")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
 
+  HEALTH_FLAG_IGNITION_LINE = 1 << 0
+  HEALTH_FLAG_IGNITION_CAN = 1 << 1
+  HEALTH_FLAG_CONTROLS_ALLOWED = 1 << 2
+  HEALTH_FLAG_POWER_SAVE_ENABLED = 1 << 3
+  HEALTH_FLAG_HEARTBEAT_LOST = 1 << 4
+  HEALTH_FLAG_SAFETY_RX_CHECKS_INVALID = 1 << 5
+  HEALTH_FLAG_SOM_RESET_TRIGGERED = 1 << 6
+
   H7_DEVICES = [HW_TYPE_RED_PANDA, HW_TYPE_TRES, HW_TYPE_CUATRO, HW_TYPE_BODY]
   SUPPORTED_DEVICES = H7_DEVICES
 
@@ -516,6 +524,7 @@ class Panda:
   def health(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, self.HEALTH_STRUCT.size)
     a = self.HEALTH_STRUCT.unpack(dat)
+    flags = a[8]
     return {
       "uptime": a[0],
       "voltage": a[1],
@@ -525,25 +534,25 @@ class Panda:
       "tx_buffer_overflow": a[5],
       "rx_buffer_overflow": a[6],
       "faults": a[7],
-      "ignition_line": a[8],
-      "ignition_can": a[9],
-      "controls_allowed": a[10],
-      "car_harness_status": a[11],
-      "safety_mode": a[12],
-      "safety_param": a[13],
-      "fault_status": a[14],
-      "power_save_enabled": a[15],
-      "heartbeat_lost": a[16],
-      "alternative_experience": a[17],
-      "interrupt_load": a[18],
-      "fan_power": a[19],
-      "safety_rx_checks_invalid": a[20],
-      "spi_error_count": a[21],
-      "sbu1_voltage_mV": a[22],
-      "sbu2_voltage_mV": a[23],
-      "som_reset_triggered": a[24],
-      "sound_output_level": a[25],
-      "temperature": a[26],
+      "ignition_line": bool(flags & self.HEALTH_FLAG_IGNITION_LINE),
+      "ignition_can": bool(flags & self.HEALTH_FLAG_IGNITION_CAN),
+      "controls_allowed": bool(flags & self.HEALTH_FLAG_CONTROLS_ALLOWED),
+      "car_harness_status": a[9],
+      "safety_mode": a[10],
+      "safety_param": a[11],
+      "fault_status": a[12],
+      "power_save_enabled": bool(flags & self.HEALTH_FLAG_POWER_SAVE_ENABLED),
+      "heartbeat_lost": bool(flags & self.HEALTH_FLAG_HEARTBEAT_LOST),
+      "alternative_experience": a[13],
+      "interrupt_load": a[14] / 255.0,
+      "fan_power": a[15],
+      "safety_rx_checks_invalid": bool(flags & self.HEALTH_FLAG_SAFETY_RX_CHECKS_INVALID),
+      "spi_error_count": a[16],
+      "sbu1_voltage_mV": a[17],
+      "sbu2_voltage_mV": a[18],
+      "som_reset_triggered": bool(flags & self.HEALTH_FLAG_SOM_RESET_TRIGGERED),
+      "sound_output_level": a[19],
+      "temperature": a[20] - 40.0,
     }
 
   @ensure_health_packet_version

@@ -9,13 +9,18 @@ static int get_health_pkt(void *dat) {
   struct health_t * health = (struct health_t*)dat;
 
   health->uptime_pkt = uptime_cnt;
-  health->voltage_pkt = current_board->read_voltage_mV();
-  health->current_pkt = current_board->read_current_mA();
+  health->voltage_pkt = (uint16_t)MIN(current_board->read_voltage_mV(), 0xFFFFU);
+  health->current_pkt = (uint16_t)MIN(current_board->read_current_mA(), 0xFFFFU);
 
-  health->ignition_line_pkt = (uint8_t)(harness_check_ignition());
-  health->ignition_can_pkt = ignition_can;
+  health->flags_pkt = 0U;
+  health->flags_pkt |= harness_check_ignition() ? HEALTH_FLAG_IGNITION_LINE : 0U;
+  health->flags_pkt |= ignition_can ? HEALTH_FLAG_IGNITION_CAN : 0U;
+  health->flags_pkt |= controls_allowed ? HEALTH_FLAG_CONTROLS_ALLOWED : 0U;
+  health->flags_pkt |= power_save_enabled ? HEALTH_FLAG_POWER_SAVE_ENABLED : 0U;
+  health->flags_pkt |= heartbeat_lost ? HEALTH_FLAG_HEARTBEAT_LOST : 0U;
+  health->flags_pkt |= safety_rx_checks_invalid ? HEALTH_FLAG_SAFETY_RX_CHECKS_INVALID : 0U;
+  health->flags_pkt |= bootkick_reset_triggered ? HEALTH_FLAG_SOM_RESET_TRIGGERED : 0U;
 
-  health->controls_allowed_pkt = controls_allowed;
   health->safety_tx_blocked_pkt = safety_tx_blocked;
   health->safety_rx_invalid_pkt = safety_rx_invalid;
   health->tx_buffer_overflow_pkt = tx_buffer_overflow;
@@ -24,27 +29,24 @@ static int get_health_pkt(void *dat) {
   health->safety_mode_pkt = (uint8_t)(current_safety_mode);
   health->safety_param_pkt = current_safety_param;
   health->alternative_experience_pkt = alternative_experience;
-  health->power_save_enabled_pkt = power_save_enabled;
-  health->heartbeat_lost_pkt = heartbeat_lost;
-  health->safety_rx_checks_invalid_pkt = safety_rx_checks_invalid;
 
   health->spi_error_count_pkt = spi_error_count;
 
   health->fault_status_pkt = fault_status;
   health->faults_pkt = faults;
 
-  health->interrupt_load_pkt = interrupt_load;
+  float interrupt_load_scaled = (CLAMP(interrupt_load, 0.0f, 1.0f) * 255.0f) + 0.5f;
+  health->interrupt_load_pkt = (uint8_t)interrupt_load_scaled;
 
   health->fan_power = fan_state.power;
 
   health->sbu1_voltage_mV = harness.sbu1_voltage_mV;
   health->sbu2_voltage_mV = harness.sbu2_voltage_mV;
 
-  health->som_reset_triggered = bootkick_reset_triggered;
-
   health->sound_output_level_pkt = sound_output_level;
 
-  health->temperature = dts_get_temperature();
+  float temperature_encoded = (CLAMP(dts_get_temperature(), -40.0f, 214.5f) + 40.0f) + 0.5f;
+  health->temperature_pkt = (uint8_t)temperature_encoded;
 
   return sizeof(*health);
 }
