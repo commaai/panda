@@ -45,8 +45,6 @@ extern uint8_t global_critical_depth;
 #define FAULT_SIREN_MALFUNCTION             (1UL << 25)
 #define FAULT_HEARTBEAT_LOOP_WATCHDOG       (1UL << 26)
 #define FAULT_INTERRUPT_RATE_SOUND_DMA      (1UL << 27)
-#define FAULT_NMI_RESET                     (1UL << 28)
-#define FAULT_HARDFAULT_RESET               (1UL << 29)
 
 // Permanent faults
 #define PERMANENT_FAULTS 0U
