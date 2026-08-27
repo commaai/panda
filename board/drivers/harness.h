@@ -28,6 +28,10 @@ void set_intercept_relay(bool intercept, bool ignition_relay) {
   if (!(drive_relay || ignition_relay)) {
     harness.relay_driven = false;
   }
+
+  #ifndef BOOTSTUB
+  relay_monitor_set_state(drive_relay);
+  #endif
 }
 
 bool harness_check_ignition(void) {
@@ -92,6 +96,10 @@ void harness_tick(void) {
 }
 
 void harness_init(void) {
+  #ifndef BOOTSTUB
+  relay_monitor_init();
+  #endif
+
   // init OBD_SBUx_RELAY
   set_gpio_output_type(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, OUTPUT_TYPE_OPEN_DRAIN);
   set_gpio_output_type(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, OUTPUT_TYPE_OPEN_DRAIN);

@@ -16,6 +16,8 @@
 
 #include "board/drivers/can_common.h"
 
+#include "board/drivers/relay.h"
+
 #include "board/drivers/fdcan.h"
 
 #include "board/sys/power_saving.h"
@@ -119,6 +121,7 @@ static void tick_handler(void) {
   static uint8_t prev_harness_status = HARNESS_STATUS_NC;
   static uint8_t loop_counter = 0U;
   static bool relay_malfunction_prev = false;
+  static bool stock_ecu_detected_prev = false;
 
   if (TICK_TIMER->SR != 0U) {
 
@@ -128,21 +131,37 @@ static void tick_handler(void) {
     // tick drivers at 8Hz
     fan_tick();
     harness_tick();
+    relay_monitor_tick();
     simple_watchdog_kick();
     sound_tick();
 
-    if (relay_malfunction_prev != relay_malfunction) {
-      if (relay_malfunction) {
+    const bool relay_malfunction_current = relay_monitor_malfunction();
+    if (relay_malfunction_prev != relay_malfunction_current) {
+      if (relay_malfunction_current) {
         fault_occurred(FAULT_RELAY_MALFUNCTION);
       } else {
         fault_recovered(FAULT_RELAY_MALFUNCTION);
       }
     }
-    relay_malfunction_prev = relay_malfunction;
+    relay_malfunction_prev = relay_malfunction_current;
+
+    // opendbc's relay_malfunction flag detects stock control messages, not the
+    // physical state of the harness relay.
+    if (stock_ecu_detected_prev != relay_malfunction) {
+      if (relay_malfunction) {
+        fault_occurred(FAULT_STOCK_ECU_DETECTED);
+      } else {
+        fault_recovered(FAULT_STOCK_ECU_DETECTED);
+      }
+    }
+    stock_ecu_detected_prev = relay_malfunction;
 
     // re-init everything that uses harness status
     if (harness.status != prev_harness_status) {
       prev_harness_status = harness.status;
+      if (harness.status == HARNESS_STATUS_NC) {
+        relay_monitor_init();
+      }
       can_set_orientation(harness.status == HARNESS_STATUS_FLIPPED);
 
       // re-init everything that uses harness status

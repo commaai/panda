@@ -47,6 +47,15 @@ int comms_can_read(uint8_t *data, uint32_t max_len);
 void comms_can_write(uint8_t *data, uint32_t len);
 void comms_can_reset(void);
 uint32_t can_slots_empty(can_ring *q);
+
+void relay_test_set_timer(uint32_t t);
+uint8_t relay_test_get_closed_check(void);
+uint8_t relay_test_get_open_check(void);
+void relay_monitor_init(void);
+void relay_monitor_set_state(bool relay_open);
+void relay_monitor_rx(CANPacket_t *msg);
+void relay_monitor_tick(void);
+bool relay_monitor_malfunction(void);
 """)
 
 class CANPacket:

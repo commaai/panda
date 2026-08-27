@@ -153,6 +153,11 @@ void set_intercept_relay(bool intercept, bool ignition_relay);
 bool harness_check_ignition(void);
 void harness_tick(void);
 void harness_init(void);
+void relay_monitor_init(void);
+void relay_monitor_set_state(bool relay_open);
+void relay_monitor_rx(const CANPacket_t *msg);
+void relay_monitor_tick(void);
+bool relay_monitor_malfunction(void);
 
 // ******************** interrupts ********************
 

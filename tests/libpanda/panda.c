@@ -17,7 +17,20 @@ void can_tx_comms_resume_spi(void) { };
 #include "boards/board_declarations.h"
 #include "opendbc/safety/safety.h"
 #include "main_definitions.h"
+#include "drivers/relay.h"
 #include "drivers/can_common.h"
+
+void relay_test_set_timer(uint32_t t) {
+  MICROSECOND_TIMER->CNT = t;
+}
+
+uint8_t relay_test_get_closed_check(void) {
+  return relay_monitor.closed_check;
+}
+
+uint8_t relay_test_get_open_check(void) {
+  return relay_monitor.open_check;
+}
 
 can_ring *rx_q = &can_rx_q;
 can_ring *tx1_q = &can_tx1_q;

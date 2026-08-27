@@ -177,7 +177,12 @@ bool can_check_checksum(CANPacket_t *packet) {
 }
 
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
-  if (skip_tx_hook || safety_tx_hook(to_push) != 0) {
+  bool relay_ok = true;
+  #if !defined(PANDA_JUNGLE) && !defined(PANDA_BODY)
+  relay_ok = !relay_monitor_malfunction();
+  #endif
+
+  if (relay_ok && (skip_tx_hook || safety_tx_hook(to_push) != 0)) {
     if (bus_number < PANDA_CAN_CNT) {
       // add CAN packet to send queue
       tx_buffer_overflow += can_push(can_queues[bus_number], to_push) ? 0U : 1U;

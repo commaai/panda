@@ -193,6 +193,12 @@ void can_rx(uint8_t can_number) {
     }
     can_set_checksum(&to_push);
 
+    #if !defined(PANDA_JUNGLE) && !defined(PANDA_BODY)
+    if (harness.status != HARNESS_STATUS_NC) {
+      relay_monitor_rx(&to_push);
+    }
+    #endif
+
     // forwarding (panda only)
     int bus_fwd_num = safety_fwd_hook(bus_number, to_push.addr);
     if (bus_fwd_num < 0) {
