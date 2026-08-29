@@ -74,6 +74,9 @@ static void enter_stop_mode(void) {
   ADC1->CR |= ADC_CR_DEEPPWD;
   ADC2->CR &= ~(ADC_CR_ADEN);
   ADC2->CR |= ADC_CR_DEEPPWD;
+  
+  // disable DACs
+  sound_stop_dac();
 
   // disable DTS
   register_clear_bits(&(DTS->CFGR1), DTS_CFGR1_TS1_START);
