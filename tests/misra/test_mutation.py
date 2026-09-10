@@ -53,7 +53,7 @@ patterns = [
   r"$a #define TEST 1\n#undef TEST\n",
 ]
 
-all_files = glob.glob('board/**', root_dir=ROOT, recursive=True)
+all_files = [f.replace(os.sep, '/') for f in glob.glob('board/**', root_dir=ROOT, recursive=True)]  # Windows globs with backslashes
 files = sorted(f for f in all_files if f.endswith(('.c', '.h')) and not f.startswith(IGNORED_PATHS))
 assert len(files) > 50, all(d in files for d in ('board/main.c', 'board/stm32h7/llfdcan.h'))
 
@@ -84,6 +84,7 @@ def test_misra_mutation(fn, patch, should_fail):
         f.write(content)
 
     # run test
-    r = subprocess.run("SKIP_TABLES_DIFF=1 panda/tests/misra/test_misra.sh", cwd=tmp, shell=True)
+    # shutil.which: a bare "bash" is the WSL launcher on Windows
+    r = subprocess.run([shutil.which("bash"), "panda/tests/misra/test_misra.sh"], cwd=tmp, env={**os.environ, "SKIP_TABLES_DIFF": "1"})
     failed = r.returncode != 0
     assert failed == should_fail

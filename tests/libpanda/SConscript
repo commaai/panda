@@ -1,6 +1,8 @@
+import os
 import opendbc
 
 env = Environment(
+  ENV=os.environ,  # like the firmware build: on Windows clang is only on the MSYS2 shell's PATH
   CFLAGS=[
     '-nostdlib',
     '-fno-builtin',
@@ -9,7 +11,12 @@ env = Environment(
     '-Wno-pointer-to-int-cast',
   ],
   CPPPATH=[".", "../../", "../../board/", opendbc.INCLUDE_PATH],
+  tools=["mingw" if os.name == "nt" else "default"],  # default picks MSVC on Windows
 )
+if os.name == "nt":
+  env["CC"] = "clang"  # the mingw tool assumes gcc
+  env["no_import_lib"] = 1  # nothing links against the DLL
+  env.Append(CFLAGS=["-mno-ms-bitfields"])  # the firmware's packed layout
 
 panda = env.SharedObject("panda.os", "panda.c")
-libpanda = env.SharedLibrary("libpanda.so", [panda])
+libpanda = env.SharedLibrary("libpanda.dll" if os.name == "nt" else "libpanda.so", [panda])

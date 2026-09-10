@@ -5,6 +5,7 @@
 .*.swo
 *.o
 *.so
+*.dll
 *.os
 *.d
 *.dump

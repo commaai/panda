@@ -29,8 +29,8 @@ dev = [
   "pytest-timeout",
   "ruff",
   "setuptools",
-  "gcc-arm-none-eabi @ git+https://github.com/commaai/dependencies.git@release-gcc-arm-none-eabi#subdirectory=gcc-arm-none-eabi",
-  "cppcheck @ git+https://github.com/commaai/dependencies.git@release-cppcheck#subdirectory=cppcheck",
+  "comma-deps-gcc-arm-none-eabi ; python_full_version >= '3.12'",  # the wheels need 3.12
+  "comma-deps-cppcheck ; python_full_version >= '3.12'",
 ]
 
 [build-system]
@@ -72,3 +72,14 @@ python_files = "test_*.py"
 testpaths = [
   "tests/"
 ]
+
+# --- TODO REMOVE AFTER DEPENDENCY PR MERGES (commaai/dependencies#107): fork-only index of the comma-deps Windows wheels until PyPI has them; not for upstream ---
+[[tool.uv.index]]
+name = "comma-deps-windows"
+url = "https://github.com/AmyJeanes/commaai-dependencies/releases/download/windows-post111/index.html"
+format = "flat"
+explicit = true
+
+[tool.uv.sources]
+comma-deps-gcc-arm-none-eabi = [{ index = "comma-deps-windows", marker = "sys_platform == 'win32'" }]
+comma-deps-cppcheck = [{ index = "comma-deps-windows", marker = "sys_platform == 'win32'" }]

@@ -16,6 +16,15 @@ claim = os.getenv("CLAIM") is not None
 no_color = os.getenv("NO_COLOR") is not None
 no_reconnect = os.getenv("NO_RECONNECT") is not None
 
+
+def _stdin_has_line() -> bool:
+  # select() only works on sockets on Windows, so poll the console with msvcrt there
+  if sys.platform == "win32":
+    import msvcrt
+    return bool(msvcrt.kbhit())
+  return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
+
+
 if __name__ == "__main__":
   while True:
     try:
@@ -50,7 +59,7 @@ if __name__ == "__main__":
               sys.stdout.flush()
             else:
               break
-          if select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], []):
+          if _stdin_has_line():
             ln = sys.stdin.readline()
             if claim:
               panda.serial_write(port_number, ln)

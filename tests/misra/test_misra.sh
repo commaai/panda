@@ -3,26 +3,26 @@ set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PANDA_DIR=$(realpath $DIR/../../)
-OPENDBC_ROOT=$(python3 -c "import opendbc; print(opendbc.INCLUDE_PATH)")
+OPENDBC_ROOT=$(python -c "import opendbc; print(opendbc.INCLUDE_PATH)")
 
 GREEN="\e[1;32m"
 YELLOW="\e[1;33m"
 RED="\e[1;31m"
 NC='\033[0m'
 
-: "${CPPCHECK_DIR:=$(python3 -c "import cppcheck; print(cppcheck.DIR)")}"
+: "${CPPCHECK_DIR:=$(python -c "import cppcheck; print(cppcheck.DIR)")}"
 
 # ensure checked in coverage table is up to date
-cd $DIR
+cd "$DIR"
 if [ -z "$SKIP_TABLES_DIFF" ]; then
-  python3 $CPPCHECK_DIR/addons/misra.py -generate-table > coverage_table
+  python $CPPCHECK_DIR/addons/misra.py -generate-table > coverage_table
   if ! git diff --quiet coverage_table; then
     echo -e "${YELLOW}MISRA coverage table doesn't match. Update and commit:${NC}"
     exit 3
   fi
 fi
 
-cd $PANDA_DIR
+cd "$PANDA_DIR"
 if [ -z "${SKIP_BUILD}" ]; then
   scons
 fi
@@ -71,7 +71,7 @@ cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ $P
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 
 # ensure list of checkers is up to date
-cd $DIR
+cd "$DIR"
 if [ -z "$SKIP_TABLES_DIFF" ] && ! git diff --quiet $CHECKLIST; then
   echo -e "\n${YELLOW}WARNING: Cppcheck checkers.txt report has changed. Review and commit...${NC}"
   exit 4

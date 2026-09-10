@@ -2,7 +2,7 @@
 set -e
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
-cd $DIR
+cd "$DIR"
 
 PLATFORM=$(uname -s)
 
@@ -19,6 +19,8 @@ elif [[ $PLATFORM == "Linux" ]]; then
   sudo apt-get install -y --no-install-recommends \
     curl ca-certificates gcc git \
     python3-dev
+elif [[ $PLATFORM == MINGW* ]]; then
+  pacman -S --needed --noconfirm mingw-w64-clang-x86_64-{clang,git,uv}  # MSYS2 CLANG64 shell; the ARM toolchain comes from uv
 else
   echo "WARNING: unsupported platform. skipping apt/brew install."
 fi
@@ -29,10 +31,10 @@ if ! command -v uv &>/dev/null; then
 
   # doesn't require sourcing on all platforms
   set +e
-  source $HOME/.local/bin/env
+  source "$HOME/.local/bin/env"
   set -e
 fi
 
 export UV_PROJECT_ENVIRONMENT="$DIR/.venv"
 uv sync --all-extras --upgrade
-source "$DIR/.venv/bin/activate"
+source "$DIR"/.venv/*/activate  # bin/, or Scripts/ on Windows

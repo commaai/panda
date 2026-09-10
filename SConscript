@@ -1,4 +1,5 @@
 import os
+import sys
 import hashlib
 import base64
 import opendbc
@@ -102,7 +103,7 @@ def build_project(project_name, project, main, extra_flags):
     BUILDERS={
       'Objcopy': Builder(generator=objcopy, suffix='.bin', src_suffix='.elf')
     },
-    tools=["default", "compilation_db"],
+    tools=["mingw" if os.name == "nt" else "default", "compilation_db"],  # default picks MSVC on Windows
   )
 
   startup = env.Object(project["STARTUP_FILE"])
@@ -125,7 +126,9 @@ def build_project(project_name, project, main, extra_flags):
   ], LINKFLAGS=[f"-Wl,--section-start,.isr_vector={project['APP_START_ADDRESS']}"] + flags)
   main_bin = env.Objcopy(f"{project_dir}/main.bin", main_elf)
   sign_py = File(f"./board/crypto/sign.py").srcnode().relpath
-  env.Command(f"./board/obj/{project_name}.bin.signed", main_bin, f"SETLEN=1 {sign_py} $SOURCE $TARGET {cert_fn}")
+  # cmd.exe on Windows runs neither a script by its shebang nor a VAR=value prefix
+  env.Command(f"./board/obj/{project_name}.bin.signed", main_bin, f'"{sys.executable}" {sign_py} $SOURCE $TARGET {cert_fn}',
+              ENV={**env["ENV"], "SETLEN": "1"})
 
 
 

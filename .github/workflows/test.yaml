@@ -34,10 +34,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['macos-latest', 'ubuntu-latest']
+        os: ['macos-latest', 'ubuntu-latest', 'windows-latest']
     timeout-minutes: 10
+    defaults:
+      run:
+        shell: ${{ contains(matrix.os, 'windows') && 'msys2 {0}' || 'bash -e {0}' }}
     steps:
       - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        if: contains(matrix.os, 'windows')
+        with:
+          msystem: CLANG64
       - run: ./test.sh
 
   windows:
