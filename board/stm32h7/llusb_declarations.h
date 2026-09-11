@@ -14,5 +14,4 @@ extern USB_OTG_GlobalTypeDef *USBx;
 #define USB_OTG_SPEED_FULL        3U
 #define DCFG_FRAME_INTERVAL_80    0U
 
-void usb_irqhandler(void);
 void usb_init(void);

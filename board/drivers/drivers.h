@@ -106,7 +106,6 @@ struct fan_state_t {
 extern struct fan_state_t fan_state;
 
 void fan_set_power(uint8_t percentage);
-void llfan_init(void);
 void fan_init(void);
 // Call this at FAN_TICK_FREQ
 void fan_tick(void);
@@ -125,8 +124,6 @@ extern FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT];
 
 void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number);
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg);
-
-void can_rx(uint8_t can_number);
 
 // ******************** harness ********************
 
@@ -174,7 +171,6 @@ typedef struct interrupt {
 
 void interrupt_timer_init(void);
 uint32_t microsecond_timer_get(void);
-void unused_interrupt_handler(void);
 
 extern interrupt interrupts[NUM_INTERRUPTS];
 
@@ -291,7 +287,6 @@ void hexdump(const void *a, int l);
 
 // ******************** usb ********************
 
-void usb_init(void);
 void usb_irqhandler(void);
 void refresh_can_tx_slots_available(void);
 void can_tx_comms_resume_usb(void);
