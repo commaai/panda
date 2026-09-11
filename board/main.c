@@ -348,32 +348,20 @@ int main(void) {
     }
     #endif
     if (!power_save_enabled) {
-      #ifdef DEBUG_FAULTS
-      if (fault_status == FAULT_STATUS_NONE) {
-      #endif
-        // useful for debugging, fade breaks = panda is overloaded
-        for (uint32_t fade = 0U; fade < MAX_LED_FADE; fade += 1U) {
-          led_set(LED_RED, true);
-          delay(fade >> 4);
-          led_set(LED_RED, false);
-          delay((MAX_LED_FADE - fade) >> 4);
-        }
+      // useful for debugging, fade breaks = panda is overloaded
+      for (uint32_t fade = 0U; fade < MAX_LED_FADE; fade += 1U) {
+        led_set(LED_RED, true);
+        delay(fade >> 4);
+        led_set(LED_RED, false);
+        delay((MAX_LED_FADE - fade) >> 4);
+      }
 
-        for (uint32_t fade = MAX_LED_FADE; fade > 0U; fade -= 1U) {
-          led_set(LED_RED, true);
-          delay(fade >> 4);
-          led_set(LED_RED, false);
-          delay((MAX_LED_FADE - fade) >> 4);
-        }
-
-      #ifdef DEBUG_FAULTS
-      } else {
-          led_set(LED_RED, 1);
-          delay(512000U);
-          led_set(LED_RED, 0);
-          delay(512000U);
-        }
-      #endif
+      for (uint32_t fade = MAX_LED_FADE; fade > 0U; fade -= 1U) {
+        led_set(LED_RED, true);
+        delay(fade >> 4);
+        led_set(LED_RED, false);
+        delay((MAX_LED_FADE - fade) >> 4);
+      }
     } else {
       if ((hw_type == HW_TYPE_CUATRO) && !current_board->read_som_gpio()) {
         assert_fatal(current_safety_mode == SAFETY_SILENT, "Error: Entering low power mode while not in SAFETY_SILENT. Hanging\n");

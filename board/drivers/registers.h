@@ -15,7 +15,6 @@ static reg register_map[REGISTER_MAP_SIZE];
 
 // Hash spread in first and second iterations seems to be reasonable.
 // See: tests/development/register_hashmap_spread.py
-// Also, check the collision warnings in the debug output, and minimize those.
 static uint16_t hash_addr(uint32_t input){
   return (((input >> 16U) ^ ((((input + 1U) & 0xFFFFU) * HASHING_PRIME) & 0xFFFFU)) & REGISTER_MAP_SIZE);
 }
@@ -34,10 +33,6 @@ void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask){
     register_map[hash].address = addr;
     register_map[hash].value = (register_map[hash].value & (~mask)) | (val & mask);
     register_map[hash].check_mask |= mask;
-  } else {
-    #ifdef DEBUG_FAULTS
-      print("Hash collision: address 0x"); puth((uint32_t) addr); print("!\n");
-    #endif
   }
   EXIT_CRITICAL()
 }

@@ -6,7 +6,6 @@
 //#define DEBUG_UART
 //#define DEBUG_USB
 //#define DEBUG_SPI
-//#define DEBUG_FAULTS
 //#define DEBUG_COMMS
 //#define DEBUG_FAN
 
