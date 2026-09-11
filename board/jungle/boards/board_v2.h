@@ -1,5 +1,11 @@
 #pragma once
 
+#include "board/config.h"
+
+uint8_t harness_orientation = HARNESS_ORIENTATION_NONE;
+uint8_t can_mode = CAN_MODE_NORMAL;
+uint8_t ignition = 0U;
+
 // ///////////////////////// //
 // Jungle board v2 (STM32H7) //
 // ///////////////////////// //
@@ -168,7 +174,6 @@ void board_v2_set_can_mode(uint8_t mode) {
   }
 }
 
-bool panda_power = false;
 uint8_t panda_power_bitmask = 0U;
 void board_v2_set_panda_power(bool enable) {
   panda_power = enable;
