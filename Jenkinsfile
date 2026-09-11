@@ -91,7 +91,11 @@ pipeline {
           steps {
             timeout(time: 20, unit: 'MINUTES') {
               deleteDir()
-              checkout scm
+              script {
+                def revision = checkout scm
+                env.GIT_COMMIT = revision.GIT_COMMIT
+                env.GIT_BRANCH = revision.GIT_BRANCH
+              }
               sh 'PYTHONWARNINGS=default ./setup.sh'
             }
           }
