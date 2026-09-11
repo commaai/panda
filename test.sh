@@ -12,4 +12,4 @@ scons
 
 # *** lint + test ***
 ruff check .
-pytest
+python -W error -m unittest discover -s tests -v

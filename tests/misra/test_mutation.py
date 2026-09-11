@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 import os
 import glob
-import pytest
+import unittest
 import shutil
 import subprocess
 import tempfile
 import random
+from concurrent.futures import ProcessPoolExecutor
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT = os.path.join(HERE, "../../")
@@ -57,7 +58,7 @@ all_files = glob.glob('board/**', root_dir=ROOT, recursive=True)
 files = sorted(f for f in all_files if f.endswith(('.c', '.h')) and not f.startswith(IGNORED_PATHS))
 assert len(files) > 50, all(d in files for d in ('board/main.c', 'board/stm32h7/llfdcan.h'))
 
-# fixed seed so every xdist worker collects the same test params
+# fixed seed for reproducible mutation selection
 rng = random.Random(len(files))
 for p in patterns:
   mutations.append((rng.choice(files), p, True))
@@ -65,10 +66,9 @@ for p in patterns:
 # sample to keep CI fast, but always include the no-mutation case
 mutations = [mutations[0]] + rng.sample(mutations[1:], min(2, len(mutations) - 1))
 
-@pytest.mark.parametrize("fn, patch, should_fail", mutations)
-def test_misra_mutation(fn, patch, should_fail):
+def run_mutation(fn, patch, should_fail):
   with tempfile.TemporaryDirectory() as tmp:
-    shutil.copytree(ROOT, tmp + "/panda", dirs_exist_ok=True)
+    shutil.copytree(ROOT, tmp + "/panda", ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__"))
 
     # apply patch
     if fn is not None:
@@ -83,7 +83,26 @@ def test_misra_mutation(fn, patch, should_fail):
       with open(fpath, "w") as f:
         f.write(content)
 
-    # run test
-    r = subprocess.run("SKIP_TABLES_DIFF=1 panda/tests/misra/test_misra.sh", cwd=tmp, shell=True)
-    failed = r.returncode != 0
-    assert failed == should_fail
+    return subprocess.run("SKIP_TABLES_DIFF=1 panda/tests/misra/test_misra.sh", cwd=tmp, shell=True,
+                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+
+
+class TestMisraMutation(unittest.TestCase):
+  @classmethod
+  def setUpClass(cls):
+    # Each mutation has its own checkout and subprocess; keep the expensive checks parallel.
+    executor = ProcessPoolExecutor(max_workers=len(mutations))
+    cls.addClassCleanup(executor.shutdown)
+    cls.results = [executor.submit(run_mutation, *mutation) for mutation in mutations]
+
+
+def mutation_test(index):
+  def test(self):
+    result = self.results[index].result()
+    self.assertEqual(result.returncode != 0, mutations[index][2], result.stdout)
+  test.__doc__ = f"MISRA mutation: {mutations[index]}"
+  return test
+
+
+for index in range(len(mutations)):
+  setattr(TestMisraMutation, f"test_misra_mutation_{index}", mutation_test(index))

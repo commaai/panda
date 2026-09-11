@@ -21,11 +21,6 @@ dependencies = [
 dev = [
   "scons",
   "cffi",
-  "flaky",
-  "pytest",
-  "pytest-xdist",
-  "pytest-mock",
-  "pytest-timeout",
   "ruff",
   "setuptools",
   "gcc-arm-none-eabi @ git+https://github.com/commaai/dependencies.git@release-gcc-arm-none-eabi#subdirectory=gcc-arm-none-eabi",
@@ -61,13 +56,3 @@ target-version="py311"
 select = ["E", "F", "W", "PIE", "C4", "ISC", "RUF100", "A"]
 ignore = ["W292", "E741", "E402", "C408", "ISC003"]
 flake8-implicit-str-concat.allow-multiline=false
-
-[tool.ruff.lint.flake8-tidy-imports.banned-api]
-"pytest.main".msg = "pytest.main requires special handling that is easy to mess up!"
-
-[tool.pytest.ini_options]
-addopts = "-Werror --strict-config --strict-markers --maxprocesses=8 -nauto --durations=10 --ignore-glob='*.sh' --ignore=tests/som --ignore=tests/hitl"
-python_files = "test_*.py"
-testpaths = [
-  "tests/"
-]
