@@ -24,7 +24,6 @@ typedef struct {
 
 TIM_TypeDef timer;
 TIM_TypeDef *MICROSECOND_TIMER = &timer;
-uint32_t microsecond_timer_get(void);
 
 uint32_t microsecond_timer_get(void) {
   return MICROSECOND_TIMER->CNT;

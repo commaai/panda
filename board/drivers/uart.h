@@ -108,7 +108,7 @@ bool put_char(uart_ring *q, char elem) {
 }
 
 // ************************ High-level debug functions **********************
-void putch(const char a) {
+static void putch(const char a) {
   // misra-c2012-17.7: serial debug function, ok to ignore output
   (void)injectc(&uart_ring_debug, a);
 }
@@ -120,7 +120,7 @@ void print(const char *a) {
   }
 }
 
-void puthx(uint32_t i, uint8_t len) {
+static void puthx(uint32_t i, uint8_t len) {
   const char c[] = "0123456789abcdef";
   for (int pos = ((int)len * 4) - 4; pos > -4; pos -= 4) {
     putch(c[(i >> (unsigned int)(pos)) & 0xFU]);

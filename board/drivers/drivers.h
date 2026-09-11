@@ -75,7 +75,6 @@ void can_set_orientation(bool flipped);
 void can_set_forwarding(uint8_t from, uint8_t to);
 #endif
 bool can_tx_check_min_slots_free(uint32_t min);
-uint8_t calculate_checksum(const uint8_t *dat, uint32_t len);
 void can_set_checksum(CANPacket_t *packet);
 bool can_check_checksum(CANPacket_t *packet);
 void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook);
@@ -117,7 +116,6 @@ extern FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT];
 void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number);
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg);
 
-void can_rx(uint8_t can_number);
 
 // ******************** harness ********************
 
@@ -165,7 +163,6 @@ typedef struct interrupt {
 
 void interrupt_timer_init(void);
 uint32_t microsecond_timer_get(void);
-void unused_interrupt_handler(void);
 
 extern interrupt interrupts[NUM_INTERRUPTS];
 
@@ -260,9 +257,7 @@ bool get_char(uart_ring *q, char *elem);
 bool injectc(uart_ring *q, char elem);
 bool put_char(uart_ring *q, char elem);
 // ************************ High-level debug functions **********************
-void putch(const char a);
 void print(const char *a);
-void puthx(uint32_t i, uint8_t len);
 void puth(unsigned int i);
 #if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
 static void puth4(unsigned int i);
