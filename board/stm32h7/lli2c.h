@@ -12,32 +12,34 @@ bool i2c_status_wait(const volatile uint32_t *reg, uint32_t mask, uint32_t val) 
   return ((*reg & mask) == val);
 }
 
-void i2c_reset(I2C_TypeDef *I2C) {
+void i2c_reset(const tracked_i2c *I2C) {
   // peripheral reset
   register_clear_bits(&I2C->CR1, I2C_CR1_PE);
-  while ((I2C->CR1 & I2C_CR1_PE) != 0U);
+  while ((I2C->hardware->CR1 & I2C_CR1_PE) != 0U);
   register_set_bits(&I2C->CR1, I2C_CR1_PE);
 }
 
-static bool i2c_write_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t value) {
+static void i2c_start(const tracked_i2c *I2C, uint32_t config) {
+  ENTER_CRITICAL();
+  // Track persistent control fields, excluding START/STOP and transfer counters.
+  register_set(&I2C->CR2, config, I2C_CR2_ADD10 | I2C_CR2_RD_WRN | I2C_CR2_AUTOEND);
+  I2C->hardware->CR2 = config | I2C_CR2_START;
+  EXIT_CRITICAL();
+}
+
+static bool i2c_write_reg(const tracked_i2c *I2C, uint8_t addr, uint8_t reg, uint8_t value) {
   bool ret = false;
 
   // Setup transfer and send START + addr
   for (uint32_t i = 0U; i < I2C_RETRY_COUNT; i++) {
-    register_clear_bits(&I2C->CR2, I2C_CR2_ADD10);
-    I2C->CR2 = ((uint32_t)addr << 1U) & I2C_CR2_SADD_Msk;
-    register_clear_bits(&I2C->CR2, I2C_CR2_RD_WRN);
-    register_set_bits(&I2C->CR2, I2C_CR2_AUTOEND);
-    I2C->CR2 |= 2UL << I2C_CR2_NBYTES_Pos;
-
-    I2C->CR2 |= I2C_CR2_START;
-    if(!i2c_status_wait(&I2C->CR2, I2C_CR2_START, 0U)) {
+    i2c_start(I2C, (((uint32_t)addr << 1U) & I2C_CR2_SADD_Msk) | (2UL << I2C_CR2_NBYTES_Pos) | I2C_CR2_AUTOEND);
+    if(!i2c_status_wait(&I2C->hardware->CR2, I2C_CR2_START, 0U)) {
       continue;
     }
 
     // check if we lost arbitration
-    if ((I2C->ISR & I2C_ISR_ARLO) != 0U) {
-      register_set_bits(&I2C->ICR, I2C_ICR_ARLOCF);
+    if ((I2C->hardware->ISR & I2C_ISR_ARLO) != 0U) {
+      I2C->hardware->ICR = I2C_ICR_ARLOCF;
     } else {
       ret = true;
       break;
@@ -49,41 +51,35 @@ static bool i2c_write_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t v
   }
 
   // Send data
-  ret = i2c_status_wait(&I2C->ISR, I2C_ISR_TXIS, I2C_ISR_TXIS);
+  ret = i2c_status_wait(&I2C->hardware->ISR, I2C_ISR_TXIS, I2C_ISR_TXIS);
   if(!ret) {
     goto end;
   }
-  I2C->TXDR = reg;
+  I2C->hardware->TXDR = reg;
 
-  ret = i2c_status_wait(&I2C->ISR, I2C_ISR_TXIS, I2C_ISR_TXIS);
+  ret = i2c_status_wait(&I2C->hardware->ISR, I2C_ISR_TXIS, I2C_ISR_TXIS);
   if(!ret) {
     goto end;
   }
-  I2C->TXDR = value;
+  I2C->hardware->TXDR = value;
 
 end:
   return ret;
 }
 
-static bool i2c_read_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t *value) {
+static bool i2c_read_reg(const tracked_i2c *I2C, uint8_t addr, uint8_t reg, uint8_t *value) {
   bool ret = false;
 
   // Setup transfer and send START + addr
   for (uint32_t i = 0U; i < I2C_RETRY_COUNT; i++) {
-    register_clear_bits(&I2C->CR2, I2C_CR2_ADD10);
-    I2C->CR2 = ((uint32_t)addr << 1U) & I2C_CR2_SADD_Msk;
-    register_clear_bits(&I2C->CR2, I2C_CR2_RD_WRN);
-    register_clear_bits(&I2C->CR2, I2C_CR2_AUTOEND);
-    I2C->CR2 |= 1UL << I2C_CR2_NBYTES_Pos;
-
-    I2C->CR2 |= I2C_CR2_START;
-    if(!i2c_status_wait(&I2C->CR2, I2C_CR2_START, 0U)) {
+    i2c_start(I2C, (((uint32_t)addr << 1U) & I2C_CR2_SADD_Msk) | (1UL << I2C_CR2_NBYTES_Pos));
+    if(!i2c_status_wait(&I2C->hardware->CR2, I2C_CR2_START, 0U)) {
       continue;
     }
 
     // check if we lost arbitration
-    if ((I2C->ISR & I2C_ISR_ARLO) != 0U) {
-      register_set_bits(&I2C->ICR, I2C_ICR_ARLOCF);
+    if ((I2C->hardware->ISR & I2C_ISR_ARLO) != 0U) {
+      I2C->hardware->ICR = I2C_ICR_ARLOCF;
     } else {
       ret = true;
       break;
@@ -95,35 +91,35 @@ static bool i2c_read_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t *v
   }
 
   // Send data
-  ret = i2c_status_wait(&I2C->ISR, I2C_ISR_TXIS, I2C_ISR_TXIS);
+  ret = i2c_status_wait(&I2C->hardware->ISR, I2C_ISR_TXIS, I2C_ISR_TXIS);
   if(!ret) {
     goto end;
   }
-  I2C->TXDR = reg;
+  I2C->hardware->TXDR = reg;
 
   // Restart
-  I2C->CR2 = (((addr << 1) | 0x1U) & I2C_CR2_SADD_Msk) | (1UL << I2C_CR2_NBYTES_Pos) | I2C_CR2_RD_WRN | I2C_CR2_START;
-  ret = i2c_status_wait(&I2C->CR2, I2C_CR2_START, 0U);
+  i2c_start(I2C, (((addr << 1) | 0x1U) & I2C_CR2_SADD_Msk) | (1UL << I2C_CR2_NBYTES_Pos) | I2C_CR2_RD_WRN);
+  ret = i2c_status_wait(&I2C->hardware->CR2, I2C_CR2_START, 0U);
   if(!ret) {
     goto end;
   }
 
   // check if we lost arbitration
-  if ((I2C->ISR & I2C_ISR_ARLO) != 0U) {
-    register_set_bits(&I2C->ICR, I2C_ICR_ARLOCF);
+  if ((I2C->hardware->ISR & I2C_ISR_ARLO) != 0U) {
+    I2C->hardware->ICR = I2C_ICR_ARLOCF;
     ret = false;
     goto end;
   }
 
   // Read data
-  ret = i2c_status_wait(&I2C->ISR, I2C_ISR_RXNE, I2C_ISR_RXNE);
+  ret = i2c_status_wait(&I2C->hardware->ISR, I2C_ISR_RXNE, I2C_ISR_RXNE);
   if(!ret) {
     goto end;
   }
-  *value = I2C->RXDR;
+  *value = I2C->hardware->RXDR;
 
   // Stop
-  I2C->CR2 |= I2C_CR2_STOP;
+  I2C->hardware->CR2 |= I2C_CR2_STOP;
 
 end:
 
@@ -134,7 +130,7 @@ end:
   return ret;
 }
 
-bool i2c_set_reg_bits(I2C_TypeDef *I2C, uint8_t address, uint8_t regis, uint8_t bits) {
+bool i2c_set_reg_bits(const tracked_i2c *I2C, uint8_t address, uint8_t regis, uint8_t bits) {
   uint8_t value;
   bool ret = i2c_read_reg(I2C, address, regis, &value);
   if(ret) {
@@ -143,7 +139,7 @@ bool i2c_set_reg_bits(I2C_TypeDef *I2C, uint8_t address, uint8_t regis, uint8_t 
   return ret;
 }
 
-bool i2c_clear_reg_bits(I2C_TypeDef *I2C, uint8_t address, uint8_t regis, uint8_t bits) {
+bool i2c_clear_reg_bits(const tracked_i2c *I2C, uint8_t address, uint8_t regis, uint8_t bits) {
   uint8_t value;
   bool ret = i2c_read_reg(I2C, address, regis, &value);
   if (ret) {
@@ -152,7 +148,7 @@ bool i2c_clear_reg_bits(I2C_TypeDef *I2C, uint8_t address, uint8_t regis, uint8_
   return ret;
 }
 
-bool i2c_set_reg_mask(I2C_TypeDef *I2C, uint8_t address, uint8_t regis, uint8_t value, uint8_t mask) {
+bool i2c_set_reg_mask(const tracked_i2c *I2C, uint8_t address, uint8_t regis, uint8_t value, uint8_t mask) {
   uint8_t old_value;
   bool ret = i2c_read_reg(I2C, address, regis, &old_value);
   if(ret) {
@@ -161,9 +157,9 @@ bool i2c_set_reg_mask(I2C_TypeDef *I2C, uint8_t address, uint8_t regis, uint8_t 
   return ret;
 }
 
-void i2c_init(I2C_TypeDef *I2C) {
+void i2c_init(const tracked_i2c *I2C) {
   // 100kHz clock speed
-  I2C->TIMINGR = 0x107075B0;
+  I2C->hardware->TIMINGR = 0x107075B0;
 
   i2c_reset(I2C);
 }

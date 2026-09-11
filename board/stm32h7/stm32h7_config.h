@@ -33,17 +33,21 @@ separate IRQs for RX and TX.
 #define NUM_INTERRUPTS 163U
 
 #define TICK_TIMER_IRQ TIM8_BRK_TIM12_IRQn
-#define TICK_TIMER TIM12
+#define TRACKED_TICK_TIMER tracked_TIM12
+#define TICK_TIMER (TRACKED_TICK_TIMER.hardware)
 
 #define MICROSECOND_TIMER TIM2
 
 #define INTERRUPT_TIMER_IRQ TIM6_DAC_IRQn
-#define INTERRUPT_TIMER TIM6
+#define TRACKED_INTERRUPT_TIMER tracked_TIM6
+#define INTERRUPT_TIMER (TRACKED_INTERRUPT_TIMER.hardware)
 
 #define IND_WDG IWDG1
 
 #define PROVISION_CHUNK_ADDRESS 0x080FFFE0U
 #define DEVICE_SERIAL_NUMBER_ADDRESS 0x080FFFC0U
+
+#include "board/stm32h7/registers.h"
 
 #include "board/can.h"
 #include "board/comms_definitions.h"

@@ -13,19 +13,16 @@
 #define OUTPUT_TYPE_OPEN_DRAIN 1U
 #define GPIO_PIN_COUNT 16U
 
-void set_gpio_mode(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
+void set_gpio_mode(const tracked_gpio *GPIO, unsigned int pin, unsigned int mode) {
   if (pin < GPIO_PIN_COUNT) {
     ENTER_CRITICAL();
     uint32_t shift = pin * 2U;
-    uint32_t tmp = GPIO->MODER;
-    tmp &= ~(3UL << shift);
-    tmp |= (mode << shift);
-    register_set(&(GPIO->MODER), tmp, 0xFFFFFFFFU);
+    register_set(&(GPIO->MODER), mode << shift, 3UL << shift);
     EXIT_CRITICAL();
   }
 }
 
-void set_gpio_output(GPIO_TypeDef *GPIO, unsigned int pin, bool enabled) {
+void set_gpio_output(const tracked_gpio *GPIO, unsigned int pin, bool enabled) {
   ENTER_CRITICAL();
   if (enabled) {
     register_set_bits(&(GPIO->ODR), (1UL << pin));
@@ -36,7 +33,7 @@ void set_gpio_output(GPIO_TypeDef *GPIO, unsigned int pin, bool enabled) {
   EXIT_CRITICAL();
 }
 
-void set_gpio_output_type(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int output_type){
+void set_gpio_output_type(const tracked_gpio *GPIO, unsigned int pin, unsigned int output_type){
   ENTER_CRITICAL();
   if(output_type == OUTPUT_TYPE_OPEN_DRAIN) {
     register_set_bits(&(GPIO->OTYPER), (1UL << pin));
@@ -46,35 +43,31 @@ void set_gpio_output_type(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int out
   EXIT_CRITICAL();
 }
 
-void set_gpio_alternate(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
+void set_gpio_alternate(const tracked_gpio *GPIO, unsigned int pin, unsigned int mode) {
   ENTER_CRITICAL();
-  uint32_t tmp = GPIO->AFR[pin >> 3U];
-  tmp &= ~(0xFU << ((pin & 7U) * 4U));
-  tmp |= mode << ((pin & 7U) * 4U);
-  register_set(&(GPIO->AFR[pin >> 3]), tmp, 0xFFFFFFFFU);
+  uint32_t shift = (pin & 7U) * 4U;
+  const tracked_register *reg = (pin < 8U) ? &GPIO->AFR0 : &GPIO->AFR1;
+  register_set(reg, mode << shift, 0xFUL << shift);
   set_gpio_mode(GPIO, pin, MODE_ALTERNATE);
   EXIT_CRITICAL();
 }
 
-void set_gpio_pullup(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
+void set_gpio_pullup(const tracked_gpio *GPIO, unsigned int pin, unsigned int mode) {
   if (pin < GPIO_PIN_COUNT) {
     ENTER_CRITICAL();
     uint32_t shift = pin * 2U;
-    uint32_t tmp = GPIO->PUPDR;
-    tmp &= ~(3UL << shift);
-    tmp |= (mode << shift);
-    register_set(&(GPIO->PUPDR), tmp, 0xFFFFFFFFU);
+    register_set(&(GPIO->PUPDR), mode << shift, 3UL << shift);
     EXIT_CRITICAL();
   }
 }
 
-int get_gpio_input(const GPIO_TypeDef *GPIO, unsigned int pin) {
-  return (GPIO->IDR & (1UL << pin)) == (1UL << pin);
+int get_gpio_input(const tracked_gpio *GPIO, unsigned int pin) {
+  return (GPIO->hardware->IDR & (1UL << pin)) == (1UL << pin);
 }
 
 #ifdef PANDA_JUNGLE
 typedef struct {
-  GPIO_TypeDef * const bank;
+  const tracked_gpio * const bank;
   uint8_t pin;
 } gpio_t;
 
@@ -93,7 +86,7 @@ void gpio_set_bitmask(gpio_t *pins, uint8_t num_pins, uint32_t bitmask) {
 
 // Detection with internal pullup
 #define PULL_EFFECTIVE_DELAY 4096
-bool detect_with_pull(GPIO_TypeDef *GPIO, int pin, int mode) {
+bool detect_with_pull(const tracked_gpio *GPIO, int pin, int mode) {
   set_gpio_mode(GPIO, pin, MODE_INPUT);
   set_gpio_pullup(GPIO, pin, mode);
   for (volatile int i=0; i<PULL_EFFECTIVE_DELAY; i++);

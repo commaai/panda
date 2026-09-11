@@ -6,64 +6,64 @@ void gpio_usb_init(void) {
 static void gpio_usb_init(void) {
 #endif
   // A11,A12: USB
-  set_gpio_alternate(GPIOA, 11, GPIO_AF10_OTG1_FS);
-  set_gpio_alternate(GPIOA, 12, GPIO_AF10_OTG1_FS);
+  set_gpio_alternate(&tracked_GPIOA, 11, GPIO_AF10_OTG1_FS);
+  set_gpio_alternate(&tracked_GPIOA, 12, GPIO_AF10_OTG1_FS);
   GPIOA->OSPEEDR = GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12;
 }
 
 void gpio_spi_init(void) {
-  set_gpio_alternate(GPIOE, 11, GPIO_AF5_SPI4);
-  set_gpio_alternate(GPIOE, 12, GPIO_AF5_SPI4);
-  set_gpio_alternate(GPIOE, 13, GPIO_AF5_SPI4);
-  set_gpio_alternate(GPIOE, 14, GPIO_AF5_SPI4);
-  register_set_bits(&(GPIOE->OSPEEDR), GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12 | GPIO_OSPEEDR_OSPEED13 | GPIO_OSPEEDR_OSPEED14);
+  set_gpio_alternate(&tracked_GPIOE, 11, GPIO_AF5_SPI4);
+  set_gpio_alternate(&tracked_GPIOE, 12, GPIO_AF5_SPI4);
+  set_gpio_alternate(&tracked_GPIOE, 13, GPIO_AF5_SPI4);
+  set_gpio_alternate(&tracked_GPIOE, 14, GPIO_AF5_SPI4);
+  register_set_bits(&tracked_GPIOE.OSPEEDR, GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12 | GPIO_OSPEEDR_OSPEED13 | GPIO_OSPEEDR_OSPEED14);
 }
 
 #ifdef BOOTSTUB
 void gpio_usart2_init(void) {
   // A2,A3: USART 2 for debugging
-  set_gpio_alternate(GPIOA, 2, GPIO_AF7_USART2);
-  set_gpio_alternate(GPIOA, 3, GPIO_AF7_USART2);
+  set_gpio_alternate(&tracked_GPIOA, 2, GPIO_AF7_USART2);
+  set_gpio_alternate(&tracked_GPIOA, 3, GPIO_AF7_USART2);
 }
 #endif
 
 void gpio_uart7_init(void) {
   // E7,E8: UART 7 for debugging
-  set_gpio_alternate(GPIOE, 7, GPIO_AF7_UART7);
-  set_gpio_alternate(GPIOE, 8, GPIO_AF7_UART7);
+  set_gpio_alternate(&tracked_GPIOE, 7, GPIO_AF7_UART7);
+  set_gpio_alternate(&tracked_GPIOE, 8, GPIO_AF7_UART7);
 }
 
 // Common GPIO initialization
 void common_init_gpio(void) {
   //F11: VOLT_S
-  set_gpio_pullup(GPIOF, 11, PULL_NONE);
-  set_gpio_mode(GPIOF, 11, MODE_ANALOG);
+  set_gpio_pullup(&tracked_GPIOF, 11, PULL_NONE);
+  set_gpio_mode(&tracked_GPIOF, 11, MODE_ANALOG);
 
   gpio_usb_init();
 
   // B8,B9: FDCAN1
-  set_gpio_pullup(GPIOB, 8, PULL_NONE);
-  set_gpio_alternate(GPIOB, 8, GPIO_AF9_FDCAN1);
+  set_gpio_pullup(&tracked_GPIOB, 8, PULL_NONE);
+  set_gpio_alternate(&tracked_GPIOB, 8, GPIO_AF9_FDCAN1);
 
-  set_gpio_pullup(GPIOB, 9, PULL_NONE);
-  set_gpio_alternate(GPIOB, 9, GPIO_AF9_FDCAN1);
+  set_gpio_pullup(&tracked_GPIOB, 9, PULL_NONE);
+  set_gpio_alternate(&tracked_GPIOB, 9, GPIO_AF9_FDCAN1);
 
   // B5,B6 (mplex to B12,B13): FDCAN2
-  set_gpio_pullup(GPIOB, 12, PULL_NONE);
-  set_gpio_pullup(GPIOB, 13, PULL_NONE);
+  set_gpio_pullup(&tracked_GPIOB, 12, PULL_NONE);
+  set_gpio_pullup(&tracked_GPIOB, 13, PULL_NONE);
 
-  set_gpio_pullup(GPIOB, 5, PULL_NONE);
-  set_gpio_alternate(GPIOB, 5, GPIO_AF9_FDCAN2);
+  set_gpio_pullup(&tracked_GPIOB, 5, PULL_NONE);
+  set_gpio_alternate(&tracked_GPIOB, 5, GPIO_AF9_FDCAN2);
 
-  set_gpio_pullup(GPIOB, 6, PULL_NONE);
-  set_gpio_alternate(GPIOB, 6, GPIO_AF9_FDCAN2);
+  set_gpio_pullup(&tracked_GPIOB, 6, PULL_NONE);
+  set_gpio_alternate(&tracked_GPIOB, 6, GPIO_AF9_FDCAN2);
 
   // G9,G10: FDCAN3
-  set_gpio_pullup(GPIOG, 9, PULL_NONE);
-  set_gpio_alternate(GPIOG, 9, GPIO_AF2_FDCAN3);
+  set_gpio_pullup(&tracked_GPIOG, 9, PULL_NONE);
+  set_gpio_alternate(&tracked_GPIOG, 9, GPIO_AF2_FDCAN3);
 
-  set_gpio_pullup(GPIOG, 10, PULL_NONE);
-  set_gpio_alternate(GPIOG, 10, GPIO_AF2_FDCAN3);
+  set_gpio_pullup(&tracked_GPIOG, 10, PULL_NONE);
+  set_gpio_alternate(&tracked_GPIOG, 10, GPIO_AF2_FDCAN3);
 }
 
 #ifdef BOOTSTUB
@@ -134,5 +134,5 @@ void peripherals_init(void) {
 }
 
 void enable_interrupt_timer(void) {
-  register_set_bits(&(RCC->APB1LENR), RCC_APB1LENR_TIM6EN); // Enable interrupt timer peripheral
+  register_set_bits(&tracked_RCC_APB1LENR, RCC_APB1LENR_TIM6EN); // Enable interrupt timer peripheral
 }

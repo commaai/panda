@@ -95,14 +95,14 @@ void bldc_init(void) {
   adc_init(ADC2);
 
   // Initialize Hall Sensors for Left Motor (PB6, PB7, PB8)
-  set_gpio_mode(GPIOB, 6, MODE_INPUT); set_gpio_pullup(GPIOB, 6, PULL_UP);
-  set_gpio_mode(GPIOB, 7, MODE_INPUT); set_gpio_pullup(GPIOB, 7, PULL_UP);
-  set_gpio_mode(GPIOB, 8, MODE_INPUT); set_gpio_pullup(GPIOB, 8, PULL_UP);
+  set_gpio_mode(&tracked_GPIOB, 6, MODE_INPUT); set_gpio_pullup(&tracked_GPIOB, 6, PULL_UP);
+  set_gpio_mode(&tracked_GPIOB, 7, MODE_INPUT); set_gpio_pullup(&tracked_GPIOB, 7, PULL_UP);
+  set_gpio_mode(&tracked_GPIOB, 8, MODE_INPUT); set_gpio_pullup(&tracked_GPIOB, 8, PULL_UP);
 
   // Initialize Hall Sensors for Right Motor (PA0, PA1, PA2)
-  set_gpio_mode(GPIOA, 0, MODE_INPUT); set_gpio_pullup(GPIOA, 0, PULL_UP);
-  set_gpio_mode(GPIOA, 1, MODE_INPUT); set_gpio_pullup(GPIOA, 1, PULL_UP);
-  set_gpio_mode(GPIOA, 2, MODE_INPUT); set_gpio_pullup(GPIOA, 2, PULL_UP);
+  set_gpio_mode(&tracked_GPIOA, 0, MODE_INPUT); set_gpio_pullup(&tracked_GPIOA, 0, PULL_UP);
+  set_gpio_mode(&tracked_GPIOA, 1, MODE_INPUT); set_gpio_pullup(&tracked_GPIOA, 1, PULL_UP);
+  set_gpio_mode(&tracked_GPIOA, 2, MODE_INPUT); set_gpio_pullup(&tracked_GPIOA, 2, PULL_UP);
 
   // Setup the model pointers for Left motor
   rtM_Left->defaultParam = &rtP_Left;
@@ -140,20 +140,20 @@ void bldc_init(void) {
 
   // Initialize GPIOs for Motor Control
   // Left Motor (TIM1): PE8(CH1N), PE9(CH1), PE10(CH2N), PE11(CH2), PE12(CH3N), PE13(CH3)
-  set_gpio_alternate(GPIOE, 8, GPIO_AF1_TIM1);
-  set_gpio_alternate(GPIOE, 9, GPIO_AF1_TIM1);
-  set_gpio_alternate(GPIOE, 10, GPIO_AF1_TIM1);
-  set_gpio_alternate(GPIOE, 11, GPIO_AF1_TIM1);
-  set_gpio_alternate(GPIOE, 12, GPIO_AF1_TIM1);
-  set_gpio_alternate(GPIOE, 13, GPIO_AF1_TIM1);
+  set_gpio_alternate(&tracked_GPIOE, 8, GPIO_AF1_TIM1);
+  set_gpio_alternate(&tracked_GPIOE, 9, GPIO_AF1_TIM1);
+  set_gpio_alternate(&tracked_GPIOE, 10, GPIO_AF1_TIM1);
+  set_gpio_alternate(&tracked_GPIOE, 11, GPIO_AF1_TIM1);
+  set_gpio_alternate(&tracked_GPIOE, 12, GPIO_AF1_TIM1);
+  set_gpio_alternate(&tracked_GPIOE, 13, GPIO_AF1_TIM1);
 
   // Right Motor (TIM8): PC6(CH1), PC7(CH2), PC8(CH3), PA5(CH1N), PB14(CH2N), PB15(CH3N)
-  set_gpio_alternate(GPIOC, 6, GPIO_AF3_TIM8);
-  set_gpio_alternate(GPIOC, 7, GPIO_AF3_TIM8);
-  set_gpio_alternate(GPIOC, 8, GPIO_AF3_TIM8);
-  set_gpio_alternate(GPIOA, 5, GPIO_AF3_TIM8);
-  set_gpio_alternate(GPIOB, 14, GPIO_AF3_TIM8);
-  set_gpio_alternate(GPIOB, 15, GPIO_AF3_TIM8);
+  set_gpio_alternate(&tracked_GPIOC, 6, GPIO_AF3_TIM8);
+  set_gpio_alternate(&tracked_GPIOC, 7, GPIO_AF3_TIM8);
+  set_gpio_alternate(&tracked_GPIOC, 8, GPIO_AF3_TIM8);
+  set_gpio_alternate(&tracked_GPIOA, 5, GPIO_AF3_TIM8);
+  set_gpio_alternate(&tracked_GPIOB, 14, GPIO_AF3_TIM8);
+  set_gpio_alternate(&tracked_GPIOB, 15, GPIO_AF3_TIM8);
 
   // --- LEFT MOTOR (TIM1) ---
   // TIM8 is an advanced control timer. We configure it for 3-phase center-aligned PWM.

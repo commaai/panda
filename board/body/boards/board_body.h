@@ -44,7 +44,7 @@ void board_body_init(void) {
 }
 
 board board_body = {
-  .led_GPIO = {GPIOA, GPIOA, GPIOA},
+  .led_GPIO = {&tracked_GPIOA, &tracked_GPIOA, &tracked_GPIOA},
   .led_pin = {10, 10, 10},
   .init = board_body_init,
 };

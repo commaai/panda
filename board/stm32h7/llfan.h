@@ -14,12 +14,12 @@ void llfan_init(void) {
   REGISTER_INTERRUPT(EXTI2_IRQn, EXTI2_IRQ_Handler, 1000U, FAULT_INTERRUPT_RATE_TACH)
 
   // Init PWM speed control
-  pwm_init(TIM3, 3);
+  pwm_init(&tracked_TIM3, 3);
 
   // Init TACH interrupt
-  register_set(&(SYSCFG->EXTICR[0]), SYSCFG_EXTICR1_EXTI2_PD, 0xF00U);
-  register_set_bits(&(EXTI->IMR1), (1U << 2));
-  register_set_bits(&(EXTI->RTSR1), (1U << 2));
-  register_set_bits(&(EXTI->FTSR1), (1U << 2));
+  register_set(&tracked_SYSCFG_EXTICR_0, SYSCFG_EXTICR1_EXTI2_PD, 0xF00U);
+  register_set_bits(&tracked_EXTI_IMR1, (1U << 2));
+  register_set_bits(&tracked_EXTI_RTSR1, (1U << 2));
+  register_set_bits(&tracked_EXTI_FTSR1, (1U << 2));
   NVIC_EnableIRQ(EXTI2_IRQn);
 }
