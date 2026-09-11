@@ -1,13 +1,11 @@
-def docker_run(String step_label, int timeout_mins, String cmd) {
+def venv_run(String step_label, int timeout_mins, String cmd) {
   timeout(time: timeout_mins, unit: 'MINUTES') {
-    sh script: "docker run --rm --privileged \
-          --env PYTHONWARNINGS=error \
-          --volume /dev/bus/usb:/dev/bus/usb \
-          --volume /var/run/dbus:/var/run/dbus \
-          --net host \
-          ${env.DOCKER_IMAGE_TAG} \
-          bash -c 'scons && ${cmd}'", \
-        label: step_label
+    sh script: """#!/usr/bin/env bash
+set -e
+source .venv/bin/activate
+scons
+${cmd}
+""", label: step_label
   }
 }
 
@@ -73,12 +71,12 @@ pipeline {
   environment {
     CI = "1"
     PYTHONWARNINGS= "error"
-    DOCKER_IMAGE_TAG = "panda:build-${env.GIT_COMMIT}"
 
     TEST_DIR = "/data/panda"
     SOURCE_DIR = "/data/panda_source/"
   }
   options {
+    skipDefaultCheckout()
     timeout(time: 3, unit: 'HOURS')
     disableConcurrentBuilds(abortPrevious: env.BRANCH_NAME != 'master')
   }
@@ -89,12 +87,14 @@ pipeline {
         lock(resource: "pandas")
       }
       stages {
-        stage('Build Docker Image') {
+        stage('Setup') {
           steps {
             timeout(time: 20, unit: 'MINUTES') {
-              script {
-                dockerImage = docker.build("${env.DOCKER_IMAGE_TAG}", "--build-arg CACHEBUST=${env.GIT_COMMIT} .")
-              }
+              // Older builds may have left root-owned files in the workspace.
+              sh 'find . -user root -exec sudo -n chown -h "$(id -u):$(id -g)" {} +'
+              deleteDir()
+              checkout scm
+              sh './setup.sh'
             }
           }
         }
@@ -102,7 +102,7 @@ pipeline {
           steps {
             script {
               retry (3) {
-                docker_run("reset hardware", 3, "python3 ./tests/hitl/reset_jungles.py")
+                venv_run("reset hardware", 3, "python3 ./tests/hitl/reset_jungles.py")
               }
             }
           }
@@ -111,7 +111,6 @@ pipeline {
         stage('parallel tests') {
           parallel {
             stage('test cuatro') {
-              agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
                 phone_steps("panda-cuatro", [
                   ["build", "scons"],
@@ -123,7 +122,6 @@ pipeline {
             }
 
             stage('test tres') {
-              agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
                 phone_steps("panda-tres", [
                   ["build", "scons"],
@@ -137,6 +135,11 @@ pipeline {
           }
         }
       }
+    }
+  }
+  post {
+    always {
+      deleteDir()
     }
   }
 }
