@@ -1,4 +1,5 @@
 import binascii
+import ctypes
 import os
 import math
 import time
@@ -17,11 +18,77 @@ try:
 except ImportError:
   fcntl = None # type: ignore
 
-# No spidev on MacOS/Windows
-try:
-  import spidev
-except ImportError:
-  spidev = None
+# Linux asm-generic ioctl ABI (including aarch64 and x86_64), linux/spi/spidev.h.
+SPI_IOC_RD_BITS_PER_WORD = 0x80016B03
+SPI_IOC_WR_MAX_SPEED_HZ = 0x40046B04
+SPI_IOC_MESSAGE_1 = 0x40206B00
+SPI_IOC_TRANSFER = struct.Struct('=QQIIHBBBBBB')
+MAX_TRANSFER_SIZE = 4096
+
+
+class SpiDev:
+  """One SPI device. Callers must serialize access, including across processes.
+
+  xfer2 returns a view valid until the next transfer; xfer returns an owned copy.
+  """
+
+  def __init__(self, path: str, speed: int):
+    if fcntl is None:
+      raise OSError("SPI requires Linux")
+    self._file = open(path, 'r+b', buffering=0)
+    self._fd = self._file.fileno()
+    try:
+      fcntl.ioctl(self.fileno(), SPI_IOC_WR_MAX_SPEED_HZ, struct.pack('=I', speed))
+      bits = fcntl.ioctl(self.fileno(), SPI_IOC_RD_BITS_PER_WORD, b'\x00')[0]
+      self._buffer = bytearray(MAX_TRANSFER_SIZE)
+      self._view = memoryview(self._buffer)
+      address = ctypes.addressof(ctypes.c_char.from_buffer(self._buffer))
+      # The kernel supports using the same buffer for transmit and receive.
+      self._transfer = bytearray(SPI_IOC_TRANSFER.pack(address, address, 0, speed, 0, bits, 0, 0, 0, 0, 0))
+      self._transfer_words = memoryview(self._transfer).cast('I')
+    except BaseException:
+      self._file.close()
+      raise
+
+  def fileno(self) -> int:
+    return self._file.fileno()
+
+  def close(self):
+    self._file.close()
+    self._fd = -1
+
+  @staticmethod
+  def _check_length(length: int):
+    if not 0 < length <= MAX_TRANSFER_SIZE:
+      raise ValueError(f"SPI transfer length must be between 1 and {MAX_TRANSFER_SIZE}")
+
+  def xfer2(self, data) -> memoryview:
+    length = len(data)
+    if not 0 < length <= MAX_TRANSFER_SIZE:
+      raise ValueError(f"SPI transfer length must be between 1 and {MAX_TRANSFER_SIZE}")
+    self._view[:length] = bytes(data)
+    self._transfer_words[4] = length  # len field at byte offset 16
+    if fcntl.ioctl(self._fd, SPI_IOC_MESSAGE_1, self._transfer) != length:
+      raise OSError("Short SPI transfer")
+    return self._view[:length]
+
+  # Both operations use one SPI_IOC_MESSAGE(1) for the single-block calls in panda.
+  def xfer(self, data) -> bytes:
+    return bytes(self.xfer2(data))
+
+  def readbytes(self, length: int) -> bytes:
+    self._check_length(length)
+    data = os.read(self.fileno(), length)
+    if len(data) != length:
+      raise OSError("Short SPI read")
+    return data
+
+  def writebytes(self, data):
+    data = bytes(data)
+    self._check_length(len(data))
+    if os.write(self.fileno(), data) != len(data):
+      raise OSError("Short SPI write")
+
 
 # Constants
 SYNC = 0x5A
@@ -89,14 +156,10 @@ class SpiDevice:
 
     if not os.path.exists(DEV_PATH):
       raise PandaSpiUnavailable(f"SPI device not found: {DEV_PATH}")
-    if spidev is None:
-      raise PandaSpiUnavailable("spidev is not installed")
 
     with SPI_LOCK:
       if speed not in SPI_DEVICES:
-        SPI_DEVICES[speed] = spidev.SpiDev()
-        SPI_DEVICES[speed].open(0, 0)
-        SPI_DEVICES[speed].max_speed_hz = speed
+        SPI_DEVICES[speed] = SpiDev(DEV_PATH, speed)
       self._spidev = SPI_DEVICES[speed]
 
   @contextmanager
