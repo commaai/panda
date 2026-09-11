@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import tempfile
 import random
+from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT = os.path.join(HERE, "../../")
@@ -65,27 +66,43 @@ for p in patterns:
 # sample to keep CI fast, but always include the no-mutation case
 mutations = [mutations[0]] + rng.sample(mutations[1:], min(2, len(mutations) - 1))
 
+def run_mutation(fn, patch, should_fail):
+  with tempfile.TemporaryDirectory() as tmp:
+    shutil.copytree(ROOT, tmp + "/panda", dirs_exist_ok=True)
+
+    # apply patch
+    if fn is not None:
+      fpath = os.path.join(tmp, "panda", fn)
+      with open(fpath) as f:
+        content = f.read()
+      if patch.startswith("s/"):
+        old, new = patch[2:].rsplit("/g", 1)[0].split("/", 1)
+        content = content.replace(old, new)
+      elif patch.startswith("$a "):
+        content += patch[3:].replace(r"\n", "\n")
+      with open(fpath, "w") as f:
+        f.write(content)
+
+    return subprocess.run("SKIP_TABLES_DIFF=1 panda/tests/misra/test_misra.sh", cwd=tmp, shell=True,
+                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+
+
 class TestMisraMutation(unittest.TestCase):
-  def test_misra_mutation(self):
-    for fn, patch, should_fail in mutations:
-      with self.subTest(fn=fn, patch=patch, should_fail=should_fail):
-        with tempfile.TemporaryDirectory() as tmp:
-          shutil.copytree(ROOT, tmp + "/panda", dirs_exist_ok=True)
+  @classmethod
+  def setUpClass(cls):
+    # Each mutation has its own checkout and subprocess; keep the expensive checks parallel.
+    executor = ThreadPoolExecutor(max_workers=len(mutations))
+    cls.addClassCleanup(executor.shutdown)
+    cls.results = [executor.submit(run_mutation, *mutation) for mutation in mutations]
 
-          # apply patch
-          if fn is not None:
-            fpath = os.path.join(tmp, "panda", fn)
-            with open(fpath) as f:
-              content = f.read()
-            if patch.startswith("s/"):
-              old, new = patch[2:].rsplit("/g", 1)[0].split("/", 1)
-              content = content.replace(old, new)
-            elif patch.startswith("$a "):
-              content += patch[3:].replace(r"\n", "\n")
-            with open(fpath, "w") as f:
-              f.write(content)
 
-          # run test
-          r = subprocess.run("SKIP_TABLES_DIFF=1 panda/tests/misra/test_misra.sh", cwd=tmp, shell=True)
-          failed = r.returncode != 0
-          self.assertEqual(failed, should_fail)
+def mutation_test(index):
+  def test(self):
+    result = self.results[index].result()
+    self.assertEqual(result.returncode != 0, mutations[index][2], result.stdout)
+  test.__doc__ = f"MISRA mutation: {mutations[index]}"
+  return test
+
+
+for index in range(len(mutations)):
+  setattr(TestMisraMutation, f"test_misra_mutation_{index}", mutation_test(index))
