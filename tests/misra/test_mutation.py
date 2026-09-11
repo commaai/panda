@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 import glob
-import pytest
+import unittest
 import shutil
 import subprocess
 import tempfile
@@ -57,7 +57,7 @@ all_files = glob.glob('board/**', root_dir=ROOT, recursive=True)
 files = sorted(f for f in all_files if f.endswith(('.c', '.h')) and not f.startswith(IGNORED_PATHS))
 assert len(files) > 50, all(d in files for d in ('board/main.c', 'board/stm32h7/llfdcan.h'))
 
-# fixed seed so every xdist worker collects the same test params
+# fixed seed for reproducible mutation selection
 rng = random.Random(len(files))
 for p in patterns:
   mutations.append((rng.choice(files), p, True))
@@ -65,25 +65,27 @@ for p in patterns:
 # sample to keep CI fast, but always include the no-mutation case
 mutations = [mutations[0]] + rng.sample(mutations[1:], min(2, len(mutations) - 1))
 
-@pytest.mark.parametrize("fn, patch, should_fail", mutations)
-def test_misra_mutation(fn, patch, should_fail):
-  with tempfile.TemporaryDirectory() as tmp:
-    shutil.copytree(ROOT, tmp + "/panda", dirs_exist_ok=True)
+class TestMisraMutation(unittest.TestCase):
+  def test_misra_mutation(self):
+    for fn, patch, should_fail in mutations:
+      with self.subTest(fn=fn, patch=patch, should_fail=should_fail):
+        with tempfile.TemporaryDirectory() as tmp:
+          shutil.copytree(ROOT, tmp + "/panda", dirs_exist_ok=True)
 
-    # apply patch
-    if fn is not None:
-      fpath = os.path.join(tmp, "panda", fn)
-      with open(fpath) as f:
-        content = f.read()
-      if patch.startswith("s/"):
-        old, new = patch[2:].rsplit("/g", 1)[0].split("/", 1)
-        content = content.replace(old, new)
-      elif patch.startswith("$a "):
-        content += patch[3:].replace(r"\n", "\n")
-      with open(fpath, "w") as f:
-        f.write(content)
+          # apply patch
+          if fn is not None:
+            fpath = os.path.join(tmp, "panda", fn)
+            with open(fpath) as f:
+              content = f.read()
+            if patch.startswith("s/"):
+              old, new = patch[2:].rsplit("/g", 1)[0].split("/", 1)
+              content = content.replace(old, new)
+            elif patch.startswith("$a "):
+              content += patch[3:].replace(r"\n", "\n")
+            with open(fpath, "w") as f:
+              f.write(content)
 
-    # run test
-    r = subprocess.run("SKIP_TABLES_DIFF=1 panda/tests/misra/test_misra.sh", cwd=tmp, shell=True)
-    failed = r.returncode != 0
-    assert failed == should_fail
+          # run test
+          r = subprocess.run("SKIP_TABLES_DIFF=1 panda/tests/misra/test_misra.sh", cwd=tmp, shell=True)
+          failed = r.returncode != 0
+          self.assertEqual(failed, should_fail)
