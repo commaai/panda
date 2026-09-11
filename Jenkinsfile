@@ -102,7 +102,7 @@ pipeline {
           steps {
             script {
               retry (3) {
-                venv_run("reset hardware", 3, "python3 ./tests/hitl/reset_jungles.py")
+                venv_run("reset hardware", 3, "sudo -n env PYTHONWARNINGS=error PYTHONDONTWRITEBYTECODE=1 .venv/bin/python3 ./tests/hitl/reset_jungles.py")
               }
             }
           }
