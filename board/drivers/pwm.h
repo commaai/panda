@@ -1,3 +1,5 @@
+#pragma once
+
 #define PWM_COUNTER_OVERFLOW 4800U // To get ~25kHz
 
 // TODO: Implement for 32-bit timers

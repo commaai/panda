@@ -1,3 +1,5 @@
+#pragma once
+
 #include "board/drivers/drivers.h"
 #include "opendbc/safety/ignition.h"
 

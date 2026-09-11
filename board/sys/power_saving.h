@@ -1,3 +1,5 @@
+#pragma once
+
 #include "board/sys/sys.h"
 
 // WARNING: To stay in compliance with the SIL2 rules laid out in STM UM2331, we should never use any of the available hardware low power modes during safety function execution.

@@ -1,3 +1,5 @@
+#pragma once
+
 #ifdef BOOTSTUB
 void gpio_usb_init(void) {
 #else

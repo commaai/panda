@@ -1,3 +1,5 @@
+#pragma once
+
 #define MODE_INPUT 0
 #define MODE_OUTPUT 1
 #define MODE_ALTERNATE 2

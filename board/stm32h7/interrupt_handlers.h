@@ -1,3 +1,5 @@
+#pragma once
+
 // ********************* Bare interrupt handlers *********************
 // Interrupts for STM32H7x5
 

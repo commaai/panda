@@ -1,3 +1,5 @@
+#pragma once
+
 #include "board/drivers/drivers.h"
 
 struct harness_t harness;

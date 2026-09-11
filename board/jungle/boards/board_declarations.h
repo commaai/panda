@@ -1,3 +1,5 @@
+#pragma once
+
 // ******************** Prototypes ********************
 typedef void (*board_init)(void);
 typedef bool (*board_get_button)(void);
