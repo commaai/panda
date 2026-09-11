@@ -1,6 +1,8 @@
 #pragma once
 
-#include "board/config.h"
+#ifdef STM32H7
+#include "stm32h7xx.h"
+#endif
 #include <stdbool.h>
 #include <stdint.h>
 

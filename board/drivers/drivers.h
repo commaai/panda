@@ -1,11 +1,12 @@
 #pragma once
 
-#include "board/config.h"
+#include <stdbool.h>
+#include <stdint.h>
 
 #include "board/can.h"
 #include "board/health.h"
 #ifdef STM32H7
-#include "board/stm32h7/lladc_declarations.h"
+#include "board/stm32h7/stm32h7.h"
 #endif
 
 typedef struct harness_configuration harness_configuration;
@@ -276,12 +277,8 @@ bool put_char(uart_ring *q, char elem);
 // ************************ High-level debug functions **********************
 void print(const char *a);
 void puth(unsigned int i);
-#if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
 void puth4(unsigned int i);
-#endif
-#if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG_USB) || defined(DEBUG_COMMS)
 void hexdump(const void *a, int l);
-#endif
 
 #endif // STM32H7
 

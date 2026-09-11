@@ -1,6 +1,5 @@
 #pragma once
 
-#include "board/config.h"
 #include "board/utils.h"
 #ifdef STM32H7
 #include "board/stm32h7/stm32h7.h"
@@ -26,3 +25,6 @@
 #ifndef BOOTSTUB
 #include "opendbc/safety/declarations.h"
 #endif
+
+// Config includes implementations, so load it after the shared declarations.
+#include "board/config.h"

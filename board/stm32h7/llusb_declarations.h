@@ -1,6 +1,6 @@
 #pragma once
 
-#include "board/stm32h7/stm32h7_config.h"
+#include "stm32h7xx.h"
 
 extern USB_OTG_GlobalTypeDef *USBx;
 

@@ -2,10 +2,13 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "board/stm32h7/stm32h7_config.h"
+#include "stm32h7xx.h"
 #include "board/stm32h7/lladc_declarations.h"
 #include "board/stm32h7/llfdcan_declarations.h"
 #include "board/stm32h7/llusb_declarations.h"
+
+// There are 163 external interrupt sources (see stm32f735xx.h)
+#define NUM_INTERRUPTS 163U
 
 // lladc
 void adc_init(ADC_TypeDef *adc);

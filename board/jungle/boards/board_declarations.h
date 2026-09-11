@@ -1,6 +1,6 @@
 #pragma once
 
-#include "board/config.h"
+#include "stm32h7xx.h"
 #include <stdbool.h>
 #include <stdint.h>
 

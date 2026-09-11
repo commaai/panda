@@ -1,6 +1,5 @@
 // ********************* Includes *********************
 #include "board/config.h"
-#include "board/stm32h7/implementation.h"
 
 #include "opendbc/safety/safety.h"
 
