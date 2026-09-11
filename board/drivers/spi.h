@@ -1,6 +1,9 @@
 #pragma once
 
+#include "board/declarations.h"
 #include "board/drivers/drivers.h"
+#include "board/stm32h7/stm32h7.h"
+#include "board/crc.h"
 
 // H7 DMA2 located in D2 domain, so we need to use SRAM1/SRAM2
 #ifdef STM32H7
@@ -30,11 +33,6 @@ enum {
 uint16_t spi_error_count = 0;
 
 #define SPI_HEADER_SIZE 7U
-
-// low level SPI prototypes
-void llspi_init(void);
-void llspi_mosi_dma(uint8_t *addr, int len);
-void llspi_miso_dma(const uint8_t *addr, int len);
 
 static uint8_t spi_state = SPI_STATE_HEADER;
 static uint16_t spi_data_len_mosi;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "board/declarations.h"
 #include "board/drivers/drivers.h"
 
 // IRQs: OTG_FS

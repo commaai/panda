@@ -29,9 +29,6 @@ separate IRQs for RX and TX.
 
 #define MAX_LED_FADE 10240U
 
-// There are 163 external interrupt sources (see stm32f735xx.h)
-#define NUM_INTERRUPTS 163U
-
 #define TICK_TIMER_IRQ TIM8_BRK_TIM12_IRQn
 #define TICK_TIMER TIM12
 
@@ -44,6 +41,8 @@ separate IRQs for RX and TX.
 
 #define PROVISION_CHUNK_ADDRESS 0x080FFFE0U
 #define DEVICE_SERIAL_NUMBER_ADDRESS 0x080FFFC0U
+
+#include "board/declarations.h"
 
 #include "board/can.h"
 #include "board/comms_definitions.h"
@@ -83,6 +82,9 @@ uart_ring uart_ring_som_debug;
 #include "board/stm32h7/board.h"
 #endif
 #include "board/stm32h7/clock.h"
+#if !defined(PANDA_BODY) && !defined(PANDA_JUNGLE)
+#include "board/stm32h7/lli2c.h"
+#endif
 
 #ifdef BOOTSTUB
   #include "board/stm32h7/llflash.h"

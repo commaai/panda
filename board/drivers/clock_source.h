@@ -1,5 +1,6 @@
 #pragma once
 
+#include "board/declarations.h"
 #include "board/drivers/drivers.h"
 
 #define CLOCK_SOURCE_PERIOD_MS           50U

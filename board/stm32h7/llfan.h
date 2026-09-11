@@ -1,5 +1,6 @@
 #pragma once
 
+#include "board/declarations.h"
 // TACH interrupt handler
 static void EXTI2_IRQ_Handler(void) {
   volatile unsigned int pr = EXTI->PR1 & (1U << 2);

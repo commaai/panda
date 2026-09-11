@@ -1,5 +1,6 @@
 #pragma once
 
+#include "board/declarations.h"
 static void uart_rx_ring(uart_ring *q){
   // Do not read out directly if DMA enabled
   ENTER_CRITICAL();

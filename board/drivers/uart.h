@@ -1,5 +1,6 @@
 #pragma once
 
+#include "board/declarations.h"
 #include "board/drivers/drivers.h"
 
 // ***************************** Definitions *****************************
@@ -7,7 +8,6 @@
 #define UART_BUFFER(x, size_rx, size_tx, uart_ptr, callback_ptr, overwrite_mode) \
   static uint8_t elems_rx_##x[size_rx]; \
   static uint8_t elems_tx_##x[size_tx]; \
-  extern uart_ring uart_ring_##x; \
   uart_ring uart_ring_##x = {  \
     .w_ptr_tx = 0, \
     .r_ptr_tx = 0, \
@@ -132,13 +132,13 @@ void puth(unsigned int i) {
 }
 
 #if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
-static void puth4(unsigned int i) {
+void puth4(unsigned int i) {
   puthx(i, 4U);
 }
 #endif
 
 #if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG_USB) || defined(DEBUG_COMMS)
-static void hexdump(const void *a, int l) {
+void hexdump(const void *a, int l) {
   if (a != NULL) {
     for (int i=0; i < l; i++) {
       if ((i != 0) && ((i & 0xf) == 0)) print("\n");

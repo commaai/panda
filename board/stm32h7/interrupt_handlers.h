@@ -1,5 +1,6 @@
 #pragma once
 
+#include "board/declarations.h"
 // ********************* Bare interrupt handlers *********************
 // Interrupts for STM32H7x5
 

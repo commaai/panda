@@ -1,10 +1,7 @@
 #pragma once
 
-extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
-
-// Prototypes
-void set_safety_mode(uint16_t mode, uint16_t param);
-bool is_car_safety_mode(uint16_t mode);
+#include "board/declarations.h"
+#include "board/main_declarations.h"
 
 static int get_health_pkt(void *dat) {
   COMPILE_TIME_ASSERT(sizeof(struct health_t) <= USBPACKET_MAX_SIZE);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "board/declarations.h"
 bool flash_is_locked(void) {
   return (FLASH->CR1 & FLASH_CR_LOCK);
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "board/declarations.h"
 #include "board/drivers/drivers.h"
 
 static void unused_interrupt_handler(void) {

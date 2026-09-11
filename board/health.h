@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 #define HEALTH_FLAG_IGNITION_LINE            (1U << 0)
 #define HEALTH_FLAG_IGNITION_CAN             (1U << 1)
 #define HEALTH_FLAG_CONTROLS_ALLOWED         (1U << 2)

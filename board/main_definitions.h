@@ -1,5 +1,6 @@
 #pragma once
 
+#include "board/declarations.h"
 #include "main_declarations.h"
 
 // ********************* Globals **********************

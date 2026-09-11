@@ -1,5 +1,7 @@
 #pragma once
 
+#include "stm32h7xx.h"
+
 extern USB_OTG_GlobalTypeDef *USBx;
 
 #define USBx_DEVICE     ((USB_OTG_DeviceTypeDef *)((uint32_t)USBx + USB_OTG_DEVICE_BASE))
@@ -12,5 +14,4 @@ extern USB_OTG_GlobalTypeDef *USBx;
 #define USB_OTG_SPEED_FULL        3U
 #define DCFG_FRAME_INTERVAL_80    0U
 
-void usb_irqhandler(void);
 void usb_init(void);

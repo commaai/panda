@@ -1,5 +1,7 @@
 #pragma once
 
+#include "stm32h7xx.h"
+
 typedef enum {
   SAMPLETIME_1_CYCLE = 0,
   SAMPLETIME_2_CYCLES = 1,
