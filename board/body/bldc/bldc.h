@@ -1,6 +1,9 @@
 #ifndef BLDC_H
 #define BLDC_H
 
+#include "board/config.h"
+#include "board/body/body.h"
+
 #include "board/body/bldc/bldc_defs.h"
 #include "board/body/boards/board_declarations.h"
 
@@ -63,6 +66,10 @@ const adc_signal_t adc_curR_phaA = ADC_CHANNEL_BLDC(ADC1, 7);
 const adc_signal_t adc_curR_phaC = ADC_CHANNEL_BLDC(ADC1, 15);
 const adc_signal_t adc_curR_DC = ADC_CHANNEL_BLDC(ADC1, 5);
 const adc_signal_t adc_batVoltage = ADC_CHANNEL_BLDC(ADC1, 4);
+
+uint8_t motor_get_error_code(uint8_t motor) {
+  return (motor == BODY_MOTOR_LEFT) ? rtY_Left.z_errCode : rtY_Right.z_errCode;
+}
 
 void motor_set_enable(bool enable) {
   enable_motors = enable;

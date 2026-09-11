@@ -1,5 +1,7 @@
 #pragma once
 
+#include "board/config.h"
+#include "board/body/body.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -8,7 +10,6 @@
 #include "board/body/boards/board_declarations.h"
 #include "board/drivers/drivers.h"
 #include "opendbc/safety/declarations.h"
-#include "board/body/bldc/bldc.h"
 
 #define BODY_CAN_ADDR_MOTOR_SPEED        0x201U
 #define BODY_CAN_ADDR_VAR_VALUES         0x202U
@@ -101,7 +102,7 @@ void body_can_periodic(uint32_t now, bool ignition, bool plug_charging) {
     float left_speed_rpm = motor_encoder_get_speed_rpm(BODY_MOTOR_LEFT);
     float right_speed_rpm = motor_encoder_get_speed_rpm(BODY_MOTOR_RIGHT);
     body_can_send_motor_speeds(BODY_BUS_NUMBER, left_speed_rpm, right_speed_rpm);
-    body_can_send_var_values(BODY_BUS_NUMBER, ignition, enable_motors, 0U, rtY_Left.z_errCode, rtY_Right.z_errCode);
+    body_can_send_var_values(BODY_BUS_NUMBER, ignition, enable_motors, 0U, motor_get_error_code(BODY_MOTOR_LEFT), motor_get_error_code(BODY_MOTOR_RIGHT));
     body_can_send_body_data(BODY_BUS_NUMBER, 0U, batt_voltage_raw, batt_percentage, plug_charging);
 
     // Send message on 0x222 to identify as body v2
