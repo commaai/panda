@@ -3,7 +3,6 @@
 #include <stdbool.h>
 
 //#define DEBUG
-//#define DEBUG_USB
 //#define DEBUG_SPI
 //#define DEBUG_COMMS
 
