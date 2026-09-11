@@ -59,5 +59,5 @@ struct board {
 extern uint8_t ignition;
 
 extern struct board board_v2;
-extern bool panda_power;
-extern bool generated_can_traffic;
+bool panda_power = false;
+bool generated_can_traffic = false;

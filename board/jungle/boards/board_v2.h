@@ -174,7 +174,6 @@ void board_v2_set_can_mode(uint8_t mode) {
   }
 }
 
-bool panda_power = false;
 uint8_t panda_power_bitmask = 0U;
 void board_v2_set_panda_power(bool enable) {
   panda_power = enable;
