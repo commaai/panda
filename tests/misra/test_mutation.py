@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import tempfile
 import random
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT = os.path.join(HERE, "../../")
@@ -68,7 +68,7 @@ mutations = [mutations[0]] + rng.sample(mutations[1:], min(2, len(mutations) - 1
 
 def run_mutation(fn, patch, should_fail):
   with tempfile.TemporaryDirectory() as tmp:
-    shutil.copytree(ROOT, tmp + "/panda", dirs_exist_ok=True)
+    shutil.copytree(ROOT, tmp + "/panda", ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__"))
 
     # apply patch
     if fn is not None:
@@ -91,7 +91,7 @@ class TestMisraMutation(unittest.TestCase):
   @classmethod
   def setUpClass(cls):
     # Each mutation has its own checkout and subprocess; keep the expensive checks parallel.
-    executor = ThreadPoolExecutor(max_workers=len(mutations))
+    executor = ProcessPoolExecutor(max_workers=len(mutations))
     cls.addClassCleanup(executor.shutdown)
     cls.results = [executor.submit(run_mutation, *mutation) for mutation in mutations]
 
