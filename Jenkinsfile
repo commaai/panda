@@ -3,7 +3,7 @@ def venv_run(String step_label, int timeout_mins, String cmd) {
     sh script: """#!/usr/bin/env bash
 set -e
 source .venv/bin/activate
-scons
+scons board/obj
 ${cmd}
 """, label: step_label
   }
