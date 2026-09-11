@@ -1,87 +1,83 @@
+import ctypes
 import os
-from cffi import FFI
-from typing import Any, Protocol
 
 from panda import LEN_TO_DLC
 
 libpanda_dir = os.path.dirname(os.path.abspath(__file__))
 libpanda_fn = os.path.join(libpanda_dir, "libpanda.so")
 
-ffi = FFI()
 
-ffi.cdef("""
-typedef struct {
-  unsigned char fd : 1;
-  unsigned char bus : 3;
-  unsigned char data_len_code : 4;
-  unsigned char rejected : 1;
-  unsigned char returned : 1;
-  unsigned char extended : 1;
-  unsigned int addr : 29;
-  unsigned char checksum;
-  unsigned char data[64];
-} CANPacket_t;
-""", packed=True)
-
-ffi.cdef("""
-int set_safety_hooks(uint16_t mode, uint16_t param);
-""")
-
-ffi.cdef("""
-typedef struct {
-  volatile uint32_t w_ptr;
-  volatile uint32_t r_ptr;
-  uint32_t fifo_size;
-  CANPacket_t *elems;
-} can_ring;
-
-extern can_ring *rx_q;
-extern can_ring *tx1_q;
-extern can_ring *tx2_q;
-extern can_ring *tx3_q;
-
-bool can_pop(can_ring *q, CANPacket_t *elem);
-bool can_push(can_ring *q, CANPacket_t *elem);
-void can_set_checksum(CANPacket_t *packet);
-int comms_can_read(uint8_t *data, uint32_t max_len);
-void comms_can_write(uint8_t *data, uint32_t len);
-void comms_can_reset(void);
-uint32_t can_slots_empty(can_ring *q);
-""")
-
-class CANPacket:
-  reserved: int
-  bus: int
-  data_len_code: int
-  rejected: int
-  returned: int
-  extended: int
-  addr: int
-  data: list[int]
-
-class Panda(Protocol):
-  # CAN
-  tx1_q: Any
-  tx2_q: Any
-  tx3_q: Any
-  def can_set_checksum(self, p: CANPacket) -> None: ...
-
-  # safety
-  def set_safety_hooks(self, mode: int, param: int) -> int: ...
+class CANPacketHeader(ctypes.LittleEndianStructure):
+  _pack_ = 1
+  _fields_ = [
+    ("fd", ctypes.c_uint8, 1),
+    ("bus", ctypes.c_uint8, 3),
+    ("data_len_code", ctypes.c_uint8, 4),
+  ]
 
 
-libpanda: Panda = ffi.dlopen(libpanda_fn)
+class CANPacketAddress(ctypes.LittleEndianStructure):
+  _pack_ = 1
+  _fields_ = [
+    ("rejected", ctypes.c_uint32, 1),
+    ("returned", ctypes.c_uint32, 1),
+    ("extended", ctypes.c_uint32, 1),
+    ("addr", ctypes.c_uint32, 29),
+  ]
 
 
-# helpers
+class CANPacketFields(ctypes.LittleEndianStructure):
+  _pack_ = 1
+  _anonymous_ = ("header", "address")
+  _fields_ = [
+    ("header", CANPacketHeader),
+    ("address", CANPacketAddress),
+    ("checksum", ctypes.c_uint8),
+    ("data", ctypes.c_uint8 * 64),
+  ]
 
-def make_CANPacket(addr: int, bus: int, dat):
-  ret = ffi.new('CANPacket_t *')
-  ret[0].extended = 1 if addr >= 0x800 else 0
-  ret[0].addr = addr
-  ret[0].data_len_code = LEN_TO_DLC[len(dat)]
-  ret[0].bus = bus
-  ret[0].data = bytes(dat)
+
+class CANPacket(ctypes.Union):
+  # Match CANPacket_t's packed fields and aligned(4) attribute.
+  _anonymous_ = ("packet",)
+  _fields_ = [("packet", CANPacketFields), ("_alignment", ctypes.c_uint32)]
+
+
+class CANRing(ctypes.Structure):
+  _fields_ = [
+    ("w_ptr", ctypes.c_uint32),
+    ("r_ptr", ctypes.c_uint32),
+    ("fifo_size", ctypes.c_uint32),
+    ("elems", ctypes.POINTER(CANPacket)),
+  ]
+
+
+libpanda = ctypes.CDLL(libpanda_fn)
+
+for name in ("rx_q", "tx1_q", "tx2_q", "tx3_q"):
+  setattr(libpanda, name, ctypes.POINTER(CANRing).in_dll(libpanda, name))
+
+for name, argtypes, restype in (
+  ("set_safety_hooks", [ctypes.c_uint16, ctypes.c_uint16], ctypes.c_int),
+  ("can_pop", [ctypes.POINTER(CANRing), ctypes.POINTER(CANPacket)], ctypes.c_bool),
+  ("can_push", [ctypes.POINTER(CANRing), ctypes.POINTER(CANPacket)], ctypes.c_bool),
+  ("can_set_checksum", [ctypes.POINTER(CANPacket)], None),
+  ("comms_can_read", [ctypes.POINTER(ctypes.c_uint8), ctypes.c_uint32], ctypes.c_int),
+  ("comms_can_write", [ctypes.c_char_p, ctypes.c_uint32], None),
+  ("comms_can_reset", [], None),
+  ("can_slots_empty", [ctypes.POINTER(CANRing)], ctypes.c_uint32),
+):
+  func = getattr(libpanda, name)
+  func.argtypes = argtypes
+  func.restype = restype
+
+
+def make_CANPacket(addr: int, bus: int, dat) -> CANPacket:
+  ret = CANPacket()
+  ret.extended = 1 if addr >= 0x800 else 0
+  ret.addr = addr
+  ret.data_len_code = LEN_TO_DLC[len(dat)]
+  ret.bus = bus
+  ret.data[:len(dat)] = bytes(dat)
   libpanda.can_set_checksum(ret)
-
   return ret
