@@ -18,17 +18,19 @@ IGNORED_PATHS = (
   'board/body',
   'board/stm32h7/inc',
   'board/fake_stm.h',
+  'board/fake_stm.c',
 
   # bootstub only files
-  'board/flasher.h',
+  'board/flasher.c',
   'board/bootstub.c',
-  'board/bootstub_declarations.h',
-  'board/stm32h7/llflash.h',
+  'board/bootstub_debug.c',
+  'board/crypto',
+  'board/stm32h7/llflash.c',
 )
 
 mutations = [
   (None, None, False),  # no mods, should pass
-  ("board/stm32h7/llfdcan.h", "s/return ret;/if (true) { return ret; } else { return false; }/g", True),
+  ("board/stm32h7/llfdcan.c", "s/return ret;/if (true) { return ret; } else { return false; }/g", True),
 ]
 
 patterns = [
@@ -56,7 +58,8 @@ patterns = [
 
 all_files = glob.glob('board/**', root_dir=ROOT, recursive=True)
 files = sorted(f for f in all_files if f.endswith(('.c', '.h')) and not f.startswith(IGNORED_PATHS))
-assert len(files) > 50, all(d in files for d in ('board/main.c', 'board/stm32h7/llfdcan.h'))
+assert len(files) > 50
+assert all(d in files for d in ('board/main.c', 'board/stm32h7/llfdcan.c'))
 
 # fixed seed for reproducible mutation selection
 rng = random.Random(len(files))

@@ -1,21 +1,19 @@
+#include "board/body/body.h"
+#include "board/body/bldc/bldc_defs.h"
 #include <stdint.h>
 #include <stdbool.h>
 
 #include "board/config.h"
-#include "board/drivers/led.h"
-#include "board/drivers/pwm.h"
-#include "board/drivers/usb.h"
-#include "board/early_init.h"
+#include "board/main.h"
+#include "board/comms.h"
+#include "board/drivers/drivers.h"
+#include "board/boards/boards.h"
+#include "board/sys/sys.h"
+#include "board/stm32h7/stm32h7.h"
 #include "board/obj/gitversion.h"
-#include "board/body/can.h"
-#include "opendbc/safety/safety.h"
-#include "board/drivers/can_common.h"
-#include "board/drivers/fdcan.h"
-#include "board/can_comms.h"
-#include "board/body/dotstar.h"
-#include "bldc/bldc.h"
+#include "opendbc/safety/declarations.h"
 
-#include "board/body/main_comms.h"
+extern int _app_start[0xc000];
 
 static volatile uint32_t tick_count = 0U;
 static volatile uint32_t ignition_press_timestamp_us = 0U;

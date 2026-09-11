@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdint.h>
+#include <stdbool.h>
+
 // cppcheck-suppress-macro [misra-c2012-1.2, misra-c2012-17.3]; allow __typeof__ extension
 #define MIN(a, b) ({ \
   __typeof__ (a) _a = (a); \
@@ -42,8 +45,13 @@
 
 #define COMPILE_TIME_ASSERT(pred) ((void)sizeof(char[1 - (2 * (!(pred) ? 1 : 0))]))
 
-// compute the time elapsed (in microseconds) from 2 counter samples
-// case where ts < ts_last is ok: overflow is properly re-casted into uint32_t
-uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
-  return ts - ts_last;
-}
+uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
+void delay(uint32_t a);
+void assert_fatal(bool condition, const char *msg);
+// cppcheck-suppress misra-c2012-21.2
+void *memset(void *str, int c, unsigned int n);
+// cppcheck-suppress misra-c2012-21.2
+void *memcpy(void *dest, const void *src, unsigned int len);
+// cppcheck-suppress misra-c2012-21.2
+int memcmp(const void *ptr1, const void *ptr2, unsigned int num);
+uint8_t crc_checksum(const uint8_t *dat, int len, uint8_t poly);

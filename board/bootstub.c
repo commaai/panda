@@ -3,20 +3,17 @@
 
 // ********************* Includes *********************
 #include "board/config.h"
-
-#include "board/drivers/led.h"
-#include "board/drivers/pwm.h"
-#include "board/drivers/usb.h"
-
-#include "board/early_init.h"
-#include "board/provision.h"
+#include "board/main.h"
+#include "board/drivers/drivers.h"
+#include "board/boards/boards.h"
+#include "board/sys/sys.h"
+#include "board/stm32h7/stm32h7.h"
 
 #include "board/crypto/rsa.h"
 #include "board/crypto/sha.h"
 
 #include "board/obj/cert.h"
 #include "board/obj/gitversion.h"
-#include "board/flasher.h"
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {

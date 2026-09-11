@@ -50,4 +50,7 @@
 #define BAT_CALIB_REAL_VOLTAGE  1260U   // multimeter voltage
 #define BAT_CALIB_ADC           1275U   // adc reading voltage
 
+void bldc_init(void);
+void bldc_step(void);
+
 #endif
