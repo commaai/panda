@@ -63,9 +63,7 @@ static void uart_interrupt_handler(uart_ring *q) {
   // Detect errors and clear them
   uint32_t err = (status & USART_ISR_ORE) | (status & USART_ISR_NE) | (status & USART_ISR_FE) | (status & USART_ISR_PE);
   if(err != 0U){
-    #ifdef DEBUG_UART
-      print("Encountered UART error: "); puth(err); print("\n");
-    #endif
+    fault_occurred(FAULT_UART_ERROR);
     UART_READ_RDR(q->uart)
   }
 
