@@ -94,7 +94,7 @@ pipeline {
               sh 'find . -user root -exec sudo -n chown -h "$(id -u):$(id -g)" {} +'
               deleteDir()
               checkout scm
-              sh './setup.sh'
+              sh 'PYTHONWARNINGS=default ./setup.sh'
             }
           }
         }
