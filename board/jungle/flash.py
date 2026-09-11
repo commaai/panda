@@ -12,7 +12,7 @@ if __name__ == "__main__":
   parser.add_argument("--all", action="store_true", help="Recover all panda jungle devices")
   args = parser.parse_args()
 
-  subprocess.check_call(f"scons -C {board_path}/.. -u -j$(nproc) .", shell=True)
+  subprocess.check_call(["make", "-C", os.path.join(board_path, "../.."), f"-j{os.cpu_count() or 1}", "panda_jungle_h7"])
 
   if args.all:
     serials = PandaJungle.list()

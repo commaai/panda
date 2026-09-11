@@ -50,6 +50,27 @@ cd panda
 ./test.sh
 ```
 
+To build separately, use GNU Make (included on Linux
+and with the macOS command line tools):
+
+```bash
+make -j4                 # all firmware, host library, and compile_commands.json
+make panda_h7            # or panda_jungle_h7 / body_h7
+make libpanda            # host test library only
+make panda_h7 DEBUG=1    # enable debug logging
+make RELEASE=1 CERT=/absolute/path/to/key
+make clean
+```
+
+`make` sources `./setup.sh` once before each build to sync dependencies and activate
+the project environment. `make help` and `make clean` skip setup.
+
+Build products stay in `board/obj/` and `tests/libpanda/libpanda.so`.
+Make tracks included headers and build options, so switching debug/release modes
+rebuilds the affected files. Use `make V=1` for full compiler commands or
+`make help` for a target summary. `PYTHON`, `CC`, `CROSS_COMPILE`, and
+`OPENDBC_INCLUDE` can be overridden for a different toolchain or opendbc checkout.
+
 See [the Panda class](https://github.com/commaai/panda/blob/master/python/__init__.py) for how to interact with the panda.
 
 For example, to receive CAN messages:

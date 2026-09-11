@@ -13,10 +13,10 @@ fi
 export RELEASE=1
 export BUILDER=DEV
 
-cd $DIR/../board
-scons -u -c
-rm obj/*
-scons -u
-cd obj
+cd "$DIR/.."
+make clean
+make -j4 firmware
+cd board/obj
 RELEASE_NAME=$(awk '{print $1}' version)
-zip -j ../../release/panda-$RELEASE_NAME.zip version panda.bin.signed bootstub.panda.bin panda_h7.bin.signed bootstub.panda_h7.bin
+mkdir -p ../../release
+zip -j ../../release/panda-$RELEASE_NAME.zip version panda_h7.bin.signed bootstub.panda_h7.bin

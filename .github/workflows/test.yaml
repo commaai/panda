@@ -24,9 +24,9 @@ jobs:
       - name: Test python package installer
         run: ${{ env.RUN }} "pip install --break-system-packages .[dev]"
       - name: Build debug FW
-        run: ${{ env.RUN }} "scons"
+        run: ${{ env.RUN }} "make -j4"
       - name: Build release FW
-        run: ${{ env.RUN }} "CERT=board/certs/debug RELEASE=1 scons"
+        run: ${{ env.RUN }} "CERT=board/certs/debug RELEASE=1 make -j4"
 
   test:
     name: ./test.sh

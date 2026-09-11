@@ -19,7 +19,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-  "scons",
   "ruff",
   "setuptools",
   "comma-deps-gcc-arm-none-eabi",

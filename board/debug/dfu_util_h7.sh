@@ -3,7 +3,8 @@ set -e
 
 DFU_UTIL="dfu-util"
 
-scons -u -j$(nproc)
+cd "$(dirname "$0")/.."
+make -C .. -j4 panda_h7
 
 PYTHONPATH=.. python3 -c "from python import Panda; Panda().reset(enter_bootstub=True); Panda().reset(enter_bootloader=True)" || true
 sleep 1

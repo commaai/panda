@@ -12,7 +12,7 @@ if __name__ == "__main__":
   parser.add_argument("--all", action="store_true", help="Recover all Panda devices")
   args = parser.parse_args()
 
-  subprocess.check_call(f"scons -C {board_path}/.. -j$(nproc) {board_path}", shell=True)
+  subprocess.check_call(["make", "-C", os.path.join(board_path, ".."), f"-j{os.cpu_count() or 1}", "panda_h7"])
 
   if args.all:
     serials = Panda.list()

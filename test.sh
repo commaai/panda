@@ -8,7 +8,7 @@ cd $DIR
 source ./setup.sh
 
 # *** build ***
-scons
+make -j4
 
 # *** lint + test ***
 ruff check .

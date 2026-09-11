@@ -13,8 +13,7 @@ DEFAULT_FIRMWARE = os.path.join(BOARD_DIR, "obj", "body_h7.bin.signed")
 
 def build_body() -> None:
   subprocess.check_call(
-    f"scons -C {REPO_ROOT} -j$(nproc) board/obj/body_h7.bin.signed",
-    shell=True,
+    ["make", "-C", REPO_ROOT, f"-j{os.cpu_count() or 1}", "body_h7"],
   )
 
 

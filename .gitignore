@@ -4,6 +4,7 @@
 .*.swp
 .*.swo
 *.o
+*.o.json
 *.so
 *.os
 *.d
@@ -20,7 +21,6 @@ examples/output.csv
 .vscode*
 nosetests.xml
 .mypy_cache/
-.sconsign.dblite
 uv.lock
 compile_commands.json
 

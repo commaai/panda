@@ -96,7 +96,7 @@ pipeline {
                   sh script: """#!/usr/bin/env bash
 set -e
 source .venv/bin/activate
-scons board/obj
+make -j4 firmware
 python3 ./tests/hitl/reset_jungles.py
 """, label: "reset hardware"
                 }
@@ -111,7 +111,7 @@ python3 ./tests/hitl/reset_jungles.py
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root'; reuseNode true } }
               steps {
                 phone_steps("panda-cuatro", [
-                  ["build", "scons"],
+                  ["build", "make -j4"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["flash jungle", "cd board/jungle && ./flash.py --all"],
                   ["test", "cd tests/hitl && HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py"],
@@ -123,7 +123,7 @@ python3 ./tests/hitl/reset_jungles.py
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root'; reuseNode true } }
               steps {
                 phone_steps("panda-tres", [
-                  ["build", "scons"],
+                  ["build", "make -j4"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["flash jungle", "cd board/jungle && ./flash.py --all"],
                   ["test", "cd tests/hitl && HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py"],
