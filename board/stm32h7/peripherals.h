@@ -1,3 +1,6 @@
+#pragma once
+
+#include "board/declarations.h"
 #ifdef BOOTSTUB
 void gpio_usb_init(void) {
 #else

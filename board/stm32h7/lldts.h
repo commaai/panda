@@ -1,5 +1,6 @@
 #pragma once
 
+#include "board/declarations.h"
 // Digital temperature sensor (DTS)
 
 #define DTS_SMP_TIME 15U // sensor periods per measurement (1 nibble)

@@ -1,10 +1,14 @@
 #pragma once
 
+#include "board/config.h"
+
 #include "board/can.h"
 #include "board/health.h"
 #ifdef STM32H7
 #include "board/stm32h7/lladc_declarations.h"
 #endif
+
+typedef struct harness_configuration harness_configuration;
 
 // ******************** bootkick ********************
 
@@ -43,6 +47,7 @@ extern can_health_t can_health[PANDA_CAN_CNT];
 // Ignition detected from CAN messages
 extern bool ignition_can;
 extern uint32_t ignition_can_cnt;
+void ignition_can_hook(const CANPacket_t *to_push);
 
 extern bool can_silent;
 extern bool can_loopback;
@@ -52,6 +57,12 @@ bool can_init(uint8_t can_number);
 void process_can(uint8_t can_number);
 
 // ********************* instantiate queues *********************
+extern can_ring can_rx_q;
+extern can_ring can_tx1_q;
+extern can_ring can_tx2_q;
+extern can_ring can_tx3_q;
+void can_clear(can_ring *q);
+
 extern can_ring *can_queues[PANDA_CAN_CNT];
 
 // helpers
@@ -254,9 +265,13 @@ typedef struct uart_ring {
   bool overwrite;
 } uart_ring;
 
+extern uart_ring uart_ring_debug;
+extern uart_ring uart_ring_som_debug;
+
 // ***************************** Function prototypes *****************************
 void debug_ring_callback(uart_ring *ring);
 void uart_tx_ring(uart_ring *q);
+void uart_init(uart_ring *q, unsigned int baud);
 uart_ring *get_ring_by_number(int a);
 // ************************* Low-level buffer functions *************************
 bool get_char(uart_ring *q, char *elem);
@@ -266,10 +281,10 @@ bool put_char(uart_ring *q, char elem);
 void print(const char *a);
 void puth(unsigned int i);
 #if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
-__attribute__((unused)) static void puth4(unsigned int i);
+void puth4(unsigned int i);
 #endif
-#if defined(DEBUG_SPI) || defined(DEBUG_USB) || defined(DEBUG_COMMS)
-static void hexdump(const void *a, int l);
+#if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG_USB) || defined(DEBUG_COMMS)
+void hexdump(const void *a, int l);
 #endif
 
 #endif // STM32H7
@@ -277,5 +292,60 @@ static void hexdump(const void *a, int l);
 // ******************** usb ********************
 
 void usb_init(void);
+void usb_irqhandler(void);
 void refresh_can_tx_slots_available(void);
 void can_tx_comms_resume_usb(void);
+
+#ifdef STM32H7
+// ******************** gpio ********************
+
+#define MODE_INPUT 0
+#define MODE_OUTPUT 1
+#define MODE_ALTERNATE 2
+#define MODE_ANALOG 3
+
+#define PULL_NONE 0
+#define PULL_UP 1
+#define PULL_DOWN 2
+
+#define OUTPUT_TYPE_PUSH_PULL 0U
+#define OUTPUT_TYPE_OPEN_DRAIN 1U
+
+void set_gpio_mode(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode);
+void set_gpio_output(GPIO_TypeDef *GPIO, unsigned int pin, bool enabled);
+void set_gpio_output_type(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int output_type);
+void set_gpio_alternate(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode);
+void set_gpio_pullup(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode);
+int get_gpio_input(const GPIO_TypeDef *GPIO, unsigned int pin);
+bool detect_with_pull(GPIO_TypeDef *GPIO, int pin, int mode);
+
+#ifdef PANDA_JUNGLE
+typedef struct {
+  GPIO_TypeDef * const bank;
+  uint8_t pin;
+} gpio_t;
+
+void gpio_set_all_output(gpio_t *pins, uint8_t num_pins, bool enabled);
+void gpio_set_bitmask(gpio_t *pins, uint8_t num_pins, uint32_t bitmask);
+#endif
+
+// ******************** led ********************
+
+#define LED_RED 0U
+#define LED_GREEN 1U
+#define LED_BLUE 2U
+
+void led_set(uint8_t color, bool enabled);
+void led_init(void);
+
+// ******************** timers ********************
+
+void microsecond_timer_init(void);
+void tick_timer_init(void);
+
+// ******************** siren ********************
+
+void fake_i2c_siren_set(bool enabled);
+void fake_siren_set(bool enabled);
+
+#endif // STM32H7

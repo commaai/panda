@@ -1,5 +1,7 @@
 #pragma once
 
+#include "board/stm32h7/stm32h7_config.h"
+
 extern USB_OTG_GlobalTypeDef *USBx;
 
 #define USBx_DEVICE     ((USB_OTG_DeviceTypeDef *)((uint32_t)USBx + USB_OTG_DEVICE_BASE))

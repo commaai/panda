@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 struct __attribute__((packed)) jungle_health_t {
   uint32_t uptime_pkt;
   float ch1_power;

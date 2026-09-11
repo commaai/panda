@@ -1,3 +1,11 @@
+#pragma once
+
+#include "board/declarations.h"
+
+uint8_t harness_orientation = HARNESS_ORIENTATION_NONE;
+uint8_t can_mode = CAN_MODE_NORMAL;
+uint8_t ignition = 0U;
+
 // ///////////////////////// //
 // Jungle board v2 (STM32H7) //
 // ///////////////////////// //

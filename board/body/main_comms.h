@@ -1,3 +1,7 @@
+#pragma once
+
+#include "board/declarations.h"
+
 void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   UNUSED(data);
   UNUSED(len);

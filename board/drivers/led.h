@@ -1,7 +1,6 @@
+#pragma once
 
-#define LED_RED 0U
-#define LED_GREEN 1U
-#define LED_BLUE 2U
+#include "board/declarations.h"
 
 #define LED_PWM_POWER 2U
 

@@ -1,3 +1,6 @@
+#pragma once
+
+#include "board/declarations.h"
 // **** libc ****
 
 __attribute__((aligned(32), noinline)) void delay(uint32_t a) {
@@ -17,7 +20,7 @@ void assert_fatal(bool condition, const char *msg) {
   }
 }
 
-// cppcheck-suppress misra-c2012-21.2
+// cppcheck-suppress [misra-c2012-21.2, misra-c2012-8.7]; also called by compiler-generated initialization
 void *memset(void *str, int c, unsigned int n) {
   uint8_t *s = str;
   for (unsigned int i = 0; i < n; i++) {

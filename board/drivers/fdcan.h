@@ -1,3 +1,6 @@
+#pragma once
+
+#include "board/declarations.h"
 #include "board/drivers/drivers.h"
 
 FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT] = {FDCAN1, FDCAN2, FDCAN3};

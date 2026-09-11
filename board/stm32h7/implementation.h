@@ -1,7 +1,6 @@
 #pragma once
 
-#include "board/config.h"
-#include "board/stm32h7/stm32h7.h"
+#include "board/declarations.h"
 
 #include "board/can.h"
 #include "board/comms_definitions.h"
@@ -33,6 +32,8 @@ uart_ring uart_ring_som_debug;
   #include "board/stm32h7/lluart.h"
 #endif
 
+#include "board/stm32h7/lladc.h"
+
 #ifdef PANDA_JUNGLE
 #include "board/jungle/stm32h7/board.h"
 #elif defined(PANDA_BODY)
@@ -41,6 +42,9 @@ uart_ring uart_ring_som_debug;
 #include "board/stm32h7/board.h"
 #endif
 #include "board/stm32h7/clock.h"
+#if !defined(PANDA_BODY) && !defined(PANDA_JUNGLE)
+#include "board/stm32h7/lli2c.h"
+#endif
 
 #ifdef BOOTSTUB
   #include "board/stm32h7/llflash.h"

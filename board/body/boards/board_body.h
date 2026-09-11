@@ -1,3 +1,6 @@
+#pragma once
+
+#include "board/declarations.h"
 #include "board/body/boards/board_declarations.h"
 
 void board_body_init(void) {

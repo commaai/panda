@@ -29,7 +29,6 @@ void fail(void) {
 }
 
 // know where to sig check
-extern void *_app_start[];
 
 int main(void) {
   // Init interrupt table

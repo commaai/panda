@@ -1,6 +1,6 @@
 #pragma once
 
-#include "board_declarations.h"
+#include "board/declarations.h"
 
 // ///////////////////////////
 // Tres (STM32H7) + Harness //
@@ -55,7 +55,7 @@ static void tres_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   set_gpio_output(GPIOD, 7, !(can0_enabled || can2_enabled));
 }
 
-static void tres_set_can_mode(uint8_t mode) {
+void tres_set_can_mode(uint8_t mode) {
   current_board->enable_can_transceiver(2U, false);
   current_board->enable_can_transceiver(4U, false);
   switch (mode) {
@@ -97,7 +97,7 @@ static void tres_set_can_mode(uint8_t mode) {
   }
 }
 
-static bool tres_read_som_gpio (void) {
+bool tres_read_som_gpio (void) {
   return (get_gpio_input(GPIOC, 2) != 0);
 }
 

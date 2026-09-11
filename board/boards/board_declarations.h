@@ -1,5 +1,7 @@
 #pragma once
 
+#include "board/drivers/drivers.h"
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -58,3 +60,15 @@ struct board {
 extern struct board board_tres;
 extern struct board board_cuatro;
 extern struct board board_red;
+
+uint32_t red_read_voltage_mV(void);
+void tres_set_can_mode(uint8_t mode);
+bool tres_read_som_gpio(void);
+
+void unused_set_ir_power(uint8_t percentage);
+void unused_set_fan_enabled(bool enabled);
+void unused_set_siren(bool enabled);
+uint32_t unused_read_current(void);
+void unused_set_bootkick(BootState state);
+bool unused_read_som_gpio(void);
+void unused_set_amp_enabled(bool enabled);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "board_declarations.h"
+#include "board/declarations.h"
 
 // ///////////////////////////// //
 // Red Panda (STM32H7) + Harness //
@@ -67,7 +67,7 @@ static void red_set_can_mode(uint8_t mode) {
   }
 }
 
-static uint32_t red_read_voltage_mV(void){
+uint32_t red_read_voltage_mV(void){
   return adc_get_mV(&(const adc_signal_t) ADC_CHANNEL_DEFAULT(ADC1, 2)) * 11U;
 }
 
