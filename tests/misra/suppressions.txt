@@ -13,12 +13,9 @@ misra-c2012-20.10
 unmatchedSuppression
 
 # All interrupt handlers are defined, including ones we don't use
-unusedFunction:*/interrupt_handlers*.c
+unusedFunction:*/interrupt_handlers*.h
 
 # all of the below suppressions are from new checks introduced after updating
 # cppcheck from 2.5 -> 2.13. they are listed here to separate the update from
 # fixing the violations and all are intended to be removed soon after
 misra-c2012-2.5   # unused macros. a few legit, rest aren't common between F4/H7 builds. should we do this in the unusedFunction pass?
-
-# External opendbc header defines the same immutable dlc_to_len table in each translation unit.
-misra-c2012-5.9:*/opendbc/safety/can.h:3

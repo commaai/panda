@@ -1,17 +1,31 @@
 // ********************* Includes *********************
 #include "board/config.h"
-#include "board/main.h"
-#include "board/comms.h"
-#include "board/drivers/drivers.h"
-#include "board/boards/boards.h"
-#include "board/sys/sys.h"
-#include "board/stm32h7/stm32h7.h"
+#include "board/stm32h7/implementation.h"
 
-#include "opendbc/safety/declarations.h"
+#include "board/drivers/led.h"
+#include "board/drivers/pwm.h"
+#include "board/drivers/usb.h"
+#include "board/drivers/simple_watchdog.h"
+#include "board/drivers/bootkick.h"
+
+#include "board/early_init.h"
+#include "board/provision.h"
+
+#include "opendbc/safety/safety.h"
 
 #include "board/health.h"
 
+#include "board/drivers/can_common.h"
+
+#include "board/drivers/fdcan.h"
+
+#include "board/sys/power_saving.h"
+
 #include "board/obj/gitversion.h"
+
+#include "board/can_comms.h"
+#include "board/main_comms.h"
+
 
 // ********************* Serial debugging *********************
 
@@ -144,9 +158,9 @@ static void tick_handler(void) {
       #ifdef DEBUG
         print("** blink ");
         print("rx:"); puth4(can_rx_q.r_ptr); print("-"); puth4(can_rx_q.w_ptr); print("  ");
-        print("tx1:"); puth4(can_queues[0]->r_ptr); print("-"); puth4(can_queues[0]->w_ptr); print("  ");
-        print("tx2:"); puth4(can_queues[1]->r_ptr); print("-"); puth4(can_queues[1]->w_ptr); print("  ");
-        print("tx3:"); puth4(can_queues[2]->r_ptr); print("-"); puth4(can_queues[2]->w_ptr); print("\n");
+        print("tx1:"); puth4(can_tx1_q.r_ptr); print("-"); puth4(can_tx1_q.w_ptr); print("  ");
+        print("tx2:"); puth4(can_tx2_q.r_ptr); print("-"); puth4(can_tx2_q.w_ptr); print("  ");
+        print("tx3:"); puth4(can_tx3_q.r_ptr); print("-"); puth4(can_tx3_q.w_ptr); print("\n");
       #endif
 
       // set green LED to be controls allowed

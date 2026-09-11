@@ -11,17 +11,5 @@ env = Environment(
   CPPPATH=[".", "../../", "../../board/", opendbc.INCLUDE_PATH],
 )
 
-sources = [
-  "panda.c",
-  "../../board/fake_stm.c",
-  "../../board/drivers/can_common.c",
-  "../../board/can_comms.c",
-  "../../board/safety.c",
-  "../../board/sys/faults.c",
-  "../../board/libc.c",
-  "../../board/utils.c",
-  "../../board/main_state.c",
-  "../../board/boards/boards.c",
-]
-objects = [env.SharedObject(f"obj/{source.rsplit('/', 1)[-1][:-2]}.os", source) for source in sources]
-libpanda = env.SharedLibrary("libpanda.so", objects)
+panda = env.SharedObject("panda.os", "panda.c")
+libpanda = env.SharedLibrary("libpanda.so", [panda])

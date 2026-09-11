@@ -13,7 +13,6 @@ extern volatile bool enable_motors;
 
 void motor_set_enable(bool enable);
 float motor_encoder_get_speed_rpm(uint8_t motor);
-uint8_t motor_get_error_code(uint8_t motor);
 void bldc_init(void);
 void bldc_step(void);
 

@@ -12,16 +12,12 @@ NC='\033[0m'
 
 : "${CPPCHECK_DIR:=$(python3 -c "import cppcheck; print(cppcheck.DIR)")}"
 
-RUN_DIR=$(mktemp -d)
-trap 'rm -rf "$RUN_DIR"' EXIT
-
 # ensure checked in coverage table is up to date
 cd $DIR
 if [ -z "$SKIP_TABLES_DIFF" ]; then
-  python3 $CPPCHECK_DIR/addons/misra.py -generate-table > "$RUN_DIR/coverage_table"
-  if ! cmp -s coverage_table "$RUN_DIR/coverage_table"; then
-    cp "$RUN_DIR/coverage_table" coverage_table.new
-    echo -e "${YELLOW}MISRA coverage table doesn't match. Review coverage_table.new and update coverage_table.${NC}"
+  python3 $CPPCHECK_DIR/addons/misra.py -generate-table > coverage_table
+  if ! git diff --quiet coverage_table; then
+    echo -e "${YELLOW}MISRA coverage table doesn't match. Update and commit:${NC}"
     exit 3
   fi
 fi
@@ -30,25 +26,21 @@ cd $PANDA_DIR
 if [ -z "${SKIP_BUILD}" ]; then
   scons
 fi
-scons compile_commands.json
 
-CHECKLIST=$RUN_DIR/checkers.txt
+CHECKLIST=$DIR/checkers.txt
 echo "Cppcheck checkers list from test_misra.sh:" > $CHECKLIST
 
 cppcheck() {
   # get all gcc defines: arm-none-eabi-gcc -dM -E - < /dev/null
   COMMON_DEFINES="-D__GNUC__=9 -UCMSIS_NVIC_VIRTUAL -UCMSIS_VECTAB_VIRTUAL -UPANDA_JUNGLE -UBOOTSTUB"
 
-  # Whole-program analysis needs a build directory with parallel checking.
-  # Never reuse cached results: cppcheck v2.13.0 can report inconsistent results.
-  BUILD_DIR=$RUN_DIR/build
-  mkdir -p "$BUILD_DIR"
+  # note that cppcheck build cache results in inconsistent results as of v2.13.0
   OUTPUT=$DIR/.output.log
 
   echo -e "\n\n\n\n\nTEST variant options:" >> $CHECKLIST
   echo -e ""${@//$PANDA_DIR/}"\n\n" >> $CHECKLIST # (absolute path removed)
 
-  $CPPCHECK_DIR/cppcheck --inline-suppr -j4 --cppcheck-build-dir="$BUILD_DIR" \
+  $CPPCHECK_DIR/cppcheck --inline-suppr \
           -I $PANDA_DIR \
           -I "$(arm-none-eabi-gcc -print-file-name=include)" \
           -I $OPENDBC_ROOT \
@@ -70,12 +62,7 @@ cppcheck() {
 PANDA_OPTS="--enable=all --disable=unusedFunction --addon=misra"
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-PANDA_SOURCE_LIST=$(python3 "$DIR/panda_sources.py")
-PANDA_SOURCES=()
-while IFS= read -r source; do
-  PANDA_SOURCES+=("$source")
-done <<< "$PANDA_SOURCE_LIST"
-cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ "${PANDA_SOURCES[@]}"
+cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ $PANDA_DIR/board/main.c
 
 # unused needs to run globally
 #printf "\n${GREEN}** UNUSED ALL CODE **${NC}\n"
@@ -85,8 +72,7 @@ printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 
 # ensure list of checkers is up to date
 cd $DIR
-if [ -z "$SKIP_TABLES_DIFF" ] && ! cmp -s "$DIR/checkers.txt" "$CHECKLIST"; then
-  cp "$CHECKLIST" "$DIR/checkers.txt.new"
-  echo -e "\n${YELLOW}Cppcheck report has changed. Review checkers.txt.new and update checkers.txt.${NC}"
+if [ -z "$SKIP_TABLES_DIFF" ] && ! git diff --quiet $CHECKLIST; then
+  echo -e "\n${YELLOW}WARNING: Cppcheck checkers.txt report has changed. Review and commit...${NC}"
   exit 4
 fi

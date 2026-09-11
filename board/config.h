@@ -36,7 +36,5 @@
 // Platform types and constants.
 #ifdef STM32H7
 #include "board/stm32h7/stm32h7_config.h"
-#else
-#include "board/fake_stm.h"
 #endif
 #include "board/utils.h"

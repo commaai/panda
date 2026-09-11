@@ -1,22 +1,33 @@
-#pragma once
-
-#include <stdbool.h>
+// minimal code to fake a panda for tests
+#include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+
+#include "utils.h"
 
 #define ALLOW_DEBUG
-#define ENTER_CRITICAL() ((void)0)
-#define EXIT_CRITICAL() ((void)0)
+
+#define ENTER_CRITICAL() 0
+#define EXIT_CRITICAL() 0
+
+void print(const char *a) {
+  printf("%s", a);
+}
+
+void puth(unsigned int i) {
+  printf("%u", i);
+}
 
 typedef struct {
   uint32_t CNT;
 } TIM_TypeDef;
 
-typedef uint32_t GPIO_TypeDef;
-typedef uint32_t USART_TypeDef;
-typedef int IRQn_Type;
-
-extern TIM_TypeDef timer;
-extern TIM_TypeDef *MICROSECOND_TIMER;
+TIM_TypeDef timer;
+TIM_TypeDef *MICROSECOND_TIMER = &timer;
 uint32_t microsecond_timer_get(void);
-void print(const char *a);
-void puth(unsigned int i);
+
+uint32_t microsecond_timer_get(void) {
+  return MICROSECOND_TIMER->CNT;
+}
+
+typedef uint32_t GPIO_TypeDef;

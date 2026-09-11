@@ -45,7 +45,12 @@
 
 #define COMPILE_TIME_ASSERT(pred) ((void)sizeof(char[1 - (2 * (!(pred) ? 1 : 0))]))
 
-uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last);
+// compute the time elapsed (in microseconds) from 2 counter samples
+// case where ts < ts_last is ok: overflow is properly re-casted into uint32_t
+static inline uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
+  return ts - ts_last;
+}
+
 void delay(uint32_t a);
 void assert_fatal(bool condition, const char *msg);
 // cppcheck-suppress misra-c2012-21.2

@@ -114,12 +114,18 @@ void fan_tick(void);
 // ******************** fdcan ********************
 #ifdef STM32H7
 
-extern FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT];
+typedef struct {
+  volatile uint32_t header[2];
+  volatile uint32_t data_word[CANPACKET_DATA_SIZE_MAX/4U];
+} canfd_fifo;
 
+#define CAN_ACK_ERROR 3U
+
+extern FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT];
 
 void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number);
 void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg);
-
+void can_rx(uint8_t can_number);
 
 // ******************** harness ********************
 
@@ -166,6 +172,7 @@ typedef struct interrupt {
 } interrupt;
 
 void interrupt_timer_init(void);
+void unused_interrupt_handler(void);
 uint32_t microsecond_timer_get(void);
 
 extern interrupt interrupts[NUM_INTERRUPTS];
@@ -188,6 +195,10 @@ void init_interrupts(bool check_rate_limit);
 
 // ******************** registers ********************
 
+// 10 bit hash with 23 as a prime
+#define REGISTER_MAP_SIZE 0x3FFU
+#define HASHING_PRIME 23U
+
 // Do not put bits in the check mask that get changed by the hardware
 void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask);
 // Set individual bits. Also add them to the check_mask.
@@ -201,6 +212,12 @@ void check_registers(void);
 void init_registers(void);
 
 // ******************** simple_watchdog ********************
+
+typedef struct simple_watchdog_state_t {
+  uint32_t fault;
+  uint32_t last_ts;
+  uint32_t threshold;
+} simple_watchdog_state_t;
 
 void simple_watchdog_kick(void);
 void simple_watchdog_init(uint32_t fault, uint32_t threshold);
@@ -226,6 +243,8 @@ void spi_tx_done(bool reset);
 #ifdef STM32H7
 
 // ***************************** Definitions *****************************
+#define FIFO_SIZE_INT 0x400U
+
 typedef struct uart_ring {
   volatile uint16_t w_ptr_tx;
   volatile uint16_t r_ptr_tx;

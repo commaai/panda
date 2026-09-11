@@ -1,18 +1,27 @@
 // ********************* Includes *********************
 #include "board/config.h"
-#include "board/main.h"
-#include "board/comms.h"
-#include "board/drivers/drivers.h"
-#include "board/boards/boards.h"
-#include "board/sys/sys.h"
-#include "board/stm32h7/stm32h7.h"
+#include "board/stm32h7/implementation.h"
 
-#include "opendbc/safety/declarations.h"
+#include "opendbc/safety/safety.h"
+
+#include "board/drivers/led.h"
+#include "board/drivers/pwm.h"
+#include "board/drivers/usb.h"
+
+#include "board/early_init.h"
+#include "board/provision.h"
 
 #include "board/health.h"
-#include "board/jungle/jungle_health.h"
+
+#include "board/drivers/can_common.h"
+
+#include "board/drivers/fdcan.h"
 
 #include "board/obj/gitversion.h"
+
+#include "board/can_comms.h"
+#include "board/jungle/main_comms.h"
+
 
 // ********************* Serial debugging *********************
 
@@ -53,9 +62,9 @@ void tick_handler(void) {
       #ifdef DEBUG
         print("** blink ");
         print("rx:"); puth4(can_rx_q.r_ptr); print("-"); puth4(can_rx_q.w_ptr); print("  ");
-        print("tx1:"); puth4(can_queues[0]->r_ptr); print("-"); puth4(can_queues[0]->w_ptr); print("  ");
-        print("tx2:"); puth4(can_queues[1]->r_ptr); print("-"); puth4(can_queues[1]->w_ptr); print("  ");
-        print("tx3:"); puth4(can_queues[2]->r_ptr); print("-"); puth4(can_queues[2]->w_ptr); print("\n");
+        print("tx1:"); puth4(can_tx1_q.r_ptr); print("-"); puth4(can_tx1_q.w_ptr); print("  ");
+        print("tx2:"); puth4(can_tx2_q.r_ptr); print("-"); puth4(can_tx2_q.w_ptr); print("  ");
+        print("tx3:"); puth4(can_tx3_q.r_ptr); print("-"); puth4(can_tx3_q.w_ptr); print("\n");
       #endif
 
       // check registers
@@ -88,6 +97,7 @@ void tick_handler(void) {
   }
   TICK_TIMER->SR = 0;
 }
+
 
 int main(void) {
   // Init interrupt table
@@ -148,8 +158,9 @@ int main(void) {
   for (cnt=0;;cnt++) {
     if (generated_can_traffic) {
       // fill up all the queues
+      can_ring *qs[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q};
       for (int j = 0; j < 3; j++) {
-        for (uint16_t n = 0U; n < can_slots_empty(can_queues[j]); n++) {
+        for (uint16_t n = 0U; n < can_slots_empty(qs[j]); n++) {
           uint16_t i = cnt % 100U;
           CANPacket_t to_send;
           to_send.returned = 0U;
