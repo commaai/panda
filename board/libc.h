@@ -1,3 +1,5 @@
+#pragma once
+
 // **** libc ****
 
 __attribute__((aligned(32), noinline)) void delay(uint32_t a) {

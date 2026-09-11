@@ -1,3 +1,5 @@
+#pragma once
+
 #include "board/sys/sys.h"
 
 uint8_t fault_status = FAULT_STATUS_NONE;

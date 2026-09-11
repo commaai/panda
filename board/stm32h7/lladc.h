@@ -1,3 +1,5 @@
+#pragma once
+
 #include "lladc_declarations.h"
 
 static uint32_t adc_avdd_mV = 0U;

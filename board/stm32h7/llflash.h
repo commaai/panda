@@ -1,3 +1,5 @@
+#pragma once
+
 bool flash_is_locked(void) {
   return (FLASH->CR1 & FLASH_CR_LOCK);
 }

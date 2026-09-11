@@ -1,3 +1,5 @@
+#pragma once
+
 #include "board/drivers/drivers.h"
 
 bool bootkick_reset_triggered = false;

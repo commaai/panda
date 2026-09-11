@@ -1,3 +1,5 @@
+#pragma once
+
 #include "llfdcan_declarations.h"
 
 // kbps multiplied by 10

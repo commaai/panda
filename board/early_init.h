@@ -1,3 +1,5 @@
+#pragma once
+
 // Early bringup
 #define ENTER_BOOTLOADER_MAGIC 0xdeadbeefU
 #define ENTER_SOFTLOADER_MAGIC 0xdeadc0deU

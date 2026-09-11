@@ -1,3 +1,5 @@
+#pragma once
+
 #include "board/sys/sys.h"
 
 // ********************* Critical section helpers *********************

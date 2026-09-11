@@ -1,3 +1,5 @@
+#pragma once
+
 // ******************** Prototypes ********************
 void print(const char *a){ UNUSED(a); }
 void puth(unsigned int i){ UNUSED(i); }
