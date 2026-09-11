@@ -19,7 +19,7 @@ void i2c_reset(I2C_TypeDef *I2C) {
   register_set_bits(&I2C->CR1, I2C_CR1_PE);
 }
 
-bool i2c_write_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t value) {
+static bool i2c_write_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t value) {
   bool ret = false;
 
   // Setup transfer and send START + addr
@@ -65,7 +65,7 @@ end:
   return ret;
 }
 
-bool i2c_read_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t *value) {
+static bool i2c_read_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t *value) {
   bool ret = false;
 
   // Setup transfer and send START + addr
