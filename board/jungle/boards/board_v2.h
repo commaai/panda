@@ -1,6 +1,6 @@
 #pragma once
 
-#include "board/declarations.h"
+#include "board/config.h"
 
 uint8_t harness_orientation = HARNESS_ORIENTATION_NONE;
 uint8_t can_mode = CAN_MODE_NORMAL;

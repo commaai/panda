@@ -56,9 +56,8 @@ struct board {
 #define SBU2 1U
 
 // ********************* Globals **********************
-extern uint8_t harness_orientation;
-extern uint8_t can_mode;
 extern uint8_t ignition;
 
 extern struct board board_v2;
 extern bool panda_power;
+extern bool generated_can_traffic;

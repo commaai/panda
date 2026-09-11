@@ -36,9 +36,6 @@ void get_provision_chunk(uint8_t *resp);
 
 #ifdef BOOTSTUB
 extern void *_app_start[];
-#elif !defined(PANDA_BODY)
+#elif !defined(PANDA_BODY) && !defined(PANDA_JUNGLE)
 extern int _app_start[0xc000]; // First three application sectors
-#endif
-#ifdef PANDA_JUNGLE
-extern bool generated_can_traffic;
 #endif
