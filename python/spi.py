@@ -1,4 +1,5 @@
 import binascii
+import ctypes
 import os
 import math
 import time
@@ -10,18 +11,6 @@ from functools import reduce
 from .base import BaseHandle, BaseSTBootloaderHandle, TIMEOUT
 from .constants import McuType, MCU_TYPE_BY_IDCODE, USBPACKET_MAX_SIZE
 from .utils import logger
-
-# No fcntl on Windows
-try:
-  import fcntl
-except ImportError:
-  fcntl = None # type: ignore
-
-# No spidev on MacOS/Windows
-try:
-  import spidev
-except ImportError:
-  spidev = None
 
 # Constants
 SYNC = 0x5A
@@ -78,40 +67,99 @@ class PandaSpiTransferFailed(PandaSpiException):
 SPI_LOCK = threading.Lock()
 SPI_DEVICES = {}
 class SpiDevice:
-  """
-  Provides locked, thread-safe access to a panda's SPI interface.
+  """Provides locked, thread-safe access to a panda's SPI interface.
+
+  xfer2 returns a view valid until the next transfer; xfer returns an owned copy.
   """
 
   MAX_SPEED = 50000000  # max of the SDM845
 
-  def __init__(self, speed=MAX_SPEED):
-    assert speed <= self.MAX_SPEED
+  # Linux asm-generic ioctl ABI (including aarch64 and x86_64), linux/spi/spidev.h.
+  SPI_IOC_RD_BITS_PER_WORD = 0x80016B03
+  SPI_IOC_WR_MAX_SPEED_HZ = 0x40046B04
+  SPI_IOC_MESSAGE_1 = 0x40206B00
+  SPI_IOC_TRANSFER = struct.Struct('=QQIIHBBBBBB')
+  MAX_TRANSFER_SIZE = 4096
 
+  def __init__(self, speed=MAX_SPEED):
+    try:
+      import fcntl
+    except ImportError as e:
+      raise PandaSpiUnavailable("SPI requires Linux") from e
+
+    assert speed <= self.MAX_SPEED
     if not os.path.exists(DEV_PATH):
       raise PandaSpiUnavailable(f"SPI device not found: {DEV_PATH}")
-    if spidev is None:
-      raise PandaSpiUnavailable("spidev is not installed")
 
+    self._ioctl = fcntl.ioctl
+    self._flock = fcntl.flock
+    self._lock_ex, self._lock_un = fcntl.LOCK_EX, fcntl.LOCK_UN
     with SPI_LOCK:
       if speed not in SPI_DEVICES:
-        SPI_DEVICES[speed] = spidev.SpiDev()
-        SPI_DEVICES[speed].open(0, 0)
-        SPI_DEVICES[speed].max_speed_hz = speed
-      self._spidev = SPI_DEVICES[speed]
+        file = open(DEV_PATH, 'r+b', buffering=0)
+        try:
+          self._ioctl(file.fileno(), self.SPI_IOC_WR_MAX_SPEED_HZ, struct.pack('=I', speed))
+          bits = self._ioctl(file.fileno(), self.SPI_IOC_RD_BITS_PER_WORD, b'\x00')[0]
+        except BaseException:
+          file.close()
+          raise
+        SPI_DEVICES[speed] = (file, bits)
+      self._file, bits = SPI_DEVICES[speed]
+
+    self._fd = self._file.fileno()
+    self._buffer = bytearray(self.MAX_TRANSFER_SIZE)
+    self._view = memoryview(self._buffer)
+    address = ctypes.addressof(ctypes.c_char.from_buffer(self._buffer))
+    # The kernel supports using the same buffer for transmit and receive.
+    self._transfer = bytearray(self.SPI_IOC_TRANSFER.pack(address, address, 0, speed, 0, bits, 0, 0, 0, 0, 0))
+    self._transfer_words = memoryview(self._transfer).cast('I')
 
   @contextmanager
   def acquire(self):
-    try:
-      SPI_LOCK.acquire()
-      fcntl.flock(self._spidev, fcntl.LOCK_EX)
-      yield self._spidev
-    finally:
-      fcntl.flock(self._spidev, fcntl.LOCK_UN)
-      SPI_LOCK.release()
+    with SPI_LOCK:
+      self._flock(self._fd, self._lock_ex)
+      try:
+        yield self
+      finally:
+        self._flock(self._fd, self._lock_un)
+
+  def fileno(self) -> int:
+    return self._fd
 
   def close(self):
-    pass
+    pass  # Connections are shared and cached by speed.
 
+  @classmethod
+  def _check_length(cls, length: int):
+    if not 0 < length <= cls.MAX_TRANSFER_SIZE:
+      raise ValueError(f"SPI transfer length must be between 1 and {cls.MAX_TRANSFER_SIZE}")
+
+  def xfer2(self, data) -> memoryview:
+    length = len(data)
+    if not 0 < length <= self.MAX_TRANSFER_SIZE:
+      raise ValueError(f"SPI transfer length must be between 1 and {self.MAX_TRANSFER_SIZE}")
+    self._view[:length] = bytes(data)
+    self._transfer_words[4] = length  # len field at byte offset 16
+    if self._ioctl(self._fd, self.SPI_IOC_MESSAGE_1, self._transfer) != length:
+      raise OSError("Short SPI transfer")
+    return self._view[:length]
+
+  # Both operations use one SPI_IOC_MESSAGE(1) for the single-block calls in panda.
+  def xfer(self, data) -> bytes:
+    return bytes(self.xfer2(data))
+
+  def readbytes(self, length: int) -> bytes:
+    self._check_length(length)
+    data = os.read(self.fileno(), length)
+    if len(data) != length:
+      raise OSError("Short SPI read")
+    return data
+
+  def writebytes(self, data):
+    data = bytes(data)
+    self._check_length(len(data))
+    if os.write(self.fileno(), data) != len(data):
+      raise OSError("Short SPI write")
 
 class PandaSpiHandle(BaseHandle):
   """
