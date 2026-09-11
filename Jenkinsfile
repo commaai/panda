@@ -111,6 +111,7 @@ pipeline {
         stage('parallel tests') {
           parallel {
             stage('test cuatro') {
+              agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
                 phone_steps("panda-cuatro", [
                   ["build", "scons"],
@@ -122,6 +123,7 @@ pipeline {
             }
 
             stage('test tres') {
+              agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root' } }
               steps {
                 phone_steps("panda-tres", [
                   ["build", "scons"],
