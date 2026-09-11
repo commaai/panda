@@ -92,7 +92,6 @@ struct fan_state_t {
   uint16_t tach_counter;
   uint16_t rpm;
   uint8_t power;
-  float error_integral;
   uint8_t cooldown_counter;
 };
 extern struct fan_state_t fan_state;
@@ -157,7 +156,6 @@ void harness_init(void);
 // ******************** interrupts ********************
 
 typedef struct interrupt {
-  IRQn_Type irq_type;
   void (*handler)(void);
   uint32_t call_counter;
   uint32_t call_rate;
@@ -172,7 +170,6 @@ void unused_interrupt_handler(void);
 extern interrupt interrupts[NUM_INTERRUPTS];
 
 #define REGISTER_INTERRUPT(irq_num, func_ptr, call_rate_max, rate_fault) \
-  interrupts[irq_num].irq_type = (irq_num); \
   interrupts[irq_num].handler = (func_ptr);  \
   interrupts[irq_num].call_counter = 0U;   \
   interrupts[irq_num].call_rate = 0U;   \
@@ -262,7 +259,6 @@ uart_ring *get_ring_by_number(int a);
 bool get_char(uart_ring *q, char *elem);
 bool injectc(uart_ring *q, char elem);
 bool put_char(uart_ring *q, char elem);
-void clear_uart_buff(uart_ring *q);
 // ************************ High-level debug functions **********************
 void putch(const char a);
 void print(const char *a);

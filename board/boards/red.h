@@ -119,7 +119,6 @@ board board_red = {
   .avdd_mV = 3300U,
   .fan_enable_cooldown_time = 0U,
   .init = red_init,
-  .init_bootloader = unused_init_bootloader,
   .enable_can_transceiver = red_enable_can_transceiver,
   .led_GPIO = {GPIOE, GPIOE, GPIOE},
   .led_pin = {4, 3, 2},

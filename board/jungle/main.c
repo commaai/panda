@@ -67,8 +67,6 @@ void tick_handler(void) {
         print("tx3:"); puth4(can_tx3_q.r_ptr); print("-"); puth4(can_tx3_q.w_ptr); print("\n");
       #endif
 
-      current_board->board_tick();
-
       // check registers
       check_registers();
 

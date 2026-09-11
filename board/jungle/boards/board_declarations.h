@@ -1,8 +1,6 @@
 // ******************** Prototypes ********************
 typedef void (*board_init)(void);
-typedef void (*board_board_tick)(void);
 typedef bool (*board_get_button)(void);
-typedef void (*board_init_bootloader)(void);
 typedef void (*board_set_panda_power)(bool enabled);
 typedef void (*board_set_panda_individual_power)(uint8_t port_num, bool enabled);
 typedef void (*board_set_ignition)(bool enabled);
@@ -18,11 +16,8 @@ struct board {
   GPIO_TypeDef * const led_GPIO[3];
   const uint8_t led_pin[3];
   const uint8_t led_pwm_channels[3]; // leave at 0 to disable PWM
-  const uint16_t avdd_mV;
   board_init init;
-  board_board_tick board_tick;
   board_get_button get_button;
-  board_init_bootloader init_bootloader;
   board_set_panda_power set_panda_power;
   board_set_panda_individual_power set_panda_individual_power;
   board_set_ignition set_ignition;

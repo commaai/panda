@@ -159,7 +159,6 @@ board board_tres = {
   .avdd_mV = 1800U,
   .fan_enable_cooldown_time = 3U,
   .init = tres_init,
-  .init_bootloader = unused_init_bootloader,
   .enable_can_transceiver = tres_enable_can_transceiver,
   .led_GPIO = {GPIOE, GPIOE, GPIOE},
   .led_pin = {4, 3, 2},

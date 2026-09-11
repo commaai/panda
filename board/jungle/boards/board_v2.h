@@ -285,15 +285,10 @@ void board_v2_init(void) {
   set_gpio_mode(GPIOG, 7, MODE_OUTPUT);
 }
 
-void board_v2_tick(void) {}
-
 board board_v2 = {
-  .avdd_mV = 3300U,
   .init = &board_v2_init,
-  .init_bootloader = &board_v2_tick,
   .led_GPIO = {GPIOE, GPIOE, GPIOE},
   .led_pin = {4, 3, 2},
-  .board_tick = &board_v2_tick,
   .get_button = &board_v2_get_button,
   .set_panda_power = &board_v2_set_panda_power,
   .set_panda_individual_power = &board_v2_set_panda_individual_power,

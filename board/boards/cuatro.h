@@ -120,7 +120,6 @@ board board_cuatro = {
   .avdd_mV = 1800U,
   .fan_enable_cooldown_time = 3U,
   .init = cuatro_init,
-  .init_bootloader = unused_init_bootloader,
   .enable_can_transceiver = cuatro_enable_can_transceiver,
   .led_GPIO = {GPIOC, GPIOC, GPIOC},
   .led_pin = {6, 7, 9},
