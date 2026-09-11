@@ -9,51 +9,10 @@
 #include "board/stm32h7/lldts.h"
 #include "board/drivers/harness.h"
 #include "board/drivers/fan.h"
+#include "board/stm32h7/llfan.h"
 #include "board/stm32h7/sound.h"
 #include "board/drivers/fake_siren.h"
 #include "board/drivers/clock_source.h"
-static void set_can_mode(uint8_t mode) {
-  current_board->enable_can_transceiver(2U, false);
-  current_board->enable_can_transceiver(4U, false);
-  switch (mode) {
-    case CAN_MODE_NORMAL:
-    case CAN_MODE_OBD_CAN2:
-      if ((bool)(mode == CAN_MODE_NORMAL) != (bool)(harness.status == HARNESS_STATUS_FLIPPED)) {
-        // B12,B13: disable normal mode
-        set_gpio_pullup(GPIOB, 12, PULL_NONE);
-        set_gpio_mode(GPIOB, 12, MODE_ANALOG);
-
-        set_gpio_pullup(GPIOB, 13, PULL_NONE);
-        set_gpio_mode(GPIOB, 13, MODE_ANALOG);
-
-        // B5,B6: FDCAN2 mode
-        set_gpio_pullup(GPIOB, 5, PULL_NONE);
-        set_gpio_alternate(GPIOB, 5, GPIO_AF9_FDCAN2);
-
-        set_gpio_pullup(GPIOB, 6, PULL_NONE);
-        set_gpio_alternate(GPIOB, 6, GPIO_AF9_FDCAN2);
-        current_board->enable_can_transceiver(2U, true);
-      } else {
-        // B5,B6: disable normal mode
-        set_gpio_pullup(GPIOB, 5, PULL_NONE);
-        set_gpio_mode(GPIOB, 5, MODE_ANALOG);
-
-        set_gpio_pullup(GPIOB, 6, PULL_NONE);
-        set_gpio_mode(GPIOB, 6, MODE_ANALOG);
-        // B12,B13: FDCAN2 mode
-        set_gpio_pullup(GPIOB, 12, PULL_NONE);
-        set_gpio_alternate(GPIOB, 12, GPIO_AF9_FDCAN2);
-
-        set_gpio_pullup(GPIOB, 13, PULL_NONE);
-        set_gpio_alternate(GPIOB, 13, GPIO_AF9_FDCAN2);
-        current_board->enable_can_transceiver(4U, true);
-      }
-      break;
-    default:
-      break;
-  }
-}
-
 #include "board/boards/red.h"
 #include "board/boards/tres.h"
 #include "board/boards/cuatro.h"

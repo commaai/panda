@@ -23,6 +23,15 @@
 #include "board/jungle/main_comms.h"
 
 
+// ********************* Serial debugging *********************
+
+void debug_ring_callback(uart_ring *ring) {
+  char rcv;
+  while (get_char(ring, &rcv)) {
+    (void)injectc(ring, rcv);
+  }
+}
+
 // ***************************** main code *****************************
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck

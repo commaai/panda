@@ -2,7 +2,7 @@
 
 // ***************************** Definitions *****************************
 
-#define UART_BUFFER(x, size_rx, size_tx, uart_ptr) \
+#define UART_BUFFER(x, size_rx, size_tx, uart_ptr, callback_ptr, overwrite_mode) \
   static uint8_t elems_rx_##x[size_rx]; \
   static uint8_t elems_tx_##x[size_tx]; \
   extern uart_ring uart_ring_##x; \
@@ -15,16 +15,18 @@
     .r_ptr_rx = 0, \
     .elems_rx = ((uint8_t *)&(elems_rx_##x)), \
     .rx_fifo_size = (size_rx), \
-    .uart = (uart_ptr) \
+    .uart = (uart_ptr), \
+    .callback = (callback_ptr), \
+    .overwrite = (overwrite_mode) \
   };
 
 // ******************************** UART buffers ********************************
 
 // debug = USART2
-UART_BUFFER(debug, FIFO_SIZE_INT, FIFO_SIZE_INT, USART2)
+UART_BUFFER(debug, FIFO_SIZE_INT, FIFO_SIZE_INT, USART2, debug_ring_callback, true)
 
 // SOM debug = UART7
-UART_BUFFER(som_debug, FIFO_SIZE_INT, FIFO_SIZE_INT, UART7)
+UART_BUFFER(som_debug, FIFO_SIZE_INT, FIFO_SIZE_INT, UART7, NULL, true)
 
 uart_ring *get_ring_by_number(int a) {
   uart_ring *ring = NULL;
@@ -64,7 +66,7 @@ bool injectc(uart_ring *q, char elem) {
   ENTER_CRITICAL();
   next_w_ptr = (q->w_ptr_rx + 1U) % q->rx_fifo_size;
 
-  if (next_w_ptr == q->r_ptr_rx) {
+  if ((next_w_ptr == q->r_ptr_rx) && q->overwrite) {
     // overwrite mode: drop oldest byte
     q->r_ptr_rx = (q->r_ptr_rx + 1U) % q->rx_fifo_size;
   }
@@ -86,7 +88,7 @@ bool put_char(uart_ring *q, char elem) {
   ENTER_CRITICAL();
   next_w_ptr = (q->w_ptr_tx + 1U) % q->tx_fifo_size;
 
-  if (next_w_ptr == q->r_ptr_tx) {
+  if ((next_w_ptr == q->r_ptr_tx) && q->overwrite) {
     // overwrite mode: drop oldest byte
     q->r_ptr_tx = (q->r_ptr_tx + 1U) % q->tx_fifo_size;
   }

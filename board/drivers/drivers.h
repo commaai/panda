@@ -97,6 +97,7 @@ struct fan_state_t {
 extern struct fan_state_t fan_state;
 
 void fan_set_power(uint8_t percentage);
+void llfan_init(void);
 void fan_init(void);
 // Call this at FAN_TICK_FREQ
 void fan_tick(void);
@@ -246,9 +247,12 @@ typedef struct uart_ring {
   uint8_t *elems_rx;
   uint32_t rx_fifo_size;
   USART_TypeDef *uart;
+  void (*callback)(struct uart_ring*);
+  bool overwrite;
 } uart_ring;
 
 // ***************************** Function prototypes *****************************
+void debug_ring_callback(uart_ring *ring);
 void uart_tx_ring(uart_ring *q);
 uart_ring *get_ring_by_number(int a);
 // ************************* Low-level buffer functions *************************

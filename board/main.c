@@ -26,6 +26,15 @@
 #include "board/main_comms.h"
 
 
+// ********************* Serial debugging *********************
+
+void debug_ring_callback(uart_ring *ring) {
+  char rcv;
+  while (get_char(ring, &rcv)) {
+    (void)put_char(ring, rcv);  // misra-c2012-17.7: cast to void is ok: debug function
+  }
+}
+
 // ****************************** safety mode ******************************
 
 // this is the only way to leave silent mode

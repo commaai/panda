@@ -55,6 +55,48 @@ static void tres_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   set_gpio_output(GPIOD, 7, !(can0_enabled || can2_enabled));
 }
 
+static void tres_set_can_mode(uint8_t mode) {
+  current_board->enable_can_transceiver(2U, false);
+  current_board->enable_can_transceiver(4U, false);
+  switch (mode) {
+    case CAN_MODE_NORMAL:
+    case CAN_MODE_OBD_CAN2:
+      if ((bool)(mode == CAN_MODE_NORMAL) != (bool)(harness.status == HARNESS_STATUS_FLIPPED)) {
+        // B12,B13: disable normal mode
+        set_gpio_pullup(GPIOB, 12, PULL_NONE);
+        set_gpio_mode(GPIOB, 12, MODE_ANALOG);
+
+        set_gpio_pullup(GPIOB, 13, PULL_NONE);
+        set_gpio_mode(GPIOB, 13, MODE_ANALOG);
+
+        // B5,B6: FDCAN2 mode
+        set_gpio_pullup(GPIOB, 5, PULL_NONE);
+        set_gpio_alternate(GPIOB, 5, GPIO_AF9_FDCAN2);
+
+        set_gpio_pullup(GPIOB, 6, PULL_NONE);
+        set_gpio_alternate(GPIOB, 6, GPIO_AF9_FDCAN2);
+        current_board->enable_can_transceiver(2U, true);
+      } else {
+        // B5,B6: disable normal mode
+        set_gpio_pullup(GPIOB, 5, PULL_NONE);
+        set_gpio_mode(GPIOB, 5, MODE_ANALOG);
+
+        set_gpio_pullup(GPIOB, 6, PULL_NONE);
+        set_gpio_mode(GPIOB, 6, MODE_ANALOG);
+        // B12,B13: FDCAN2 mode
+        set_gpio_pullup(GPIOB, 12, PULL_NONE);
+        set_gpio_alternate(GPIOB, 12, GPIO_AF9_FDCAN2);
+
+        set_gpio_pullup(GPIOB, 13, PULL_NONE);
+        set_gpio_alternate(GPIOB, 13, GPIO_AF9_FDCAN2);
+        current_board->enable_can_transceiver(4U, true);
+      }
+      break;
+    default:
+      break;
+  }
+}
+
 static bool tres_read_som_gpio (void) {
   return (get_gpio_input(GPIOC, 2) != 0);
 }
@@ -120,7 +162,7 @@ board board_tres = {
   .enable_can_transceiver = tres_enable_can_transceiver,
   .led_GPIO = {GPIOE, GPIOE, GPIOE},
   .led_pin = {4, 3, 2},
-  .set_can_mode = set_can_mode,
+  .set_can_mode = tres_set_can_mode,
   .read_voltage_mV = red_read_voltage_mV,
   .read_current_mA = unused_read_current,
   .set_fan_enabled = tres_set_fan_enabled,
