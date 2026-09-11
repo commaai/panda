@@ -24,13 +24,6 @@ static volatile uint32_t ignition_press_timestamp_us = 0U;
 static volatile bool ignition = false;
 static volatile bool plug_charging = false;
 
-void debug_ring_callback(uart_ring *ring) {
-  char rcv;
-  while (get_char(ring, &rcv)) {
-    (void)injectc(ring, rcv);
-  }
-}
-
 void __attribute__ ((noinline)) enable_fpu(void) {
   SCB->CPACR |= ((3UL << (10U * 2U)) | (3UL << (11U * 2U)));
 }
