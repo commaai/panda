@@ -12,6 +12,7 @@
 #include "board/provision.h"
 
 #include "board/health.h"
+#include "board/jungle/jungle_health.h"
 
 #include "board/drivers/can_common.h"
 

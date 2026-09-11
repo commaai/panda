@@ -1,6 +1,4 @@
-#include "board/drivers/drivers.h"
-#include "board/stm32h7/stm32h7.h"
-#include "board/boards/boards.h"
+#include "board/body/boards/board_declarations.h"
 
 void board_body_init(void) {
   // Initialize CAN pins

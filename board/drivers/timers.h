@@ -1,8 +1,3 @@
-#include "board/config.h"
-#include "board/drivers/drivers.h"
-#include "board/stm32h7/stm32h7.h"
-#include "board/sys/sys.h"
-
 static void timer_init(TIM_TypeDef *TIM, int psc) {
   register_set(&(TIM->PSC), (psc-1), 0xFFFFU);
   register_set(&(TIM->DIER), TIM_DIER_UIE, 0x5F5FU);

@@ -1,13 +1,6 @@
-#include "board/drivers/drivers.h"
-#include "board/stm32h7/stm32h7.h"
-#include "board/boards/boards.h"
 // ///////////////////////// //
 // Jungle board v2 (STM32H7) //
 // ///////////////////////// //
-
-uint8_t harness_orientation = HARNESS_ORIENTATION_NONE;
-uint8_t can_mode = CAN_MODE_NORMAL;
-uint8_t ignition = 0U;
 
 #define ADC_CHANNEL(a, c) {.adc = (a), .channel = (c), .sample_time = SAMPLETIME_810_CYCLES, .oversampling = OVERSAMPLING_1}
 

@@ -1,10 +1,9 @@
-#include "board/config.h"
 #include "board/sys/sys.h"
 
 // ********************* Critical section helpers *********************
 uint8_t global_critical_depth = 0U;
 
-volatile bool interrupts_enabled = false;
+static volatile bool interrupts_enabled = false;
 
 void enable_interrupts(void) {
   interrupts_enabled = true;

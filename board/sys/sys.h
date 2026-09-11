@@ -1,15 +1,11 @@
 #pragma once
 
-#include <stdbool.h>
-#include <stdint.h>
-
 // ******************** critical ********************
 
 void enable_interrupts(void);
 void disable_interrupts(void);
 
 extern uint8_t global_critical_depth;
-extern volatile bool interrupts_enabled;
 
 #ifndef ENTER_CRITICAL
 #define ENTER_CRITICAL()                                      \
@@ -64,9 +60,4 @@ void fault_recovered(uint32_t fault);
 
 extern bool power_save_enabled;
 
-void enable_can_transceivers(bool enabled);
 void set_power_save_state(bool enable);
-void enter_stop_mode(void);
-#ifdef ALLOW_DEBUG
-extern volatile bool stop_mode_requested;
-#endif

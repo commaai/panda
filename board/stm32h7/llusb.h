@@ -1,11 +1,4 @@
-#include "board/stm32h7/stm32h7.h"
-#include "board/drivers/drivers.h"
-#include "board/sys/sys.h"
-
-#define USBx_PCGCCTL    *(__IO uint32_t *)((uint32_t)USBx + USB_OTG_PCGCCTL_BASE)
-#define USBD_FS_TRDT_VALUE        6UL
-#define USB_OTG_SPEED_FULL        3U
-#define DCFG_FRAME_INTERVAL_80    0U
+#include "llusb_declarations.h"
 
 USB_OTG_GlobalTypeDef *USBx = USB_OTG_HS;
 

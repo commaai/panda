@@ -1,7 +1,4 @@
-#include "board/stm32h7/stm32h7.h"
-#include "board/drivers/drivers.h"
-
-#define VREFINT_CAL_ADDR ((uint16_t *)0x1FF1E860UL)
+#include "lladc_declarations.h"
 
 static uint32_t adc_avdd_mV = 0U;
 

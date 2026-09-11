@@ -1,14 +1,3 @@
-#include "board/config.h"
-#include "board/main.h"
-#include "board/comms.h"
-#include "board/drivers/drivers.h"
-#include "opendbc/safety/declarations.h"
-#include "board/boards/boards.h"
-#include "board/sys/sys.h"
-#include "board/stm32h7/stm32h7.h"
-#include "board/obj/gitversion.h"
-#include "board/jungle/jungle_health.h"
-
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 bool generated_can_traffic = false;

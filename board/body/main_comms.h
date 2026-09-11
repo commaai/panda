@@ -1,20 +1,7 @@
-#include "board/config.h"
-#include "board/main.h"
-#include "board/comms.h"
-#include "board/drivers/drivers.h"
-#include "opendbc/safety/declarations.h"
-#include "board/boards/boards.h"
-#include "board/sys/sys.h"
-#include "board/stm32h7/stm32h7.h"
-#include "board/obj/gitversion.h"
-#include "board/body/body.h"
-
 void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   UNUSED(data);
   UNUSED(len);
 }
-
-extern int _app_start[0xc000];
 
 int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   unsigned int resp_len = 0;

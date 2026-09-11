@@ -1,6 +1,3 @@
-#include "board/stm32h7/stm32h7.h"
-#include "board/drivers/drivers.h"
-
 /*
 HSE: 25MHz
 PLL1Q: 80MHz (for FDCAN)

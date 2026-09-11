@@ -1,7 +1,3 @@
-#include "board/stm32h7/stm32h7.h"
-#include "board/drivers/drivers.h"
-#include "board/sys/sys.h"
-
 // master -> panda DMA start
 // cppcheck-suppress constParameterPointer ; RX DMA writes through addr after return
 void llspi_mosi_dma(uint8_t *addr, int len) {

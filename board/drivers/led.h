@@ -1,6 +1,7 @@
-#include "board/config.h"
-#include "board/drivers/drivers.h"
-#include "board/boards/boards.h"
+
+#define LED_RED 0U
+#define LED_GREEN 1U
+#define LED_BLUE 2U
 
 #define LED_PWM_POWER 2U
 

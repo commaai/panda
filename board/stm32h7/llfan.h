@@ -1,7 +1,3 @@
-#include "board/stm32h7/stm32h7.h"
-#include "board/drivers/drivers.h"
-#include "board/sys/sys.h"
-
 // TACH interrupt handler
 static void EXTI2_IRQ_Handler(void) {
   volatile unsigned int pr = EXTI->PR1 & (1U << 2);

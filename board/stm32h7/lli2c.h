@@ -1,6 +1,3 @@
-#include "board/stm32h7/stm32h7.h"
-#include "board/drivers/drivers.h"
-
 // TODO: this driver relies heavily on polling,
 // if we want it to be more async, we should use interrupts
 

@@ -1,9 +1,4 @@
-#include "board/config.h"
 #include "board/drivers/drivers.h"
-#include "board/stm32h7/stm32h7.h"
-#include "board/boards/boards.h"
-#include "board/sys/sys.h"
-#include "board/comms.h"
 
 // IRQs: OTG_FS
 

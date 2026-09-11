@@ -1,8 +1,3 @@
-#include "board/stm32h7/stm32h7.h"
-#include "board/drivers/drivers.h"
-#include "board/boards/boards.h"
-#include "board/sys/sys.h"
-
 #define SOUND_RX_BUF_SIZE 1000U
 #define SOUND_TX_BUF_SIZE (SOUND_RX_BUF_SIZE/2U)
 #define MIC_RX_BUF_SIZE 512U
@@ -148,7 +143,7 @@ void sound_init_dac(void) {
   DMA1_Stream1->CR = DMA_SxCR_DBM | (0b11UL << DMA_SxCR_PL_Pos) | (0b01UL << DMA_SxCR_MSIZE_Pos) | (0b01UL << DMA_SxCR_PSIZE_Pos) | DMA_SxCR_MINC | (1U << DMA_SxCR_DIR_Pos);
 }
 
-void sound_stop_dac(void) {
+static void sound_stop_dac(void) {
   register_clear_bits(&BDMA_Channel0->CCR, BDMA_CCR_EN);
   BDMA->IFCR = 0xFFFFFFFFU;
 

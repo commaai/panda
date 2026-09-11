@@ -1,6 +1,3 @@
-#include "board/utils.h"
-#include "board/drivers/drivers.h"
-
 // **** libc ****
 
 __attribute__((aligned(32), noinline)) void delay(uint32_t a) {

@@ -1,8 +1,3 @@
-#include "board/comms.h"
-#include "board/drivers/drivers.h"
-#include "board/utils.h"
-#include "board/sys/sys.h"
-
 /*
   CAN transactions to and from the host come in the form of
   a certain number of CANPacket_t. The transaction is split

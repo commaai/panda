@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stdint.h>
 
 //#define DEBUG
 //#define DEBUG_UART
@@ -33,8 +32,11 @@
   #endif
 #endif
 
-// Platform types and constants.
+// platform includes
 #ifdef STM32H7
-#include "board/stm32h7/stm32h7_config.h"
+  #include "board/stm32h7/stm32h7_config.h"
+#else
+  // TODO: uncomment this, cppcheck complains
+  // building for tests
+  //#include "fake_stm.h"
 #endif
-#include "board/utils.h"

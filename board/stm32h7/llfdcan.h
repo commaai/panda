@@ -1,23 +1,4 @@
-#include "board/stm32h7/stm32h7.h"
-#include "board/drivers/drivers.h"
-
-// SAE J2284-4 document specifies a bus-line network running at 2 Mbit/s
-// SAE J2284-5 document specifies a point-to-point communication running at 5 Mbit/s
-
-#define CAN_PCLK 80000U // KHz, sourced from PLL1Q
-#define BITRATE_PRESCALER 2U // Valid from 250Kbps to 5Mbps with 80Mhz clock
-#define CAN_SP_NOMINAL 80U // 80% for both SAE J2284-4 and SAE J2284-5
-#define CAN_SP_DATA_2M 80U // 80% for SAE J2284-4
-#define CAN_SP_DATA_5M 75U // 75% for SAE J2284-5
-#define CAN_QUANTA(speed, prescaler) (CAN_PCLK / ((speed) / 10U * (prescaler)))
-#define CAN_SEG1(tq, sp) (((tq) * (sp) / 100U)- 1U)
-#define CAN_SEG2(tq, sp) ((tq) * (100U - (sp)) / 100U)
-#define FDCAN_OFFSET_W 846UL // words for each FDCAN module, equally
-#define FDCAN_RX_FIFO_0_EL_W_SIZE (FDCAN_RX_FIFO_0_EL_SIZE / 4UL)
-#define FDCAN_RX_FIFO_0_OFFSET 0UL
-#define FDCAN_TX_FIFO_OFFSET (FDCAN_RX_FIFO_0_OFFSET + (FDCAN_RX_FIFO_0_EL_CNT * FDCAN_RX_FIFO_0_EL_W_SIZE))
-#define CAN_NAME_FROM_CANIF(CAN_DEV) (((CAN_DEV)==FDCAN1) ? "FDCAN1" : (((CAN_DEV) == FDCAN2) ? "FDCAN2" : "FDCAN3"))
-#define CAN_NUM_FROM_CANIF(CAN_DEV) (((CAN_DEV)==FDCAN1) ? 0UL : (((CAN_DEV) == FDCAN2) ? 1UL : 2UL))
+#include "llfdcan_declarations.h"
 
 // kbps multiplied by 10
 const uint32_t speeds[SPEEDS_ARRAY_SIZE] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};

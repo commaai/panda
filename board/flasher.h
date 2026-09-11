@@ -1,14 +1,3 @@
-#include "board/config.h"
-#include "board/obj/gitversion.h"
-
-#include "board/main.h"
-#include "board/comms.h"
-#include "board/drivers/drivers.h"
-#include "opendbc/safety/declarations.h"
-#include "board/boards/boards.h"
-#include "board/sys/sys.h"
-#include "board/stm32h7/stm32h7.h"
-
 // from the linker script
 #define APP_START_ADDRESS 0x8020000U
 

@@ -1,6 +1,4 @@
-#include "board/drivers/drivers.h"
-#include "board/stm32h7/stm32h7.h"
-#include "board/boards/boards.h"
+#include "board/jungle/boards/board_declarations.h"
 
 #include "board/stm32h7/lladc.h"
 #include "board/jungle/boards/board_v2.h"

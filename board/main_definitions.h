@@ -1,5 +1,4 @@
-#include "board/main.h"
-#include "board/boards/boards.h"
+#include "main_declarations.h"
 
 // ********************* Globals **********************
 uint8_t hw_type = 0;

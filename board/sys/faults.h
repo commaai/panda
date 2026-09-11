@@ -1,4 +1,3 @@
-#include "board/drivers/drivers.h"
 #include "board/sys/sys.h"
 
 uint8_t fault_status = FAULT_STATUS_NONE;

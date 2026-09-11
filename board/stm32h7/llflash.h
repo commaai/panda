@@ -1,5 +1,3 @@
-#include "board/stm32h7/stm32h7.h"
-
 bool flash_is_locked(void) {
   return (FLASH->CR1 & FLASH_CR_LOCK);
 }

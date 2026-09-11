@@ -1,8 +1,6 @@
 #pragma once
 
-#include "board/drivers/drivers.h"
-#include "board/stm32h7/stm32h7.h"
-#include "board/boards/boards.h"
+#include "board_declarations.h"
 
 // ////////////////////////// //
 // Cuatro (STM32H7) + Harness //

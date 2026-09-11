@@ -1,6 +1,5 @@
 #pragma once
 
-#include "board/config.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include "board/body/bldc/bldc_defs.h"
@@ -52,5 +51,3 @@ struct board {
 // Ignition On
 #define OBDC_IGNITION_ON_PORT GPIOB
 #define OBDC_IGNITION_ON_PIN  11
-
-extern struct board board_body;

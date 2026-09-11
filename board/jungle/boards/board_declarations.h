@@ -1,7 +1,3 @@
-#pragma once
-
-#include "board/config.h"
-
 // ******************** Prototypes ********************
 typedef void (*board_init)(void);
 typedef bool (*board_get_button)(void);
@@ -54,9 +50,6 @@ struct board {
 #define SBU2 1U
 
 // ********************* Globals **********************
-extern uint8_t harness_orientation;
-extern uint8_t can_mode;
-extern uint8_t ignition;
-
-extern struct board board_v2;
-extern bool panda_power;
+uint8_t harness_orientation = HARNESS_ORIENTATION_NONE;
+uint8_t can_mode = CAN_MODE_NORMAL;
+uint8_t ignition = 0U;

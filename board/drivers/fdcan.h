@@ -1,11 +1,4 @@
-#include "board/config.h"
 #include "board/drivers/drivers.h"
-#include "board/stm32h7/stm32h7.h"
-#include "board/sys/sys.h"
-#include "opendbc/safety/declarations.h"
-#if defined(PANDA_BODY) && !defined(BOOTSTUB)
-#include "board/body/body.h"
-#endif
 
 FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT] = {FDCAN1, FDCAN2, FDCAN3};
 

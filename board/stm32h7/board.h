@@ -1,9 +1,7 @@
-#include "board/drivers/drivers.h"
-#include "board/stm32h7/stm32h7.h"
 // ///////////////////////////////////////////////////////////// //
 // Hardware abstraction layer for all different supported boards //
 // ///////////////////////////////////////////////////////////// //
-#include "board/boards/boards.h"
+#include "board/boards/board_declarations.h"
 #include "board/boards/unused_funcs.h"
 
 // ///// Board definition and detection ///// //
@@ -13,7 +11,6 @@
 #include "board/drivers/fan.h"
 #include "board/stm32h7/llfan.h"
 #include "board/stm32h7/sound.h"
-#include "board/stm32h7/lli2c.h"
 #include "board/drivers/fake_siren.h"
 #include "board/drivers/clock_source.h"
 #include "board/boards/red.h"

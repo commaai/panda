@@ -1,6 +1,4 @@
-#include "board/config.h"
 #include "board/drivers/drivers.h"
-#include "board/sys/sys.h"
 
 void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!

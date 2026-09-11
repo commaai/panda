@@ -1,7 +1,4 @@
-#include "board/config.h"
 #include "board/drivers/drivers.h"
-#include "board/sys/sys.h"
-#include "opendbc/safety/declarations.h"
 #include "opendbc/safety/ignition.h"
 
 uint32_t safety_tx_blocked = 0;
@@ -17,6 +14,7 @@ bool can_loopback = false;
 // ********************* instantiate queues *********************
 #define can_buffer(x, size) \
   static CANPacket_t elems_##x[size]; \
+  extern can_ring can_##x; \
   can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = (size), .elems = (CANPacket_t *)&(elems_##x) };
 
 #define CAN_RX_BUFFER_SIZE 4096U

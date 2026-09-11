@@ -1,8 +1,3 @@
-#include "board/config.h"
-#include "board/drivers/drivers.h"
-#include "board/boards/boards.h"
-#include "board/main.h"
-#include "opendbc/safety/declarations.h"
 #include "board/sys/sys.h"
 
 // WARNING: To stay in compliance with the SIL2 rules laid out in STM UM2331, we should never use any of the available hardware low power modes during safety function execution.
@@ -57,7 +52,7 @@ void set_power_save_state(bool enable) {
   }
 }
 
-void enter_stop_mode(void) {
+static void enter_stop_mode(void) {
   // set all GPIO to analog mode to reduce power, analog mode also disables pull resistors
   register_set(&(GPIOA->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
   register_set(&(GPIOB->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);

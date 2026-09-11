@@ -1,6 +1,3 @@
-#include "board/stm32h7/stm32h7.h"
-#include "board/drivers/drivers.h"
-
 // ********************* Bare interrupt handlers *********************
 // Interrupts for STM32H7x5
 

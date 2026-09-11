@@ -1,7 +1,4 @@
-#include "board/config.h"
 #include "board/drivers/drivers.h"
-#include "board/stm32h7/stm32h7.h"
-#include "board/boards/boards.h"
 
 struct fan_state_t fan_state;
 

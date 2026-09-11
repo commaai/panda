@@ -1,6 +1,5 @@
 #pragma once
 
-#include "board/boards/boards.h"
 void unused_set_ir_power(uint8_t percentage) {
   UNUSED(percentage);
 }

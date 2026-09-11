@@ -2,15 +2,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "board/config.h"
-
-#ifdef PANDA_JUNGLE
-#include "board/jungle/boards/boards.h"
-#elif defined(PANDA_BODY)
-#include "board/body/boards/boards.h"
-#else
-
-typedef struct harness_configuration harness_configuration;
 
 // ******************** Prototypes ********************
 typedef enum {
@@ -67,23 +58,3 @@ struct board {
 extern struct board board_tres;
 extern struct board board_cuatro;
 extern struct board board_red;
-
-uint32_t red_read_voltage_mV(void);
-void tres_set_can_mode(uint8_t mode);
-bool tres_read_som_gpio(void);
-
-void unused_set_ir_power(uint8_t percentage);
-void unused_set_fan_enabled(bool enabled);
-void unused_set_siren(bool enabled);
-uint32_t unused_read_current(void);
-void unused_set_bootkick(BootState state);
-bool unused_read_som_gpio(void);
-void unused_set_amp_enabled(bool enabled);
-#endif
-
-typedef struct board board;
-
-extern uint8_t hw_type;
-extern board *current_board;
-
-void detect_board_type(void);

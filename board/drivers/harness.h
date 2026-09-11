@@ -1,6 +1,4 @@
-#include "board/config.h"
 #include "board/drivers/drivers.h"
-#include "board/boards/boards.h"
 
 struct harness_t harness;
 

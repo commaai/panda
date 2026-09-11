@@ -1,5 +1,4 @@
-#include "board/stm32h7/stm32h7.h"
-#include "board/drivers/drivers.h"
+#pragma once
 
 // Digital temperature sensor (DTS)
 

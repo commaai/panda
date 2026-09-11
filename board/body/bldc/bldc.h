@@ -2,8 +2,7 @@
 #define BLDC_H
 
 #include "board/body/bldc/bldc_defs.h"
-#include "board/boards/boards.h"
-#include "board/body/body.h"
+#include "board/body/boards/board_declarations.h"
 
 #include <stdint.h>
 #include <stdbool.h>
