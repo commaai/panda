@@ -1,15 +1,3 @@
-def venv_run(String step_label, int timeout_mins, String cmd) {
-  timeout(time: timeout_mins, unit: 'MINUTES') {
-    sh script: """#!/usr/bin/env bash
-set -e
-source .venv/bin/activate
-scons board/obj
-${cmd}
-""", label: step_label
-  }
-}
-
-
 def phone(String ip, String step_label, String cmd) {
   withCredentials([file(credentialsId: 'id_rsa', variable: 'key_file')]) {
     def ssh_cmd = """
@@ -104,7 +92,14 @@ pipeline {
           steps {
             script {
               retry (3) {
-                venv_run("reset hardware", 3, "python3 ./tests/hitl/reset_jungles.py")
+                timeout(time: 3, unit: 'MINUTES') {
+                  sh script: """#!/usr/bin/env bash
+set -e
+source .venv/bin/activate
+scons board/obj
+python3 ./tests/hitl/reset_jungles.py
+""", label: "reset hardware"
+                }
               }
             }
           }
