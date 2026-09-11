@@ -286,7 +286,6 @@ void board_v2_init(void) {
 }
 
 board board_v2 = {
-  .avdd_mV = 3300U,
   .init = &board_v2_init,
   .led_GPIO = {GPIOE, GPIOE, GPIOE},
   .led_pin = {4, 3, 2},
