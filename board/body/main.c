@@ -2,6 +2,7 @@
 #include <stdbool.h>
 
 #include "board/config.h"
+#include "board/stm32h7/implementation.h"
 #include "board/drivers/led.h"
 #include "board/drivers/pwm.h"
 #include "board/drivers/usb.h"
