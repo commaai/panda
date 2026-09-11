@@ -90,8 +90,6 @@ pipeline {
         stage('Setup') {
           steps {
             timeout(time: 20, unit: 'MINUTES') {
-              // Older builds may have left root-owned files in the workspace.
-              sh 'find . -user root -exec sudo -n chown -h "$(id -u):$(id -g)" {} +'
               deleteDir()
               checkout scm
               sh 'PYTHONWARNINGS=default ./setup.sh'
@@ -102,7 +100,7 @@ pipeline {
           steps {
             script {
               retry (3) {
-                venv_run("reset hardware", 3, "sudo -n env PYTHONWARNINGS=error PYTHONDONTWRITEBYTECODE=1 .venv/bin/python3 ./tests/hitl/reset_jungles.py")
+                venv_run("reset hardware", 3, "python3 ./tests/hitl/reset_jungles.py")
               }
             }
           }
