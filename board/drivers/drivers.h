@@ -259,11 +259,8 @@ bool put_char(uart_ring *q, char elem);
 // ************************ High-level debug functions **********************
 void print(const char *a);
 void puth(unsigned int i);
-#if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
+#if defined(BOOTSTUB) || defined(DEBUG)
 static void puth4(unsigned int i);
-#endif
-#if defined(DEBUG_SPI) || defined(DEBUG_COMMS)
-static void hexdump(const void *a, int l);
 #endif
 
 #endif // STM32H7

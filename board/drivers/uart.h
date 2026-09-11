@@ -131,21 +131,8 @@ void puth(unsigned int i) {
   puthx(i, 8U);
 }
 
-#if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
+#if defined(BOOTSTUB) || defined(DEBUG)
 static void puth4(unsigned int i) {
   puthx(i, 4U);
-}
-#endif
-
-#if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG_COMMS)
-static void hexdump(const void *a, int l) {
-  if (a != NULL) {
-    for (int i=0; i < l; i++) {
-      if ((i != 0) && ((i & 0xf) == 0)) print("\n");
-      puthx(((const unsigned char*)a)[i], 2U);
-      print(" ");
-    }
-  }
-  print("\n");
 }
 #endif
