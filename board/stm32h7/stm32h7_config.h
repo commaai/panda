@@ -74,8 +74,6 @@ uart_ring uart_ring_som_debug;
   #include "board/stm32h7/lluart.h"
 #endif
 
-#include "board/stm32h7/lladc.h"
-
 #ifdef PANDA_JUNGLE
 #include "board/jungle/stm32h7/board.h"
 #elif defined(PANDA_BODY)

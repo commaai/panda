@@ -1,10 +1,10 @@
 #pragma once
 
-#include "board/declarations.h"
+#include "board/config.h"
+#include "board/body/body.h"
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "board/config.h"
 #include "board/body/boards/board_declarations.h"
 
 #define DOTSTAR_LED_COUNT 10U

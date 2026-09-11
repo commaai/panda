@@ -36,7 +36,7 @@ void get_provision_chunk(uint8_t *resp);
 
 #ifdef BOOTSTUB
 extern void *_app_start[];
-#else
+#elif !defined(PANDA_BODY)
 extern int _app_start[0xc000]; // First three application sectors
 #endif
 #ifdef PANDA_JUNGLE

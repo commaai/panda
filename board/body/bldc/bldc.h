@@ -1,13 +1,16 @@
 #ifndef BLDC_H
 #define BLDC_H
 
-#include "board/declarations.h"
+#include "board/config.h"
+#include "board/body/body.h"
 
 #include "board/body/bldc/bldc_defs.h"
 #include "board/body/boards/board_declarations.h"
 
 #include <stdint.h>
 #include <stdbool.h>
+
+#include "board/stm32h7/lladc.h"
 
 // Matlab includes and defines - from auto-code generation
 #include "BLDC_controller.h"           /* Model's header file */

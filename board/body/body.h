@@ -34,3 +34,7 @@ void dotstar_init(void);
 void dotstar_show(void);
 void dotstar_run_rainbow(uint32_t now_us);
 void dotstar_apply_breathe(dotstar_rgb_t color, uint32_t now_us, uint32_t cycle_us);
+
+#ifndef BOOTSTUB
+extern int _app_start[0xc000];
+#endif

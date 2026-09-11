@@ -1,6 +1,7 @@
 #pragma once
 
-#include "board/declarations.h"
+#include "board/config.h"
+#include "board/body/body.h"
 #include <stdbool.h>
 #include <stdint.h>
 
