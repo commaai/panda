@@ -114,7 +114,7 @@ python3 ./tests/hitl/reset_jungles.py
                   ["build", "scons"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["flash jungle", "cd board/jungle && ./flash.py --all"],
-                  ["test", "cd tests/hitl && python -m unittest -v 2*.py [5-9]*.py"],
+                  ["test", "cd tests/hitl && HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py"],
                 ])
               }
             }
@@ -126,7 +126,7 @@ python3 ./tests/hitl/reset_jungles.py
                   ["build", "scons"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["flash jungle", "cd board/jungle && ./flash.py --all"],
-                  ["test", "cd tests/hitl && python -m unittest -v 2*.py [5-9]*.py"],
+                  ["test", "cd tests/hitl && HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py"],
                 ])
               }
             }

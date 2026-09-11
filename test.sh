@@ -12,5 +12,4 @@ scons
 
 # *** lint + test ***
 ruff check .
-python -W error -m unittest discover -s tests/usbprotocol -v
-python -W error -m unittest discover -s tests/misra -v
+python -W error -m unittest discover -s tests -v

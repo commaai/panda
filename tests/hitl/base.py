@@ -51,6 +51,7 @@ def panda_test(**options):
   return decorate
 
 
+@unittest.skipUnless(os.environ.get("HITL") == "1", "hardware tests require HITL=1")
 class PandaTestCase(unittest.TestCase):
   panda_types = None
 
