@@ -1,5 +1,7 @@
 #pragma once
 
+#include "board/config.h"
+#include "board/body/body.h"
 #include "board/body/boards/board_declarations.h"
 
 void board_body_init(void) {

@@ -15,8 +15,6 @@
 #include "board/body/dotstar.h"
 #include "bldc/bldc.h"
 
-extern int _app_start[0xc000];
-
 #include "board/body/main_comms.h"
 
 static volatile uint32_t tick_count = 0U;

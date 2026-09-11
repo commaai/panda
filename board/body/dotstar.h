@@ -1,19 +1,14 @@
 #pragma once
 
+#include "board/config.h"
+#include "board/body/body.h"
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "board/config.h"
 #include "board/body/boards/board_declarations.h"
 
 #define DOTSTAR_LED_COUNT 10U
 #define DOTSTAR_GLOBAL_BRIGHTNESS_MAX 31U
-
-typedef struct {
-  uint8_t r;
-  uint8_t g;
-  uint8_t b;
-} dotstar_rgb_t;
 
 typedef struct {
   bool initialized;
@@ -74,7 +69,7 @@ static inline void dotstar_send_end_frame(uint16_t led_count) {
   }
 }
 
-static inline void dotstar_show(void) {
+void dotstar_show(void) {
   if (!dotstar_state.initialized) {
     return;
   }
@@ -93,7 +88,7 @@ static inline void dotstar_show(void) {
   dotstar_send_end_frame(DOTSTAR_LED_COUNT);
 }
 
-static inline void dotstar_init(void) {
+void dotstar_init(void) {
   set_gpio_pullup(DOTSTAR_CLK_PORT, DOTSTAR_CLK_PIN, PULL_NONE);
   set_gpio_output_type(DOTSTAR_CLK_PORT, DOTSTAR_CLK_PIN, OUTPUT_TYPE_PUSH_PULL);
   set_gpio_mode(DOTSTAR_CLK_PORT, DOTSTAR_CLK_PIN, MODE_OUTPUT);
@@ -161,7 +156,7 @@ static inline void dotstar_hue_to_rgb(uint16_t hue, uint8_t *r, uint8_t *g, uint
   }
 }
 
-static inline void dotstar_run_rainbow(uint32_t now_us) {
+void dotstar_run_rainbow(uint32_t now_us) {
   uint32_t brightness_phase = (now_us / 40000U) % 62U;
   uint8_t brightness = (brightness_phase <= 31U) ? (uint8_t)(brightness_phase + 1U) : (uint8_t)(62U - brightness_phase);
   if (brightness == 0U) {
@@ -178,7 +173,7 @@ static inline void dotstar_run_rainbow(uint32_t now_us) {
   }
 }
 
-static inline void dotstar_apply_breathe(dotstar_rgb_t color, uint32_t now_us, uint32_t cycle_us) {
+void dotstar_apply_breathe(dotstar_rgb_t color, uint32_t now_us, uint32_t cycle_us) {
   if (!dotstar_state.initialized) {
     return;
   }

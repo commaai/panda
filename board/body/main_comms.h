@@ -1,5 +1,8 @@
 #pragma once
 
+#include "board/config.h"
+#include "board/body/body.h"
+
 void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   UNUSED(data);
   UNUSED(len);
