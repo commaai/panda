@@ -304,7 +304,6 @@ int main(void) {
   REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK)
   tick_timer_init();
 
-  print("DEBUG ENABLED\n");
   // enable USB (right before interrupts or enum can fail!)
   usb_init();
 
