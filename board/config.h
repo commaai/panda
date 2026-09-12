@@ -3,7 +3,6 @@
 #include <stdbool.h>
 
 //#define DEBUG
-//#define DEBUG_FAULTS
 
 #define CAN_INIT_TIMEOUT_MS 500U
 #define USBPACKET_MAX_SIZE 0x40U
