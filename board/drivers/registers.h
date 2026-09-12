@@ -3,41 +3,26 @@
 #include "board/drivers/drivers.h"
 
 typedef struct reg {
-  volatile uint32_t *address;
   uint32_t value;
   uint32_t check_mask;
   bool logged_fault;
 } reg;
 
-#define CHECK_COLLISION(hash, addr) (((uint32_t) register_map[hash].address != 0U) && (register_map[hash].address != (addr)))
-
-static reg register_map[REGISTER_MAP_SIZE];
-
-// Hash spread in first and second iterations seems to be reasonable.
-// See: tests/development/register_hashmap_spread.py
-// Also, check the collision warnings in the debug output, and minimize those.
-static uint16_t hash_addr(uint32_t input){
-  return (((input >> 16U) ^ ((((input + 1U) & 0xFFFFU) * HASHING_PRIME) & 0xFFFFU)) & REGISTER_MAP_SIZE);
-}
+#define REGISTER_COUNT (sizeof(register_addresses) / sizeof(register_addresses[0]))
+static reg register_map[REGISTER_COUNT];
 
 // Do not put bits in the check mask that get changed by the hardware
 void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask){
   ENTER_CRITICAL()
-  // Set bits in register that are also in the mask
-  (*addr) = ((*addr) & (~mask)) | (val & mask);
-
-  // Add these values to the map
-  uint16_t hash = hash_addr((uint32_t) addr);
-  uint16_t tries = REGISTER_MAP_SIZE;
-  while(CHECK_COLLISION(hash, addr) && (tries > 0U)) { hash = hash_addr((uint32_t) hash); tries--;}
-  if (tries != 0U){
-    register_map[hash].address = addr;
-    register_map[hash].value = (register_map[hash].value & (~mask)) | (val & mask);
-    register_map[hash].check_mask |= mask;
+  uint32_t i = 0U;
+  while ((i < REGISTER_COUNT) && (register_addresses[i] != addr)) { i++; }
+  if (i < REGISTER_COUNT) {
+    // Set bits in register that are also in the mask
+    (*addr) = ((*addr) & (~mask)) | (val & mask);
+    register_map[i].value = (register_map[i].value & (~mask)) | (val & mask);
+    register_map[i].check_mask |= mask;
   } else {
-    #ifdef DEBUG_FAULTS
-      print("Hash collision: address 0x"); puth((uint32_t) addr); print("!\n");
-    #endif
+    assert_fatal(false, "Register missing from monitoring inventory\n");
   }
   EXIT_CRITICAL()
 }
@@ -56,12 +41,12 @@ void register_clear_bits(volatile uint32_t *addr, uint32_t val) {
 
 // To be called periodically
 void check_registers(void){
-  for(uint16_t i=0U; i<REGISTER_MAP_SIZE; i++){
-    if((uint32_t) register_map[i].address != 0U){
+  for(uint16_t i=0U; i<REGISTER_COUNT; i++){
+    if(register_map[i].check_mask != 0U){
       ENTER_CRITICAL()
-      if((*(register_map[i].address) & register_map[i].check_mask) != (register_map[i].value & register_map[i].check_mask)){
+      if((*(register_addresses[i]) & register_map[i].check_mask) != (register_map[i].value & register_map[i].check_mask)){
         if(!register_map[i].logged_fault){
-          print("Register 0x"); puth((uint32_t) register_map[i].address); print(" divergent! Map: 0x"); puth(register_map[i].value); print(" Reg: 0x"); puth(*(register_map[i].address)); print("\n");
+          print("Register 0x"); puth((uint32_t) register_addresses[i]); print(" divergent! Map: 0x"); puth(register_map[i].value); print(" Reg: 0x"); puth(*(register_addresses[i])); print("\n");
           register_map[i].logged_fault = true;
         }
         fault_occurred(FAULT_REGISTER_DIVERGENT);
@@ -72,8 +57,9 @@ void check_registers(void){
 }
 
 void init_registers(void) {
-  for(uint16_t i=0U; i<REGISTER_MAP_SIZE; i++){
-    register_map[i].address = (volatile uint32_t *) 0U;
+  for(uint16_t i=0U; i<REGISTER_COUNT; i++){
+    register_map[i].value = 0U;
     register_map[i].check_mask = 0U;
+    register_map[i].logged_fault = false;
   }
 }

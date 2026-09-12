@@ -59,6 +59,7 @@ separate IRQs for RX and TX.
 #include "board/sys/faults.h"
 #include "board/utils.h"
 
+#include "board/stm32h7/registers.h"
 #include "board/drivers/registers.h"
 #include "board/drivers/interrupts.h"
 

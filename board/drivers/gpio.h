@@ -17,10 +17,7 @@ void set_gpio_mode(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
   if (pin < GPIO_PIN_COUNT) {
     ENTER_CRITICAL();
     uint32_t shift = pin * 2U;
-    uint32_t tmp = GPIO->MODER;
-    tmp &= ~(3UL << shift);
-    tmp |= (mode << shift);
-    register_set(&(GPIO->MODER), tmp, 0xFFFFFFFFU);
+    register_set(&(GPIO->MODER), mode << shift, 3UL << shift);
     EXIT_CRITICAL();
   }
 }
@@ -48,10 +45,8 @@ void set_gpio_output_type(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int out
 
 void set_gpio_alternate(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
   ENTER_CRITICAL();
-  uint32_t tmp = GPIO->AFR[pin >> 3U];
-  tmp &= ~(0xFU << ((pin & 7U) * 4U));
-  tmp |= mode << ((pin & 7U) * 4U);
-  register_set(&(GPIO->AFR[pin >> 3]), tmp, 0xFFFFFFFFU);
+  uint32_t shift = (pin & 7U) * 4U;
+  register_set(&(GPIO->AFR[pin >> 3U]), mode << shift, 0xFUL << shift);
   set_gpio_mode(GPIO, pin, MODE_ALTERNATE);
   EXIT_CRITICAL();
 }
@@ -60,10 +55,7 @@ void set_gpio_pullup(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
   if (pin < GPIO_PIN_COUNT) {
     ENTER_CRITICAL();
     uint32_t shift = pin * 2U;
-    uint32_t tmp = GPIO->PUPDR;
-    tmp &= ~(3UL << shift);
-    tmp |= (mode << shift);
-    register_set(&(GPIO->PUPDR), tmp, 0xFFFFFFFFU);
+    register_set(&(GPIO->PUPDR), mode << shift, 3UL << shift);
     EXIT_CRITICAL();
   }
 }

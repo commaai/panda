@@ -184,10 +184,6 @@ void init_interrupts(bool check_rate_limit);
 
 // ******************** registers ********************
 
-// 10 bit hash with 23 as a prime
-#define REGISTER_MAP_SIZE 0x3FFU
-#define HASHING_PRIME 23U
-
 // Do not put bits in the check mask that get changed by the hardware
 void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask);
 // Set individual bits. Also add them to the check_mask.
