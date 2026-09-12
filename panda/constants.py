@@ -2,10 +2,11 @@ import os
 import enum
 import hashlib
 from typing import NamedTuple
-from . import firmware
 
 BASEDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
-FIRMWARE_PATH = os.path.dirname(os.path.realpath(firmware.__file__))
+FIRMWARE_PATH = os.path.join(BASEDIR, "firmware")
+if not os.path.isfile(os.path.join(FIRMWARE_PATH, "health.h")):
+  FIRMWARE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "firmware")
 FW_PATH = os.path.join(FIRMWARE_PATH, "obj/")
 
 def compute_version_hash(filepath):
