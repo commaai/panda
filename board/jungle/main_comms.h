@@ -34,7 +34,7 @@ int get_jungle_health_pkt(void *dat) {
   return sizeof(*health);
 }
 
-// send on serial, first byte to select the ring
+// Endpoint 2 is only used by the bootstub for flashing.
 void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   UNUSED(data);
   UNUSED(len);
@@ -83,7 +83,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xb6: read debug logs
     case 0xb6:
-      while ((resp_len < MIN(req->length, USBPACKET_MAX_SIZE)) && debug_get_char((char*)&resp[resp_len])) {
+      while ((resp_len < req->length) && (resp_len < USBPACKET_MAX_SIZE) && debug_get_char((char*)&resp[resp_len])) {
         ++resp_len;
       }
       break;

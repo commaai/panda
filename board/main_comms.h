@@ -53,23 +53,14 @@ static int get_health_pkt(void *dat) {
   return sizeof(*health);
 }
 
-// send on serial, first byte to select the ring
+// Endpoint 2 is only used by the bootstub for flashing.
 void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
-  uart_ring *ur = get_ring_by_number(data[0]);
-  if ((len != 0U) && (ur != NULL)) {
-    if ((data[0] < 2U) || (data[0] >= 4U)) {
-      for (uint32_t i = 1; i < len; i++) {
-        while (!put_char(ur, data[i])) {
-          // wait
-        }
-      }
-    }
-  }
+  UNUSED(data);
+  UNUSED(len);
 }
 
 int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   unsigned int resp_len = 0;
-  uart_ring *ur = NULL;
   uint32_t time;
 
 #ifdef DEBUG_COMMS
@@ -113,7 +104,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     #endif
     // **** 0xb6: read debug logs
     case 0xb6:
-      while ((resp_len < MIN(req->length, USBPACKET_MAX_SIZE)) && debug_get_char((char*)&resp[resp_len])) {
+      while ((resp_len < req->length) && (resp_len < USBPACKET_MAX_SIZE) && debug_get_char((char*)&resp[resp_len])) {
         ++resp_len;
       }
       break;
@@ -258,20 +249,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       // you can only set this if you are in a non car safety mode
       if (!is_car_safety_mode(current_safety_mode)) {
         alternative_experience = req->param1;
-      }
-      break;
-    // **** 0xe0: UART read
-    case 0xe0:
-      ur = get_ring_by_number(req->param1);
-      if (ur == NULL) {
-        break;
-      }
-
-      // read
-      uint16_t req_length = MIN(req->length, USBPACKET_MAX_SIZE);
-      while ((resp_len < req_length) &&
-                         get_char(ur, (char*)&resp[resp_len])) {
-        ++resp_len;
       }
       break;
     // **** 0xe5: set CAN loopback (for testing)

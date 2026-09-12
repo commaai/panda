@@ -228,33 +228,6 @@ void spi_init(void);
 void spi_rx_done(void);
 void spi_tx_done(bool reset);
 
-// ******************** uart ********************
-#ifdef STM32H7
-
-// ***************************** Definitions *****************************
-#define FIFO_SIZE_INT 0x400U
-
-typedef struct uart_ring {
-  volatile uint16_t w_ptr_tx;
-  volatile uint16_t r_ptr_tx;
-  uint8_t *elems_tx;
-  uint32_t tx_fifo_size;
-  volatile uint16_t w_ptr_rx;
-  volatile uint16_t r_ptr_rx;
-  uint8_t *elems_rx;
-  uint32_t rx_fifo_size;
-  USART_TypeDef *uart;
-  bool overwrite;
-} uart_ring;
-
-// ***************************** Function prototypes *****************************
-void uart_tx_ring(uart_ring *q);
-uart_ring *get_ring_by_number(int a);
-// ************************* Low-level buffer functions *************************
-bool get_char(uart_ring *q, char *elem);
-bool put_char(uart_ring *q, char elem);
-#endif // STM32H7
-
 // ******************** debug ********************
 bool debug_get_char(char *elem);
 void print(const char *a);

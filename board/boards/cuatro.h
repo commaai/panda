@@ -77,10 +77,6 @@ static void cuatro_init(void) {
   // SOM bootkick + reset lines
   cuatro_set_bootkick(BOOT_BOOTKICK);
 
-  // SOM debugging UART
-  gpio_uart7_init();
-  uart_init(&uart_ring_som_debug, 115200);
-
   // fan setup
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
   register_set_bits(&(GPIOC->OTYPER), GPIO_OTYPER_OT8); // open drain

@@ -121,7 +121,6 @@ ensure_health_packet_version = partial(ensure_version, "health", "HEALTH_PACKET_
 
 class Panda:
 
-  SERIAL_SOM_DEBUG = 4
 
   USB_VIDS = (0xbbaa, 0x3801)  # 0x3801 is comma's registered VID
   USB_PIDS = (0xddee, 0xddcc)
@@ -749,25 +748,6 @@ class Panda:
         break
       ret.extend(dat)
     return bytes(ret)
-
-  # ******************* serial *******************
-
-  def serial_read(self, port_number, maxlen=1024):
-    ret = b''
-    while 1:
-      r = bytes(self._handle.controlRead(Panda.REQUEST_IN, 0xe0, port_number, 0, 0x40))
-      if len(r) == 0 or len(ret) >= maxlen:
-        break
-      ret += r
-    return ret
-
-  def serial_write(self, port_number, ln):
-    ret = 0
-    if isinstance(ln, str):
-      ln = bytes(ln, 'utf-8')
-    for i in range(0, len(ln), 0x20):
-      ret += self._handle.bulkWrite(2, struct.pack("B", port_number) + ln[i:i + 0x20])
-    return ret
 
   def send_heartbeat(self, engaged=True):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf3, engaged, 0, b'')
