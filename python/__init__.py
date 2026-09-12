@@ -696,16 +696,6 @@ class Panda:
   def set_canfd_auto(self, bus, auto):
       self._handle.controlWrite(Panda.REQUEST_OUT, 0xe8, bus, int(auto), b'')
 
-  def set_uart_baud(self, uart, rate):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe4, uart, int(rate / 300), b'')
-
-  def set_uart_parity(self, uart, parity):
-    # parity, 0=off, 1=even, 2=odd
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe2, uart, parity, b'')
-
-  def set_uart_callback(self, uart, install):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe3, uart, int(install), b'')
-
   # ******************* can *******************
 
   # The panda will NAK CAN writes when there is CAN congestion.

@@ -19,14 +19,6 @@ void gpio_spi_init(void) {
   register_set_bits(&(GPIOE->OSPEEDR), GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12 | GPIO_OSPEEDR_OSPEED13 | GPIO_OSPEEDR_OSPEED14);
 }
 
-#ifdef BOOTSTUB
-void gpio_usart2_init(void) {
-  // A2,A3: USART 2 for debugging
-  set_gpio_alternate(GPIOA, 2, GPIO_AF7_USART2);
-  set_gpio_alternate(GPIOA, 3, GPIO_AF7_USART2);
-}
-#endif
-
 void gpio_uart7_init(void) {
   // E7,E8: UART 7 for debugging
   set_gpio_alternate(GPIOE, 7, GPIO_AF7_UART7);

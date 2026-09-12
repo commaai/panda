@@ -33,10 +33,6 @@ if __name__ == "__main__":
         time.sleep(1)
         continue
 
-      if os.getenv("BAUD") is not None:
-        for panda in pandas:
-          panda.set_uart_baud(port_number, int(os.getenv("BAUD")))  # type: ignore
-
       while True:
         for i, panda in enumerate(pandas):
           while True:
