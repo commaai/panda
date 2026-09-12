@@ -63,8 +63,6 @@ static void hexdump(const void *a, int l) {
   print("\n");
 }
 
-#if defined(BOOTSTUB) || defined(DEBUG)
-static void puth4(unsigned int i) {
+static inline void puth4(unsigned int i) {
   puthx(i, 4U);
 }
-#endif

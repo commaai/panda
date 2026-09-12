@@ -74,21 +74,7 @@ bool can_push(can_ring *q, const CANPacket_t *elem) {
   }
   EXIT_CRITICAL();
   if (!ret) {
-    #ifdef DEBUG
-      print("can_push to ");
-      if (q == &can_rx_q) {
-        print("can_rx_q");
-      } else if (q == &can_tx1_q) {
-        print("can_tx1_q");
-      } else if (q == &can_tx2_q) {
-        print("can_tx2_q");
-      } else if (q == &can_tx3_q) {
-        print("can_tx3_q");
-      } else {
-        print("unknown");
-      }
-      print(" failed!\n");
-    #endif
+    print("can_push failed!\n");
   }
   return ret;
 }

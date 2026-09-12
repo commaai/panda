@@ -233,9 +233,7 @@ bool debug_get_char(char *elem);
 void print(const char *a);
 void puth(unsigned int i);
 static void hexdump(const void *a, int l);
-#if defined(BOOTSTUB) || defined(DEBUG)
-static void puth4(unsigned int i);
-#endif
+static inline void puth4(unsigned int i);
 
 // ******************** usb ********************
 

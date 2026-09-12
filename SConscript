@@ -19,9 +19,6 @@ else:
   cert_fn = File("./board/certs/debug").srcnode().relpath
   common_flags += ["-DALLOW_DEBUG"]
 
-  if os.getenv("DEBUG"):
-    common_flags += ["-DDEBUG"]
-
 def objcopy(source, target, env, for_signature):
     return '$OBJCOPY -O binary %s %s' % (source[0], target[0])
 

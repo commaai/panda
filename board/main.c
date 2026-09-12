@@ -143,14 +143,6 @@ static void tick_handler(void) {
 
     // decimated to 1Hz
     if (loop_counter == 0U) {
-      #ifdef DEBUG
-        print("** blink ");
-        print("rx:"); puth4(can_rx_q.r_ptr); print("-"); puth4(can_rx_q.w_ptr); print("  ");
-        print("tx1:"); puth4(can_tx1_q.r_ptr); print("-"); puth4(can_tx1_q.w_ptr); print("  ");
-        print("tx2:"); puth4(can_tx2_q.r_ptr); print("-"); puth4(can_tx2_q.w_ptr); print("  ");
-        print("tx3:"); puth4(can_tx3_q.r_ptr); print("-"); puth4(can_tx3_q.w_ptr); print("\n");
-      #endif
-
       // set green LED to be controls allowed
       led_set(LED_GREEN, controls_allowed);
 
@@ -312,9 +304,7 @@ int main(void) {
   REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK)
   tick_timer_init();
 
-#ifdef DEBUG
   print("DEBUG ENABLED\n");
-#endif
   // enable USB (right before interrupts or enum can fail!)
   usb_init();
 
