@@ -113,9 +113,6 @@ void peripherals_init(void) {
   RCC->APB1LENR |= RCC_APB1LENR_TIM12EN;  // slow loop
   RCC->APB1LENR |= RCC_APB1LENR_TIM5EN; // sound trigger timer
 
-#ifdef PANDA_JUNGLE
-  RCC->AHB3ENR |= RCC_AHB3ENR_SDMMC1EN; // SDMMC
-#endif
 }
 
 void enable_interrupt_timer(void) {

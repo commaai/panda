@@ -25,7 +25,6 @@ typedef struct {
 typedef struct {
   uint8_t bus_lookup;
   uint8_t can_num_lookup;
-  int8_t forwarding_bus;
   uint32_t can_speed;
   uint32_t can_data_speed;
   bool canfd_auto;
@@ -71,9 +70,6 @@ extern bus_config_t bus_config[PANDA_CAN_CNT];
 
 void can_init_all(void);
 void can_set_orientation(bool flipped);
-#ifdef PANDA_JUNGLE
-void can_set_forwarding(uint8_t from, uint8_t to);
-#endif
 bool can_tx_check_min_slots_free(uint32_t min);
 void can_set_checksum(CANPacket_t *packet);
 bool can_check_checksum(CANPacket_t *packet);

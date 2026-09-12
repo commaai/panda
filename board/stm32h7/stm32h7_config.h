@@ -71,9 +71,7 @@ separate IRQs for RX and TX.
   #include "board/drivers/debug.h"
 #endif
 
-#ifdef PANDA_JUNGLE
-#include "board/jungle/stm32h7/board.h"
-#elif defined(PANDA_BODY)
+#ifdef PANDA_BODY
 #include "board/body/stm32h7/board.h"
 #else
 #include "board/stm32h7/board.h"

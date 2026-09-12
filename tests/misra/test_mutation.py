@@ -14,7 +14,6 @@ ROOT = os.path.join(HERE, "../../")
 # skip mutating these paths
 IGNORED_PATHS = (
   'board/obj',
-  'board/jungle',
   'board/body',
   'board/stm32h7/inc',
   'board/fake_stm.h',

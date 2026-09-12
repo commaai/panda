@@ -161,18 +161,11 @@ def version_hash(path):
   with open(path, "rb") as f:
     # Normalize line endings on Windows
     return int.from_bytes(hashlib.sha256(f.read().replace(b'\r', b'')).digest()[:4], 'little')
-hh, ch, jh = version_hash("board/health.h"), version_hash(os.path.join(opendbc.INCLUDE_PATH, "opendbc/safety/can.h")), version_hash("board/jungle/jungle_health.h")
-common_flags += [f"-DHEALTH_PACKET_VERSION=0x{hh:08X}U", f"-DCAN_PACKET_VERSION_HASH=0x{ch:08X}U",
-                 f"-DJUNGLE_HEALTH_PACKET_VERSION=0x{jh:08X}U"]
+hh, ch = version_hash("board/health.h"), version_hash(os.path.join(opendbc.INCLUDE_PATH, "opendbc/safety/can.h"))
+common_flags += [f"-DHEALTH_PACKET_VERSION=0x{hh:08X}U", f"-DCAN_PACKET_VERSION_HASH=0x{ch:08X}U"]
 
 # panda fw
 build_project("panda_h7", base_project_h7, "./board/main.c", [])
-
-# panda jungle fw
-flags = [
-  "-DPANDA_JUNGLE",
-]
-build_project("panda_jungle_h7", base_project_h7, "./board/jungle/main.c", flags)
 
 # body fw
 build_project("body_h7", base_project_h7, "./board/body/main.c", ["-DPANDA_BODY"])
