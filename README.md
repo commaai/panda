@@ -76,13 +76,6 @@ EOF
 sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 
-HITL tests use preflashed Panda Jungle fixtures through `panda.PandaJungle`. Jungle firmware is not included in this repository.
-On Linux, allow access to the fixtures with this udev rule:
-
-```
-SUBSYSTEM=="usb", ATTRS{idVendor}=="3801", ATTRS{idProduct}=="ddcf", MODE="0666"
-```
-
 ## Licensing
 
 panda software is released under the MIT license unless otherwise specified.

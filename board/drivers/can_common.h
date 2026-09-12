@@ -134,7 +134,6 @@ void can_set_orientation(bool flipped) {
   bus_config[2].can_num_lookup = flipped ? 0U : 2U;
 }
 
-
 bool can_tx_check_min_slots_free(uint32_t min) {
   return
     (can_slots_empty(&can_tx1_q) >= min) &&
