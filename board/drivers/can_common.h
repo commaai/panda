@@ -114,9 +114,9 @@ void can_clear(can_ring *q) {
 // Helpers
 // Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
 bus_config_t bus_config[PANDA_CAN_CNT] = {
-  { .bus_lookup = 0U, .can_num_lookup = 0U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_auto = false, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
-  { .bus_lookup = 1U, .can_num_lookup = 1U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_auto = false, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
-  { .bus_lookup = 2U, .can_num_lookup = 2U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_auto = false, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
+  { .bus_lookup = 0U, .can_num_lookup = 0U, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_auto = false, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
+  { .bus_lookup = 1U, .can_num_lookup = 1U, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_auto = false, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
+  { .bus_lookup = 2U, .can_num_lookup = 2U, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_auto = false, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
 };
 
 void can_init_all(void) {
@@ -133,12 +133,6 @@ void can_set_orientation(bool flipped) {
   bus_config[2].bus_lookup = flipped ? 0U : 2U;
   bus_config[2].can_num_lookup = flipped ? 0U : 2U;
 }
-
-#ifdef PANDA_JUNGLE
-void can_set_forwarding(uint8_t from, uint8_t to) {
-  bus_config[from].forwarding_bus = to;
-}
-#endif
 
 bool can_tx_check_min_slots_free(uint32_t min) {
   return

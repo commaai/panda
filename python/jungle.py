@@ -1,13 +1,8 @@
-# python library to interface with panda
-import os
+# Python interface for the preflashed Jungle fixtures used by HITL tests.
 import struct
 from functools import wraps
 
-from panda import Panda, PandaDFU
-from panda.python.constants import McuType, compute_version_hash
-
-BASEDIR = os.path.dirname(os.path.realpath(__file__))
-FW_PATH = os.path.join(BASEDIR, "../obj/")
+from panda import Panda
 
 
 def ensure_jungle_health_packet_version(fn):
@@ -15,19 +10,9 @@ def ensure_jungle_health_packet_version(fn):
   def wrapper(self, *args, **kwargs):
     if self.health_version != self.HEALTH_PACKET_VERSION:
       raise RuntimeError(f"Jungle firmware ({self.health_version}) doesn't match the \
-                           library's health packet version ({self.HEALTH_PACKET_VERSION}). \
-                           Reflash jungle.")
+                           library's health packet version ({self.HEALTH_PACKET_VERSION}).")
     return fn(self, *args, **kwargs)
   return wrapper
-
-
-class PandaJungleDFU(PandaDFU):
-  def recover(self):
-    fn = os.path.join(FW_PATH, self._mcu_type.config.bootstub_fn.replace("panda", "panda_jungle"))
-    with open(fn, "rb") as f:
-      code = f.read()
-    self.program_bootstub(code)
-    self.reset()
 
 
 class PandaJungle(Panda):
@@ -39,7 +24,8 @@ class PandaJungle(Panda):
   H7_DEVICES = [HW_TYPE_V2, ]
   SUPPORTED_DEVICES = H7_DEVICES
 
-  HEALTH_PACKET_VERSION = compute_version_hash(os.path.join(BASEDIR, "jungle_health.h"))
+  # Frozen protocol hash of the health packet in the installed Jungle firmware.
+  HEALTH_PACKET_VERSION = 0xDD322770
   HEALTH_STRUCT = struct.Struct("<IffffffHHHHHHHHHHHH")
 
   HARNESS_ORIENTATION_NONE = 0
@@ -51,32 +37,13 @@ class PandaJungle(Panda):
     return None, None, None, None
 
   def flash(self, fn=None, code=None, reconnect=True):
-    if not fn:
-      fn = os.path.join(FW_PATH, McuType.H7.config.app_fn.replace("panda", "panda_jungle"))
-    super().flash(fn=fn, code=code, reconnect=reconnect)
+    raise NotImplementedError("Jungle firmware flashing is no longer supported")
 
   def recover(self, timeout: int | None = 60, reset: bool = True) -> bool:
-    dfu_serial = self.get_dfu_serial()
-
-    if reset:
-      self.reset(enter_bootstub=True)
-      self.reset(enter_bootloader=True)
-
-    if not self.wait_for_dfu(dfu_serial, timeout=timeout):
-      return False
-
-    dfu = PandaJungleDFU(dfu_serial)
-    dfu.recover()
-
-    # reflash after recover
-    self.connect(True, True)
-    self.flash()
-    return True
+    raise NotImplementedError("Jungle firmware recovery is no longer supported")
 
   def up_to_date(self, fn=None) -> bool:
-    if fn is None:
-      fn = os.path.join(FW_PATH, McuType.H7.config.app_fn.replace("panda", "panda_jungle"))
-    return super().up_to_date(fn=fn)
+    raise NotImplementedError("Jungle firmware is no longer distributed")
 
   # ******************* health *******************
 
@@ -119,9 +86,6 @@ class PandaJungle(Panda):
   def set_panda_power(self, enabled):
     self._handle.controlWrite(PandaJungle.REQUEST_OUT, 0xa0, int(enabled), 0, b'')
 
-  def set_panda_individual_power(self, port, enabled):
-    self._handle.controlWrite(PandaJungle.REQUEST_OUT, 0xa3, int(port), int(enabled), b'')
-
   def set_harness_orientation(self, mode):
     self._handle.controlWrite(PandaJungle.REQUEST_OUT, 0xa1, int(mode), 0, b'')
 
@@ -130,22 +94,3 @@ class PandaJungle(Panda):
 
   def set_can_silent(self, silent):
     self._handle.controlWrite(PandaJungle.REQUEST_OUT, 0xf5, int(silent), 0, b'')
-
-  def set_generated_can(self, enabled):
-    self._handle.controlWrite(PandaJungle.REQUEST_OUT, 0xa4, int(enabled), 0, b'')
-
-  # ******************* serial *******************
-
-  def debug_read(self):
-    ret = []
-    while 1:
-      lret = bytes(self._handle.controlRead(PandaJungle.REQUEST_IN, 0xe0, 0, 0, 0x40))
-      if len(lret) == 0:
-        break
-      ret.append(lret)
-    return b''.join(ret)
-
-  # ******************* header pins *******************
-
-  def set_header_pin(self, pin_num, enabled):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, int(pin_num), int(enabled), b'')

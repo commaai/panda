@@ -195,12 +195,9 @@ static void can_rx(uint8_t can_number) {
     }
     can_set_checksum(&to_push);
 
-    // forwarding (panda only)
+    // forwarding
     int bus_fwd_num = safety_fwd_hook(bus_number, to_push.addr);
-    if (bus_fwd_num < 0) {
-      bus_fwd_num = bus_config[can_number].forwarding_bus;
-    }
-    if (bus_fwd_num != -1) {
+    if (bus_fwd_num >= 0) {
       CANPacket_t to_send;
 
       to_send.fd = to_push.fd;

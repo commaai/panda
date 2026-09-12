@@ -76,8 +76,6 @@ EOF
 sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 
-The panda jungle uses different udev rules. See [the repo](https://github.com/commaai/panda_jungle#udev-rules) for instructions.
-
 ## Licensing
 
 panda software is released under the MIT license unless otherwise specified.
