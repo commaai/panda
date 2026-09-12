@@ -1,7 +1,6 @@
 import binascii
 import ctypes
 import os
-import math
 import time
 import struct
 import threading
@@ -9,36 +8,40 @@ from contextlib import contextmanager
 from functools import reduce
 
 from .base import BaseHandle, BaseSTBootloaderHandle, TIMEOUT
-from .constants import McuType, MCU_TYPE_BY_IDCODE, USBPACKET_MAX_SIZE
+from .constants import McuType, MCU_TYPE_BY_IDCODE
 from .utils import logger
 
 # Constants
 SYNC = 0x5A
-HACK = 0x79
-DACK = 0x85
+ACK = 0x85
+BUSY = 0x79
+FRAME_SIZE = 256
+MAX_PAYLOAD = 248  # a multiple of four for bootstub flash writes
 NACK = 0x1F
-CHECKSUM_START = 0xAB
+VERSION_ENDPOINT = 0xFF
 
 MIN_ACK_TIMEOUT_MS = 100
 MAX_XFER_RETRY_COUNT = 5
 
-SPI_BUF_SIZE = 4096  # from panda/board/drivers/spi.h
-XFER_SIZE = SPI_BUF_SIZE - 0x40 # give some room for SPI protocol overhead
-
 DEV_PATH = "/dev/spidev0.0"
 
 
-def crc8(data):
-  crc = 0xFF    # standard init value
-  poly = 0xD5   # standard crc8: x8+x7+x6+x4+x2+1
-  size = len(data)
-  for i in range(size - 1, -1, -1):
-    crc ^= data[i]
+def _crc8_table():
+  table = []
+  for crc in range(256):
     for _ in range(8):
-      if ((crc & 0x80) != 0):
-        crc = ((crc << 1) ^ poly) & 0xFF
-      else:
-        crc <<= 1
+      crc = ((crc << 1) ^ (0xD5 if crc & 0x80 else 0)) & 0xFF
+    table.append(crc)
+  return bytes(table)
+
+
+CRC8_TABLE = _crc8_table()
+
+
+def crc8(data):
+  crc = 0xFF
+  for value in reversed(data):
+    crc = CRC8_TABLE[crc ^ value]
   return crc
 
 
@@ -52,6 +55,9 @@ class PandaSpiUnavailable(PandaSpiException):
   pass
 
 class PandaSpiNackResponse(PandaSpiException):
+  pass
+
+class PandaSpiBusy(PandaSpiNackResponse):
   pass
 
 class PandaSpiMissingAck(PandaSpiException):
@@ -123,16 +129,8 @@ class SpiDevice:
       finally:
         self._flock(self._fd, self._lock_un)
 
-  def fileno(self) -> int:
-    return self._fd
-
   def close(self):
     pass  # Connections are shared and cached by speed.
-
-  @classmethod
-  def _check_length(cls, length: int):
-    if not 0 < length <= cls.MAX_TRANSFER_SIZE:
-      raise ValueError(f"SPI transfer length must be between 1 and {cls.MAX_TRANSFER_SIZE}")
 
   def xfer2(self, data) -> memoryview:
     length = len(data)
@@ -148,91 +146,55 @@ class SpiDevice:
   def xfer(self, data) -> bytes:
     return bytes(self.xfer2(data))
 
-  def readbytes(self, length: int) -> bytes:
-    self._check_length(length)
-    data = os.read(self.fileno(), length)
-    if len(data) != length:
-      raise OSError("Short SPI read")
-    return data
-
-  def writebytes(self, data):
-    data = bytes(data)
-    self._check_length(len(data))
-    if os.write(self.fileno(), data) != len(data):
-      raise OSError("Short SPI write")
-
 class PandaSpiHandle(BaseHandle):
   """
   A class that mimics a libusb1 handle for panda SPI communications.
   """
 
-  PROTOCOL_VERSION = 2
+  PROTOCOL_VERSION = 4
   HEADER = struct.Struct("<BBHH")
 
   def __init__(self) -> None:
     self.dev = SpiDevice()
     self.no_retry = "NO_RETRY" in os.environ
 
-  # helpers
-  def _calc_checksum(self, data: bytes) -> int:
-    cksum = CHECKSUM_START
-    for b in data:
-      cksum ^= b
-    return cksum
+  def _transfer_spidev(self, spi, endpoint: int, data, timeout: int, max_rx_len: int = MAX_PAYLOAD, expect_disconnect: bool = False) -> bytes:
+    if len(data) > MAX_PAYLOAD:
+      raise ValueError(f"SPI payload exceeds {MAX_PAYLOAD} bytes")
+    max_rx_len = min(MAX_PAYLOAD, max_rx_len)
+    packet = bytearray(FRAME_SIZE)
+    self.HEADER.pack_into(packet, 0, SYNC, endpoint, len(data), max_rx_len)
+    packet[self.HEADER.size:self.HEADER.size + len(data)] = data
+    packet[-1] = crc8(packet[:-1])
+    spi.xfer2(packet)
+    if expect_disconnect:
+      return b""
 
-  def _wait_for_ack(self, spi, ack_val: int, timeout: int, tx: int, length: int = 1) -> bytes:
-    timeout_s = max(MIN_ACK_TIMEOUT_MS, timeout) * 1e-3
-
-    start = time.monotonic()
-    while (timeout == 0) or ((time.monotonic() - start) < timeout_s):
-      dat = spi.xfer2([tx, ] * length)
-      if dat[0] == ack_val:
-        return bytes(dat)
-      elif dat[0] == NACK:
+    deadline = time.monotonic() + max(MIN_ACK_TIMEOUT_MS, timeout) * 1e-3
+    while timeout == 0 or time.monotonic() < deadline:
+      reply = spi.xfer2(bytes(FRAME_SIZE))
+      if reply[0] not in (ACK, NACK, BUSY):
+        continue
+      if crc8(reply[:-1]) != reply[-1]:
+        raise PandaSpiBadChecksum
+      if reply[0] == BUSY:
+        raise PandaSpiBusy
+      if reply[0] == NACK:
         raise PandaSpiNackResponse
-
+      length = struct.unpack_from("<H", reply, 1)[0]
+      if length > max_rx_len:
+        raise PandaSpiException(f"response length greater than max ({max_rx_len} {length})")
+      return bytes(reply[3:3 + length])
     raise PandaSpiMissingAck
 
-  def _transfer_spidev(self, spi, endpoint: int, data, timeout: int, max_rx_len: int = 1000, expect_disconnect: bool = False) -> bytes:
-    max_rx_len = max(USBPACKET_MAX_SIZE, max_rx_len)
+  def _resync(self, spi):
+    # Clock out a pending response, or provoke and consume an idle NACK.
+    for _ in range(5):
+      reply = spi.xfer2(bytes(FRAME_SIZE))
+      if reply[0] in (ACK, NACK, BUSY) and crc8(reply[:-1]) == reply[-1]:
+        return
 
-    logger.debug("- send header")
-    packet = self.HEADER.pack(SYNC, endpoint, len(data), max_rx_len)
-    packet += bytes([self._calc_checksum(packet), ])
-    spi.xfer2(packet)
-
-    logger.debug("- waiting for header ACK")
-    self._wait_for_ack(spi, HACK, MIN_ACK_TIMEOUT_MS, 0x11)
-
-    logger.debug("- sending data")
-    packet = bytes([*data, self._calc_checksum(data)])
-    spi.xfer2(packet)
-
-    if expect_disconnect:
-      logger.debug("- expecting disconnect, returning")
-      return b""
-    else:
-      logger.debug("- waiting for data ACK")
-      preread_len = USBPACKET_MAX_SIZE + 1  # read enough for a controlRead
-      dat = self._wait_for_ack(spi, DACK, timeout, 0x13, length=3 + preread_len)
-
-      # get response length, then response
-      response_len = struct.unpack("<H", dat[1:3])[0]
-      if response_len > max_rx_len:
-        raise PandaSpiException(f"response length greater than max ({max_rx_len} {response_len})")
-
-      # read rest
-      remaining = (response_len + 1) - preread_len
-      if remaining > 0:
-        dat += bytes(spi.readbytes(remaining))
-
-      dat = dat[:3 + response_len + 1]
-      if self._calc_checksum(dat) != 0:
-        raise PandaSpiBadChecksum
-
-      return dat[3:-1]
-
-  def _transfer(self, endpoint: int, data, timeout: int, max_rx_len: int = 1000, expect_disconnect: bool = False) -> bytes:
+  def _transfer(self, endpoint: int, data, timeout: int, max_rx_len: int = MAX_PAYLOAD, expect_disconnect: bool = False) -> bytes:
     logger.debug("starting transfer: endpoint=%d, max_rx_len=%d", endpoint, max_rx_len)
     logger.debug("==============================================")
 
@@ -248,54 +210,26 @@ class PandaSpiHandle(BaseHandle):
         except PandaSpiException as e:
           exc = e
           logger.debug("SPI transfer failed, retrying", exc_info=True)
+          if isinstance(e, PandaSpiBusy):
+            continue
           if self.no_retry:
             break
-
-          # ensure slave is in a consistent state and ready for the next transfer
-          # (e.g. slave TX buffer isn't stuck full)
-          nack_cnt = 0
-          attempts = 5
-          while (nack_cnt <= 3) and (attempts > 0):
-            attempts -= 1
-            try:
-              self._wait_for_ack(spi, NACK, MIN_ACK_TIMEOUT_MS, 0x11, length=XFER_SIZE//2)
-              nack_cnt += 1
-            except PandaSpiException:
-              nack_cnt = 0
+          if not isinstance(e, (PandaSpiNackResponse, PandaSpiBadChecksum)):
+            self._resync(spi)
 
     raise exc
 
   def get_protocol_version(self) -> bytes:
-    vers_str = b"VERSION"
-    def _get_version(spi) -> bytes:
-      spi.writebytes(vers_str)
-
-      logger.debug("- waiting for echo")
-      start = time.monotonic()
-      while True:
-        version_bytes = spi.readbytes(len(vers_str) + 2)
-        if bytes(version_bytes).startswith(vers_str):
-          break
-        if (time.monotonic() - start) > 0.001:
-          raise PandaSpiMissingAck
-
-      rlen = struct.unpack("<H", bytes(version_bytes[-2:]))[0]
-      if rlen > 1000:
-        raise PandaSpiException("response length greater than max")
-
-      # get response
-      dat = spi.readbytes(rlen + 1)
-      resp = dat[:-1]
-      calculated_crc = crc8(bytes(version_bytes + resp))
-      if calculated_crc != dat[-1]:
-        raise PandaSpiBadChecksum
-      return bytes(resp)
-
+    # Discovery can reconnect while an earlier client's reply is still pending.
     exc = PandaSpiException()
     with self.dev.acquire() as spi:
       for _ in range(10):
+        self._resync(spi)
         try:
-          return _get_version(spi)
+          data = self._transfer_spidev(spi, VERSION_ENDPOINT, b"", MIN_ACK_TIMEOUT_MS, max_rx_len=15)
+          if len(data) != 15:
+            raise PandaSpiException("invalid discovery response length")
+          return data
         except PandaSpiException as e:
           exc = e
           logger.debug("SPI get protocol version failed, retrying", exc_info=True)
@@ -306,23 +240,23 @@ class PandaSpiHandle(BaseHandle):
     self.dev.close()
 
   def controlWrite(self, request_type: int, request: int, value: int, index: int, data, timeout: int = TIMEOUT, expect_disconnect: bool = False):
-    return self._transfer(0, struct.pack("<BHHH", request, value, index, 0), timeout, expect_disconnect=expect_disconnect)
+    return self._transfer(0, struct.pack("<BHHH", request, value, index, 0), timeout, max_rx_len=0, expect_disconnect=expect_disconnect)
 
   def controlRead(self, request_type: int, request: int, value: int, index: int, length: int, timeout: int = TIMEOUT):
     return self._transfer(0, struct.pack("<BHHH", request, value, index, length), timeout, max_rx_len=length)
 
   def bulkWrite(self, endpoint: int, data: bytes, timeout: int = TIMEOUT) -> int:
     mv = memoryview(data)
-    for x in range(math.ceil(len(data) / XFER_SIZE)):
-      self._transfer(endpoint, mv[XFER_SIZE*x:XFER_SIZE*(x+1)], timeout)
+    for offset in range(0, len(data), MAX_PAYLOAD):
+      self._transfer(endpoint, mv[offset:offset + MAX_PAYLOAD], timeout)
     return len(data)
 
   def bulkRead(self, endpoint: int, length: int, timeout: int = TIMEOUT) -> bytes:
     ret = b""
-    for _ in range(math.ceil(length / XFER_SIZE)):
-      d = self._transfer(endpoint, [], timeout, max_rx_len=XFER_SIZE)
-      ret += d
-      if len(d) < XFER_SIZE:
+    for _ in range(0, length, MAX_PAYLOAD):
+      data = self._transfer(endpoint, b"", timeout)
+      ret += data
+      if len(data) < MAX_PAYLOAD:
         break
     return ret
 

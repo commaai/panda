@@ -213,7 +213,9 @@ void simple_watchdog_init(uint32_t fault, uint32_t threshold);
 // in a tight loop, plus some buffer
 #define SPI_IRQ_RATE  16000U
 
-#define SPI_BUF_SIZE 4096U
+#define SPI_FRAME_SIZE 256U
+#define SPI_MAX_PAYLOAD 248U
+#define SPI_BUF_SIZE (2U * SPI_FRAME_SIZE)
 extern uint8_t spi_buf_rx[SPI_BUF_SIZE];
 extern uint8_t spi_buf_tx[SPI_BUF_SIZE];
 
@@ -221,8 +223,7 @@ extern uint16_t spi_error_count;
 
 void can_tx_comms_resume_spi(void);
 void spi_init(void);
-void spi_rx_done(void);
-void spi_tx_done(bool reset);
+void spi_rx_done(const uint8_t *data);
 
 // ******************** debug ********************
 bool debug_get_char(char *elem);

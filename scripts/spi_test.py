@@ -22,7 +22,8 @@ if __name__ == "__main__":
   #print(f"sudo taskset -pc {core} $(pgrep -f spi0)")
   #os.system(f"sudo taskset -pc {core} $(pgrep -f spi0)")
 
-  p = Panda()
+  Panda.USB_PIDS = ()  # exercise SPI even when the panda is also visible on USB
+  p = Panda(cli=False)
   p.reset()
   start = datetime.now()
   le = p.health()['spi_error_count']
@@ -47,4 +48,3 @@ if __name__ == "__main__":
     print(
       f"{avg('hz'):04.0f}Hz   {avg('err'):04.0f} errors   [{cnt:04d}Hz   {s['err'][-1]:04d} errors]  {datetime.now() - start}"
     )
-
