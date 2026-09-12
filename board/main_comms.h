@@ -111,6 +111,12 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       stop_mode_requested = true;
       break;
     #endif
+    // **** 0xb6: read debug logs
+    case 0xb6:
+      while ((resp_len < MIN(req->length, USBPACKET_MAX_SIZE)) && debug_get_char((char*)&resp[resp_len])) {
+        ++resp_len;
+      }
+      break;
     // **** 0xc0: reset communications state
     case 0xc0:
       comms_can_reset();
@@ -254,10 +260,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         alternative_experience = req->param1;
       }
       break;
-    // **** 0xe0: uart read
+    // **** 0xe0: UART read
     case 0xe0:
       ur = get_ring_by_number(req->param1);
-      if (!ur) {
+      if (ur == NULL) {
         break;
       }
 

@@ -244,19 +244,19 @@ typedef struct uart_ring {
   uint8_t *elems_rx;
   uint32_t rx_fifo_size;
   USART_TypeDef *uart;
-  void (*callback)(struct uart_ring*);
   bool overwrite;
 } uart_ring;
 
 // ***************************** Function prototypes *****************************
-void debug_ring_callback(uart_ring *ring);
 void uart_tx_ring(uart_ring *q);
 uart_ring *get_ring_by_number(int a);
 // ************************* Low-level buffer functions *************************
 bool get_char(uart_ring *q, char *elem);
-bool injectc(uart_ring *q, char elem);
 bool put_char(uart_ring *q, char elem);
-// ************************ High-level debug functions **********************
+#endif // STM32H7
+
+// ******************** debug ********************
+bool debug_get_char(char *elem);
 void print(const char *a);
 void puth(unsigned int i);
 #if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
@@ -265,8 +265,6 @@ static void puth4(unsigned int i);
 #if defined(DEBUG_SPI) || defined(DEBUG_USB) || defined(DEBUG_COMMS)
 static void hexdump(const void *a, int l);
 #endif
-
-#endif // STM32H7
 
 // ******************** usb ********************
 

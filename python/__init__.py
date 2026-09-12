@@ -121,7 +121,6 @@ ensure_health_packet_version = partial(ensure_version, "health", "HEALTH_PACKET_
 
 class Panda:
 
-  SERIAL_DEBUG = 0
   SERIAL_SOM_DEBUG = 4
 
   USB_VIDS = (0xbbaa, 0x3801)  # 0x3801 is comma's registered VID
@@ -740,6 +739,16 @@ class Panda:
 
     """
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf1, bus, 0, b'')
+
+  def debug_read(self, maxlen=1024):
+    """Read up to maxlen bytes of internal debug logs."""
+    ret = bytearray()
+    while len(ret) < maxlen:
+      dat = self._handle.controlRead(Panda.REQUEST_IN, 0xb6, 0, 0, min(0x40, maxlen - len(ret)))
+      if not dat:
+        break
+      ret.extend(dat)
+    return bytes(ret)
 
   # ******************* serial *******************
 

@@ -71,6 +71,7 @@ uart_ring uart_ring_som_debug;
 #include "board/drivers/timers.h"
 
 #if !defined(BOOTSTUB)
+  #include "board/drivers/debug.h"
   #include "board/drivers/uart.h"
   #include "board/stm32h7/lluart.h"
 #endif

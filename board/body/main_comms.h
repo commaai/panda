@@ -12,6 +12,12 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   unsigned int resp_len = 0;
 
   switch (req->request) {
+    // **** 0xb6: read debug logs
+    case 0xb6:
+      while ((resp_len < MIN(req->length, USBPACKET_MAX_SIZE)) && debug_get_char((char*)&resp[resp_len])) {
+        ++resp_len;
+      }
+      break;
     // **** 0xc1: get hardware type
     case 0xc1:
       resp[0] = hw_type;

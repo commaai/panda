@@ -86,9 +86,8 @@ class TestUsb(PandaTestCase):
 
       print("loopback 100 messages at speed %d, comp speed is %.2f, percent %.2f" % (speed, comp_kbps, saturation_pct))
 
-  # this will fail if you have hardware serial connected
-  def test_serial_debug(self):
+  def test_debug_logs(self):
     p = self.p
-    _ = p.serial_read(Panda.SERIAL_DEBUG)  # junk
+    _ = p.debug_read()  # junk
     p.call_control_api(0x01)
-    assert p.serial_read(Panda.SERIAL_DEBUG).startswith(b"NO HANDLER")
+    assert p.debug_read().startswith(b"NO HANDLER")

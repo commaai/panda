@@ -81,6 +81,12 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       resp[3] = ((time & 0xFF000000U) >> 24U);
       resp_len = 4U;
       break;
+    // **** 0xb6: read debug logs
+    case 0xb6:
+      while ((resp_len < MIN(req->length, USBPACKET_MAX_SIZE)) && debug_get_char((char*)&resp[resp_len])) {
+        ++resp_len;
+      }
+      break;
     // **** 0xc0: reset communications
     case 0xc0:
       comms_can_reset();
@@ -197,13 +203,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         bus_config[req->param1].can_speed = req->param2;
         bool ret = can_init(CAN_NUM_FROM_BUS_NUM(req->param1));
         UNUSED(ret);
-      }
-      break;
-    // **** 0xe0: debug read
-    case 0xe0:
-      // read
-      while ((resp_len < MIN(req->length, USBPACKET_MAX_SIZE)) && get_char(get_ring_by_number(0), (char*)&resp[resp_len])) {
-        ++resp_len;
       }
       break;
     // **** 0xe5: set CAN loopback (for testing)
