@@ -104,13 +104,11 @@ static void __attribute__ ((noinline)) enable_fpu(void) {
 
 // called at 8Hz
 static void tick_handler(void) {
-  static uint32_t siren_countdown = 0; // siren plays while countdown > 0
-  static uint32_t controls_allowed_countdown = 0;
-  static uint8_t prev_harness_status = HARNESS_STATUS_NC;
-  static uint8_t loop_counter = 0U;
-  static bool relay_malfunction_prev = false;
-
   if (TICK_TIMER->SR != 0U) {
+    static uint32_t siren_countdown = 0; // siren plays while countdown > 0
+    static uint8_t prev_harness_status = HARNESS_STATUS_NC;
+    static uint8_t loop_counter = 0U;
+    static bool relay_malfunction_prev = false;
 
     // siren
     current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
@@ -143,6 +141,8 @@ static void tick_handler(void) {
 
     // decimated to 1Hz
     if (loop_counter == 0U) {
+      static uint32_t controls_allowed_countdown = 0;
+
       // set green LED to be controls allowed
       led_set(LED_GREEN, controls_allowed);
 
@@ -274,7 +274,7 @@ int main(void) {
 
   print("Config:\n");
   print("  Board type: 0x"); puth(hw_type); print("\n");
-  print("  MCU UID: "); hexdump((const void *)UID_BASE, 12);
+  print("  MCU UID: "); hexdump((const uint8_t *)UID_BASE, 12);
 
   // init board
   current_board->init();

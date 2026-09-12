@@ -121,7 +121,7 @@ void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
 
 void soft_flasher_start(void) {
   print("\n\n\n************************ FLASHER START ************************\n");
-  print("MCU UID: "); hexdump((const void *)UID_BASE, 12);
+  print("MCU UID: "); hexdump((const uint8_t *)UID_BASE, 12);
 
   enter_bootloader_mode = 0;
 
