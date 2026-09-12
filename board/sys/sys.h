@@ -42,7 +42,6 @@ extern uint8_t global_critical_depth;
 #define FAULT_INTERRUPT_RATE_TICK           (1UL << 21)
 #define FAULT_INTERRUPT_RATE_EXTI           (1UL << 22)
 #define FAULT_INTERRUPT_RATE_SPI            (1UL << 23)
-#define FAULT_INTERRUPT_RATE_UART_7         (1UL << 24)
 #define FAULT_SIREN_MALFUNCTION             (1UL << 25)
 #define FAULT_HEARTBEAT_LOOP_WATCHDOG       (1UL << 26)
 #define FAULT_INTERRUPT_RATE_SOUND_DMA      (1UL << 27)

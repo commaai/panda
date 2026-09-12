@@ -19,12 +19,6 @@ void gpio_spi_init(void) {
   register_set_bits(&(GPIOE->OSPEEDR), GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12 | GPIO_OSPEEDR_OSPEED13 | GPIO_OSPEEDR_OSPEED14);
 }
 
-void gpio_uart7_init(void) {
-  // E7,E8: UART 7 for debugging
-  set_gpio_alternate(GPIOE, 7, GPIO_AF7_UART7);
-  set_gpio_alternate(GPIOE, 8, GPIO_AF7_UART7);
-}
-
 // Common GPIO initialization
 void common_init_gpio(void) {
   //F11: VOLT_S
@@ -98,7 +92,6 @@ void peripherals_init(void) {
   RCC->AHB1ENR |= RCC_AHB1ENR_USB1OTGHSEN; // USB
   RCC->AHB1LPENR |= RCC_AHB1LPENR_USB1OTGHSLPEN; // USB LP needed for CSleep state(__WFI())
   RCC->AHB1LPENR &= ~(RCC_AHB1LPENR_USB1OTGHSULPILPEN); // disable USB ULPI
-  RCC->APB1LENR |= RCC_APB1LENR_UART7EN;  // SOM uart
   RCC->APB1HENR |= RCC_APB1HENR_FDCANEN; // FDCAN core enable
 
   // Analog

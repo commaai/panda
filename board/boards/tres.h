@@ -118,10 +118,6 @@ static void tres_init(void) {
   tres_set_bootkick(BOOT_BOOTKICK);
   set_gpio_mode(GPIOC, 12, MODE_OUTPUT);
 
-  // SOM debugging UART
-  gpio_uart7_init();
-  uart_init(&uart_ring_som_debug, 115200);
-
   // fan setup
   set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
 

@@ -241,7 +241,7 @@ static void usb_setup(void) {
       ENDPOINT_RCV | 1, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
       TOUSBORDER(0x0040U), // Max Packet (0x0040)
       0x00, // Polling Interval (NA)
-      // endpoint 2, send serial
+      // endpoint 2, bootstub flashing
       DSCR_ENDPOINT_LEN, USB_DESC_TYPE_ENDPOINT, // Length, Type
       ENDPOINT_SND | 2, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
       TOUSBORDER(0x0040U), // Max Packet (0x0040)
@@ -261,7 +261,7 @@ static void usb_setup(void) {
       ENDPOINT_RCV | 1, ENDPOINT_TYPE_INT, // Endpoint Num/Direction, Type
       TOUSBORDER(0x0040U), // Max Packet (0x0040)
       0x05, // Polling Interval (5 frames)
-      // endpoint 2, send serial
+      // endpoint 2, bootstub flashing
       DSCR_ENDPOINT_LEN, USB_DESC_TYPE_ENDPOINT, // Length, Type
       ENDPOINT_SND | 2, ENDPOINT_TYPE_BULK, // Endpoint Num/Direction, Type
       TOUSBORDER(0x0040U), // Max Packet (0x0040)

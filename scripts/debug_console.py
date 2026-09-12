@@ -3,7 +3,6 @@
 import os
 import sys
 import time
-import select
 import codecs
 
 from panda import Panda
@@ -11,8 +10,6 @@ from panda import Panda
 setcolor = ["\033[1;32;40m", "\033[1;31;40m"]
 unsetcolor = "\033[00m"
 
-# Set PORT=4 to use the SOM UART instead of internal debug logs.
-port_number = int(os.environ["PORT"]) if "PORT" in os.environ else None
 claim = os.getenv("CLAIM") is not None
 no_color = os.getenv("NO_COLOR") is not None
 no_reconnect = os.getenv("NO_RECONNECT") is not None
@@ -37,7 +34,7 @@ if __name__ == "__main__":
       while True:
         for i, panda in enumerate(pandas):
           while True:
-            ret = panda.debug_read() if port_number is None else panda.serial_read(port_number)
+            ret = panda.debug_read()
             if len(ret) > 0:
               decoded = decoders[i].decode(ret)
               if no_color:
@@ -47,10 +44,6 @@ if __name__ == "__main__":
               sys.stdout.flush()
             else:
               break
-          if port_number is not None and select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], []):
-            ln = sys.stdin.readline()
-            if claim:
-              panda.serial_write(port_number, ln)
           time.sleep(0.01)
     except KeyboardInterrupt:
       break
