@@ -16,7 +16,7 @@ if os.getenv("RELEASE"):
   assert os.path.exists(cert_fn), 'Certificate file not found. Please specify absolute path'
 else:
   BUILD_TYPE = "DEBUG"
-  cert_fn = File("./board/certs/debug").srcnode().relpath
+  cert_fn = File("./board/crypto/certs/debug").srcnode().relpath
   common_flags += ["-DALLOW_DEBUG"]
 
 def objcopy(source, target, env, for_signature):
@@ -30,7 +30,7 @@ def get_version(builder, build_type):
   return f"{builder}-{git}-{build_type}"
 
 def get_key_header(name):
-  public_fn = File(f'./board/certs/{name}.pub').srcnode().get_path()
+  public_fn = File(f'./board/crypto/certs/{name}.pub').srcnode().get_path()
   with open(public_fn, "rb") as f:
     key = base64.b64decode(f.read().split()[1])
   values = []
