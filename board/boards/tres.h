@@ -2,10 +2,6 @@
 
 #include "board_declarations.h"
 
-// ///////////////////////////
-// Tres (STM32H7) + Harness //
-// ///////////////////////////
-
 static bool tres_ir_enabled;
 static bool tres_fan_enabled;
 static void tres_update_fan_ir_power(void) {
