@@ -27,13 +27,6 @@ void fan_tick(void) {
     fan_state.tach_counter = 0U;
     fan_state.rpm = (fan_rpm_fast + (3U * fan_state.rpm)) / 4U;
 
-    #ifdef DEBUG_FAN
-      puth(fan_state.target_rpm);
-      print(" "); puth(fan_rpm_fast);
-      print(" "); puth(fan_state.power);
-      print("\n");
-    #endif
-
     // Cooldown counter to prevent noise on tachometer line.
     if (fan_state.power > 0U) {
       fan_state.cooldown_counter = current_board->fan_enable_cooldown_time * FAN_TICK_FREQ;

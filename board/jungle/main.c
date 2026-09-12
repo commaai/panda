@@ -112,6 +112,7 @@ int main(void) {
 
   print("Config:\n");
   print("  Board type: 0x"); puth(hw_type); print("\n");
+  print("  MCU UID: "); hexdump((const void *)UID_BASE, 12);
 
   // init board
   current_board->init();

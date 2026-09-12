@@ -232,11 +232,9 @@ void spi_tx_done(bool reset);
 bool debug_get_char(char *elem);
 void print(const char *a);
 void puth(unsigned int i);
-#if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
-static void puth4(unsigned int i);
-#endif
-#if defined(DEBUG_SPI) || defined(DEBUG_USB) || defined(DEBUG_COMMS)
 static void hexdump(const void *a, int l);
+#if defined(BOOTSTUB) || defined(DEBUG)
+static void puth4(unsigned int i);
 #endif
 
 // ******************** usb ********************

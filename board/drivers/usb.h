@@ -110,11 +110,6 @@ static void *USB_ReadPacket(void *dest, uint16_t len) {
 }
 
 static void USB_WritePacket(const void *src, uint16_t len, uint32_t ep) {
-  #ifdef DEBUG_USB
-  print("writing ");
-  hexdump(src, len);
-  #endif
-
   uint32_t numpacket = ((uint32_t)len + (USBPACKET_MAX_SIZE - 1U)) / USBPACKET_MAX_SIZE;
   uint32_t count32b = 0;
   count32b = ((uint32_t)len + 3U) / 4U;
@@ -137,11 +132,6 @@ static void USB_WritePacket(const void *src, uint16_t len, uint32_t ep) {
 // IN EP 0 TX FIFO has a max size of 127 bytes (much smaller than the rest)
 // so use TX FIFO empty interrupt to send larger amounts of data
 static void USB_WritePacket_EP0(uint8_t *src, uint16_t len) {
-  #ifdef DEBUG_USB
-  print("writing ");
-  hexdump(src, len);
-  #endif
-
   uint16_t wplen = MIN(len, 0x40);
   USB_WritePacket(src, wplen, 0);
 
@@ -465,10 +455,6 @@ static void usb_setup(void) {
       // set now?
       USBx_DEVICE->DCFG |= ((setup.b.wValue.w & 0x7fU) << 4);
 
-      #ifdef DEBUG_USB
-        print(" set address\n");
-      #endif
-
       USB_WritePacket(0, 0, 0);
       USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
 
@@ -603,46 +589,12 @@ void usb_irqhandler(void) {
   unsigned int gotgint = USBx->GOTGINT;
   unsigned int daint = USBx_DEVICE->DAINT;
 
-  // gintsts SUSPEND? 04008428
-  #ifdef DEBUG_USB
-    puth(gintsts);
-    print(" ");
-    /*puth(USBx->GCCFG);
-    print(" ");*/
-    puth(gotgint);
-    print(" ep ");
-    puth(daint);
-    print(" USB interrupt!\n");
-  #endif
-
   if ((gintsts & USB_OTG_GINTSTS_CIDSCHG) != 0U) {
     print("connector ID status change\n");
   }
 
   if ((gintsts & USB_OTG_GINTSTS_USBRST) != 0U) {
-    #ifdef DEBUG_USB
-      print("USB reset\n");
-    #endif
     usb_reset();
-  }
-
-  if ((gintsts & USB_OTG_GINTSTS_ENUMDNE) != 0U) {
-    #ifdef DEBUG_USB
-      print("enumeration done\n");
-    #endif
-    // Full speed, ENUMSPD
-    //puth(USBx_DEVICE->DSTS);
-  }
-
-  if ((gintsts & USB_OTG_GINTSTS_OTGINT) != 0U) {
-    #ifdef DEBUG_USB
-      print("OTG int:");
-      puth(USBx->GOTGINT);
-      print("\n");
-    #endif
-
-    // getting ADTOCHG
-    //USBx->GOTGINT = USBx->GOTGINT;
   }
 
   // RX FIFO first
@@ -651,27 +603,10 @@ void usb_irqhandler(void) {
     volatile unsigned int rxst = USBx->GRXSTSP;
     int status = (rxst & USB_OTG_GRXSTSP_PKTSTS) >> 17;
 
-    #ifdef DEBUG_USB
-      print(" RX FIFO:");
-      puth(rxst);
-      print(" status: ");
-      puth(status);
-      print(" len: ");
-      puth((rxst & USB_OTG_GRXSTSP_BCNT) >> 4);
-      print("\n");
-    #endif
-
     if (status == STS_DATA_UPDT) {
       int endpoint = (rxst & USB_OTG_GRXSTSP_EPNUM);
       int len = (rxst & USB_OTG_GRXSTSP_BCNT) >> 4;
       (void)USB_ReadPacket(&usbdata, len);
-      #ifdef DEBUG_USB
-        print("  data ");
-        puth(len);
-        print("\n");
-        hexdump(&usbdata, len);
-      #endif
-
       if (endpoint == 2) {
         comms_endpoint2_write((uint8_t *) usbdata, len);
       }
@@ -682,11 +617,6 @@ void usb_irqhandler(void) {
       }
     } else if (status == STS_SETUP_UPDT) {
       (void)USB_ReadPacket(&setup, 8);
-      #ifdef DEBUG_USB
-        print("  setup ");
-        hexdump(&setup, 8);
-        print("\n");
-      #endif
     } else {
       // status is neither STS_DATA_UPDT or STS_SETUP_UPDT, skip
     }
@@ -706,9 +636,6 @@ void usb_irqhandler(void) {
 
   if ((gintsts & USB_OTG_GINTSTS_BOUTNAKEFF) || (gintsts & USB_OTG_GINTSTS_GINAKEFF)) {
     // no global NAK, why is this getting set?
-    #ifdef DEBUG_USB
-      print("GLOBAL NAK\n");
-    #endif
     USBx_DEVICE->DCTL |= USB_OTG_DCTL_CGONAK | USB_OTG_DCTL_CGINAK;
   }
 
@@ -724,51 +651,15 @@ void usb_irqhandler(void) {
 
   // out endpoint hit
   if ((gintsts & USB_OTG_GINTSTS_OEPINT) != 0U) {
-    #ifdef DEBUG_USB
-      print("  0:");
-      puth(USBx_OUTEP(0U)->DOEPINT);
-      print(" 2:");
-      puth(USBx_OUTEP(2U)->DOEPINT);
-      print(" 3:");
-      puth(USBx_OUTEP(3U)->DOEPINT);
-      print(" ");
-      puth(USBx_OUTEP(3U)->DOEPCTL);
-      print(" 4:");
-      puth(USBx_OUTEP(4)->DOEPINT);
-      print(" OUT ENDPOINT\n");
-    #endif
-
     if ((USBx_OUTEP(2U)->DOEPINT & USB_OTG_DOEPINT_XFRC) != 0U) {
-      #ifdef DEBUG_USB
-        print("  OUT2 PACKET XFRC\n");
-      #endif
       USBx_OUTEP(2U)->DOEPTSIZ = (1UL << 19) | 0x40U;
       USBx_OUTEP(2U)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_CNAK;
     }
 
     if ((USBx_OUTEP(3U)->DOEPINT & USB_OTG_DOEPINT_XFRC) != 0U) {
-      #ifdef DEBUG_USB
-        print("  OUT3 PACKET XFRC\n");
-      #endif
       // NAK cleared by process_can (if tx buffers have room)
       outep3_processing = false;
       refresh_can_tx_slots_available();
-    } else if ((USBx_OUTEP(3U)->DOEPINT & 0x2000U) != 0U) {
-      #ifdef DEBUG_USB
-        print("  OUT3 PACKET WTF\n");
-      #endif
-      // if NAK was set trigger this, unknown interrupt
-      // TODO: why was this here? fires when TX buffers when we can't clear NAK
-      // USBx_OUTEP(3U)->DOEPTSIZ = (1U << 19) | 0x40U;
-      // USBx_OUTEP(3U)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
-    } else if ((USBx_OUTEP(3U)->DOEPINT) != 0U) {
-      #ifdef DEBUG_USB
-        print("OUTEP3 error ");
-        puth(USBx_OUTEP(3U)->DOEPINT);
-        print("\n");
-      #endif
-    } else {
-      // USBx_OUTEP(3U)->DOEPINT is 0, ok to skip
     }
 
     if ((USBx_OUTEP(0U)->DOEPINT & USB_OTG_DIEPINT_XFRC) != 0U) {
@@ -788,14 +679,6 @@ void usb_irqhandler(void) {
 
   // interrupt endpoint hit (Page 1221)
   if ((gintsts & USB_OTG_GINTSTS_IEPINT) != 0U) {
-    #ifdef DEBUG_USB
-      print("  ");
-      puth(USBx_INEP(0U)->DIEPINT);
-      print(" ");
-      puth(USBx_INEP(1U)->DIEPINT);
-      print(" IN ENDPOINT\n");
-    #endif
-
     // Should likely check the EP of the IN request even if there is
     // only one IN endpoint.
 
@@ -813,9 +696,6 @@ void usb_irqhandler(void) {
       case 0: ////// Bulk config
         // *** IN token received when TxFIFO is empty
         if ((USBx_INEP(1U)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) != 0U) {
-          #ifdef DEBUG_USB
-          print("  IN PACKET QUEUE\n");
-          #endif
           // TODO: always assuming max len, can we get the length?
           USB_WritePacket((void *)response, comms_can_read(response, 0x40), 1);
         }
@@ -824,9 +704,6 @@ void usb_irqhandler(void) {
       case 1: ////// Interrupt config
         // *** IN token received when TxFIFO is empty
         if ((USBx_INEP(1U)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) != 0U) {
-          #ifdef DEBUG_USB
-          print("  IN PACKET QUEUE\n");
-          #endif
           // TODO: always assuming max len, can we get the length?
           int len = comms_can_read(response, 0x40);
           if (len > 0) {
@@ -840,10 +717,6 @@ void usb_irqhandler(void) {
     }
 
     if ((USBx_INEP(0U)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) != 0U) {
-      #ifdef DEBUG_USB
-      print("  IN PACKET QUEUE\n");
-      #endif
-
       if ((ep0_txlen != 0U) && ((USBx_INEP(0U)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV) >= 0x40U)) {
         uint16_t len = MIN(ep0_txlen, 0x40);
         USB_WritePacket(ep0_txdata, len, 0);

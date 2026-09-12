@@ -88,6 +88,8 @@ int main(void) {
   current_board = &board_body;
   hw_type = HW_TYPE_BODY;
 
+  print("MCU UID: "); hexdump((const void *)UID_BASE, 12);
+
   current_board->init();
 
   REGISTER_INTERRUPT(EXTI15_10_IRQn, exti15_10_handler, 10000U, FAULT_INTERRUPT_RATE_EXTI);
