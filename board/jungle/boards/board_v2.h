@@ -13,48 +13,48 @@ uint8_t ignition = 0U;
 #define ADC_CHANNEL(a, c) {.adc = (a), .channel = (c), .sample_time = SAMPLETIME_810_CYCLES, .oversampling = OVERSAMPLING_1}
 
 gpio_t power_pins[] = {
-  {.bank = &tracked_GPIOA, .pin = 0},
-  {.bank = &tracked_GPIOA, .pin = 1},
-  {.bank = &tracked_GPIOF, .pin = 12},
-  {.bank = &tracked_GPIOA, .pin = 5},
-  {.bank = &tracked_GPIOC, .pin = 5},
-  {.bank = &tracked_GPIOB, .pin = 2},
+  {.bank = GPIOA, .pin = 0},
+  {.bank = GPIOA, .pin = 1},
+  {.bank = GPIOF, .pin = 12},
+  {.bank = GPIOA, .pin = 5},
+  {.bank = GPIOC, .pin = 5},
+  {.bank = GPIOB, .pin = 2},
 };
 
 gpio_t sbu1_ignition_pins[] = {
-  {.bank = &tracked_GPIOD, .pin = 0},
-  {.bank = &tracked_GPIOD, .pin = 5},
-  {.bank = &tracked_GPIOD, .pin = 12},
-  {.bank = &tracked_GPIOD, .pin = 14},
-  {.bank = &tracked_GPIOE, .pin = 5},
-  {.bank = &tracked_GPIOE, .pin = 9},
+  {.bank = GPIOD, .pin = 0},
+  {.bank = GPIOD, .pin = 5},
+  {.bank = GPIOD, .pin = 12},
+  {.bank = GPIOD, .pin = 14},
+  {.bank = GPIOE, .pin = 5},
+  {.bank = GPIOE, .pin = 9},
 };
 
 gpio_t sbu1_relay_pins[] = {
-  {.bank = &tracked_GPIOD, .pin = 1},
-  {.bank = &tracked_GPIOD, .pin = 6},
-  {.bank = &tracked_GPIOD, .pin = 11},
-  {.bank = &tracked_GPIOD, .pin = 15},
-  {.bank = &tracked_GPIOE, .pin = 6},
-  {.bank = &tracked_GPIOE, .pin = 10},
+  {.bank = GPIOD, .pin = 1},
+  {.bank = GPIOD, .pin = 6},
+  {.bank = GPIOD, .pin = 11},
+  {.bank = GPIOD, .pin = 15},
+  {.bank = GPIOE, .pin = 6},
+  {.bank = GPIOE, .pin = 10},
 };
 
 gpio_t sbu2_ignition_pins[] = {
-  {.bank = &tracked_GPIOD, .pin = 3},
-  {.bank = &tracked_GPIOD, .pin = 8},
-  {.bank = &tracked_GPIOD, .pin = 9},
-  {.bank = &tracked_GPIOE, .pin = 0},
-  {.bank = &tracked_GPIOE, .pin = 7},
-  {.bank = &tracked_GPIOE, .pin = 11},
+  {.bank = GPIOD, .pin = 3},
+  {.bank = GPIOD, .pin = 8},
+  {.bank = GPIOD, .pin = 9},
+  {.bank = GPIOE, .pin = 0},
+  {.bank = GPIOE, .pin = 7},
+  {.bank = GPIOE, .pin = 11},
 };
 
 gpio_t sbu2_relay_pins[] = {
-  {.bank = &tracked_GPIOD, .pin = 4},
-  {.bank = &tracked_GPIOD, .pin = 10},
-  {.bank = &tracked_GPIOD, .pin = 13},
-  {.bank = &tracked_GPIOE, .pin = 1},
-  {.bank = &tracked_GPIOE, .pin = 8},
-  {.bank = &tracked_GPIOE, .pin = 12},
+  {.bank = GPIOD, .pin = 4},
+  {.bank = GPIOD, .pin = 10},
+  {.bank = GPIOD, .pin = 13},
+  {.bank = GPIOE, .pin = 1},
+  {.bank = GPIOE, .pin = 8},
+  {.bank = GPIOE, .pin = 12},
 };
 
 const adc_signal_t sbu1_channels[] = {
@@ -107,16 +107,16 @@ void board_v2_set_harness_orientation(uint8_t orientation) {
 void board_v2_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver) {
     case 1U:
-      set_gpio_output(&tracked_GPIOG, 11, !enabled);
+      set_gpio_output(GPIOG, 11, !enabled);
       break;
     case 2U:
-      set_gpio_output(&tracked_GPIOB, 3, !enabled);
+      set_gpio_output(GPIOB, 3, !enabled);
       break;
     case 3U:
-      set_gpio_output(&tracked_GPIOD, 7, !enabled);
+      set_gpio_output(GPIOD, 7, !enabled);
       break;
     case 4U:
-      set_gpio_output(&tracked_GPIOB, 4, !enabled);
+      set_gpio_output(GPIOB, 4, !enabled);
       break;
     default:
       print("Invalid CAN transceiver ("); puth(transceiver); print("): enabling failed\n");
@@ -126,7 +126,7 @@ void board_v2_enable_can_transceiver(uint8_t transceiver, bool enabled) {
 
 void board_v2_enable_header_pin(uint8_t pin_num, bool enabled) {
   if (pin_num < 8U) {
-    set_gpio_output(&tracked_GPIOG, pin_num, enabled);
+    set_gpio_output(GPIOG, pin_num, enabled);
   } else {
     print("Invalid pin number ("); puth(pin_num); print("): enabling failed\n");
   }
@@ -138,34 +138,34 @@ void board_v2_set_can_mode(uint8_t mode) {
   switch (mode) {
     case CAN_MODE_NORMAL:
       // B12,B13: disable normal mode
-      set_gpio_pullup(&tracked_GPIOB, 12, PULL_NONE);
-      set_gpio_mode(&tracked_GPIOB, 12, MODE_ANALOG);
+      set_gpio_pullup(GPIOB, 12, PULL_NONE);
+      set_gpio_mode(GPIOB, 12, MODE_ANALOG);
 
-      set_gpio_pullup(&tracked_GPIOB, 13, PULL_NONE);
-      set_gpio_mode(&tracked_GPIOB, 13, MODE_ANALOG);
+      set_gpio_pullup(GPIOB, 13, PULL_NONE);
+      set_gpio_mode(GPIOB, 13, MODE_ANALOG);
 
       // B5,B6: FDCAN2 mode
-      set_gpio_pullup(&tracked_GPIOB, 5, PULL_NONE);
-      set_gpio_alternate(&tracked_GPIOB, 5, GPIO_AF9_FDCAN2);
+      set_gpio_pullup(GPIOB, 5, PULL_NONE);
+      set_gpio_alternate(GPIOB, 5, GPIO_AF9_FDCAN2);
 
-      set_gpio_pullup(&tracked_GPIOB, 6, PULL_NONE);
-      set_gpio_alternate(&tracked_GPIOB, 6, GPIO_AF9_FDCAN2);
+      set_gpio_pullup(GPIOB, 6, PULL_NONE);
+      set_gpio_alternate(GPIOB, 6, GPIO_AF9_FDCAN2);
       can_mode = CAN_MODE_NORMAL;
       board_v2_enable_can_transceiver(2U, true);
       break;
     case CAN_MODE_OBD_CAN2:
       // B5,B6: disable normal mode
-      set_gpio_pullup(&tracked_GPIOB, 5, PULL_NONE);
-      set_gpio_mode(&tracked_GPIOB, 5, MODE_ANALOG);
+      set_gpio_pullup(GPIOB, 5, PULL_NONE);
+      set_gpio_mode(GPIOB, 5, MODE_ANALOG);
 
-      set_gpio_pullup(&tracked_GPIOB, 6, PULL_NONE);
-      set_gpio_mode(&tracked_GPIOB, 6, MODE_ANALOG);
+      set_gpio_pullup(GPIOB, 6, PULL_NONE);
+      set_gpio_mode(GPIOB, 6, MODE_ANALOG);
       // B12,B13: FDCAN2 mode
-      set_gpio_pullup(&tracked_GPIOB, 12, PULL_NONE);
-      set_gpio_alternate(&tracked_GPIOB, 12, GPIO_AF9_FDCAN2);
+      set_gpio_pullup(GPIOB, 12, PULL_NONE);
+      set_gpio_alternate(GPIOB, 12, GPIO_AF9_FDCAN2);
 
-      set_gpio_pullup(&tracked_GPIOB, 13, PULL_NONE);
-      set_gpio_alternate(&tracked_GPIOB, 13, GPIO_AF9_FDCAN2);
+      set_gpio_pullup(GPIOB, 13, PULL_NONE);
+      set_gpio_alternate(GPIOB, 13, GPIO_AF9_FDCAN2);
       can_mode = CAN_MODE_OBD_CAN2;
       board_v2_enable_can_transceiver(4U, true);
       break;
@@ -197,7 +197,7 @@ void board_v2_set_panda_individual_power(uint8_t port_num, bool enable) {
 }
 
 bool board_v2_get_button(void) {
-  return get_gpio_input(&tracked_GPIOG, 15);
+  return get_gpio_input(GPIOG, 15);
 }
 
 void board_v2_set_ignition(bool enabled) {
@@ -260,41 +260,41 @@ void board_v2_init(void) {
 
   // Current monitor channels
   adc_init(ADC1);
-  register_set_bits(&tracked_SYSCFG_PMCR, SYSCFG_PMCR_PA0SO | SYSCFG_PMCR_PA1SO); // open up analog switches for PA0_C and PA1_C
-  set_gpio_mode(&tracked_GPIOF, 11, MODE_ANALOG);
-  set_gpio_mode(&tracked_GPIOA, 6, MODE_ANALOG);
-  set_gpio_mode(&tracked_GPIOC, 4, MODE_ANALOG);
-  set_gpio_mode(&tracked_GPIOB, 1, MODE_ANALOG);
+  register_set_bits(&SYSCFG->PMCR, SYSCFG_PMCR_PA0SO | SYSCFG_PMCR_PA1SO); // open up analog switches for PA0_C and PA1_C
+  set_gpio_mode(GPIOF, 11, MODE_ANALOG);
+  set_gpio_mode(GPIOA, 6, MODE_ANALOG);
+  set_gpio_mode(GPIOC, 4, MODE_ANALOG);
+  set_gpio_mode(GPIOB, 1, MODE_ANALOG);
 
   // SBU channels
   adc_init(ADC3);
-  set_gpio_mode(&tracked_GPIOC, 2, MODE_ANALOG);
-  set_gpio_mode(&tracked_GPIOC, 3, MODE_ANALOG);
-  set_gpio_mode(&tracked_GPIOF, 9, MODE_ANALOG);
-  set_gpio_mode(&tracked_GPIOF, 7, MODE_ANALOG);
-  set_gpio_mode(&tracked_GPIOF, 5, MODE_ANALOG);
-  set_gpio_mode(&tracked_GPIOF, 3, MODE_ANALOG);
-  set_gpio_mode(&tracked_GPIOF, 10, MODE_ANALOG);
-  set_gpio_mode(&tracked_GPIOF, 8, MODE_ANALOG);
-  set_gpio_mode(&tracked_GPIOF, 6, MODE_ANALOG);
-  set_gpio_mode(&tracked_GPIOF, 4, MODE_ANALOG);
-  set_gpio_mode(&tracked_GPIOC, 0, MODE_ANALOG);
-  set_gpio_mode(&tracked_GPIOC, 1, MODE_ANALOG);
+  set_gpio_mode(GPIOC, 2, MODE_ANALOG);
+  set_gpio_mode(GPIOC, 3, MODE_ANALOG);
+  set_gpio_mode(GPIOF, 9, MODE_ANALOG);
+  set_gpio_mode(GPIOF, 7, MODE_ANALOG);
+  set_gpio_mode(GPIOF, 5, MODE_ANALOG);
+  set_gpio_mode(GPIOF, 3, MODE_ANALOG);
+  set_gpio_mode(GPIOF, 10, MODE_ANALOG);
+  set_gpio_mode(GPIOF, 8, MODE_ANALOG);
+  set_gpio_mode(GPIOF, 6, MODE_ANALOG);
+  set_gpio_mode(GPIOF, 4, MODE_ANALOG);
+  set_gpio_mode(GPIOC, 0, MODE_ANALOG);
+  set_gpio_mode(GPIOC, 1, MODE_ANALOG);
 
   // Header pins
-  set_gpio_mode(&tracked_GPIOG, 0, MODE_OUTPUT);
-  set_gpio_mode(&tracked_GPIOG, 1, MODE_OUTPUT);
-  set_gpio_mode(&tracked_GPIOG, 2, MODE_OUTPUT);
-  set_gpio_mode(&tracked_GPIOG, 3, MODE_OUTPUT);
-  set_gpio_mode(&tracked_GPIOG, 4, MODE_OUTPUT);
-  set_gpio_mode(&tracked_GPIOG, 5, MODE_OUTPUT);
-  set_gpio_mode(&tracked_GPIOG, 6, MODE_OUTPUT);
-  set_gpio_mode(&tracked_GPIOG, 7, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 0, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 1, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 2, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 3, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 4, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 5, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 6, MODE_OUTPUT);
+  set_gpio_mode(GPIOG, 7, MODE_OUTPUT);
 }
 
 board board_v2 = {
   .init = &board_v2_init,
-  .led_GPIO = {&tracked_GPIOE, &tracked_GPIOE, &tracked_GPIOE},
+  .led_GPIO = {GPIOE, GPIOE, GPIOE},
   .led_pin = {4, 3, 2},
   .get_button = &board_v2_get_button,
   .set_panda_power = &board_v2_set_panda_power,

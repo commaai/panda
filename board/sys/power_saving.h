@@ -56,13 +56,13 @@ void set_power_save_state(bool enable) {
 
 static void enter_stop_mode(void) {
   // set all GPIO to analog mode to reduce power, analog mode also disables pull resistors
-  register_set(&tracked_GPIOA.MODER, 0xFFFFFFFFU, 0xFFFFFFFFU);
-  register_set(&tracked_GPIOB.MODER, 0xFFFFFFFFU, 0xFFFFFFFFU);
-  register_set(&tracked_GPIOC.MODER, 0xFFFFFFFFU, 0xFFFFFFFFU);
-  register_set(&tracked_GPIOD.MODER, 0xFFFFFFFFU, 0xFFFFFFFFU);
-  register_set(&tracked_GPIOE.MODER, 0xFFFFFFFFU, 0xFFFFFFFFU);
-  register_set(&tracked_GPIOF.MODER, 0xFFFFFFFFU, 0xFFFFFFFFU);
-  register_set(&tracked_GPIOG.MODER, 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOA->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOB->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOC->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOD->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOE->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOF->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
+  register_set(&(GPIOG->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
 
   // init GPIO to lowest power state
   current_board->set_bootkick(BOOT_STANDBY);
@@ -78,17 +78,17 @@ static void enter_stop_mode(void) {
   ADC2->CR |= ADC_CR_DEEPPWD;
 
   // disable DTS
-  register_clear_bits(&tracked_DTS_CFGR1, DTS_CFGR1_TS1_START);
-  register_clear_bits(&tracked_DTS_CFGR1, DTS_CFGR1_TS1_EN);
-  register_set(&tracked_DTS_CFGR1, 0U, (DTS_CFGR1_TS1_SMP_TIME_Msk | DTS_CFGR1_REFCLK_SEL_Msk | DTS_CFGR1_Q_MEAS_OPT_Msk | DTS_CFGR1_HSREF_CLK_DIV_Msk | DTS_CFGR1_TS1_INTRIG_SEL_Msk));
+  register_clear_bits(&(DTS->CFGR1), DTS_CFGR1_TS1_START);
+  register_clear_bits(&(DTS->CFGR1), DTS_CFGR1_TS1_EN);
+  register_set(&(DTS->CFGR1), 0U, (DTS_CFGR1_TS1_SMP_TIME_Msk | DTS_CFGR1_REFCLK_SEL_Msk | DTS_CFGR1_Q_MEAS_OPT_Msk | DTS_CFGR1_HSREF_CLK_DIV_Msk | DTS_CFGR1_TS1_INTRIG_SEL_Msk));
   RCC->APB4ENR &= ~(RCC_APB4ENR_DTSEN);
 
   // disable HSI48: 48 MHz USB clock
-  register_clear_bits(&tracked_RCC_CR, RCC_CR_HSI48ON);
+  register_clear_bits(&(RCC->CR), RCC_CR_HSI48ON);
   // disable SRAM retention in stop mode
-  register_clear_bits(&tracked_RCC_AHB2LPENR, RCC_AHB2LPENR_SRAM1LPEN | RCC_AHB2LPENR_SRAM2LPEN);
-  register_clear_bits(&tracked_RCC_AHB4LPENR, RCC_AHB4LPENR_SRAM4LPEN);
-  register_clear_bits(&tracked_RCC_AHB3LPENR, RCC_AHB3LPENR_AXISRAMLPEN);
+  register_clear_bits(&(RCC->AHB2LPENR), RCC_AHB2LPENR_SRAM1LPEN | RCC_AHB2LPENR_SRAM2LPEN);
+  register_clear_bits(&(RCC->AHB4LPENR), RCC_AHB4LPENR_SRAM4LPEN);
+  register_clear_bits(&(RCC->AHB3LPENR), RCC_AHB3LPENR_AXISRAMLPEN);
 
   // SBU pins to input for EXTI wakeup
   set_gpio_mode(current_board->harness_config->GPIO_SBU1,
@@ -98,25 +98,25 @@ static void enter_stop_mode(void) {
 
   // EXTI1: SBU2 (PA1)
   // EXTI4: SBU1 (PC4)
-  register_set(&tracked_SYSCFG_EXTICR_0, SYSCFG_EXTICR1_EXTI1_PA, 0xF0U);
-  register_set(&tracked_SYSCFG_EXTICR_1, SYSCFG_EXTICR2_EXTI4_PC, 0xFU);
-  register_set_bits(&tracked_EXTI_IMR1, (1U << 1) | (1U << 4));
-  register_set_bits(&tracked_EXTI_RTSR1, (1U << 1) | (1U << 4));
-  register_set_bits(&tracked_EXTI_FTSR1, (1U << 1) | (1U << 4));
+  register_set(&(SYSCFG->EXTICR[0]), SYSCFG_EXTICR1_EXTI1_PA, 0xF0U);
+  register_set(&(SYSCFG->EXTICR[1]), SYSCFG_EXTICR2_EXTI4_PC, 0xFU);
+  register_set_bits(&(EXTI->IMR1), (1U << 1) | (1U << 4));
+  register_set_bits(&(EXTI->RTSR1), (1U << 1) | (1U << 4));
+  register_set_bits(&(EXTI->FTSR1), (1U << 1) | (1U << 4));
 
   // EXTI for CAN wakeup
   // EXTI8:  FDCAN1 RX (PB8)
   // EXTI5:  FDCAN2 RX (PB5)
   // EXTI12: FDCAN3 RX (PD12)
-  set_gpio_mode(&tracked_GPIOB, 8, MODE_INPUT);
-  register_set(&tracked_SYSCFG_EXTICR_2, SYSCFG_EXTICR3_EXTI8_PB, 0xFU);
-  set_gpio_mode(&tracked_GPIOB, 5, MODE_INPUT);
-  register_set(&tracked_SYSCFG_EXTICR_1, SYSCFG_EXTICR2_EXTI5_PB, 0xF0U);
-  set_gpio_mode(&tracked_GPIOD, 12, MODE_INPUT);
-  register_set(&tracked_SYSCFG_EXTICR_3, SYSCFG_EXTICR4_EXTI12_PD, 0xFU);
+  set_gpio_mode(GPIOB, 8, MODE_INPUT);
+  register_set(&(SYSCFG->EXTICR[2]), SYSCFG_EXTICR3_EXTI8_PB, 0xFU);
+  set_gpio_mode(GPIOB, 5, MODE_INPUT);
+  register_set(&(SYSCFG->EXTICR[1]), SYSCFG_EXTICR2_EXTI5_PB, 0xF0U);
+  set_gpio_mode(GPIOD, 12, MODE_INPUT);
+  register_set(&(SYSCFG->EXTICR[3]), SYSCFG_EXTICR4_EXTI12_PD, 0xFU);
   uint32_t can_exti_line = (1UL << 8) | (1UL << 5) | (1UL << 12);
-  register_set_bits(&tracked_EXTI_IMR1, can_exti_line);
-  register_set_bits(&tracked_EXTI_FTSR1, can_exti_line);
+  register_set_bits(&(EXTI->IMR1), can_exti_line);
+  register_set_bits(&(EXTI->FTSR1), can_exti_line);
 
   // clear pending EXTI
   EXTI->PR1 = (1U << 1) | (1U << 4) | can_exti_line;
@@ -127,10 +127,10 @@ static void enter_stop_mode(void) {
   }
 
   // stop mode
-  register_clear_bits(&tracked_PWR_CPUCR, PWR_CPUCR_PDDS_D1 | PWR_CPUCR_PDDS_D2 | PWR_CPUCR_PDDS_D3);
+  register_clear_bits(&(PWR->CPUCR), PWR_CPUCR_PDDS_D1 | PWR_CPUCR_PDDS_D2 | PWR_CPUCR_PDDS_D3);
 
   // set SVOS5 voltage scaling, flash low-power
-  register_set(&tracked_PWR_CR1, PWR_CR1_SVOS_0 | PWR_CR1_FLPS, PWR_CR1_SVOS | PWR_CR1_FLPS);
+  register_set(&(PWR->CR1), PWR_CR1_SVOS_0 | PWR_CR1_FLPS, PWR_CR1_SVOS | PWR_CR1_FLPS);
 
   // enter stop mode on WFI
   SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;

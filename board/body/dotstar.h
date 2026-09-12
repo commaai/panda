@@ -23,17 +23,17 @@ static dotstar_state_t dotstar_state = {
 
 static inline void dotstar_set_clk(bool high) {
   if (high) {
-    DOTSTAR_CLK_PORT->hardware->BSRR = (uint32_t)(1U << DOTSTAR_CLK_PIN);
+    DOTSTAR_CLK_PORT->BSRR = (uint32_t)(1U << DOTSTAR_CLK_PIN);
   } else {
-    DOTSTAR_CLK_PORT->hardware->BSRR = (uint32_t)(1U << (DOTSTAR_CLK_PIN + 16U));
+    DOTSTAR_CLK_PORT->BSRR = (uint32_t)(1U << (DOTSTAR_CLK_PIN + 16U));
   }
 }
 
 static inline void dotstar_set_data(bool high) {
   if (high) {
-    DOTSTAR_DATA_PORT->hardware->BSRR = (uint32_t)(1U << DOTSTAR_DATA_PIN);
+    DOTSTAR_DATA_PORT->BSRR = (uint32_t)(1U << DOTSTAR_DATA_PIN);
   } else {
-    DOTSTAR_DATA_PORT->hardware->BSRR = (uint32_t)(1U << (DOTSTAR_DATA_PIN + 16U));
+    DOTSTAR_DATA_PORT->BSRR = (uint32_t)(1U << (DOTSTAR_DATA_PIN + 16U));
   }
 }
 

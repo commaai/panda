@@ -1,7 +1,5 @@
 #pragma once
 
-#include "board/drivers/register_declarations.h"
-
 #include "stm32h7xx.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -21,7 +19,7 @@ typedef float (*board_get_channel_power)(uint8_t channel);
 typedef uint16_t (*board_get_sbu_mV)(uint8_t channel, uint8_t sbu);
 
 struct board {
-  const tracked_gpio * const led_GPIO[3];
+  GPIO_TypeDef * const led_GPIO[3];
   const uint8_t led_pin[3];
   const uint8_t led_pwm_channels[3]; // leave at 0 to disable PWM
   board_init init;

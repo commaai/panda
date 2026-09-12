@@ -1,6 +1,5 @@
 #pragma once
 
-#include "board/drivers/register_declarations.h"
 #include "board/can.h"
 #include "board/health.h"
 #include "board/crc.h"
@@ -134,10 +133,10 @@ struct harness_t {
 extern struct harness_t harness;
 
 struct harness_configuration {
-  const tracked_gpio * const GPIO_SBU1;
-  const tracked_gpio * const GPIO_SBU2;
-  const tracked_gpio * const GPIO_relay_SBU1;
-  const tracked_gpio * const GPIO_relay_SBU2;
+  GPIO_TypeDef * const GPIO_SBU1;
+  GPIO_TypeDef * const GPIO_SBU2;
+  GPIO_TypeDef * const GPIO_relay_SBU1;
+  GPIO_TypeDef * const GPIO_relay_SBU2;
   const uint8_t pin_SBU1;
   const uint8_t pin_SBU2;
   const uint8_t pin_relay_SBU1;
@@ -182,6 +181,20 @@ void interrupt_timer_handler(void);
 void init_interrupts(bool check_rate_limit);
 
 #endif // STM32H7
+
+// ******************** registers ********************
+
+// Do not put bits in the check mask that get changed by the hardware
+void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask);
+// Set individual bits. Also add them to the check_mask.
+// Do not use this to change bits that get reset by the hardware
+void register_set_bits(volatile uint32_t *addr, uint32_t val);
+// Clear individual bits. Also add them to the check_mask.
+// Do not use this to clear bits that get set by the hardware
+void register_clear_bits(volatile uint32_t *addr, uint32_t val);
+// To be called periodically
+void check_registers(void);
+void init_registers(void);
 
 // ******************** simple_watchdog ********************
 

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "board/drivers/register_declarations.h"
-
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -26,7 +24,7 @@ typedef void (*board_set_amp_enabled)(bool enabled);
 
 struct board {
   harness_configuration *harness_config;
-  const tracked_gpio * const led_GPIO[3];
+  GPIO_TypeDef * const led_GPIO[3];
   const uint8_t led_pin[3];
   const uint8_t led_pwm_channels[3]; // leave at 0 to disable PWM
   const bool has_spi;

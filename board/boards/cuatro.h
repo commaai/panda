@@ -9,16 +9,16 @@
 static void cuatro_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   switch (transceiver) {
     case 1U:
-      set_gpio_output(&tracked_GPIOB, 7, !enabled);
+      set_gpio_output(GPIOB, 7, !enabled);
       break;
     case 2U:
-      set_gpio_output(&tracked_GPIOB, 10, !enabled);
+      set_gpio_output(GPIOB, 10, !enabled);
       break;
     case 3U:
-      set_gpio_output(&tracked_GPIOD, 8, !enabled);
+      set_gpio_output(GPIOD, 8, !enabled);
       break;
     case 4U:
-      set_gpio_output(&tracked_GPIOB, 11, !enabled);
+      set_gpio_output(GPIOB, 11, !enabled);
       break;
     default:
       break;
@@ -34,45 +34,45 @@ static uint32_t cuatro_read_current_mA(void) {
 }
 
 static void cuatro_set_fan_enabled(bool enabled) {
-  set_gpio_output(&tracked_GPIOD, 3, !enabled);
+  set_gpio_output(GPIOD, 3, !enabled);
 }
 
 static void cuatro_set_bootkick(BootState state) {
-  set_gpio_output(&tracked_GPIOA, 0, state != BOOT_BOOTKICK);
+  set_gpio_output(GPIOA, 0, state != BOOT_BOOTKICK);
   // DC_IN rising edge wakes SOM from ship mode
-  set_gpio_output(&tracked_GPIOC, 11, state != BOOT_BOOTKICK);
+  set_gpio_output(GPIOC, 11, state != BOOT_BOOTKICK);
 }
 
 static void cuatro_set_amp_enabled(bool enabled) {
-  set_gpio_output(&tracked_GPIOB, 0, enabled);
+  set_gpio_output(GPIOB, 0, enabled);
 }
 
 static void cuatro_init(void) {
   common_init_gpio();
 
   // open drain
-  set_gpio_output_type(&tracked_GPIOD, 3, OUTPUT_TYPE_OPEN_DRAIN); // FAN_EN
-  set_gpio_output_type(&tracked_GPIOC, 11, OUTPUT_TYPE_OPEN_DRAIN); // DC_IN_EN_N
+  set_gpio_output_type(GPIOD, 3, OUTPUT_TYPE_OPEN_DRAIN); // FAN_EN
+  set_gpio_output_type(GPIOC, 11, OUTPUT_TYPE_OPEN_DRAIN); // DC_IN_EN_N
 
   // Power readout
-  set_gpio_mode(&tracked_GPIOC, 5, MODE_ANALOG);
-  set_gpio_mode(&tracked_GPIOA, 6, MODE_ANALOG);
+  set_gpio_mode(GPIOC, 5, MODE_ANALOG);
+  set_gpio_mode(GPIOA, 6, MODE_ANALOG);
 
   // CAN transceiver enables
-  set_gpio_pullup(&tracked_GPIOB, 7, PULL_NONE);
-  set_gpio_mode(&tracked_GPIOB, 7, MODE_OUTPUT);
-  set_gpio_pullup(&tracked_GPIOD, 8, PULL_NONE);
-  set_gpio_mode(&tracked_GPIOD, 8, MODE_OUTPUT);
+  set_gpio_pullup(GPIOB, 7, PULL_NONE);
+  set_gpio_mode(GPIOB, 7, MODE_OUTPUT);
+  set_gpio_pullup(GPIOD, 8, PULL_NONE);
+  set_gpio_mode(GPIOD, 8, MODE_OUTPUT);
 
   // FDCAN3, different pins on this package than the rest of the reds
-  set_gpio_pullup(&tracked_GPIOD, 12, PULL_NONE);
-  set_gpio_alternate(&tracked_GPIOD, 12, GPIO_AF5_FDCAN3);
-  set_gpio_pullup(&tracked_GPIOD, 13, PULL_NONE);
-  set_gpio_alternate(&tracked_GPIOD, 13, GPIO_AF5_FDCAN3);
+  set_gpio_pullup(GPIOD, 12, PULL_NONE);
+  set_gpio_alternate(GPIOD, 12, GPIO_AF5_FDCAN3);
+  set_gpio_pullup(GPIOD, 13, PULL_NONE);
+  set_gpio_alternate(GPIOD, 13, GPIO_AF5_FDCAN3);
 
   // C2: SOM GPIO used as input (fan control at boot)
-  set_gpio_mode(&tracked_GPIOC, 2, MODE_INPUT);
-  set_gpio_pullup(&tracked_GPIOC, 2, PULL_DOWN);
+  set_gpio_mode(GPIOC, 2, MODE_INPUT);
+  set_gpio_pullup(GPIOC, 2, PULL_DOWN);
 
   // SOM bootkick + reset lines
   cuatro_set_bootkick(BOOT_BOOTKICK);
@@ -82,29 +82,29 @@ static void cuatro_init(void) {
   uart_init(&uart_ring_som_debug, 115200);
 
   // fan setup
-  set_gpio_alternate(&tracked_GPIOC, 8, GPIO_AF2_TIM3);
-  register_set_bits(&tracked_GPIOC.OTYPER, GPIO_OTYPER_OT8); // open drain
+  set_gpio_alternate(GPIOC, 8, GPIO_AF2_TIM3);
+  register_set_bits(&(GPIOC->OTYPER), GPIO_OTYPER_OT8); // open drain
 
   // Clock source
   clock_source_init(true);
 
   // Sound codec
   cuatro_set_amp_enabled(false);
-  set_gpio_alternate(&tracked_GPIOA, 2, GPIO_AF8_SAI4);    // SAI4_SCK_B
-  set_gpio_alternate(&tracked_GPIOC, 0, GPIO_AF8_SAI4);    // SAI4_FS_B
-  set_gpio_alternate(&tracked_GPIOD, 11, GPIO_AF10_SAI4);  // SAI4_SD_A
-  set_gpio_alternate(&tracked_GPIOE, 3, GPIO_AF8_SAI4);    // SAI4_SD_B
-  set_gpio_alternate(&tracked_GPIOE, 4, GPIO_AF3_DFSDM1);  // DFSDM1_DATIN3
-  set_gpio_alternate(&tracked_GPIOE, 9, GPIO_AF3_DFSDM1);  // DFSDM1_CKOUT
-  set_gpio_alternate(&tracked_GPIOE, 6, GPIO_AF10_SAI4);   // SAI4_MCLK_B
+  set_gpio_alternate(GPIOA, 2, GPIO_AF8_SAI4);    // SAI4_SCK_B
+  set_gpio_alternate(GPIOC, 0, GPIO_AF8_SAI4);    // SAI4_FS_B
+  set_gpio_alternate(GPIOD, 11, GPIO_AF10_SAI4);  // SAI4_SD_A
+  set_gpio_alternate(GPIOE, 3, GPIO_AF8_SAI4);    // SAI4_SD_B
+  set_gpio_alternate(GPIOE, 4, GPIO_AF3_DFSDM1);  // DFSDM1_DATIN3
+  set_gpio_alternate(GPIOE, 9, GPIO_AF3_DFSDM1);  // DFSDM1_CKOUT
+  set_gpio_alternate(GPIOE, 6, GPIO_AF10_SAI4);   // SAI4_MCLK_B
   sound_init();
 }
 
 static harness_configuration cuatro_harness_config = {
-  .GPIO_SBU1 = &tracked_GPIOC,
-  .GPIO_SBU2 = &tracked_GPIOA,
-  .GPIO_relay_SBU1 = &tracked_GPIOA,
-  .GPIO_relay_SBU2 = &tracked_GPIOA,
+  .GPIO_SBU1 = GPIOC,
+  .GPIO_SBU2 = GPIOA,
+  .GPIO_relay_SBU1 = GPIOA,
+  .GPIO_relay_SBU2 = GPIOA,
   .pin_SBU1 = 4,
   .pin_SBU2 = 1,
   .pin_relay_SBU1 = 9,
@@ -121,7 +121,7 @@ board board_cuatro = {
   .fan_enable_cooldown_time = 3U,
   .init = cuatro_init,
   .enable_can_transceiver = cuatro_enable_can_transceiver,
-  .led_GPIO = {&tracked_GPIOC, &tracked_GPIOC, &tracked_GPIOC},
+  .led_GPIO = {GPIOC, GPIOC, GPIOC},
   .led_pin = {6, 7, 9},
   .led_pwm_channels = {1, 2, 4},
   .set_can_mode = tres_set_can_mode,

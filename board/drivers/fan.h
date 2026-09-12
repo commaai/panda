@@ -44,7 +44,7 @@ void fan_tick(void) {
     }
 
     // Set PWM and enable line
-    pwm_set(&tracked_TIM3, 3, fan_state.power);
+    pwm_set(TIM3, 3, fan_state.power);
     current_board->set_fan_enabled((fan_state.power > 0U) || (fan_state.cooldown_counter > 0U));
   }
 }
