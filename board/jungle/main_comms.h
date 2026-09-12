@@ -44,13 +44,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   unsigned int resp_len = 0;
   uint32_t time;
 
-#ifdef DEBUG_COMMS
-  print("raw control request: "); hexdump(req, sizeof(ControlPacket_t)); print("\n");
-  print("- request "); puth(req->request); print("\n");
-  print("- param1 "); puth(req->param1); print("\n");
-  print("- param2 "); puth(req->param2); print("\n");
-#endif
-
   switch (req->request) {
     // **** 0xa0: Set panda power.
     case 0xa0:

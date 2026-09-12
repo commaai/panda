@@ -104,13 +104,11 @@ static void __attribute__ ((noinline)) enable_fpu(void) {
 
 // called at 8Hz
 static void tick_handler(void) {
-  static uint32_t siren_countdown = 0; // siren plays while countdown > 0
-  static uint32_t controls_allowed_countdown = 0;
-  static uint8_t prev_harness_status = HARNESS_STATUS_NC;
-  static uint8_t loop_counter = 0U;
-  static bool relay_malfunction_prev = false;
-
   if (TICK_TIMER->SR != 0U) {
+    static uint32_t siren_countdown = 0; // siren plays while countdown > 0
+    static uint8_t prev_harness_status = HARNESS_STATUS_NC;
+    static uint8_t loop_counter = 0U;
+    static bool relay_malfunction_prev = false;
 
     // siren
     current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
@@ -143,13 +141,7 @@ static void tick_handler(void) {
 
     // decimated to 1Hz
     if (loop_counter == 0U) {
-      #ifdef DEBUG
-        print("** blink ");
-        print("rx:"); puth4(can_rx_q.r_ptr); print("-"); puth4(can_rx_q.w_ptr); print("  ");
-        print("tx1:"); puth4(can_tx1_q.r_ptr); print("-"); puth4(can_tx1_q.w_ptr); print("  ");
-        print("tx2:"); puth4(can_tx2_q.r_ptr); print("-"); puth4(can_tx2_q.w_ptr); print("  ");
-        print("tx3:"); puth4(can_tx3_q.r_ptr); print("-"); puth4(can_tx3_q.w_ptr); print("\n");
-      #endif
+      static uint32_t controls_allowed_countdown = 0;
 
       // set green LED to be controls allowed
       led_set(LED_GREEN, controls_allowed);
@@ -282,6 +274,7 @@ int main(void) {
 
   print("Config:\n");
   print("  Board type: 0x"); puth(hw_type); print("\n");
+  print("  MCU UID: "); hexdump((const uint8_t *)UID_BASE, 12);
 
   // init board
   current_board->init();
@@ -311,9 +304,6 @@ int main(void) {
   REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK)
   tick_timer_init();
 
-#ifdef DEBUG
-  print("DEBUG ENABLED\n");
-#endif
   // enable USB (right before interrupts or enum can fail!)
   usb_init();
 
@@ -337,32 +327,20 @@ int main(void) {
     }
     #endif
     if (!power_save_enabled) {
-      #ifdef DEBUG_FAULTS
-      if (fault_status == FAULT_STATUS_NONE) {
-      #endif
-        // useful for debugging, fade breaks = panda is overloaded
-        for (uint32_t fade = 0U; fade < MAX_LED_FADE; fade += 1U) {
-          led_set(LED_RED, true);
-          delay(fade >> 4);
-          led_set(LED_RED, false);
-          delay((MAX_LED_FADE - fade) >> 4);
-        }
+      // useful for debugging, fade breaks = panda is overloaded
+      for (uint32_t fade = 0U; fade < MAX_LED_FADE; fade += 1U) {
+        led_set(LED_RED, true);
+        delay(fade >> 4);
+        led_set(LED_RED, false);
+        delay((MAX_LED_FADE - fade) >> 4);
+      }
 
-        for (uint32_t fade = MAX_LED_FADE; fade > 0U; fade -= 1U) {
-          led_set(LED_RED, true);
-          delay(fade >> 4);
-          led_set(LED_RED, false);
-          delay((MAX_LED_FADE - fade) >> 4);
-        }
-
-      #ifdef DEBUG_FAULTS
-      } else {
-          led_set(LED_RED, 1);
-          delay(512000U);
-          led_set(LED_RED, 0);
-          delay(512000U);
-        }
-      #endif
+      for (uint32_t fade = MAX_LED_FADE; fade > 0U; fade -= 1U) {
+        led_set(LED_RED, true);
+        delay(fade >> 4);
+        led_set(LED_RED, false);
+        delay((MAX_LED_FADE - fade) >> 4);
+      }
     } else {
       if ((hw_type == HW_TYPE_CUATRO) && !current_board->read_som_gpio()) {
         assert_fatal(current_safety_mode == SAFETY_SILENT, "Error: Entering low power mode while not in SAFETY_SILENT. Hanging\n");
