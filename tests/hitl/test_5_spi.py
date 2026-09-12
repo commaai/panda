@@ -4,21 +4,28 @@ from unittest.mock import patch
 
 from panda.tests.hitl.base import PandaTestCase
 from panda import Panda
-from panda.python.spi import PandaProtocolMismatch, PandaSpiNackResponse
+from panda.python.spi import SYNC, PandaProtocolMismatch, PandaSpiNackResponse, crc8
 
 
 class TestSpi(PandaTestCase):
+  @classmethod
+  def setUpClass(cls):
+    spi_only = patch.object(Panda, 'usb_connect', return_value=(None, None, None, False))
+    spi_only.start()
+    cls.addClassCleanup(spi_only.stop)
+    super().setUpClass()
+
   def _ping(self, panda):
     # should work with no retries
-    with patch.object(panda._handle, '_wait_for_ack', wraps=panda._handle._wait_for_ack) as spy:
+    with patch.object(panda._handle, '_transfer_spidev', wraps=panda._handle._transfer_spidev) as spy:
       panda.health()
-      assert spy.call_count == 2
+      assert spy.call_count == 1
 
   def test_protocol_version_check(self):
     p = self.p
     for bootstub in (False, True):
       p.reset(enter_bootstub=bootstub)
-      with patch('panda.python.spi.PandaSpiHandle.PROTOCOL_VERSION', return_value="abc"):
+      with patch('panda.python.spi.PandaSpiHandle.PROTOCOL_VERSION', 0):
         # list should still work with wrong version
         assert p._serial in Panda.list()
 
@@ -43,21 +50,21 @@ class TestSpi(PandaTestCase):
 
   def test_all_comm_types(self):
     p = self.p
-    spy = self.enterContext(patch.object(p._handle, '_wait_for_ack', wraps=p._handle._wait_for_ack))
+    spy = self.enterContext(patch.object(p._handle, '_transfer_spidev', wraps=p._handle._transfer_spidev))
 
     # controlRead + controlWrite
     p.health()
     p.can_clear(0)
-    assert spy.call_count == 2*2
+    assert spy.call_count == 2
 
     # bulkRead + bulkWrite
     p.can_recv()
     p.can_send(0x123, b"somedata", 0)
-    assert spy.call_count == 2*4
+    assert spy.call_count == 4
 
   def test_bad_header(self):
     p = self.p
-    with patch('panda.python.spi.SYNC', return_value=0):
+    with patch('panda.python.spi.SYNC', 0):
       with self.assertRaises(PandaSpiNackResponse):
         p._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, p.HEALTH_STRUCT.size, timeout=50)
     self._ping(p)
@@ -65,7 +72,7 @@ class TestSpi(PandaTestCase):
   def test_bad_checksum(self):
     p = self.p
     cnt = p.health()['spi_error_count']
-    with patch('panda.python.spi.PandaSpiHandle._calc_checksum', return_value=0):
+    with patch('panda.python.spi.crc8', side_effect=lambda data: 0 if data[0] == SYNC else crc8(data)):
       with self.assertRaises(PandaSpiNackResponse):
         p._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, p.HEALTH_STRUCT.size, timeout=50)
     self._ping(p)
