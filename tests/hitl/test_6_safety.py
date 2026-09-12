@@ -1,7 +1,7 @@
 import time
 
 from opendbc.car.structs import CarParams
-from panda.tests.hitl.base import PandaTestCase
+from tests.hitl.base import PandaTestCase
 
 
 class TestSafety(PandaTestCase):

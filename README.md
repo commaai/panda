@@ -6,8 +6,8 @@ panda speaks CAN and CAN FD, and it runs on the [STM32H725](https://www.st.com/r
 
 ```
 .
-├── board           # Code that runs on the STM32
-├── python          # Python userspace library for interfacing with the panda
+├── firmware        # Code that runs on the STM32
+├── panda           # Python userspace library for interfacing with the panda
 ├── tests           # Tests for panda
 ├── scripts         # Miscellaneous used for panda development and debugging
 ├── examples        # Example scripts for using a panda in a car
@@ -20,7 +20,7 @@ panda is compiled with vehicle-specific safety logic provided by [opendbc](https
 ## Code Rigor
 
 The panda firmware is written for its use in conjunction with [openpilot](https://github.com/commaai/openpilot). The panda firmware, through its safety model, provides and enforces the
-[openpilot safety](https://github.com/commaai/openpilot/blob/master/docs/SAFETY.md). Due to its critical function, it's important that the application code rigor within the `board` folder is held to high standards.
+[openpilot safety](https://github.com/commaai/openpilot/blob/master/docs/SAFETY.md). Due to its critical function, it's important that the application code rigor within the `firmware` folder is held to high standards.
 
 These are the [CI regression tests](https://github.com/commaai/panda/actions) we have in place:
 * A generic static code analysis is performed by [cppcheck](https://github.com/danmar/cppcheck/).
@@ -50,7 +50,7 @@ cd panda
 ./test.sh
 ```
 
-See [the Panda class](https://github.com/commaai/panda/blob/master/python/__init__.py) for how to interact with the panda.
+See [the Panda class](https://github.com/commaai/panda/blob/master/panda/__init__.py) for how to interact with the panda.
 
 For example, to receive CAN messages:
 ``` python

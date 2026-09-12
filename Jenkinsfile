@@ -96,7 +96,7 @@ pipeline {
                   sh script: """#!/usr/bin/env bash
 set -e
 source .venv/bin/activate
-python3 ./tests/hitl/reset_jungles.py
+python3 -m tests.hitl.reset_jungles
 """, label: "reset hardware"
                 }
               }
@@ -112,7 +112,7 @@ python3 ./tests/hitl/reset_jungles.py
                 phone_steps("panda-cuatro", [
                   ["build", "scons"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
-                  ["test", "cd tests/hitl && HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py"],
+                  ["test", "HITL=1 python -m unittest -v tests/hitl/test_2*.py tests/hitl/test_[5-9]*.py"],
                 ])
               }
             }
@@ -123,7 +123,7 @@ python3 ./tests/hitl/reset_jungles.py
                 phone_steps("panda-tres", [
                   ["build", "scons"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
-                  ["test", "cd tests/hitl && HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py"],
+                  ["test", "HITL=1 python -m unittest -v tests/hitl/test_2*.py tests/hitl/test_[5-9]*.py"],
                 ])
               }
             }

@@ -2,9 +2,9 @@ import binascii
 import random
 from unittest.mock import patch
 
-from panda.tests.hitl.base import PandaTestCase
+from tests.hitl.base import PandaTestCase
 from panda import Panda
-from panda.python.spi import PandaProtocolMismatch, PandaSpiNackResponse
+from panda.spi import PandaProtocolMismatch, PandaSpiNackResponse
 
 
 class TestSpi(PandaTestCase):
@@ -18,7 +18,7 @@ class TestSpi(PandaTestCase):
     p = self.p
     for bootstub in (False, True):
       p.reset(enter_bootstub=bootstub)
-      with patch('panda.python.spi.PandaSpiHandle.PROTOCOL_VERSION', return_value="abc"):
+      with patch('panda.spi.PandaSpiHandle.PROTOCOL_VERSION', return_value="abc"):
         # list should still work with wrong version
         assert p._serial in Panda.list()
 
@@ -57,7 +57,7 @@ class TestSpi(PandaTestCase):
 
   def test_bad_header(self):
     p = self.p
-    with patch('panda.python.spi.SYNC', return_value=0):
+    with patch('panda.spi.SYNC', return_value=0):
       with self.assertRaises(PandaSpiNackResponse):
         p._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, p.HEALTH_STRUCT.size, timeout=50)
     self._ping(p)
@@ -65,7 +65,7 @@ class TestSpi(PandaTestCase):
   def test_bad_checksum(self):
     p = self.p
     cnt = p.health()['spi_error_count']
-    with patch('panda.python.spi.PandaSpiHandle._calc_checksum', return_value=0):
+    with patch('panda.spi.PandaSpiHandle._calc_checksum', return_value=0):
       with self.assertRaises(PandaSpiNackResponse):
         p._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, p.HEALTH_STRUCT.size, timeout=50)
     self._ping(p)

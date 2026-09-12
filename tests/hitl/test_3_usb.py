@@ -1,9 +1,9 @@
 import time
 
 from opendbc.car.structs import CarParams
-from panda.tests.hitl.base import PandaTestCase
+from tests.hitl.base import PandaTestCase
 from panda import Panda
-from panda.tests.hitl.helpers import time_many_sends
+from tests.hitl.helpers import time_many_sends
 
 
 class TestUsb(PandaTestCase):

@@ -8,7 +8,7 @@ env = Environment(
     '-Wfatal-errors',
     '-Wno-pointer-to-int-cast',
   ],
-  CPPPATH=[".", "../../", "../../board/", opendbc.INCLUDE_PATH],
+  CPPPATH=[".", "../../", "../../firmware/", opendbc.INCLUDE_PATH],
 )
 
 panda = env.SharedObject("panda.os", "panda.c")

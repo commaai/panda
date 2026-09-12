@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from panda.tests.libs.resetter import Resetter
+from tests.libs.resetter import Resetter
 
 
 # * port 1: unused jungles-under-test

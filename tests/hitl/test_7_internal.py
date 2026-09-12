@@ -1,6 +1,6 @@
 import time
 
-from panda.tests.hitl.base import PandaTestCase, panda_test
+from tests.hitl.base import PandaTestCase, panda_test
 from panda import Panda
 
 

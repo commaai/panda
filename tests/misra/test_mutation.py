@@ -13,21 +13,21 @@ ROOT = os.path.join(HERE, "../../")
 
 # skip mutating these paths
 IGNORED_PATHS = (
-  'board/obj',
-  'board/body',
-  'board/stm32h7/inc',
-  'board/fake_stm.h',
+  'firmware/obj',
+  'firmware/body',
+  'firmware/stm32h7/inc',
+  'firmware/fake_stm.h',
 
   # bootstub only files
-  'board/flasher.h',
-  'board/bootstub.c',
-  'board/bootstub_declarations.h',
-  'board/stm32h7/llflash.h',
+  'firmware/flasher.h',
+  'firmware/bootstub.c',
+  'firmware/bootstub_declarations.h',
+  'firmware/stm32h7/llflash.h',
 )
 
 mutations = [
   (None, None, False),  # no mods, should pass
-  ("board/stm32h7/llfdcan.h", "s/return ret;/if (true) { return ret; } else { return false; }/g", True),
+  ("firmware/stm32h7/llfdcan.h", "s/return ret;/if (true) { return ret; } else { return false; }/g", True),
 ]
 
 patterns = [
@@ -53,9 +53,9 @@ patterns = [
   r"$a #define TEST 1\n#undef TEST\n",
 ]
 
-all_files = glob.glob('board/**', root_dir=ROOT, recursive=True)
+all_files = glob.glob('firmware/**', root_dir=ROOT, recursive=True)
 files = sorted(f for f in all_files if f.endswith(('.c', '.h')) and not f.startswith(IGNORED_PATHS))
-assert len(files) > 50, all(d in files for d in ('board/main.c', 'board/stm32h7/llfdcan.h'))
+assert len(files) > 50, all(d in files for d in ('firmware/main.c', 'firmware/stm32h7/llfdcan.h'))
 
 # fixed seed for reproducible mutation selection
 rng = random.Random(len(files))

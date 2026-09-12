@@ -5,8 +5,8 @@ import threading
 from collections import defaultdict
 
 from opendbc.car.structs import CarParams
-from panda.tests.hitl.base import PandaTestCase, panda_test
-from panda.tests.hitl.helpers import time_many_sends, get_random_can_messages, clear_can_buffers
+from tests.hitl.base import PandaTestCase, panda_test
+from tests.hitl.helpers import time_many_sends, get_random_can_messages, clear_can_buffers
 
 class TestCanLoopback(PandaTestCase):
   @panda_test(needs_jungle=True)

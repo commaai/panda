@@ -31,18 +31,14 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = [
-  "panda",
-  "panda.python",
-  "panda.board",
-  "panda.board.body",
-]
+packages = ["panda", "panda.firmware"]
 
 [tool.setuptools.package-data]
-"panda.board" = ["health.h"]
+"panda.firmware" = ["health.h"]
 
 [tool.setuptools.package-dir]
-panda = "."
+# Include the firmware health schema used by the Python client at runtime.
+"panda.firmware" = "firmware"
 
 # https://beta.ruff.rs/docs/configuration/#using-pyprojecttoml
 [tool.ruff]

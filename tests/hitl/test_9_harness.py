@@ -2,7 +2,7 @@ import time
 import itertools
 
 from opendbc.car.structs import CarParams
-from panda.tests.hitl.base import PandaTestCase, panda_test
+from tests.hitl.base import PandaTestCase, panda_test
 from panda import Panda
 
 # TODO: test relay

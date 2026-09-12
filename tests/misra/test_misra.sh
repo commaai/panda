@@ -62,11 +62,11 @@ cppcheck() {
 PANDA_OPTS="--enable=all --disable=unusedFunction --addon=misra"
 
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ $PANDA_DIR/board/main.c
+cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/firmware/stm32h7/inc/ $PANDA_DIR/firmware/main.c
 
 # unused needs to run globally
 #printf "\n${GREEN}** UNUSED ALL CODE **${NC}\n"
-#cppcheck --enable=unusedFunction --quiet $PANDA_DIR/board/
+#cppcheck --enable=unusedFunction --quiet $PANDA_DIR/firmware/
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
 
