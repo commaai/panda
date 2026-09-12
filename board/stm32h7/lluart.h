@@ -18,9 +18,6 @@ static void uart_rx_ring(uart_ring *q){
   if (next_w_ptr != q->r_ptr_rx) {
     q->elems_rx[q->w_ptr_rx] = c;
     q->w_ptr_rx = next_w_ptr;
-    if (q->callback != NULL) {
-      q->callback(q);
-    }
   }
 
   EXIT_CRITICAL();

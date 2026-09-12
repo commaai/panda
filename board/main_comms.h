@@ -254,17 +254,17 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         alternative_experience = req->param1;
       }
       break;
-    // **** 0xe0: uart read
+    // **** 0xe0: debug log or UART read
     case 0xe0:
       ur = get_ring_by_number(req->param1);
-      if (!ur) {
+      if ((req->param1 != 0U) && (ur == NULL)) {
         break;
       }
 
       // read
       uint16_t req_length = MIN(req->length, USBPACKET_MAX_SIZE);
       while ((resp_len < req_length) &&
-                         get_char(ur, (char*)&resp[resp_len])) {
+                         ((req->param1 == 0U) ? debug_get_char((char*)&resp[resp_len]) : get_char(ur, (char*)&resp[resp_len]))) {
         ++resp_len;
       }
       break;
