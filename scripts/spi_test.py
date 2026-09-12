@@ -34,7 +34,7 @@ if __name__ == "__main__":
         p.get_type()   # get_type has no processing on panda side
       except PandaSpiException:
         print(f"ERROR after {datetime.now() - start}\n\n")
-        sys.stdout.write("\033[1;32;40m" + p.serial_read(0).decode('utf8') + "\033[00m" + "\n")
+        sys.stdout.write("\033[1;32;40m" + p.debug_read().decode('utf8') + "\033[00m" + "\n")
         sys.stdout.flush()
         sys.exit()
       cnt += 1
