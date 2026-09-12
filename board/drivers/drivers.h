@@ -51,6 +51,7 @@ extern bool can_loopback;
 // ******************* functions prototypes *********************
 bool can_init(uint8_t can_number);
 void process_can(uint8_t can_number);
+void process_can_batch(uint8_t can_number, uint32_t max_packets);
 
 // ********************* instantiate queues *********************
 extern can_ring *can_queues[PANDA_CAN_CNT];

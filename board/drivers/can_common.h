@@ -164,12 +164,16 @@ bool can_check_checksum(CANPacket_t *packet) {
   return (calculate_checksum((uint8_t *) packet, CANPACKET_HEAD_SIZE + GET_LEN(packet)) == 0U);
 }
 
-void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
+void can_send_internal(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook, uint32_t *pending_packets) {
   if (skip_tx_hook || safety_tx_hook(to_push) != 0) {
     if (bus_number < PANDA_CAN_CNT) {
       // add CAN packet to send queue
       tx_buffer_overflow += can_push(can_queues[bus_number], to_push) ? 0U : 1U;
-      process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
+      if (pending_packets != NULL) {
+        pending_packets[bus_number] += 1U;
+      } else {
+        process_can(CAN_NUM_FROM_BUS_NUM(bus_number));
+      }
     }
   } else {
     safety_tx_blocked += 1U;
@@ -180,6 +184,10 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
     can_set_checksum(to_push);
     rx_buffer_overflow += can_push(&can_rx_q, to_push) ? 0U : 1U;
   }
+}
+
+void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
+  can_send_internal(to_push, bus_number, skip_tx_hook, NULL);
 }
 
 bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len) {

@@ -6,6 +6,19 @@
 const uint32_t speeds[SPEEDS_ARRAY_SIZE] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};
 const uint32_t data_speeds[DATA_SPEEDS_ARRAY_SIZE] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U, 20000U, 50000U};
 
+static bool fdcan_wait_init_timed(const FDCAN_GlobalTypeDef *FDCANx, bool requested) {
+  uint32_t started = microsecond_timer_get();
+  uint32_t expected = requested ? FDCAN_CCCR_INIT : 0U;
+  bool ret = true;
+  while ((FDCANx->CCCR & FDCAN_CCCR_INIT) != expected) {
+    if ((microsecond_timer_get() - started) >= (CAN_INIT_TIMEOUT_MS * 1000U)) {
+      ret = false;
+      break;
+    }
+  }
+  return ret;
+}
+
 static bool fdcan_request_init(FDCAN_GlobalTypeDef *FDCANx) {
   bool ret = true;
   // Exit from sleep mode
@@ -13,16 +26,22 @@ static bool fdcan_request_init(FDCAN_GlobalTypeDef *FDCANx) {
   while ((FDCANx->CCCR & FDCAN_CCCR_CSA) == FDCAN_CCCR_CSA);
 
   // Request init
-  uint32_t timeout_counter = 0U;
   FDCANx->CCCR |= FDCAN_CCCR_INIT;
-  while ((FDCANx->CCCR & FDCAN_CCCR_INIT) == 0U) {
-    // Delay for about 1ms
-    delay(10000);
-    timeout_counter++;
+  if ((SCB->CCR & SCB_CCR_IC_Msk) != 0U) {
+    // Runtime I-cache invalidates delay()'s cycle calibration. The free-running
+    // timer preserves the millisecond deadline even with interrupts disabled.
+    ret = fdcan_wait_init_timed(FDCANx, true);
+  } else {
+    uint32_t timeout_counter = 0U;
+    while ((FDCANx->CCCR & FDCAN_CCCR_INIT) == 0U) {
+      // Delay for about 1ms
+      delay(10000);
+      timeout_counter++;
 
-    if (timeout_counter >= CAN_INIT_TIMEOUT_MS){
-      ret = false;
-      break;
+      if (timeout_counter >= CAN_INIT_TIMEOUT_MS){
+        ret = false;
+        break;
+      }
     }
   }
   return ret;
@@ -32,15 +51,19 @@ static bool fdcan_exit_init(FDCAN_GlobalTypeDef *FDCANx) {
   bool ret = true;
 
   FDCANx->CCCR &= ~(FDCAN_CCCR_INIT);
-  uint32_t timeout_counter = 0U;
-  while ((FDCANx->CCCR & FDCAN_CCCR_INIT) != 0U) {
-    // Delay for about 1ms
-    delay(10000);
-    timeout_counter++;
+  if ((SCB->CCR & SCB_CCR_IC_Msk) != 0U) {
+    ret = fdcan_wait_init_timed(FDCANx, false);
+  } else {
+    uint32_t timeout_counter = 0U;
+    while ((FDCANx->CCCR & FDCAN_CCCR_INIT) != 0U) {
+      // Delay for about 1ms
+      delay(10000);
+      timeout_counter++;
 
-    if (timeout_counter >= CAN_INIT_TIMEOUT_MS) {
-      ret = false;
-      break;
+      if (timeout_counter >= CAN_INIT_TIMEOUT_MS) {
+        ret = false;
+        break;
+      }
     }
   }
   return ret;
@@ -181,7 +204,8 @@ bool llcan_init(FDCAN_GlobalTypeDef *FDCANx) {
 
     // RX FIFO 0
     FDCANx->RXF0C |= (FDCAN_RX_FIFO_0_OFFSET + (can_number * FDCAN_OFFSET_W)) << FDCAN_RXF0C_F0SA_Pos;
-    FDCANx->RXF0C |= FDCAN_RX_FIFO_0_EL_CNT << FDCAN_RXF0C_F0S_Pos;
+    uint32_t rx_fifo_count = FDCAN_RX_FIFO_0_EL_CNT;
+    FDCANx->RXF0C |= rx_fifo_count << FDCAN_RXF0C_F0S_Pos;
     // RX FIFO 0 switch to non-blocking (overwrite) mode
     FDCANx->RXF0C |= FDCAN_RXF0C_F0OM;
 
@@ -203,9 +227,16 @@ bool llcan_init(FDCAN_GlobalTypeDef *FDCANx) {
     FDCANx->IE |= FDCAN_IE_RF0NE; // Rx FIFO 0 new message
     FDCANx->IE |= FDCAN_IE_PEDE | FDCAN_IE_PEAE | FDCAN_IE_BOE | FDCAN_IE_EPE | FDCAN_IE_RF0LE;
 
-    // Messages for INT1 (Only TFE works??)
+    // Messages for INT1
     FDCANx->ILS |= FDCAN_ILS_TFEL;
     FDCANx->IE |= FDCAN_IE_TFEE; // Tx FIFO empty
+#if FDCAN_TX_FIFO_EL_CNT > 1U
+    // TC additionally requires each FIFO buffer's TXBTIE bit. Refill while
+    // other frames are still transmitting, instead of waiting for FIFO empty.
+    FDCANx->TXBTIE = (1UL << FDCAN_TX_FIFO_EL_CNT) - 1UL;
+    FDCANx->ILS |= FDCAN_ILS_TCL;
+    FDCANx->IE |= FDCAN_IE_TCE;
+#endif
 
     ret = fdcan_exit_init(FDCANx);
     if(!ret) {

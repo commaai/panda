@@ -67,7 +67,12 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
 
   if (ir_reg != 0U) {
     // Clear error interrupts
+#if FDCAN_TX_FIFO_EL_CNT > 1U
+    // W1C only the handled errors; preserve completion events for TX refill.
+    FDCANx->IR = FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EP | FDCAN_IR_BO | FDCAN_IR_RF0L;
+#else
     FDCANx->IR |= (FDCAN_IR_PED | FDCAN_IR_PEA | FDCAN_IR_EP | FDCAN_IR_BO | FDCAN_IR_RF0L);
+#endif
     can_health[can_number].total_error_cnt += 1U;
     // Check for RX FIFO overflow
     if ((ir_reg & (FDCAN_IR_RF0L)) != 0U) {
@@ -85,18 +90,22 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
 
 // ***************************** CAN *****************************
 // FDFDCANx_IT1 IRQ Handler (TX)
-void process_can(uint8_t can_number) {
+static bool process_can_one(uint8_t can_number, bool refresh_slots) {
+  bool progress = false;
   if (can_number != 0xffU) {
     ENTER_CRITICAL();
 
     FDCAN_GlobalTypeDef *FDCANx = CANIF_FROM_CAN_NUM(can_number);
     uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
 
+#if FDCAN_TX_FIFO_EL_CNT == 1U
     FDCANx->IR |= FDCAN_IR_TFE; // Clear Tx FIFO Empty flag
+#endif
 
     if ((FDCANx->TXFQS & FDCAN_TXFQS_TFQF) == 0U) {
       CANPacket_t to_send;
       if (can_pop(can_queues[bus_number], &to_send)) {
+        progress = true;
         if (can_check_checksum(&to_send)) {
           can_health[can_number].total_tx_cnt += 1U;
 
@@ -142,11 +151,55 @@ void process_can(uint8_t can_number) {
           can_health[can_number].total_tx_checksum_error_cnt += 1U;
         }
 
-        refresh_can_tx_slots_available();
+        if (refresh_slots) {
+          refresh_can_tx_slots_available();
+        }
       }
     }
     EXIT_CRITICAL();
   }
+  return progress;
+}
+
+void process_can(uint8_t can_number) {
+  (void)process_can_one(can_number, true);
+}
+
+// SPI admission holds the critical section across enqueue and FIFO priming.
+// Bound dequeues by the accepted packet count, as with per-packet kicks. This
+// also bounds receipts by the space reserved at admission, even with a backlog.
+// A bad checksum consumes one dequeue attempt, but does not stop the batch.
+void process_can_batch(uint8_t can_number, uint32_t max_packets) {
+  if (can_number != 0xffU) {
+    ENTER_CRITICAL();
+    for (uint32_t i = 0U; i < max_packets; i++) {
+      if (!process_can_one(can_number, false)) {
+        break;
+      }
+    }
+    EXIT_CRITICAL();
+  }
+}
+
+// Refill on completion without changing IRQ priority or safety-hook placement.
+// Only already-approved packets are dequeued, in order.
+static void process_can_tx_irq(uint8_t can_number) {
+#if FDCAN_TX_FIFO_EL_CNT > 1U
+  ENTER_CRITICAL();
+  FDCAN_GlobalTypeDef *can = CANIF_FROM_CAN_NUM(can_number);
+  // W1C only the TX sources. Do not clear unrelated pending RX/error events.
+  can->IR = FDCAN_IR_TC | FDCAN_IR_TFE;
+  const can_ring *queue = can_queues[BUS_NUM_FROM_CAN_NUM(can_number)];
+  uint32_t queued = queue->fifo_size - 1U - can_slots_empty(queue);
+  // Stops on FIFO full/queue empty and cannot loop forever on bad checksums.
+  process_can_batch(can_number, queued);
+  if (queued != (queue->fifo_size - 1U - can_slots_empty(queue))) {
+    refresh_can_tx_slots_available();
+  }
+  EXIT_CRITICAL();
+#else
+  process_can(can_number);
+#endif
 }
 
 // FDFDCANx_IT0 IRQ Handler (RX and errors)
@@ -158,7 +211,12 @@ static void can_rx(uint8_t can_number) {
   uint32_t ir_reg = FDCANx->IR;
 
   // Clear all new messages from Rx FIFO 0
+#if FDCAN_TX_FIFO_EL_CNT > 1U
+  // RX and TX events can be pending together. Do not acknowledge TX here.
+  FDCANx->IR = FDCAN_IR_RF0N;
+#else
   FDCANx->IR |= FDCAN_IR_RF0N;
+#endif
   while ((FDCANx->RXF0S & FDCAN_RXF0S_F0FL) != 0U) {
     can_health[can_number].total_rx_cnt += 1U;
     // get the index of the next RX FIFO element (0 to FDCAN_RX_FIFO_0_EL_CNT - 1)
@@ -246,13 +304,13 @@ static void can_rx(uint8_t can_number) {
 }
 
 static void FDCAN1_IT0_IRQ_Handler(void) { can_rx(0); }
-static void FDCAN1_IT1_IRQ_Handler(void) { process_can(0); }
+static void FDCAN1_IT1_IRQ_Handler(void) { process_can_tx_irq(0); }
 
 static void FDCAN2_IT0_IRQ_Handler(void) { can_rx(1); }
-static void FDCAN2_IT1_IRQ_Handler(void) { process_can(1); }
+static void FDCAN2_IT1_IRQ_Handler(void) { process_can_tx_irq(1); }
 
 static void FDCAN3_IT0_IRQ_Handler(void) { can_rx(2);  }
-static void FDCAN3_IT1_IRQ_Handler(void) { process_can(2); }
+static void FDCAN3_IT1_IRQ_Handler(void) { process_can_tx_irq(2); }
 
 bool can_init(uint8_t can_number) {
   bool ret = false;

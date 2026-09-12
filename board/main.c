@@ -317,6 +317,9 @@ int main(void) {
   led_set(LED_BLUE, false);
 
   print("**** INTERRUPTS ON ****\n");
+  // Enable after USB startup's CPU-calibrated delay. Normal app flash/bootloader
+  // transitions reset. CMSIS invalidates I-cache; D-cache stays disabled.
+  SCB_EnableICache();
   enable_interrupts();
 
   // LED should keep on blinking all the time

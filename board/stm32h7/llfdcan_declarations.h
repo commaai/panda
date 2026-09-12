@@ -19,8 +19,16 @@
 
 // FDCAN_RX_FIFO_0_EL_CNT + FDCAN_TX_FIFO_EL_CNT can't exceed 47 elements (47 * 72 bytes = 3,384 bytes) per FDCAN module
 
+// Four TX entries hide refill latency at CAN FD rates. Other targets retain
+// their existing allocation; each controller still uses exactly 47 entries.
+#if defined(STM32H7) && !defined(BOOTSTUB) && !defined(PANDA_JUNGLE) && !defined(PANDA_BODY)
+#define FDCAN_TX_FIFO_EL_CNT 4UL
+#else
+#define FDCAN_TX_FIFO_EL_CNT 1UL
+#endif
+#define FDCAN_RX_FIFO_0_EL_CNT (47UL - FDCAN_TX_FIFO_EL_CNT)
+
 // RX FIFO 0
-#define FDCAN_RX_FIFO_0_EL_CNT 46UL
 #define FDCAN_RX_FIFO_0_HEAD_SIZE 8UL // bytes
 #define FDCAN_RX_FIFO_0_DATA_SIZE 64UL // bytes
 #define FDCAN_RX_FIFO_0_EL_SIZE (FDCAN_RX_FIFO_0_HEAD_SIZE + FDCAN_RX_FIFO_0_DATA_SIZE)
@@ -28,7 +36,6 @@
 #define FDCAN_RX_FIFO_0_OFFSET 0UL
 
 // TX FIFO
-#define FDCAN_TX_FIFO_EL_CNT 1UL
 #define FDCAN_TX_FIFO_HEAD_SIZE 8UL // bytes
 #define FDCAN_TX_FIFO_DATA_SIZE 64UL // bytes
 #define FDCAN_TX_FIFO_EL_SIZE (FDCAN_TX_FIFO_HEAD_SIZE + FDCAN_TX_FIFO_DATA_SIZE)

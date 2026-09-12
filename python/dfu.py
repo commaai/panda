@@ -15,13 +15,19 @@ class PandaDFU:
     handle: BaseSTBootloaderHandle | None
     self._context, handle = PandaDFU.usb_connect(dfu_serial)
     if handle is None:
+      if self._context is not None:
+        self._context.close()
       self._context, handle = PandaDFU.spi_connect(dfu_serial)
 
     if handle is None:
       raise Exception(f"failed to open DFU device {dfu_serial}")
 
     self._handle: BaseSTBootloaderHandle = handle
-    self._mcu_type: McuType = self._handle.get_mcu_type()
+    try:
+      self._mcu_type: McuType = self._handle.get_mcu_type()
+    except BaseException:
+      self.close()
+      raise
 
   def __enter__(self):
     return self
@@ -33,8 +39,9 @@ class PandaDFU:
     if self._handle is not None:
       self._handle.close()
       self._handle = None
-      if self._context is not None:
-        self._context.close()
+    if self._context is not None:
+      self._context.close()
+      self._context = None
 
   @staticmethod
   def usb_connect(dfu_serial: str | None):
@@ -62,10 +69,15 @@ class PandaDFU:
     try:
       handle = STBootloaderSPIHandle()
       this_dfu_serial = PandaDFU.st_serial_to_dfu_serial(handle.get_uid(), handle.get_mcu_type())
-    except PandaSpiException:
-      handle = None
+    except BaseException as e:
+      if handle is not None:
+        handle.close()
+      if isinstance(e, PandaSpiException):
+        return None, None
+      raise
 
     if dfu_serial is not None and dfu_serial != this_dfu_serial:
+      handle.close()
       handle = None
 
     return None, handle
@@ -87,6 +99,7 @@ class PandaDFU:
 
   @staticmethod
   def spi_list() -> list[str]:
+    h = None
     try:
       _, h = PandaDFU.spi_connect(None)
       if h is not None:
@@ -94,6 +107,9 @@ class PandaDFU:
         return [dfu_serial, ]
     except PandaSpiException:
       pass
+    finally:
+      if h is not None:
+        h.close()
     return []
 
   @staticmethod

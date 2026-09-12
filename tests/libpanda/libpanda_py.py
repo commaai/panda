@@ -65,6 +65,11 @@ for name, argtypes, restype in (
   ("comms_can_read", [ctypes.POINTER(ctypes.c_uint8), ctypes.c_uint32], ctypes.c_int),
   ("comms_can_write", [ctypes.c_char_p, ctypes.c_uint32], None),
   ("comms_can_reset", [], None),
+  ("can_clear", [ctypes.POINTER(CANRing)], None),
+  ("comms_can_write_checked", [ctypes.c_void_p, ctypes.c_uint32], ctypes.c_bool),
+  ("can_send", [ctypes.POINTER(CANPacket), ctypes.c_uint8, ctypes.c_bool], None),
+  ("comms_can_read_spi", [ctypes.POINTER(ctypes.c_uint8), ctypes.c_uint32], ctypes.c_int),
+  ("comms_can_wire_copy", [ctypes.POINTER(ctypes.c_uint8), ctypes.c_void_p, ctypes.c_uint32, ctypes.c_bool], None),
   ("can_slots_empty", [ctypes.POINTER(CANRing)], ctypes.c_uint32),
 ):
   func = getattr(libpanda, name)

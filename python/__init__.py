@@ -169,7 +169,11 @@ class Panda:
     else:
       self._connect_serial = serial
 
-    self.connect(claim)
+    try:
+      self.connect(claim)
+    except BaseException:
+      self.close()
+      raise
 
   def _cli_select_panda(self):
     dfu_pandas = PandaDFU.list()
@@ -250,25 +254,33 @@ class Panda:
 
   @classmethod
   def spi_connect(cls, serial, ignore_version=False):
+    handle = None
     try:
       handle = PandaSpiHandle()
       dat = handle.get_protocol_version()
-    except PandaSpiException:
-      return None, None, None, False
+    except BaseException as e:
+      if handle is not None:
+        handle.close()
+      if isinstance(e, PandaSpiException):
+        return None, None, None, False
+      raise
 
     spi_serial = binascii.hexlify(dat[:12]).decode()
     pid = dat[13]
     if pid not in (0xcc, 0xee):
+      handle.close()
       raise PandaProtocolMismatch(f"invalid bootstub status ({pid=}). reflash panda")
     bootstub = pid == 0xee
     spi_version = dat[14]
 
     # did we get the right panda?
     if serial is not None and spi_serial != serial:
+      handle.close()
       return None, None, None, False
 
     # ensure our protocol version matches the panda
     if (not ignore_version) and spi_version != handle.PROTOCOL_VERSION:
+      handle.close()
       raise PandaProtocolMismatch(f"panda protocol mismatch: expected {handle.PROTOCOL_VERSION}, got {spi_version}. reflash panda")
 
     # got a device and all good
@@ -348,7 +360,9 @@ class Panda:
 
   @classmethod
   def spi_list(cls):
-    _, _, serial, _ = cls.spi_connect(None, ignore_version=True)
+    _, handle, serial, _ = cls.spi_connect(None, ignore_version=True)
+    if handle is not None:
+      handle.close()
     if serial is not None:
       return [serial, ]
     return []
@@ -467,19 +481,27 @@ class Panda:
   def recover(self, timeout: int | None = 60, reset: bool = True) -> bool:
     dfu_serial = self.get_dfu_serial()
 
-    if reset:
-      self.reset(enter_bootstub=True)
-      self.reset(enter_bootloader=True)
+    try:
+      if reset:
+        self.reset(enter_bootstub=True)
+        self.reset(enter_bootloader=True)
+    finally:
+      # A hardware-triggered reset does not release this process's SPI ownership.
+      self.close()
 
     if not self.wait_for_dfu(dfu_serial, timeout=timeout):
       return False
 
-    dfu = PandaDFU(dfu_serial)
-    dfu.recover()
+    with PandaDFU(dfu_serial) as dfu:
+      dfu.recover()
 
-    # reflash after recover
-    self.connect(True, True)
-    self.flash()
+    # Release DFU ownership before opening the normal SPI protocol again.
+    try:
+      self.connect(True, True)
+      self.flash()
+    except BaseException:
+      self.close()
+      raise
     return True
 
   @staticmethod
