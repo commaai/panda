@@ -239,7 +239,7 @@ static void tick_handler(void) {
       ignition_can_cnt += 1U;
 
       // synchronous safety check
-      safety_tick(&current_safety_config);
+      safety_tick();
     }
 
     loop_counter++;
