@@ -20,7 +20,7 @@
   "variants": [
     {
       "name": "original",
-      "title": "Original",
+      "title": "Native 48 kHz PCM",
       "playback_gain_db": 2.949999999999999,
       "integrated_lufs": -25.7,
       "true_peak_dbfs": -3.07,

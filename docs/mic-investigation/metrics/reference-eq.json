@@ -317,7 +317,7 @@
   "variants": [
     {
       "name": "original",
-      "title": "Original mic recording",
+      "title": "Native 48 kHz PCM",
       "channels": 1,
       "integrated_lufs": -25.63,
       "true_peak_dbfs": -3.0,
