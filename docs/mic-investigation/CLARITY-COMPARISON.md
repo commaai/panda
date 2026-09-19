@@ -31,3 +31,11 @@ Both reports now start with a loudness-matched 16 kHz AAC / 32 kbit/s approximat
 The original clarity page now also embeds Gentle EQ — bass retained and both Reference fit variants, matched to its −25.70 LUFS playback level. Their measured true peaks are −3.07, −4.55 and −7.52 dBFS. The reference-fit plot is embedded below the earlier experiment plot.
 
 The user reported clipping-like upper-frequency harshness in the subtler synthesis version and agreed to set synthesis aside. Its measured exported true peak was −3 dBFS; this does not rule out audible processing distortion. Existing synthesis clips remain as archived experiments.
+
+## Halfway fit hiss audition
+
+User strongly liked the halfway reference fit but heard mid/high hiss. Applying its measured FIR to post-music quiet raises 3–6 kHz noise by 8.37 dB and 6–10 kHz by 11.30 dB, versus 0.48 dB at 14–20 kHz, before playback gain. This points toward lower treble as the added hiss source; it does not identify the perceptual source conclusively.
+
+Added a separate halfway + light denoise button, preserving the preferred halfway clip byte-for-byte. Noise profile uses capture 50.48–54 s; validation uses held-out quiet 54–57 s. Bounded spectral suppression, at most 6 dB, is inactive below 2 kHz and fully active above 3.5 kHz. Existing halfway EQ follows. Held-out 6–10 kHz quiet drops 5.80 dB; reduction during music and listener preference are not established. Detail loss and watery artifacts remain possible. No synthesis or new capture. Output measures −25.70 LUFS and −4.55 dBFS true peak; the browser button plays all 45 seconds.
+
+![Hiss and held-out quiet measurements](figures/clarity-comparison-01/halfway-hiss.png)

@@ -101,5 +101,69 @@
     }
   ],
   "reference_comparison_limitations": "This matches the tonal balance of this one phone+room+enclosure+mic capture toward the source. It is not an exact microphone calibration or waveform reconstruction. Reference is stereo, capture mono. Noise remains and is amplified by positive EQ. No source samples are mixed into processed microphone clips. No synthesis or denoising in these versions.",
-  "latest_listener_feedback": "Subtler harmonics sound like high frequencies clip. User agreed to set synthesis aside and focus on 48 kHz capture and EQ. Existing synth clips retained for documentation."
+  "latest_listener_feedback": "Subtler harmonics sound like high frequencies clip. User agreed to set synthesis aside and focus on 48 kHz capture and EQ. Existing synth clips retained for documentation. User strongly preferred Reference fit halfway but heard mid/high hiss; added a separate bounded noise-profile audition without changing that favorite.",
+  "halfway_denoise": {
+    "title": "Reference fit \u2014 halfway + light denoise",
+    "name": "reference_half_denoise",
+    "integrated_lufs": -25.7,
+    "true_peak_dbfs": -4.55,
+    "bands": [
+      {
+        "band_hz": [
+          1000,
+          3000
+        ],
+        "eq_noise_boost_db": -1.2246941888048393,
+        "music_above_quiet_db": 32.72066090153864,
+        "held_out_quiet_reduction_db": 0.09709158481733828
+      },
+      {
+        "band_hz": [
+          3000,
+          6000
+        ],
+        "eq_noise_boost_db": 8.366304363074155,
+        "music_above_quiet_db": 20.691389997110207,
+        "held_out_quiet_reduction_db": 5.546712151435802
+      },
+      {
+        "band_hz": [
+          6000,
+          10000
+        ],
+        "eq_noise_boost_db": 11.299617518536063,
+        "music_above_quiet_db": 12.319221659692346,
+        "held_out_quiet_reduction_db": 5.802413128281126
+      },
+      {
+        "band_hz": [
+          10000,
+          14000
+        ],
+        "eq_noise_boost_db": 5.631631843944094,
+        "music_above_quiet_db": 9.668813576397223,
+        "held_out_quiet_reduction_db": 5.8315583141953065
+      },
+      {
+        "band_hz": [
+          14000,
+          20000
+        ],
+        "eq_noise_boost_db": 0.48047012481284523,
+        "music_above_quiet_db": 10.049917067243541,
+        "held_out_quiet_reduction_db": 5.744812724899441
+      }
+    ],
+    "profile_capture_seconds": [
+      50.48,
+      54
+    ],
+    "held_out_quiet_seconds": [
+      54,
+      57
+    ],
+    "method": "2048-sample Hann STFT, 512 hop; noise-power subtraction gain, bounded to at most 6 dB attenuation; 9-bin / 5-frame smoothing; no attenuation below 2 kHz, full effect above 3.5 kHz. Existing halfway EQ follows. Constant playback gain.",
+    "limitations": "Post-music room noise is an estimate, not isolated microphone self-noise. Quiet reduction is measured on withheld quiet, not proof of equal reduction underneath music. Denoising can soften detail or cause watery artifacts. No new capture or synthesis.",
+    "preserved_halfway_sha256": "42a6c732bd7d30240836c36eb6f0e0b6c54e50fc8c2d407e0892b85bd01b47c3"
+  }
 }
