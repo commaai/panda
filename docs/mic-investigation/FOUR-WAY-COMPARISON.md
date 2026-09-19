@@ -20,3 +20,9 @@ Button 5 adds the same halfway EQ + light denoise at 48 kHz AAC / 32 kbps, reusi
 ## Added processed 48 kbps comparison
 
 Button 6 adds halfway EQ + light denoise at 48 kHz AAC / 48 kbps, reusing Candidate D exactly. Output measures −25.70 LUFS and −4.65 dBFS true peak; playback and 45-second duration were verified in the browser. The listener preferred 3/4 and, on repeat listening, described 5 as a bit worse. Preference for 6 is pending.
+
+## 32 kHz AAC at 32 kbps
+
+Added button 7 using the same halfway reference EQ + light denoise PCM source. Downsampled to 32 kHz, encoded as mono AAC at 32 kbps, then decoded to 48 kHz WAV for synchronized browser playback. Compare 5 versus 7 for the sample-rate change at the same bitrate; compare 3 versus 7 for overall encoding loss. No new physical recording or production configuration change.
+
+The 45-second encoded M4A is 188,441 bytes (0.251 MB/min including this container), with measured stream bitrate 32,332 bit/s. Playback is matched to -25.70 LUFS, has -3.42 dBFS true peak and zero measured alignment lag. No listening preference established yet. Metrics and reproduction script accompany the embedded report.
