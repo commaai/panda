@@ -74,3 +74,7 @@ All additional figures are indexed in [the plot gallery](PLOTS.md).
 ## Action-camera repeat
 
 The user filmed a repeat of the automated music and tone sequence. Both captures completed without overruns and reproduced the weak upper-band result. [Repeat measurements and plots](ACTION-CAMERA-REPEAT.md). No firmware or audio-processing change was made for the demonstration.
+
+## Independent headphone source: tones through 22 kHz
+
+An external USB AirPods Max test detected scheduled tones through 22 kHz, including a weak 20 kHz tone. This rules out a hard 15–18 kHz cutoff in the tested capture path. [Actual capture, metrics, limitations, and embedded listening report](HEADPHONE-SOURCE.md). No firmware or correction-processing change was made.
