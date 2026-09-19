@@ -82,7 +82,8 @@ static void BDMA_Channel1_IRQ_Handler(void) {
     // Smooth the quantized DMA position before correcting the read rate.
     // DC gain remains 1/65536 per sample of buffer error; Q20 limits rate jitter.
     uint32_t phase_distance = (write_phase - mic_read_phase) & MIC_PHASE_MASK;
-    int32_t phase_error = (int32_t)phase_distance - (int32_t)(MIC_TARGET_SAMPLES * MIC_PHASE_ONE);
+    uint32_t target_phase = MIC_TARGET_SAMPLES * MIC_PHASE_ONE;
+    int32_t phase_error = (int32_t)phase_distance - (int32_t)target_phase;
     mic_rate_error += (phase_error - mic_rate_error) / 32;
     int32_t signed_step = (int32_t)MIC_PHASE_ONE + (mic_rate_error / 65536);
     uint32_t step = (uint32_t)signed_step;
@@ -98,9 +99,11 @@ static void BDMA_Channel1_IRQ_Handler(void) {
       int32_t cubic = -samples[0] + (3 * samples[1]) - (3 * samples[2]) + samples[3];
       int32_t quadratic = (3 * samples[0]) - (6 * samples[1]) + (3 * samples[2]);
       int32_t linear = -(2 * samples[0]) - (3 * samples[1]) + (6 * samples[2]) - samples[3];
-      float fraction = (float)(mic_read_phase % MIC_PHASE_ONE) / (float)MIC_PHASE_ONE;
-      float interpolated = ((((float)cubic * fraction) + (float)quadratic) * fraction + (float)linear) * fraction;
-      int32_t sample = (int32_t)((interpolated * (1.0f / 6.0f)) + (float)samples[1]);
+      uint32_t fraction_bits = mic_read_phase % MIC_PHASE_ONE;
+      float fraction = (float)fraction_bits / (float)MIC_PHASE_ONE;
+      float interpolated = (((((float)cubic * fraction) + (float)quadratic) * fraction) + (float)linear) * fraction;
+      float scaled = (interpolated * (1.0f / 6.0f)) + (float)samples[1];
+      int32_t sample = (int32_t)scaled;
       // Polynomial interpolation can overshoot; saturate instead of wrapping.
       if (sample > 32767) {
         sample = 32767;
