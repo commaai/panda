@@ -25,3 +25,9 @@ Methods: [RBJ/W3C EQ cookbook](https://www.w3.org/TR/audio-eq-cookbook/) and [FF
 ## Logged-equivalent comparison
 
 Both reports now start with a loudness-matched 16 kHz AAC / 32 kbit/s approximation of logged video audio. It uses the same recording and adds no simulated clicks. Native 48 kHz remains experimental. [Reference-derived EQ, later listening feedback, and updated reports](REFERENCE-EQ.md).
+
+## Unified listening page
+
+The original clarity page now also embeds Gentle EQ — bass retained and both Reference fit variants, matched to its −25.70 LUFS playback level. Their measured true peaks are −3.07, −4.55 and −7.52 dBFS. The reference-fit plot is embedded below the earlier experiment plot.
+
+The user reported clipping-like upper-frequency harshness in the subtler synthesis version and agreed to set synthesis aside. Its measured exported true peak was −3 dBFS; this does not rule out audible processing distortion. Existing synthesis clips remain as archived experiments.

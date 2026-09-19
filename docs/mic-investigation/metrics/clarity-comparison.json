@@ -76,5 +76,30 @@
     "true_peak_dbfs": -3.15,
     "gain_after_decode_db": 25.459999999999997,
     "scope": "Same native 48 kHz capture reduced to 16 kHz mono and encoded AAC at 32 kbit/s, then decoded for embedded playback. Approximation of current Connect/video format, not actual old-firmware capture or exact on-device resampling/encoder equivalence. Existing clock/startup clicks are not recreated. Raw rlogs use 16 kHz PCM; qlogs contain no audio. Native 48 kHz here is experimental capture; production micd still defaults to 16 kHz."
-  }
+  },
+  "reference_comparison_variants": [
+    {
+      "name": "gentle_body",
+      "title": "Gentle EQ \u2014 bass retained",
+      "integrated_lufs": -25.69,
+      "true_peak_dbfs": -3.07,
+      "gain_adjustment_from_reference_report_db": -0.05999999999999872
+    },
+    {
+      "name": "reference_half",
+      "title": "Reference fit \u2014 halfway",
+      "integrated_lufs": -25.7,
+      "true_peak_dbfs": -4.55,
+      "gain_adjustment_from_reference_report_db": -0.07000000000000028
+    },
+    {
+      "name": "reference_full",
+      "title": "Reference fit \u2014 closer match",
+      "integrated_lufs": -25.71,
+      "true_peak_dbfs": -7.52,
+      "gain_adjustment_from_reference_report_db": -0.07000000000000028
+    }
+  ],
+  "reference_comparison_limitations": "This matches the tonal balance of this one phone+room+enclosure+mic capture toward the source. It is not an exact microphone calibration or waveform reconstruction. Reference is stereo, capture mono. Noise remains and is amplified by positive EQ. No source samples are mixed into processed microphone clips. No synthesis or denoising in these versions.",
+  "latest_listener_feedback": "Subtler harmonics sound like high frequencies clip. User agreed to set synthesis aside and focus on 48 kHz capture and EQ. Existing synth clips retained for documentation."
 }
