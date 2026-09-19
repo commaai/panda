@@ -70,3 +70,7 @@ The package can be rigidly mounted while its internal diaphragm responds to air 
 The first Web Audio phone attempt acknowledged playback but emitted no detected tones and is excluded. The first resampler injection experiment mixed synthetic and live DMA samples; its plot under `figures/resampler-path-01` is invalid for gain calibration and superseded by `resampler-path-02`. It is retained as an explicitly rejected experiment. Mild denoising changed timbre without a clear listening preference; the modest treble compensation produced no meaningful improvement. Neither was installed as a fix.
 
 All additional figures are indexed in [the plot gallery](PLOTS.md).
+
+## Action-camera repeat
+
+The user filmed a repeat of the automated music and tone sequence. Both captures completed without overruns and reproduced the weak upper-band result. [Repeat measurements and plots](ACTION-CAMERA-REPEAT.md). No firmware or audio-processing change was made for the demonstration.
