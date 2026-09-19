@@ -1,0 +1,17 @@
+{
+  "title": "6. Halfway EQ + denoise \u2014 48 kHz AAC / 48 kbps",
+  "sample_rate": 48000,
+  "target_bitrate": 48000,
+  "duration_seconds": 45,
+  "integrated_lufs": -25.7,
+  "true_peak_dbfs": -4.65,
+  "playback_sha256": "27f8c0226e8e5e053d127ccd19afa62adf2578d5d7fba3b285b121285552c539",
+  "reused_candidate": "D",
+  "description": "The same halfway reference EQ + light denoise target encoded at 48 kHz with AAC at 48 kbps. Compare with 3 (PCM), 4 (64 kbps), and 5 (32 kbps). Reuses the earlier Candidate D exactly.",
+  "latest_listener_feedback": "User preferred 3/4; initially described 5 as not too far behind, then clarified on repeat listening that 5 is a bit worse. Requested 48 kbps comparison; preference for 6 is pending.",
+  "browser_verified": {
+    "plays": true,
+    "duration_seconds": 45,
+    "same_audio_as_candidate_D": true
+  }
+}

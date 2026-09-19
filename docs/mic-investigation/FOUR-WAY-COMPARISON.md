@@ -16,3 +16,7 @@ The four explanations appear immediately under Restart. Prior blind comparisons 
 ## Added processed 32 kbps comparison
 
 Button 5 adds the same halfway EQ + light denoise at 48 kHz AAC / 32 kbps, reusing the earlier Candidate G exactly. It measures −25.69 LUFS and −3.94 dBFS true peak. Compare 3/5 for compression or 4/5 for bitrate. Its browser playback and 45-second duration were verified; embedded PCM is aliased to avoid increasing report size.
+
+## Added processed 48 kbps comparison
+
+Button 6 adds halfway EQ + light denoise at 48 kHz AAC / 48 kbps, reusing Candidate D exactly. Output measures −25.70 LUFS and −4.65 dBFS true peak; playback and 45-second duration were verified in the browser. The listener preferred 3/4 and, on repeat listening, described 5 as a bit worse. Preference for 6 is pending.
