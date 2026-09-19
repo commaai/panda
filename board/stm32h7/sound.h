@@ -5,7 +5,7 @@
 #define MIC_RX_BUF_SIZE 512U
 #define MIC_TX_BUF_SIZE (MIC_RX_BUF_SIZE * 2U)
 #define MIC_RING_SAMPLES (MIC_RX_BUF_SIZE * 2U)
-#define MIC_PHASE_ONE 65536U
+#define MIC_PHASE_ONE 1048576U // Q20 sample position
 #define MIC_PHASE_MASK ((MIC_RING_SAMPLES * MIC_PHASE_ONE) - 1U)
 #define MIC_TARGET_SAMPLES (MIC_RX_BUF_SIZE + (MIC_RX_BUF_SIZE / 2U))
 __attribute__((section(".sram4"))) static uint16_t sound_rx_buf[2][SOUND_RX_BUF_SIZE];
@@ -62,6 +62,7 @@ static void BDMA_Channel1_IRQ_Handler(void) {
     mic_resampler_ready = false;
   } else {
     static uint32_t mic_read_phase;
+    static int32_t mic_rate_error;
     // Read a consistent producer position if DMA switches buffers between reads.
     uint32_t target;
     uint32_t remaining;
@@ -74,24 +75,39 @@ static void BDMA_Channel1_IRQ_Handler(void) {
     uint32_t available = ((write_phase - mic_read_phase) & MIC_PHASE_MASK) / MIC_PHASE_ONE;
     if (!mic_resampler_ready || (available < (MIC_RX_BUF_SIZE + 32U)) || (available > (MIC_RING_SAMPLES - 32U))) {
       mic_read_phase = (write_phase - (MIC_TARGET_SAMPLES * MIC_PHASE_ONE)) & MIC_PHASE_MASK;
-      available = MIC_TARGET_SAMPLES;
       fade_in = true;
       mic_resampler_ready = true;
+      mic_rate_error = 0;
     }
-    // A one-sample buffer error changes the rate by 1/65536, correcting
-    // both the nominal clock offset and residual crystal drift.
-    uint32_t step = MIC_PHASE_ONE + available - MIC_TARGET_SAMPLES;
+    // Smooth the quantized DMA position before correcting the read rate.
+    // DC gain remains 1/65536 per sample of buffer error; Q20 limits rate jitter.
+    uint32_t phase_distance = (write_phase - mic_read_phase) & MIC_PHASE_MASK;
+    int32_t phase_error = (int32_t)phase_distance - (int32_t)(MIC_TARGET_SAMPLES * MIC_PHASE_ONE);
+    mic_rate_error += (phase_error - mic_rate_error) / 32;
+    int32_t signed_step = (int32_t)MIC_PHASE_ONE + (mic_rate_error / 65536);
+    uint32_t step = (uint32_t)signed_step;
     for (uint16_t i = 0U; i < MIC_RX_BUF_SIZE; i++) {
       uint32_t index = mic_read_phase / MIC_PHASE_ONE;
-      uint32_t next = (index + 1U) % MIC_RING_SAMPLES;
-      uint16_t first_bits = (uint16_t)(mic_rx_buf[index / MIC_RX_BUF_SIZE][index % MIC_RX_BUF_SIZE] >> 16U);
-      int32_t first_sample = (int16_t)first_bits;
-      uint16_t next_bits = (uint16_t)(mic_rx_buf[next / MIC_RX_BUF_SIZE][next % MIC_RX_BUF_SIZE] >> 16U);
-      int32_t next_sample = (int16_t)next_bits;
-      // Q15 interpolation keeps the worst-case signed product within int32_t.
-      uint32_t fraction_bits = (mic_read_phase % MIC_PHASE_ONE) / 2U;
-      int32_t fraction = (int32_t)fraction_bits;
-      int32_t sample = first_sample + (((next_sample - first_sample) * fraction) / 32768);
+      int32_t samples[4];
+      for (uint32_t tap = 0U; tap < 4U; tap++) {
+        uint32_t address = (index + MIC_RING_SAMPLES + tap - 1U) % MIC_RING_SAMPLES;
+        samples[tap] = (int16_t)(uint16_t)(mic_rx_buf[address / MIC_RX_BUF_SIZE][address % MIC_RX_BUF_SIZE] >> 16U);
+      }
+      // Four-point Lagrange interpolation at nodes -1, 0, 1, 2.
+      // Coefficients scaled by six remain exact and bounded in int32_t.
+      int32_t cubic = -samples[0] + (3 * samples[1]) - (3 * samples[2]) + samples[3];
+      int32_t quadratic = (3 * samples[0]) - (6 * samples[1]) + (3 * samples[2]);
+      int32_t linear = -(2 * samples[0]) - (3 * samples[1]) + (6 * samples[2]) - samples[3];
+      float fraction = (float)(mic_read_phase % MIC_PHASE_ONE) / (float)MIC_PHASE_ONE;
+      float interpolated = ((((float)cubic * fraction) + (float)quadratic) * fraction + (float)linear) * fraction;
+      int32_t sample = (int32_t)((interpolated * (1.0f / 6.0f)) + (float)samples[1]);
+      // Polynomial interpolation can overshoot; saturate instead of wrapping.
+      if (sample > 32767) {
+        sample = 32767;
+      }
+      if (sample < -32768) {
+        sample = -32768;
+      }
       if (fade_in) {
         sample = (sample * (int32_t)i) / (int32_t)MIC_RX_BUF_SIZE;
       }
