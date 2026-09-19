@@ -184,5 +184,6 @@
       "peak_dbfs": -3.2997805845798887
     }
   },
-  "limitations": "Uncalibrated speakers and different positions/volumes. Stereo playback may couple differently to the mono mic. This does not isolate microphone response. Heatmaps match 500\u20132000 Hz mean power; listening copies use only a constant gain to target -24 dBFS RMS, subject to peak headroom. No EQ or denoising. Raw captures retained."
+  "limitations": "Uncalibrated speakers and different positions/volumes. Stereo playback may couple differently to the mono mic. This does not isolate microphone response. Heatmaps match 500\u20132000 Hz mean power; listening copies use only a constant gain to target -24 dBFS RMS, subject to peak headroom. No EQ or denoising. Raw captures retained.",
+  "placement_caveat": "The user reported moving the AirPods; whether this happened between tests, during music, or both is not yet established. Placement was not controlled, so the weaker music result cannot be compared with the tone test as a fixed-position measurement."
 }

@@ -95,12 +95,14 @@ def main():
   axis.legend()
   figure.savefig(ROOT / 'music-noise.png', dpi=150)
   metrics['limitations'] = 'Uncalibrated speakers and different positions/volumes. Stereo playback may couple differently to the mono mic. This does not isolate microphone response. Heatmaps match 500–2000 Hz mean power; listening copies use only a constant gain to target -24 dBFS RMS, subject to peak headroom. No EQ or denoising. Raw captures retained.'
+  metrics['placement_caveat'] = 'The user reported moving the AirPods; whether this happened between tests, during music, or both is not yet established. Placement was not controlled, so the weaker music result cannot be compared with the tone test as a fixed-position measurement.'
   (ROOT / 'metrics.json').write_text(json.dumps(metrics, indent=2) + '\n')
   page = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AirPods versus iPhone music capture</title><style>body{font:17px/1.5 system-ui;max-width:1200px;margin:25px auto;padding:0 20px}img,audio{width:100%}td,th{padding:6px;text-align:right}</style><h1>Same music: AirPods versus iPhone</h1><p>Actual microphone recordings, same music file and pop-fix firmware. The AirPods recording followed an on-device spoken countdown, with an open earcup near the USB corner of the flat comma four. No correction processing changed.</p><p>' + metrics['limitations'] + '</p>'
   for title, filename in [('Source file', 'listen-source.wav'), ('Earlier iPhone → microphone', 'listen-phone-music-camera-01.wav'), ('New AirPods → microphone', 'listen-headphone-music-01.wav')]:
     page += '<h2>' + title + '</h2><audio controls preload="none" src="data:audio/wav;base64,' + base64.b64encode((ROOT / filename).read_bytes()).decode() + '"></audio>'
   for filename in ('music-comparison.png', 'music-noise.png'):
     page += '<img alt="' + filename + '" src="data:image/png;base64,' + base64.b64encode((ROOT / filename).read_bytes()).decode() + '">'
+  page = page.replace('<h1>Same music: AirPods versus iPhone</h1>', '<h1>Same music: AirPods versus iPhone</h1><p><strong>Movement reported:</strong> ' + metrics['placement_caveat'] + '</p>')
   page += '<h2>Music band power above post-music quiet</h2><table><tr><th>Band (kHz)</th><th>iPhone (dB)</th><th>AirPods (dB)</th></tr>'
   phone = metrics['captures']['phone-music-camera-01']['bands']
   headphone = metrics['captures']['headphone-music-01']['bands']
