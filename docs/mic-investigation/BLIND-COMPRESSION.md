@@ -9,3 +9,5 @@ The report contains only Candidate A–G labels. Buttons share one player, retai
 This audition compares encoding quality for one recording. It does not validate production integration, runtime cost, other sounds, or raw-rlog compression savings. Compressed sizes and identities can be revealed after listening.
 
 [Self-contained listening report](reports/clarity-comparison.html) · [Blinded verification](metrics/blind-compression-verification.json)
+
+A labeled “Reference — halfway EQ + light denoise (48 kHz PCM)” button precedes A–G. It reuses the exact preferred processed PCM clip, verified in the browser, and does not disclose the anonymous candidate identities.

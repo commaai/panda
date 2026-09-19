@@ -11,6 +11,7 @@ from pathlib import Path
 import numpy as np
 
 from make_clarity_comparison import loudness, wav_bytes
+from add_blind_reference import add_reference
 
 RESULTS = Path('/home/batman/tmp/c4-mic-results')
 PAGE_ROOT = RESULTS / 'clarity-comparison-01'
@@ -125,5 +126,6 @@ page=page[:script_start]+loader+page[script_end:]
 legend_marker='<div class="note" id="clip-legend">'
 page=page.replace(legend_marker,bootstrap+legend_marker,1)
 assert len(page.encode())<100*1024*1024
+page = add_reference(page)
 (PAGE_ROOT/'index.html').write_text(page)
 print(json.dumps({**summary,'embedded_report_megabytes':round(len(page.encode())/1e6,2)},indent=2))
