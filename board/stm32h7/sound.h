@@ -4,16 +4,21 @@
 #define SOUND_TX_BUF_SIZE (SOUND_RX_BUF_SIZE/2U)
 #define MIC_RX_BUF_SIZE 512U
 #define MIC_TX_BUF_SIZE (MIC_RX_BUF_SIZE * 2U)
+#define MIC_RING_SAMPLES (MIC_RX_BUF_SIZE * 2U)
+#define MIC_PHASE_ONE 65536U
+#define MIC_PHASE_MASK ((MIC_RING_SAMPLES * MIC_PHASE_ONE) - 1U)
+#define MIC_TARGET_SAMPLES (MIC_RX_BUF_SIZE + (MIC_RX_BUF_SIZE / 2U))
 __attribute__((section(".sram4"))) static uint16_t sound_rx_buf[2][SOUND_RX_BUF_SIZE];
 __attribute__((section(".sram4"))) static uint16_t sound_tx_buf[2][SOUND_TX_BUF_SIZE];
-__attribute__((section(".sram4"))) static uint32_t mic_rx_buf[2][MIC_RX_BUF_SIZE];
+__attribute__((section(".sram4"))) static volatile uint32_t mic_rx_buf[2][MIC_RX_BUF_SIZE];
 __attribute__((section(".sram4"))) static uint16_t mic_tx_buf[2][MIC_TX_BUF_SIZE];
 
 #define SOUND_IDLE_TIMEOUT 4U
 #define MIC_SKIP_BUFFERS 2U // Skip first 2 buffers (1024 samples = ~21ms at 48kHz)
 static uint8_t sound_idle_count;
 static uint8_t mic_idle_count;
-static uint8_t mic_buffer_count;
+static volatile uint8_t mic_buffer_count;
+static volatile bool mic_resampler_ready;
 uint16_t sound_output_level;
 
 void sound_tick(void) {
@@ -31,28 +36,68 @@ void sound_tick(void) {
     if (mic_idle_count == 0U) {
       register_clear_bits(&DFSDM1_Channel0->CHCFGR1, DFSDM_CHCFGR1_DFSDMEN);
       mic_buffer_count = 0U;
+      mic_resampler_ready = false;
+      (void)memset(mic_tx_buf, 0, sizeof(mic_tx_buf));
     }
   }
 }
 
-// Recording processing
+// Count complete input buffers before reading settled microphone samples.
 static void DMA1_Stream0_IRQ_Handler(void) {
-  DMA1->LIFCR |= 0x7DU; // clear flags
-
-  uint8_t tx_buf_idx = (((BDMA_Channel1->CCR & BDMA_CCR_CT) >> BDMA_CCR_CT_Pos) == 1U) ? 0U : 1U;
-
-  if (mic_buffer_count < MIC_SKIP_BUFFERS) {
-    // Send silence during settling
+  DMA1->LIFCR |= 0x7DU;
+  if (mic_buffer_count < (MIC_SKIP_BUFFERS + 2U)) {
     mic_buffer_count++;
+  }
+}
+
+// Drive recording output from the I2S clock. DFSDM uses an independent clock,
+// so interpolate from its circular DMA buffer and gently correct the read rate.
+static void BDMA_Channel1_IRQ_Handler(void) {
+  BDMA->IFCR |= BDMA_IFCR_CGIF1;
+  uint8_t tx_buf_idx = (((BDMA_Channel1->CCR & BDMA_CCR_CT) >> BDMA_CCR_CT_Pos) == 1U) ? 0U : 1U;
+  if ((mic_idle_count == 0U) || (mic_buffer_count < (MIC_SKIP_BUFFERS + 2U))) {
     for (uint16_t i = 0U; i < MIC_TX_BUF_SIZE; i++) {
       mic_tx_buf[tx_buf_idx][i] = 0U;
     }
+    mic_resampler_ready = false;
   } else {
-    // process samples
-    uint8_t buf_idx = (((DMA1_Stream0->CR & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos) == 1U) ? 0U : 1U;
-    for (uint16_t i=0U; i < MIC_RX_BUF_SIZE; i++) {
-      mic_tx_buf[tx_buf_idx][2U*i] = ((mic_rx_buf[buf_idx][i] >> 16U) & 0xFFFFU);
-      mic_tx_buf[tx_buf_idx][(2U*i)+1U] = mic_tx_buf[tx_buf_idx][2U*i];
+    static uint32_t mic_read_phase;
+    // Read a consistent producer position if DMA switches buffers between reads.
+    uint32_t target;
+    uint32_t remaining;
+    do {
+      target = (DMA1_Stream0->CR & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos;
+      remaining = DMA1_Stream0->NDTR;
+    } while (target != ((DMA1_Stream0->CR & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos));
+    uint32_t write_phase = (((target * MIC_RX_BUF_SIZE) + MIC_RX_BUF_SIZE - remaining) * MIC_PHASE_ONE) & MIC_PHASE_MASK;
+    bool fade_in = !mic_resampler_ready;
+    uint32_t available = ((write_phase - mic_read_phase) & MIC_PHASE_MASK) / MIC_PHASE_ONE;
+    if (!mic_resampler_ready || (available < (MIC_RX_BUF_SIZE + 32U)) || (available > (MIC_RING_SAMPLES - 32U))) {
+      mic_read_phase = (write_phase - (MIC_TARGET_SAMPLES * MIC_PHASE_ONE)) & MIC_PHASE_MASK;
+      available = MIC_TARGET_SAMPLES;
+      fade_in = true;
+      mic_resampler_ready = true;
+    }
+    // A one-sample buffer error changes the rate by 1/65536, correcting
+    // both the nominal clock offset and residual crystal drift.
+    uint32_t step = MIC_PHASE_ONE + available - MIC_TARGET_SAMPLES;
+    for (uint16_t i = 0U; i < MIC_RX_BUF_SIZE; i++) {
+      uint32_t index = mic_read_phase / MIC_PHASE_ONE;
+      uint32_t next = (index + 1U) % MIC_RING_SAMPLES;
+      uint16_t first_bits = (uint16_t)(mic_rx_buf[index / MIC_RX_BUF_SIZE][index % MIC_RX_BUF_SIZE] >> 16U);
+      int32_t first_sample = (int16_t)first_bits;
+      uint16_t next_bits = (uint16_t)(mic_rx_buf[next / MIC_RX_BUF_SIZE][next % MIC_RX_BUF_SIZE] >> 16U);
+      int32_t next_sample = (int16_t)next_bits;
+      // Q15 interpolation keeps the worst-case signed product within int32_t.
+      uint32_t fraction_bits = (mic_read_phase % MIC_PHASE_ONE) / 2U;
+      int32_t fraction = (int32_t)fraction_bits;
+      int32_t sample = first_sample + (((next_sample - first_sample) * fraction) / 32768);
+      if (fade_in) {
+        sample = (sample * (int32_t)i) / (int32_t)MIC_RX_BUF_SIZE;
+      }
+      mic_tx_buf[tx_buf_idx][2U * i] = (uint16_t)sample;
+      mic_tx_buf[tx_buf_idx][(2U * i) + 1U] = (uint16_t)sample;
+      mic_read_phase = (mic_read_phase + step) & MIC_PHASE_MASK;
     }
   }
 }
@@ -159,6 +204,7 @@ static void sound_stop_dac(void) {
 
 void sound_init(void) {
   REGISTER_INTERRUPT(BDMA_Channel0_IRQn, BDMA_Channel0_IRQ_Handler, 128U, FAULT_INTERRUPT_RATE_SOUND_DMA)
+  REGISTER_INTERRUPT(BDMA_Channel1_IRQn, BDMA_Channel1_IRQ_Handler, 128U, FAULT_INTERRUPT_RATE_SOUND_DMA)
   REGISTER_INTERRUPT(DMA1_Stream0_IRQn, DMA1_Stream0_IRQ_Handler, 128U, FAULT_INTERRUPT_RATE_SOUND_DMA)
 
   // Init DAC and its DMA
@@ -191,6 +237,9 @@ void sound_init(void) {
   register_set(&DMAMUX2_Channel0->CCR, 16U, DMAMUX_CxCR_DMAREQ_ID_Msk); // SAI4_B_DMA
   register_set_bits(&BDMA_Channel0->CCR, BDMA_CCR_EN);
 
+  // SRAM4 is not initialized by startup; transmit silence until capture is ready.
+  (void)memset(mic_tx_buf, 0, sizeof(mic_tx_buf));
+
   // mic output
   register_set(&SAI4_Block_A->CR1, SAI_xCR1_DMAEN | (0b01UL << SAI_xCR1_SYNCEN_Pos) | (0b100UL << SAI_xCR1_DS_Pos) | (0b10UL << SAI_xCR1_MODE_Pos), 0x0FFB3FEFU);
   register_set(&SAI4_Block_A->CR2, 0U, 0xFFFBU);
@@ -218,7 +267,7 @@ void sound_init(void) {
   register_set(&BDMA_Channel1->CM0AR, (uint32_t) mic_tx_buf[0], 0xFFFFFFFFU);
   register_set(&BDMA_Channel1->CM1AR, (uint32_t) mic_tx_buf[1], 0xFFFFFFFFU);
   BDMA_Channel1->CNDTR = MIC_TX_BUF_SIZE;
-  register_set(&BDMA_Channel1->CCR, BDMA_CCR_DBM | (0b01UL << BDMA_CCR_MSIZE_Pos) |(0b01UL << BDMA_CCR_PSIZE_Pos) | BDMA_CCR_MINC | BDMA_CCR_CIRC | (0b1U << BDMA_CCR_DIR_Pos), 0xFFFFU);
+  register_set(&BDMA_Channel1->CCR, BDMA_CCR_DBM | (0b01UL << BDMA_CCR_MSIZE_Pos) |(0b01UL << BDMA_CCR_PSIZE_Pos) | BDMA_CCR_MINC | BDMA_CCR_CIRC | BDMA_CCR_TCIE | (0b1U << BDMA_CCR_DIR_Pos), 0xFFFFU);
   register_set(&DMAMUX2_Channel1->CCR, 15U, DMAMUX_CxCR_DMAREQ_ID_Msk); // SAI4_A_DMA
   register_set_bits(&BDMA_Channel1->CCR, BDMA_CCR_EN);
 
@@ -226,5 +275,6 @@ void sound_init(void) {
   register_set_bits(&SAI4_Block_A->CR1, SAI_xCR1_SAIEN);
   register_set_bits(&SAI4_Block_B->CR1, SAI_xCR1_SAIEN);
   NVIC_EnableIRQ(BDMA_Channel0_IRQn);
+  NVIC_EnableIRQ(BDMA_Channel1_IRQn);
   NVIC_EnableIRQ(DMA1_Stream0_IRQn);
 }
