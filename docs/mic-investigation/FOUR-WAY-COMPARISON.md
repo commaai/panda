@@ -12,3 +12,7 @@ Compare 1/2 to isolate sample rate at the same nominal codec bitrate, and 3/4 to
 The four explanations appear immediately under Restart. Prior blind comparisons and other experiments remain collapsed. Duplicate embedded audio is referenced internally to avoid inflating the report with identical PCM copies. All audio remains embedded. These are offline comparisons, not deployed production changes.
 
 [Listening report](reports/clarity-comparison.html) · [Measurements](metrics/four-way-comparison.json) · [Verification](metrics/four-way-verification.json)
+
+## Added processed 32 kbps comparison
+
+Button 5 adds the same halfway EQ + light denoise at 48 kHz AAC / 32 kbps, reusing the earlier Candidate G exactly. It measures −25.69 LUFS and −3.94 dBFS true peak. Compare 3/5 for compression or 4/5 for bitrate. Its browser playback and 45-second duration were verified; embedded PCM is aliased to avoid increasing report size.

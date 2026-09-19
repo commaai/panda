@@ -1,0 +1,11 @@
+{
+  "title": "5. Halfway EQ + denoise \u2014 48 kHz AAC / 32 kbps",
+  "sample_rate": 48000,
+  "target_bitrate": 32000,
+  "duration_seconds": 45,
+  "integrated_lufs": -25.69,
+  "true_peak_dbfs": -3.94,
+  "playback_sha256": "65e9da9f51f65f21a7ec2cf91693db4b02b79eeabdb958fe365cdbdc2cdb9802",
+  "reused_candidate": "G",
+  "description": "The same halfway EQ + light denoise target encoded at 48 kHz with AAC at 32 kbps. Compare with 3 for compression loss, or 4 for the bitrate tradeoff. Same audio as the earlier Candidate G."
+}
