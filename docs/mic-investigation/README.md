@@ -78,3 +78,7 @@ The user filmed a repeat of the automated music and tone sequence. Both captures
 ## Independent headphone source: tones through 22 kHz
 
 An external USB AirPods Max test detected scheduled tones through 22 kHz, including a weak 20 kHz tone. This rules out a hard 15–18 kHz cutoff in the tested capture path. [Actual capture, metrics, limitations, and embedded listening report](HEADPHONE-SOURCE.md). No firmware or correction-processing change was made.
+
+## Music through AirPods Max
+
+The same music file was played through the external headphones. This placement recovered weaker upper-frequency musical detail than the earlier iPhone test, despite detection of strong isolated tones through 22 kHz. [Aligned plots, listening report, and limitations](HEADPHONE-MUSIC.md).
