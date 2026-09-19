@@ -86,3 +86,7 @@ The same music file was played through the external headphones. This placement r
 ## Stationary headphone pair
 
 Repeated tones and music after the user confirmed stationary placement. The 20 kHz tone was clearer than previously, and scheduled tones were detected through 22 kHz. [Fresh music comparison, actual captures, and limitations](HEADPHONE-STATIONARY.md).
+
+## Offline clarity audition
+
+Five loudness-matched versions of the better iPhone recording: original, two EQ strengths, and two strengths of explicitly synthetic harmonics. User preferred both EQs for reducing boomy bass; subtler synthesis is under audition. [Processing details, curves, limitations, and listening buttons](CLARITY-COMPARISON.md). Preference and real-time suitability remain unvalidated.
