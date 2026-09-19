@@ -82,3 +82,7 @@ An external USB AirPods Max test detected scheduled tones through 22 kHz, includ
 ## Music through AirPods Max
 
 The same music file was played through the external headphones. This placement recovered weaker upper-frequency musical detail than the earlier iPhone test, despite detection of strong isolated tones through 22 kHz. [Aligned plots, listening report, and limitations](HEADPHONE-MUSIC.md).
+
+## Stationary headphone pair
+
+Repeated tones and music after the user confirmed stationary placement. The 20 kHz tone was clearer than previously, and scheduled tones were detected through 22 kHz. [Fresh music comparison, actual captures, and limitations](HEADPHONE-STATIONARY.md).

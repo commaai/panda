@@ -1,0 +1,390 @@
+{
+  "tones": {
+    "dataset": "headphone-stationary-tones-01",
+    "source": "USB AirPods Max, open earcup near USB corner",
+    "source_offset_seconds": 0.17766666666666664,
+    "low_frequency_playback_verified": true,
+    "capture_seconds": 45.0,
+    "peak_dbfs": -33.72292324257386,
+    "rail_samples": 0,
+    "input_overflows": 0,
+    "input_underflows": 0,
+    "playback_underflows": 0,
+    "firmware": "DEV-77581827-DEBUG",
+    "tones": [
+      {
+        "frequency_hz": 1000,
+        "start_seconds": 2,
+        "duration_seconds": 2,
+        "peak": 0.1,
+        "tone_band_dbfs": -37.574302052291124,
+        "quiet_band_dbfs": -95.92287126536411,
+        "rise_db": 58.348569213072984,
+        "peak_frequency_hz": 1000.0
+      },
+      {
+        "frequency_hz": 8000,
+        "start_seconds": 5,
+        "duration_seconds": 2,
+        "peak": 0.1,
+        "tone_band_dbfs": -72.47749378782788,
+        "quiet_band_dbfs": -117.87792554763158,
+        "rise_db": 45.400431759803695,
+        "peak_frequency_hz": 8000.0
+      },
+      {
+        "frequency_hz": 14000,
+        "start_seconds": 8,
+        "duration_seconds": 2,
+        "peak": 0.1,
+        "tone_band_dbfs": -68.73711874124257,
+        "quiet_band_dbfs": -119.04912823198475,
+        "rise_db": 50.312009490742184,
+        "peak_frequency_hz": 14000.0
+      },
+      {
+        "frequency_hz": 16000,
+        "start_seconds": 11,
+        "duration_seconds": 2,
+        "peak": 0.1,
+        "tone_band_dbfs": -89.78513744784429,
+        "quiet_band_dbfs": -120.6350445396267,
+        "rise_db": 30.849907091782413,
+        "peak_frequency_hz": 16000.0
+      },
+      {
+        "frequency_hz": 17000,
+        "start_seconds": 14,
+        "duration_seconds": 2,
+        "peak": 0.1,
+        "tone_band_dbfs": -88.99661684955545,
+        "quiet_band_dbfs": -121.45603393468895,
+        "rise_db": 32.459417085133495,
+        "peak_frequency_hz": 17000.0
+      },
+      {
+        "frequency_hz": 18000,
+        "start_seconds": 17,
+        "duration_seconds": 2,
+        "peak": 0.1,
+        "tone_band_dbfs": -98.78437402299106,
+        "quiet_band_dbfs": -119.69274567337698,
+        "rise_db": 20.908371650385916,
+        "peak_frequency_hz": 18000.0
+      },
+      {
+        "frequency_hz": 19000,
+        "start_seconds": 20,
+        "duration_seconds": 2,
+        "peak": 0.1,
+        "tone_band_dbfs": -99.47595016465286,
+        "quiet_band_dbfs": -124.12949718641251,
+        "rise_db": 24.65354702175965,
+        "peak_frequency_hz": 19000.0
+      },
+      {
+        "frequency_hz": 20000,
+        "start_seconds": 23,
+        "duration_seconds": 2,
+        "peak": 0.1,
+        "tone_band_dbfs": -100.88933108096592,
+        "quiet_band_dbfs": -125.30050975131574,
+        "rise_db": 24.411178670349827,
+        "peak_frequency_hz": 20000.0
+      },
+      {
+        "frequency_hz": 21000,
+        "start_seconds": 26,
+        "duration_seconds": 2,
+        "peak": 0.1,
+        "tone_band_dbfs": -94.97305908144826,
+        "quiet_band_dbfs": -126.19034662558326,
+        "rise_db": 31.217287544135004,
+        "peak_frequency_hz": 21000.0
+      },
+      {
+        "frequency_hz": 22000,
+        "start_seconds": 29,
+        "duration_seconds": 2,
+        "peak": 0.1,
+        "tone_band_dbfs": -94.68516664041849,
+        "quiet_band_dbfs": -124.23952726028338,
+        "rise_db": 29.554360619864894,
+        "peak_frequency_hz": 22000.0
+      }
+    ],
+    "limitations": "Uncalibrated source and placement. Measured response includes headphone, air path, enclosure and microphone processing. Positive detection is useful; non-detection cannot identify which element attenuates the tone. No EQ, denoising or simulated microphone distortion."
+  },
+  "music": {
+    "dataset": "headphone-stationary-music-01, compared with phone-music-camera-01",
+    "same_source_bytes": true,
+    "captures": {
+      "phone-music-camera-01": {
+        "source_offset_seconds": 1.48,
+        "envelope_correlation": 0.9016272951077764,
+        "bands": [
+          {
+            "band_hz": [
+              500,
+              2000
+            ],
+            "music_dbfs": -53.06033211991835,
+            "quiet_dbfs": -83.17583212313316,
+            "rise_db": 30.115500003214812
+          },
+          {
+            "band_hz": [
+              4000,
+              8000
+            ],
+            "music_dbfs": -81.71535916341016,
+            "quiet_dbfs": -99.18623370285269,
+            "rise_db": 17.470874539442534
+          },
+          {
+            "band_hz": [
+              8000,
+              12000
+            ],
+            "music_dbfs": -86.9528928441566,
+            "quiet_dbfs": -98.42767209255634,
+            "rise_db": 11.474779248399742
+          },
+          {
+            "band_hz": [
+              12000,
+              14000
+            ],
+            "music_dbfs": -93.70489141966345,
+            "quiet_dbfs": -102.23706474372669,
+            "rise_db": 8.532173324063237
+          },
+          {
+            "band_hz": [
+              14000,
+              16000
+            ],
+            "music_dbfs": -90.19923832070393,
+            "quiet_dbfs": -102.7531554822232,
+            "rise_db": 12.55391716151928
+          },
+          {
+            "band_hz": [
+              16000,
+              18000
+            ],
+            "music_dbfs": -105.55199362891697,
+            "quiet_dbfs": -106.18127607416226,
+            "rise_db": 0.6292824452452805
+          },
+          {
+            "band_hz": [
+              18000,
+              20000
+            ],
+            "music_dbfs": -105.68912475130865,
+            "quiet_dbfs": -106.8455195228313,
+            "rise_db": 1.156394771522642
+          },
+          {
+            "band_hz": [
+              20000,
+              22000
+            ],
+            "music_dbfs": -106.11869867265916,
+            "quiet_dbfs": -108.0942619394125,
+            "rise_db": 1.9755632667533405
+          }
+        ],
+        "input_overflows": 0,
+        "input_underflows": 0,
+        "rail_samples": 0,
+        "peak_dbfs": -28.496784542626227
+      },
+      "headphone-stationary-music-01": {
+        "source_offset_seconds": 0.14,
+        "envelope_correlation": 0.9387393860419331,
+        "bands": [
+          {
+            "band_hz": [
+              500,
+              2000
+            ],
+            "music_dbfs": -57.74863038945453,
+            "quiet_dbfs": -81.44095903494014,
+            "rise_db": 23.692328645485603
+          },
+          {
+            "band_hz": [
+              4000,
+              8000
+            ],
+            "music_dbfs": -95.12667322853476,
+            "quiet_dbfs": -99.09388240754787,
+            "rise_db": 3.9672091790131105
+          },
+          {
+            "band_hz": [
+              8000,
+              12000
+            ],
+            "music_dbfs": -98.87833097903336,
+            "quiet_dbfs": -100.11345137368201,
+            "rise_db": 1.2351203946486464
+          },
+          {
+            "band_hz": [
+              12000,
+              14000
+            ],
+            "music_dbfs": -99.38061947961987,
+            "quiet_dbfs": -100.13601763474068,
+            "rise_db": 0.7553981551208153
+          },
+          {
+            "band_hz": [
+              14000,
+              16000
+            ],
+            "music_dbfs": -96.35567686516549,
+            "quiet_dbfs": -101.68433896829724,
+            "rise_db": 5.328662103131748
+          },
+          {
+            "band_hz": [
+              16000,
+              18000
+            ],
+            "music_dbfs": -105.71556332705126,
+            "quiet_dbfs": -106.10461594630507,
+            "rise_db": 0.3890526192538175
+          },
+          {
+            "band_hz": [
+              18000,
+              20000
+            ],
+            "music_dbfs": -106.04187105330882,
+            "quiet_dbfs": -106.8317326001079,
+            "rise_db": 0.7898615467990737
+          },
+          {
+            "band_hz": [
+              20000,
+              22000
+            ],
+            "music_dbfs": -106.4976952522524,
+            "quiet_dbfs": -107.94617080592212,
+            "rise_db": 1.4484755536697236
+          }
+        ],
+        "input_overflows": 0,
+        "input_underflows": 0,
+        "rail_samples": 0,
+        "peak_dbfs": -30.213975587374335
+      }
+    },
+    "listening": {
+      "source": {
+        "gain_db": -0.8840465123628547,
+        "result_rms_dbfs": -28.0,
+        "peak_dbfs": -14.86424185243444
+      },
+      "phone-music-camera-01": {
+        "gain_db": 23.713058284363818,
+        "result_rms_dbfs": -28.0,
+        "peak_dbfs": -4.78372625826241
+      },
+      "headphone-stationary-music-01": {
+        "gain_db": 28.1947627494792,
+        "result_rms_dbfs": -28.0,
+        "peak_dbfs": -2.0192128378951377
+      }
+    },
+    "limitations": "Uncalibrated speakers and different positions/volumes. Stereo playback may couple differently to the mono mic. This does not isolate microphone response. Heatmaps match 500\u20132000 Hz mean power; listening copies use only a constant gain to target -28 dBFS RMS, subject to peak headroom. No EQ or denoising. Raw captures retained.",
+    "placement_caveat": "User confirmed stationary before this tone-and-music pair and was asked to leave the earcup in place throughout. This is still an uncalibrated source and geometry."
+  },
+  "comparison_with_previous_moved_run": [
+    {
+      "band_hz": [
+        500,
+        2000
+      ],
+      "previous_music_dbfs": -60.30121076406287,
+      "stationary_music_dbfs": -57.74863038945453,
+      "difference_db": 2.5525803746083398,
+      "stationary_music_above_quiet_db": 23.692328645485603
+    },
+    {
+      "band_hz": [
+        4000,
+        8000
+      ],
+      "previous_music_dbfs": -96.92423581569223,
+      "stationary_music_dbfs": -95.12667322853476,
+      "difference_db": 1.797562587157472,
+      "stationary_music_above_quiet_db": 3.9672091790131105
+    },
+    {
+      "band_hz": [
+        8000,
+        12000
+      ],
+      "previous_music_dbfs": -99.2561409786133,
+      "stationary_music_dbfs": -98.87833097903336,
+      "difference_db": 0.377809999579938,
+      "stationary_music_above_quiet_db": 1.2351203946486464
+    },
+    {
+      "band_hz": [
+        12000,
+        14000
+      ],
+      "previous_music_dbfs": -99.17576633552757,
+      "stationary_music_dbfs": -99.38061947961987,
+      "difference_db": -0.20485314409229716,
+      "stationary_music_above_quiet_db": 0.7553981551208153
+    },
+    {
+      "band_hz": [
+        14000,
+        16000
+      ],
+      "previous_music_dbfs": -97.14839746447423,
+      "stationary_music_dbfs": -96.35567686516549,
+      "difference_db": 0.792720599308737,
+      "stationary_music_above_quiet_db": 5.328662103131748
+    },
+    {
+      "band_hz": [
+        16000,
+        18000
+      ],
+      "previous_music_dbfs": -105.49364666351795,
+      "stationary_music_dbfs": -105.71556332705126,
+      "difference_db": -0.22191666353330675,
+      "stationary_music_above_quiet_db": 0.3890526192538175
+    },
+    {
+      "band_hz": [
+        18000,
+        20000
+      ],
+      "previous_music_dbfs": -106.0517557005476,
+      "stationary_music_dbfs": -106.04187105330882,
+      "difference_db": 0.009884647238777688,
+      "stationary_music_above_quiet_db": 0.7898615467990737
+    },
+    {
+      "band_hz": [
+        20000,
+        22000
+      ],
+      "previous_music_dbfs": -106.59638517752919,
+      "stationary_music_dbfs": -106.4976952522524,
+      "difference_db": 0.098689925276787,
+      "stationary_music_above_quiet_db": 1.4484755536697236
+    }
+  ],
+  "conditions": "User confirmed stationary before paired tone and music recordings; asked to keep earcup fixed throughout. Same stimulus files, firmware and requested PC sink. Captured sink volume recorded separately for both runs; source uncalibrated."
+}
