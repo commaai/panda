@@ -21,3 +21,7 @@ Methods: [RBJ/W3C EQ cookbook](https://www.w3.org/TR/audio-eq-cookbook/) and [FF
 ![Applied EQ and actual output spectra](figures/clarity-comparison-01/eq-and-spectra.png)
 
 [Embedded listening report](reports/clarity-comparison.html) · [Processing measurements](metrics/clarity-comparison.json)
+
+## Logged-equivalent comparison
+
+Both reports now start with a loudness-matched 16 kHz AAC / 32 kbit/s approximation of logged video audio. It uses the same recording and adds no simulated clicks. Native 48 kHz remains experimental. [Reference-derived EQ, later listening feedback, and updated reports](REFERENCE-EQ.md).

@@ -1,0 +1,15 @@
+{
+  "title": "Logged equivalent \u2014 16 kHz AAC, 32 kbps",
+  "codec": {
+    "codec_name": "aac",
+    "profile": "LC",
+    "sample_rate": "16000",
+    "channels": 1,
+    "duration": "45.000000",
+    "bit_rate": "32206"
+  },
+  "integrated_lufs": -25.63,
+  "true_peak_dbfs": -3.08,
+  "gain_after_decode_db": 25.53,
+  "scope": "Same native 48 kHz capture reduced to 16 kHz mono and encoded AAC at 32 kbit/s, then decoded for embedded playback. Approximation of current Connect/video format, not actual old-firmware capture or exact on-device resampling/encoder equivalence. Existing clock/startup clicks are not recreated. Raw rlogs use 16 kHz PCM; qlogs contain no audio. Native 48 kHz here is experimental capture; production micd still defaults to 16 kHz."
+}

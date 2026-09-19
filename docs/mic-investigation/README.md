@@ -90,3 +90,7 @@ Repeated tones and music after the user confirmed stationary placement. The 20 k
 ## Offline clarity audition
 
 Five loudness-matched versions of the better iPhone recording: original, two EQ strengths, and two strengths of explicitly synthetic harmonics. User preferred both EQs for reducing boomy bass; subtler synthesis is under audition. [Processing details, curves, limitations, and listening buttons](CLARITY-COMPARISON.md). Preference and real-time suitability remain unvalidated.
+
+## Logged-equivalent comparison
+
+Both reports now start with a loudness-matched 16 kHz AAC / 32 kbit/s approximation of logged video audio. It uses the same recording and adds no simulated clicks. Native 48 kHz remains experimental. [Reference-derived EQ, later listening feedback, and updated reports](REFERENCE-EQ.md).
