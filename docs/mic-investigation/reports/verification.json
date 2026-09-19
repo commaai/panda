@@ -1,0 +1,17 @@
+{
+  "pop-comparison.html": {
+    "embedded_assets": 11,
+    "external_assets": 0,
+    "private_path_scan_passed": true
+  },
+  "upper-frequency.html": {
+    "embedded_assets": 5,
+    "external_assets": 0,
+    "private_path_scan_passed": true
+  },
+  "phone-music-and-levels.html": {
+    "embedded_assets": 5,
+    "external_assets": 0,
+    "private_path_scan_passed": true
+  }
+}

@@ -1,0 +1,11 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Phone speaker · Mic lab</title><style>
+body{background:#11161d;color:#eff4fa;font:19px/1.5 system-ui;max-width:600px;margin:45px auto;padding:0 22px}
+h1{font-size:32px;margin-bottom:8px}button{font:inherit;font-weight:650;border:0;border-radius:14px;padding:18px;width:100%;margin:10px 0;background:#83dfba;color:#10251d}
+button.secondary{background:#303b4a;color:#fff}button:disabled{opacity:.5}.card{padding:22px;background:#1d2632;border-radius:20px;margin:25px 0}
+#status{font-size:24px;font-weight:650}#detail{color:#bdcbdc}progress{width:100%;height:15px}#timer{font-variant-numeric:tabular-nums}
+</style><h1>Phone speaker</h1><p>Place your iPhone beside the comma four, with its speaker at a moderate volume.</p>
+<div class="card"><div id="status">Tap once to connect</div><p id="detail">Then the test audio will be controlled automatically. No microphone access needed.</p>
+<progress id="progress" value="0" max="35"></progress><div id="timer">Waiting</div></div>
+<button id="enable">Enable speaker</button><button id="stop" class="secondary">Stop and disconnect</button>
+<audio id="testAudio" src="phone-sweep.wav" preload="auto"></audio><video id="wake" src="awake.mp4" playsinline preload="auto" width="160" height="90" aria-label="Silent keep-awake video"></video><p id="awake">Keep this page open and the screen unlocked during testing.</p><script src="speaker.js"></script></html>

@@ -1,0 +1,291 @@
+{
+  "levels": [
+    {
+      "start": 2.0,
+      "duration": 1,
+      "frequency_hz": 1000,
+      "peak": 0.025,
+      "tone_band_dbfs": -53.165878856153725,
+      "quiet_band_dbfs": -98.09138200406065,
+      "rise_db": 44.92550314790692
+    },
+    {
+      "start": 3.5,
+      "duration": 1,
+      "frequency_hz": 8000,
+      "peak": 0.025,
+      "tone_band_dbfs": -70.65400992084767,
+      "quiet_band_dbfs": -121.78021408067303,
+      "rise_db": 51.12620415982536
+    },
+    {
+      "start": 5.0,
+      "duration": 1,
+      "frequency_hz": 14000,
+      "peak": 0.025,
+      "tone_band_dbfs": -65.9937949877024,
+      "quiet_band_dbfs": -118.80763943726734,
+      "rise_db": 52.81384444956494
+    },
+    {
+      "start": 6.5,
+      "duration": 1,
+      "frequency_hz": 16000,
+      "peak": 0.025,
+      "tone_band_dbfs": -97.2139154828447,
+      "quiet_band_dbfs": -123.33093006184643,
+      "rise_db": 26.117014579001733
+    },
+    {
+      "start": 8.0,
+      "duration": 1,
+      "frequency_hz": 17000,
+      "peak": 0.025,
+      "tone_band_dbfs": -107.02373091906847,
+      "quiet_band_dbfs": -123.0543514865895,
+      "rise_db": 16.030620567521026
+    },
+    {
+      "start": 9.5,
+      "duration": 1,
+      "frequency_hz": 18000,
+      "peak": 0.025,
+      "tone_band_dbfs": -122.54760358688145,
+      "quiet_band_dbfs": -123.7896065123877,
+      "rise_db": 1.242002925506256
+    },
+    {
+      "start": 11.0,
+      "duration": 1,
+      "frequency_hz": 19000,
+      "peak": 0.025,
+      "tone_band_dbfs": -122.02648580804002,
+      "quiet_band_dbfs": -123.27267681067993,
+      "rise_db": 1.246191002639904
+    },
+    {
+      "start": 12.5,
+      "duration": 1,
+      "frequency_hz": 20000,
+      "peak": 0.025,
+      "tone_band_dbfs": -124.19765767621519,
+      "quiet_band_dbfs": -124.5336623292018,
+      "rise_db": 0.33600465298661675
+    },
+    {
+      "start": 14.0,
+      "duration": 1,
+      "frequency_hz": 1000,
+      "peak": 0.1,
+      "tone_band_dbfs": -49.46046077724759,
+      "quiet_band_dbfs": -99.15317458839064,
+      "rise_db": 49.69271381114305
+    },
+    {
+      "start": 15.5,
+      "duration": 1,
+      "frequency_hz": 8000,
+      "peak": 0.1,
+      "tone_band_dbfs": -60.97295687373179,
+      "quiet_band_dbfs": -117.61347898895188,
+      "rise_db": 56.640522115220094
+    },
+    {
+      "start": 17.0,
+      "duration": 1,
+      "frequency_hz": 14000,
+      "peak": 0.1,
+      "tone_band_dbfs": -56.5085046163788,
+      "quiet_band_dbfs": -121.27034475605254,
+      "rise_db": 64.76184013967374
+    },
+    {
+      "start": 18.5,
+      "duration": 1,
+      "frequency_hz": 16000,
+      "peak": 0.1,
+      "tone_band_dbfs": -88.15390198397554,
+      "quiet_band_dbfs": -120.71175046605346,
+      "rise_db": 32.557848482077915
+    },
+    {
+      "start": 20.0,
+      "duration": 1,
+      "frequency_hz": 17000,
+      "peak": 0.1,
+      "tone_band_dbfs": -100.17245387206066,
+      "quiet_band_dbfs": -122.98245504300526,
+      "rise_db": 22.810001170944602
+    },
+    {
+      "start": 21.5,
+      "duration": 1,
+      "frequency_hz": 18000,
+      "peak": 0.1,
+      "tone_band_dbfs": -124.64563777673743,
+      "quiet_band_dbfs": -123.1428218091985,
+      "rise_db": -1.502815967538936
+    },
+    {
+      "start": 23.0,
+      "duration": 1,
+      "frequency_hz": 19000,
+      "peak": 0.1,
+      "tone_band_dbfs": -122.06620057360448,
+      "quiet_band_dbfs": -128.03218118684643,
+      "rise_db": 5.965980613241953
+    },
+    {
+      "start": 24.5,
+      "duration": 1,
+      "frequency_hz": 20000,
+      "peak": 0.1,
+      "tone_band_dbfs": -122.99385397115104,
+      "quiet_band_dbfs": -123.13449378349378,
+      "rise_db": 0.1406398123427408
+    },
+    {
+      "start": 26.0,
+      "duration": 1,
+      "frequency_hz": 1000,
+      "peak": 0.2,
+      "tone_band_dbfs": -48.51969265724715,
+      "quiet_band_dbfs": -98.35257142497751,
+      "rise_db": 49.832878767730364
+    },
+    {
+      "start": 27.5,
+      "duration": 1,
+      "frequency_hz": 8000,
+      "peak": 0.2,
+      "tone_band_dbfs": -58.955723222674564,
+      "quiet_band_dbfs": -122.70298769909064,
+      "rise_db": 63.74726447641608
+    },
+    {
+      "start": 29.0,
+      "duration": 1,
+      "frequency_hz": 14000,
+      "peak": 0.2,
+      "tone_band_dbfs": -54.53422820875966,
+      "quiet_band_dbfs": -120.15914836719809,
+      "rise_db": 65.62492015843843
+    },
+    {
+      "start": 30.5,
+      "duration": 1,
+      "frequency_hz": 16000,
+      "peak": 0.2,
+      "tone_band_dbfs": -86.46561604924642,
+      "quiet_band_dbfs": -120.29976324402377,
+      "rise_db": 33.834147194777344
+    },
+    {
+      "start": 32.0,
+      "duration": 1,
+      "frequency_hz": 17000,
+      "peak": 0.2,
+      "tone_band_dbfs": -98.48539570969044,
+      "quiet_band_dbfs": -122.52384811300486,
+      "rise_db": 24.038452403314423
+    },
+    {
+      "start": 33.5,
+      "duration": 1,
+      "frequency_hz": 18000,
+      "peak": 0.2,
+      "tone_band_dbfs": -122.74116763173451,
+      "quiet_band_dbfs": -123.22318909252276,
+      "rise_db": 0.48202146078824626
+    },
+    {
+      "start": 35.0,
+      "duration": 1,
+      "frequency_hz": 19000,
+      "peak": 0.2,
+      "tone_band_dbfs": -123.61000849012822,
+      "quiet_band_dbfs": -126.11761044901965,
+      "rise_db": 2.507601958891428
+    },
+    {
+      "start": 36.5,
+      "duration": 1,
+      "frequency_hz": 20000,
+      "peak": 0.2,
+      "tone_band_dbfs": -122.58739462663866,
+      "quiet_band_dbfs": -125.61973700738584,
+      "rise_db": 3.032342380747181
+    }
+  ],
+  "level_source_offset_seconds": 1.1576666666666666,
+  "music_source_offset_seconds": 1.43,
+  "music_envelope_correlation": 0.8992231004903077,
+  "music_bands": [
+    {
+      "band_hz": [
+        500,
+        2000
+      ],
+      "music_dbfs": -53.091655774291795,
+      "post_music_noise_dbfs": -65.43192737213153,
+      "rise_db": 12.340271597839731
+    },
+    {
+      "band_hz": [
+        4000,
+        8000
+      ],
+      "music_dbfs": -81.54623088530771,
+      "post_music_noise_dbfs": -96.44052508920922,
+      "rise_db": 14.89429420390151
+    },
+    {
+      "band_hz": [
+        8000,
+        12000
+      ],
+      "music_dbfs": -86.91149260340208,
+      "post_music_noise_dbfs": -98.63236343768119,
+      "rise_db": 11.720870834279111
+    },
+    {
+      "band_hz": [
+        12000,
+        14000
+      ],
+      "music_dbfs": -93.94358596560345,
+      "post_music_noise_dbfs": -102.11540615876517,
+      "rise_db": 8.171820193161722
+    },
+    {
+      "band_hz": [
+        14000,
+        16000
+      ],
+      "music_dbfs": -90.7714416477742,
+      "post_music_noise_dbfs": -101.34591348860006,
+      "rise_db": 10.574471840825865
+    },
+    {
+      "band_hz": [
+        16000,
+        18000
+      ],
+      "music_dbfs": -105.57852553829385,
+      "post_music_noise_dbfs": -105.91445729472171,
+      "rise_db": 0.3359317564278683
+    },
+    {
+      "band_hz": [
+        18000,
+        20000
+      ],
+      "music_dbfs": -105.6980101870645,
+      "post_music_noise_dbfs": -106.37727344815579,
+      "rise_db": 0.6792632610912932
+    }
+  ],
+  "scope": "Real acoustic captures. Source file levels deliberately changed; physical phone volume and capture firmware unchanged. No correction EQ or denoising.",
+  "phone-levels-01_overflows": 0,
+  "phone-music-01_overflows": 0
+}
