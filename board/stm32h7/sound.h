@@ -42,10 +42,9 @@ static void DMA1_Stream0_IRQ_Handler(void) {
 
   // Keep capture completion halfway through an output buffer, away from its swap.
   // Adjust only the microphone clock; PCM samples and DFSDM gain are unchanged.
-  int32_t phase_error = (int32_t)MIC_RX_BUF_SIZE - (int32_t)BDMA_Channel1->CNDTR;
-  int32_t fraction = (int32_t)MIC_PLL_FRAC + (4 * phase_error);
+  uint32_t fraction = MIC_PLL_FRAC + (4U * MIC_RX_BUF_SIZE) - (4U * BDMA_Channel1->CNDTR);
   register_clear_bits(&RCC->PLLCFGR, RCC_PLLCFGR_PLL2FRACEN);
-  register_set(&RCC->PLL2FRACR, (uint32_t)fraction << RCC_PLL2FRACR_FRACN2_Pos, RCC_PLL2FRACR_FRACN2_Msk);
+  register_set(&RCC->PLL2FRACR, fraction << RCC_PLL2FRACR_FRACN2_Pos, RCC_PLL2FRACR_FRACN2_Msk);
   register_set_bits(&RCC->PLLCFGR, RCC_PLLCFGR_PLL2FRACEN);
 
   uint8_t tx_buf_idx = (((BDMA_Channel1->CCR & BDMA_CCR_CT) >> BDMA_CCR_CT_Pos) == 1U) ? 0U : 1U;
