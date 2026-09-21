@@ -192,7 +192,7 @@ void sound_init(void) {
   register_set(&DMAMUX2_Channel0->CCR, 16U, DMAMUX_CxCR_DMAREQ_ID_Msk); // SAI4_B_DMA
   register_set_bits(&BDMA_Channel0->CCR, BDMA_CCR_EN);
 
-  // SRAM4 is not cleared at startup; transmit silence until capture is ready.
+  // SRAM4 is not cleared at startup; transmit silence until capture is ready
   (void)memset(mic_tx_buf, 0, sizeof(mic_tx_buf));
 
   // mic output
