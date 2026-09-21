@@ -1,0 +1,169 @@
+{
+  "source": "phone-music-camera-01, native 48 kHz real microphone capture",
+  "source_sha256": "862b4f7509c8211d635be6d95f2d5694ef34d1fafaf08312c81cce1aaa0d03e9",
+  "capture_interval_seconds": [
+    3.48,
+    48.48
+  ],
+  "working_gain": 13.2987012987013,
+  "gentle_eq_filter": "bass=f=200:t=q:w=0.707:g=-2,equalizer=f=3200:t=q:w=0.75:g=3,equalizer=f=7500:t=q:w=0.8:g=3",
+  "stronger_eq_filter": "bass=f=250:t=q:w=0.707:g=-3,equalizer=f=3200:t=q:w=0.7:g=5,equalizer=f=7500:t=q:w=0.8:g=6",
+  "synthetic_wet_filter": "highpass=f=2500:p=2,lowpass=f=6500:p=2,aresample=192000,aexciter=freq=3000:ceil=14000:drive=6:amount=1:listen=1,highpass=f=6500:p=2,lowpass=f=14000:p=2,aresample=48000",
+  "wet_input_fir": "513-tap centered FIR, pass 2.5\u20134.5 kHz with 1.8\u20132.5 and 4.5\u20135.5 kHz transitions",
+  "wet_fir": "513-tap centered Hamming-windowed FIR, transitions 5.5\u20137 and 12\u201314.5 kHz",
+  "wet_gain": 3.3532782569910657,
+  "subtle_wet_gain": 232.50831884850402,
+  "subtle_wet_rms_relative_to_gentle_db": -34,
+  "added_wet_rms_relative_to_gentle_db": -28,
+  "loudness_target_lufs": -25.7,
+  "normalization": "Constant gain only, chosen from measured integrated loudness and true peak. No limiter or compressor.",
+  "variants": [
+    {
+      "name": "original",
+      "title": "Native 48 kHz PCM",
+      "playback_gain_db": 2.949999999999999,
+      "integrated_lufs": -25.7,
+      "true_peak_dbfs": -3.07,
+      "rms_dbfs": -26.28687365501721
+    },
+    {
+      "name": "gentle",
+      "title": "Gentle EQ",
+      "playback_gain_db": 1.7500000000000004,
+      "integrated_lufs": -25.71,
+      "true_peak_dbfs": -3.0,
+      "rms_dbfs": -26.533131382392064
+    },
+    {
+      "name": "stronger",
+      "title": "Stronger EQ",
+      "playback_gain_db": 0.6500000000000017,
+      "integrated_lufs": -25.7,
+      "true_peak_dbfs": -3.07,
+      "rms_dbfs": -26.717088530512303
+    },
+    {
+      "name": "harmonics",
+      "title": "Gentle EQ + synthetic harmonics",
+      "playback_gain_db": 1.7400000000000013,
+      "integrated_lufs": -25.7,
+      "true_peak_dbfs": -3.04,
+      "rms_dbfs": -26.536112684749558
+    },
+    {
+      "name": "subtle",
+      "title": "Gentle EQ + subtler harmonics",
+      "playback_gain_db": 1.7500000000000004,
+      "integrated_lufs": -25.7,
+      "true_peak_dbfs": -3.0,
+      "rms_dbfs": -26.53144192883827
+    }
+  ],
+  "listener_feedback": "User preferred both EQs for reducing boomy bass; prior synthetic version was cool but airy/shallow and made vocals sound too high-pitched. Preserve EQ bass cleanup and reduce synthetic effect.",
+  "scope": "Offline preference experiment, not a microphone calibration or verified improvement. Harmonic variant deliberately invents content. No denoising; firmware unchanged.",
+  "synthetic_probe_3khz_to_9khz_above_adjacent_db": 155.9001247023758,
+  "logged_equivalent": {
+    "title": "Logged equivalent \u2014 16 kHz AAC, 32 kbps",
+    "codec": {
+      "codec_name": "aac",
+      "profile": "LC",
+      "sample_rate": "16000",
+      "channels": 1,
+      "duration": "45.000000",
+      "bit_rate": "32206"
+    },
+    "integrated_lufs": -25.7,
+    "true_peak_dbfs": -3.15,
+    "gain_after_decode_db": 25.459999999999997,
+    "scope": "Same native 48 kHz capture reduced to 16 kHz mono and encoded AAC at 32 kbit/s, then decoded for embedded playback. Approximation of current Connect/video format, not actual old-firmware capture or exact on-device resampling/encoder equivalence. Existing clock/startup clicks are not recreated. Raw rlogs use 16 kHz PCM; qlogs contain no audio. Native 48 kHz here is experimental capture; production micd still defaults to 16 kHz."
+  },
+  "reference_comparison_variants": [
+    {
+      "name": "gentle_body",
+      "title": "Gentle EQ \u2014 bass retained",
+      "integrated_lufs": -25.69,
+      "true_peak_dbfs": -3.07,
+      "gain_adjustment_from_reference_report_db": -0.05999999999999872
+    },
+    {
+      "name": "reference_half",
+      "title": "Reference fit \u2014 halfway",
+      "integrated_lufs": -25.7,
+      "true_peak_dbfs": -4.55,
+      "gain_adjustment_from_reference_report_db": -0.07000000000000028
+    },
+    {
+      "name": "reference_full",
+      "title": "Reference fit \u2014 closer match",
+      "integrated_lufs": -25.71,
+      "true_peak_dbfs": -7.52,
+      "gain_adjustment_from_reference_report_db": -0.07000000000000028
+    }
+  ],
+  "reference_comparison_limitations": "This matches the tonal balance of this one phone+room+enclosure+mic capture toward the source. It is not an exact microphone calibration or waveform reconstruction. Reference is stereo, capture mono. Noise remains and is amplified by positive EQ. No source samples are mixed into processed microphone clips. No synthesis or denoising in these versions.",
+  "latest_listener_feedback": "Subtler harmonics sound like high frequencies clip. User agreed to set synthesis aside and focus on 48 kHz capture and EQ. Existing synth clips retained for documentation. User strongly preferred Reference fit halfway but heard mid/high hiss; added a separate bounded noise-profile audition without changing that favorite.",
+  "halfway_denoise": {
+    "title": "Reference fit \u2014 halfway + light denoise",
+    "name": "reference_half_denoise",
+    "integrated_lufs": -25.7,
+    "true_peak_dbfs": -4.55,
+    "bands": [
+      {
+        "band_hz": [
+          1000,
+          3000
+        ],
+        "eq_noise_boost_db": -1.2246941888048393,
+        "music_above_quiet_db": 32.72066090153864,
+        "held_out_quiet_reduction_db": 0.09709158481733828
+      },
+      {
+        "band_hz": [
+          3000,
+          6000
+        ],
+        "eq_noise_boost_db": 8.366304363074155,
+        "music_above_quiet_db": 20.691389997110207,
+        "held_out_quiet_reduction_db": 5.546712151435802
+      },
+      {
+        "band_hz": [
+          6000,
+          10000
+        ],
+        "eq_noise_boost_db": 11.299617518536063,
+        "music_above_quiet_db": 12.319221659692346,
+        "held_out_quiet_reduction_db": 5.802413128281126
+      },
+      {
+        "band_hz": [
+          10000,
+          14000
+        ],
+        "eq_noise_boost_db": 5.631631843944094,
+        "music_above_quiet_db": 9.668813576397223,
+        "held_out_quiet_reduction_db": 5.8315583141953065
+      },
+      {
+        "band_hz": [
+          14000,
+          20000
+        ],
+        "eq_noise_boost_db": 0.48047012481284523,
+        "music_above_quiet_db": 10.049917067243541,
+        "held_out_quiet_reduction_db": 5.744812724899441
+      }
+    ],
+    "profile_capture_seconds": [
+      50.48,
+      54
+    ],
+    "held_out_quiet_seconds": [
+      54,
+      57
+    ],
+    "method": "2048-sample Hann STFT, 512 hop; noise-power subtraction gain, bounded to at most 6 dB attenuation; 9-bin / 5-frame smoothing; no attenuation below 2 kHz, full effect above 3.5 kHz. Existing halfway EQ follows. Constant playback gain.",
+    "limitations": "Post-music room noise is an estimate, not isolated microphone self-noise. Quiet reduction is measured on withheld quiet, not proof of equal reduction underneath music. Denoising can soften detail or cause watery artifacts. No new capture or synthesis.",
+    "preserved_halfway_sha256": "42a6c732bd7d30240836c36eb6f0e0b6c54e50fc8c2d407e0892b85bd01b47c3"
+  }
+}

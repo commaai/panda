@@ -1,0 +1,284 @@
+{
+  "phone_sweep": {
+    "scope": "Actual iPhone speaker-to-c4 microphone capture; source file playback triggered remotely after device capture starts. No synthetic injection in firmware.",
+    "source_start_seconds_in_capture": 0.047666666666666746,
+    "tones": [
+      {
+        "frequency_hz": 1000,
+        "peak_hz": 1000.0,
+        "tone_window_band_dbfs": -45.13726382002033,
+        "preceding_quiet_band_dbfs": -99.64540497542103,
+        "band_rise_db": 54.5081411554007
+      },
+      {
+        "frequency_hz": 4000,
+        "peak_hz": 4000.0,
+        "tone_window_band_dbfs": -59.20425993877417,
+        "preceding_quiet_band_dbfs": -120.27972294858834,
+        "band_rise_db": 61.07546300981417
+      },
+      {
+        "frequency_hz": 8000,
+        "peak_hz": 8000.0,
+        "tone_window_band_dbfs": -60.921078256583,
+        "preceding_quiet_band_dbfs": -117.83280203068784,
+        "band_rise_db": 56.91172377410484
+      },
+      {
+        "frequency_hz": 12000,
+        "peak_hz": 12000.0,
+        "tone_window_band_dbfs": -75.54341555990939,
+        "preceding_quiet_band_dbfs": -117.21028649424339,
+        "band_rise_db": 41.666870934334
+      },
+      {
+        "frequency_hz": 14000,
+        "peak_hz": 14000.0,
+        "tone_window_band_dbfs": -60.22004294360744,
+        "preceding_quiet_band_dbfs": -117.73662595750307,
+        "band_rise_db": 57.51658301389563
+      },
+      {
+        "frequency_hz": 15000,
+        "peak_hz": 15000.0,
+        "tone_window_band_dbfs": -76.95689353421082,
+        "preceding_quiet_band_dbfs": -121.40303319539268,
+        "band_rise_db": 44.44613966118186
+      },
+      {
+        "frequency_hz": 16000,
+        "peak_hz": 16000.0,
+        "tone_window_band_dbfs": -87.8396920873373,
+        "preceding_quiet_band_dbfs": -120.73591054678158,
+        "band_rise_db": 32.896218459444285
+      },
+      {
+        "frequency_hz": 17000,
+        "peak_hz": 17000.0,
+        "tone_window_band_dbfs": -97.12976099400998,
+        "preceding_quiet_band_dbfs": -125.05907378530709,
+        "band_rise_db": 27.929312791297107
+      },
+      {
+        "frequency_hz": 18000,
+        "peak_hz": 17999.166666666668,
+        "tone_window_band_dbfs": -121.29331812415352,
+        "preceding_quiet_band_dbfs": -121.4992776274934,
+        "band_rise_db": 0.20595950333988355
+      },
+      {
+        "frequency_hz": 19000,
+        "peak_hz": 19020.0,
+        "tone_window_band_dbfs": -122.94604251973938,
+        "preceding_quiet_band_dbfs": -121.8619663765977,
+        "band_rise_db": -1.0840761431416723
+      },
+      {
+        "frequency_hz": 20000,
+        "peak_hz": 19998.333333333336,
+        "tone_window_band_dbfs": -123.71704989775436,
+        "preceding_quiet_band_dbfs": -121.61341092392883,
+        "band_rise_db": -2.1036389738255394
+      }
+    ],
+    "overflows": 0
+  },
+  "direct_bitexact": {
+    "sample_count": 528000,
+    "mismatched_samples": 0,
+    "phase_offset": 12,
+    "scope": "Capture after first second compared sample by sample with the injected periodic waveform."
+  },
+  "resampler": {
+    "scope": "Synthetic periodic waveform substituted at every cubic interpolation input read; physical microphone and DFSDM response bypassed. DMA producer clock and original rate controller retained.",
+    "tones": [
+      {
+        "frequency_hz": 983.3916083916085,
+        "expected_rms_dbfs": -32.36411553695896,
+        "captured_rms_dbfs": -32.3654997689954,
+        "gain_db": -0.0013842320364349763
+      },
+      {
+        "frequency_hz": 3980.3946053946056,
+        "expected_rms_dbfs": -32.36411129402619,
+        "captured_rms_dbfs": -32.375037549480545,
+        "gain_db": -0.010926255454360899
+      },
+      {
+        "frequency_hz": 8007.617382617384,
+        "expected_rms_dbfs": -32.36414820001364,
+        "captured_rms_dbfs": -32.51115739996158,
+        "gain_db": -0.14700919994793943
+      },
+      {
+        "frequency_hz": 11988.01198801199,
+        "expected_rms_dbfs": -32.364217943738325,
+        "captured_rms_dbfs": -33.02201260909696,
+        "gain_db": -0.6577946653586306
+      },
+      {
+        "frequency_hz": 14001.623376623378,
+        "expected_rms_dbfs": -32.364183201573205,
+        "captured_rms_dbfs": -33.514792589948144,
+        "gain_db": -1.1506093883749375
+      },
+      {
+        "frequency_hz": 14985.014985014986,
+        "expected_rms_dbfs": -32.36409337685002,
+        "captured_rms_dbfs": -33.827997285532106,
+        "gain_db": -1.4639039086820913
+      },
+      {
+        "frequency_hz": 15968.406593406595,
+        "expected_rms_dbfs": -32.36410463030631,
+        "captured_rms_dbfs": -34.192929044229686,
+        "gain_db": -1.8288244139233842
+      },
+      {
+        "frequency_hz": 16998.626373626375,
+        "expected_rms_dbfs": -32.36424319511004,
+        "captured_rms_dbfs": -34.63587585923124,
+        "gain_db": -2.2716326641211957
+      },
+      {
+        "frequency_hz": 17982.017982017984,
+        "expected_rms_dbfs": -32.36434875367944,
+        "captured_rms_dbfs": -35.12110334158297,
+        "gain_db": -2.756754587903534
+      },
+      {
+        "frequency_hz": 18965.409590409592,
+        "expected_rms_dbfs": -32.364168419671614,
+        "captured_rms_dbfs": -35.66977527454401,
+        "gain_db": -3.3056068548723965
+      },
+      {
+        "frequency_hz": 19995.629370629373,
+        "expected_rms_dbfs": -32.36426375838714,
+        "captured_rms_dbfs": -36.31785882921127,
+        "gain_db": -3.9535950708241216
+      },
+      {
+        "frequency_hz": 20979.02097902098,
+        "expected_rms_dbfs": -32.36416246886236,
+        "captured_rms_dbfs": -37.01017793302066,
+        "gain_db": -4.646015464158293
+      },
+      {
+        "frequency_hz": 21962.41258741259,
+        "expected_rms_dbfs": -32.36398999264877,
+        "captured_rms_dbfs": -37.77788910632928,
+        "gain_db": -5.413899113680519
+      }
+    ],
+    "overflows": 0,
+    "note": "Tone power integrated within plus/minus 15 Hz in capture seconds 2\u201310. Reference is exact quantized MCU table."
+  },
+  "speaker_control_comparison": [
+    {
+      "frequency_hz": 1000,
+      "speaker_enabled_band_dbfs": -46.925739393420116,
+      "speaker_disabled_band_dbfs": -97.12061281581686,
+      "enabled_minus_disabled_db": 50.19487342239674,
+      "enabled_above_preceding_noise_db": 42.904337120561195,
+      "disabled_above_preceding_noise_db": -6.127530544176864
+    },
+    {
+      "frequency_hz": 4000,
+      "speaker_enabled_band_dbfs": -68.15962469371557,
+      "speaker_disabled_band_dbfs": -116.28952223915442,
+      "enabled_minus_disabled_db": 48.12989754543885,
+      "enabled_above_preceding_noise_db": 50.73335249868845,
+      "disabled_above_preceding_noise_db": 1.0182454234730045
+    },
+    {
+      "frequency_hz": 8000,
+      "speaker_enabled_band_dbfs": -71.86264288681869,
+      "speaker_disabled_band_dbfs": -118.81160619584864,
+      "enabled_minus_disabled_db": 46.94896330902995,
+      "enabled_above_preceding_noise_db": 47.72458040403606,
+      "disabled_above_preceding_noise_db": -0.6632906120531175
+    },
+    {
+      "frequency_hz": 12000,
+      "speaker_enabled_band_dbfs": -74.76745467447134,
+      "speaker_disabled_band_dbfs": -120.11517541730478,
+      "enabled_minus_disabled_db": 45.347720742833445,
+      "enabled_above_preceding_noise_db": 44.28204968548263,
+      "disabled_above_preceding_noise_db": -1.637282765733005
+    },
+    {
+      "frequency_hz": 14000,
+      "speaker_enabled_band_dbfs": -69.90470934427962,
+      "speaker_disabled_band_dbfs": -116.09242815912756,
+      "enabled_minus_disabled_db": 46.18771881484794,
+      "enabled_above_preceding_noise_db": 49.840568642067836,
+      "disabled_above_preceding_noise_db": 6.719352636888999
+    },
+    {
+      "frequency_hz": 15000,
+      "speaker_enabled_band_dbfs": -77.22284629634512,
+      "speaker_disabled_band_dbfs": -116.44469397120405,
+      "enabled_minus_disabled_db": 39.22184767485892,
+      "enabled_above_preceding_noise_db": 40.31254488661659,
+      "disabled_above_preceding_noise_db": 0.5897557943514613
+    },
+    {
+      "frequency_hz": 16000,
+      "speaker_enabled_band_dbfs": -89.50292496299247,
+      "speaker_disabled_band_dbfs": -123.44567078686835,
+      "enabled_minus_disabled_db": 33.94274582387588,
+      "enabled_above_preceding_noise_db": 31.568419297818906,
+      "disabled_above_preceding_noise_db": -1.654261993094707
+    },
+    {
+      "frequency_hz": 17000,
+      "speaker_enabled_band_dbfs": -94.58804657959772,
+      "speaker_disabled_band_dbfs": -121.24078993682623,
+      "enabled_minus_disabled_db": 26.652743357228516,
+      "enabled_above_preceding_noise_db": 27.449773493395597,
+      "disabled_above_preceding_noise_db": -1.5594980419774203
+    },
+    {
+      "frequency_hz": 18000,
+      "speaker_enabled_band_dbfs": -99.1603863523931,
+      "speaker_disabled_band_dbfs": -122.73656994520724,
+      "enabled_minus_disabled_db": 23.576183592814132,
+      "enabled_above_preceding_noise_db": 22.50430797711543,
+      "disabled_above_preceding_noise_db": 0.08618302126183153
+    },
+    {
+      "frequency_hz": 19000,
+      "speaker_enabled_band_dbfs": -105.3453268973699,
+      "speaker_disabled_band_dbfs": -121.7016394590612,
+      "enabled_minus_disabled_db": 16.356312561691297,
+      "enabled_above_preceding_noise_db": 17.882741001710542,
+      "disabled_above_preceding_noise_db": 1.4752577546694852
+    },
+    {
+      "frequency_hz": 20000,
+      "speaker_enabled_band_dbfs": -99.01441156242727,
+      "speaker_disabled_band_dbfs": -123.51792605907238,
+      "enabled_minus_disabled_db": 24.50351449664511,
+      "enabled_above_preceding_noise_db": 23.552401656567028,
+      "disabled_above_preceding_noise_db": 0.9714316723761272
+    },
+    {
+      "frequency_hz": 21000,
+      "speaker_enabled_band_dbfs": -106.90768476663197,
+      "speaker_disabled_band_dbfs": -124.45081647698038,
+      "enabled_minus_disabled_db": 17.543131710348405,
+      "enabled_above_preceding_noise_db": 17.05990944460997,
+      "disabled_above_preceding_noise_db": -2.349862163424902
+    },
+    {
+      "frequency_hz": 22000,
+      "speaker_enabled_band_dbfs": -90.8479231528712,
+      "speaker_disabled_band_dbfs": -123.19264973645272,
+      "enabled_minus_disabled_db": 32.34472658358152,
+      "enabled_above_preceding_noise_db": 33.45338219179578,
+      "disabled_above_preceding_noise_db": -0.13218850412710026
+    }
+  ],
+  "scope": "Digital synthetic-injection tests and separate real acoustic/muted-control recordings. No production firmware change retained."
+}

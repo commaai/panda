@@ -1,0 +1,10 @@
+{
+  "native48_aac32_alignment_lag_samples": 0,
+  "all_four_browser_buttons_play": true,
+  "duration_seconds": 45,
+  "switching_retains_position": true,
+  "legend_immediately_under_restart": true,
+  "candidate_C_and_proposal_share_identical_playback": true,
+  "preferred_PCM_unchanged": true,
+  "browser_page_errors": 0
+}

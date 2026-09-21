@@ -1,0 +1,36 @@
+{
+  "duration_seconds": 45,
+  "loudness_target_lufs": -25.7,
+  "new_native48_aac32": {
+    "integrated_lufs": -25.7,
+    "true_peak_dbfs": -2.85,
+    "encoded_container_bytes": 191920
+  },
+  "variants": [
+    {
+      "key": "logged",
+      "title": "1. Logged equivalent \u2014 16 kHz AAC / 32 kbps",
+      "sha256": "e5fe1c9fe6f54b3e4da068c1711c202f5cba5e4ef5adaa8a8ee331269136b715",
+      "description": "Current logged-format approximation: 16 kHz mono AAC at 32 kbps, with no EQ or denoising. Uses this same recording; old firmware clicks are not recreated."
+    },
+    {
+      "key": "native48_aac32",
+      "title": "2. Native 48 kHz \u2014 AAC / 32 kbps",
+      "sha256": "1c5cf78a6b01686a99b6062ab4f54a02a8dabe122f468ac22a8510bb6b7be451",
+      "description": "Native 48 kHz capture encoded with the current qcamera AAC bitrate of 32 kbps. No EQ or denoising. Compare 1 versus 2 to hear the sample-rate change at the same bitrate."
+    },
+    {
+      "key": "reference_half_denoise",
+      "title": "3. Halfway EQ + denoise \u2014 48 kHz PCM",
+      "sha256": "10bde44c01c9009f6515ed516a2fc0490e7f6780a31acc0107d94d03dc29d835",
+      "description": "The exact halfway reference EQ + light denoise PCM version you liked. This is the uncompressed processed listening target."
+    },
+    {
+      "key": "proposed48_aac64",
+      "title": "4. Proposed EQ + denoise \u2014 48 kHz AAC / 64 kbps",
+      "sha256": "11f0146f096cae143f5b54c44cbbfd11afb0d349abf2b30f677455a2f53b34ec",
+      "description": "That same processed target encoded at 48 kHz with AAC at 64 kbps, then decoded for playback. Compare 3 versus 4 to isolate compression. Same audio as the earlier Candidate C."
+    }
+  ],
+  "scope": "Offline format comparisons on the same captured music. Not recordings of production logging changes. Existing favorite and proposed 64 kbps playback are reused exactly."
+}

@@ -1,0 +1,116 @@
+{
+  "dataset": "headphone-source-01",
+  "source": "USB AirPods Max, open earcup near USB corner",
+  "source_offset_seconds": 0.18766666666666687,
+  "low_frequency_playback_verified": true,
+  "capture_seconds": 45.0,
+  "peak_dbfs": -34.90669280345233,
+  "rail_samples": 0,
+  "input_overflows": 0,
+  "input_underflows": 0,
+  "playback_underflows": 0,
+  "firmware": "DEV-77581827-DEBUG",
+  "tones": [
+    {
+      "frequency_hz": 1000,
+      "start_seconds": 2,
+      "duration_seconds": 2,
+      "peak": 0.1,
+      "tone_band_dbfs": -38.889716792738916,
+      "quiet_band_dbfs": -95.17263467008272,
+      "rise_db": 56.2829178773438,
+      "peak_frequency_hz": 1000.0
+    },
+    {
+      "frequency_hz": 8000,
+      "start_seconds": 5,
+      "duration_seconds": 2,
+      "peak": 0.1,
+      "tone_band_dbfs": -76.94728576470592,
+      "quiet_band_dbfs": -119.60174836848624,
+      "rise_db": 42.65446260378032,
+      "peak_frequency_hz": 8000.0
+    },
+    {
+      "frequency_hz": 14000,
+      "start_seconds": 8,
+      "duration_seconds": 2,
+      "peak": 0.1,
+      "tone_band_dbfs": -69.19483020118373,
+      "quiet_band_dbfs": -120.80668725106702,
+      "rise_db": 51.611857049883284,
+      "peak_frequency_hz": 14000.0
+    },
+    {
+      "frequency_hz": 16000,
+      "start_seconds": 11,
+      "duration_seconds": 2,
+      "peak": 0.1,
+      "tone_band_dbfs": -79.73284368320903,
+      "quiet_band_dbfs": -123.67990481477875,
+      "rise_db": 43.947061131569725,
+      "peak_frequency_hz": 16000.0
+    },
+    {
+      "frequency_hz": 17000,
+      "start_seconds": 14,
+      "duration_seconds": 2,
+      "peak": 0.1,
+      "tone_band_dbfs": -88.09656469465551,
+      "quiet_band_dbfs": -121.53932052985178,
+      "rise_db": 33.442755835196266,
+      "peak_frequency_hz": 17000.0
+    },
+    {
+      "frequency_hz": 18000,
+      "start_seconds": 17,
+      "duration_seconds": 2,
+      "peak": 0.1,
+      "tone_band_dbfs": -95.92798470718797,
+      "quiet_band_dbfs": -122.29086471048676,
+      "rise_db": 26.362880003298784,
+      "peak_frequency_hz": 18000.0
+    },
+    {
+      "frequency_hz": 19000,
+      "start_seconds": 20,
+      "duration_seconds": 2,
+      "peak": 0.1,
+      "tone_band_dbfs": -96.19166717579907,
+      "quiet_band_dbfs": -122.20979851985227,
+      "rise_db": 26.018131344053202,
+      "peak_frequency_hz": 19000.0
+    },
+    {
+      "frequency_hz": 20000,
+      "start_seconds": 23,
+      "duration_seconds": 2,
+      "peak": 0.1,
+      "tone_band_dbfs": -111.7176454666725,
+      "quiet_band_dbfs": -124.40443490313919,
+      "rise_db": 12.686789436466697,
+      "peak_frequency_hz": 19999.333333333332
+    },
+    {
+      "frequency_hz": 21000,
+      "start_seconds": 26,
+      "duration_seconds": 2,
+      "peak": 0.1,
+      "tone_band_dbfs": -92.34139052150945,
+      "quiet_band_dbfs": -123.46624274552784,
+      "rise_db": 31.124852224018383,
+      "peak_frequency_hz": 21000.0
+    },
+    {
+      "frequency_hz": 22000,
+      "start_seconds": 29,
+      "duration_seconds": 2,
+      "peak": 0.1,
+      "tone_band_dbfs": -101.28177912571505,
+      "quiet_band_dbfs": -123.44122374635396,
+      "rise_db": 22.159444620638908,
+      "peak_frequency_hz": 21999.333333333332
+    }
+  ],
+  "limitations": "Uncalibrated source and placement. Measured response includes headphone, air path, enclosure and microphone processing. Positive detection is useful; non-detection cannot identify which element attenuates the tone. No EQ, denoising or simulated microphone distortion."
+}

@@ -1,0 +1,12 @@
+{
+  "sample_rate": 48000,
+  "channels": 1,
+  "codec": "aac",
+  "bitrate": 48000,
+  "selected_clip": "processed48_aac48",
+  "processing": "halfway reference EQ plus light denoise",
+  "nominal_audio_bytes_per_minute": 360000,
+  "extra_audio_bytes_per_minute": 120000,
+  "production_applied": false,
+  "integration_note": "Production micd remains 16 kHz PCM and qcamera AAC remains 32 kbps. Raising capture to 48 kHz without changing rlog storage adds 3.84 MB/min pre-Zstd PCM; compressed rlog integration is separate work."
+}

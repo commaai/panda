@@ -1,0 +1,375 @@
+{
+  "measurement": {
+    "source": "Actual file played in phone-music-camera-01; studio radio-edit reference",
+    "capture": "phone-music-camera-01",
+    "aligned_source_seconds": [
+      3,
+      46
+    ],
+    "capture_offset_seconds": 1.48,
+    "reference_level_offset_db": 14.710349545450141,
+    "normalization_band_hz": [
+      500,
+      2000
+    ],
+    "bands": [
+      {
+        "center_hz": 31.25,
+        "reference_minus_capture_db": 11.541182021905117,
+        "capture_above_quiet_db": 0.41916679247671923
+      },
+      {
+        "center_hz": 39.37253280921478,
+        "reference_minus_capture_db": 30.99942453238853,
+        "capture_above_quiet_db": 0.42992332057218147
+      },
+      {
+        "center_hz": 49.60628287400625,
+        "reference_minus_capture_db": 33.509308957525775,
+        "capture_above_quiet_db": -0.9812180078394797
+      },
+      {
+        "center_hz": 62.5,
+        "reference_minus_capture_db": 33.50070287446232,
+        "capture_above_quiet_db": 0.9119790933106685
+      },
+      {
+        "center_hz": 78.74506561842958,
+        "reference_minus_capture_db": 36.54865935487465,
+        "capture_above_quiet_db": 3.783979580683296
+      },
+      {
+        "center_hz": 99.21256574801247,
+        "reference_minus_capture_db": 26.117176425788244,
+        "capture_above_quiet_db": 8.50889872966597
+      },
+      {
+        "center_hz": 125.0,
+        "reference_minus_capture_db": 17.67661246857631,
+        "capture_above_quiet_db": 12.2080626328111
+      },
+      {
+        "center_hz": 157.49013123685916,
+        "reference_minus_capture_db": 15.2525892750541,
+        "capture_above_quiet_db": 18.10198066428072
+      },
+      {
+        "center_hz": 198.42513149602493,
+        "reference_minus_capture_db": 13.438400129869729,
+        "capture_above_quiet_db": 19.923930806667382
+      },
+      {
+        "center_hz": 250.0,
+        "reference_minus_capture_db": 14.16597616647629,
+        "capture_above_quiet_db": 14.842175979182151
+      },
+      {
+        "center_hz": 314.9802624737183,
+        "reference_minus_capture_db": 12.71257325695023,
+        "capture_above_quiet_db": 16.575147483626477
+      },
+      {
+        "center_hz": 396.8502629920499,
+        "reference_minus_capture_db": 8.989138949554532,
+        "capture_above_quiet_db": 19.374591879525802
+      },
+      {
+        "center_hz": 500.0,
+        "reference_minus_capture_db": 9.560835090410352,
+        "capture_above_quiet_db": 18.191089883085013
+      },
+      {
+        "center_hz": 629.9605249474366,
+        "reference_minus_capture_db": 6.612662523971695,
+        "capture_above_quiet_db": 24.39665789860723
+      },
+      {
+        "center_hz": 793.7005259840998,
+        "reference_minus_capture_db": 2.8304751378072783,
+        "capture_above_quiet_db": 29.63049872025447
+      },
+      {
+        "center_hz": 1000.0,
+        "reference_minus_capture_db": -1.6263743564611914,
+        "capture_above_quiet_db": 31.72947728807997
+      },
+      {
+        "center_hz": 1259.9210498948732,
+        "reference_minus_capture_db": -4.511063770379513,
+        "capture_above_quiet_db": 31.178902906288272
+      },
+      {
+        "center_hz": 1587.4010519681995,
+        "reference_minus_capture_db": -2.8681578374548593,
+        "capture_above_quiet_db": 33.65127417428379
+      },
+      {
+        "center_hz": 2000.0,
+        "reference_minus_capture_db": -4.125984760864325,
+        "capture_above_quiet_db": 39.732269984854945
+      },
+      {
+        "center_hz": 2519.8420997897465,
+        "reference_minus_capture_db": 5.006249576076728,
+        "capture_above_quiet_db": 35.00065485652566
+      },
+      {
+        "center_hz": 3174.8021039363994,
+        "reference_minus_capture_db": 15.071629122484863,
+        "capture_above_quiet_db": 23.982177966139417
+      },
+      {
+        "center_hz": 4000.0,
+        "reference_minus_capture_db": 15.987163143200194,
+        "capture_above_quiet_db": 22.07807666216365
+      },
+      {
+        "center_hz": 5039.684199579493,
+        "reference_minus_capture_db": 15.899092810041934,
+        "capture_above_quiet_db": 20.129195599834762
+      },
+      {
+        "center_hz": 6349.604207872798,
+        "reference_minus_capture_db": 23.00582910119303,
+        "capture_above_quiet_db": 13.50962734797326
+      },
+      {
+        "center_hz": 8000.0,
+        "reference_minus_capture_db": 24.907010284489232,
+        "capture_above_quiet_db": 11.290710979891045
+      },
+      {
+        "center_hz": 10079.368399158986,
+        "reference_minus_capture_db": 21.5394698977709,
+        "capture_above_quiet_db": 14.222378742720013
+      },
+      {
+        "center_hz": 12699.208415745596,
+        "reference_minus_capture_db": 21.51002129914189,
+        "capture_above_quiet_db": 7.912727240732156
+      },
+      {
+        "center_hz": 16000.0,
+        "reference_minus_capture_db": 23.04015298288001,
+        "capture_above_quiet_db": 10.177521148435027
+      },
+      {
+        "center_hz": 20158.73679831797,
+        "reference_minus_capture_db": 28.51837679946361,
+        "capture_above_quiet_db": 1.646174092108112
+      }
+    ],
+    "limitation": "Broadband spectral ratio includes phone, room, enclosure and mic. This is an example-specific tonal target, not an exact mic calibration."
+  },
+  "source_sha256": "862b4f7509c8211d635be6d95f2d5694ef34d1fafaf08312c81cce1aaa0d03e9",
+  "working_gain": 13.2987012987013,
+  "loudness_target_lufs": -25.63,
+  "filter_taps": 2049,
+  "filter_alignment": "Centered offline convolution; real-time implementation/latency unvalidated",
+  "design": "Log-spaced one-third-octave power-ratio measurements, three-band smoothing, gain limited to -6/+24 dB, tapered out below 90\u2013150 Hz and above 10\u201314 kHz, attenuated where capture is within 3\u201310 dB of quiet. Level anchor 500\u20132000 Hz.",
+  "band_targets": [
+    {
+      "center_hz": 31.25,
+      "raw_difference_db": 11.541182021905117,
+      "full_target_db": 0.0
+    },
+    {
+      "center_hz": 39.37253280921478,
+      "raw_difference_db": 30.99942453238853,
+      "full_target_db": 0.0
+    },
+    {
+      "center_hz": 49.60628287400625,
+      "raw_difference_db": 33.509308957525775,
+      "full_target_db": 0.0
+    },
+    {
+      "center_hz": 62.5,
+      "raw_difference_db": 33.50070287446232,
+      "full_target_db": 0.0
+    },
+    {
+      "center_hz": 78.74506561842958,
+      "raw_difference_db": 36.54865935487465,
+      "full_target_db": 0.0
+    },
+    {
+      "center_hz": 99.21256574801247,
+      "raw_difference_db": 26.117176425788244,
+      "full_target_db": 2.900062385496577
+    },
+    {
+      "center_hz": 125.0,
+      "raw_difference_db": 17.67661246857631,
+      "full_target_db": 11.188769468040933
+    },
+    {
+      "center_hz": 157.49013123685916,
+      "raw_difference_db": 15.2525892750541,
+      "full_target_db": 15.405047787138558
+    },
+    {
+      "center_hz": 198.42513149602493,
+      "raw_difference_db": 13.438400129869729,
+      "full_target_db": 14.073841425317463
+    },
+    {
+      "center_hz": 250.0,
+      "raw_difference_db": 14.16597616647629,
+      "full_target_db": 13.620731429943135
+    },
+    {
+      "center_hz": 314.9802624737183,
+      "raw_difference_db": 12.71257325695023,
+      "full_target_db": 12.14506540748282
+    },
+    {
+      "center_hz": 396.8502629920499,
+      "raw_difference_db": 8.989138949554532,
+      "full_target_db": 10.062921561617411
+    },
+    {
+      "center_hz": 500.0,
+      "raw_difference_db": 9.560835090410352,
+      "full_target_db": 8.680867913586733
+    },
+    {
+      "center_hz": 629.9605249474366,
+      "raw_difference_db": 6.612662523971695,
+      "full_target_db": 6.404158819040255
+    },
+    {
+      "center_hz": 793.7005259840998,
+      "raw_difference_db": 2.8304751378072783,
+      "full_target_db": 2.661809610781265
+    },
+    {
+      "center_hz": 1000.0,
+      "raw_difference_db": -1.6263743564611914,
+      "full_target_db": -1.2333343363736544
+    },
+    {
+      "center_hz": 1259.9210498948732,
+      "raw_difference_db": -4.511063770379513,
+      "full_target_db": -3.3791649336687692
+    },
+    {
+      "center_hz": 1587.4010519681995,
+      "raw_difference_db": -2.8681578374548593,
+      "full_target_db": -3.5933410515383892
+    },
+    {
+      "center_hz": 2000.0,
+      "raw_difference_db": -4.125984760864325,
+      "full_target_db": -1.5284694457766954
+    },
+    {
+      "center_hz": 2519.8420997897465,
+      "raw_difference_db": 5.006249576076728,
+      "full_target_db": 5.239535878443498
+    },
+    {
+      "center_hz": 3174.8021039363994,
+      "raw_difference_db": 15.071629122484863,
+      "full_target_db": 12.784167741061662
+    },
+    {
+      "center_hz": 4000.0,
+      "raw_difference_db": 15.987163143200194,
+      "full_target_db": 15.736262054731796
+    },
+    {
+      "center_hz": 5039.684199579493,
+      "raw_difference_db": 15.899092810041934,
+      "full_target_db": 17.697794466119273
+    },
+    {
+      "center_hz": 6349.604207872798,
+      "raw_difference_db": 23.00582910119303,
+      "full_target_db": 21.704440324229306
+    },
+    {
+      "center_hz": 8000.0,
+      "raw_difference_db": 24.907010284489232,
+      "full_target_db": 23.589829891985598
+    },
+    {
+      "center_hz": 10079.368399158986,
+      "raw_difference_db": 21.5394698977709,
+      "full_target_db": 21.930045846071767
+    },
+    {
+      "center_hz": 12699.208415745596,
+      "raw_difference_db": 21.51002129914189,
+      "full_target_db": 4.998213416136857
+    },
+    {
+      "center_hz": 16000.0,
+      "raw_difference_db": 23.04015298288001,
+      "full_target_db": 0.0
+    },
+    {
+      "center_hz": 20158.73679831797,
+      "raw_difference_db": 28.51837679946361,
+      "full_target_db": 0.0
+    }
+  ],
+  "variants": [
+    {
+      "name": "original",
+      "title": "Native 48 kHz PCM",
+      "channels": 1,
+      "integrated_lufs": -25.63,
+      "true_peak_dbfs": -3.0,
+      "playback_gain_db": 3.0199999999999987
+    },
+    {
+      "name": "gentle_body",
+      "title": "Gentle EQ \u2014 bass retained",
+      "channels": 1,
+      "integrated_lufs": -25.64,
+      "true_peak_dbfs": -3.01,
+      "playback_gain_db": 1.8100000000000018
+    },
+    {
+      "name": "reference_half",
+      "title": "Reference fit \u2014 halfway",
+      "channels": 1,
+      "integrated_lufs": -25.63,
+      "true_peak_dbfs": -4.48,
+      "playback_gain_db": 2.0400000000000027
+    },
+    {
+      "name": "reference_full",
+      "title": "Reference fit \u2014 closer match",
+      "channels": 1,
+      "integrated_lufs": -25.63,
+      "true_peak_dbfs": -7.45,
+      "playback_gain_db": -1.619999999999997
+    },
+    {
+      "name": "reference",
+      "title": "Reference source \u2014 stereo",
+      "channels": 2,
+      "integrated_lufs": -25.63,
+      "true_peak_dbfs": -13.52,
+      "playback_gain_db": 0.33000000000000274
+    }
+  ],
+  "limitations": "This matches the tonal balance of this one phone+room+enclosure+mic capture toward the source. It is not an exact microphone calibration or waveform reconstruction. Reference is stereo, capture mono. Noise remains and is amplified by positive EQ. No source samples are mixed into processed microphone clips. No synthesis or denoising in these versions.",
+  "logged_equivalent": {
+    "title": "Logged equivalent \u2014 16 kHz AAC, 32 kbps",
+    "codec": {
+      "codec_name": "aac",
+      "profile": "LC",
+      "sample_rate": "16000",
+      "channels": 1,
+      "duration": "45.000000",
+      "bit_rate": "32206"
+    },
+    "integrated_lufs": -25.63,
+    "true_peak_dbfs": -3.08,
+    "gain_after_decode_db": 25.53,
+    "scope": "Same native 48 kHz capture reduced to 16 kHz mono and encoded AAC at 32 kbit/s, then decoded for embedded playback. Approximation of current Connect/video format, not actual old-firmware capture or exact on-device resampling/encoder equivalence. Existing clock/startup clicks are not recreated. Raw rlogs use 16 kHz PCM; qlogs contain no audio. Native 48 kHz here is experimental capture; production micd still defaults to 16 kHz."
+  }
+}

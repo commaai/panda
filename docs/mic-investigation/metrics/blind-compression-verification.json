@@ -1,0 +1,26 @@
+{
+  "candidate_count": 7,
+  "labels": [
+    "Candidate A",
+    "Candidate B",
+    "Candidate C",
+    "Candidate D",
+    "Candidate E",
+    "Candidate F",
+    "Candidate G"
+  ],
+  "duration_seconds": 45,
+  "sample_rate": 48000,
+  "loudness_target_lufs": -25.7,
+  "max_loudness_spread_lu": 0.00999999999999801,
+  "all_alignment_lags_within_one_sample": true,
+  "all_true_peaks_below_minus_2_dbfs": true,
+  "answer_key_in_report": false,
+  "browser_verified": {
+    "all_seven_play": true,
+    "all_durations_seconds": 45,
+    "switching_retains_position": true,
+    "page_errors": 0,
+    "muted_during_verification": true
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "dataset": "phone-music-camera-01 and phone-levels-camera-01, identical firmware",
+  "band": "strictly within \u00b125 Hz of each listed frequency; same bandwidth, absolute full-scale convention",
+  "source_music_convention": "mean channel power of the stereo file, not an acoustic measurement",
+  "source_tone_convention": "calculated RMS for 0.2-peak sine; file rounding at 16 bits is negligible here",
+  "music_windows": {
+    "source_seconds": [
+      3,
+      46
+    ],
+    "capture_offset_seconds": 1.48
+  },
+  "limitations": "No gain correction for the phone speaker, room or mic. Narrow-band tone levels use previous central 0.6 s Hann measurements; music/noise use averaged 1 s Hann windows. Source and capture spectral differences are not a calibrated transfer function.",
+  "rows": [
+    {
+      "frequency_hz": 14000,
+      "source_tone_dbfs": -16.989700043360187,
+      "source_music_band_dbfs": -70.85091563701019,
+      "capture_tone_band_dbfs": -53.33974841471797,
+      "capture_music_band_dbfs": -103.02229261554812,
+      "capture_quiet_band_dbfs": -120.48037015287238,
+      "source_tone_minus_music_db": 53.86121559365,
+      "capture_tone_minus_music_db": 49.68254420083016,
+      "capture_music_above_noise_db": 17.458077537324257
+    },
+    {
+      "frequency_hz": 16000,
+      "source_tone_dbfs": -16.989700043360187,
+      "source_music_band_dbfs": -71.8643307465748,
+      "capture_tone_band_dbfs": -85.77246841840916,
+      "capture_music_band_dbfs": -121.099267884411,
+      "capture_quiet_band_dbfs": -121.97119511478226,
+      "source_tone_minus_music_db": 54.874630703214606,
+      "capture_tone_minus_music_db": 35.326799466001845,
+      "capture_music_above_noise_db": 0.8719272303712557
+    },
+    {
+      "frequency_hz": 17000,
+      "source_tone_dbfs": -16.989700043360187,
+      "source_music_band_dbfs": -71.79339328131688,
+      "capture_tone_band_dbfs": -96.5924363481266,
+      "capture_music_band_dbfs": -121.61584297083493,
+      "capture_quiet_band_dbfs": -122.19753115762798,
+      "source_tone_minus_music_db": 54.80369323795669,
+      "capture_tone_minus_music_db": 25.023406622708336,
+      "capture_music_above_noise_db": 0.5816881867930448
+    },
+    {
+      "frequency_hz": 18000,
+      "source_tone_dbfs": -16.989700043360187,
+      "source_music_band_dbfs": -75.59491481651898,
+      "capture_tone_band_dbfs": -124.34831256930829,
+      "capture_music_band_dbfs": -122.02592438012643,
+      "capture_quiet_band_dbfs": -122.99949073009147,
+      "source_tone_minus_music_db": 58.60521477315879,
+      "capture_tone_minus_music_db": -2.322388189181865,
+      "capture_music_above_noise_db": 0.97356634996504
+    },
+    {
+      "frequency_hz": 19000,
+      "source_tone_dbfs": -16.989700043360187,
+      "source_music_band_dbfs": -74.49702870813971,
+      "capture_tone_band_dbfs": -123.20991414715516,
+      "capture_music_band_dbfs": -121.73469756914488,
+      "capture_quiet_band_dbfs": -122.6374614572677,
+      "source_tone_minus_music_db": 57.50732866477952,
+      "capture_tone_minus_music_db": -1.4752165780102757,
+      "capture_music_above_noise_db": 0.9027638881228199
+    },
+    {
+      "frequency_hz": 20000,
+      "source_tone_dbfs": -16.989700043360187,
+      "source_music_band_dbfs": -78.99480208136515,
+      "capture_tone_band_dbfs": -123.17553732508429,
+      "capture_music_band_dbfs": -121.84139937289807,
+      "capture_quiet_band_dbfs": -123.30456681164138,
+      "source_tone_minus_music_db": 62.005102038004964,
+      "capture_tone_minus_music_db": -1.334137952186225,
+      "capture_music_above_noise_db": 1.4631674387433122
+    }
+  ]
+}

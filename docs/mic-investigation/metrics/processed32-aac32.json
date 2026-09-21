@@ -1,0 +1,21 @@
+{
+  "title": "7. Halfway EQ + denoise \u2014 32 kHz AAC / 32 kbps",
+  "description": "The same preferred 48 kHz halfway EQ + light denoise recording, downsampled to 32 kHz before AAC encoding at 32 kbps. Compare 5 versus 7 for sample rate at the same bitrate, or 3 versus 7 for overall loss. Decoded to 48 kHz PCM only for consistent playback; this does not restore discarded frequencies.",
+  "codec": {
+    "codec_name": "aac",
+    "sample_rate": "32000",
+    "channels": 1,
+    "duration": "45.000000",
+    "bit_rate": "32332"
+  },
+  "duration_seconds": 45,
+  "container_bytes": 188441,
+  "container_MB_per_minute": 0.2512546666666667,
+  "playback_sample_rate": 48000,
+  "source_sha256": "10bde44c01c9009f6515ed516a2fc0490e7f6780a31acc0107d94d03dc29d835",
+  "playback_sha256": "699a0e9707a3fc332681ab3b9e5c44486f5dde3c29c629a5f5894914f8c3d0bc",
+  "integrated_lufs": -25.7,
+  "true_peak_dbfs": -3.42,
+  "playback_gain_db": -0.4399999999999977,
+  "alignment_lag_samples": 0
+}

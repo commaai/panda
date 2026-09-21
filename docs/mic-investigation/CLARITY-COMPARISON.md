@@ -1,0 +1,41 @@
+# Offline clarity EQ and harmonic audition
+
+At the user's request, made listening variants from the better iPhone-to-comma-four capture (`phone-music-camera-01`), using the same aligned 45 seconds for every version. No new recording, firmware modification, or reference-song mixing was performed. The user prefers the iPhone as the source for further physical tests.
+
+Variants:
+
+- Original: playback gain only.
+- Gentle EQ: -2 dB low shelf at 200 Hz, broad +3 dB peaks at 3.2 and 7.5 kHz. Combined boost is roughly 4 dB in the overlapping region.
+- Stronger EQ: -3 dB low shelf at 250 Hz, broad +5/+6 dB peaks at 3.2/7.5 kHz. Combined boost approaches 8 dB.
+- Gentle EQ plus synthetic harmonics: the prior brighter version, with an oversampled nonlinear branch shaped mainly to 7–12 kHz. Wet RMS is 28 dB below the EQ signal's whole-clip RMS.
+- Gentle EQ plus subtler harmonics: reduces the added layer to 34 dB below dry RMS (6 dB less than the prior option), and derives it from an input band confined mainly to 2.5–4.5 kHz. The EQ bass cleanup is unchanged. This adds invented content; it does not recover the original missing frequencies. FIR processing is centered offline; real-time latency/CPU suitability is unvalidated.
+
+EQ choices are restrained taste experiments based on where the iPhone capture still has musical content, not an inverse response calibrated against the downloaded reference. EQ raises noise along with signal. The harmonic option can alter timbre, add harshness or intermodulation, and is not established as higher fidelity. No denoising is used.
+
+All five encoded WAVs measure approximately -25.70 LUFS with about 3 dB or more true-peak headroom. Matching uses constant gain only; no limiter or compressor. A pure 3 kHz probe verifies that the nonlinear path generates a 9 kHz component. Browser checks verified all five buttons, retained playback position when switching, 45-second durations, and restart, with audio muted during testing.
+
+The report is self-contained, with synchronized switching buttons and embedded audio/plot. User feedback: both EQ versions improved the sound and reduced boomy bass. The prior synthetic version was interesting but airy/shallow and made vocals sound too high-pitched. The subtler option responds to this feedback; its preference is pending. These measurements verify processing and headroom, not general perceptual improvement.
+
+Methods: [RBJ/W3C EQ cookbook](https://www.w3.org/TR/audio-eq-cookbook/) and [FFmpeg exciter documentation](https://ffmpeg.org/ffmpeg-filters.html#aexciter).
+
+![Applied EQ and actual output spectra](figures/clarity-comparison-01/eq-and-spectra.png)
+
+[Embedded listening report](reports/clarity-comparison.html) · [Processing measurements](metrics/clarity-comparison.json)
+
+## Logged-equivalent comparison
+
+Both reports now start with a loudness-matched 16 kHz AAC / 32 kbit/s approximation of logged video audio. It uses the same recording and adds no simulated clicks. Native 48 kHz remains experimental. [Reference-derived EQ, later listening feedback, and updated reports](REFERENCE-EQ.md).
+
+## Unified listening page
+
+The original clarity page now also embeds Gentle EQ — bass retained and both Reference fit variants, matched to its −25.70 LUFS playback level. Their measured true peaks are −3.07, −4.55 and −7.52 dBFS. The reference-fit plot is embedded below the earlier experiment plot.
+
+The user reported clipping-like upper-frequency harshness in the subtler synthesis version and agreed to set synthesis aside. Its measured exported true peak was −3 dBFS; this does not rule out audible processing distortion. Existing synthesis clips remain as archived experiments.
+
+## Halfway fit hiss audition
+
+User strongly liked the halfway reference fit but heard mid/high hiss. Applying its measured FIR to post-music quiet raises 3–6 kHz noise by 8.37 dB and 6–10 kHz by 11.30 dB, versus 0.48 dB at 14–20 kHz, before playback gain. This points toward lower treble as the added hiss source; it does not identify the perceptual source conclusively.
+
+Added a separate halfway + light denoise button, preserving the preferred halfway clip byte-for-byte. Noise profile uses capture 50.48–54 s; validation uses held-out quiet 54–57 s. Bounded spectral suppression, at most 6 dB, is inactive below 2 kHz and fully active above 3.5 kHz. Existing halfway EQ follows. Held-out 6–10 kHz quiet drops 5.80 dB; reduction during music and listener preference are not established. Detail loss and watery artifacts remain possible. No synthesis or new capture. Output measures −25.70 LUFS and −4.55 dBFS true peak; the browser button plays all 45 seconds.
+
+![Hiss and held-out quiet measurements](figures/clarity-comparison-01/halfway-hiss.png)

@@ -1,0 +1,98 @@
+{
+  "before": {
+    "firmware": "DEV-5314c84d-DEBUG",
+    "seconds": 15,
+    "tone": {
+      "nominal_hz": 1000,
+      "measured_hz": 1001.0141578438963,
+      "window_seconds": [
+        4,
+        5.2
+      ],
+      "fundamental_dbfs": -42.51623484107466,
+      "preceding_room_noise_dbfs": -56.55205250496853,
+      "apparent_snr_db": 14.035817663893866,
+      "tone_above_room_noise": true,
+      "path_gain_db": -15.068959892107728,
+      "thd_harmonics_2_through_6_percent": 0.07698419150889654,
+      "thdn_percent": 8.999788855166528,
+      "harmonics_dbc": {
+        "2": -62.62178874461573,
+        "3": -74.47159418350992,
+        "4": -80.26713967510909,
+        "5": -93.62561976412326,
+        "6": -95.02625036734905
+      },
+      "room_noise_window_seconds": [
+        0.3,
+        0.8
+      ]
+    },
+    "repeats": {
+      "512": [],
+      "1024": [
+        {
+          "start_sample": 1024,
+          "length": 178,
+          "delay": 1024
+        },
+        {
+          "start_sample": 505010,
+          "length": 512,
+          "delay": 1024
+        }
+      ]
+    },
+    "overruns": 0,
+    "near_rail_samples": [
+      0
+    ],
+    "source_wav_sha256": "ef61381ee22f63b60912df2e9604e317cf1d1f47747c3eaa4cc6b5993c612fa4"
+  },
+  "after": {
+    "firmware": "DEV-77581827-DEBUG",
+    "seconds": 15,
+    "tone": {
+      "nominal_hz": 1000,
+      "measured_hz": 1000.0116613816492,
+      "window_seconds": [
+        4,
+        5.2
+      ],
+      "fundamental_dbfs": -41.7046395893792,
+      "preceding_room_noise_dbfs": -56.22803401318094,
+      "apparent_snr_db": 14.52339442380174,
+      "tone_above_room_noise": true,
+      "path_gain_db": -14.257364640412263,
+      "thd_harmonics_2_through_6_percent": 0.08661860517242789,
+      "thdn_percent": 6.783210172543211,
+      "harmonics_dbc": {
+        "2": -65.84649032527194,
+        "3": -64.33230712945077,
+        "4": -79.3409282036289,
+        "5": -69.61802346876196,
+        "6": -93.58544825902753
+      },
+      "room_noise_window_seconds": [
+        0.3,
+        0.8
+      ]
+    },
+    "repeats": {
+      "512": [],
+      "1024": []
+    },
+    "overruns": 0,
+    "near_rail_samples": [
+      0
+    ],
+    "source_wav_sha256": "13c48b0108def3ade053c6b07a9856d511da96c4020450ed7fcac332f3510afe"
+  },
+  "baseline_event_seconds": 10.521041666666667,
+  "playback_gains": {
+    "Full fresh recordings \u2014 15 seconds each": 1.0,
+    "Around the measured baseline repeat": 4.311578947368421,
+    "Fresh startup \u2014 first second": 0.09729697629534319,
+    "Fresh pair through offline AAC 32k": 1.0
+  }
+}

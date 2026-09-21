@@ -1,0 +1,189 @@
+{
+  "dataset": "headphone-music-01, compared with phone-music-camera-01",
+  "same_source_bytes": true,
+  "captures": {
+    "phone-music-camera-01": {
+      "source_offset_seconds": 1.48,
+      "envelope_correlation": 0.9016272951077764,
+      "bands": [
+        {
+          "band_hz": [
+            500,
+            2000
+          ],
+          "music_dbfs": -53.06033211991835,
+          "quiet_dbfs": -83.17583212313316,
+          "rise_db": 30.115500003214812
+        },
+        {
+          "band_hz": [
+            4000,
+            8000
+          ],
+          "music_dbfs": -81.71535916341016,
+          "quiet_dbfs": -99.18623370285269,
+          "rise_db": 17.470874539442534
+        },
+        {
+          "band_hz": [
+            8000,
+            12000
+          ],
+          "music_dbfs": -86.9528928441566,
+          "quiet_dbfs": -98.42767209255634,
+          "rise_db": 11.474779248399742
+        },
+        {
+          "band_hz": [
+            12000,
+            14000
+          ],
+          "music_dbfs": -93.70489141966345,
+          "quiet_dbfs": -102.23706474372669,
+          "rise_db": 8.532173324063237
+        },
+        {
+          "band_hz": [
+            14000,
+            16000
+          ],
+          "music_dbfs": -90.19923832070393,
+          "quiet_dbfs": -102.7531554822232,
+          "rise_db": 12.55391716151928
+        },
+        {
+          "band_hz": [
+            16000,
+            18000
+          ],
+          "music_dbfs": -105.55199362891697,
+          "quiet_dbfs": -106.18127607416226,
+          "rise_db": 0.6292824452452805
+        },
+        {
+          "band_hz": [
+            18000,
+            20000
+          ],
+          "music_dbfs": -105.68912475130865,
+          "quiet_dbfs": -106.8455195228313,
+          "rise_db": 1.156394771522642
+        },
+        {
+          "band_hz": [
+            20000,
+            22000
+          ],
+          "music_dbfs": -106.11869867265916,
+          "quiet_dbfs": -108.0942619394125,
+          "rise_db": 1.9755632667533405
+        }
+      ],
+      "input_overflows": 0,
+      "input_underflows": 0,
+      "rail_samples": 0,
+      "peak_dbfs": -28.496784542626227
+    },
+    "headphone-music-01": {
+      "source_offset_seconds": 0.17,
+      "envelope_correlation": 0.9271663481368718,
+      "bands": [
+        {
+          "band_hz": [
+            500,
+            2000
+          ],
+          "music_dbfs": -60.30121076406287,
+          "quiet_dbfs": -72.16121848798662,
+          "rise_db": 11.860007723923744
+        },
+        {
+          "band_hz": [
+            4000,
+            8000
+          ],
+          "music_dbfs": -96.92423581569223,
+          "quiet_dbfs": -98.87666201801947,
+          "rise_db": 1.9524262023272456
+        },
+        {
+          "band_hz": [
+            8000,
+            12000
+          ],
+          "music_dbfs": -99.2561409786133,
+          "quiet_dbfs": -100.20635931369723,
+          "rise_db": 0.9502183350839317
+        },
+        {
+          "band_hz": [
+            12000,
+            14000
+          ],
+          "music_dbfs": -99.17576633552757,
+          "quiet_dbfs": -99.78138099289966,
+          "rise_db": 0.6056146573720866
+        },
+        {
+          "band_hz": [
+            14000,
+            16000
+          ],
+          "music_dbfs": -97.14839746447423,
+          "quiet_dbfs": -98.95313153767958,
+          "rise_db": 1.8047340732053527
+        },
+        {
+          "band_hz": [
+            16000,
+            18000
+          ],
+          "music_dbfs": -105.49364666351795,
+          "quiet_dbfs": -106.11974327895469,
+          "rise_db": 0.6260966154367367
+        },
+        {
+          "band_hz": [
+            18000,
+            20000
+          ],
+          "music_dbfs": -106.0517557005476,
+          "quiet_dbfs": -106.8205217015836,
+          "rise_db": 0.7687660010359991
+        },
+        {
+          "band_hz": [
+            20000,
+            22000
+          ],
+          "music_dbfs": -106.59638517752919,
+          "quiet_dbfs": -107.87889363513295,
+          "rise_db": 1.2825084576037682
+        }
+      ],
+      "input_overflows": 0,
+      "input_underflows": 0,
+      "rail_samples": 0,
+      "peak_dbfs": -34.37751203498577
+    }
+  },
+  "listening": {
+    "source": {
+      "gain_db": 3.115953487637144,
+      "result_rms_dbfs": -24.0,
+      "peak_dbfs": -10.864241852434443
+    },
+    "phone-music-camera-01": {
+      "gain_db": 27.581634731412727,
+      "result_rms_dbfs": -24.13142355295109,
+      "peak_dbfs": -0.9151498112135024
+    },
+    "headphone-music-01": {
+      "gain_db": 33.43885053381219,
+      "result_rms_dbfs": -24.0,
+      "peak_dbfs": -3.2997805845798887
+    }
+  },
+  "limitations": "Uncalibrated speakers and different positions/volumes. Stereo playback may couple differently to the mono mic. This does not isolate microphone response. Heatmaps match 500\u20132000 Hz mean power; listening copies use only a constant gain to target -24 dBFS RMS, subject to peak headroom. No EQ or denoising. Raw captures retained.",
+  "placement_caveat": "The user reported moving the AirPods; whether this happened between tests, during music, or both is not yet established. Placement was not controlled, so the weaker music result cannot be compared with the tone test as a fixed-position measurement."
+}
