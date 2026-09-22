@@ -316,6 +316,14 @@ int main(void) {
   led_set(LED_GREEN, false);
   led_set(LED_BLUE, false);
 
+  if (fault_cookie == NMI_COOKIE) {
+    reset_flags |= HEALTH_FLAG_NMI_RESET;
+  }
+  if (fault_cookie == HARDFAULT_COOKIE) {
+    reset_flags |= HEALTH_FLAG_HARDFAULT_RESET;
+  }
+  fault_cookie = 0U;
+
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();
 
