@@ -31,6 +31,7 @@ void sound_tick(void) {
     if (mic_idle_count == 0U) {
       register_clear_bits(&DFSDM1_Channel0->CHCFGR1, DFSDM_CHCFGR1_DFSDMEN);
       mic_buffer_count = 0U;
+      (void)memset(mic_tx_buf, 0, sizeof(mic_tx_buf));
     }
   }
 }
@@ -190,6 +191,9 @@ void sound_init(void) {
   register_set(&BDMA_Channel0->CCR, BDMA_CCR_DBM | (0b01UL << BDMA_CCR_MSIZE_Pos) | (0b01UL << BDMA_CCR_PSIZE_Pos) | BDMA_CCR_MINC | BDMA_CCR_CIRC | BDMA_CCR_TCIE, 0xFFFFU);
   register_set(&DMAMUX2_Channel0->CCR, 16U, DMAMUX_CxCR_DMAREQ_ID_Msk); // SAI4_B_DMA
   register_set_bits(&BDMA_Channel0->CCR, BDMA_CCR_EN);
+
+  // SRAM4 is not cleared at startup; transmit silence until capture is ready
+  (void)memset(mic_tx_buf, 0, sizeof(mic_tx_buf));
 
   // mic output
   register_set(&SAI4_Block_A->CR1, SAI_xCR1_DMAEN | (0b01UL << SAI_xCR1_SYNCEN_Pos) | (0b100UL << SAI_xCR1_DS_Pos) | (0b10UL << SAI_xCR1_MODE_Pos), 0x0FFB3FEFU);
