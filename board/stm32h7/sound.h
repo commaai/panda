@@ -10,6 +10,7 @@ __attribute__((section(".sram4"))) static uint32_t mic_rx_buf[2][MIC_RX_BUF_SIZE
 __attribute__((section(".sram4"))) static uint16_t mic_tx_buf[2][MIC_TX_BUF_SIZE];
 
 #define SOUND_IDLE_TIMEOUT 4U
+#define MIC_PLL_FRAC 3867U // 5 MHz * (65 + 3867/8192) / 62 / 2 / 55 is approximately 48 kHz
 #define MIC_SKIP_BUFFERS 2U // Skip first 2 buffers (1024 samples = ~21ms at 48kHz)
 static uint8_t sound_idle_count;
 static uint8_t mic_idle_count;
@@ -39,6 +40,13 @@ void sound_tick(void) {
 // Recording processing
 static void DMA1_Stream0_IRQ_Handler(void) {
   DMA1->LIFCR |= 0x7DU; // clear flags
+
+  // Keep capture completion halfway through an output buffer, away from its swap.
+  // Adjust only the microphone clock; PCM samples and DFSDM gain are unchanged.
+  uint32_t fraction = MIC_PLL_FRAC + (4U * MIC_RX_BUF_SIZE) - (4U * BDMA_Channel1->CNDTR);
+  register_clear_bits(&RCC->PLLCFGR, RCC_PLLCFGR_PLL2FRACEN);
+  register_set(&RCC->PLL2FRACR, fraction << RCC_PLL2FRACR_FRACN2_Pos, RCC_PLL2FRACR_FRACN2_Msk);
+  register_set_bits(&RCC->PLLCFGR, RCC_PLLCFGR_PLL2FRACEN);
 
   uint8_t tx_buf_idx = (((BDMA_Channel1->CCR & BDMA_CCR_CT) >> BDMA_CCR_CT_Pos) == 1U) ? 0U : 1U;
 
@@ -201,8 +209,17 @@ void sound_init(void) {
   register_set(&SAI4_Block_A->FRCR, (31U << SAI_xFRCR_FRL_Pos), 0x7FFFFU);
   register_set(&SAI4_Block_A->SLOTR, (0b11UL << SAI_xSLOTR_SLOTEN_Pos) | (1UL << SAI_xSLOTR_NBSLOT_Pos) | (0b01U << SAI_xSLOTR_SLOTSZ_Pos), 0xFFFF0FDFU); // NBSLOT definition is vague
 
+  // Dedicated audio PLL: HSE / 5 * (65 + fraction/8192) / 62 = 5.28 MHz.
+  register_set(&RCC->PLL2DIVR, (64UL << RCC_PLL2DIVR_N2_Pos) | (61UL << RCC_PLL2DIVR_P2_Pos), 0x7F7FFFFFU);
+  register_set(&RCC->PLL2FRACR, MIC_PLL_FRAC << RCC_PLL2FRACR_FRACN2_Pos, RCC_PLL2FRACR_FRACN2_Msk);
+  register_set(&RCC->PLLCFGR, RCC_PLLCFGR_PLL2RGE_2 | RCC_PLLCFGR_DIVP2EN | RCC_PLLCFGR_PLL2FRACEN,
+               RCC_PLLCFGR_PLL2RGE | RCC_PLLCFGR_PLL2VCOSEL | RCC_PLLCFGR_DIVP2EN | RCC_PLLCFGR_PLL2FRACEN);
+  register_set_bits(&RCC->CR, RCC_CR_PLL2ON);
+  while ((RCC->CR & RCC_CR_PLL2RDY) == 0U) {}
+  register_set(&RCC->D2CCIP1R, RCC_D2CCIP1R_SAI1SEL_0, RCC_D2CCIP1R_SAI1SEL);
+
   // init DFSDM for PDM mic
-  register_set(&DFSDM1_Channel0->CHCFGR1, (90UL << DFSDM_CHCFGR1_CKOUTDIV_Pos) | DFSDM_CHCFGR1_CHEN, 0xC0FFF1EFU); // CH0 controls the clock
+  register_set(&DFSDM1_Channel0->CHCFGR1, (1UL << DFSDM_CHCFGR1_CKOUTDIV_Pos) | DFSDM_CHCFGR1_CKOUTSRC | DFSDM_CHCFGR1_CHEN, 0xC0FFF1EFU); // CH0 controls the clock
   register_set(&DFSDM1_Channel3->CHCFGR1, (0b01UL << DFSDM_CHCFGR1_SPICKSEL_Pos) | (0b00U << DFSDM_CHCFGR1_SITP_Pos) | DFSDM_CHCFGR1_CHEN, 0x0000F1EFU); // SITP determines sample edge
   register_set(&DFSDM1_Filter0->FLTFCR, (0U << DFSDM_FLTFCR_IOSR_Pos) | (54UL << DFSDM_FLTFCR_FOSR_Pos) | (4UL << DFSDM_FLTFCR_FORD_Pos), 0xE3FF00FFU);
   register_set(&DFSDM1_Filter0->FLTCR1, DFSDM_FLTCR1_FAST | (3UL << DFSDM_FLTCR1_RCH_Pos) | DFSDM_FLTCR1_RDMAEN | DFSDM_FLTCR1_RCONT | DFSDM_FLTCR1_DFEN, 0x672E7F3BU);
