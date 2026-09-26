@@ -54,6 +54,8 @@ ENTRY(Reset_Handler)
 
 /* Highest address of the user mode stack */
 enter_bootloader_mode = 0x38001FFC;
+fault_cookie = 0x38003FFC;
+
 _estack = 0x20020000;    /* end of RAM */
 _app_start = 0x08020000; /* Reserve Sector 0(128K) for bootloader */
 
