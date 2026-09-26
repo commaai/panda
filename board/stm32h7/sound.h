@@ -43,7 +43,7 @@ static void DMA1_Stream0_IRQ_Handler(void) {
 
   // Keep capture completion halfway through an output buffer, away from its swap.
   // Adjust only the microphone clock; PCM samples and DFSDM gain are unchanged.
-  uint32_t fraction = MIC_PLL_FRAC + (4U * MIC_RX_BUF_SIZE) - (4U * BDMA_Channel1->CNDTR);
+  uint32_t fraction = MIC_PLL_FRAC + (4U * (MIC_TX_BUF_SIZE / 2U)) - (4U * BDMA_Channel1->CNDTR);
   register_clear_bits(&RCC->PLLCFGR, RCC_PLLCFGR_PLL2FRACEN);
   register_set(&RCC->PLL2FRACR, fraction << RCC_PLL2FRACR_FRACN2_Pos, RCC_PLL2FRACR_FRACN2_Msk);
   register_set_bits(&RCC->PLLCFGR, RCC_PLLCFGR_PLL2FRACEN);
@@ -213,7 +213,7 @@ void sound_init(void) {
   register_set(&RCC->PLL2DIVR, (64UL << RCC_PLL2DIVR_N2_Pos) | (61UL << RCC_PLL2DIVR_P2_Pos), 0x7F7FFFFFU);
   register_set(&RCC->PLL2FRACR, MIC_PLL_FRAC << RCC_PLL2FRACR_FRACN2_Pos, RCC_PLL2FRACR_FRACN2_Msk);
   register_set(&RCC->PLLCFGR, RCC_PLLCFGR_PLL2RGE_2 | RCC_PLLCFGR_DIVP2EN | RCC_PLLCFGR_PLL2FRACEN,
-               RCC_PLLCFGR_PLL2RGE | RCC_PLLCFGR_PLL2VCOSEL | RCC_PLLCFGR_DIVP2EN | RCC_PLLCFGR_PLL2FRACEN);
+               RCC_PLLCFGR_PLL2RGE | RCC_PLLCFGR_PLL2VCOSEL | RCC_PLLCFGR_DIVP2EN | RCC_PLLCFGR_DIVQ2EN | RCC_PLLCFGR_DIVR2EN | RCC_PLLCFGR_PLL2FRACEN);
   register_set_bits(&RCC->CR, RCC_CR_PLL2ON);
   while ((RCC->CR & RCC_CR_PLL2RDY) == 0U) {}
   register_set(&RCC->D2CCIP1R, RCC_D2CCIP1R_SAI1SEL_0, RCC_D2CCIP1R_SAI1SEL);
