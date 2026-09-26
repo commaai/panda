@@ -82,6 +82,7 @@ void clock_init(void) {
   register_set_bits(&(RCC->CR), RCC_CR_HSI48ON);
   while ((RCC->CR & RCC_CR_HSI48RDY) == 0U);
   // Specify the frequency source for PLL1, divider for DIVM1, DIVM2, DIVM3 : HSE, 5, 5, 5
+  // PLL2 is reserved for the cuatro microphone clock: sound.h configures it and retunes its fraction at runtime from DIVM2's 5 MHz reference
   register_set(&(RCC->PLLCKSELR), RCC_PLLCKSELR_PLLSRC_HSE | RCC_PLLCKSELR_DIVM1_0 | RCC_PLLCKSELR_DIVM1_2 | RCC_PLLCKSELR_DIVM2_0 | RCC_PLLCKSELR_DIVM2_2 | RCC_PLLCKSELR_DIVM3_0 | RCC_PLLCKSELR_DIVM3_2, 0x3F3F3F3U);
 
   // *** PLL1 start ***
