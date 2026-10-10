@@ -34,8 +34,6 @@ can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
 #endif
 can_buffer(tx3_q, CAN_TX_BUFFER_SIZE)
 
-// FIXME:
-// cppcheck-suppress misra-c2012-9.3
 can_ring *can_queues[PANDA_CAN_CNT] = {&can_tx1_q, &can_tx2_q, &can_tx3_q};
 
 // ********************* interrupt safe queue *********************

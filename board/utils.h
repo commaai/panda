@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stddef.h>
+
 // cppcheck-suppress-macro [misra-c2012-1.2, misra-c2012-17.3]; allow __typeof__ extension
 #define MIN(a, b) ({ \
   __typeof__ (a) _a = (a); \
@@ -27,13 +29,6 @@
   __typeof__ (a) _a = (a); \
   (_a > 0) ? _a : (-_a); \
 })
-
-#ifndef NULL
-// this just provides a standard implementation of NULL
-// in lieu of including libc in the panda build
-// cppcheck-suppress [misra-c2012-21.1]
-#define NULL ((void*)0)
-#endif
 
 // STM32 HAL defines this
 #ifndef UNUSED
