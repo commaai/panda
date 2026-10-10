@@ -132,7 +132,7 @@ static void USB_WritePacket(const void *src, uint16_t len, uint32_t ep) {
 // IN EP 0 TX FIFO has a max size of 127 bytes (much smaller than the rest)
 // so use TX FIFO empty interrupt to send larger amounts of data
 static void USB_WritePacket_EP0(uint8_t *src, uint16_t len) {
-  uint16_t wplen = MIN(len, 0x40);
+  uint16_t wplen = MIN(len, 0x40U);
   USB_WritePacket(src, wplen, 0);
 
   if (wplen < len) {
@@ -573,7 +573,7 @@ static void usb_setup(void) {
       control_req.length = setup.b.wLength.w;
 
       resp_len = comms_control_handler(&control_req, response);
-      USB_WritePacket(response, MIN(resp_len, setup.b.wLength.w), 0);
+      USB_WritePacket(response, MIN(resp_len, (int)setup.b.wLength.w), 0);
       USBx_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_CNAK;
   }
 }
@@ -718,7 +718,7 @@ void usb_irqhandler(void) {
 
     if ((USBx_INEP(0U)->DIEPINT & USB_OTG_DIEPMSK_ITTXFEMSK) != 0U) {
       if ((ep0_txlen != 0U) && ((USBx_INEP(0U)->DTXFSTS & USB_OTG_DTXFSTS_INEPTFSAV) >= 0x40U)) {
-        uint16_t len = MIN(ep0_txlen, 0x40);
+        uint16_t len = MIN(ep0_txlen, 0x40U);
         USB_WritePacket(ep0_txdata, len, 0);
         ep0_txdata = &ep0_txdata[len];
         ep0_txlen -= len;
