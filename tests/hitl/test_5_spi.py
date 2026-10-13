@@ -1,8 +1,11 @@
 import binascii
 import random
+import time
 from unittest.mock import patch
 
+from opendbc.car.structs import CarParams
 from panda.tests.hitl.base import PandaTestCase
+from panda.tests.hitl.helpers import clear_can_buffers
 from panda import Panda
 from panda.python.spi import PandaProtocolMismatch, PandaSpiNackResponse
 
@@ -84,3 +87,17 @@ class TestSpi(PandaTestCase):
         p._handle.bulkWrite(ep, b"abc", timeout=50)
 
       self._ping(p)
+
+  def test_multiple_clients(self):
+    # every client's request runs, even when it's identical to another client's
+    self.p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    self.p.set_can_loopback(True)
+    clear_can_buffers(self.p)
+    p1, p2 = Panda(self.p._serial), Panda(self.p._serial)
+    for _ in range(100):
+      p1.can_send(0x123, b"\x01" * 8, 0)
+      p2.can_send(0x123, b"\x01" * 8, 0)
+    time.sleep(0.1)
+    p1.close()
+    p2.close()
+    assert len([m for m in self.p.can_recv() if m[2] == 0]) == 200
