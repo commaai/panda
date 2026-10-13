@@ -3,7 +3,6 @@ import random
 import struct
 import threading
 import time
-import unittest
 from unittest.mock import patch
 
 from opendbc.car.structs import CarParams
@@ -164,7 +163,6 @@ class TestSpi(PandaTestCase):
       t.join()
     assert errors == []
 
-  @unittest.expectedFailure  # SPI bulkRead ignores length on the old protocol
   def test_max_sizes(self):
     # around the first read size and the max transfer size
     for n in (1, 1013, 1014, 4032):
