@@ -6,9 +6,11 @@
 #ifdef STM32H7
 __attribute__((section(".sram12"))) uint8_t spi_buf_rx[SPI_BUF_SIZE];
 __attribute__((section(".sram12"))) uint8_t spi_buf_tx[SPI_BUF_SIZE];
+__attribute__((section(".sram12"))) static uint8_t spi_buf_listening[1];
 #else
 uint8_t spi_buf_rx[SPI_BUF_SIZE];
 uint8_t spi_buf_tx[SPI_BUF_SIZE];
+static uint8_t spi_buf_listening[1];
 #endif
 
 // SPI protocol, see python/spi.py for the host side.
@@ -18,13 +20,14 @@ uint8_t spi_buf_tx[SPI_BUF_SIZE];
 // then reads rx_len bytes at a time, until the first byte is a response:
 //   MISO: SPI_ACK or SPI_NACK, seq, len (u16), data[len], crc32 (u32)
 // The response always fits in rx_len, so the next transfer reads all of it.
-// If a read gets SPI_LISTENING instead, we never got the request, and the host sends it again.
+// If a read gets SPI_LISTENING instead, the host sends the request again.
 // Anything that isn't a valid request is dropped, and we go back to listening.
 // NACK means a valid request that we refused, e.g. CAN TX buffers are full.
 //
-// We arm what's next on every CS rising edge, and only trust a transfer if it was armed
-// cleanly (see llspi_arm), otherwise we arm the same thing again. It never matters how
-// long we take to get to it.
+// We arm what's next on every CS rising edge, whatever state the bus is in. If a transfer
+// doesn't cleanly see what we armed, the host ends up sending its request again, and a
+// repeat of the request we last handled (same seq) gets the same response again instead
+// of running twice. So it never matters how long we take to get to it.
 #define SPI_LISTENING 0x3CU
 #define SPI_ACK 0xC3U
 #define SPI_NACK 0x5AU
@@ -42,7 +45,7 @@ uint16_t spi_error_count = 0;
 
 // low level SPI prototypes
 void llspi_init(void);
-bool llspi_arm(const uint8_t *tx, uint16_t tx_len);
+void llspi_arm(const uint8_t *tx, uint16_t tx_len);
 uint16_t llspi_rx_count(void);
 
 static bool spi_can_tx_ready = false;
@@ -106,15 +109,19 @@ static bool spi_handle_endpoint(uint8_t endpoint, const uint8_t *data, uint16_t 
 // Handle a request and build the response in spi_buf_tx. Returns the response size the host
 // will read, or 0 if it's not a valid request
 static uint16_t spi_process_request(uint16_t n) {
+  static bool handled = false;
+  static uint32_t handled_crc = 0U;
+
   // n can include filler from the host's reads if we were slow, it's ignored
   uint16_t tx_len = spi_buf_rx[2] | (spi_buf_rx[3] << 8U);
   uint16_t rx_len = spi_buf_rx[4] | (spi_buf_rx[5] << 8U);
   uint32_t req_len = SPI_REQ_HEADER_SIZE + (uint32_t)tx_len + SPI_CRC_SIZE;
-  bool valid = (n >= (SPI_REQ_HEADER_SIZE + SPI_CRC_SIZE)) && (req_len <= n) &&
-               (crc32(spi_buf_rx, req_len - SPI_CRC_SIZE) == read_u32(&spi_buf_rx[req_len - SPI_CRC_SIZE])) &&
+  uint32_t crc = (req_len <= n) ? read_u32(&spi_buf_rx[req_len - SPI_CRC_SIZE]) : 0U;
+  bool valid = (req_len <= n) && (crc32(spi_buf_rx, req_len - SPI_CRC_SIZE) == crc) &&
                (rx_len >= SPI_RESP_OVERHEAD) && (rx_len <= SPI_BUF_SIZE);
 
-  if (valid) {
+  if (valid && !(handled && (crc == handled_crc))) {
+    // a new request. a repeat of the last one (same seq) gets the same response again
     uint16_t max_data_len = rx_len - SPI_RESP_OVERHEAD;
     uint16_t data_len = 0U;
     bool ack = spi_handle_endpoint(spi_buf_rx[0], &spi_buf_rx[SPI_REQ_HEADER_SIZE], tx_len, max_data_len,
@@ -128,40 +135,40 @@ static uint16_t spi_process_request(uint16_t n) {
     spi_buf_tx[3] = (data_len >> 8U) & 0xFFU;
     uint16_t len = SPI_RESP_HEADER_SIZE + data_len;
     write_u32(&spi_buf_tx[len], crc32(spi_buf_tx, len));
-  } else if (req_len <= n) {
+    handled = true;
+    handled_crc = crc;
+  } else if (!valid && (req_len <= n)) {
     // looked like a request, but the CRC is wrong. the host's filler doesn't count, its length doesn't fit
     spi_error_count += 1U;
   } else {
-    // host's filler, or a partial request
+    // a repeat, host's filler, or a partial request
   }
   return valid ? rx_len : 0U;
 }
 
 // Called on every CS rising edge
 void spi_cs_rising(void) {
-  static bool responding = false;  // otherwise listening
-  static bool clean = false;       // whether the transfer that just ended was armed cleanly
-  static uint16_t resp_len = 0U;
+  static uint16_t resp_len = 0U;  // 0 while listening
 
+  // nothing received means the SPI ignored that transfer, since it started before we armed
   uint16_t n = llspi_rx_count();
-  if (clean && (n > 0U)) {
+  if (n > 0U) {
     // the host read the response, or sent a request
-    resp_len = responding ? 0U : spi_process_request(n);
-    responding = (resp_len > 0U);
+    resp_len = (resp_len > 0U) ? 0U : spi_process_request(n);
   }
 
-  if (responding) {
-    clean = llspi_arm(spi_buf_tx, resp_len);
+  if (resp_len > 0U) {
+    llspi_arm(spi_buf_tx, resp_len);
   } else {
-    spi_buf_tx[0] = SPI_LISTENING;
-    clean = llspi_arm(spi_buf_tx, 1U);
+    llspi_arm(spi_buf_listening, 1U);
   }
 }
 
 void spi_init(void) {
   crc32_init();
   llspi_init();
-  spi_cs_rising();
+  spi_buf_listening[0] = SPI_LISTENING;
+  llspi_arm(spi_buf_listening, 1U);
 }
 
 void can_tx_comms_resume_spi(void) {

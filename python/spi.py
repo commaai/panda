@@ -49,12 +49,6 @@ class PandaSpiNackResponse(PandaSpiException):
 class PandaSpiMissingAck(PandaSpiException):
   pass
 
-class PandaSpiBadChecksum(PandaSpiException):
-  pass
-
-class PandaSpiTransferFailed(PandaSpiException):
-  pass
-
 
 SPI_LOCK = threading.Lock()
 SPI_DEVICES = {}
@@ -181,7 +175,7 @@ class PandaSpiHandle(BaseHandle):
           return b""
 
         # read until the response. if the panda is listening again, it never got the request
-        while time.monotonic() < deadline:
+        while True:
           dat = spi.xfer(poll)
           if dat[0] == LISTENING:
             break
@@ -197,6 +191,9 @@ class PandaSpiHandle(BaseHandle):
               return dat[RESP_HEADER.size:end]
             break
 
+          if time.monotonic() > deadline:
+            break
+
       if time.monotonic() > deadline:
         raise PandaSpiMissingAck
 
@@ -205,7 +202,7 @@ class PandaSpiHandle(BaseHandle):
 
     # timeout of 0 means forever
     deadline = time.monotonic() + (max(MIN_TIMEOUT_MS, timeout) * 1e-3 if timeout != 0 else math.inf)
-    nack: PandaSpiNackResponse | None = None
+    nack = None
     nack_count = 0
     while True:
       try:
@@ -213,17 +210,17 @@ class PandaSpiHandle(BaseHandle):
           return self._transfer_spidev(spi, endpoint, data, deadline, max_rx_len, expect_disconnect)
       except PandaSpiNackResponse as e:
         # the panda NACKs while its CAN TX buffers are full, don't busy wait on it
-        nack = e
-        nack_count += 1
         if self.no_retry or time.monotonic() > deadline:
           raise
+        nack = e
+        nack_count += 1
         if nack_count > 3:
           time.sleep(min(max(nack_count * 10, 200), 2000) * 1e-6)
-      except PandaSpiException as e:
-        logger.debug("SPI transfer failed", exc_info=True)
-        if self.no_retry or time.monotonic() > deadline:
-          # if the panda was refusing, that's why we ran out of time
-          raise (nack or e) from None
+      except PandaSpiMissingAck:
+        # only raised once the deadline passed. if the panda was refusing, that's why
+        if nack is not None:
+          raise nack from None
+        raise
 
   def get_protocol_version(self) -> bytes:
     # serial, HW type, bootstub, protocol version

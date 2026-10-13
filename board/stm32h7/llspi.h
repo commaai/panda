@@ -5,19 +5,15 @@
 
 void spi_cs_rising(void);
 
-static bool llspi_cs_high(void) {
-  return (GPIOE->IDR & (1UL << SPI_CS_PIN)) != 0U;
-}
-
-// Arms MOSI into spi_buf_rx and MISO from tx. Returns whether it was armed cleanly: CS was high
-// the whole time and the first byte was ready, so the next transfer sees all of tx from its start
-bool llspi_arm(const uint8_t *tx, uint16_t tx_len) {
+// Arms MOSI into spi_buf_rx and MISO from tx. A transfer that's already in progress is ignored,
+// or at worst garbled, which the protocol recovers from
+void llspi_arm(const uint8_t *tx, uint16_t tx_len) {
   // stop DMA + SPI
   register_clear_bits(&(SPI4->CR1), SPI_CR1_SPE);
   DMA2_Stream2->CR &= ~DMA_SxCR_EN;
   DMA2_Stream3->CR &= ~DMA_SxCR_EN;
   register_clear_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN | SPI_CFG1_TXDMAEN);
-  while (((DMA2_Stream2->CR & DMA_SxCR_EN) != 0U) || ((DMA2_Stream3->CR & DMA_SxCR_EN) != 0U)) {}
+  for (uint16_t i = 0U; (i < 1000U) && (((DMA2_Stream2->CR & DMA_SxCR_EN) != 0U) || ((DMA2_Stream3->CR & DMA_SxCR_EN) != 0U)); i++) {}
 
   // drain the RX FIFO and clear all flags
   while ((SPI4->SR & SPI_SR_RXP) != 0U) {
@@ -34,23 +30,17 @@ bool llspi_arm(const uint8_t *tx, uint16_t tx_len) {
   DMA2_Stream3->NDTR = tx_len;
 
   // enable, in the order from the reference manual
-  EXTI->PR1 = (1UL << SPI_CS_PIN);
-  bool cs_was_high = llspi_cs_high();
   register_set_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN);
   DMA2_Stream2->CR |= DMA_SxCR_EN;
   DMA2_Stream3->CR |= DMA_SxCR_EN;
   register_set_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
   register_set_bits(&(SPI4->CR1), SPI_CR1_SPE);
-
-  // wait for the first byte to get to the TX FIFO
-  for (uint16_t i = 0U; (i < 1000U) && (DMA2_Stream3->NDTR == tx_len); i++) {}
-  return cs_was_high && (DMA2_Stream3->NDTR != tx_len) && llspi_cs_high() && ((EXTI->PR1 & (1UL << SPI_CS_PIN)) == 0U);
 }
 
 // Number of bytes received since the last arm, saturates at SPI_BUF_SIZE
 uint16_t llspi_rx_count(void) {
   // let the DMA empty the FIFO, unless it's already full
-  while (((SPI4->SR & SPI_SR_RXP) != 0U) && (DMA2_Stream2->NDTR != 0U)) {}
+  for (uint16_t i = 0U; (i < 1000U) && ((SPI4->SR & SPI_SR_RXP) != 0U) && (DMA2_Stream2->NDTR != 0U); i++) {}
   return SPI_BUF_SIZE - DMA2_Stream2->NDTR;
 }
 
