@@ -9,29 +9,27 @@ from contextlib import contextmanager
 from functools import reduce
 
 from .base import BaseHandle, BaseSTBootloaderHandle, TIMEOUT
-from .constants import McuType, MCU_TYPE_BY_IDCODE, USBPACKET_MAX_SIZE
+from .constants import McuType, MCU_TYPE_BY_IDCODE
 from .utils import logger
 
 # Protocol, see board/drivers/spi.h
 LISTENING = 0x3C
 ACK = 0xC3
 NACK = 0x5A
-POLL = 0xFF
 INFO_ENDPOINT = 0xF0
 
-REQ_HEADER = struct.Struct("<BBHH")  # endpoint, seq, tx_len, max_rx_len
+REQ_HEADER = struct.Struct("<BBHH")  # endpoint, seq, tx_len, rx_len
 RESP_HEADER = struct.Struct("<BBH")  # status, seq, len
 CRC = struct.Struct("<I")
+RESP_OVERHEAD = RESP_HEADER.size + CRC.size
+POLL = 0xFF  # filler while reading the response, never a valid request
 
 MIN_TIMEOUT_MS = 100
 MAX_XFER_RETRY_COUNT = 5  # ST bootloader
 
 SPI_BUF_SIZE = 4096  # from panda/board/drivers/drivers.h
 XFER_SIZE = SPI_BUF_SIZE - 0x40 # give some room for SPI protocol overhead
-
-# first read of the response, enough for a controlRead
-PREREAD_LEN = RESP_HEADER.size + USBPACKET_MAX_SIZE + CRC.size
-POLL_PACKET = bytes([POLL, ]) * PREREAD_LEN
+FIRST_READ_SIZE = 1024 - RESP_OVERHEAD  # reads are usually small, start small
 
 DEV_PATH = "/dev/spidev0.0"
 
@@ -168,66 +166,64 @@ class PandaSpiHandle(BaseHandle):
     self.seq = 0
 
   def _transfer_spidev(self, spi, endpoint: int, data, deadline: float, max_rx_len: int, expect_disconnect: bool) -> bytes:
+    """One request and its response. Retries until the panda got the request and we got its response, or the deadline."""
+    # the response is always read in one transfer of rx_len
+    rx_len = max_rx_len + RESP_OVERHEAD
     self.seq = (self.seq + 1) & 0xFF
-    packet = REQ_HEADER.pack(endpoint, self.seq, len(data), max_rx_len) + bytes(data)
+    packet = REQ_HEADER.pack(endpoint, self.seq, len(data), rx_len) + bytes(data)
     packet += CRC.pack(binascii.crc32(packet))
+    poll = bytes([POLL, ]) * rx_len
 
     while True:
-      logger.debug("- sending request")
-      while spi.xfer2(packet)[0] != LISTENING:
-        # panda wasn't listening yet
-        if time.monotonic() > deadline:
-          raise PandaSpiMissingAck
+      # send the request, until the panda was listening for it
+      if spi.xfer2(packet)[0] == LISTENING:
+        if expect_disconnect:
+          return b""
 
-      if expect_disconnect:
-        logger.debug("- expecting disconnect, returning")
-        return b""
+        # read until the response. if the panda is listening again, it never got the request
+        while time.monotonic() < deadline:
+          dat = spi.xfer(poll)
+          if dat[0] == LISTENING:
+            break
 
-      logger.debug("- waiting for response")
-      while (dat := spi.xfer(POLL_PACKET))[0] not in (ACK, NACK, LISTENING):
-        if time.monotonic() > deadline:
-          raise PandaSpiMissingAck
-      if dat[0] == LISTENING:
-        logger.debug("- request was dropped, resending")
-        if time.monotonic() > deadline:
-          raise PandaSpiMissingAck
-        continue
+          # a response that got cut off or corrupted isn't one, keep reading
+          status, seq, response_len = RESP_HEADER.unpack_from(dat)
+          end = RESP_HEADER.size + response_len
+          if status in (ACK, NACK) and response_len <= max_rx_len and CRC.unpack_from(dat, end)[0] == binascii.crc32(dat[:end]):
+            # otherwise it's the response to an old request, and we send ours again
+            if seq == self.seq:
+              if status == NACK:
+                raise PandaSpiNackResponse
+              return dat[RESP_HEADER.size:end]
+            break
 
-      status, seq, response_len = RESP_HEADER.unpack_from(dat)
-      if response_len > max_rx_len:
-        raise PandaSpiBadChecksum(f"response length greater than max ({max_rx_len} {response_len})")
+      if time.monotonic() > deadline:
+        raise PandaSpiMissingAck
 
-      # read the rest
-      total_len = RESP_HEADER.size + response_len + CRC.size
-      if total_len > len(dat):
-        dat += spi.xfer(bytes([POLL, ]) * (total_len - len(dat)))
-      dat = dat[:total_len]
+  def _transfer(self, endpoint: int, data, timeout: int, max_rx_len: int = 0, expect_disconnect: bool = False) -> bytes:
+    logger.debug("transfer: endpoint=%d, max_rx_len=%d", endpoint, max_rx_len)
 
-      if CRC.unpack_from(dat, total_len - CRC.size)[0] != binascii.crc32(dat[:-CRC.size]):
-        raise PandaSpiBadChecksum
-      if seq != self.seq:
-        logger.debug("- got response to an old request, resending")
-        if time.monotonic() > deadline:
-          raise PandaSpiMissingAck
-        continue
-      if status == NACK:
-        raise PandaSpiNackResponse
-      return dat[RESP_HEADER.size:-CRC.size]
-
-  def _transfer(self, endpoint: int, data, timeout: int, max_rx_len: int = 1000, expect_disconnect: bool = False) -> bytes:
-    logger.debug("starting transfer: endpoint=%d, max_rx_len=%d", endpoint, max_rx_len)
-    logger.debug("==============================================")
-
-    max_rx_len = max(USBPACKET_MAX_SIZE, max_rx_len)
+    # timeout of 0 means forever
     deadline = time.monotonic() + (max(MIN_TIMEOUT_MS, timeout) * 1e-3 if timeout != 0 else math.inf)
+    nack: PandaSpiNackResponse | None = None
+    nack_count = 0
     while True:
-      with self.dev.acquire() as spi:
-        try:
+      try:
+        with self.dev.acquire() as spi:
           return self._transfer_spidev(spi, endpoint, data, deadline, max_rx_len, expect_disconnect)
-        except PandaSpiException:
-          logger.debug("SPI transfer failed", exc_info=True)
-          if self.no_retry or time.monotonic() > deadline:
-            raise
+      except PandaSpiNackResponse as e:
+        # the panda NACKs while its CAN TX buffers are full, don't busy wait on it
+        nack = e
+        nack_count += 1
+        if self.no_retry or time.monotonic() > deadline:
+          raise
+        if nack_count > 3:
+          time.sleep(min(max(nack_count * 10, 200), 2000) * 1e-6)
+      except PandaSpiException as e:
+        logger.debug("SPI transfer failed", exc_info=True)
+        if self.no_retry or time.monotonic() > deadline:
+          # if the panda was refusing, that's why we ran out of time
+          raise (nack or e) from None
 
   def get_protocol_version(self) -> bytes:
     # serial, HW type, bootstub, protocol version
@@ -245,16 +241,17 @@ class PandaSpiHandle(BaseHandle):
 
   def bulkWrite(self, endpoint: int, data: bytes, timeout: int = TIMEOUT) -> int:
     mv = memoryview(data)
-    for x in range(math.ceil(len(data) / XFER_SIZE)):
-      self._transfer(endpoint, mv[XFER_SIZE*x:XFER_SIZE*(x+1)], timeout)
+    for x in range(0, len(data), XFER_SIZE):
+      self._transfer(endpoint, mv[x:x+XFER_SIZE], timeout)
     return len(data)
 
   def bulkRead(self, endpoint: int, length: int, timeout: int = TIMEOUT) -> bytes:
     ret = b""
-    for _ in range(math.ceil(length / XFER_SIZE)):
-      d = self._transfer(endpoint, [], timeout, max_rx_len=XFER_SIZE)
+    while len(ret) < length:
+      to_read = min(XFER_SIZE if len(ret) else FIRST_READ_SIZE, length - len(ret))
+      d = self._transfer(endpoint, b"", timeout, max_rx_len=to_read)
       ret += d
-      if len(d) < XFER_SIZE:
+      if len(d) < to_read:
         break
     return ret
 

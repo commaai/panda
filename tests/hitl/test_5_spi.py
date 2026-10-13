@@ -9,7 +9,7 @@ from unittest.mock import patch
 from opendbc.car.structs import CarParams
 from panda.tests.hitl.base import PandaTestCase
 from panda import Panda
-from panda.python.spi import PandaProtocolMismatch, PandaSpiNackResponse, PandaSpiMissingAck, REQ_HEADER, CRC, LISTENING, ACK, NACK, POLL_PACKET
+from panda.python.spi import PandaProtocolMismatch, PandaSpiNackResponse, PandaSpiMissingAck, REQ_HEADER, CRC, LISTENING, ACK, NACK, POLL
 
 
 class TestSpi(PandaTestCase):
@@ -61,16 +61,17 @@ class TestSpi(PandaTestCase):
     assert spy.call_count == 4
 
   def test_bad_crc(self):
+    # dropped, and the panda goes back to listening
     p = self.p
     cnt = p.health()['spi_error_count']
     with p._handle.dev.acquire() as spi:
-      pkt = REQ_HEADER.pack(0, 1, 8, p.HEALTH_STRUCT.size) + b"\xd2" + b"\x00"*7
+      pkt = REQ_HEADER.pack(0, 1, 8, 72) + b"\xd2" + b"\x00"*7
       pkt += CRC.pack(binascii.crc32(pkt) ^ 1)
       while spi.xfer(pkt)[0] != LISTENING:
         pass
-      while (dat := spi.xfer(POLL_PACKET))[0] not in (ACK, NACK):
+      while (dat := spi.xfer(bytes([POLL, ]) * 72))[0] not in (ACK, NACK, LISTENING):
         pass
-      assert dat[0] == NACK
+      assert dat[0] == LISTENING
     self._ping(p)
     assert (p.health()['spi_error_count'] - cnt) == 1
 
@@ -87,7 +88,7 @@ class TestSpi(PandaTestCase):
     # host gives up at every stage of a transfer
     p = self.p
     with p._handle.dev.acquire() as spi:
-      pkt = REQ_HEADER.pack(0, 1, 8, p.HEALTH_STRUCT.size) + b"\xd2" + b"\x00"*7
+      pkt = REQ_HEADER.pack(0, 1, 8, 72) + b"\xd2" + b"\x00"*7
       pkt += CRC.pack(binascii.crc32(pkt))
       while spi.xfer(pkt)[0] != LISTENING:
         pass
@@ -98,7 +99,7 @@ class TestSpi(PandaTestCase):
       while spi.xfer(pkt)[0] != LISTENING:
         pass
       for _ in range(100):
-        if spi.xfer(POLL_PACKET[:8])[0] == ACK:
+        if spi.xfer(bytes([POLL, ]) * 8)[0] == ACK:
           break
       else:
         raise AssertionError("no response")

@@ -5,12 +5,12 @@
 
 void spi_cs_rising(void);
 
-bool llspi_cs_high(void) {
+static bool llspi_cs_high(void) {
   return (GPIOE->IDR & (1UL << SPI_CS_PIN)) != 0U;
 }
 
-// Arms MOSI into spi_buf_rx and MISO from tx, only while CS is high. Returns
-// whether the next transfer is guaranteed to see all of tx from its first byte
+// Arms MOSI into spi_buf_rx and MISO from tx. Returns whether it was armed cleanly: CS was high
+// the whole time and the first byte was ready, so the next transfer sees all of tx from its start
 bool llspi_arm(const uint8_t *tx, uint16_t tx_len) {
   // stop DMA + SPI
   register_clear_bits(&(SPI4->CR1), SPI_CR1_SPE);
@@ -33,26 +33,21 @@ bool llspi_arm(const uint8_t *tx, uint16_t tx_len) {
   register_set(&(DMA2_Stream3->M0AR), (uint32_t)tx, 0xFFFFFFFFU);
   DMA2_Stream3->NDTR = tx_len;
 
-  // the SPI ignores a transfer that's already in progress when it's enabled,
-  // so all that matters is that the first byte is ready before CS goes low
+  // enable, in the order from the reference manual
   EXTI->PR1 = (1UL << SPI_CS_PIN);
-  bool ok = llspi_cs_high();
-  if (ok) {
-    // enable, in the order from the reference manual
-    register_set_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN);
-    DMA2_Stream2->CR |= DMA_SxCR_EN;
-    DMA2_Stream3->CR |= DMA_SxCR_EN;
-    register_set_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
-    register_set_bits(&(SPI4->CR1), SPI_CR1_SPE);
+  bool cs_was_high = llspi_cs_high();
+  register_set_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN);
+  DMA2_Stream2->CR |= DMA_SxCR_EN;
+  DMA2_Stream3->CR |= DMA_SxCR_EN;
+  register_set_bits(&(SPI4->CFG1), SPI_CFG1_TXDMAEN);
+  register_set_bits(&(SPI4->CR1), SPI_CR1_SPE);
 
-    // wait for the first byte to get to the TX FIFO
-    for (uint16_t i = 0U; (i < 1000U) && (DMA2_Stream3->NDTR == tx_len); i++) {}
-    ok = (DMA2_Stream3->NDTR != tx_len) && llspi_cs_high() && ((EXTI->PR1 & (1UL << SPI_CS_PIN)) == 0U);
-  }
-  return ok;
+  // wait for the first byte to get to the TX FIFO
+  for (uint16_t i = 0U; (i < 1000U) && (DMA2_Stream3->NDTR == tx_len); i++) {}
+  return cs_was_high && (DMA2_Stream3->NDTR != tx_len) && llspi_cs_high() && ((EXTI->PR1 & (1UL << SPI_CS_PIN)) == 0U);
 }
 
-// Number of bytes clocked since the last arm, saturates at SPI_BUF_SIZE
+// Number of bytes received since the last arm, saturates at SPI_BUF_SIZE
 uint16_t llspi_rx_count(void) {
   // let the DMA empty the FIFO, unless it's already full
   while (((SPI4->SR & SPI_SR_RXP) != 0U) && (DMA2_Stream2->NDTR != 0U)) {}
