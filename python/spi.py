@@ -18,8 +18,8 @@ ACK = 0xC3
 NACK = 0x5A
 INFO_ENDPOINT = 0xF0
 
-REQ_HEADER = struct.Struct("<BBHH")  # endpoint, seq, tx_len, rx_len
-RESP_HEADER = struct.Struct("<BBH")  # status, seq, len
+REQ_HEADER = struct.Struct("<BIHH")  # endpoint, id, tx_len, rx_len
+RESP_HEADER = struct.Struct("<BIH")  # status, id, len
 CRC = struct.Struct("<I")
 RESP_OVERHEAD = RESP_HEADER.size + CRC.size
 POLL = 0xFF  # filler while reading the response, never a valid request
@@ -157,14 +157,14 @@ class PandaSpiHandle(BaseHandle):
   def __init__(self) -> None:
     self.dev = SpiDevice()
     self.no_retry = "NO_RETRY" in os.environ
-    self.seq = 0
 
   def _transfer_spidev(self, spi, endpoint: int, data, deadline: float, max_rx_len: int, expect_disconnect: bool) -> bytes:
     """One request and its response. Retries until the panda got the request and we got its response, or the deadline."""
     # the response is always read in one transfer of rx_len
     rx_len = max_rx_len + RESP_OVERHEAD
-    self.seq = (self.seq + 1) & 0xFF
-    packet = REQ_HEADER.pack(endpoint, self.seq, len(data), rx_len) + bytes(data)
+    # random, so it's never the same as another request the panda just handled, even from another client
+    req_id = int.from_bytes(os.urandom(4), "little")
+    packet = REQ_HEADER.pack(endpoint, req_id, len(data), rx_len) + bytes(data)
     packet += CRC.pack(binascii.crc32(packet))
     poll = bytes([POLL, ]) * rx_len
 
@@ -181,11 +181,11 @@ class PandaSpiHandle(BaseHandle):
             break
 
           # a response that got cut off or corrupted isn't one, keep reading
-          status, seq, response_len = RESP_HEADER.unpack_from(dat)
+          status, resp_id, response_len = RESP_HEADER.unpack_from(dat)
           end = RESP_HEADER.size + response_len
           if status in (ACK, NACK) and response_len <= max_rx_len and CRC.unpack_from(dat, end)[0] == binascii.crc32(dat[:end]):
             # otherwise it's the response to an old request, and we send ours again
-            if seq == self.seq:
+            if resp_id == req_id:
               if status == NACK:
                 raise PandaSpiNackResponse
               return dat[RESP_HEADER.size:end]

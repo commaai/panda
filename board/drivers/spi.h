@@ -16,9 +16,10 @@ static uint8_t spi_buf_listening[1];
 // SPI protocol, see python/spi.py for the host side.
 //
 // The host sends each request in one transfer, until the first byte it gets back is SPI_LISTENING:
-//   MOSI: endpoint, seq, tx_len (u16), rx_len (u16), data[tx_len], crc32 (u32)
+//   MOSI: endpoint, id (u32), tx_len (u16), rx_len (u16), data[tx_len], crc32 (u32)
 // then reads rx_len bytes at a time, until the first byte is a response:
-//   MISO: SPI_ACK or SPI_NACK, seq, len (u16), data[len], crc32 (u32)
+//   MISO: SPI_ACK or SPI_NACK, id (u32), len (u16), data[len], crc32 (u32)
+// The id is random for each new request, and stays the same when the host sends it again.
 // The response always fits in rx_len, so the next transfer reads all of it.
 // If a read gets SPI_LISTENING instead, the host sends the request again.
 // Anything that isn't a valid request is dropped, and we go back to listening.
@@ -26,15 +27,15 @@ static uint8_t spi_buf_listening[1];
 //
 // We arm what's next on every CS rising edge, whatever state the bus is in. If a transfer
 // doesn't cleanly see what we armed, the host ends up sending its request again, and a
-// repeat of the request we last handled (same seq) gets the same response again instead
+// repeat of the request we last handled (same id) gets the same response again instead
 // of running twice. So it never matters how long we take to get to it.
 #define SPI_LISTENING 0x3CU
 #define SPI_ACK 0xC3U
 #define SPI_NACK 0x5AU
 #define SPI_IDLE 0x00U  // sent on underrun
 
-#define SPI_REQ_HEADER_SIZE 6U
-#define SPI_RESP_HEADER_SIZE 4U
+#define SPI_REQ_HEADER_SIZE 9U
+#define SPI_RESP_HEADER_SIZE 7U
 #define SPI_CRC_SIZE 4U
 #define SPI_RESP_OVERHEAD (SPI_RESP_HEADER_SIZE + SPI_CRC_SIZE)
 
@@ -110,19 +111,20 @@ static bool spi_handle_endpoint(uint8_t endpoint, const uint8_t *data, uint16_t 
 // will read, or 0 if it's not a valid request
 static uint16_t spi_process_request(uint16_t n) {
   static bool handled = false;
-  static uint8_t handled_seq = 0U;
+  static uint32_t handled_id = 0U;
   static uint32_t handled_crc = 0U;
 
   // n can include filler from the host's reads if we were slow, it's ignored
-  uint16_t tx_len = spi_buf_rx[2] | (spi_buf_rx[3] << 8U);
-  uint16_t rx_len = spi_buf_rx[4] | (spi_buf_rx[5] << 8U);
+  uint32_t id = read_u32(&spi_buf_rx[1]);
+  uint16_t tx_len = spi_buf_rx[5] | (spi_buf_rx[6] << 8U);
+  uint16_t rx_len = spi_buf_rx[7] | (spi_buf_rx[8] << 8U);
   uint32_t req_len = SPI_REQ_HEADER_SIZE + (uint32_t)tx_len + SPI_CRC_SIZE;
   uint32_t crc = (req_len <= n) ? read_u32(&spi_buf_rx[req_len - SPI_CRC_SIZE]) : 0U;
   bool valid = (req_len <= n) && (crc32(spi_buf_rx, req_len - SPI_CRC_SIZE) == crc) &&
                (rx_len >= SPI_RESP_OVERHEAD) && (rx_len <= SPI_BUF_SIZE);
 
-  if (valid && !(handled && (spi_buf_rx[1] == handled_seq) && (crc == handled_crc))) {
-    // a new request. a repeat of the last one (same seq) gets the same response again
+  if (valid && !(handled && (id == handled_id) && (crc == handled_crc))) {
+    // a new request. a repeat of the last one (same id) gets the same response again
     uint16_t max_data_len = rx_len - SPI_RESP_OVERHEAD;
     uint16_t data_len = 0U;
     bool ack = spi_handle_endpoint(spi_buf_rx[0], &spi_buf_rx[SPI_REQ_HEADER_SIZE], tx_len, max_data_len,
@@ -131,13 +133,13 @@ static uint16_t spi_process_request(uint16_t n) {
     data_len = ack ? MIN(data_len, max_data_len) : 0U;
 
     spi_buf_tx[0] = ack ? SPI_ACK : SPI_NACK;
-    spi_buf_tx[1] = spi_buf_rx[1];
-    spi_buf_tx[2] = data_len & 0xFFU;
-    spi_buf_tx[3] = (data_len >> 8U) & 0xFFU;
+    write_u32(&spi_buf_tx[1], id);
+    spi_buf_tx[5] = data_len & 0xFFU;
+    spi_buf_tx[6] = (data_len >> 8U) & 0xFFU;
     uint16_t len = SPI_RESP_HEADER_SIZE + data_len;
     write_u32(&spi_buf_tx[len], crc32(spi_buf_tx, len));
     handled = true;
-    handled_seq = spi_buf_rx[1];
+    handled_id = id;
     handled_crc = crc;
   } else if (!valid && (req_len <= n)) {
     // looked like a request, but the CRC is wrong. the host's filler doesn't count, its length doesn't fit
