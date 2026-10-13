@@ -118,6 +118,9 @@ static void enter_stop_mode(void) {
   register_set_bits(&(EXTI->IMR1), can_exti_line);
   register_set_bits(&(EXTI->FTSR1), can_exti_line);
 
+  // don't wake up on SPI chip select (EXTI11, shares an IRQ with FDCAN3 RX)
+  register_clear_bits(&(EXTI->IMR1), (1UL << 11));
+
   // clear pending EXTI
   EXTI->PR1 = (1U << 1) | (1U << 4) | can_exti_line;
 

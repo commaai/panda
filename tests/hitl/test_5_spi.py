@@ -9,15 +9,15 @@ from unittest.mock import patch
 from opendbc.car.structs import CarParams
 from panda.tests.hitl.base import PandaTestCase
 from panda import Panda
-from panda.python.spi import PandaProtocolMismatch, PandaSpiNackResponse
+from panda.python.spi import PandaProtocolMismatch, PandaSpiNackResponse, PandaSpiMissingAck, REQ_HEADER, CRC, LISTENING, ACK, NACK, POLL_PACKET
 
 
 class TestSpi(PandaTestCase):
   def _ping(self, panda):
     # should work with no retries
-    with patch.object(panda._handle, '_wait_for_ack', wraps=panda._handle._wait_for_ack) as spy:
+    with patch.object(panda._handle, '_transfer_spidev', wraps=panda._handle._transfer_spidev) as spy:
       panda.health()
-      assert spy.call_count == 2
+      assert spy.call_count == 1
 
   def test_protocol_version_check(self):
     p = self.p
@@ -48,33 +48,67 @@ class TestSpi(PandaTestCase):
 
   def test_all_comm_types(self):
     p = self.p
-    spy = self.enterContext(patch.object(p._handle, '_wait_for_ack', wraps=p._handle._wait_for_ack))
+    spy = self.enterContext(patch.object(p._handle, '_transfer_spidev', wraps=p._handle._transfer_spidev))
 
     # controlRead + controlWrite
     p.health()
     p.can_clear(0)
-    assert spy.call_count == 2*2
+    assert spy.call_count == 2
 
     # bulkRead + bulkWrite
     p.can_recv()
     p.can_send(0x123, b"somedata", 0)
-    assert spy.call_count == 2*4
+    assert spy.call_count == 4
 
-  def test_bad_header(self):
-    p = self.p
-    with patch('panda.python.spi.SYNC', return_value=0):
-      with self.assertRaises(PandaSpiNackResponse):
-        p._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, p.HEALTH_STRUCT.size, timeout=50)
-    self._ping(p)
-
-  def test_bad_checksum(self):
+  def test_bad_crc(self):
     p = self.p
     cnt = p.health()['spi_error_count']
-    with patch('panda.python.spi.PandaSpiHandle._calc_checksum', return_value=0):
-      with self.assertRaises(PandaSpiNackResponse):
-        p._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, p.HEALTH_STRUCT.size, timeout=50)
+    with p._handle.dev.acquire() as spi:
+      pkt = REQ_HEADER.pack(0, 1, 8, p.HEALTH_STRUCT.size) + b"\xd2" + b"\x00"*7
+      pkt += CRC.pack(binascii.crc32(pkt) ^ 1)
+      while spi.xfer(pkt)[0] != LISTENING:
+        pass
+      while (dat := spi.xfer(POLL_PACKET))[0] not in (ACK, NACK):
+        pass
+      assert dat[0] == NACK
     self._ping(p)
-    assert (p.health()['spi_error_count'] - cnt) > 0
+    assert (p.health()['spi_error_count'] - cnt) == 1
+
+  def test_garbage(self):
+    # random bytes, of random lengths, at any point in the protocol
+    p = self.p
+    for _ in range(100):
+      with p._handle.dev.acquire() as spi:
+        for _ in range(random.randint(1, 5)):
+          spi.xfer(random.randbytes(random.randint(1, 4096)))
+      self._ping(p)
+
+  def test_abandoned_transfers(self):
+    # host gives up at every stage of a transfer
+    p = self.p
+    with p._handle.dev.acquire() as spi:
+      pkt = REQ_HEADER.pack(0, 1, 8, p.HEALTH_STRUCT.size) + b"\xd2" + b"\x00"*7
+      pkt += CRC.pack(binascii.crc32(pkt))
+      while spi.xfer(pkt)[0] != LISTENING:
+        pass
+    self._ping(p)
+
+    # read only part of the response
+    with p._handle.dev.acquire() as spi:
+      while spi.xfer(pkt)[0] != LISTENING:
+        pass
+      for _ in range(100):
+        if spi.xfer(POLL_PACKET[:8])[0] == ACK:
+          break
+      else:
+        raise AssertionError("no response")
+    self._ping(p)
+
+  def test_timeout(self):
+    p = self.p
+    with patch('panda.python.spi.LISTENING', 0xFF), self.assertRaises(PandaSpiMissingAck):
+      p._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, p.HEALTH_STRUCT.size, timeout=50)
+    self._ping(p)
 
   def test_non_existent_endpoint(self):
     p = self.p
