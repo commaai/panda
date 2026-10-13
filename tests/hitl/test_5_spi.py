@@ -1,6 +1,9 @@
 import binascii
 import random
+import struct
+import threading
 import time
+import unittest
 from unittest.mock import patch
 
 from opendbc.car.structs import CarParams
@@ -97,3 +100,38 @@ class TestSpi(PandaTestCase):
         p2.can_send(0x123, b"\x01" * 8, 0)
     time.sleep(0.1)
     assert len([m for m in self.p.can_recv() if m[2] == 0]) == 200
+
+  @unittest.expectedFailure  # SPI can_send_many writes more frames at once than the panda has room for
+  def test_can_exactly_once(self):
+    # more than a full transfer each way, so writes and reads are split into chunks
+    self.p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    self.p.set_can_loopback(True)
+    sent = [struct.pack(">Q", i) for i in range(600)]
+    self.p.can_send_many([(0x123, dat, 0) for dat in sent], timeout=0)
+    time.sleep(0.5)
+    got = []
+    while len(r := self.p.can_recv()):
+      got += [m[1] for m in r if m[2] == 0]
+    assert sorted(got) == sent
+
+  def test_threads(self):
+    # one handle shared by threads, like pandad
+    errors = []
+    def hammer():
+      try:
+        for _ in range(200):
+          self.p.health()
+      except Exception as e:
+        errors.append(e)
+    threads = [threading.Thread(target=hammer) for _ in range(4)]
+    for t in threads:
+      t.start()
+    for t in threads:
+      t.join()
+    assert errors == []
+
+  @unittest.expectedFailure  # SPI bulkRead ignores length on the old protocol
+  def test_max_sizes(self):
+    # around the first read size and the max transfer size
+    for n in (1, 1013, 1014, 4032):
+      assert len(self.p._handle.bulkRead(0xAB, n)) == n
