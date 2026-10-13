@@ -48,7 +48,10 @@ static void EXTI15_10_IRQ_Handler(void) {
   if ((EXTI->PR1 & (1UL << SPI_CS_PIN)) != 0U) {
     // clear first, so an edge during processing fires again
     EXTI->PR1 = (1UL << SPI_CS_PIN);
-    spi_cs_rising();
+    // if we're late and the next transfer already started, its own rising edge handles it
+    if ((GPIOE->IDR & (1UL << SPI_CS_PIN)) != 0U) {
+      spi_cs_rising();
+    }
   }
 }
 

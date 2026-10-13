@@ -110,6 +110,7 @@ static bool spi_handle_endpoint(uint8_t endpoint, const uint8_t *data, uint16_t 
 // will read, or 0 if it's not a valid request
 static uint16_t spi_process_request(uint16_t n) {
   static bool handled = false;
+  static uint8_t handled_seq = 0U;
   static uint32_t handled_crc = 0U;
 
   // n can include filler from the host's reads if we were slow, it's ignored
@@ -120,7 +121,7 @@ static uint16_t spi_process_request(uint16_t n) {
   bool valid = (req_len <= n) && (crc32(spi_buf_rx, req_len - SPI_CRC_SIZE) == crc) &&
                (rx_len >= SPI_RESP_OVERHEAD) && (rx_len <= SPI_BUF_SIZE);
 
-  if (valid && !(handled && (crc == handled_crc))) {
+  if (valid && !(handled && (spi_buf_rx[1] == handled_seq) && (crc == handled_crc))) {
     // a new request. a repeat of the last one (same seq) gets the same response again
     uint16_t max_data_len = rx_len - SPI_RESP_OVERHEAD;
     uint16_t data_len = 0U;
@@ -136,6 +137,7 @@ static uint16_t spi_process_request(uint16_t n) {
     uint16_t len = SPI_RESP_HEADER_SIZE + data_len;
     write_u32(&spi_buf_tx[len], crc32(spi_buf_tx, len));
     handled = true;
+    handled_seq = spi_buf_rx[1];
     handled_crc = crc;
   } else if (!valid && (req_len <= n)) {
     // looked like a request, but the CRC is wrong. the host's filler doesn't count, its length doesn't fit
