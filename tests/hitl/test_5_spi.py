@@ -93,11 +93,9 @@ class TestSpi(PandaTestCase):
     self.p.set_safety_mode(CarParams.SafetyModel.allOutput)
     self.p.set_can_loopback(True)
     clear_can_buffers(self.p)
-    p1, p2 = Panda(self.p._serial), Panda(self.p._serial)
-    for _ in range(100):
-      p1.can_send(0x123, b"\x01" * 8, 0)
-      p2.can_send(0x123, b"\x01" * 8, 0)
+    with Panda(self.p._serial) as p1, Panda(self.p._serial) as p2:
+      for _ in range(100):
+        p1.can_send(0x123, b"\x01" * 8, 0)
+        p2.can_send(0x123, b"\x01" * 8, 0)
     time.sleep(0.1)
-    p1.close()
-    p2.close()
     assert len([m for m in self.p.can_recv() if m[2] == 0]) == 200
