@@ -5,7 +5,6 @@ from unittest.mock import patch
 
 from opendbc.car.structs import CarParams
 from panda.tests.hitl.base import PandaTestCase
-from panda.tests.hitl.helpers import clear_can_buffers
 from panda import Panda
 from panda.python.spi import PandaProtocolMismatch, PandaSpiNackResponse
 
@@ -92,7 +91,6 @@ class TestSpi(PandaTestCase):
     # every client's request runs, even when it's identical to another client's
     self.p.set_safety_mode(CarParams.SafetyModel.allOutput)
     self.p.set_can_loopback(True)
-    clear_can_buffers(self.p)
     with Panda(self.p._serial) as p1, Panda(self.p._serial) as p2:
       for _ in range(100):
         p1.can_send(0x123, b"\x01" * 8, 0)
