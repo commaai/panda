@@ -101,7 +101,6 @@ class TestSpi(PandaTestCase):
     time.sleep(0.1)
     assert len([m for m in self.p.can_recv() if m[2] == 0]) == 200
 
-  @unittest.expectedFailure  # SPI can_send_many writes more frames at once than the panda has room for
   def test_can_exactly_once(self):
     # more than a full transfer each way, so writes and reads are split into chunks
     self.p.set_safety_mode(CarParams.SafetyModel.allOutput)
@@ -114,7 +113,7 @@ class TestSpi(PandaTestCase):
       got += [m[1] for m in r if m[2] == 0]
     assert sorted(got) == sent
 
-  def test_threads(self):
+  def test_thread_safe(self):
     # one handle shared by threads, like pandad
     errors = []
     def hammer():
