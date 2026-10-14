@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-import os
 import sys
 import time
 from datetime import datetime
 from collections import defaultdict, deque
 
-os.environ['NO_RETRY'] = '1'  # no spi retries
 from panda import Panda, PandaSpiException
 
 
