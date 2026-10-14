@@ -7,9 +7,13 @@ env = Environment(
     '-std=gnu11',
     '-Wfatal-errors',
     '-Wno-pointer-to-int-cast',
+    '-Wno-int-to-pointer-cast',
   ],
   CPPPATH=[".", "../../", "../../board/", opendbc.INCLUDE_PATH],
 )
 
 panda = env.SharedObject("panda.os", "panda.c")
 libpanda = env.SharedLibrary("libpanda.so", [panda])
+
+board = env.SharedObject("board.os", "board.c", CFLAGS=env["CFLAGS"] + ["-DSTM32H7", "-DSTM32H725xx"], CPPPATH=env["CPPPATH"] + ["../../board/stm32h7/inc"])
+libboard = env.SharedLibrary("libboard.so", [board])
