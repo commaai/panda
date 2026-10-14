@@ -106,7 +106,8 @@ class TestSpi(PandaTestCase):
 
   def test_timeout(self):
     p = self.p
-    with patch('panda.python.spi.LISTENING', 0xFF), self.assertRaises(PandaSpiMissingAck):
+    # never equal to a byte, unlike 0xFF which MISO reads while the panda re-arms
+    with patch('panda.python.spi.LISTENING', 0x100), self.assertRaises(PandaSpiMissingAck):
       p._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, p.HEALTH_STRUCT.size, timeout=50)
     self._ping(p)
 
