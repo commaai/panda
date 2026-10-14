@@ -25,6 +25,7 @@ RESP_OVERHEAD = RESP_HEADER.size + CRC.size
 POLL = 0xFF  # filler while reading the response, never a valid request
 
 MIN_TIMEOUT_MS = 100
+SILENT_TIMEOUT = 1.0  # seconds, longer than the slowest request takes on the panda
 MAX_XFER_RETRY_COUNT = 5  # ST bootloader
 
 SPI_BUF_SIZE = 4096  # from panda/board/drivers/drivers.h
@@ -156,21 +157,22 @@ class PandaSpiHandle(BaseHandle):
 
   def __init__(self) -> None:
     self.dev = SpiDevice()
-    self.no_retry = "NO_RETRY" in os.environ
 
-  def _transfer_spidev(self, spi, endpoint: int, data, deadline: float, max_rx_len: int, expect_disconnect: bool) -> bytes:
-    """One request and its response. Retries until the panda got the request and we got its response, or the deadline."""
+  def _transfer_spidev(self, spi, endpoint: int, req_id: int, data, deadline: float, max_rx_len: int, expect_disconnect: bool) -> bytes | None:
+    """One request and its response. Retries until the panda got the request and we got its response, or the deadline.
+    Returns None if the panda went quiet, so the caller can let go of the bus for a bit."""
     # the response is always read in one transfer of rx_len
     rx_len = max_rx_len + RESP_OVERHEAD
-    # random, so it's never the same as another request the panda just handled, even from another client
-    req_id = int.from_bytes(os.urandom(4), "little")
     packet = REQ_HEADER.pack(endpoint, req_id, len(data), rx_len) + bytes(data)
     packet += CRC.pack(binascii.crc32(packet))
     poll = bytes([POLL, ]) * rx_len
 
+    # when the panda last showed it's there
+    alive = time.monotonic()
     while True:
       # send the request, until the panda was listening for it
       if spi.xfer2(packet)[0] == LISTENING:
+        alive = time.monotonic()
         if expect_disconnect:
           return b""
 
@@ -178,6 +180,7 @@ class PandaSpiHandle(BaseHandle):
         while True:
           dat = spi.xfer(poll)
           if dat[0] == LISTENING:
+            alive = time.monotonic()
             break
 
           # a response that got cut off or corrupted isn't one, keep reading
@@ -189,13 +192,16 @@ class PandaSpiHandle(BaseHandle):
               if status == NACK:
                 raise PandaSpiNackResponse
               return dat[RESP_HEADER.size:end]
+            alive = time.monotonic()
             break
 
-          if time.monotonic() > deadline:
+          if time.monotonic() > min(deadline, alive + SILENT_TIMEOUT):
             break
 
       if time.monotonic() > deadline:
         raise PandaSpiMissingAck
+      if time.monotonic() > alive + SILENT_TIMEOUT:
+        return None
 
   def _transfer(self, endpoint: int, data, timeout: int, max_rx_len: int = 0, expect_disconnect: bool = False) -> bytes:
     logger.debug("transfer: endpoint=%d, max_rx_len=%d", endpoint, max_rx_len)
@@ -204,14 +210,24 @@ class PandaSpiHandle(BaseHandle):
     deadline = time.monotonic() + (max(MIN_TIMEOUT_MS, timeout) * 1e-3 if timeout != 0 else math.inf)
     nack = None
     nack_count = 0
+    # random, so it's never the same as another request the panda just handled, even from another client.
+    # it stays the same when we send the request again, so the panda never runs it twice
+    req_id = int.from_bytes(os.urandom(4), "little")
     while True:
       try:
         with self.dev.acquire() as spi:
-          return self._transfer_spidev(spi, endpoint, data, deadline, max_rx_len, expect_disconnect)
+          dat = self._transfer_spidev(spi, endpoint, req_id, data, deadline, max_rx_len, expect_disconnect)
+        if dat is not None:
+          return dat
+        # the panda went quiet. let go of the bus for a bit, someone else might need it
+        logger.warning("SPI: panda isn't responding")
+        time.sleep(0.01)
       except PandaSpiNackResponse as e:
         # the panda NACKs while its CAN TX buffers are full, don't busy wait on it
-        if self.no_retry or time.monotonic() > deadline:
+        if time.monotonic() > deadline:
           raise
+        # a new id, since the panda would answer the same id with the same NACK
+        req_id = int.from_bytes(os.urandom(4), "little")
         nack = e
         nack_count += 1
         if nack_count > 3:
