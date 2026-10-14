@@ -130,10 +130,11 @@ static uint16_t spi_process_request(uint16_t n) {
     bool ack = spi_handle_endpoint(req.endpoint, &spi_buf_rx[sizeof(req)], req.tx_len, max_data_len,
                                    &spi_buf_tx[sizeof(spi_resp_header_t)], &data_len);
     // like USB, a response is cut off at what the host reads
+    data_len = ack ? MIN(data_len, max_data_len) : 0U;
     spi_resp_header_t resp = {
       .status = ack ? SPI_ACK : SPI_NACK,
       .id = req.id,
-      .len = ack ? MIN(data_len, max_data_len) : 0U,
+      .len = data_len,
     };
     (void)memcpy(spi_buf_tx, (uint8_t *)&resp, sizeof(resp));
     uint32_t len = sizeof(resp) + resp.len;
