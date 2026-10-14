@@ -207,6 +207,9 @@ class PandaSpiHandle(BaseHandle):
 
     # timeout of 0 means forever
     deadline = time.monotonic() + (max(MIN_TIMEOUT_MS, timeout) * 1e-3 if timeout != 0 else math.inf)
+    # a NACK is a definitive answer (the panda's CAN TX buffers are full), not silence:
+    # honor the caller's timeout for it instead of the floor, so a short timeout really is short
+    nack_deadline = time.monotonic() + (timeout * 1e-3 if timeout != 0 else math.inf)
     nack = None
     nack_count = 0
     # random, so it's never the same as another request the panda just handled, even from another client.
@@ -223,7 +226,7 @@ class PandaSpiHandle(BaseHandle):
         time.sleep(0.01)
       except PandaSpiNackResponse as e:
         # the panda NACKs while its CAN TX buffers are full, don't busy wait on it
-        if time.monotonic() > deadline:
+        if time.monotonic() > nack_deadline:
           raise
         # a new id, since the panda would answer the same id with the same NACK
         req_id = int.from_bytes(os.urandom(4), "little")
