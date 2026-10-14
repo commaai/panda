@@ -34,10 +34,21 @@ static uint8_t spi_buf_listening[1];
 #define SPI_NACK 0x5AU
 #define SPI_IDLE 0x00U  // sent on underrun
 
-#define SPI_REQ_HEADER_SIZE 9U
-#define SPI_RESP_HEADER_SIZE 7U
+typedef struct {
+  uint8_t endpoint;
+  uint32_t id;
+  uint16_t tx_len;
+  uint16_t rx_len;
+} __attribute__((packed)) spi_req_header_t;
+
+typedef struct {
+  uint8_t status;
+  uint32_t id;
+  uint16_t len;
+} __attribute__((packed)) spi_resp_header_t;
+
 #define SPI_CRC_SIZE 4U
-#define SPI_RESP_OVERHEAD (SPI_RESP_HEADER_SIZE + SPI_CRC_SIZE)
+#define SPI_RESP_OVERHEAD (sizeof(spi_resp_header_t) + SPI_CRC_SIZE)
 
 #define SPI_PROTOCOL_VERSION 3U
 #define SPI_ENDPOINT_INFO 0xF0U
@@ -50,17 +61,6 @@ void llspi_arm(const uint8_t *tx, uint16_t tx_len);
 uint16_t llspi_rx_count(void);
 
 static bool spi_can_tx_ready = false;
-
-static uint32_t read_u32(const uint8_t *p) {
-  return (uint32_t)p[0] | ((uint32_t)p[1] << 8U) | ((uint32_t)p[2] << 16U) | ((uint32_t)p[3] << 24U);
-}
-
-static void write_u32(uint8_t *p, uint32_t v) {
-  p[0] = v & 0xFFU;
-  p[1] = (v >> 8U) & 0xFFU;
-  p[2] = (v >> 16U) & 0xFFU;
-  p[3] = (v >> 24U) & 0xFFU;
-}
 
 // Handle one endpoint. Returns whether to ACK, and writes the response data length
 static bool spi_handle_endpoint(uint8_t endpoint, const uint8_t *data, uint16_t data_len, uint16_t max_resp_len,
@@ -115,31 +115,34 @@ static uint16_t spi_process_request(uint16_t n) {
   static uint32_t handled_crc = 0U;
 
   // n can include filler from the host's reads if we were slow, it's ignored
-  uint32_t id = read_u32(&spi_buf_rx[1]);
-  uint16_t tx_len = spi_buf_rx[5] | (spi_buf_rx[6] << 8U);
-  uint16_t rx_len = spi_buf_rx[7] | (spi_buf_rx[8] << 8U);
-  uint32_t req_len = SPI_REQ_HEADER_SIZE + (uint32_t)tx_len + SPI_CRC_SIZE;
-  uint32_t crc = (req_len <= n) ? read_u32(&spi_buf_rx[req_len - SPI_CRC_SIZE]) : 0U;
+  spi_req_header_t req;
+  (void)memcpy((uint8_t *)&req, spi_buf_rx, sizeof(req));
+  uint32_t req_len = sizeof(req) + (uint32_t)req.tx_len + SPI_CRC_SIZE;
+  uint32_t crc = 0U;
+  if (req_len <= n) {
+    (void)memcpy((uint8_t *)&crc, &spi_buf_rx[req_len - SPI_CRC_SIZE], SPI_CRC_SIZE);
+  }
   bool valid = (req_len <= n) && (crc32(spi_buf_rx, req_len - SPI_CRC_SIZE) == crc) &&
-               (rx_len >= SPI_RESP_OVERHEAD) && (rx_len <= SPI_BUF_SIZE);
+               (req.rx_len >= SPI_RESP_OVERHEAD) && (req.rx_len <= SPI_BUF_SIZE);
 
-  if (valid && !(handled && (id == handled_id) && (crc == handled_crc))) {
+  if (valid && !(handled && (req.id == handled_id) && (crc == handled_crc))) {
     // a new request. a repeat of the last one (same id) gets the same response again
-    uint16_t max_data_len = rx_len - SPI_RESP_OVERHEAD;
+    uint16_t max_data_len = req.rx_len - SPI_RESP_OVERHEAD;
     uint16_t data_len = 0U;
-    bool ack = spi_handle_endpoint(spi_buf_rx[0], &spi_buf_rx[SPI_REQ_HEADER_SIZE], tx_len, max_data_len,
-                                   &spi_buf_tx[SPI_RESP_HEADER_SIZE], &data_len);
+    bool ack = spi_handle_endpoint(req.endpoint, &spi_buf_rx[sizeof(req)], req.tx_len, max_data_len,
+                                   &spi_buf_tx[sizeof(spi_resp_header_t)], &data_len);
     // like USB, a response is cut off at what the host reads
-    data_len = ack ? MIN(data_len, max_data_len) : 0U;
-
-    spi_buf_tx[0] = ack ? SPI_ACK : SPI_NACK;
-    write_u32(&spi_buf_tx[1], id);
-    spi_buf_tx[5] = data_len & 0xFFU;
-    spi_buf_tx[6] = (data_len >> 8U) & 0xFFU;
-    uint16_t len = SPI_RESP_HEADER_SIZE + data_len;
-    write_u32(&spi_buf_tx[len], crc32(spi_buf_tx, len));
+    spi_resp_header_t resp = {
+      .status = ack ? SPI_ACK : SPI_NACK,
+      .id = req.id,
+      .len = ack ? MIN(data_len, max_data_len) : 0U,
+    };
+    (void)memcpy(spi_buf_tx, (uint8_t *)&resp, sizeof(resp));
+    uint32_t len = sizeof(resp) + resp.len;
+    uint32_t resp_crc = crc32(spi_buf_tx, len);
+    (void)memcpy(&spi_buf_tx[len], (uint8_t *)&resp_crc, SPI_CRC_SIZE);
     handled = true;
-    handled_id = id;
+    handled_id = req.id;
     handled_crc = crc;
   } else if (!valid && (req_len <= n)) {
     // looked like a request, but the CRC is wrong. the host's filler doesn't count, its length doesn't fit
@@ -147,7 +150,7 @@ static uint16_t spi_process_request(uint16_t n) {
   } else {
     // a repeat, host's filler, or a partial request
   }
-  return valid ? rx_len : 0U;
+  return valid ? req.rx_len : 0U;
 }
 
 // Called on every CS rising edge
