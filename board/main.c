@@ -106,9 +106,17 @@ static void __attribute__ ((noinline)) enable_fpu(void) {
 static void tick_handler(void) {
   if (TICK_TIMER->SR != 0U) {
     static uint32_t siren_countdown = 0; // siren plays while countdown > 0
+    static uint32_t controls_allowed_countdown = 0;
     static uint8_t prev_harness_status = HARNESS_STATUS_NC;
     static uint8_t loop_counter = 0U;
     static bool relay_malfunction_prev = false;
+
+    heartbeat_tick_counter += 1U;
+
+    // start the siren early on power loss
+    if ((controls_allowed_countdown > 0U) && (heartbeat_tick_counter > 2U) && (current_board->read_voltage_mV() < 6000U)) {
+      siren_countdown = 3U;
+    }
 
     // siren
     current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
@@ -141,8 +149,6 @@ static void tick_handler(void) {
 
     // decimated to 1Hz
     if (loop_counter == 0U) {
-      static uint32_t controls_allowed_countdown = 0;
-
       // set green LED to be controls allowed
       led_set(LED_GREEN, controls_allowed);
 
