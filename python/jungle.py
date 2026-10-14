@@ -33,7 +33,7 @@ class PandaJungle(Panda):
   HARNESS_ORIENTATION_2 = 2
 
   @classmethod
-  def spi_connect(cls, serial, ignore_version=False):
+  def spi_connect(cls, serial):
     return None, None, None, None
 
   def flash(self, fn=None, code=None, reconnect=True):

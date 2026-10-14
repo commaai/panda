@@ -251,10 +251,10 @@ class Panda:
     return isinstance(self._handle, PandaSpiHandle)
 
   @classmethod
-  def spi_connect(cls, serial, ignore_version=False):
+  def spi_connect(cls, serial):
     try:
       handle = PandaSpiHandle()
-      dat = handle.get_protocol_version()
+      dat = handle.get_info()
     except PandaSpiException:
       return None, None, None, False
 
@@ -263,15 +263,10 @@ class Panda:
     if pid not in (0xcc, 0xee):
       raise PandaProtocolMismatch(f"invalid bootstub status ({pid=}). reflash panda")
     bootstub = pid == 0xee
-    spi_version = dat[14]
 
     # did we get the right panda?
     if serial is not None and spi_serial != serial:
       return None, None, None, False
-
-    # ensure our protocol version matches the panda
-    if (not ignore_version) and spi_version != handle.PROTOCOL_VERSION:
-      raise PandaProtocolMismatch(f"panda protocol mismatch: expected {handle.PROTOCOL_VERSION}, got {spi_version}. reflash panda")
 
     # got a device and all good
     return None, handle, spi_serial, bootstub
@@ -350,7 +345,7 @@ class Panda:
 
   @classmethod
   def spi_list(cls):
-    _, _, serial, _ = cls.spi_connect(None, ignore_version=True)
+    _, _, serial, _ = cls.spi_connect(None)
     if serial is not None:
       return [serial, ]
     return []

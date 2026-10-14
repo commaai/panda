@@ -6,30 +6,30 @@
 #ifdef STM32H7
 __attribute__((section(".sram12"))) uint8_t spi_buf_rx[SPI_BUF_SIZE];
 __attribute__((section(".sram12"))) uint8_t spi_buf_tx[SPI_BUF_SIZE];
-__attribute__((section(".sram12"))) static uint8_t spi_buf_listening[1];
+__attribute__((section(".sram12"))) static uint8_t spi_buf_ready[1];
 #else
 uint8_t spi_buf_rx[SPI_BUF_SIZE];
 uint8_t spi_buf_tx[SPI_BUF_SIZE];
-static uint8_t spi_buf_listening[1];
+static uint8_t spi_buf_ready[1];
 #endif
 
 // SPI protocol, see python/spi.py for the host side.
 //
-// The host sends each request in one transfer, until the first byte it gets back is SPI_LISTENING:
+// The host sends each request in one transfer, until the first byte it gets back is SPI_SLAVE_READY:
 //   MOSI: endpoint, id (u32), tx_len (u16), rx_len (u16), data[tx_len], crc32 (u32)
 // then reads rx_len bytes at a time, until the first byte is a response:
 //   MISO: SPI_ACK or SPI_NACK, id (u32), len (u16), data[len], crc32 (u32)
 // The id is random for each new request, and stays the same when the host sends it again.
 // The response always fits in rx_len, so the next transfer reads all of it.
-// If a read gets SPI_LISTENING instead, the host sends the request again.
-// Anything that isn't a valid request is dropped, and we go back to listening.
+// If a read gets SPI_SLAVE_READY instead, the host sends the request again.
+// Anything that isn't a valid request is dropped, and we're ready for the next one.
 // NACK means a valid request that we refused, e.g. CAN TX buffers are full.
 //
-// We arm what's next on every CS rising edge, whatever state the bus is in. If a transfer
-// doesn't cleanly see what we armed, the host ends up sending its request again, and a
+// We queue what's next on every CS rising edge, whatever state the bus is in. If a transfer
+// doesn't cleanly see what we queued, the host ends up sending its request again, and a
 // repeat of the request we last handled (same id) gets the same response again instead
 // of running twice. So it never matters how long we take to get to it.
-#define SPI_LISTENING 0x3CU
+#define SPI_SLAVE_READY 0x3CU
 #define SPI_ACK 0xC3U
 #define SPI_NACK 0x5AU
 #define SPI_IDLE 0x00U  // sent on underrun
@@ -50,14 +50,13 @@ typedef struct {
 #define SPI_CRC_SIZE 4U
 #define SPI_RESP_OVERHEAD (sizeof(spi_resp_header_t) + SPI_CRC_SIZE)
 
-#define SPI_PROTOCOL_VERSION 3U
 #define SPI_ENDPOINT_INFO 0xF0U
 
 uint16_t spi_error_count = 0;
 
 // low level SPI prototypes
 void llspi_init(void);
-void llspi_arm(const uint8_t *tx, uint16_t tx_len);
+void llspi_queue(const uint8_t *tx, uint16_t tx_len);
 uint16_t llspi_rx_count(void);
 
 static bool spi_can_tx_ready = false;
@@ -89,12 +88,11 @@ static bool spi_handle_endpoint(uint8_t endpoint, const uint8_t *data, uint16_t 
       ack = true;
     }
   } else if (endpoint == SPI_ENDPOINT_INFO) {
-    // serial, HW type, bootstub, protocol version
+    // serial, HW type, bootstub
     (void)memcpy(resp, ((uint8_t *)UID_BASE), 12);
     resp[12] = hw_type;
     resp[13] = USB_PID & 0xFFU;
-    resp[14] = SPI_PROTOCOL_VERSION;
-    *resp_len = 15U;
+    *resp_len = 14U;
     ack = true;
   } else if (endpoint == 0xABU) {
     // test endpoint: mimics panda -> device transfer
@@ -153,29 +151,45 @@ static uint16_t spi_process_request(uint16_t n) {
   return valid ? req.rx_len : 0U;
 }
 
-// Called on every CS rising edge
+// Called at the end of every transfer: CS is active low, so it rises when the host is done
 void spi_cs_rising(void) {
-  static uint16_t resp_len = 0U;  // 0 while listening
+  // what we queued for the transfer that just ended
+  static bool response_queued = false;
+  static uint16_t resp_len = 0U;
 
-  // nothing received means the SPI ignored that transfer, since it started before we armed
+  // *** handle the transfer ***
+  bool send_response = response_queued;
   uint16_t n = llspi_rx_count();
   if (n > 0U) {
-    // the host read the response, or sent a request
-    resp_len = (resp_len > 0U) ? 0U : spi_process_request(n);
+    if (response_queued) {
+      // the host read the response, so we're ready for the next request
+      send_response = false;
+    } else {
+      // the host sent a request, we respond if it's valid
+      resp_len = spi_process_request(n);
+      send_response = resp_len > 0U;
+    }
   }
 
-  if (resp_len > 0U) {
-    llspi_arm(spi_buf_tx, resp_len);
+  // *** setup next transfer with master ***
+  if (send_response) {
+    // send response to the master
+    llspi_queue(spi_buf_tx, resp_len);
+    response_queued = true;
   } else {
-    llspi_arm(spi_buf_listening, 1U);
+    // read from the master
+    llspi_queue(spi_buf_ready, 1U);
+    response_queued = false;
   }
 }
 
 void spi_init(void) {
   crc32_init();
   llspi_init();
-  spi_buf_listening[0] = SPI_LISTENING;
-  llspi_arm(spi_buf_listening, 1U);
+
+  // kick off the first read
+  spi_buf_ready[0] = SPI_SLAVE_READY;
+  llspi_queue(spi_buf_ready, 1U);
 }
 
 void can_tx_comms_resume_spi(void) {

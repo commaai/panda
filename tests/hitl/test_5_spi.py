@@ -8,7 +8,7 @@ from unittest.mock import patch
 from opendbc.car.structs import CarParams
 from panda.tests.hitl.base import PandaTestCase
 from panda import Panda
-from panda.python.spi import PandaProtocolMismatch, PandaSpiNackResponse, PandaSpiMissingAck, REQ_HEADER, CRC, LISTENING, ACK, NACK, POLL
+from panda.python.spi import PandaSpiNackResponse, PandaSpiMissingAck, REQ_HEADER, CRC, SLAVE_READY, ACK, NACK, POLL
 
 
 class TestSpi(PandaTestCase):
@@ -18,23 +18,11 @@ class TestSpi(PandaTestCase):
       panda.health()
       assert spy.call_count == 1
 
-  def test_protocol_version_check(self):
+  def test_info(self):
     p = self.p
     for bootstub in (False, True):
       p.reset(enter_bootstub=bootstub)
-      with patch('panda.python.spi.PandaSpiHandle.PROTOCOL_VERSION', return_value="abc"):
-        # list should still work with wrong version
-        assert p._serial in Panda.list()
-
-        # connect but raise protocol error
-        with self.assertRaises(PandaProtocolMismatch):
-          Panda(p._serial)
-
-  def test_protocol_version_data(self):
-    p = self.p
-    for bootstub in (False, True):
-      p.reset(enter_bootstub=bootstub)
-      v = p._handle.get_protocol_version()
+      v = p._handle.get_info()
 
       uid = binascii.hexlify(v[:12]).decode()
       assert uid == p.get_uid()
@@ -60,17 +48,17 @@ class TestSpi(PandaTestCase):
     assert spy.call_count == 4
 
   def test_bad_crc(self):
-    # dropped, and the panda goes back to listening
+    # dropped, and the panda is ready for the next request
     p = self.p
     cnt = p.health()['spi_error_count']
     with p._handle.dev.acquire() as spi:
       pkt = REQ_HEADER.pack(0, 1, 8, 72) + b"\xd2" + b"\x00"*7
       pkt += CRC.pack(binascii.crc32(pkt) ^ 1)
-      while spi.xfer(pkt)[0] != LISTENING:
+      while spi.xfer(pkt)[0] != SLAVE_READY:
         pass
-      while (dat := spi.xfer(bytes([POLL, ]) * 72))[0] not in (ACK, NACK, LISTENING):
+      while (dat := spi.xfer(bytes([POLL, ]) * 72))[0] not in (ACK, NACK, SLAVE_READY):
         pass
-      assert dat[0] == LISTENING
+      assert dat[0] == SLAVE_READY
     self._ping(p)
     assert (p.health()['spi_error_count'] - cnt) == 1
 
@@ -89,13 +77,13 @@ class TestSpi(PandaTestCase):
     with p._handle.dev.acquire() as spi:
       pkt = REQ_HEADER.pack(0, 1, 8, 72) + b"\xd2" + b"\x00"*7
       pkt += CRC.pack(binascii.crc32(pkt))
-      while spi.xfer(pkt)[0] != LISTENING:
+      while spi.xfer(pkt)[0] != SLAVE_READY:
         pass
     self._ping(p)
 
     # read only part of the response
     with p._handle.dev.acquire() as spi:
-      while spi.xfer(pkt)[0] != LISTENING:
+      while spi.xfer(pkt)[0] != SLAVE_READY:
         pass
       for _ in range(100):
         if spi.xfer(bytes([POLL, ]) * 8)[0] == ACK:
@@ -106,8 +94,8 @@ class TestSpi(PandaTestCase):
 
   def test_timeout(self):
     p = self.p
-    # never equal to a byte, unlike 0xFF which MISO reads while the panda re-arms
-    with patch('panda.python.spi.LISTENING', 0x100), self.assertRaises(PandaSpiMissingAck):
+    # never equal to a byte, unlike 0xFF which MISO reads while the panda queues the next transfer
+    with patch('panda.python.spi.SLAVE_READY', 0x100), self.assertRaises(PandaSpiMissingAck):
       p._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, p.HEALTH_STRUCT.size, timeout=50)
     self._ping(p)
 

@@ -13,7 +13,7 @@ from .constants import McuType, MCU_TYPE_BY_IDCODE
 from .utils import logger
 
 # Protocol, see board/drivers/spi.h
-LISTENING = 0x3C
+SLAVE_READY = 0x3C
 ACK = 0xC3
 NACK = 0x5A
 INFO_ENDPOINT = 0xF0
@@ -153,7 +153,6 @@ class PandaSpiHandle(BaseHandle):
   A class that mimics a libusb1 handle for panda SPI communications.
   """
 
-  PROTOCOL_VERSION = 3
 
   def __init__(self) -> None:
     self.dev = SpiDevice()
@@ -170,16 +169,16 @@ class PandaSpiHandle(BaseHandle):
     # when the panda last showed it's there
     alive = time.monotonic()
     while True:
-      # send the request, until the panda was listening for it
-      if spi.xfer2(packet)[0] == LISTENING:
+      # send the request, until the panda was ready for it
+      if spi.xfer2(packet)[0] == SLAVE_READY:
         alive = time.monotonic()
         if expect_disconnect:
           return b""
 
-        # read until the response. if the panda is listening again, it never got the request
+        # read until the response. if the panda is ready again, it never got the request
         while True:
           dat = spi.xfer(poll)
-          if dat[0] == LISTENING:
+          if dat[0] == SLAVE_READY:
             alive = time.monotonic()
             break
 
@@ -238,9 +237,9 @@ class PandaSpiHandle(BaseHandle):
           raise nack from None
         raise
 
-  def get_protocol_version(self) -> bytes:
-    # serial, HW type, bootstub, protocol version
-    return self._transfer(INFO_ENDPOINT, b"", MIN_TIMEOUT_MS, max_rx_len=15)
+  def get_info(self) -> bytes:
+    # serial, HW type, bootstub
+    return self._transfer(INFO_ENDPOINT, b"", MIN_TIMEOUT_MS, max_rx_len=14)
 
   # libusb1 functions
   def close(self):

@@ -5,9 +5,9 @@
 
 void spi_cs_rising(void);
 
-// Arms MOSI into spi_buf_rx and MISO from tx. A transfer that's already in progress is ignored,
+// Queues the next transfer: MOSI into spi_buf_rx, MISO from tx. A transfer that's already in progress is ignored,
 // or at worst garbled, which the protocol recovers from
-void llspi_arm(const uint8_t *tx, uint16_t tx_len) {
+void llspi_queue(const uint8_t *tx, uint16_t tx_len) {
   // stop DMA + SPI
   register_clear_bits(&(SPI4->CR1), SPI_CR1_SPE);
   DMA2_Stream2->CR &= ~DMA_SxCR_EN;
@@ -37,13 +37,14 @@ void llspi_arm(const uint8_t *tx, uint16_t tx_len) {
   register_set_bits(&(SPI4->CR1), SPI_CR1_SPE);
 }
 
-// Number of bytes received since the last arm, saturates at SPI_BUF_SIZE
+// Number of bytes received since we last queued, saturates at SPI_BUF_SIZE
 uint16_t llspi_rx_count(void) {
   // let the DMA empty the FIFO, unless it's already full
   for (uint16_t i = 0U; (i < 1000U) && ((SPI4->SR & SPI_SR_RXP) != 0U) && (DMA2_Stream2->NDTR != 0U); i++) {}
   return SPI_BUF_SIZE - DMA2_Stream2->NDTR;
 }
 
+// CS rising edge, the end of a transfer
 static void EXTI15_10_IRQ_Handler(void) {
   if ((EXTI->PR1 & (1UL << SPI_CS_PIN)) != 0U) {
     // clear first, so an edge during processing fires again
