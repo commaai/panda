@@ -55,6 +55,9 @@ void set_power_save_state(bool enable) {
 }
 
 static void enter_stop_mode(void) {
+  // the SPI CS interrupt shares an IRQ with the FDCAN3 RX wakeup line, and doesn't clear its pending bit
+  NVIC_DisableIRQ(EXTI15_10_IRQn);
+
   // set all GPIO to analog mode to reduce power, analog mode also disables pull resistors
   register_set(&(GPIOA->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
   register_set(&(GPIOB->MODER), 0xFFFFFFFFU, 0xFFFFFFFFU);
@@ -117,6 +120,9 @@ static void enter_stop_mode(void) {
   uint32_t can_exti_line = (1UL << 8) | (1UL << 5) | (1UL << 12);
   register_set_bits(&(EXTI->IMR1), can_exti_line);
   register_set_bits(&(EXTI->FTSR1), can_exti_line);
+
+  // don't wake up on SPI chip select (EXTI11, shares an IRQ with FDCAN3 RX)
+  register_clear_bits(&(EXTI->IMR1), (1UL << 11));
 
   // clear pending EXTI
   EXTI->PR1 = (1U << 1) | (1U << 4) | can_exti_line;

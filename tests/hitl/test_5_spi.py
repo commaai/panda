@@ -3,39 +3,26 @@ import random
 import struct
 import threading
 import time
-import unittest
 from unittest.mock import patch
 
 from opendbc.car.structs import CarParams
 from panda.tests.hitl.base import PandaTestCase
 from panda import Panda
-from panda.python.spi import PandaProtocolMismatch, PandaSpiNackResponse
+from panda.python.spi import PandaSpiNackResponse, PandaSpiMissingAck, REQ_HEADER, CRC, SLAVE_READY, ACK, NACK, POLL
 
 
 class TestSpi(PandaTestCase):
   def _ping(self, panda):
     # should work with no retries
-    with patch.object(panda._handle, '_wait_for_ack', wraps=panda._handle._wait_for_ack) as spy:
+    with patch.object(panda._handle, '_transfer_spidev', wraps=panda._handle._transfer_spidev) as spy:
       panda.health()
-      assert spy.call_count == 2
+      assert spy.call_count == 1
 
-  def test_protocol_version_check(self):
+  def test_info(self):
     p = self.p
     for bootstub in (False, True):
       p.reset(enter_bootstub=bootstub)
-      with patch('panda.python.spi.PandaSpiHandle.PROTOCOL_VERSION', return_value="abc"):
-        # list should still work with wrong version
-        assert p._serial in Panda.list()
-
-        # connect but raise protocol error
-        with self.assertRaises(PandaProtocolMismatch):
-          Panda(p._serial)
-
-  def test_protocol_version_data(self):
-    p = self.p
-    for bootstub in (False, True):
-      p.reset(enter_bootstub=bootstub)
-      v = p._handle.get_protocol_version()
+      v = p._handle.get_info()
 
       uid = binascii.hexlify(v[:12]).decode()
       assert uid == p.get_uid()
@@ -48,33 +35,69 @@ class TestSpi(PandaTestCase):
 
   def test_all_comm_types(self):
     p = self.p
-    spy = self.enterContext(patch.object(p._handle, '_wait_for_ack', wraps=p._handle._wait_for_ack))
+    spy = self.enterContext(patch.object(p._handle, '_transfer_spidev', wraps=p._handle._transfer_spidev))
 
     # controlRead + controlWrite
     p.health()
     p.can_clear(0)
-    assert spy.call_count == 2*2
+    assert spy.call_count == 2
 
     # bulkRead + bulkWrite
     p.can_recv()
     p.can_send(0x123, b"somedata", 0)
-    assert spy.call_count == 2*4
+    assert spy.call_count == 4
 
-  def test_bad_header(self):
-    p = self.p
-    with patch('panda.python.spi.SYNC', return_value=0):
-      with self.assertRaises(PandaSpiNackResponse):
-        p._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, p.HEALTH_STRUCT.size, timeout=50)
-    self._ping(p)
-
-  def test_bad_checksum(self):
+  def test_bad_crc(self):
+    # dropped, and the panda is ready for the next request
     p = self.p
     cnt = p.health()['spi_error_count']
-    with patch('panda.python.spi.PandaSpiHandle._calc_checksum', return_value=0):
-      with self.assertRaises(PandaSpiNackResponse):
-        p._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, p.HEALTH_STRUCT.size, timeout=50)
+    with p._handle.dev.acquire() as spi:
+      pkt = REQ_HEADER.pack(0, 1, 8, 72) + b"\xd2" + b"\x00"*7
+      pkt += CRC.pack(binascii.crc32(pkt) ^ 1)
+      while spi.xfer(pkt)[0] != SLAVE_READY:
+        pass
+      while (dat := spi.xfer(bytes([POLL, ]) * 72))[0] not in (ACK, NACK, SLAVE_READY):
+        pass
+      assert dat[0] == SLAVE_READY
     self._ping(p)
-    assert (p.health()['spi_error_count'] - cnt) > 0
+    assert (p.health()['spi_error_count'] - cnt) == 1
+
+  def test_garbage(self):
+    # random bytes, of random lengths, at any point in the protocol
+    p = self.p
+    for _ in range(100):
+      with p._handle.dev.acquire() as spi:
+        for _ in range(random.randint(1, 5)):
+          spi.xfer(random.randbytes(random.randint(1, 4096)))
+      self._ping(p)
+
+  def test_abandoned_transfers(self):
+    # host gives up at every stage of a transfer
+    p = self.p
+    with p._handle.dev.acquire() as spi:
+      pkt = REQ_HEADER.pack(0, 1, 8, 72) + b"\xd2" + b"\x00"*7
+      pkt += CRC.pack(binascii.crc32(pkt))
+      while spi.xfer(pkt)[0] != SLAVE_READY:
+        pass
+    self._ping(p)
+
+    # read only part of the response
+    with p._handle.dev.acquire() as spi:
+      while spi.xfer(pkt)[0] != SLAVE_READY:
+        pass
+      for _ in range(100):
+        if spi.xfer(bytes([POLL, ]) * 8)[0] == ACK:
+          break
+      else:
+        raise AssertionError("no response")
+    self._ping(p)
+
+  def test_timeout(self):
+    p = self.p
+    # never equal to a byte, unlike 0xFF which MISO reads while the panda queues the next transfer
+    with patch('panda.python.spi.SLAVE_READY', 0x100), self.assertRaises(PandaSpiMissingAck):
+      p._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, p.HEALTH_STRUCT.size, timeout=50)
+    self._ping(p)
 
   def test_non_existent_endpoint(self):
     p = self.p
@@ -129,7 +152,6 @@ class TestSpi(PandaTestCase):
       t.join()
     assert errors == []
 
-  @unittest.expectedFailure  # SPI bulkRead ignores length on the old protocol
   def test_max_sizes(self):
     # around the first read size and the max transfer size
     for n in (1, 1013, 1014, 4032):

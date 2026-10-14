@@ -221,8 +221,6 @@ extern uint16_t spi_error_count;
 
 void can_tx_comms_resume_spi(void);
 void spi_init(void);
-void spi_rx_done(void);
-void spi_tx_done(bool reset);
 
 // ******************** debug ********************
 bool debug_get_char(char *elem);
