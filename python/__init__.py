@@ -1,6 +1,7 @@
 # python library to interface with panda
 import os
 import re
+import math
 import sys
 import time
 import usb1
@@ -17,7 +18,7 @@ from opendbc.car.structs import CarParams
 from .base import BaseHandle
 from .constants import BASEDIR, FW_PATH, McuType, compute_version_hash
 from .dfu import PandaDFU
-from .spi import PandaSpiHandle, PandaSpiException, PandaProtocolMismatch
+from .spi import PandaSpiHandle, PandaSpiException, PandaSpiNackResponse, PandaProtocolMismatch
 from .usb import PandaUsbHandle
 from .utils import logger
 
@@ -701,16 +702,27 @@ class Panda:
   # libusb will try to send it again, with a max timeout.
   # Timeout is in ms. If set to 0, the timeout is infinite.
   CAN_SEND_TIMEOUT_MS = 10
+  # over SPI, a NACK comes back right away. this is how long we wait before trying that chunk again
+  CAN_SEND_RETRY_S = 1e-3
 
   def can_reset_communications(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xc0, 0, 0, b'')
 
   @ensure_can_packet_version
   def can_send_many(self, arr, *, fd=False, timeout=CAN_SEND_TIMEOUT_MS):
+    deadline = time.monotonic() + (timeout * 1e-3 if timeout != 0 else math.inf)
     snds = pack_can_buffer(arr, chunk=True, fd=fd)
     for tx in snds:
       while len(tx) > 0:
-        bs = self._handle.bulkWrite(3, tx, timeout=timeout)
+        try:
+          bs = self._handle.bulkWrite(3, tx, timeout=timeout)
+        except PandaSpiNackResponse:
+          # the panda's CAN TX buffers are full. try this chunk again if there's time for it,
+          # so a timeout of one retry period or less means a single attempt
+          if time.monotonic() + self.CAN_SEND_RETRY_S > deadline:
+            raise
+          time.sleep(self.CAN_SEND_RETRY_S)
+          continue
         tx = tx[bs:]
 
   def can_send(self, addr, dat, bus, *, fd=False, timeout=CAN_SEND_TIMEOUT_MS):

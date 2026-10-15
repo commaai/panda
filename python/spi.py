@@ -207,35 +207,19 @@ class PandaSpiHandle(BaseHandle):
 
     # timeout of 0 means forever
     deadline = time.monotonic() + (max(MIN_TIMEOUT_MS, timeout) * 1e-3 if timeout != 0 else math.inf)
-    nack = None
-    nack_count = 0
     # random, so it's never the same as another request the panda just handled, even from another client.
     # it stays the same when we send the request again, so the panda never runs it twice
     req_id = int.from_bytes(os.urandom(4), "little")
     while True:
-      try:
-        with self.dev.acquire() as spi:
-          dat = self._transfer_spidev(spi, endpoint, req_id, data, deadline, max_rx_len, expect_disconnect)
-        if dat is not None:
-          return dat
-        # the panda went quiet. let go of the bus for a bit, someone else might need it
-        logger.warning("SPI: panda isn't responding")
-        time.sleep(0.01)
-      except PandaSpiNackResponse as e:
-        # the panda NACKs while its CAN TX buffers are full, don't busy wait on it
-        if time.monotonic() > deadline:
-          raise
-        # a new id, since the panda would answer the same id with the same NACK
-        req_id = int.from_bytes(os.urandom(4), "little")
-        nack = e
-        nack_count += 1
-        if nack_count > 3:
-          time.sleep(min(max(nack_count * 10, 200), 2000) * 1e-6)
-      except PandaSpiMissingAck:
-        # only raised once the deadline passed. if the panda was refusing, that's why
-        if nack is not None:
-          raise nack from None
-        raise
+      # a NACK is the panda's answer (unknown endpoint, or its CAN TX buffers are full), it raises right away.
+      # whether to try again is the caller's call.
+      with self.dev.acquire() as spi:
+        dat = self._transfer_spidev(spi, endpoint, req_id, data, deadline, max_rx_len, expect_disconnect)
+      if dat is not None:
+        return dat
+      # the panda went quiet. let go of the bus for a bit, someone else might need it
+      logger.warning("SPI: panda isn't responding")
+      time.sleep(0.01)
 
   def get_info(self) -> bytes:
     # serial, HW type, bootstub
