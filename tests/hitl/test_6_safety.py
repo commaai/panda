@@ -40,7 +40,6 @@ class TestSafety(PandaTestCase):
       assert h['safety_mode'] == CarParams.SafetyModel.silent
       assert not h['controls_allowed']
 
-      # latched until reset
       p.set_safety_mode(CarParams.SafetyModel.allOutput)
       assert p.health()['safety_mode'] == CarParams.SafetyModel.silent
     p.reset()

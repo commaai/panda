@@ -57,7 +57,6 @@ extern uint32_t faults;
 
 void fault_occurred(uint32_t fault);
 void fault_recovered(uint32_t fault);
-// every firmware defines its safe state
 void fault_safe_state(void);
 
 // ******************** power_saving ********************
