@@ -263,6 +263,18 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xe8:
       bus_config[req->param1].canfd_auto = req->param2 > 0U;
       break;
+    #ifdef ALLOW_DEBUG
+    // **** 0xea: inject fault, for testing
+    case 0xea:
+      if (req->param1 < 32U) {
+        fault_occurred(1UL << req->param1);
+      }
+      break;
+    // **** 0xeb: inject HardFault, for testing
+    case 0xeb:
+      __builtin_trap();
+      break;
+    #endif
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:
       if (req->param1 == 0xFFFFU) {
