@@ -17,6 +17,10 @@
 
 #include "board/body/main_comms.h"
 
+// body has no safety modes
+void fault_safe_state(void) {
+}
+
 static volatile uint32_t tick_count = 0U;
 static volatile uint32_t ignition_press_timestamp_us = 0U;
 static volatile bool ignition = false;
