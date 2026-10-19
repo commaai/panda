@@ -1,7 +1,7 @@
 import time
 
 from panda import Panda, PandaDFU
-from panda.tests.hitl.base import PandaTestCase
+from panda.tests.hitl.base import PandaTestCase, panda_test
 
 # openpilot v0.11.1 system/hardware/tici/hardware.py
 STM_RST_N = 124
@@ -34,6 +34,7 @@ def recover_internal_panda():
 class TestBoot(PandaTestCase):
   panda_types = Panda.INTERNAL_DEVICES
 
+  @panda_test(timeout=5*60)
   def test_pandad_boot_flow(self):
     p = self.p
     for count in range(10):
