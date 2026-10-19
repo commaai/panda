@@ -10,6 +10,9 @@ void fault_occurred(uint32_t fault) {
     if ((PERMANENT_FAULTS & fault) != 0U) {
       print("Permanent fault occurred: 0x"); puth(fault); print("\n");
       fault_status = FAULT_STATUS_PERMANENT;
+      #if !defined(BOOTSTUB) && !defined(PANDA_BODY)
+      fault_safe_state();
+      #endif
     } else {
       print("Temporary fault occurred: 0x"); puth(fault); print("\n");
       fault_status = FAULT_STATUS_TEMPORARY;

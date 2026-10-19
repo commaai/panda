@@ -46,14 +46,18 @@ extern uint8_t global_critical_depth;
 #define FAULT_HEARTBEAT_LOOP_WATCHDOG       (1UL << 26)
 #define FAULT_INTERRUPT_RATE_SOUND_DMA      (1UL << 27)
 
-// Permanent faults
-#define PERMANENT_FAULTS 0U
+// permanent faults put panda in the safe state until reset
+#define PERMANENT_FAULTS (FAULT_UNUSED_INTERRUPT_HANDLED | FAULT_INTERRUPT_RATE_CAN_1 | FAULT_INTERRUPT_RATE_CAN_2 | \
+                          FAULT_INTERRUPT_RATE_CAN_3 | FAULT_INTERRUPT_RATE_INTERRUPTS | FAULT_INTERRUPT_RATE_SPI_DMA | \
+                          FAULT_INTERRUPT_RATE_USB | FAULT_REGISTER_DIVERGENT | FAULT_INTERRUPT_RATE_TICK | \
+                          FAULT_INTERRUPT_RATE_SPI)
 
 extern uint8_t fault_status;
 extern uint32_t faults;
 
 void fault_occurred(uint32_t fault);
 void fault_recovered(uint32_t fault);
+void fault_safe_state(void);
 
 // ******************** power_saving ********************
 
