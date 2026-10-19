@@ -274,6 +274,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xeb:
       __builtin_trap();
       break;
+    // **** 0xec: inject NMI, for testing
+    case 0xec:
+      SCB->ICSR = SCB_ICSR_NMIPENDSET_Msk;
+      break;
     #endif
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:
