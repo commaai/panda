@@ -43,6 +43,7 @@ class TestSafety(PandaTestCase):
       # latched until reset
       p.set_safety_mode(CarParams.SafetyModel.allOutput)
       assert p.health()['safety_mode'] == CarParams.SafetyModel.silent
+    p.reset()
 
   def test_temporary_fault_no_safe_state(self):
     p = self.p
@@ -51,6 +52,7 @@ class TestSafety(PandaTestCase):
     h = p.health()
     assert h['fault_status'] == 1
     assert h['safety_mode'] == CarParams.SafetyModel.allOutput
+    p.reset()
 
   def test_hardfault_resets_to_silent(self):
     p = self.p
