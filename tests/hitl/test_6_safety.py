@@ -1,11 +1,13 @@
 import time
 
 from opendbc.car.structs import CarParams
-from panda.tests.hitl.base import PandaTestCase
+from panda.tests.hitl.base import PandaTestCase, panda_test
+from panda.tests.hitl.helpers import clear_can_buffers
 
 # board/sys/sys.h PERMANENT_FAULTS
 PERMANENT_FAULT_BITS = (1, 2, 3, 4, 7, 8, 15, 18, 21, 23)
 FAULT_SIREN_MALFUNCTION_BIT = 25
+FAULT_REGISTER_DIVERGENT_BIT = 18
 
 
 class TestSafety(PandaTestCase):
@@ -62,3 +64,31 @@ class TestSafety(PandaTestCase):
     assert h['hardfault_reset']
     assert h['safety_mode'] == CarParams.SafetyModel.silent
     assert not h['controls_allowed']
+
+  def test_nmi_resets_to_silent(self):
+    p = self.p
+    p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    p.inject_nmi()
+    p.reconnect()
+    h = p.health()
+    assert h['nmi_reset']
+    assert h['safety_mode'] == CarParams.SafetyModel.silent
+    assert not h['controls_allowed']
+
+  @panda_test(needs_jungle=True)
+  def test_fault_stops_tx(self):
+    p = self.p
+    jungle = self.panda_jungle
+    p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    clear_can_buffers(p)
+    clear_can_buffers(jungle)
+
+    p.can_send(0x1aa, b"before", 0)
+    time.sleep(0.05)
+    assert (0x1aa, b"before", 0) in jungle.can_recv()
+
+    p.inject_fault(FAULT_REGISTER_DIVERGENT_BIT)
+    p.can_send(0x1aa, b"after", 0)
+    time.sleep(0.05)
+    assert all(addr != 0x1aa for addr, _, _ in jungle.can_recv())
+    p.reset()
