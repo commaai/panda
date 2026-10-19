@@ -1,3 +1,4 @@
+import struct
 import time
 
 from panda import Panda, PandaDFU
@@ -33,6 +34,11 @@ def recover_internal_panda():
 
 class TestBoot(PandaTestCase):
   panda_types = Panda.INTERNAL_DEVICES
+
+  def test_supply_config(self):
+    cr3, pkgr, rsr = struct.unpack("<III", self.p._handle.controlRead(Panda.REQUEST_IN, 0xed, 0, 0, 12))
+    print(f"type={self.p.get_type()} CR3={cr3:#010x} PKGR={pkgr:#x} RSR={rsr:#010x}")
+
 
   @panda_test(timeout=5*60)
   def test_pandad_boot_flow(self):

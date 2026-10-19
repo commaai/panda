@@ -97,6 +97,13 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       stop_mode_requested = true;
       break;
     #endif
+    // **** 0xed: read PWR->CR3, SYSCFG->PKGR, RCC->RSR
+    case 0xed:
+      (void)memcpy(&resp[0], (const uint8_t *)&PWR->CR3, 4U);
+      (void)memcpy(&resp[4], (const uint8_t *)&SYSCFG->PKGR, 4U);
+      (void)memcpy(&resp[8], (const uint8_t *)&RCC->RSR, 4U);
+      resp_len = 12U;
+      break;
     // **** 0xb6: read debug logs
     case 0xb6:
       while ((resp_len < req->length) && (resp_len < USBPACKET_MAX_SIZE) && debug_get_char((char*)&resp[resp_len])) {
