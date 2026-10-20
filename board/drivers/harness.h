@@ -32,6 +32,33 @@ void set_intercept_relay(bool intercept, bool ignition_relay) {
   }
 }
 
+#ifdef ALLOW_DEBUG
+bool relay_readback_inject = false;
+#endif
+
+static bool relay_pin_mismatch(const GPIO_TypeDef *GPIO, unsigned int pin) {
+  bool is_output = ((GPIO->MODER >> (pin * 2U)) & 3U) == (uint32_t)MODE_OUTPUT;
+  bool driven = (GPIO->ODR & (1UL << pin)) != 0U;
+  bool read = get_gpio_input(GPIO, pin) != 0;
+  #ifdef ALLOW_DEBUG
+  read = read != relay_readback_inject;
+  #endif
+  return is_output && (driven != read);
+}
+
+// GPIO_SM_2: the relay pins are open drain with a pull-up on the FET gate, so the pin reads back what is driven.
+// called at 8Hz, two mismatches in a row are a fault, which leaves time for the gate to settle after a change
+void harness_check_relay_readback(void) {
+  static uint8_t mismatches = 0U;
+  const harness_configuration *cfg = current_board->harness_config;
+  bool mismatch = relay_pin_mismatch(cfg->GPIO_relay_SBU1, cfg->pin_relay_SBU1) ||
+                  relay_pin_mismatch(cfg->GPIO_relay_SBU2, cfg->pin_relay_SBU2);
+  mismatches = mismatch ? (uint8_t)MIN(mismatches + 1U, 2U) : 0U;
+  if (mismatches >= 2U) {
+    fault_occurred(FAULT_OUTPUT_READBACK);
+  }
+}
+
 bool harness_check_ignition(void) {
   bool ret = false;
 

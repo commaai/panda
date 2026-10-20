@@ -137,6 +137,7 @@ static void tick_handler(void) {
     // tick drivers at 8Hz
     fan_tick();
     harness_tick();
+    harness_check_relay_readback();
     simple_watchdog_kick();
     sound_tick();
 

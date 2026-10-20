@@ -310,6 +310,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xf2:
       register_set(&(TIM16->PSC), req->param1, 0xFFFFU);
       break;
+    // **** 0xf5: invert the relay read-back, for testing
+    case 0xf5:
+      relay_readback_inject = true;
+      break;
     #endif
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:

@@ -143,6 +143,7 @@ struct harness_configuration {
 
 // The ignition relay is only used for testing purposes
 void set_intercept_relay(bool intercept, bool ignition_relay);
+void harness_check_relay_readback(void);
 bool harness_check_ignition(void);
 void harness_tick(void);
 void harness_init(void);

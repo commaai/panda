@@ -28,6 +28,22 @@ static bool fdcan_request_init(FDCAN_GlobalTypeDef *FDCANx) {
   return ret;
 }
 
+// config registers are only writable in init (RM0468 61.5), so they go into the register map before leaving it
+static void fdcan_track_config(FDCAN_GlobalTypeDef *FDCANx) {
+  register_set(&(FDCANx->NBTP), FDCANx->NBTP, 0xFFFFFFFFU);
+  register_set(&(FDCANx->DBTP), FDCANx->DBTP, 0xFFFFFFFFU);
+  register_set(&(FDCANx->IE), FDCANx->IE, 0xFFFFFFFFU);
+  register_set(&(FDCANx->ILS), FDCANx->ILS, 0xFFFFFFFFU);
+  register_set(&(FDCANx->ILE), FDCANx->ILE, 0xFFFFFFFFU);
+  register_set(&(FDCANx->GFC), FDCANx->GFC, 0xFFFFFFFFU);
+  register_set(&(FDCANx->SIDFC), FDCANx->SIDFC, 0xFFFFFFFFU);
+  register_set(&(FDCANx->XIDFC), FDCANx->XIDFC, 0xFFFFFFFFU);
+  register_set(&(FDCANx->RXF0C), FDCANx->RXF0C, 0xFFFFFFFFU);
+  register_set(&(FDCANx->RXESC), FDCANx->RXESC, 0xFFFFFFFFU);
+  register_set(&(FDCANx->TXBC), FDCANx->TXBC, 0xFFFFFFFFU);
+  register_set(&(FDCANx->TXESC), FDCANx->TXESC, 0xFFFFFFFFU);
+}
+
 static bool fdcan_exit_init(FDCAN_GlobalTypeDef *FDCANx) {
   bool ret = true;
 
@@ -108,6 +124,7 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_t data_
     if (silent) {
       FDCANx->CCCR |= FDCAN_CCCR_MON;
     }
+    fdcan_track_config(FDCANx);
     ret = fdcan_exit_init(FDCANx);
     if (!ret) {
       print(CAN_NAME_FROM_CANIF(FDCANx)); print(" set_speed timed out! (2)\n");
@@ -207,6 +224,7 @@ bool llcan_init(FDCAN_GlobalTypeDef *FDCANx) {
     FDCANx->ILS |= FDCAN_ILS_TFEL;
     FDCANx->IE |= FDCAN_IE_TFEE; // Tx FIFO empty
 
+    fdcan_track_config(FDCANx);
     ret = fdcan_exit_init(FDCANx);
     if(!ret) {
       print(CAN_NAME_FROM_CANIF(FDCANx)); print(" llcan_init timed out (2)!\n");
