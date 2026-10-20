@@ -47,7 +47,20 @@ static PackageSMPSType get_package_smps_type(void) {
   return ret;
 }
 
-void clock_init(void) {
+// bounded so a dead oscillator can't hang init
+#define CLOCK_WAIT_LOOPS 1000000U
+
+static bool clock_wait(volatile const uint32_t *reg, uint32_t mask, uint32_t val) {
+  uint32_t loops = 0U;
+  while (((*reg & mask) != val) && (loops < CLOCK_WAIT_LOOPS)) {
+    loops++;
+  }
+  return (*reg & mask) == val;
+}
+
+// returns false if a clock didn't come up, the core then keeps running from HSI without CAN
+bool clock_init(void) {
+  bool ok;
   /*
     WARNING: PWR->CR3's lower byte can only be written once
     * subsequent writes will silently fail
@@ -70,42 +83,52 @@ void clock_init(void) {
 
   // Set VOS level (VOS3 to 170Mhz, VOS2 to 300Mhz, VOS1 to 400Mhz, VOS0 to 550Mhz)
   register_set(&(PWR->D3CR), PWR_D3CR_VOS_1 | PWR_D3CR_VOS_0, 0xC000U); //VOS1, needed for 80Mhz CAN FD
-  while ((PWR->CSR1 & PWR_CSR1_ACTVOSRDY) == 0U);
-  while ((PWR->CSR1 & PWR_CSR1_ACTVOS) != (PWR->D3CR & PWR_D3CR_VOS)); // check that VOS level was actually set
+  ok = clock_wait(&(PWR->CSR1), PWR_CSR1_ACTVOSRDY, PWR_CSR1_ACTVOSRDY);
+  if (ok) {
+    ok = clock_wait(&(PWR->CSR1), PWR_CSR1_ACTVOS, PWR->D3CR & PWR_D3CR_VOS); // check that VOS level was actually set
+  }
 
   // Configure Flash ACR register LATENCY and WRHIGHFREQ (VOS0 range!)
   register_set(&(FLASH->ACR), FLASH_ACR_LATENCY_2WS | 0x20U, 0x3FU); // VOS2, AXI 100MHz-150MHz
-  // enable external oscillator HSE
-  register_set_bits(&(RCC->CR), RCC_CR_HSEON);
-  while ((RCC->CR & RCC_CR_HSERDY) == 0U);
-  // enable internal HSI48 for USB FS kernel
-  register_set_bits(&(RCC->CR), RCC_CR_HSI48ON);
-  while ((RCC->CR & RCC_CR_HSI48RDY) == 0U);
-  // Specify the frequency source for PLL1, divider for DIVM1, DIVM2, DIVM3 : HSE, 5, 5, 5
-  register_set(&(RCC->PLLCKSELR), RCC_PLLCKSELR_PLLSRC_HSE | RCC_PLLCKSELR_DIVM1_0 | RCC_PLLCKSELR_DIVM1_2 | RCC_PLLCKSELR_DIVM2_0 | RCC_PLLCKSELR_DIVM2_2 | RCC_PLLCKSELR_DIVM3_0 | RCC_PLLCKSELR_DIVM3_2, 0x3F3F3F3U);
+  if (ok) {
+    // enable external oscillator HSE
+    register_set_bits(&(RCC->CR), RCC_CR_HSEON);
+    ok = clock_wait(&(RCC->CR), RCC_CR_HSERDY, RCC_CR_HSERDY);
+  }
+  if (ok) {
+    // enable internal HSI48 for USB FS kernel
+    register_set_bits(&(RCC->CR), RCC_CR_HSI48ON);
+    ok = clock_wait(&(RCC->CR), RCC_CR_HSI48RDY, RCC_CR_HSI48RDY);
+  }
+  if (ok) {
+    // Specify the frequency source for PLL1, divider for DIVM1, DIVM2, DIVM3 : HSE, 5, 5, 5
+    register_set(&(RCC->PLLCKSELR), RCC_PLLCKSELR_PLLSRC_HSE | RCC_PLLCKSELR_DIVM1_0 | RCC_PLLCKSELR_DIVM1_2 | RCC_PLLCKSELR_DIVM2_0 | RCC_PLLCKSELR_DIVM2_2 | RCC_PLLCKSELR_DIVM3_0 | RCC_PLLCKSELR_DIVM3_2, 0x3F3F3F3U);
 
-  // *** PLL1 start ***
-  // Specify multiplier N and dividers P, Q, R for PLL1 : 48, 1, 3, 2 (clock 240Mhz, PLL1Q 80Mhz for CAN FD)
-  register_set(&(RCC->PLL1DIVR), 0x102002FU, 0x7F7FFFFFU);
-  // Specify the input and output frequency ranges, enable dividers for PLL1
-  register_set(&(RCC->PLLCFGR), RCC_PLLCFGR_PLL1RGE_2 | RCC_PLLCFGR_DIVP1EN | RCC_PLLCFGR_DIVQ1EN | RCC_PLLCFGR_DIVR1EN, 0x7000CU);
-  // Enable PLL1
-  register_set_bits(&(RCC->CR), RCC_CR_PLL1ON);
-  while((RCC->CR & RCC_CR_PLL1RDY) == 0U);
-  // *** PLL1 end ***
+    // *** PLL1 start ***
+    // Specify multiplier N and dividers P, Q, R for PLL1 : 48, 1, 3, 2 (clock 240Mhz, PLL1Q 80Mhz for CAN FD)
+    register_set(&(RCC->PLL1DIVR), 0x102002FU, 0x7F7FFFFFU);
+    // Specify the input and output frequency ranges, enable dividers for PLL1
+    register_set(&(RCC->PLLCFGR), RCC_PLLCFGR_PLL1RGE_2 | RCC_PLLCFGR_DIVP1EN | RCC_PLLCFGR_DIVQ1EN | RCC_PLLCFGR_DIVR1EN, 0x7000CU);
+    // Enable PLL1
+    register_set_bits(&(RCC->CR), RCC_CR_PLL1ON);
+    ok = clock_wait(&(RCC->CR), RCC_CR_PLL1RDY, RCC_CR_PLL1RDY);
+    // *** PLL1 end ***
+  }
 
-  //////////////OTHER CLOCKS////////////////////
-  // RCC HCLK Clock Source / RCC APB3 Clock Source / RCC SYS Clock Source
-  register_set(&(RCC->D1CFGR), RCC_D1CFGR_HPRE_DIV2 | RCC_D1CFGR_D1PPRE_DIV2 | RCC_D1CFGR_D1CPRE_DIV1, 0xF7FU);
-  // RCC APB1 Clock Source / RCC APB2 Clock Source
-  register_set(&(RCC->D2CFGR), RCC_D2CFGR_D2PPRE1_DIV2 | RCC_D2CFGR_D2PPRE2_DIV2, 0x770U);
-  // RCC APB4 Clock Source
-  register_set(&(RCC->D3CFGR), RCC_D3CFGR_D3PPRE_DIV2, 0x70U);
+  if (ok) {
+    //////////////OTHER CLOCKS////////////////////
+    // RCC HCLK Clock Source / RCC APB3 Clock Source / RCC SYS Clock Source
+    register_set(&(RCC->D1CFGR), RCC_D1CFGR_HPRE_DIV2 | RCC_D1CFGR_D1PPRE_DIV2 | RCC_D1CFGR_D1CPRE_DIV1, 0xF7FU);
+    // RCC APB1 Clock Source / RCC APB2 Clock Source
+    register_set(&(RCC->D2CFGR), RCC_D2CFGR_D2PPRE1_DIV2 | RCC_D2CFGR_D2PPRE2_DIV2, 0x770U);
+    // RCC APB4 Clock Source
+    register_set(&(RCC->D3CFGR), RCC_D3CFGR_D3PPRE_DIV2, 0x70U);
 
-  // Set SysClock source to PLL
-  register_set(&(RCC->CFGR), RCC_CFGR_SW_PLL1, 0x7U);
-  while((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL1);
-  //////////////END OTHER CLOCKS////////////////////
+    // Set SysClock source to PLL
+    register_set(&(RCC->CFGR), RCC_CFGR_SW_PLL1, 0x7U);
+    ok = clock_wait(&(RCC->CFGR), RCC_CFGR_SWS, RCC_CFGR_SWS_PLL1);
+    //////////////END OTHER CLOCKS////////////////////
+  }
 
   // Configure clock source for USB (HSI48)
   register_set(&(RCC->D2CCIP2R), RCC_D2CCIP2R_USBSEL_1 | RCC_D2CCIP2R_USBSEL_0, RCC_D2CCIP2R_USBSEL);
@@ -115,8 +138,54 @@ void clock_init(void) {
   register_set_bits(&(RCC->D2CCIP1R), RCC_D2CCIP1R_DFSDM1SEL);
   // Configure clock source for ADC1,2,3 (per_ck(currently HSE))
   register_set(&(RCC->D3CCIPR), RCC_D3CCIPR_ADCSEL_1, RCC_D3CCIPR_ADCSEL);
-  //Enable the Clock Security System
-  register_set_bits(&(RCC->CR), RCC_CR_CSSHSEON);
+  if (ok) {
+    //Enable the Clock Security System
+    register_set_bits(&(RCC->CR), RCC_CR_CSSHSEON);
+  }
   //Enable Vdd33usb supply level detector
   register_set_bits(&(PWR->CR3), PWR_CR3_USB33DEN);
+  return ok;
+}
+
+// CLK_SM_3: TIM16 captures every 8th LSI edge (RM0468 Table 94, 46.6.18 TIM16_TISEL), counted on the
+// HSE derived 120MHz APB2 timer clock. 32kHz LSI gives 30000 counts, the 25% window only catches gross
+// HSE or PLL errors since LSI itself isn't accurate
+#define LSI_COUNTS_NOMINAL 30000U
+#define LSI_CAPTURE_LOOPS 200000U
+
+bool clock_check_init(void) {
+  register_set_bits(&(RCC->CSR), RCC_CSR_LSION);
+  bool ok = clock_wait(&(RCC->CSR), RCC_CSR_LSIRDY, RCC_CSR_LSIRDY);
+
+  RCC->APB2ENR |= RCC_APB2ENR_TIM16EN;
+  register_set(&(TIM16->TISEL), 1U, TIM_TISEL_TI1SEL);
+  register_set(&(TIM16->CCMR1), TIM_CCMR1_CC1S_0 | TIM_CCMR1_IC1PSC_1 | TIM_CCMR1_IC1PSC_0, 0xFFU);
+  register_set(&(TIM16->CCER), TIM_CCER_CC1E, 0xFU);
+  register_set(&(TIM16->PSC), 0U, 0xFFFFU);
+  register_set(&(TIM16->ARR), 0xFFFFU, 0xFFFFU);
+  register_set(&(TIM16->CR1), TIM_CR1_CEN, 0x3FU);
+  return ok;
+}
+
+static bool lsi_capture(uint16_t *count) {
+  uint32_t loops = 0U;
+  while (((TIM16->SR & TIM_SR_CC1IF) == 0U) && (loops < LSI_CAPTURE_LOOPS)) {
+    loops++;
+  }
+  // reading CCR1 clears CC1IF
+  *count = (uint16_t)TIM16->CCR1;
+  return loops < LSI_CAPTURE_LOOPS;
+}
+
+// called at 1Hz, two LSI captures take under 1ms
+bool clock_check(void) {
+  uint16_t start = 0U;
+  uint16_t end = 0U;
+  (void)TIM16->CCR1;
+  bool ok = lsi_capture(&start);
+  if (ok) {
+    ok = lsi_capture(&end);
+  }
+  uint32_t counts = (uint16_t)(end - start);
+  return ok && (counts > ((LSI_COUNTS_NOMINAL * 3U) / 4U)) && (counts < ((LSI_COUNTS_NOMINAL * 5U) / 4U));
 }

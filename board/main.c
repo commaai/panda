@@ -249,6 +249,9 @@ static void tick_handler(void) {
       // check registers
       check_registers();
       mpu_check();
+      if (!clock_check()) {
+        fault_occurred(FAULT_CLOCK);
+      }
 
       // set ignition_can to false after 2s of no CAN seen
       if (ignition_can_cnt > 2U) {
@@ -282,8 +285,9 @@ int main(void) {
   disable_interrupts();
 
   // init early devices
-  clock_init();
+  bool clock_ok = clock_init();
   peripherals_init();
+  bool lsi_ok = clock_check_init();
   detect_board_type();
   led_init();
   // red+green leds enabled until succesful USB/SPI init, as a debug indicator
@@ -304,6 +308,9 @@ int main(void) {
 
   // init board
   current_board->init();
+  if (!clock_ok || !lsi_ok) {
+    fault_occurred(FAULT_CLOCK);
+  }
   current_board->set_can_mode(CAN_MODE_NORMAL);
   harness_init();
 
@@ -330,6 +337,7 @@ int main(void) {
 
   // 8Hz timer
   REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK)
+  interrupts[TICK_TIMER_IRQ].min_call_rate = 4U;
   tick_timer_init();
 
   // enable USB (right before interrupts or enum can fail!)

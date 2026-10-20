@@ -302,6 +302,14 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xed:
       self_test_inject((uint8_t)req->param1);
       break;
+    // **** 0xef: stop the tick interrupt, for testing
+    case 0xef:
+      NVIC_DisableIRQ(TICK_TIMER_IRQ);
+      break;
+    // **** 0xf2: set the clock check timer prescaler, for testing
+    case 0xf2:
+      register_set(&(TIM16->PSC), req->param1, 0xFFFFU);
+      break;
     #endif
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:

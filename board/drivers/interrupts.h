@@ -55,6 +55,12 @@ void interrupt_timer_handler(void) {
         print("Interrupt 0x"); puth(i); print(" fired too often (0x"); puth(interrupts[i].call_counter); print("/s)!\n");
       }
 
+      // only once it has run a full second, so a late start isn't a fault
+      if (check_interrupt_rate && (interrupts[i].call_counter < interrupts[i].min_call_rate) && (interrupts[i].call_rate >= interrupts[i].min_call_rate)) {
+        print("Interrupt 0x"); puth(i); print(" stopped firing (0x"); puth(interrupts[i].call_counter); print("/s)!\n");
+        fault_occurred(FAULT_INTERRUPT_MISSING);
+      }
+
       // Reset interrupt counters
       interrupts[i].call_rate = interrupts[i].call_counter;
       interrupts[i].call_counter = 0U;
@@ -76,6 +82,7 @@ void init_interrupts(bool check_rate_limit){
 
   for(uint16_t i=0U; i<NUM_INTERRUPTS; i++){
     interrupts[i].handler = unused_interrupt_handler;
+    interrupts[i].min_call_rate = 0U;
   }
 
   // Init interrupt timer for a 1s interval

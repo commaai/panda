@@ -86,7 +86,7 @@ int main(void) {
   disable_interrupts();
   init_interrupts(true);
 
-  clock_init();
+  (void)clock_init();
   peripherals_init();
 
   current_board = &board_body;

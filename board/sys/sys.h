@@ -41,6 +41,8 @@ extern uint8_t global_critical_depth;
 #define FAULT_SELF_TEST_FLASH               (1UL << 11)
 #define FAULT_ECC                           (1UL << 12)
 #define FAULT_INTERRUPT_RATE_USB            (1UL << 15)
+#define FAULT_CLOCK                         (1UL << 16)
+#define FAULT_INTERRUPT_MISSING             (1UL << 17)
 #define FAULT_REGISTER_DIVERGENT            (1UL << 18)
 #define FAULT_INTERRUPT_RATE_CLOCK_SOURCE   (1UL << 20)
 #define FAULT_INTERRUPT_RATE_TICK           (1UL << 21)
@@ -55,7 +57,8 @@ extern uint8_t global_critical_depth;
 #define PERMANENT_FAULTS (FAULT_UNUSED_INTERRUPT_HANDLED | FAULT_INTERRUPT_RATE_CAN_1 | FAULT_INTERRUPT_RATE_CAN_2 | \
                           FAULT_INTERRUPT_RATE_CAN_3 | FAULT_INTERRUPT_RATE_INTERRUPTS | FAULT_INTERRUPT_RATE_SPI_DMA | \
                           FAULT_INTERRUPT_RATE_USB | FAULT_INTERRUPT_RATE_TICK | FAULT_SELF_TEST_CPU | \
-                          FAULT_SELF_TEST_RAM | FAULT_SELF_TEST_FLASH | FAULT_ECC)
+                          FAULT_SELF_TEST_RAM | FAULT_SELF_TEST_FLASH | FAULT_ECC | FAULT_INTERRUPT_MISSING | \
+                          FAULT_CLOCK)
 
 extern uint8_t fault_status;
 extern uint32_t faults;

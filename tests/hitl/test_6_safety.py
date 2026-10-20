@@ -5,9 +5,11 @@ from panda.tests.hitl.base import PandaTestCase, panda_test
 from panda.tests.hitl.helpers import clear_can_buffers
 
 # board/sys/sys.h PERMANENT_FAULTS
-PERMANENT_FAULT_BITS = (1, 2, 3, 4, 7, 8, 9, 10, 11, 12, 15, 21)
+PERMANENT_FAULT_BITS = (1, 2, 3, 4, 7, 8, 9, 10, 11, 12, 15, 16, 17, 21)
 # board/drivers/self_test.h injection index: fault bit
 SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11}
+FAULT_CLOCK_BIT = 16
+FAULT_INTERRUPT_MISSING_BIT = 17
 FAULT_SIREN_MALFUNCTION_BIT = 25
 FAULT_INTERRUPT_RATE_CAN_1_BIT = 2
 
@@ -144,3 +146,27 @@ class TestSafety(PandaTestCase):
     h = p.health()
     assert h['faults'] == 0, f"faults {h['faults']:#x}"
     assert h['safety_mode'] == CarParams.SafetyModel.allOutput
+
+  def test_tick_stopped(self):
+    p = self.p
+    p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    time.sleep(2.5)
+    p.stop_tick()
+    t = time.monotonic()
+    while not ((h := p.health())['faults'] & (1 << FAULT_INTERRUPT_MISSING_BIT)) and (time.monotonic() - t) < 3:
+      time.sleep(0.05)
+    print(f"tick stopped: fault after {(time.monotonic() - t) * 1e3:.0f} ms")
+    assert h['faults'] & (1 << FAULT_INTERRUPT_MISSING_BIT)
+    assert h['safety_mode'] == CarParams.SafetyModel.silent
+    p.reset()
+
+  def test_clock_check(self):
+    p = self.p
+    p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    p.set_clock_check_prescaler(1)
+    t = time.monotonic()
+    while not ((h := p.health())['faults'] & (1 << FAULT_CLOCK_BIT)) and (time.monotonic() - t) < 3:
+      time.sleep(0.05)
+    assert h['faults'] & (1 << FAULT_CLOCK_BIT)
+    assert h['safety_mode'] == CarParams.SafetyModel.silent
+    p.reset()
