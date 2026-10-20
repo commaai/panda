@@ -80,6 +80,7 @@ def build_project(project_name, project, main, extra_flags):
     "-fmax-errors=1",
     f"-T{File(project['LINKER_SCRIPT']).srcnode().relpath}",
     "-fsingle-precision-constant",
+    "-fdata-sections",
     "-Os",
     "-g",
   ]

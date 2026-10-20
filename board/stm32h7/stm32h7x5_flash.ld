@@ -152,6 +152,18 @@ SECTIONS
   {
     . = ALIGN(4);
     _sdata = .;        /* create a global symbol at data start */
+
+    /* safety state, one MPU region, see board/stm32h7/llmpu.h */
+    . = ALIGN(64);
+    _ssafety = .;
+    *(.data.controls_allowed .bss.controls_allowed)
+    *(.data.current_safety_mode .bss.current_safety_mode)
+    *(.data.current_safety_param .bss.current_safety_param)
+    *(.data.current_hooks .bss.current_hooks)
+    *(.data.current_safety_config .bss.current_safety_config)
+    . = ALIGN(64);
+    _esafety = .;
+
     *(.data)           /* .data sections */
     *(.data*)          /* .data* sections */
 
@@ -182,10 +194,15 @@ SECTIONS
     . = ALIGN(8);
     PROVIDE ( end = . );
     PROVIDE ( _end = . );
+    . = ALIGN(32);
+    _stack_guard = .;
+    . = . + 32;
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
   } >DTCMRAM
+
+  ASSERT((_esafety - _ssafety) <= 64, "safety state doesn't fit its MPU region")
 
   .itcmram (NOLOAD) :
   {
