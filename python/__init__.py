@@ -682,6 +682,9 @@ class Panda:
   def inject_mpu_fault(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xee, 0, 0, b'', expect_disconnect=True)
 
+  def inject_stack_overflow(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf0, 0, 0, b'', expect_disconnect=True)
+
   def set_safety_mode(self, mode=CarParams.SafetyModel.silent, param=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
 
