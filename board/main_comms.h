@@ -278,6 +278,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xec:
       SCB->ICSR = SCB_ICSR_NMIPENDSET_Msk;
       break;
+    // **** 0xee: write controls_allowed outside safety, for testing
+    case 0xee:
+      controls_allowed = true;
+      break;
     #endif
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:

@@ -196,7 +196,9 @@ static void can_rx(uint8_t can_number) {
     can_set_checksum(&to_push);
 
     // forwarding
+    mpu_safety_open();
     int bus_fwd_num = safety_fwd_hook(bus_number, to_push.addr);
+    mpu_safety_close();
     if (bus_fwd_num >= 0) {
       CANPacket_t to_send;
 
@@ -218,7 +220,9 @@ static void can_rx(uint8_t can_number) {
     body_can_rx(&to_push);
     #endif
 
+    mpu_safety_open();
     safety_rx_invalid += safety_rx_hook(&to_push) ? 0U : 1U;
+    mpu_safety_close();
     ignition_can_hook(&to_push);
 
     led_set(LED_BLUE, true);
