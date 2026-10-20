@@ -30,6 +30,9 @@
 // this is the only way to leave silent mode
 void set_safety_mode(uint16_t mode, uint16_t param) {
   uint16_t mode_copy = mode;
+  if ((faults & PERMANENT_FAULTS) != 0U) {
+    mode_copy = SAFETY_SILENT;
+  }
   int err = set_safety_hooks(mode_copy, param);
   if (err == -1) {
     print("Error: safety set mode failed. Falling back to SILENT\n");
@@ -76,6 +79,11 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
       break;
   }
   can_init_all();
+}
+
+// SILENT clears controls_allowed and opens the relay
+void fault_safe_state(void) {
+  set_safety_mode(SAFETY_SILENT, 0U);
 }
 
 bool is_car_safety_mode(uint16_t mode) {

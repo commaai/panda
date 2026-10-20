@@ -670,6 +670,15 @@ class Panda:
   def enter_stop_mode(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xb5, 0, 0, b'', expect_disconnect=True)
 
+  def inject_fault(self, fault_bit):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xea, fault_bit, 0, b'')
+
+  def inject_hardfault(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xeb, 0, 0, b'', expect_disconnect=True)
+
+  def inject_nmi(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xec, 0, 0, b'', expect_disconnect=True)
+
   def set_safety_mode(self, mode=CarParams.SafetyModel.silent, param=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
 

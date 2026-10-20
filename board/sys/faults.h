@@ -10,6 +10,7 @@ void fault_occurred(uint32_t fault) {
     if ((PERMANENT_FAULTS & fault) != 0U) {
       print("Permanent fault occurred: 0x"); puth(fault); print("\n");
       fault_status = FAULT_STATUS_PERMANENT;
+      fault_safe_state();
     } else {
       print("Temporary fault occurred: 0x"); puth(fault); print("\n");
       fault_status = FAULT_STATUS_TEMPORARY;
