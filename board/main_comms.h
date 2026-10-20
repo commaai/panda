@@ -295,6 +295,12 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       __set_MSP((uint32_t)&_stack_guard + 32U);
       stack_guard_hit();
       break;
+    // **** 0xf7: corrupt the inverted copy of controls_allowed, for testing
+    case 0xf7:
+      mpu_safety_open();
+      controls_allowed_inv = !controls_allowed_inv;
+      mpu_safety_close();
+      break;
     #endif
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:
