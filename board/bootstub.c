@@ -39,7 +39,7 @@ int main(void) {
   init_interrupts(true);
 
   disable_interrupts();
-  (void)clock_init();
+  clock_init();
   detect_board_type();
 
 

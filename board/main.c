@@ -285,7 +285,7 @@ int main(void) {
   disable_interrupts();
 
   // init early devices
-  bool clock_ok = clock_init();
+  clock_init();
   peripherals_init();
   bool lsi_ok = clock_check_init();
   detect_board_type();
@@ -308,7 +308,7 @@ int main(void) {
 
   // init board
   current_board->init();
-  if (!clock_ok || !lsi_ok) {
+  if (!lsi_ok) {
     fault_occurred(FAULT_CLOCK);
   }
   current_board->set_can_mode(CAN_MODE_NORMAL);
