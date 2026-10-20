@@ -673,6 +673,13 @@ class Panda:
   def inject_fault(self, fault_bit):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xea, int(fault_bit), 0, b'')
 
+  def inject_nvic_divergence(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xfd, 0, 0, b'')
+
+  def get_option_bytes(self):
+    optsr, optsr2, wpsn, boot = struct.unpack("<IIII", self._handle.controlRead(Panda.REQUEST_IN, 0xfb, 0, 0, 16))
+    return {"optsr": optsr, "optsr2": optsr2, "wpsn": wpsn, "boot": boot}
+
   def inject_hardfault(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xeb, 0, 0, b'', expect_disconnect=True)
 

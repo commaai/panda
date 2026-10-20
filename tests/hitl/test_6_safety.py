@@ -15,6 +15,7 @@ FAULT_INTERRUPT_RATE_CAN_1_BIT = 2
 FAULT_OUTPUT_READBACK_BIT = 13
 FAULT_ADC_BIT = 24
 FAULT_TIMER_BIT = 28
+FAULT_REGISTER_DIVERGENT_BIT = 18
 
 
 class TestSafety(PandaTestCase):
@@ -222,3 +223,21 @@ class TestSafety(PandaTestCase):
       time.sleep(0.2)
     h = p.health()
     assert h['faults'] == 0, f"faults {h['faults']:#x}"
+
+  def test_option_bytes(self):
+    ob = self.p.get_option_bytes()
+    print({k: hex(v) for k, v in ob.items()})
+    assert ob['optsr2'] & 0x3 == 0
+    assert ob['boot'] & 0xFFFF == 0x0800
+    assert not self.p.health()['faults'] & (1 << FAULT_REGISTER_DIVERGENT_BIT)
+
+  def test_nvic_readback(self):
+    p = self.p
+    p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    assert not p.health()['faults'] & (1 << FAULT_REGISTER_DIVERGENT_BIT)
+    p.inject_nvic_divergence()
+    t = time.monotonic()
+    while not p.health()['faults'] & (1 << FAULT_REGISTER_DIVERGENT_BIT) and (time.monotonic() - t) < 3:
+      time.sleep(0.05)
+    assert p.health()['faults'] & (1 << FAULT_REGISTER_DIVERGENT_BIT)
+    p.reset()

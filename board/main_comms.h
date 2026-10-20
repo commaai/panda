@@ -304,7 +304,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xef: stop the tick interrupt, for testing
     case 0xef:
-      NVIC_DisableIRQ(TICK_TIMER_IRQ);
+      nvic_disable(TICK_TIMER_IRQ);
       break;
     // **** 0xf2: set the clock check timer prescaler, for testing
     case 0xf2:
@@ -322,6 +322,18 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // **** 0xfa: offset the second harness ADC acquisition, for testing
     case 0xfa:
       harness_adc_check_offset_mV = req->param1;
+      break;
+    // **** 0xfb: read FLASH OPTSR_CUR, OPTSR2_CUR, WPSN_CUR1, BOOT_CUR
+    case 0xfb:
+      (void)memcpy(&resp[0], (const uint8_t *)&FLASH->OPTSR_CUR, 4U);
+      (void)memcpy(&resp[4], (const uint8_t *)&FLASH->OPTSR2_CUR, 4U);
+      (void)memcpy(&resp[8], (const uint8_t *)&FLASH->WPSN_CUR1, 4U);
+      (void)memcpy(&resp[12], (const uint8_t *)&FLASH->BOOT_CUR, 4U);
+      resp_len = 16U;
+      break;
+    // **** 0xfd: enable an unused IRQ behind nvic_enable, for testing
+    case 0xfd:
+      NVIC_EnableIRQ(WWDG_IRQn);
       break;
     #endif
     // **** 0xf1: Clear CAN ring buffer.

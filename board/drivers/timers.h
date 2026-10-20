@@ -42,10 +42,10 @@ void interrupt_timer_init(void) {
   register_set(&(INTERRUPT_TIMER->DIER), TIM_DIER_UIE, 0x5F5FU);
   register_set(&(INTERRUPT_TIMER->CR1), TIM_CR1_CEN, 0x3FU);
   INTERRUPT_TIMER->SR = 0;
-  NVIC_EnableIRQ(INTERRUPT_TIMER_IRQ);
+  nvic_enable(INTERRUPT_TIMER_IRQ);
 }
 
 void tick_timer_init(void) {
   timer_init(TICK_TIMER, (uint16_t)((15.25*APB2_TIMER_FREQ)/8U));
-  NVIC_EnableIRQ(TICK_TIMER_IRQ);
+  nvic_enable(TICK_TIMER_IRQ);
 }

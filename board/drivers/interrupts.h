@@ -10,6 +10,40 @@ static void unused_interrupt_handler(void) {
 
 interrupt interrupts[NUM_INTERRUPTS];
 
+// NVIC enables only change through nvic_enable/nvic_disable, nvic_check reads them back
+// stop mode is the exception, it runs with interrupts off and exits through reset
+static uint32_t nvic_expected[8];
+
+void nvic_enable(IRQn_Type irq) {
+  ENTER_CRITICAL();
+  nvic_expected[(uint32_t)irq >> 5U] |= (1UL << ((uint32_t)irq & 0x1FU));
+  NVIC_EnableIRQ(irq);
+  EXIT_CRITICAL();
+}
+
+void nvic_disable(IRQn_Type irq) {
+  ENTER_CRITICAL();
+  nvic_expected[(uint32_t)irq >> 5U] &= ~(1UL << ((uint32_t)irq & 0x1FU));
+  NVIC_DisableIRQ(irq);
+  EXIT_CRITICAL();
+}
+
+void nvic_check(void) {
+  bool ok = true;
+  ENTER_CRITICAL();
+  for (uint8_t i = 0U; i < 8U; i++) {
+    ok = ok && (NVIC->ISER[i] == nvic_expected[i]);
+  }
+  // nothing sets a priority, all IRQs stay at 0
+  for (uint8_t i = 0U; i < 240U; i++) {
+    ok = ok && (NVIC->IP[i] == 0U);
+  }
+  EXIT_CRITICAL();
+  if (!ok) {
+    fault_occurred(FAULT_REGISTER_DIVERGENT);
+  }
+}
+
 static bool check_interrupt_rate = false;
 
 static uint32_t idle_time = 0U;

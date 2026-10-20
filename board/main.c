@@ -256,6 +256,7 @@ static void tick_handler(void) {
       if (!clock_check()) {
         fault_occurred(FAULT_CLOCK);
       }
+      nvic_check();
 
       // set ignition_can to false after 2s of no CAN seen
       if (ignition_can_cnt > 2U) {
@@ -292,6 +293,7 @@ int main(void) {
   bool clock_ok = clock_init();
   peripherals_init();
   bool lsi_ok = clock_check_init();
+  check_option_bytes();
   detect_board_type();
   led_init();
   // red+green leds enabled until succesful USB/SPI init, as a debug indicator

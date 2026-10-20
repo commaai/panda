@@ -137,28 +137,28 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_t data_
 
 void llcan_irq_disable(const FDCAN_GlobalTypeDef *FDCANx) {
   if (FDCANx == FDCAN1) {
-    NVIC_DisableIRQ(FDCAN1_IT0_IRQn);
-    NVIC_DisableIRQ(FDCAN1_IT1_IRQn);
+    nvic_disable(FDCAN1_IT0_IRQn);
+    nvic_disable(FDCAN1_IT1_IRQn);
   } else if (FDCANx == FDCAN2) {
-    NVIC_DisableIRQ(FDCAN2_IT0_IRQn);
-    NVIC_DisableIRQ(FDCAN2_IT1_IRQn);
+    nvic_disable(FDCAN2_IT0_IRQn);
+    nvic_disable(FDCAN2_IT1_IRQn);
   } else if (FDCANx == FDCAN3) {
-    NVIC_DisableIRQ(FDCAN3_IT0_IRQn);
-    NVIC_DisableIRQ(FDCAN3_IT1_IRQn);
+    nvic_disable(FDCAN3_IT0_IRQn);
+    nvic_disable(FDCAN3_IT1_IRQn);
   } else {
   }
 }
 
 void llcan_irq_enable(const FDCAN_GlobalTypeDef *FDCANx) {
   if (FDCANx == FDCAN1) {
-    NVIC_EnableIRQ(FDCAN1_IT0_IRQn);
-    NVIC_EnableIRQ(FDCAN1_IT1_IRQn);
+    nvic_enable(FDCAN1_IT0_IRQn);
+    nvic_enable(FDCAN1_IT1_IRQn);
   } else if (FDCANx == FDCAN2) {
-    NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
-    NVIC_EnableIRQ(FDCAN2_IT1_IRQn);
+    nvic_enable(FDCAN2_IT0_IRQn);
+    nvic_enable(FDCAN2_IT1_IRQn);
   } else if (FDCANx == FDCAN3) {
-    NVIC_EnableIRQ(FDCAN3_IT0_IRQn);
-    NVIC_EnableIRQ(FDCAN3_IT1_IRQn);
+    nvic_enable(FDCAN3_IT0_IRQn);
+    nvic_enable(FDCAN3_IT1_IRQn);
   } else {
   }
 }

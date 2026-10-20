@@ -28,8 +28,8 @@ void clock_source_init(bool enable_channel1) {
 
 
   // No interrupts
-  NVIC_DisableIRQ(TIM1_UP_TIM10_IRQn);
-  NVIC_DisableIRQ(TIM1_CC_IRQn);
+  nvic_disable(TIM1_UP_TIM10_IRQn);
+  nvic_disable(TIM1_CC_IRQn);
 
   // Set GPIO as timer channels
   if (enable_channel1) {
