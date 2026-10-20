@@ -19,10 +19,11 @@ static uint32_t mpu_safety_rasr(uint32_t access) {
 }
 
 static uint32_t mpu_stack_guard_rasr(void) {
-  return mpu_rasr(ARM_MPU_AP_NONE, ARM_MPU_REGION_SIZE_32B);
+  return mpu_rasr(ARM_MPU_AP_NONE, ARM_MPU_REGION_SIZE_512B);
 }
 
 static void mpu_set_safety_access(uint32_t access) {
+  __DMB();
   MPU->RNR = MPU_REGION_SAFETY;
   MPU->RASR = mpu_safety_rasr(access);
   __DSB();
