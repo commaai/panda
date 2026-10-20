@@ -111,8 +111,9 @@ class PandaTestCase(unittest.TestCase):
     assert not p.bootstub
 
     # Check for faults
-    assert p.health()['faults'] == 0
-    assert p.health()['fault_status'] == 0
+    h = p.health()
+    assert h['faults'] == 0, f"faults {h['faults']:#x}"
+    assert h['fault_status'] == 0
 
     # Check for SPI errors
     #assert p.health()['spi_error_count'] == 0

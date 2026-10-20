@@ -57,6 +57,10 @@ enter_bootloader_mode = 0x38001FFC;
 fault_cookie = 0x38003FFC;
 
 _estack = 0x20020000;    /* end of RAM */
+_axisram_start = ORIGIN(AXISRAM);
+_axisram_end = ORIGIN(AXISRAM) + LENGTH(AXISRAM);
+_itcmram_start = ORIGIN(ITCMRAM);
+_itcmram_end = ORIGIN(ITCMRAM) + LENGTH(ITCMRAM);
 _app_start = 0x08020000; /* Reserve Sector 0(128K) for bootloader */
 
 /* Generate a link error if heap and stack don't fit into RAM */
@@ -207,13 +211,19 @@ SECTIONS
   .itcmram (NOLOAD) :
   {
     . = ALIGN(4);
+    _sitcmram = .;
     *(.itcmram*)
+    . = ALIGN(4);
+    _eitcmram = .;
   } >ITCMRAM
 
   .axisram (NOLOAD) :
   {
     . = ALIGN(4);
+    _saxisram = .;
     *(.axisram*)
+    . = ALIGN(4);
+    _eaxisram = .;
   } >AXISRAM
 
   .sram12 (NOLOAD) :

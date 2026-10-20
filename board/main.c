@@ -24,6 +24,7 @@
 
 #include "board/can_comms.h"
 #include "board/main_comms.h"
+#include "board/drivers/self_test.h"
 
 // ****************************** safety mode ******************************
 
@@ -265,6 +266,8 @@ static void tick_handler(void) {
       mpu_safety_close();
     }
 
+    self_test_tick();
+
     loop_counter++;
     loop_counter %= 8U;
   }
@@ -348,6 +351,8 @@ int main(void) {
     reset_flags |= HEALTH_FLAG_HARDFAULT_RESET;
   }
   fault_cookie = 0U;
+
+  self_test_init();
 
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();

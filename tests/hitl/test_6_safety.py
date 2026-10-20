@@ -5,7 +5,9 @@ from panda.tests.hitl.base import PandaTestCase, panda_test
 from panda.tests.hitl.helpers import clear_can_buffers
 
 # board/sys/sys.h PERMANENT_FAULTS
-PERMANENT_FAULT_BITS = (1, 2, 3, 4, 7, 8, 15, 21)
+PERMANENT_FAULT_BITS = (1, 2, 3, 4, 7, 8, 9, 10, 11, 12, 15, 21)
+# board/drivers/self_test.h injection index: fault bit
+SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11}
 FAULT_SIREN_MALFUNCTION_BIT = 25
 FAULT_INTERRUPT_RATE_CAN_1_BIT = 2
 
@@ -112,3 +114,33 @@ class TestSafety(PandaTestCase):
     time.sleep(0.05)
     assert all(addr != 0x1aa for addr, _, _ in jungle.can_recv())
     p.reset()
+
+  @panda_test(timeout=2*60)
+  def test_self_test_failure(self):
+    p = self.p
+    for test, fault_bit in SELF_TEST_FAULT_BITS.items():
+      p.reset()
+      p.set_safety_mode(CarParams.SafetyModel.allOutput)
+      p.inject_self_test_failure(test)
+
+      # heartbeat keeps allOutput, so only the fault can set SILENT
+      t = time.monotonic()
+      while not (p.health()['faults'] & (1 << fault_bit)) and (time.monotonic() - t) < 15:
+        p.send_heartbeat(engaged=False)
+        time.sleep(0.1)
+      print(f"self-test {test}: fault after {time.monotonic() - t:.1f} s")
+      h = p.health()
+      assert h['faults'] & (1 << fault_bit)
+      assert h['fault_status'] == 2
+      assert h['safety_mode'] == CarParams.SafetyModel.silent
+    p.reset()
+
+  def test_self_test_no_fault(self):
+    p = self.p
+    p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    for _ in range(60):
+      p.send_heartbeat(engaged=False)
+      time.sleep(0.2)
+    h = p.health()
+    assert h['faults'] == 0, f"faults {h['faults']:#x}"
+    assert h['safety_mode'] == CarParams.SafetyModel.allOutput

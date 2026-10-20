@@ -4,6 +4,9 @@ extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 // Prototypes
 void set_safety_mode(uint16_t mode, uint16_t param);
+#ifdef ALLOW_DEBUG
+void self_test_inject(uint8_t test);
+#endif
 bool is_car_safety_mode(uint16_t mode);
 
 static int get_health_pkt(void *dat) {
@@ -294,6 +297,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xf0:
       __set_MSP((uint32_t)&_stack_guard + 32U);
       stack_guard_hit();
+      break;
+    // **** 0xed: inject self-test failure, for testing
+    case 0xed:
+      self_test_inject((uint8_t)req->param1);
       break;
     #endif
     // **** 0xf1: Clear CAN ring buffer.
