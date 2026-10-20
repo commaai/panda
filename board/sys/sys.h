@@ -38,6 +38,7 @@ extern uint8_t global_critical_depth;
 #define FAULT_INTERRUPT_RATE_SPI_DMA        (1UL << 8)
 #define FAULT_INTERRUPT_RATE_USB            (1UL << 15)
 #define FAULT_REGISTER_DIVERGENT            (1UL << 18)
+#define FAULT_SAFETY_REDUNDANCY             (1UL << 19)
 #define FAULT_INTERRUPT_RATE_CLOCK_SOURCE   (1UL << 20)
 #define FAULT_INTERRUPT_RATE_TICK           (1UL << 21)
 #define FAULT_INTERRUPT_RATE_EXTI           (1UL << 22)
@@ -50,7 +51,7 @@ extern uint8_t global_critical_depth;
 // TODO: add FAULT_REGISTER_DIVERGENT and FAULT_INTERRUPT_RATE_SPI once their 3X fleet rate is root caused
 #define PERMANENT_FAULTS (FAULT_UNUSED_INTERRUPT_HANDLED | FAULT_INTERRUPT_RATE_CAN_1 | FAULT_INTERRUPT_RATE_CAN_2 | \
                           FAULT_INTERRUPT_RATE_CAN_3 | FAULT_INTERRUPT_RATE_INTERRUPTS | FAULT_INTERRUPT_RATE_SPI_DMA | \
-                          FAULT_INTERRUPT_RATE_USB | FAULT_INTERRUPT_RATE_TICK)
+                          FAULT_INTERRUPT_RATE_USB | FAULT_INTERRUPT_RATE_TICK | FAULT_SAFETY_REDUNDANCY)
 
 extern uint8_t fault_status;
 extern uint32_t faults;

@@ -5,7 +5,8 @@ from panda.tests.hitl.base import PandaTestCase, panda_test
 from panda.tests.hitl.helpers import clear_can_buffers
 
 # board/sys/sys.h PERMANENT_FAULTS
-PERMANENT_FAULT_BITS = (1, 2, 3, 4, 7, 8, 15, 21)
+PERMANENT_FAULT_BITS = (1, 2, 3, 4, 7, 8, 15, 19, 21)
+FAULT_SAFETY_REDUNDANCY_BIT = 19
 FAULT_SIREN_MALFUNCTION_BIT = 25
 FAULT_INTERRUPT_RATE_CAN_1_BIT = 2
 
@@ -74,6 +75,19 @@ class TestSafety(PandaTestCase):
     assert h['hardfault_reset']
     assert h['safety_mode'] == CarParams.SafetyModel.silent
     assert not h['controls_allowed']
+
+  def test_safety_redundancy_fault(self):
+    p = self.p
+    p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    p.inject_safety_redundancy_fault()
+    t = time.monotonic()
+    while not ((h := p.health())['faults'] & (1 << FAULT_SAFETY_REDUNDANCY_BIT)) and (time.monotonic() - t) < 3:
+      p.send_heartbeat(engaged=False)
+      time.sleep(0.1)
+    assert h['faults'] & (1 << FAULT_SAFETY_REDUNDANCY_BIT)
+    assert h['safety_mode'] == CarParams.SafetyModel.silent
+    assert not h['controls_allowed']
+    p.reset()
 
   def test_stack_overflow_resets_to_silent(self):
     p = self.p

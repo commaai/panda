@@ -679,6 +679,9 @@ class Panda:
   def inject_nmi(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xec, 0, 0, b'', expect_disconnect=True)
 
+  def inject_safety_redundancy_fault(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, 0, 0, b'')
+
   def inject_mpu_fault(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xee, 0, 0, b'', expect_disconnect=True)
 

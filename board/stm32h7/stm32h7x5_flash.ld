@@ -161,6 +161,10 @@ SECTIONS
     *(.data.current_safety_param .bss.current_safety_param)
     *(.data.current_hooks .bss.current_hooks)
     *(.data.current_safety_config .bss.current_safety_config)
+    *(.data.controls_allowed_inv .bss.controls_allowed_inv)
+    *(.data.current_safety_mode_inv .bss.current_safety_mode_inv)
+    *(.data.current_safety_param_inv .bss.current_safety_param_inv)
+    *(.data.safety_state_invalid .bss.safety_state_invalid)
     . = ALIGN(64);
     _esafety = .;
 
