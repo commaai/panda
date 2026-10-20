@@ -200,7 +200,6 @@ void init_registers(void);
 
 void mpu_safety_open(void);
 void mpu_safety_close(void);
-bool mpu_shadow_write(void);
 
 // ******************** simple_watchdog ********************
 

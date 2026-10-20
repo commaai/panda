@@ -288,7 +288,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xee: write controls_allowed outside safety, for testing
     case 0xee:
-      controls_allowed = true;
+      controls_allowed = !controls_allowed;
       break;
     // **** 0xf0: run the stack into its MPU guard, for testing
     case 0xf0:

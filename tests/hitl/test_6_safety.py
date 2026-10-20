@@ -64,15 +64,21 @@ class TestSafety(PandaTestCase):
     assert h['safety_mode'] == CarParams.SafetyModel.silent
     assert not h['controls_allowed']
 
-  def test_mpu_fault_shadow(self):
+  def test_mpu_fault(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
     p.inject_mpu_fault()
-    h = p.health()
-    assert h['faults'] & (1 << FAULT_MPU_BIT)
-    assert h['fault_status'] == 1
-    assert h['safety_mode'] == CarParams.SafetyModel.allOutput
-    assert not h['hardfault_reset']
+    if FAULT_MPU_BIT in PERMANENT_FAULT_BITS:
+      p.reconnect()
+      h = p.health()
+      assert h['hardfault_reset']
+      assert h['safety_mode'] == CarParams.SafetyModel.silent
+    else:
+      # flagged at the next safety hook, raised by mpu_check() at 1 Hz
+      time.sleep(2.5)
+      h = p.health()
+      assert h['faults'] & (1 << FAULT_MPU_BIT)
+      assert h['safety_mode'] == CarParams.SafetyModel.allOutput
     p.reset()
 
   def test_stack_overflow_resets_to_silent(self):
