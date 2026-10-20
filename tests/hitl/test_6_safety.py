@@ -5,9 +5,9 @@ from panda.tests.hitl.base import PandaTestCase, panda_test
 from panda.tests.hitl.helpers import clear_can_buffers
 
 # board/sys/sys.h PERMANENT_FAULTS
-PERMANENT_FAULT_BITS = (1, 2, 3, 4, 7, 8, 15, 18, 21, 23)
+PERMANENT_FAULT_BITS = (1, 2, 3, 4, 7, 8, 15, 21)
 FAULT_SIREN_MALFUNCTION_BIT = 25
-FAULT_REGISTER_DIVERGENT_BIT = 18
+FAULT_INTERRUPT_RATE_CAN_1_BIT = 2
 
 
 class TestSafety(PandaTestCase):
@@ -87,7 +87,7 @@ class TestSafety(PandaTestCase):
     time.sleep(0.05)
     assert (0x1aa, b"before", 0) in jungle.can_recv()
 
-    p.inject_fault(FAULT_REGISTER_DIVERGENT_BIT)
+    p.inject_fault(FAULT_INTERRUPT_RATE_CAN_1_BIT)
     p.can_send(0x1aa, b"after", 0)
     time.sleep(0.05)
     assert all(addr != 0x1aa for addr, _, _ in jungle.can_recv())
