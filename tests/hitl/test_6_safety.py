@@ -4,10 +4,9 @@ from opendbc.car.structs import CarParams
 from panda.tests.hitl.base import PandaTestCase, panda_test
 from panda.tests.hitl.helpers import clear_can_buffers
 
-# board/sys/sys.h PERMANENT_FAULTS
-PERMANENT_FAULT_BITS = (1, 2, 3, 4, 7, 8, 15, 21)
+# keep in sync with PERMANENT_FAULTS, see board/sys/sys.h
+PERMANENT_FAULT_BITS = ()
 FAULT_SIREN_MALFUNCTION_BIT = 25
-FAULT_INTERRUPT_RATE_CAN_1_BIT = 2
 
 
 class TestSafety(PandaTestCase):
@@ -77,6 +76,8 @@ class TestSafety(PandaTestCase):
 
   @panda_test(needs_jungle=True)
   def test_fault_stops_tx(self):
+    if not PERMANENT_FAULT_BITS:
+      self.skipTest("no permanent faults")
     p = self.p
     jungle = self.panda_jungle
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
@@ -87,7 +88,7 @@ class TestSafety(PandaTestCase):
     time.sleep(0.05)
     assert (0x1aa, b"before", 0) in jungle.can_recv()
 
-    p.inject_fault(FAULT_INTERRUPT_RATE_CAN_1_BIT)
+    p.inject_fault(PERMANENT_FAULT_BITS[0])
     p.can_send(0x1aa, b"after", 0)
     time.sleep(0.05)
     assert all(addr != 0x1aa for addr, _, _ in jungle.can_recv())
