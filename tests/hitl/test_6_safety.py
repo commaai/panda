@@ -75,6 +75,16 @@ class TestSafety(PandaTestCase):
     assert h['safety_mode'] == CarParams.SafetyModel.silent
     assert not h['controls_allowed']
 
+  def test_stack_overflow_resets_to_silent(self):
+    p = self.p
+    p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    p.inject_stack_overflow()
+    p.reconnect()
+    h = p.health()
+    assert h['hardfault_reset']
+    assert h['safety_mode'] == CarParams.SafetyModel.silent
+    assert not h['controls_allowed']
+
   def test_nmi_resets_to_silent(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
