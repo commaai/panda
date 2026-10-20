@@ -27,6 +27,11 @@ void __initialize_hardware_early(void) {
 void fault_safe_state(void) {
 }
 
+// no MPU in the bootstub
+bool mpu_shadow_write(void) {
+  return false;
+}
+
 void fail(void) {
   soft_flasher_start();
 }

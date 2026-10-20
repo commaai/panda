@@ -76,6 +76,8 @@ void NMI_Handler(void) {
 }
 
 void HardFault_Handler(void) {
-  fault_cookie = HARDFAULT_COOKIE;
-  NVIC_SystemReset();
+  if (!mpu_shadow_write()) {
+    fault_cookie = HARDFAULT_COOKIE;
+    NVIC_SystemReset();
+  }
 }

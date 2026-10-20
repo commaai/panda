@@ -2,6 +2,7 @@
 
 // linker symbols, see stm32h7x5_flash.ld
 extern uint32_t _ssafety;
+extern uint32_t _esafety;
 extern uint32_t _stack_guard;
 
 #define MPU_REGION_SAFETY 0U
@@ -76,4 +77,21 @@ void mpu_check(void) {
   if (!ok) {
     fault_occurred(FAULT_REGISTER_DIVERGENT);
   }
+}
+
+// shadow mode until FAULT_MPU is permanent: a write to the safety state from outside the safety code
+// is logged and let through, the next mpu_safety_close() enables the region again
+bool mpu_shadow_write(void) {
+  uint32_t mmfsr = SCB->CFSR & SCB_CFSR_MEMFAULTSR_Msk;
+  uint32_t addr = SCB->MMFAR;
+  bool shadow = ((PERMANENT_FAULTS & FAULT_MPU) == 0U) && (mmfsr == (SCB_CFSR_DACCVIOL_Msk | SCB_CFSR_MMARVALID_Msk)) &&
+                (addr >= (uint32_t)&_ssafety) && (addr < (uint32_t)&_esafety);
+  if (shadow) {
+    SCB->CFSR = mmfsr;
+    SCB->HFSR = SCB_HFSR_FORCED_Msk;
+    MPU->RNR = MPU_REGION_SAFETY;
+    MPU->RASR &= ~MPU_RASR_ENABLE_Msk;
+    fault_occurred(FAULT_MPU);
+  }
+  return shadow;
 }

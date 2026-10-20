@@ -6,6 +6,7 @@ from panda.tests.hitl.base import PandaTestCase
 # keep in sync with PERMANENT_FAULTS, see board/sys/sys.h
 PERMANENT_FAULT_BITS = ()
 FAULT_SIREN_MALFUNCTION_BIT = 25
+FAULT_MPU_BIT = 29
 
 
 class TestSafety(PandaTestCase):
@@ -63,15 +64,16 @@ class TestSafety(PandaTestCase):
     assert h['safety_mode'] == CarParams.SafetyModel.silent
     assert not h['controls_allowed']
 
-  def test_mpu_fault_resets_to_silent(self):
+  def test_mpu_fault_shadow(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
     p.inject_mpu_fault()
-    p.reconnect()
     h = p.health()
-    assert h['hardfault_reset']
-    assert h['safety_mode'] == CarParams.SafetyModel.silent
-    assert not h['controls_allowed']
+    assert h['faults'] & (1 << FAULT_MPU_BIT)
+    assert h['fault_status'] == 1
+    assert h['safety_mode'] == CarParams.SafetyModel.allOutput
+    assert not h['hardfault_reset']
+    p.reset()
 
   def test_stack_overflow_resets_to_silent(self):
     p = self.p
