@@ -163,6 +163,9 @@ static void tick_handler(void) {
 
     // decimated to 1Hz
     if (loop_counter == 0U) {
+      static timer_check_t tick_timer_check = {0};
+      timer_check(&tick_timer_check, 1000000U);
+
       // set green LED to be controls allowed
       led_set(LED_GREEN, controls_allowed);
 

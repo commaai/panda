@@ -314,6 +314,15 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xf5:
       relay_readback_inject = true;
       break;
+    // **** 0xe9: set the microsecond timer prescaler, for testing
+    case 0xe9:
+      register_set(&(MICROSECOND_TIMER->PSC), req->param1, 0xFFFFU);
+      MICROSECOND_TIMER->EGR = TIM_EGR_UG;
+      break;
+    // **** 0xfa: offset the second harness ADC acquisition, for testing
+    case 0xfa:
+      harness_adc_check_offset_mV = req->param1;
+      break;
     #endif
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:

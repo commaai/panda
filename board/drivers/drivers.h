@@ -125,7 +125,11 @@ struct harness_t {
   uint16_t sbu2_voltage_mV;
   bool relay_driven;
   bool sbu_adc_lock;
+  uint8_t adc_mismatches;
 };
+
+#define HARNESS_ADC_AGREEMENT_MV 100
+#define HARNESS_ADC_MISMATCH_FAULT 8U
 extern struct harness_t harness;
 
 struct harness_configuration {
@@ -159,6 +163,11 @@ typedef struct interrupt {
   uint32_t call_rate_fault;
 } interrupt;
 
+typedef struct {
+  uint32_t last_ts;
+  uint8_t mismatches;
+} timer_check_t;
+void timer_check(timer_check_t *check, uint32_t expected_us);
 void interrupt_timer_init(void);
 uint32_t microsecond_timer_get(void);
 

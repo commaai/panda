@@ -697,6 +697,12 @@ class Panda:
   def inject_relay_readback_fault(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf5, 0, 0, b'')
 
+  def set_microsecond_timer_prescaler(self, psc):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe9, int(psc), 0, b'')
+
+  def set_harness_adc_check_offset(self, offset_mV):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xfa, int(offset_mV), 0, b'')
+
   def set_safety_mode(self, mode=CarParams.SafetyModel.silent, param=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
 

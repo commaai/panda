@@ -51,7 +51,9 @@ extern uint8_t global_critical_depth;
 #define FAULT_INTERRUPT_RATE_SPI            (1UL << 23)
 #define FAULT_SIREN_MALFUNCTION             (1UL << 25)
 #define FAULT_HEARTBEAT_LOOP_WATCHDOG       (1UL << 26)
+#define FAULT_ADC                           (1UL << 24)
 #define FAULT_INTERRUPT_RATE_SOUND_DMA      (1UL << 27)
+#define FAULT_TIMER                         (1UL << 28)
 
 // permanent faults put panda in the safe state until reset
 // TODO: add FAULT_REGISTER_DIVERGENT and FAULT_INTERRUPT_RATE_SPI once their 3X fleet rate is root caused
@@ -59,7 +61,7 @@ extern uint8_t global_critical_depth;
                           FAULT_INTERRUPT_RATE_CAN_3 | FAULT_INTERRUPT_RATE_INTERRUPTS | FAULT_INTERRUPT_RATE_SPI_DMA | \
                           FAULT_INTERRUPT_RATE_USB | FAULT_INTERRUPT_RATE_TICK | FAULT_SELF_TEST_CPU | \
                           FAULT_SELF_TEST_RAM | FAULT_SELF_TEST_FLASH | FAULT_ECC | FAULT_INTERRUPT_MISSING | \
-                          FAULT_CLOCK | FAULT_OUTPUT_READBACK)
+                          FAULT_CLOCK | FAULT_OUTPUT_READBACK | FAULT_ADC | FAULT_TIMER)
 
 extern uint8_t fault_status;
 extern uint32_t faults;

@@ -66,6 +66,10 @@ static void adc_calibrate_vdda(void) {
   print("  AVDD: 0x"); puth(adc_avdd_mV); print(" mV\n");
 }
 
+bool adc_avdd_plausible(uint32_t expected_mV) {
+  return (adc_avdd_mV > ((expected_mV * 9U) / 10U)) && (adc_avdd_mV < ((expected_mV * 11U) / 10U));
+}
+
 uint16_t adc_get_mV(const adc_signal_t *signal) {
   uint16_t ret = 0;
 
