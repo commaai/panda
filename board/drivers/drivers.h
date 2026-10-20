@@ -181,7 +181,7 @@ void init_interrupts(bool check_rate_limit);
 // ******************** registers ********************
 
 // 10 bit hash with 23 as a prime
-#define REGISTER_MAP_SIZE 0x3FFU
+#define REGISTER_MAP_SIZE 0x400U
 #define HASHING_PRIME 23U
 
 // Do not put bits in the check mask that get changed by the hardware

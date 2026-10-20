@@ -17,7 +17,7 @@ static reg register_map[REGISTER_MAP_SIZE];
 // See: tests/development/register_hashmap_spread.py
 // Also, check the collision warnings in the debug output, and minimize those.
 static uint16_t hash_addr(uint32_t input){
-  return (((input >> 16U) ^ ((((input + 1U) & 0xFFFFU) * HASHING_PRIME) & 0xFFFFU)) & REGISTER_MAP_SIZE);
+  return (((input >> 16U) ^ ((((input + 1U) & 0xFFFFU) * HASHING_PRIME) & 0xFFFFU)) & (REGISTER_MAP_SIZE - 1U));
 }
 
 // Do not put bits in the check mask that get changed by the hardware
