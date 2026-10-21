@@ -33,6 +33,7 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
   if ((faults & PERMANENT_FAULTS) != 0U) {
     mode_copy = SAFETY_SILENT;
   }
+  mpu_safety_open();
   int err = set_safety_hooks(mode_copy, param);
   if (err == -1) {
     print("Error: safety set mode failed. Falling back to SILENT\n");
@@ -41,6 +42,7 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
     // TERMINAL ERROR: we can't continue if SILENT safety mode isn't succesfully set
     assert_fatal(err == 0, "Error: Failed setting SILENT mode. Hanging\n");
   }
+  mpu_safety_close();
   safety_tx_blocked = 0;
   safety_rx_invalid = 0;
 
@@ -196,7 +198,9 @@ static void tick_handler(void) {
       if (controls_allowed && !heartbeat_engaged) {
         heartbeat_engaged_mismatches += 1U;
         if (heartbeat_engaged_mismatches >= 3U) {
+          mpu_safety_open();
           controls_allowed = false;
+          mpu_safety_close();
         }
       } else {
         heartbeat_engaged_mismatches = 0U;
@@ -253,7 +257,10 @@ static void tick_handler(void) {
       ignition_can_cnt += 1U;
 
       // synchronous safety check
+      mpu_safety_open();
       safety_tick();
+      mpu_safety_close();
+      mpu_check();
     }
 
     loop_counter++;
@@ -304,6 +311,8 @@ int main(void) {
   if (current_board->has_fan) {
     fan_init();
   }
+
+  mpu_init();
 
   // init to SILENT and can silent
   set_safety_mode(SAFETY_SILENT, 0U);

@@ -196,6 +196,11 @@ void register_clear_bits(volatile uint32_t *addr, uint32_t val);
 void check_registers(void);
 void init_registers(void);
 
+// ******************** mpu ********************
+
+void mpu_safety_open(void);
+void mpu_safety_close(void);
+
 // ******************** simple_watchdog ********************
 
 typedef struct simple_watchdog_state_t {

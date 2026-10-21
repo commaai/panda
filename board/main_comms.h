@@ -61,6 +61,14 @@ void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   UNUSED(len);
 }
 
+#ifdef ALLOW_DEBUG
+static void __attribute__((noinline)) stack_guard_hit(void) {
+  volatile uint32_t frame[4];
+  frame[0] = 0U;
+  UNUSED(frame);
+}
+#endif
+
 int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   unsigned int resp_len = 0;
   uint32_t time;
@@ -277,6 +285,15 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // **** 0xec: inject NMI, for testing
     case 0xec:
       SCB->ICSR = SCB_ICSR_NMIPENDSET_Msk;
+      break;
+    // **** 0xee: write controls_allowed outside safety, for testing
+    case 0xee:
+      controls_allowed = !controls_allowed;
+      break;
+    // **** 0xf0: run the stack into its MPU guard, for testing
+    case 0xf0:
+      __set_MSP((uint32_t)&_stack_guard + 32U);
+      stack_guard_hit();
       break;
     #endif
     // **** 0xf1: Clear CAN ring buffer.
