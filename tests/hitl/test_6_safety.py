@@ -6,7 +6,7 @@ from panda.tests.hitl.base import PandaTestCase
 # keep in sync with PERMANENT_FAULTS, see board/sys/sys.h
 PERMANENT_FAULT_BITS = ()
 FAULT_SIREN_MALFUNCTION_BIT = 25
-FAULT_MPU_BIT = 29
+FAULT_MPU_BIT = 28
 
 
 class TestSafety(PandaTestCase):
