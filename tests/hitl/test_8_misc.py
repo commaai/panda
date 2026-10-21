@@ -44,7 +44,7 @@ class TestMisc(PandaTestCase):
           panda_jungle.set_ignition(True)
         elif wakeup == "1":
           # the panda only wakes up on one of FDCAN2's two pairs, CAN1 or OBD depending on the orientation.
-          # which UP lane is on that pair depends on how the DUT's OBD-C cable is plugged in, so send on both
+          # those are the UP's buses 1 and 3 in either orientation (see LANES in ultimate_provisioning), so send on both
           for bus in (1, 3):
             panda_jungle.can_send(0x123, b'\x01\x02', bus)
         else:

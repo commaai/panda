@@ -24,35 +24,17 @@ fi
 git -C /data/hardware fetch --depth 1 origin ${HARDWARE_REF}
 git -C /data/hardware checkout -qf FETCH_HEAD
 
-pkill -f panda_up.py || true
-PYTHONPATH=/data/hardware/ultimate_provisioning python3 -c "from ultimate_provisioning import UP; UP().reset_obdc_gpio()"
 PYTHONPATH=/data/hardware/ultimate_provisioning python3 -m ultimate_provisioning ready
 """)
 }
 
 // serve the UP's harness and CAN to the tests on the DUT, see tests/hitl/up.py
 def upStart(String ip) {
-  upHost(ip, "UP: start", """
-cat > /tmp/panda_up.py <<'PY'
-${readFile("tests/hitl/up.py")}
-PY
-PYTHONUNBUFFERED=1 PYTHONPATH=/data/hardware/ultimate_provisioning setsid nohup python3 /tmp/panda_up.py serve > /tmp/panda_up.log 2>&1 < /dev/null &
-for i in \$(seq 30); do
-  if grep -q serving /tmp/panda_up.log; then
-    break
-  fi
-  sleep 0.5
-done
-cat /tmp/panda_up.log
-grep -q serving /tmp/panda_up.log
-""")
+  upHost(ip, "UP: start", "PYTHONPATH=/data/hardware/ultimate_provisioning python3 -m ultimate_provisioning jungle --serve")
 }
 
 def upStop(String ip) {
-  upHost(ip, "UP: stop", """
-pkill -f panda_up.py || true
-PYTHONPATH=/data/hardware/ultimate_provisioning python3 -c "from ultimate_provisioning import UP; UP().reset_obdc_gpio()"
-""")
+  upHost(ip, "UP: stop", "PYTHONPATH=/data/hardware/ultimate_provisioning python3 -m ultimate_provisioning release")
 }
 
 // run on the DUT, through its UP
