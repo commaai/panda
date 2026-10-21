@@ -44,10 +44,15 @@ static RAMECC_MonitorTypeDef *const ecc_monitors[] = {
 #define SELF_TEST_RAM 1U
 #define SELF_TEST_FLASH 2U
 static uint8_t self_test_fail = 0U;
+static uint32_t flash_crc_flip = 0U;
 
+// the flash injection goes through the CRC compare
 void self_test_inject(uint8_t test) {
-  if (test <= SELF_TEST_FLASH) {
+  if (test == SELF_TEST_FLASH) {
+    flash_crc_flip = 1U;
+  } else if (test <= SELF_TEST_RAM) {
     self_test_fail |= (uint8_t)(1U << test);
+  } else {
   }
 }
 
@@ -130,7 +135,7 @@ static bool ram_test_skip(uint32_t start, uint32_t end) {
 
 // next block of the running pass, wraps around all regions
 static bool ram_test_next(void) {
-  // SRAM1/2 and SRAM4 only hold DMA buffers, which DMA can write mid test, they're covered at boot and by ECC
+  // SRAM1/2 and SRAM4 hold the DMA buffers, which DMA can write mid test, and the test's own backup, they're covered at boot and by ECC
   static const ram_region ram_regions[] = {
     {(uint32_t)&_dtcmram_start, (uint32_t)&_dtcmram_end},
     {(uint32_t)&_saxisram, (uint32_t)&_eaxisram},
@@ -171,6 +176,10 @@ static bool flash_test_next(void) {
   crc = crc32_update(crc, &((const uint8_t *)_app_start)[offset], n);
   offset += n;
   if (offset >= len) {
+#ifdef ALLOW_DEBUG
+    crc ^= flash_crc_flip;
+    flash_crc_flip = 0U;
+#endif
     ok = (len != 0U) && ((crc ^ 0xFFFFFFFFU) == flash_crc_stored());
     offset = 0U;
     crc = 0xFFFFFFFFU;
@@ -185,7 +194,6 @@ static void self_test_check(bool cpu_ok, bool ram_ok, bool flash_ok) {
 #ifdef ALLOW_DEBUG
   cpu = cpu && !self_test_injected(SELF_TEST_CPU);
   ram = ram && !self_test_injected(SELF_TEST_RAM);
-  flash = flash && !self_test_injected(SELF_TEST_FLASH);
 #endif
   if (!cpu) {
     fault_occurred(FAULT_SELF_TEST_CPU);
