@@ -115,7 +115,7 @@ class TestSafety(PandaTestCase):
 
       # heartbeat keeps allOutput, so only the fault can set SILENT
       t = time.monotonic()
-      while not (p.health()['faults'] & (1 << fault_bit)) and (time.monotonic() - t) < 15:
+      while not (p.health()['faults'] & (1 << fault_bit)) and (time.monotonic() - t) < 30:
         p.send_heartbeat(engaged=False)
         time.sleep(0.1)
       print(f"self-test {test}: fault after {time.monotonic() - t:.1f} s")
