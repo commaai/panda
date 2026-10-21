@@ -21,7 +21,6 @@ class TestMisc(PandaTestCase):
     p = self.p
     panda_jungle = self.panda_jungle
     serial = p.get_usb_serial()
-    panda_jungle.set_obd(True)
 
     for orientation in (Panda.HARNESS_STATUS_FLIPPED, Panda.HARNESS_STATUS_NORMAL):
       panda_jungle.set_harness_orientation(orientation)

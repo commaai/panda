@@ -1,10 +1,69 @@
-def phone(String ip, String step_label, String cmd) {
+// the DUTs sit on ultimate provisioning (UP) boards, which stand in for the jungle.
+// DUTs are reached through their UP, over the USB network between them
+UP_DUT_IP = "10.254.254.2"
+HARDWARE_REF = "ultimate-provisioning"
+SSH_OPTS = "-o ControlMaster=no -o ControlPath=none -o ConnectTimeout=5 -o ServerAliveInterval=5 -o ServerAliveCountMax=12 -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+
+def upHost(String ip, String step_label, String cmd) {
+  withCredentials([file(credentialsId: 'id_rsa', variable: 'key_file')]) {
+    sh label: step_label, script: """
+ssh ${SSH_OPTS} -i ${key_file} 'comma@${ip}' /usr/bin/bash <<'END'
+set -e
+source /etc/profile
+${cmd}
+END"""
+  }
+}
+
+def upSetup(String ip) {
+  upHost(ip, "UP: setup DUT", """
+if [ ! -d /data/hardware ]; then
+  git clone --depth 1 --filter=blob:none --sparse https://github.com/commaai/hardware.git /data/hardware
+  git -C /data/hardware sparse-checkout set ultimate_provisioning
+fi
+git -C /data/hardware fetch --depth 1 origin ${HARDWARE_REF}
+git -C /data/hardware checkout -qf FETCH_HEAD
+
+pkill -f panda_up.py || true
+PYTHONPATH=/data/hardware/ultimate_provisioning python3 -c "from ultimate_provisioning import UP; UP().reset_obdc_gpio()"
+PYTHONPATH=/data/hardware/ultimate_provisioning python3 -m ultimate_provisioning ready
+""")
+}
+
+// serve the UP's harness and CAN to the tests on the DUT, see tests/hitl/up.py
+def upStart(String ip) {
+  upHost(ip, "UP: start", """
+cat > /tmp/panda_up.py <<'PY'
+${readFile("tests/hitl/up.py")}
+PY
+PYTHONUNBUFFERED=1 PYTHONPATH=/data/hardware/ultimate_provisioning setsid nohup python3 /tmp/panda_up.py serve > /tmp/panda_up.log 2>&1 < /dev/null &
+for i in \$(seq 30); do
+  if grep -q serving /tmp/panda_up.log; then
+    break
+  fi
+  sleep 0.5
+done
+cat /tmp/panda_up.log
+grep -q serving /tmp/panda_up.log
+""")
+}
+
+def upStop(String ip) {
+  upHost(ip, "UP: stop", """
+pkill -f panda_up.py || true
+PYTHONPATH=/data/hardware/ultimate_provisioning python3 -c "from ultimate_provisioning import UP; UP().reset_obdc_gpio()"
+""")
+}
+
+// run on the DUT, through its UP
+def device(String ip, String step_label, String cmd) {
   withCredentials([file(credentialsId: 'id_rsa', variable: 'key_file')]) {
     def ssh_cmd = """
-ssh -tt -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ConnectionAttempts=3 -o ServerAliveInterval=10 -o ServerAliveCountMax=3 -i ${key_file} 'comma@${ip}' /usr/bin/bash <<'END'
+ssh ${SSH_OPTS} -o ProxyCommand='ssh ${SSH_OPTS} -i ${key_file} -W %h:%p comma@${ip}' -i ${key_file} 'comma@${UP_DUT_IP}' exec setpriv --pdeathsig HUP /usr/bin/bash <<'END'
 
 set -e
 
+trap 'kill 0' HUP # stop this process group on SSH disconnect
 
 source ~/.bash_profile
 if [ -f /etc/profile ]; then
@@ -37,16 +96,22 @@ END"""
   }
 }
 
-def phone_steps(String device_type, steps) {
-  lock(resource: "", label: device_type, inversePrecedence: true, variable: 'device_ip', quantity: 1) {
+def device_steps(steps) {
+  lock(resource: "", label: "up", inversePrecedence: true, variable: 'up_ip', quantity: 1, resourceSelectStrategy: 'random') {
     timeout(time: 20, unit: 'MINUTES') {
       retry (3) {
+        upSetup(up_ip)
         def date = sh(script: 'date', returnStdout: true).trim()
-        phone(device_ip, "set time", "date -s '${date}'")
-        phone(device_ip, "git checkout", readFile("tests/setup_device_ci.sh"))
+        device(up_ip, "set time", "date -s '${date}'")
+        device(up_ip, "git checkout", readFile("tests/setup_device_ci.sh"))
       }
-      steps.each { item ->
-        phone(device_ip, item[0], item[1])
+      try {
+        upStart(up_ip)
+        steps.each { item ->
+          device(up_ip, item[0], item[1])
+        }
+      } finally {
+        upStop(up_ip)
       }
     }
   }
@@ -70,65 +135,28 @@ pipeline {
   }
 
   stages {
-    stage ('Acquire resource locks') {
-      options {
-        lock(resource: "pandas")
+    stage('Setup') {
+      steps {
+        timeout(time: 20, unit: 'MINUTES') {
+          deleteDir()
+          script {
+            def revision = checkout scm
+            env.GIT_COMMIT = revision.GIT_COMMIT
+            env.GIT_BRANCH = revision.GIT_BRANCH
+          }
+        }
       }
-      stages {
-        stage('Setup') {
-          steps {
-            timeout(time: 20, unit: 'MINUTES') {
-              deleteDir()
-              script {
-                def revision = checkout scm
-                env.GIT_COMMIT = revision.GIT_COMMIT
-                env.GIT_BRANCH = revision.GIT_BRANCH
-              }
-              sh 'PYTHONWARNINGS=default ./setup.sh'
-            }
-          }
-        }
-        stage('reset hardware') {
-          steps {
-            script {
-              retry (3) {
-                timeout(time: 3, unit: 'MINUTES') {
-                  sh script: """#!/usr/bin/env bash
-set -e
-source .venv/bin/activate
-python3 ./tests/hitl/reset_jungles.py
-""", label: "reset hardware"
-                }
-              }
-            }
-          }
-        }
+    }
 
-        stage('parallel tests') {
-          parallel {
-            stage('test cuatro') {
-              agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root'; reuseNode true } }
-              steps {
-                phone_steps("panda-cuatro", [
-                  ["build", "scons"],
-                  ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
-                  ["test", "cd tests/hitl && HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py"],
-                ])
-              }
-            }
-
-            stage('test tres') {
-              agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root'; reuseNode true } }
-              steps {
-                phone_steps("panda-tres", [
-                  ["build", "scons"],
-                  ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
-                  ["test", "cd tests/hitl && HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py"],
-                ])
-              }
-            }
-
-          }
+    stage('test cuatro') {
+      agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root'; reuseNode true } }
+      steps {
+        script {
+          device_steps([
+            ["build", "scons"],
+            ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
+            ["test", "cd tests/hitl && HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py"],
+          ])
         }
       }
     }
