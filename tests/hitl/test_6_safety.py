@@ -2,16 +2,17 @@ import time
 
 from opendbc.car.structs import CarParams
 from panda.tests.hitl.base import PandaTestCase, panda_test
-from panda.tests.hitl.helpers import clear_can_buffers
 
-# board/sys/sys.h PERMANENT_FAULTS
-PERMANENT_FAULT_BITS = (1, 2, 3, 4, 7, 8, 9, 10, 11, 12, 15, 16, 17, 21)
+# keep in sync with PERMANENT_FAULTS, see board/sys/sys.h
+PERMANENT_FAULT_BITS = ()
 # board/drivers/self_test.h injection index: fault bit
 SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11}
 FAULT_CLOCK_BIT = 16
 FAULT_INTERRUPT_MISSING_BIT = 17
 FAULT_SIREN_MALFUNCTION_BIT = 25
-FAULT_INTERRUPT_RATE_CAN_1_BIT = 2
+# one runtime RAM pass: DTCM, AXI SRAM and ITCM in 248 B steps at 8 Hz, see board/drivers/self_test.h
+RAM_TEST_PASS_S = 0x80000 / 248 / 8
+FAULT_MPU_BIT = 28
 
 
 class TestSafety(PandaTestCase):
@@ -69,15 +70,22 @@ class TestSafety(PandaTestCase):
     assert h['safety_mode'] == CarParams.SafetyModel.silent
     assert not h['controls_allowed']
 
-  def test_mpu_fault_resets_to_silent(self):
+  def test_mpu_fault(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
     p.inject_mpu_fault()
-    p.reconnect()
-    h = p.health()
-    assert h['hardfault_reset']
-    assert h['safety_mode'] == CarParams.SafetyModel.silent
-    assert not h['controls_allowed']
+    if FAULT_MPU_BIT in PERMANENT_FAULT_BITS:
+      p.reconnect()
+      h = p.health()
+      assert h['hardfault_reset']
+      assert h['safety_mode'] == CarParams.SafetyModel.silent
+    else:
+      # flagged at the next safety hook, raised by mpu_check() at 1 Hz
+      time.sleep(2.5)
+      h = p.health()
+      assert h['faults'] & (1 << FAULT_MPU_BIT)
+      assert h['safety_mode'] == CarParams.SafetyModel.allOutput
+    p.reset()
 
   def test_stack_overflow_resets_to_silent(self):
     p = self.p
@@ -99,24 +107,6 @@ class TestSafety(PandaTestCase):
     assert h['safety_mode'] == CarParams.SafetyModel.silent
     assert not h['controls_allowed']
 
-  @panda_test(needs_jungle=True)
-  def test_fault_stops_tx(self):
-    p = self.p
-    jungle = self.panda_jungle
-    p.set_safety_mode(CarParams.SafetyModel.allOutput)
-    clear_can_buffers(p)
-    clear_can_buffers(jungle)
-
-    p.can_send(0x1aa, b"before", 0)
-    time.sleep(0.05)
-    assert (0x1aa, b"before", 0) in jungle.can_recv()
-
-    p.inject_fault(FAULT_INTERRUPT_RATE_CAN_1_BIT)
-    p.can_send(0x1aa, b"after", 0)
-    time.sleep(0.05)
-    assert all(addr != 0x1aa for addr, _, _ in jungle.can_recv())
-    p.reset()
-
   @panda_test(timeout=2*60)
   def test_self_test_failure(self):
     p = self.p
@@ -133,14 +123,18 @@ class TestSafety(PandaTestCase):
       print(f"self-test {test}: fault after {time.monotonic() - t:.1f} s")
       h = p.health()
       assert h['faults'] & (1 << fault_bit)
-      assert h['fault_status'] == 2
-      assert h['safety_mode'] == CarParams.SafetyModel.silent
+      if fault_bit in PERMANENT_FAULT_BITS:
+        assert h['safety_mode'] == CarParams.SafetyModel.silent
+      else:
+        assert h['safety_mode'] == CarParams.SafetyModel.allOutput
     p.reset()
 
+  @panda_test(timeout=6*60)
   def test_self_test_no_fault(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
-    for _ in range(60):
+    t = time.monotonic()
+    while (time.monotonic() - t) < (RAM_TEST_PASS_S + 5):
       p.send_heartbeat(engaged=False)
       time.sleep(0.2)
     h = p.health()

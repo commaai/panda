@@ -55,8 +55,15 @@ ENTRY(Reset_Handler)
 /* Highest address of the user mode stack */
 enter_bootloader_mode = 0x38001FFC;
 fault_cookie = 0x38003FFC;
+self_test_cookie = 0x38003FF8;
 
 _estack = 0x20020000;    /* end of RAM */
+_dtcmram_start = ORIGIN(DTCMRAM);
+_dtcmram_end = ORIGIN(DTCMRAM) + LENGTH(DTCMRAM);
+_sram12_start = ORIGIN(SRAM12);
+_sram12_end = ORIGIN(SRAM12) + LENGTH(SRAM12);
+_sram4_start = ORIGIN(SRAM4);
+_sram4_end = ORIGIN(SRAM4) + LENGTH(SRAM4);
 _axisram_start = ORIGIN(AXISRAM);
 _axisram_end = ORIGIN(AXISRAM) + LENGTH(AXISRAM);
 _itcmram_start = ORIGIN(ITCMRAM);
@@ -198,32 +205,31 @@ SECTIONS
     . = ALIGN(8);
     PROVIDE ( end = . );
     PROVIDE ( _end = . );
-    . = ALIGN(32);
+    . = ALIGN(512);
     _stack_guard = .;
-    . = . + 32;
+    . = . + 512;
+    _stack_guard_end = .;
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
   } >DTCMRAM
 
   ASSERT((_esafety - _ssafety) <= 64, "safety state doesn't fit its MPU region")
+  ASSERT(DEFINED(controls_allowed) ? (controls_allowed >= _ssafety && controls_allowed < _esafety) : !DEFINED(safety_tx_hook), "controls_allowed not in the MPU region")
+  ASSERT(DEFINED(current_safety_mode) ? (current_safety_mode >= _ssafety && current_safety_mode < _esafety) : !DEFINED(safety_tx_hook), "current_safety_mode not in the MPU region")
+  ASSERT(DEFINED(current_safety_param) ? (current_safety_param >= _ssafety && current_safety_param < _esafety) : !DEFINED(safety_tx_hook), "current_safety_param not in the MPU region")
+  ASSERT(DEFINED(current_safety_config) ? (current_safety_config >= _ssafety && current_safety_config < _esafety) : !DEFINED(safety_tx_hook), "current_safety_config not in the MPU region")
 
   .itcmram (NOLOAD) :
   {
     . = ALIGN(4);
-    _sitcmram = .;
     *(.itcmram*)
-    . = ALIGN(4);
-    _eitcmram = .;
   } >ITCMRAM
 
   .axisram (NOLOAD) :
   {
     . = ALIGN(4);
-    _saxisram = .;
     *(.axisram*)
-    . = ALIGN(4);
-    _eaxisram = .;
   } >AXISRAM
 
   .sram12 (NOLOAD) :

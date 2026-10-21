@@ -61,6 +61,7 @@ defined in linker script */
 Reset_Handler:
   ldr   sp, =_estack      /* set stack pointer */
   bl __initialize_hardware_early
+  bl ram_test_startup
 
 /* Copy the data segment initializers from flash to SRAM */
   ldr r0, =_sdata
@@ -108,6 +109,14 @@ LoopFillZerobss:
  * @param  None
  * @retval None
 */
+/* the app and body firmware link the real one from self_test.s, the bootstub doesn't test RAM */
+    .section  .text.ram_test_none,"ax",%progbits
+ram_test_none:
+  bx lr
+  .size  ram_test_none, .-ram_test_none
+  .weak  ram_test_startup
+  .thumb_set ram_test_startup, ram_test_none
+
     .section  .text.Default_Handler,"ax",%progbits
 Default_Handler:
 Infinite_Loop:
