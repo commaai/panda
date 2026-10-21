@@ -31,7 +31,7 @@ class TestMisc(PandaTestCase):
         print(f"orientation={orientation} wakeup={wakeup}")
 
         # drop any of the last wakeup's frames that nothing ACKed, they'd wake the panda right away
-        for bus in range(3):
+        for bus in range(4):
           panda_jungle.can_clear(bus)
 
         p.enter_stop_mode()
@@ -42,11 +42,20 @@ class TestMisc(PandaTestCase):
         # wake via ignition or CAN activity
         if wakeup == "ign":
           panda_jungle.set_ignition(True)
+        elif wakeup == "1":
+          # the panda only wakes up on one of FDCAN2's two pairs, CAN1 or OBD depending on the orientation.
+          # which UP lane is on that pair depends on how the DUT's OBD-C cable is plugged in, so send on both
+          for bus in (1, 3):
+            panda_jungle.can_send(0x123, b'\x01\x02', bus)
         else:
           panda_jungle.can_send(0x123, b'\x01\x02', int(wakeup))
 
         # panda should reset and come back
-        assert Panda.wait_for_panda(serial, timeout=10)
+        if not Panda.wait_for_panda(serial, timeout=10):
+          # wake it up with ignition, the UP can't power cycle it for the next tests
+          panda_jungle.set_ignition(True)
+          Panda.wait_for_panda(serial, timeout=10)
+          raise AssertionError(f"panda didn't wake up on {wakeup}, orientation={orientation}")
 
         p.reconnect()
         assert p.health()['uptime'] < 3
