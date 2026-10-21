@@ -246,7 +246,6 @@ static void tick_handler(void) {
 
       // check registers
       check_registers();
-      mpu_check();
 
       // set ignition_can to false after 2s of no CAN seen
       if (ignition_can_cnt > 2U) {
@@ -262,6 +261,7 @@ static void tick_handler(void) {
       mpu_safety_open();
       safety_tick();
       mpu_safety_close();
+      mpu_check();
     }
 
     self_test_tick();

@@ -51,8 +51,8 @@ void mpu_safety_open(void) {
 void mpu_safety_close(void) {
   mpu_safety_depth -= 1U;
   if (mpu_safety_depth == 0U) {
-    (void)memcpy(mpu_safety_copy, _ssafety, sizeof(mpu_safety_copy));
     mpu_set_safety_access(MPU_SAFETY_CLOSED);
+    (void)memcpy(mpu_safety_copy, _ssafety, sizeof(mpu_safety_copy));
   }
   EXIT_CRITICAL();
 }
