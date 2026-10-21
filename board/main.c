@@ -249,7 +249,8 @@ static void tick_handler(void) {
 
       // check registers
       check_registers();
-      if (!clock_check()) {
+      // a dead LSI spins a bounded wait every call, once is enough
+      if (((faults & FAULT_CLOCK) == 0U) && !clock_check()) {
         fault_occurred(FAULT_CLOCK);
       }
       interrupt_timer_check();
