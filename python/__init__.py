@@ -685,6 +685,9 @@ class Panda:
   def inject_stack_overflow(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf0, 0, 0, b'', expect_disconnect=True)
 
+  def inject_self_test_failure(self, test):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xed, test, 0, b'')
+
   def set_safety_mode(self, mode=CarParams.SafetyModel.silent, param=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
 

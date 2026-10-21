@@ -13,10 +13,14 @@ void crc32_init(void) {
   }
 }
 
-uint32_t crc32(const uint8_t *dat, uint32_t len) {
-  uint32_t crc = 0xFFFFFFFFU;
+uint32_t crc32_update(uint32_t crc, const uint8_t *dat, uint32_t len) {
+  uint32_t ret = crc;
   for (uint32_t i = 0U; i < len; i++) {
-    crc = crc32_table[(crc ^ dat[i]) & 0xFFU] ^ (crc >> 8U);
+    ret = crc32_table[(ret ^ dat[i]) & 0xFFU] ^ (ret >> 8U);
   }
-  return crc ^ 0xFFFFFFFFU;
+  return ret;
+}
+
+uint32_t crc32(const uint8_t *dat, uint32_t len) {
+  return crc32_update(0xFFFFFFFFU, dat, len) ^ 0xFFFFFFFFU;
 }

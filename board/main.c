@@ -24,6 +24,7 @@
 
 #include "board/can_comms.h"
 #include "board/main_comms.h"
+#include "board/drivers/self_test.h"
 
 // ****************************** safety mode ******************************
 
@@ -263,6 +264,8 @@ static void tick_handler(void) {
       mpu_check();
     }
 
+    self_test_tick();
+
     loop_counter++;
     loop_counter %= 8U;
   }
@@ -326,6 +329,8 @@ int main(void) {
   // 8Hz timer
   REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK)
   tick_timer_init();
+
+  self_test_init();
 
   // enable USB (right before interrupts or enum can fail!)
   usb_init();

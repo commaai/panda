@@ -55,8 +55,19 @@ ENTRY(Reset_Handler)
 /* Highest address of the user mode stack */
 enter_bootloader_mode = 0x38001FFC;
 fault_cookie = 0x38003FFC;
+self_test_cookie = 0x38003FF8;
 
 _estack = 0x20020000;    /* end of RAM */
+_dtcmram_start = ORIGIN(DTCMRAM);
+_dtcmram_end = ORIGIN(DTCMRAM) + LENGTH(DTCMRAM);
+_sram12_start = ORIGIN(SRAM12);
+_sram12_end = ORIGIN(SRAM12) + LENGTH(SRAM12);
+_sram4_start = ORIGIN(SRAM4);
+_sram4_end = ORIGIN(SRAM4) + LENGTH(SRAM4);
+_axisram_start = ORIGIN(AXISRAM);
+_axisram_end = ORIGIN(AXISRAM) + LENGTH(AXISRAM);
+_itcmram_start = ORIGIN(ITCMRAM);
+_itcmram_end = ORIGIN(ITCMRAM) + LENGTH(ITCMRAM);
 _app_start = 0x08020000; /* Reserve Sector 0(128K) for bootloader */
 
 /* Generate a link error if heap and stack don't fit into RAM */
@@ -197,6 +208,7 @@ SECTIONS
     . = ALIGN(512);
     _stack_guard = .;
     . = . + 512;
+    _stack_guard_end = .;
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);

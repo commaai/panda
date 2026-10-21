@@ -1,11 +1,15 @@
 import time
 
 from opendbc.car.structs import CarParams
-from panda.tests.hitl.base import PandaTestCase
+from panda.tests.hitl.base import PandaTestCase, panda_test
 
 # keep in sync with PERMANENT_FAULTS, see board/sys/sys.h
 PERMANENT_FAULT_BITS = ()
+# board/drivers/self_test.h injection index: fault bit
+SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11}
 FAULT_SIREN_MALFUNCTION_BIT = 25
+# one runtime RAM pass: DTCM, AXI SRAM and ITCM in 248 B steps at 8 Hz, see board/drivers/self_test.h
+RAM_TEST_PASS_S = 0x80000 / 248 / 8
 FAULT_MPU_BIT = 28
 
 
@@ -100,3 +104,37 @@ class TestSafety(PandaTestCase):
     assert h['nmi_reset']
     assert h['safety_mode'] == CarParams.SafetyModel.silent
     assert not h['controls_allowed']
+
+  @panda_test(timeout=2*60)
+  def test_self_test_failure(self):
+    p = self.p
+    for test, fault_bit in SELF_TEST_FAULT_BITS.items():
+      p.reset()
+      p.set_safety_mode(CarParams.SafetyModel.allOutput)
+      p.inject_self_test_failure(test)
+
+      # heartbeat keeps allOutput, so only the fault can set SILENT
+      t = time.monotonic()
+      while not (p.health()['faults'] & (1 << fault_bit)) and (time.monotonic() - t) < 30:
+        p.send_heartbeat(engaged=False)
+        time.sleep(0.1)
+      print(f"self-test {test}: fault after {time.monotonic() - t:.1f} s")
+      h = p.health()
+      assert h['faults'] & (1 << fault_bit)
+      if fault_bit in PERMANENT_FAULT_BITS:
+        assert h['safety_mode'] == CarParams.SafetyModel.silent
+      else:
+        assert h['safety_mode'] == CarParams.SafetyModel.allOutput
+    p.reset()
+
+  @panda_test(timeout=6*60)
+  def test_self_test_no_fault(self):
+    p = self.p
+    p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    t = time.monotonic()
+    while (time.monotonic() - t) < (RAM_TEST_PASS_S + 5):
+      p.send_heartbeat(engaged=False)
+      time.sleep(0.2)
+    h = p.health()
+    assert h['faults'] == 0, f"faults {h['faults']:#x}"
+    assert h['safety_mode'] == CarParams.SafetyModel.allOutput
