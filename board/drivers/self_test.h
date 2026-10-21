@@ -50,14 +50,16 @@ static RAMECC_MonitorTypeDef *const ecc_monitors[] = {
 #define SELF_TEST_CPU 0U
 #define SELF_TEST_RAM 1U
 #define SELF_TEST_FLASH 2U
+#define SELF_TEST_RAM_ECC 3U
+#define SELF_TEST_FLASH_ECC 4U
 static uint8_t self_test_fail = 0U;
 static uint32_t flash_crc_flip = 0U;
 
-// the flash injection goes through the CRC compare
+// the flash CRC injection goes through the CRC compare
 void self_test_inject(uint8_t test) {
   if (test == SELF_TEST_FLASH) {
     flash_crc_flip = 1U;
-  } else if (test <= SELF_TEST_RAM) {
+  } else if (test <= SELF_TEST_FLASH_ECC) {
     self_test_fail |= (uint8_t)(1U << test);
   } else {
   }
@@ -259,13 +261,22 @@ static void self_test_check(bool cpu_ok, bool ram_ok, bool flash_ok) {
   if (!flash) {
     fault_occurred(FAULT_SELF_TEST_FLASH);
   }
-  // a CPU read with a double ECC error bus faults, this catches the DMA reads from flash
-  if ((FLASH->SR1 & FLASH_SR_DBECCERR) != 0U) {
-    fault_occurred(FAULT_ECC);
-  }
+  uint32_t flash_sr = FLASH->SR1;
   uint32_t ecc_sr = 0U;
   for (uint8_t i = 0U; i < ECC_MONITOR_CNT; i++) {
     ecc_sr |= ecc_monitors[i]->SR;
+  }
+#ifdef ALLOW_DEBUG
+  if (self_test_injected(SELF_TEST_FLASH_ECC)) {
+    flash_sr |= FLASH_SR_DBECCERR;
+  }
+  if (self_test_injected(SELF_TEST_RAM_ECC)) {
+    ecc_sr |= RAMECC_SR_DEDF;
+  }
+#endif
+  // a CPU read with a double ECC error bus faults, this catches the DMA reads from flash
+  if ((flash_sr & FLASH_SR_DBECCERR) != 0U) {
+    fault_occurred(FAULT_ECC);
   }
   if ((ecc_sr & (RAMECC_SR_DEDF | RAMECC_SR_DEBWDF)) != 0U) {
     fault_occurred(FAULT_ECC);

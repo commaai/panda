@@ -6,7 +6,7 @@ from panda.tests.hitl.base import PandaTestCase, panda_test
 # keep in sync with PERMANENT_FAULTS, see board/sys/sys.h
 PERMANENT_FAULT_BITS = ()
 # board/drivers/self_test.h injection index: fault bit
-SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11}
+SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11, 3: 12, 4: 12}
 FAULT_UNUSED_INTERRUPT_HANDLED_BIT = 1
 FAULT_CLOCK_BIT = 16
 FAULT_INTERRUPT_MISSING_BIT = 17
@@ -114,6 +114,7 @@ class TestSafety(PandaTestCase):
     for test, fault_bit in SELF_TEST_FAULT_BITS.items():
       p.reset()
       p.set_safety_mode(CarParams.SafetyModel.allOutput)
+      assert not (p.health()['faults'] & (1 << fault_bit))
       p.inject_self_test_failure(test)
 
       # heartbeat keeps allOutput, so only the fault can set SILENT
