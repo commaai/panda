@@ -6,7 +6,7 @@ from panda.tests.hitl.base import PandaTestCase, panda_test
 # keep in sync with PERMANENT_FAULTS, see board/sys/sys.h
 PERMANENT_FAULT_BITS = ()
 # board/drivers/self_test.h injection index: fault bit
-SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11}
+SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11, 3: 12, 4: 12}
 FAULT_SIREN_MALFUNCTION_BIT = 25
 # one runtime RAM pass: DTCM, AXI SRAM and ITCM in 248 B steps at 8 Hz, see board/drivers/self_test.h
 RAM_TEST_PASS_S = 0x80000 / 248 / 8
@@ -111,6 +111,7 @@ class TestSafety(PandaTestCase):
     for test, fault_bit in SELF_TEST_FAULT_BITS.items():
       p.reset()
       p.set_safety_mode(CarParams.SafetyModel.allOutput)
+      assert not (p.health()['faults'] & (1 << fault_bit))
       p.inject_self_test_failure(test)
 
       # heartbeat keeps allOutput, so only the fault can set SILENT
