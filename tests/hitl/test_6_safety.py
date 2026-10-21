@@ -1,8 +1,6 @@
-import os
 import time
 
 from opendbc.car.structs import CarParams
-from panda import FW_PATH, McuType
 from panda.tests.hitl.base import PandaTestCase, panda_test
 
 # keep in sync with PERMANENT_FAULTS, see board/sys/sys.h
@@ -15,8 +13,6 @@ FAULT_INTERRUPT_MISSING_BIT = 17
 FAULT_SIREN_MALFUNCTION_BIT = 25
 # one runtime RAM pass: DTCM, AXI SRAM and ITCM in 248 B steps at 8 Hz, see board/drivers/self_test.h
 RAM_TEST_PASS_S = 0x80000 / 248 / 8
-# one flash pass: 1 KB at 8 Hz over the app image, see board/drivers/self_test.h
-FLASH_TEST_PASS_S = os.path.getsize(os.path.join(FW_PATH, McuType.H7.config.app_fn)) / 1024 / 8
 FAULT_MPU_BIT = 28
 
 
@@ -122,7 +118,7 @@ class TestSafety(PandaTestCase):
 
       # heartbeat keeps allOutput, so only the fault can set SILENT
       t = time.monotonic()
-      while not (p.health()['faults'] & (1 << fault_bit)) and (time.monotonic() - t) < (FLASH_TEST_PASS_S + 5):
+      while not (p.health()['faults'] & (1 << fault_bit)) and (time.monotonic() - t) < 30:
         p.send_heartbeat(engaged=False)
         time.sleep(0.1)
       print(f"self-test {test}: fault after {time.monotonic() - t:.1f} s")
