@@ -8,7 +8,7 @@ PERMANENT_FAULT_BITS = ()
 # board/drivers/self_test.h injection index: fault bit
 SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11}
 FAULT_SIREN_MALFUNCTION_BIT = 25
-FAULT_MPU_BIT = 29
+FAULT_MPU_BIT = 28
 
 
 class TestSafety(PandaTestCase):
