@@ -45,6 +45,8 @@ uint16_t llspi_rx_count(void) {
 }
 
 // CS rising edge, the end of a transfer
+#define EXTI15_10_LINES 0xFC00U
+
 static void EXTI15_10_IRQ_Handler(void) {
   if ((EXTI->PR1 & (1UL << SPI_CS_PIN)) != 0U) {
     // clear first, so an edge during processing fires again, read back so the clear lands before the return
@@ -54,9 +56,12 @@ static void EXTI15_10_IRQ_Handler(void) {
     if ((GPIOE->IDR & (1UL << SPI_CS_PIN)) != 0U) {
       spi_cs_rising();
     }
-  } else {
-    // the other lines on this vector have no interrupts enabled
+  } else if ((EXTI->PR1 & (EXTI15_10_LINES & ~(1UL << SPI_CS_PIN))) != 0U) {
+    // another line on this vector, none of them has a trigger enabled
+    EXTI->PR1 = EXTI15_10_LINES & ~(1UL << SPI_CS_PIN);
     fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
+  } else {
+    // a CS edge during the handler pends the vector again after PR1 was already cleared, that's not a fault
   }
 }
 
