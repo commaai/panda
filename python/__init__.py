@@ -683,7 +683,7 @@ class Panda:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xef, 1, 0, b'')
 
   def inject_unexpected_interrupt(self):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf4, 0, 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, 0, 0, b'')
 
   def inject_css_reset(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf5, 0, 0, b'', expect_disconnect=True)

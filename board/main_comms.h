@@ -310,8 +310,8 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xf2:
       register_set(&(TIM16->PSC), req->param1, 0xFFFFU);
       break;
-    // **** 0xf4: call the tick handler without its flag, for testing
-    case 0xf4:
+    // **** 0xf7: call the tick handler without its flag, for testing
+    case 0xf7:
       NVIC_SetPendingIRQ(TICK_TIMER_IRQ);
       break;
     // **** 0xf5: reset as after a clock security system NMI, for testing

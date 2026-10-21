@@ -28,7 +28,7 @@ void FDCAN1_IT1_IRQHandler(void) {handle_interrupt(FDCAN1_IT1_IRQn);}
 void FDCAN2_IT1_IRQHandler(void) {handle_interrupt(FDCAN2_IT1_IRQn);}
 void EXTI9_5_IRQHandler(void) {handle_interrupt(EXTI9_5_IRQn);}
 void TIM1_BRK_IRQHandler(void) {handle_interrupt(TIM1_BRK_IRQn);}
-void TIM1_UP_TIM10_IRQHandler(void) {handle_interrupt(TIM1_UP_TIM10_IRQn);}
+void TIM1_UP_IRQHandler(void) {handle_interrupt(TIM1_UP_IRQn);}
 void TIM1_TRG_COM_IRQHandler(void) {handle_interrupt(TIM1_TRG_COM_IRQn);}
 void TIM1_CC_IRQHandler(void) {handle_interrupt(TIM1_CC_IRQn);}
 void TIM2_IRQHandler(void) {handle_interrupt(TIM2_IRQn);}

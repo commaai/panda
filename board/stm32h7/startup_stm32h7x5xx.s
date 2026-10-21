@@ -118,9 +118,9 @@ ram_test_none:
   .thumb_set ram_test_startup, ram_test_none
 
     .section  .text.Default_Handler,"ax",%progbits
+/* exceptions without a handler of their own reset through the HardFault path, so they show up in health */
 Default_Handler:
-Infinite_Loop:
-  b  Infinite_Loop
+  b  HardFault_Handler
   .size  Default_Handler, .-Default_Handler
 /******************************************************************************
 *
