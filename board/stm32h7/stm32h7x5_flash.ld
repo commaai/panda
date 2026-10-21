@@ -223,19 +223,13 @@ SECTIONS
   .itcmram (NOLOAD) :
   {
     . = ALIGN(4);
-    _sitcmram = .;
     *(.itcmram*)
-    . = ALIGN(4);
-    _eitcmram = .;
   } >ITCMRAM
 
   .axisram (NOLOAD) :
   {
     . = ALIGN(4);
-    _saxisram = .;
     *(.axisram*)
-    . = ALIGN(4);
-    _eaxisram = .;
   } >AXISRAM
 
   .sram12 (NOLOAD) :
