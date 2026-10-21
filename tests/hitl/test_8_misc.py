@@ -30,6 +30,10 @@ class TestMisc(PandaTestCase):
         panda_jungle.set_ignition(False)
         print(f"orientation={orientation} wakeup={wakeup}")
 
+        # drop any of the last wakeup's frames that nothing ACKed, they'd wake the panda right away
+        for bus in range(3):
+          panda_jungle.can_clear(bus)
+
         p.enter_stop_mode()
         p.close()
         # wait for panda to enter stop mode

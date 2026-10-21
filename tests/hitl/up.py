@@ -58,7 +58,7 @@ def serve() -> None:
   interfaces = available_interfaces()
   bitrates = dict.fromkeys(range(len(interfaces)), 500_000)
   configure(interfaces, bitrate=500_000)
-  can = CAN(interfaces)
+  can = [CAN(interfaces)]
   state = {"orientation": UPJungle.HARNESS_ORIENTATION_NONE, "ignition": False}
 
   def apply_harness():
@@ -83,6 +83,9 @@ def serve() -> None:
     i = interfaces[bus]
     subprocess.run(f"sudo ip link set {i} down && sudo ip link set {i} type can bitrate {bitrates[bus]} restart-ms 100 && "
                    f"sudo ip link set {i} up", shell=True, check=True)
+    # the old sockets only return ENETDOWN after this
+    can[0].close()
+    can[0] = CAN(interfaces)
 
   def set_can_speed_kbps(bus, speed):
     if bitrates[bus] != speed * 1000:
@@ -90,14 +93,14 @@ def serve() -> None:
       restart(bus)
 
   def can_send(addr, dat, bus):
-    can.can_send(addr, dat.data, bus)
+    can[0].can_send(addr, dat.data, bus)
 
   def can_recv():
-    return [(addr, xmlrpc.client.Binary(dat), bus) for addr, dat, bus in can.can_recv()]
+    return [(addr, xmlrpc.client.Binary(dat), bus) for addr, dat, bus in can[0].can_recv()]
 
   def can_clear(bus):
     if bus == 0xFFFF:
-      can.can_recv()
+      can[0].can_recv()
     elif bus in bitrates:
       restart(bus)
 
@@ -105,7 +108,7 @@ def serve() -> None:
     for bus in bitrates:
       bitrates[bus] = 500_000
       restart(bus)
-    can.can_recv()
+    can[0].can_recv()
     set_harness_orientation(UPJungle.HARNESS_ORIENTATION_NONE)
 
   server = SimpleXMLRPCServer((UP_IP, PORT), allow_none=True, logRequests=False)
