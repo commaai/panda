@@ -198,15 +198,19 @@ SECTIONS
     . = ALIGN(8);
     PROVIDE ( end = . );
     PROVIDE ( _end = . );
-    . = ALIGN(32);
+    . = ALIGN(512);
     _stack_guard = .;
-    . = . + 32;
+    . = . + 512;
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
   } >DTCMRAM
 
   ASSERT((_esafety - _ssafety) <= 64, "safety state doesn't fit its MPU region")
+  ASSERT(DEFINED(controls_allowed) ? (controls_allowed >= _ssafety && controls_allowed < _esafety) : !DEFINED(safety_tx_hook), "controls_allowed not in the MPU region")
+  ASSERT(DEFINED(current_safety_mode) ? (current_safety_mode >= _ssafety && current_safety_mode < _esafety) : !DEFINED(safety_tx_hook), "current_safety_mode not in the MPU region")
+  ASSERT(DEFINED(current_safety_param) ? (current_safety_param >= _ssafety && current_safety_param < _esafety) : !DEFINED(safety_tx_hook), "current_safety_param not in the MPU region")
+  ASSERT(DEFINED(current_safety_config) ? (current_safety_config >= _ssafety && current_safety_config < _esafety) : !DEFINED(safety_tx_hook), "current_safety_config not in the MPU region")
 
   .itcmram (NOLOAD) :
   {

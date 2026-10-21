@@ -31,13 +31,11 @@
 // this is the only way to leave silent mode
 void set_safety_mode(uint16_t mode, uint16_t param) {
   uint16_t mode_copy = mode;
-  uint16_t param_copy = param;
   if ((faults & PERMANENT_FAULTS) != 0U) {
     mode_copy = SAFETY_SILENT;
-    param_copy = 0U;
   }
   mpu_safety_open();
-  int err = set_safety_hooks(mode_copy, param_copy);
+  int err = set_safety_hooks(mode_copy, param);
   if (err == -1) {
     print("Error: safety set mode failed. Falling back to SILENT\n");
     mode_copy = SAFETY_SILENT;
@@ -68,7 +66,7 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
       // Clear any pending messages in the can core (i.e. sending while comma power is unplugged)
       // TODO: rewrite using hardware queues rather than fifo to cancel specific messages
       can_clear_send(CANIF_FROM_CAN_NUM(1), 1);
-      if (param_copy == 0U) {
+      if (param == 0U) {
         current_board->set_can_mode(CAN_MODE_OBD_CAN2);
       } else {
         current_board->set_can_mode(CAN_MODE_NORMAL);
