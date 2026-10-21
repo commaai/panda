@@ -208,6 +208,7 @@ SECTIONS
     . = ALIGN(512);
     _stack_guard = .;
     . = . + 512;
+    _stack_guard_end = .;
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);

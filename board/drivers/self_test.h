@@ -13,8 +13,6 @@
 #define RAM_TEST_BLOCK_WORDS 64U
 // consecutive blocks overlap by two words, for coupling across a block boundary
 #define RAM_TEST_STEP ((RAM_TEST_BLOCK_WORDS - 2U) * 4U)
-// see stm32h7x5_flash.ld
-#define RAM_TEST_GUARD_SIZE 512U
 // kept clear of the frames of the running test
 #define RAM_TEST_STACK_WINDOW 512U
 #define FLASH_CRC_CHUNK 0x400U
@@ -25,6 +23,7 @@ extern uint32_t _saxisram;
 extern uint32_t _eaxisram;
 extern uint32_t _sitcmram;
 extern uint32_t _eitcmram;
+extern uint32_t _stack_guard_end;
 extern uint32_t self_test_cookie;
 
 typedef struct {
@@ -97,6 +96,7 @@ static bool ram_test_march(volatile uint32_t *p, uint32_t n, uint32_t bg) {
 }
 
 // transparent, interrupts stay off while the block holds test patterns
+// covers the address decoder within the block only, the boot test covers it across whole regions
 static bool ram_test_block(uint32_t addr, uint32_t words) {
   // outside the tested regions, copies are read back instead
   __attribute__((section(".sram12"))) static volatile uint32_t ram_test_backup[RAM_TEST_BLOCK_WORDS];
@@ -126,9 +126,8 @@ static bool ram_test_block(uint32_t addr, uint32_t words) {
 
 // the stack guard faults on access and the running frames can't hold test patterns, both are covered at boot
 static bool ram_test_skip(uint32_t start, uint32_t end) {
-  uint32_t guard = (uint32_t)&_stack_guard;
   uint32_t sp = __get_MSP();
-  bool guard_hit = (start < (guard + RAM_TEST_GUARD_SIZE)) && (end > guard);
+  bool guard_hit = (start < (uint32_t)&_stack_guard_end) && (end > (uint32_t)&_stack_guard);
   bool stack_hit = (start < (sp + RAM_TEST_STACK_WINDOW)) && (end > (sp - RAM_TEST_STACK_WINDOW));
   return guard_hit || stack_hit;
 }

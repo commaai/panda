@@ -109,7 +109,7 @@ LoopFillZerobss:
  * @param  None
  * @retval None
 */
-/* the app links the real one from self_test.s, the bootstub doesn't test RAM */
+/* the app and body firmware link the real one from self_test.s, the bootstub doesn't test RAM */
     .section  .text.ram_test_none,"ax",%progbits
 ram_test_none:
   bx lr
