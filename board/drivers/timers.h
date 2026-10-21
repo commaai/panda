@@ -7,6 +7,15 @@ static void timer_init(TIM_TypeDef *TIM, int psc) {
   TIM->SR = 0;
 }
 
+// an update before SR was cleared stays pending in the NVIC and would run the handler without a flag,
+// read back so the clear reached the timer before the pending bit is dropped
+static void timer_irq_enable(TIM_TypeDef *TIM, IRQn_Type irq) {
+  TIM->SR = 0;
+  (void)TIM->SR;
+  NVIC_ClearPendingIRQ(irq);
+  NVIC_EnableIRQ(irq);
+}
+
 void microsecond_timer_init(void) {
   MICROSECOND_TIMER->PSC = (APB1_TIMER_FREQ - 1U);
   MICROSECOND_TIMER->CR1 = TIM_CR1_CEN;
@@ -23,11 +32,10 @@ void interrupt_timer_init(void) {
   register_set(&(INTERRUPT_TIMER->PSC), ((uint16_t)(15.25*APB1_TIMER_FREQ)-1U), 0xFFFFU);
   register_set(&(INTERRUPT_TIMER->DIER), TIM_DIER_UIE, 0x5F5FU);
   register_set(&(INTERRUPT_TIMER->CR1), TIM_CR1_CEN, 0x3FU);
-  INTERRUPT_TIMER->SR = 0;
-  NVIC_EnableIRQ(INTERRUPT_TIMER_IRQ);
+  timer_irq_enable(INTERRUPT_TIMER, INTERRUPT_TIMER_IRQ);
 }
 
 void tick_timer_init(void) {
   timer_init(TICK_TIMER, (uint16_t)((15.25*APB2_TIMER_FREQ)/8U));
-  NVIC_EnableIRQ(TICK_TIMER_IRQ);
+  timer_irq_enable(TICK_TIMER, TICK_TIMER_IRQ);
 }
