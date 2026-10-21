@@ -68,10 +68,12 @@ void early_initialization(void) {
 // we don't want to infinitely loop, so let's set a logging cookie and reset.
 #define NMI_COOKIE 0x4E4D4921U
 #define HARDFAULT_COOKIE 0x48464C54U
+#define CSS_COOKIE 0x43535321U
 extern uint32_t fault_cookie;
 
 void NMI_Handler(void) {
-  fault_cookie = NMI_COOKIE;
+  // the clock security system raises the NMI when HSE fails (RM0468 8.5.3)
+  fault_cookie = ((RCC->CIFR & RCC_CIFR_HSECSSF) != 0U) ? CSS_COOKIE : NMI_COOKIE;
   NVIC_SystemReset();
 }
 

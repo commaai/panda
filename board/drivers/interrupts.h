@@ -46,19 +46,27 @@ void handle_interrupt(IRQn_Type irq_type){
   EXIT_CRITICAL();
 }
 
+static uint32_t interrupt_timer_windows = 0U;
+
 // Every second
 void interrupt_timer_handler(void) {
   if (INTERRUPT_TIMER->SR != 0U) {
+    // cleared first, a flag cleared on the way out can retrigger the vector
+    INTERRUPT_TIMER->SR = 0;
+    interrupt_timer_windows += 1U;
     for (uint16_t i = 0U; i < NUM_INTERRUPTS; i++) {
       // Log IRQ call rate faults
       if (check_interrupt_rate && (interrupts[i].call_counter > interrupts[i].max_call_rate)) {
         print("Interrupt 0x"); puth(i); print(" fired too often (0x"); puth(interrupts[i].call_counter); print("/s)!\n");
       }
 
-      // only once it has run a full second, so a late start isn't a fault
-      if (check_interrupt_rate && (interrupts[i].call_counter < interrupts[i].min_call_rate) && (interrupts[i].call_rate >= interrupts[i].min_call_rate)) {
-        print("Interrupt 0x"); puth(i); print(" stopped firing (0x"); puth(interrupts[i].call_counter); print("/s)!\n");
-        fault_occurred(FAULT_INTERRUPT_MISSING);
+      // the first window after registration can be partial
+      if (check_interrupt_rate && (interrupts[i].min_call_rate > 0U)) {
+        if (interrupts[i].min_call_rate_armed && (interrupts[i].call_counter < interrupts[i].min_call_rate)) {
+          print("Interrupt 0x"); puth(i); print(" stopped firing (0x"); puth(interrupts[i].call_counter); print("/s)!\n");
+          fault_occurred(FAULT_INTERRUPT_MISSING);
+        }
+        interrupts[i].min_call_rate_armed = true;
       }
 
       // Reset interrupt counters
@@ -73,8 +81,21 @@ void interrupt_timer_handler(void) {
 #endif
     idle_time = 0U;
     busy_time = 0U;
+  } else {
+    // TIM6 shares the vector with the DAC, which has no interrupts enabled
+    fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
   }
-  INTERRUPT_TIMER->SR = 0;
+}
+
+// called at 1Hz from the tick, the interrupt timer checks every other interrupt and this checks the interrupt timer
+void interrupt_timer_check(void) {
+  static uint32_t last_windows = 0U;
+  static uint8_t misses = 0U;
+  misses = (interrupt_timer_windows == last_windows) ? (uint8_t)MIN(misses + 1U, 2U) : 0U;
+  last_windows = interrupt_timer_windows;
+  if (check_interrupt_rate && (misses >= 2U)) {
+    fault_occurred(FAULT_INTERRUPT_MISSING);
+  }
 }
 
 void init_interrupts(bool check_rate_limit){
@@ -83,6 +104,7 @@ void init_interrupts(bool check_rate_limit){
   for(uint16_t i=0U; i<NUM_INTERRUPTS; i++){
     interrupts[i].handler = unused_interrupt_handler;
     interrupts[i].min_call_rate = 0U;
+    interrupts[i].min_call_rate_armed = false;
   }
 
   // Init interrupt timer for a 1s interval

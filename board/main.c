@@ -116,6 +116,8 @@ static void __attribute__ ((noinline)) enable_fpu(void) {
 // called at 8Hz
 static void tick_handler(void) {
   if (TICK_TIMER->SR != 0U) {
+    // cleared first, a flag cleared on the way out can retrigger the vector
+    TICK_TIMER->SR = 0;
     static uint32_t siren_countdown = 0; // siren plays while countdown > 0
     static uint32_t controls_allowed_countdown = 0;
     static uint8_t prev_harness_status = HARNESS_STATUS_NC;
@@ -249,6 +251,7 @@ static void tick_handler(void) {
       if (!clock_check()) {
         fault_occurred(FAULT_CLOCK);
       }
+      interrupt_timer_check();
 
       // set ignition_can to false after 2s of no CAN seen
       if (ignition_can_cnt > 2U) {
@@ -271,8 +274,10 @@ static void tick_handler(void) {
 
     loop_counter++;
     loop_counter %= 8U;
+  } else {
+    // TIM12 shares the vector with the TIM8 break, which has no interrupts enabled
+    fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
   }
-  TICK_TIMER->SR = 0;
 }
 
 int main(void) {
@@ -352,8 +357,11 @@ int main(void) {
   led_set(LED_GREEN, false);
   led_set(LED_BLUE, false);
 
-  if (fault_cookie == NMI_COOKIE) {
+  if ((fault_cookie == NMI_COOKIE) || (fault_cookie == CSS_COOKIE)) {
     reset_flags |= HEALTH_FLAG_NMI_RESET;
+  }
+  if (fault_cookie == CSS_COOKIE) {
+    fault_occurred(FAULT_CLOCK);
   }
   if (fault_cookie == HARDFAULT_COOKIE) {
     reset_flags |= HEALTH_FLAG_HARDFAULT_RESET;

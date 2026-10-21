@@ -679,8 +679,17 @@ class Panda:
   def stop_tick(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xef, 0, 0, b'')
 
+  def stop_interrupt_timer(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xef, 1, 0, b'')
+
+  def inject_unexpected_interrupt(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf4, 0, 0, b'')
+
+  def inject_css_reset(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf5, 0, 0, b'', expect_disconnect=True)
+
   def set_clock_check_prescaler(self, psc):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf2, int(psc), 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf2, psc, 0, b'')
 
   def inject_nmi(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xec, 0, 0, b'', expect_disconnect=True)

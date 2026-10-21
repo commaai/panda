@@ -47,7 +47,7 @@ static PackageSMPSType get_package_smps_type(void) {
   return ret;
 }
 
-// bounded so a dead oscillator can't hang init
+// bounded so a dead LSI can't hang init or the tick
 #define CLOCK_WAIT_LOOPS 1000000U
 
 static bool clock_wait(volatile const uint32_t *reg, uint32_t mask, uint32_t val) {
@@ -136,7 +136,6 @@ void clock_init(void) {
 // HSE derived 120MHz APB2 timer clock. 32kHz LSI gives 30000 counts, the 25% window only catches gross
 // HSE or PLL errors since LSI itself isn't accurate
 #define LSI_COUNTS_NOMINAL 30000U
-#define LSI_CAPTURE_LOOPS 200000U
 
 bool clock_check_init(void) {
   register_set_bits(&(RCC->CSR), RCC_CSR_LSION);
@@ -153,13 +152,10 @@ bool clock_check_init(void) {
 }
 
 static bool lsi_capture(uint16_t *count) {
-  uint32_t loops = 0U;
-  while (((TIM16->SR & TIM_SR_CC1IF) == 0U) && (loops < LSI_CAPTURE_LOOPS)) {
-    loops++;
-  }
+  bool ok = clock_wait(&(TIM16->SR), TIM_SR_CC1IF, TIM_SR_CC1IF);
   // reading CCR1 clears CC1IF
   *count = (uint16_t)TIM16->CCR1;
-  return loops < LSI_CAPTURE_LOOPS;
+  return ok;
 }
 
 // called at 1Hz, two LSI captures take under 1ms

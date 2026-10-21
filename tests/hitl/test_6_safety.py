@@ -7,6 +7,7 @@ from panda.tests.hitl.base import PandaTestCase, panda_test
 PERMANENT_FAULT_BITS = ()
 # board/drivers/self_test.h injection index: fault bit
 SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11}
+FAULT_UNUSED_INTERRUPT_HANDLED_BIT = 1
 FAULT_CLOCK_BIT = 16
 FAULT_INTERRUPT_MISSING_BIT = 17
 FAULT_SIREN_MALFUNCTION_BIT = 25
@@ -141,26 +142,48 @@ class TestSafety(PandaTestCase):
     assert h['faults'] == 0, f"faults {h['faults']:#x}"
     assert h['safety_mode'] == CarParams.SafetyModel.allOutput
 
+  def _wait_fault(self, fault_bit, timeout):
+    p = self.p
+    t = time.monotonic()
+    while not ((h := p.health())['faults'] & (1 << fault_bit)) and (time.monotonic() - t) < timeout:
+      time.sleep(0.05)
+    print(f"fault bit {fault_bit} after {(time.monotonic() - t) * 1e3:.0f} ms")
+    assert h['faults'] & (1 << fault_bit)
+    expected = CarParams.SafetyModel.silent if fault_bit in PERMANENT_FAULT_BITS else CarParams.SafetyModel.allOutput
+    assert h['safety_mode'] == expected
+    p.reset()
+
   def test_tick_stopped(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
     time.sleep(2.5)
     p.stop_tick()
-    t = time.monotonic()
-    while not ((h := p.health())['faults'] & (1 << FAULT_INTERRUPT_MISSING_BIT)) and (time.monotonic() - t) < 3:
-      time.sleep(0.05)
-    print(f"tick stopped: fault after {(time.monotonic() - t) * 1e3:.0f} ms")
-    assert h['faults'] & (1 << FAULT_INTERRUPT_MISSING_BIT)
-    assert h['safety_mode'] == CarParams.SafetyModel.silent
-    p.reset()
+    self._wait_fault(FAULT_INTERRUPT_MISSING_BIT, 3)
+
+  def test_interrupt_timer_stopped(self):
+    p = self.p
+    p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    time.sleep(2.5)
+    p.stop_interrupt_timer()
+    self._wait_fault(FAULT_INTERRUPT_MISSING_BIT, 4)
+
+  def test_unexpected_interrupt(self):
+    p = self.p
+    p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    p.inject_unexpected_interrupt()
+    self._wait_fault(FAULT_UNUSED_INTERRUPT_HANDLED_BIT, 1)
 
   def test_clock_check(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
     p.set_clock_check_prescaler(1)
-    t = time.monotonic()
-    while not ((h := p.health())['faults'] & (1 << FAULT_CLOCK_BIT)) and (time.monotonic() - t) < 3:
-      time.sleep(0.05)
+    self._wait_fault(FAULT_CLOCK_BIT, 3)
+
+  def test_css_reset(self):
+    p = self.p
+    p.inject_css_reset()
+    p.reconnect()
+    h = p.health()
+    assert h['nmi_reset']
     assert h['faults'] & (1 << FAULT_CLOCK_BIT)
-    assert h['safety_mode'] == CarParams.SafetyModel.silent
     p.reset()

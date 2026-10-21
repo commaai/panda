@@ -53,6 +53,9 @@ static void EXTI15_10_IRQ_Handler(void) {
     if ((GPIOE->IDR & (1UL << SPI_CS_PIN)) != 0U) {
       spi_cs_rising();
     }
+  } else {
+    // the other lines on this vector have no interrupts enabled
+    fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
   }
 }
 
