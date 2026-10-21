@@ -191,15 +191,15 @@ static void self_test_check(bool cpu_ok, bool ram_ok, bool flash_ok) {
   if ((FLASH->SR1 & FLASH_SR_DBECCERR) != 0U) {
     fault_occurred(FAULT_ECC);
   }
-  if (((RAMECC1_Monitor1->SR | RAMECC1_Monitor2->SR) & RAMECC_SR_DEDF) != 0U) {
+  if (((RAMECC1_Monitor1->SR | RAMECC1_Monitor2->SR | RAMECC1_Monitor6->SR) & (RAMECC_SR_DEDF | RAMECC_SR_DEBWDF)) != 0U) {
     fault_occurred(FAULT_ECC);
   }
 }
 
-// RAMECC monitors all of AXI SRAM and ITCM, a word never written since power-on can read as an ECC error
+// a word never written since power-on can read as an ECC error, 64-bit stores since AXI SRAM and ITCM have 64-bit ECC words (RM0468 3.2)
 static void ecc_ram_init(uint32_t start, uint32_t end) {
-  for (uint32_t addr = start; addr < end; addr += 4U) {
-    *((volatile uint32_t *)addr) = 0U;
+  for (uint32_t addr = start; addr < end; addr += 8U) {
+    *((volatile uint64_t *)addr) = 0U;
   }
 }
 
@@ -216,12 +216,14 @@ void self_test_init(void) {
     }
   }
 
-  // RM0468 3.3.3: RAMECC1 monitor 1 is AXI SRAM, 2 is ITCM, both fully written above (RM0468 Table 8, TCM_AXI_SHARED 00)
+  // RM0468 Table 11: RAMECC1 monitor 1 is AXI SRAM, 2 is ITCM, 6 is the AXI SRAM shared with ITCM, all fully written above (RM0468 Table 8, TCM_AXI_SHARED 00)
   // the other RAMs hold the stack and DMA buffers, which aren't written before their first read
   RAMECC1_Monitor1->SR = 0U;
   RAMECC1_Monitor2->SR = 0U;
+  RAMECC1_Monitor6->SR = 0U;
   register_set(&(RAMECC1_Monitor1->CR), RAMECC_CR_ECCDEIE | RAMECC_CR_ECCELEN, 0x3CU);
   register_set(&(RAMECC1_Monitor2->CR), RAMECC_CR_ECCDEIE | RAMECC_CR_ECCELEN, 0x3CU);
+  register_set(&(RAMECC1_Monitor6->CR), RAMECC_CR_ECCDEIE | RAMECC_CR_ECCELEN, 0x3CU);
 
   self_test_check((cpu_test_registers() == 0U) && (fpu_test_registers() == 0U), ram_ok, flash_app_len() != 0U);
 }

@@ -330,6 +330,8 @@ int main(void) {
   REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK)
   tick_timer_init();
 
+  self_test_init();
+
   // enable USB (right before interrupts or enum can fail!)
   usb_init();
 
@@ -349,8 +351,6 @@ int main(void) {
     reset_flags |= HEALTH_FLAG_HARDFAULT_RESET;
   }
   fault_cookie = 0U;
-
-  self_test_init();
 
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();
