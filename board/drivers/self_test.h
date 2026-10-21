@@ -15,8 +15,8 @@
 #define RAM_TEST_STEP ((RAM_TEST_BLOCK_WORDS - 2U) * 4U)
 // kept clear of the frames of the running test
 #define RAM_TEST_STACK_WINDOW 512U
-// one alias per address bit above the block, enough for the largest region (AXI SRAM, 2^19)
-#define RAM_TEST_ALIASES 12U
+// one alias per address bit above the block, AXI SRAM needs the most, 0x100 to 0x40000
+#define RAM_TEST_ALIASES 11U
 // SRAM1/2 and SRAM4 words read per tick for ECC scrubbing
 #define RAM_SCRUB_WORDS 64U
 #define FLASH_CRC_CHUNK 0x400U
@@ -111,9 +111,18 @@ static bool ram_test_skip(uint32_t start, uint32_t end) {
   return guard_hit || stack_hit;
 }
 
+// a decoder fault on an address bit above the block makes the block share cells with an alias, which then reads the patterns
+static bool ram_test_aliases_ok(volatile uint32_t *const *alias, const uint32_t *val, uint8_t n) {
+  bool ok = true;
+  for (uint8_t i = 0U; i < n; i++) {
+    ok = ok && (*alias[i] == val[i]);
+  }
+  return ok;
+}
+
 // transparent, interrupts stay off while the block holds test patterns
-// the march covers the address decoder within the block, the aliases cover the address bits above it (UM2331 RAM_SM_8):
-// a decoder fault on such a bit makes the block share cells with an alias, which then reads the patterns
+// the march covers the address decoder within the block, the aliases the address bits above it (UM2331 RAM_SM_8),
+// checked after both backgrounds since an alias can hold one of them already
 static bool ram_test_block(uint32_t addr, uint32_t words, uint32_t start, uint32_t end) {
   // outside the tested regions, copies are read back instead
   __attribute__((section(".sram12"))) static volatile uint32_t ram_test_backup[RAM_TEST_BLOCK_WORDS];
@@ -142,10 +151,9 @@ static bool ram_test_block(uint32_t addr, uint32_t words, uint32_t start, uint32
     alias_val[i] = *alias[i];
   }
   ok = ram_test_march(p, words, 0x00000000U) && ok;
+  ok = ram_test_aliases_ok(alias, alias_val, aliases) && ok;
   ok = ram_test_march(p, words, 0x55555555U) && ok;
-  for (uint8_t i = 0U; i < aliases; i++) {
-    ok = ok && (*alias[i] == alias_val[i]);
-  }
+  ok = ram_test_aliases_ok(alias, alias_val, aliases) && ok;
   for (uint32_t i = 0U; i < words; i++) {
     p[i] = ram_test_backup[i];
   }
