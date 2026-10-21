@@ -81,8 +81,8 @@ def serve() -> None:
   def restart(bus):
     # takes the interface down and up, which also drops frames stuck in its TX FIFO, e.g. when nothing ACKs
     i = interfaces[bus]
-    subprocess.run(f"sudo ip link set {i} down && sudo ip link set {i} type can bitrate {bitrates[bus]} restart-ms 100 && "
-                   f"sudo ip link set {i} up", shell=True, check=True)
+    for cmd in ("down", f"type can bitrate {bitrates[bus]} restart-ms 100", "up"):
+      subprocess.run(["sudo", "ip", "link", "set", i, *cmd.split()], check=True)
     # the old sockets only return ENETDOWN after this
     can[0].close()
     can[0] = CAN(interfaces)
