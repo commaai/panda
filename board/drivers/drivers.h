@@ -143,7 +143,6 @@ struct harness_configuration {
 
 // The ignition relay is only used for testing purposes
 void set_intercept_relay(bool intercept, bool ignition_relay);
-void harness_check_relay_readback(void);
 bool harness_check_ignition(void);
 void harness_tick(void);
 void harness_init(void);
@@ -164,7 +163,7 @@ typedef struct {
   uint32_t prev_ts;
   uint32_t mismatches;
 } timer_check_t;
-void timer_check(timer_check_t *check, uint32_t expected_us);
+void timer_check(timer_check_t *check);
 void interrupt_timer_init(void);
 uint32_t microsecond_timer_get(void);
 

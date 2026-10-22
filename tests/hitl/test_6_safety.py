@@ -13,17 +13,8 @@ FAULT_SIREN_MALFUNCTION_BIT = 25
 # one runtime RAM pass: DTCM, AXI SRAM and ITCM in 248 B steps at 8 Hz, see board/drivers/self_test.h
 RAM_TEST_PASS_S = 0x80000 / 248 / 8
 FAULT_MPU_BIT = 28
-# board/main_comms.h 0xf5 injection index: fault bit, safety mode
-READBACK_FAULTS = {
-  0: (13, CarParams.SafetyModel.allOutput),
-  1: (29, CarParams.SafetyModel.allOutput),
-  2: (24, CarParams.SafetyModel.allOutput),
-  3: (29, CarParams.SafetyModel.allOutput),
-  4: (18, CarParams.SafetyModel.allOutput),
-  5: (18, CarParams.SafetyModel.allOutput),
-  # harness detection only reads the ADC while the relay isn't driven
-  6: (24, CarParams.SafetyModel.noOutput),
-}
+# board/main_comms.h 0xf5 injection index: fault bit
+READBACK_FAULT_BITS = {0: 13, 1: 29, 2: 24, 3: 29, 4: 18, 5: 18, 6: 24}
 
 
 class TestSafety(PandaTestCase):
@@ -182,9 +173,10 @@ class TestSafety(PandaTestCase):
   @panda_test(timeout=3*60)
   def test_readback_fault(self):
     p = self.p
-    for test, (fault_bit, mode) in READBACK_FAULTS.items():
+    for test, fault_bit in READBACK_FAULT_BITS.items():
       p.reset()
-      p.set_safety_mode(mode)
+      # harness detection only reads the ADC while the relay isn't driven
+      p.set_safety_mode(CarParams.SafetyModel.noOutput)
       time.sleep(2.5)
       h = p.health()
       assert h['faults'] == 0, f"faults {h['faults']:#x}"
@@ -195,6 +187,5 @@ class TestSafety(PandaTestCase):
         time.sleep(0.05)
       print(f"readback fault {test}: fault after {time.monotonic() - t:.1f} s")
       assert h['faults'] & (1 << fault_bit)
-      expected = CarParams.SafetyModel.silent if fault_bit in PERMANENT_FAULT_BITS else mode
-      assert h['safety_mode'] == expected
+      assert h['safety_mode'] == (CarParams.SafetyModel.silent if fault_bit in PERMANENT_FAULT_BITS else CarParams.SafetyModel.noOutput)
     p.reset()

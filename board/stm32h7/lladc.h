@@ -40,24 +40,15 @@ uint16_t adc_get_raw(const adc_signal_t *signal) {
   signal->adc->CFGR2 = (((1U << (uint32_t) signal->oversampling) - 1U) << ADC_CFGR2_OVSR_Pos) | ((uint32_t) signal->oversampling << ADC_CFGR2_OVSS_Pos);
   signal->adc->CFGR2 |= (signal->oversampling != OVERSAMPLING_1) ? ADC_CFGR2_ROVSE : 0U;
 
-  // start conversion, bounded so a stuck ADC reads 0 instead of hanging. >= 4 cycles per iteration at 240MHz,
-  // so 1M is > 16ms, the longest conversion is VREFINT on ADC2: (810.5+8.5) x256 at 32MHz = 6.6ms
-  signal->adc->ISR = ADC_ISR_EOC | ADC_ISR_EOS | ADC_ISR_OVR;
+  // start conversion
   signal->adc->CR |= ADC_CR_ADSTART;
+  // bounded, a stuck ADC reads 0 and fails the ADC checks instead of hanging
   uint32_t timeout = 1000000U;
-  while (((signal->adc->ISR & ADC_ISR_EOC) == 0U) && (timeout > 0U)) {
-    timeout--;
-  }
-
-  uint16_t res = (timeout > 0U) ? (uint16_t)signal->adc->DR : 0U;
-
   while (((signal->adc->ISR & ADC_ISR_EOS) == 0U) && (timeout > 0U)) {
     timeout--;
   }
-  signal->adc->ISR |= ADC_ISR_EOS;
-  if ((timeout == 0U) && ((signal->adc->CR & ADC_CR_ADSTART) != 0U)) {
-    signal->adc->CR |= ADC_CR_ADSTP;
-  }
+  uint16_t res = (timeout > 0U) ? (uint16_t)signal->adc->DR : 0U;
+  signal->adc->ISR = ADC_ISR_EOC | ADC_ISR_EOS;
 
   return res;
 }
@@ -79,10 +70,6 @@ static void adc_calibrate_vdda(void) {
   print("  AVDD: 0x"); puth(adc_avdd_mV); print(" mV\n");
 }
 
-#ifdef ALLOW_DEBUG
-volatile bool adc_check_inject = false;
-#endif
-
 // set while the main loop converts on ADC2, the harness cross-read skips it then
 static volatile bool adc2_busy = false;
 
@@ -91,9 +78,6 @@ bool adc_check(uint32_t expected_avdd_mV) {
   adc2_busy = true;
   uint32_t avdd_mV = adc_measure_avdd_mV();
   adc2_busy = false;
-  #ifdef ALLOW_DEBUG
-  avdd_mV = adc_check_inject ? 0U : avdd_mV;
-  #endif
   return (avdd_mV > ((expected_avdd_mV * 9U) / 10U)) && (avdd_mV < ((expected_avdd_mV * 11U) / 10U));
 }
 

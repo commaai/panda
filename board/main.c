@@ -137,7 +137,6 @@ static void tick_handler(void) {
     // tick drivers at 8Hz
     fan_tick();
     harness_tick();
-    harness_check_relay_readback();
     simple_watchdog_kick();
     sound_tick();
 
@@ -164,8 +163,7 @@ static void tick_handler(void) {
     // decimated to 1Hz
     if (loop_counter == 0U) {
       static timer_check_t tick_timer_check = {0};
-      timer_check(&tick_timer_check, 1000000U);
-
+      timer_check(&tick_timer_check);
       // set green LED to be controls allowed
       led_set(LED_GREEN, controls_allowed);
 

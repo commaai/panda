@@ -27,12 +27,11 @@ uint32_t microsecond_timer_get(void) {
 
 // SR-MCU-20, catches a stuck or misconfigured timer, the clock itself is checked by clock_check
 // measured over two periods, one late interrupt gives two mismatches that are never consecutive
-void timer_check(timer_check_t *check, uint32_t expected_us) {
+void timer_check(timer_check_t *check) {
   uint32_t now = microsecond_timer_get();
   if (check->prev_ts != 0U) {
     uint32_t dt = get_ts_elapsed(now, check->prev_ts);
-    uint32_t tol = expected_us / 10U;
-    bool ok = (dt > ((2U * expected_us) - tol)) && (dt < ((2U * expected_us) + tol));
+    bool ok = (dt > 1900000U) && (dt < 2100000U);
     check->mismatches = ok ? 0U : (check->mismatches + 1U);
     if (check->mismatches >= 2U) {
       fault_occurred(FAULT_TIMER);

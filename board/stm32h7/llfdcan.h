@@ -30,18 +30,11 @@ static bool fdcan_request_init(FDCAN_GlobalTypeDef *FDCANx) {
 
 // SR-MCU-11, the config goes into the register map before leaving init
 static void fdcan_track_config(FDCAN_GlobalTypeDef *FDCANx) {
-  register_set(&(FDCANx->NBTP), FDCANx->NBTP, 0xFFFFFFFFU);
-  register_set(&(FDCANx->DBTP), FDCANx->DBTP, 0xFFFFFFFFU);
-  register_set(&(FDCANx->IE), FDCANx->IE, 0xFFFFFFFFU);
-  register_set(&(FDCANx->ILS), FDCANx->ILS, 0xFFFFFFFFU);
-  register_set(&(FDCANx->ILE), FDCANx->ILE, 0xFFFFFFFFU);
-  register_set(&(FDCANx->GFC), FDCANx->GFC, 0xFFFFFFFFU);
-  register_set(&(FDCANx->SIDFC), FDCANx->SIDFC, 0xFFFFFFFFU);
-  register_set(&(FDCANx->XIDFC), FDCANx->XIDFC, 0xFFFFFFFFU);
-  register_set(&(FDCANx->RXF0C), FDCANx->RXF0C, 0xFFFFFFFFU);
-  register_set(&(FDCANx->RXESC), FDCANx->RXESC, 0xFFFFFFFFU);
-  register_set(&(FDCANx->TXBC), FDCANx->TXBC, 0xFFFFFFFFU);
-  register_set(&(FDCANx->TXESC), FDCANx->TXESC, 0xFFFFFFFFU);
+  volatile uint32_t *regs[] = {&(FDCANx->NBTP), &(FDCANx->DBTP), &(FDCANx->IE), &(FDCANx->ILS), &(FDCANx->ILE), &(FDCANx->GFC),
+                               &(FDCANx->SIDFC), &(FDCANx->XIDFC), &(FDCANx->RXF0C), &(FDCANx->RXESC), &(FDCANx->TXBC), &(FDCANx->TXESC)};
+  for (uint8_t i = 0U; i < (sizeof(regs) / sizeof(regs[0])); i++) {
+    register_set(regs[i], *regs[i], 0xFFFFFFFFU);
+  }
   register_set(&(FDCANx->CCCR), FDCANx->CCCR, FDCAN_CCCR_MON | FDCAN_CCCR_DAR | FDCAN_CCCR_TEST | FDCAN_CCCR_FDOE | FDCAN_CCCR_BRSE | FDCAN_CCCR_NISO);
 }
 
