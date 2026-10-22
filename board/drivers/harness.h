@@ -88,6 +88,17 @@ static uint8_t harness_detect_orientation(void) {
       sbu1_adc2_mV += harness_adc2_offset_mV;
       #endif
       adc_mismatches = (ABS((int32_t)harness.sbu1_voltage_mV - (int32_t)sbu1_adc2_mV) <= 100) ? 0U : (adc_mismatches + 1U);
+      // TEMP sbu debug: SBU1 on ADC1 and ADC2 and the largest delta, once per second
+      static uint32_t dbg_n = 0U;
+      static uint32_t dbg_max = 0U;
+      dbg_max = MAX(dbg_max, (uint32_t)ABS((int32_t)harness.sbu1_voltage_mV - (int32_t)sbu1_adc2_mV));
+      dbg_n++;
+      if (dbg_n >= 8U) {
+        print("sbu dbg adc1 0x"); puth(harness.sbu1_voltage_mV); print(" adc2 0x"); puth(sbu1_adc2_mV);
+        print(" sbu2 0x"); puth(harness.sbu2_voltage_mV); print(" maxd 0x"); puth(dbg_max); print("\n");
+        dbg_n = 0U;
+        dbg_max = 0U;
+      }
     }
 
     // Detect connection and orientation
