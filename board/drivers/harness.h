@@ -53,11 +53,11 @@ static bool relay_pin_mismatch(const GPIO_TypeDef *GPIO, unsigned int pin) {
 // GPIO_SM_2: the relay pins are open drain with a pull-up on the FET gate, so the pin reads back what is driven.
 // called at 8Hz, two mismatches in a row are a fault, which leaves time for the gate to settle after a change
 void harness_check_relay_readback(void) {
-  static uint8_t mismatches = 0U;
+  static uint32_t mismatches = 0U;
   const harness_configuration *cfg = current_board->harness_config;
   bool mismatch = relay_pin_mismatch(cfg->GPIO_relay_SBU1, cfg->pin_relay_SBU1) ||
                   relay_pin_mismatch(cfg->GPIO_relay_SBU2, cfg->pin_relay_SBU2);
-  mismatches = mismatch ? (uint8_t)MIN(mismatches + 1U, 2U) : 0U;
+  mismatches = mismatch ? (mismatches + 1U) : 0U;
   if (mismatches >= 2U) {
     fault_occurred(FAULT_OUTPUT_READBACK);
   }

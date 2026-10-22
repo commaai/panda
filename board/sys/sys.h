@@ -40,28 +40,25 @@ extern uint8_t global_critical_depth;
 #define FAULT_SELF_TEST_RAM                 (1UL << 10)
 #define FAULT_SELF_TEST_FLASH               (1UL << 11)
 #define FAULT_ECC                           (1UL << 12)
+#define FAULT_OUTPUT_READBACK               (1UL << 13)
 #define FAULT_INTERRUPT_RATE_USB            (1UL << 15)
 #define FAULT_CLOCK                         (1UL << 16)
 #define FAULT_INTERRUPT_MISSING             (1UL << 17)
-#define FAULT_OUTPUT_READBACK               (1UL << 13)
 #define FAULT_REGISTER_DIVERGENT            (1UL << 18)
 #define FAULT_INTERRUPT_RATE_CLOCK_SOURCE   (1UL << 20)
 #define FAULT_INTERRUPT_RATE_TICK           (1UL << 21)
 #define FAULT_INTERRUPT_RATE_EXTI           (1UL << 22)
 #define FAULT_INTERRUPT_RATE_SPI            (1UL << 23)
+#define FAULT_ADC                           (1UL << 24)
 #define FAULT_SIREN_MALFUNCTION             (1UL << 25)
 #define FAULT_HEARTBEAT_LOOP_WATCHDOG       (1UL << 26)
-#define FAULT_ADC                           (1UL << 24)
 #define FAULT_INTERRUPT_RATE_SOUND_DMA      (1UL << 27)
-#define FAULT_TIMER                         (1UL << 28)
+#define FAULT_MPU                           (1UL << 28)
+#define FAULT_TIMER                         (1UL << 29)
 
 // permanent faults put panda in the safe state until reset
-// TODO: add FAULT_REGISTER_DIVERGENT and FAULT_INTERRUPT_RATE_SPI once their 3X fleet rate is root caused
-#define PERMANENT_FAULTS (FAULT_UNUSED_INTERRUPT_HANDLED | FAULT_INTERRUPT_RATE_CAN_1 | FAULT_INTERRUPT_RATE_CAN_2 | \
-                          FAULT_INTERRUPT_RATE_CAN_3 | FAULT_INTERRUPT_RATE_INTERRUPTS | FAULT_INTERRUPT_RATE_SPI_DMA | \
-                          FAULT_INTERRUPT_RATE_USB | FAULT_INTERRUPT_RATE_TICK | FAULT_SELF_TEST_CPU | \
-                          FAULT_SELF_TEST_RAM | FAULT_SELF_TEST_FLASH | FAULT_ECC | FAULT_INTERRUPT_MISSING | \
-                          FAULT_CLOCK | FAULT_OUTPUT_READBACK | FAULT_ADC | FAULT_TIMER)
+// TODO: enable faults one by one once their fleet rate is checked
+#define PERMANENT_FAULTS 0U
 
 extern uint8_t fault_status;
 extern uint32_t faults;
