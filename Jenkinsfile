@@ -30,7 +30,7 @@ PYTHONPATH=/data/hardware/ultimate_provisioning python3 -m ultimate_provisioning
 
 // serve the UP's harness and CAN to the tests on the DUT, see tests/hitl/up.py
 def upStart(String ip) {
-  upHost(ip, "UP: start", "PYTHONPATH=/data/hardware/ultimate_provisioning python3 -m ultimate_provisioning jungle --serve")
+  upHost(ip, "UP: start", "PYTHONPATH=/data/hardware/ultimate_provisioning python3 -m ultimate_provisioning serve")
 }
 
 def upStop(String ip) {

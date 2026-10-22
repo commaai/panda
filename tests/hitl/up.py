@@ -1,7 +1,7 @@
 """The HITL tests' stand-in for a panda jungle: an ultimate provisioning (UP) board.
 
 The tests run on the DUT, and the DUT's internal panda is wired to the UP's OBD-C port.
-`python -m ultimate_provisioning jungle --serve` runs on the UP and serves its harness and CAN
+`python -m ultimate_provisioning serve` runs on the UP and serves its harness and CAN
 over the USB network between the UP and the DUT. Bus 3 is the OBD port, see ultimate_provisioning.
 """
 import os
@@ -12,7 +12,7 @@ UP_IP = os.environ.get("UP_IP", "10.254.254.1")
 PORT = 8722
 
 
-class UPJungle:
+class UP:
   HARNESS_ORIENTATION_NONE = 0
   HARNESS_ORIENTATION_1 = 1
   HARNESS_ORIENTATION_2 = 2

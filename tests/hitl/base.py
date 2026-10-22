@@ -5,7 +5,7 @@ import unittest
 
 from panda import Panda, PandaDFU
 from panda.tests.hitl.helpers import clear_can_buffers
-from panda.tests.hitl.up import UPJungle
+from panda.tests.hitl.up import UP
 
 SPEED_NORMAL = 500
 BUS_SPEEDS = [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL)]
@@ -20,7 +20,7 @@ _panda_serial = None
 def init_devices():
   if not NO_JUNGLE:
     global _panda_jungle
-    _panda_jungle = UPJungle()
+    _panda_jungle = UP()
 
   with Panda(serial=None, claim=False) as p:
     global _panda_type
@@ -33,7 +33,7 @@ def init_jungle():
   if _panda_jungle is None:
     return
   clear_can_buffers(_panda_jungle)
-  _panda_jungle.set_harness_orientation(UPJungle.HARNESS_ORIENTATION_1)
+  _panda_jungle.set_harness_orientation(UP.HARNESS_ORIENTATION_1)
   for bus, speed in BUS_SPEEDS:
     _panda_jungle.set_can_speed_kbps(bus, speed)
 
