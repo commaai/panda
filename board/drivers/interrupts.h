@@ -10,8 +10,7 @@ static void unused_interrupt_handler(void) {
 
 interrupt interrupts[NUM_INTERRUPTS];
 
-// NVIC enables only change through nvic_enable/nvic_disable, nvic_check reads them back
-// stop mode is the exception, it runs with interrupts off and exits through reset
+// NVIC_SM_0: enables only change through these, stop mode exits through reset
 static uint32_t nvic_expected[8];
 
 void nvic_enable(IRQn_Type irq) {
@@ -80,19 +79,24 @@ void handle_interrupt(IRQn_Type irq_type){
   EXIT_CRITICAL();
 }
 
+static uint32_t interrupt_timer_windows = 0U;
+
 // Every second
 void interrupt_timer_handler(void) {
-  static timer_check_t interrupt_timer_check = {0};
+  static timer_check_t interrupt_timer_period = {0};
   if (INTERRUPT_TIMER->SR != 0U) {
-    timer_check(&interrupt_timer_check, 1000000U);
+    // cleared first, a flag cleared on the way out can retrigger the vector
+    INTERRUPT_TIMER->SR = 0;
+    interrupt_timer_windows += 1U;
+    timer_check(&interrupt_timer_period);
     for (uint16_t i = 0U; i < NUM_INTERRUPTS; i++) {
       // Log IRQ call rate faults
       if (check_interrupt_rate && (interrupts[i].call_counter > interrupts[i].max_call_rate)) {
         print("Interrupt 0x"); puth(i); print(" fired too often (0x"); puth(interrupts[i].call_counter); print("/s)!\n");
       }
 
-      // only once it has run a full second, so a late start isn't a fault
-      if (check_interrupt_rate && (interrupts[i].call_counter < interrupts[i].min_call_rate) && (interrupts[i].call_rate >= interrupts[i].min_call_rate)) {
+      // the first window spans boot
+      if (check_interrupt_rate && (interrupt_timer_windows > 1U) && (interrupts[i].call_counter < interrupts[i].min_call_rate)) {
         print("Interrupt 0x"); puth(i); print(" stopped firing (0x"); puth(interrupts[i].call_counter); print("/s)!\n");
         fault_occurred(FAULT_INTERRUPT_MISSING);
       }
@@ -109,8 +113,21 @@ void interrupt_timer_handler(void) {
 #endif
     idle_time = 0U;
     busy_time = 0U;
+  } else {
+    // TIM6 shares the vector with the DAC, which has no interrupts enabled
+    fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
   }
-  INTERRUPT_TIMER->SR = 0;
+}
+
+// called at 1Hz from the tick, one miss is normal since the two timers drift
+void interrupt_timer_check(void) {
+  static uint32_t last_windows = 0U;
+  static uint32_t misses = 0U;
+  misses = (interrupt_timer_windows == last_windows) ? (misses + 1U) : 0U;
+  last_windows = interrupt_timer_windows;
+  if (check_interrupt_rate && (misses >= 2U)) {
+    fault_occurred(FAULT_INTERRUPT_MISSING);
+  }
 }
 
 void init_interrupts(bool check_rate_limit){

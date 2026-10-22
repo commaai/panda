@@ -31,13 +31,11 @@
 // this is the only way to leave silent mode
 void set_safety_mode(uint16_t mode, uint16_t param) {
   uint16_t mode_copy = mode;
-  uint16_t param_copy = param;
   if ((faults & PERMANENT_FAULTS) != 0U) {
     mode_copy = SAFETY_SILENT;
-    param_copy = 0U;
   }
   mpu_safety_open();
-  int err = set_safety_hooks(mode_copy, param_copy);
+  int err = set_safety_hooks(mode_copy, param);
   if (err == -1) {
     print("Error: safety set mode failed. Falling back to SILENT\n");
     mode_copy = SAFETY_SILENT;
@@ -68,7 +66,7 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
       // Clear any pending messages in the can core (i.e. sending while comma power is unplugged)
       // TODO: rewrite using hardware queues rather than fifo to cancel specific messages
       can_clear_send(CANIF_FROM_CAN_NUM(1), 1);
-      if (param_copy == 0U) {
+      if (param == 0U) {
         current_board->set_can_mode(CAN_MODE_OBD_CAN2);
       } else {
         current_board->set_can_mode(CAN_MODE_NORMAL);
@@ -117,7 +115,9 @@ static void __attribute__ ((noinline)) enable_fpu(void) {
 
 // called at 8Hz
 static void tick_handler(void) {
-  if (TICK_TIMER->SR != 0U) {
+  if ((TICK_TIMER->SR & TIM_SR_UIF) != 0U) {
+    // cleared first, a flag cleared on the way out can retrigger the vector
+    TICK_TIMER->SR = 0;
     static uint32_t siren_countdown = 0; // siren plays while countdown > 0
     static uint32_t controls_allowed_countdown = 0;
     static uint8_t prev_harness_status = HARNESS_STATUS_NC;
@@ -137,7 +137,6 @@ static void tick_handler(void) {
     // tick drivers at 8Hz
     fan_tick();
     harness_tick();
-    harness_check_relay_readback();
     simple_watchdog_kick();
     sound_tick();
 
@@ -164,8 +163,7 @@ static void tick_handler(void) {
     // decimated to 1Hz
     if (loop_counter == 0U) {
       static timer_check_t tick_timer_check = {0};
-      timer_check(&tick_timer_check, 1000000U);
-
+      timer_check(&tick_timer_check);
       // set green LED to be controls allowed
       led_set(LED_GREEN, controls_allowed);
 
@@ -252,10 +250,10 @@ static void tick_handler(void) {
 
       // check registers
       check_registers();
-      mpu_check();
       if (!clock_check()) {
         fault_occurred(FAULT_CLOCK);
       }
+      interrupt_timer_check();
       nvic_check();
 
       // set ignition_can to false after 2s of no CAN seen
@@ -272,14 +270,17 @@ static void tick_handler(void) {
       mpu_safety_open();
       safety_tick();
       mpu_safety_close();
+      mpu_check();
     }
 
     self_test_tick();
 
     loop_counter++;
     loop_counter %= 8U;
+  } else {
+    // TIM12 shares the vector with the TIM8 break, which has no interrupts enabled
+    fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
   }
-  TICK_TIMER->SR = 0;
 }
 
 int main(void) {
@@ -290,9 +291,9 @@ int main(void) {
   disable_interrupts();
 
   // init early devices
-  bool clock_ok = clock_init();
+  clock_init();
   peripherals_init();
-  bool lsi_ok = clock_check_init();
+  clock_check_init();
   check_option_bytes();
   detect_board_type();
   led_init();
@@ -314,9 +315,6 @@ int main(void) {
 
   // init board
   current_board->init();
-  if (!clock_ok || !lsi_ok) {
-    fault_occurred(FAULT_CLOCK);
-  }
   current_board->set_can_mode(CAN_MODE_NORMAL);
   harness_init();
 
@@ -346,6 +344,8 @@ int main(void) {
   interrupts[TICK_TIMER_IRQ].min_call_rate = 4U;
   tick_timer_init();
 
+  self_test_init();
+
   // enable USB (right before interrupts or enum can fail!)
   usb_init();
 
@@ -366,8 +366,6 @@ int main(void) {
   }
   fault_cookie = 0U;
 
-  self_test_init();
-
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();
 
@@ -379,6 +377,13 @@ int main(void) {
     }
     #endif
     if (!power_save_enabled) {
+      // ADC_SM_3, takes milliseconds so not in an interrupt
+      if (!adc_check(current_board->avdd_mV)) {
+        ENTER_CRITICAL();
+        fault_occurred(FAULT_ADC);
+        EXIT_CRITICAL();
+      }
+
       // useful for debugging, fade breaks = panda is overloaded
       for (uint32_t fade = 0U; fade < MAX_LED_FADE; fade += 1U) {
         led_set(LED_RED, true);

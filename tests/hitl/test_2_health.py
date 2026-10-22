@@ -11,7 +11,8 @@ class TestHealth(PandaTestCase):
     p = self.p
     for _ in range(10):
       voltage = p.health()['voltage']
-      assert ((voltage > 11000) and (voltage < 13000))
+      # the UP supplies ~15V
+      assert ((voltage > 11000) and (voltage < 16000))
       time.sleep(0.1)
 
   def test_hw_type(self):

@@ -44,15 +44,23 @@ uint16_t llspi_rx_count(void) {
   return SPI_BUF_SIZE - DMA2_Stream2->NDTR;
 }
 
+#define EXTI15_10_LINES 0xFC00U
+
 // CS rising edge, the end of a transfer
 static void EXTI15_10_IRQ_Handler(void) {
   if ((EXTI->PR1 & (1UL << SPI_CS_PIN)) != 0U) {
-    // clear first, so an edge during processing fires again
+    // clear first, so an edge during processing fires again, read back so the clear lands before the return
     EXTI->PR1 = (1UL << SPI_CS_PIN);
+    (void)EXTI->PR1;
     // if we're late and the next transfer already started, its own rising edge handles it
     if ((GPIOE->IDR & (1UL << SPI_CS_PIN)) != 0U) {
       spi_cs_rising();
     }
+  }
+  // no other line on this vector has a trigger enabled
+  if ((EXTI->PR1 & (EXTI15_10_LINES & ~(1UL << SPI_CS_PIN))) != 0U) {
+    EXTI->PR1 = EXTI15_10_LINES & ~(1UL << SPI_CS_PIN);
+    fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
   }
 }
 

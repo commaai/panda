@@ -65,22 +65,25 @@ void flasher_peripherals_init(void) {
 }
 #endif
 
-// all RST bits of each RCC reset register per stm32h725xx.h, AHB3 without CPURST
-#define RCC_AHB1_RST_BITS 0x02008023U
-#define RCC_AHB2_RST_BITS 0x00030271U
-#define RCC_AHB3_RST_BITS 0x00E95011U
-#define RCC_AHB4_RST_BITS 0x032806FFU
-#define RCC_APB1L_RST_BITS 0xEAFFC3FFU
-#define RCC_APB1H_RST_BITS 0x03000136U
-#define RCC_APB2_RST_BITS 0x405730F3U
-#define RCC_APB3_RST_BITS 0x00000008U
-#define RCC_APB4_RST_BITS 0x0420DEAAU
-
-// RST and EN bits share their position, so everything without a clock enable is held in reset
-static void hold_unused_in_reset(volatile uint32_t *enr, volatile uint32_t *rstr, uint32_t rst_bits) {
-  uint32_t en = *enr;
-  register_set(rstr, rst_bits & ~en, 0xFFFFFFFFU);
-  register_set(enr, en, 0xFFFFFFFFU);
+// FFI_SM_0, FFI_SM_1: hold everything without a clock enable in reset, RST and EN bits share positions
+// all RST bits per stm32h725xx.h, except CPURST and the H73x only CRYP, HASH, OTFDEC
+static void hold_unused_in_reset(void) {
+  static const struct { volatile uint32_t *enr; volatile uint32_t *rstr; uint32_t rst_bits; } regs[] = {
+    {&(RCC->AHB1ENR), &(RCC->AHB1RSTR), 0x02008023U},
+    {&(RCC->AHB2ENR), &(RCC->AHB2RSTR), 0x00030241U},
+    {&(RCC->AHB3ENR), &(RCC->AHB3RSTR), 0x00295011U},
+    {&(RCC->AHB4ENR), &(RCC->AHB4RSTR), 0x032806FFU},
+    {&(RCC->APB1LENR), &(RCC->APB1LRSTR), 0xEAFFC3FFU},
+    {&(RCC->APB1HENR), &(RCC->APB1HRSTR), 0x03000136U},
+    {&(RCC->APB2ENR), &(RCC->APB2RSTR), 0x405730F3U},
+    {&(RCC->APB3ENR), &(RCC->APB3RSTR), 0x00000008U},
+    {&(RCC->APB4ENR), &(RCC->APB4RSTR), 0x0420DEAAU},
+  };
+  for (uint8_t i = 0U; i < (sizeof(regs) / sizeof(regs[0])); i++) {
+    uint32_t en = *regs[i].enr;
+    register_set(regs[i].rstr, regs[i].rst_bits & ~en, 0xFFFFFFFFU);
+    register_set(regs[i].enr, en, 0xFFFFFFFFU);
+  }
 }
 
 // Peripheral initialization
@@ -132,16 +135,7 @@ void peripherals_init(void) {
   RCC->APB1LENR |= RCC_APB1LENR_TIM12EN;  // slow loop
   RCC->APB1LENR |= RCC_APB1LENR_TIM5EN; // sound trigger timer
 
-  // UM2331 FFI_SM_0 and FFI_SM_1, any later clock enable has to be added above
-  hold_unused_in_reset(&(RCC->AHB1ENR), &(RCC->AHB1RSTR), RCC_AHB1_RST_BITS);
-  hold_unused_in_reset(&(RCC->AHB2ENR), &(RCC->AHB2RSTR), RCC_AHB2_RST_BITS);
-  hold_unused_in_reset(&(RCC->AHB3ENR), &(RCC->AHB3RSTR), RCC_AHB3_RST_BITS);
-  hold_unused_in_reset(&(RCC->AHB4ENR), &(RCC->AHB4RSTR), RCC_AHB4_RST_BITS);
-  hold_unused_in_reset(&(RCC->APB1LENR), &(RCC->APB1LRSTR), RCC_APB1L_RST_BITS);
-  hold_unused_in_reset(&(RCC->APB1HENR), &(RCC->APB1HRSTR), RCC_APB1H_RST_BITS);
-  hold_unused_in_reset(&(RCC->APB2ENR), &(RCC->APB2RSTR), RCC_APB2_RST_BITS);
-  hold_unused_in_reset(&(RCC->APB3ENR), &(RCC->APB3RSTR), RCC_APB3_RST_BITS);
-  hold_unused_in_reset(&(RCC->APB4ENR), &(RCC->APB4RSTR), RCC_APB4_RST_BITS);
+  hold_unused_in_reset();
 }
 
 void enable_interrupt_timer(void) {

@@ -7,6 +7,14 @@ static void timer_init(TIM_TypeDef *TIM, int psc) {
   TIM->SR = 0;
 }
 
+// drop an update that pended before init, read back so the clear lands first
+static void timer_irq_enable(TIM_TypeDef *TIM, IRQn_Type irq) {
+  TIM->SR = 0;
+  (void)TIM->SR;
+  NVIC_ClearPendingIRQ(irq);
+  nvic_enable(irq);
+}
+
 void microsecond_timer_init(void) {
   register_set(&(MICROSECOND_TIMER->PSC), (APB1_TIMER_FREQ - 1U), 0xFFFFU);
   register_set(&(MICROSECOND_TIMER->CR1), TIM_CR1_CEN, 0x3FU);
@@ -17,21 +25,18 @@ uint32_t microsecond_timer_get(void) {
   return MICROSECOND_TIMER->CNT;
 }
 
-// one timer measured against another, both would have to drift the same way to go unnoticed
-void timer_check(timer_check_t *check, uint32_t expected_us) {
+// GTIM_SM_1: against the microsecond timer over two periods, one late interrupt can't fault
+void timer_check(timer_check_t *check) {
   uint32_t now = microsecond_timer_get();
-  if (check->last_ts != 0U) {
-    uint32_t dt = get_ts_elapsed(now, check->last_ts);
-    uint32_t tol = expected_us / 20U;
-    if ((dt < (expected_us - tol)) || (dt > (expected_us + tol))) {
-      check->mismatches += 1U;
-      if (check->mismatches >= 2U) {
-        fault_occurred(FAULT_TIMER);
-      }
-    } else {
-      check->mismatches = 0U;
+  if (check->prev_ts != 0U) {
+    uint32_t dt = get_ts_elapsed(now, check->prev_ts);
+    bool ok = (dt > 1900000U) && (dt < 2100000U);
+    check->mismatches = ok ? 0U : (check->mismatches + 1U);
+    if (check->mismatches >= 2U) {
+      fault_occurred(FAULT_TIMER);
     }
   }
+  check->prev_ts = check->last_ts;
   check->last_ts = now;
 }
 
@@ -41,11 +46,12 @@ void interrupt_timer_init(void) {
   register_set(&(INTERRUPT_TIMER->PSC), ((uint16_t)(15.25*APB1_TIMER_FREQ)-1U), 0xFFFFU);
   register_set(&(INTERRUPT_TIMER->DIER), TIM_DIER_UIE, 0x5F5FU);
   register_set(&(INTERRUPT_TIMER->CR1), TIM_CR1_CEN, 0x3FU);
-  INTERRUPT_TIMER->SR = 0;
-  nvic_enable(INTERRUPT_TIMER_IRQ);
+  // load the prescaler now, so the first window covers all of boot
+  INTERRUPT_TIMER->EGR = TIM_EGR_UG;
+  timer_irq_enable(INTERRUPT_TIMER, INTERRUPT_TIMER_IRQ);
 }
 
 void tick_timer_init(void) {
   timer_init(TICK_TIMER, (uint16_t)((15.25*APB2_TIMER_FREQ)/8U));
-  nvic_enable(TICK_TIMER_IRQ);
+  timer_irq_enable(TICK_TIMER, TICK_TIMER_IRQ);
 }

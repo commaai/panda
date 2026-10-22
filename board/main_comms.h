@@ -291,7 +291,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xee: write controls_allowed outside safety, for testing
     case 0xee:
-      controls_allowed = true;
+      controls_allowed = !controls_allowed;
       break;
     // **** 0xf0: run the stack into its MPU guard, for testing
     case 0xf0:
@@ -302,38 +302,43 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xed:
       self_test_inject((uint8_t)req->param1);
       break;
-    // **** 0xef: stop the tick interrupt, for testing
+    // **** 0xef: break an interrupt or the clock check, for testing
     case 0xef:
-      nvic_disable(TICK_TIMER_IRQ);
+      if (req->param1 == 0U) {
+        nvic_disable(TICK_TIMER_IRQ);
+      } else if (req->param1 == 1U) {
+        nvic_disable(INTERRUPT_TIMER_IRQ);
+      } else if (req->param1 == 2U) {
+        // the tick handler runs without its flag
+        NVIC_SetPendingIRQ(TICK_TIMER_IRQ);
+      } else if (req->param1 == 3U) {
+        // halves the counts per LSI capture
+        register_set(&(TIM16->PSC), 1U, 0xFFFFU);
+      } else if (req->param1 == 4U) {
+        // an unused IRQ, outside nvic_enable
+        NVIC_EnableIRQ(WWDG_IRQn);
+      } else {
+      }
       break;
-    // **** 0xf2: set the clock check timer prescaler, for testing
-    case 0xf2:
-      register_set(&(TIM16->PSC), req->param1, 0xFFFFU);
-      break;
-    // **** 0xf5: invert the relay read-back, for testing
+    // **** 0xf5: break a read-back or cross-check, for testing
     case 0xf5:
-      relay_readback_inject = true;
-      break;
-    // **** 0xe9: set the microsecond timer prescaler, for testing
-    case 0xe9:
-      register_set(&(MICROSECOND_TIMER->PSC), req->param1, 0xFFFFU);
-      MICROSECOND_TIMER->EGR = TIM_EGR_UG;
-      break;
-    // **** 0xfa: offset the second harness ADC acquisition, for testing
-    case 0xfa:
-      harness_adc_check_offset_mV = req->param1;
-      break;
-    // **** 0xfb: read FLASH OPTSR_CUR, OPTSR2_CUR, WPSN_CUR1, BOOT_CUR
-    case 0xfb:
-      (void)memcpy(&resp[0], (const uint8_t *)&FLASH->OPTSR_CUR, 4U);
-      (void)memcpy(&resp[4], (const uint8_t *)&FLASH->OPTSR2_CUR, 4U);
-      (void)memcpy(&resp[8], (const uint8_t *)&FLASH->WPSN_CUR1, 4U);
-      (void)memcpy(&resp[12], (const uint8_t *)&FLASH->BOOT_CUR, 4U);
-      resp_len = 16U;
-      break;
-    // **** 0xfd: enable an unused IRQ behind nvic_enable, for testing
-    case 0xfd:
-      NVIC_EnableIRQ(WWDG_IRQn);
+      if (req->param1 == 0U) {
+        relay_readback_inject = true;
+      } else if (req->param1 == 1U) {
+        register_set(&(INTERRUPT_TIMER->PSC), (INTERRUPT_TIMER->PSC * 23U) / 20U, 0xFFFFU);
+      } else if (req->param1 == 2U) {
+        ADC3_COMMON->CCR &= ~ADC_CCR_VREFEN;
+      } else if (req->param1 == 3U) {
+        register_set(&(TICK_TIMER->PSC), (TICK_TIMER->PSC * 23U) / 20U, 0xFFFFU);
+      } else if (req->param1 == 4U) {
+        // raw writes, outside the register map
+        FDCAN1->IE ^= FDCAN_IE_TCFE;
+      } else if (req->param1 == 5U) {
+        RCC->APB1LENR |= RCC_APB1LENR_TIM13EN;
+      } else if (req->param1 == 6U) {
+        harness_adc2_offset_mV = 500U;
+      } else {
+      }
       break;
     #endif
     // **** 0xf1: Clear CAN ring buffer.

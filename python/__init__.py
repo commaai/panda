@@ -671,23 +671,13 @@ class Panda:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xb5, 0, 0, b'', expect_disconnect=True)
 
   def inject_fault(self, fault_bit):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xea, int(fault_bit), 0, b'')
-
-  def inject_nvic_divergence(self):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xfd, 0, 0, b'')
-
-  def get_option_bytes(self):
-    optsr, optsr2, wpsn, boot = struct.unpack("<IIII", self._handle.controlRead(Panda.REQUEST_IN, 0xfb, 0, 0, 16))
-    return {"optsr": optsr, "optsr2": optsr2, "wpsn": wpsn, "boot": boot}
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xea, fault_bit, 0, b'')
 
   def inject_hardfault(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xeb, 0, 0, b'', expect_disconnect=True)
 
-  def stop_tick(self):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xef, 0, 0, b'')
-
-  def set_clock_check_prescaler(self, psc):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf2, int(psc), 0, b'')
+  def inject_interrupt_fault(self, test):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xef, test, 0, b'')
 
   def inject_nmi(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xec, 0, 0, b'', expect_disconnect=True)
@@ -699,16 +689,10 @@ class Panda:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf0, 0, 0, b'', expect_disconnect=True)
 
   def inject_self_test_failure(self, test):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xed, int(test), 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xed, test, 0, b'')
 
-  def inject_relay_readback_fault(self):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf5, 0, 0, b'')
-
-  def set_microsecond_timer_prescaler(self, psc):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xe9, int(psc), 0, b'')
-
-  def set_harness_adc_check_offset(self, offset_mV):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xfa, int(offset_mV), 0, b'')
+  def inject_readback_fault(self, test):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf5, test, 0, b'')
 
   def set_safety_mode(self, mode=CarParams.SafetyModel.silent, param=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')

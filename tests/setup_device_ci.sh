@@ -45,6 +45,11 @@ sleep infinity
 EOF
 chmod +x $CONTINUE_PATH
 
+# a DUT that booted with a continue.sh that launches openpilot is still running it, and its pandad fights the tests for the panda
+if pgrep -f launch_chffrplus.sh > /dev/null; then
+  sudo systemctl stop comma
+fi
+
 if [ ! -d "$SOURCE_DIR" ]; then
   git clone https://github.com/commaai/panda.git $SOURCE_DIR
 fi
