@@ -40,6 +40,7 @@ extern uint8_t global_critical_depth;
 #define FAULT_SELF_TEST_RAM                 (1UL << 10)
 #define FAULT_SELF_TEST_FLASH               (1UL << 11)
 #define FAULT_ECC                           (1UL << 12)
+#define FAULT_OUTPUT_READBACK               (1UL << 13)
 #define FAULT_INTERRUPT_RATE_USB            (1UL << 15)
 #define FAULT_CLOCK                         (1UL << 16)
 #define FAULT_INTERRUPT_MISSING             (1UL << 17)
@@ -48,10 +49,12 @@ extern uint8_t global_critical_depth;
 #define FAULT_INTERRUPT_RATE_TICK           (1UL << 21)
 #define FAULT_INTERRUPT_RATE_EXTI           (1UL << 22)
 #define FAULT_INTERRUPT_RATE_SPI            (1UL << 23)
+#define FAULT_ADC                           (1UL << 24)
 #define FAULT_SIREN_MALFUNCTION             (1UL << 25)
 #define FAULT_HEARTBEAT_LOOP_WATCHDOG       (1UL << 26)
 #define FAULT_INTERRUPT_RATE_SOUND_DMA      (1UL << 27)
 #define FAULT_MPU                           (1UL << 28)
+#define FAULT_TIMER                         (1UL << 29)
 
 // permanent faults put panda in the safe state until reset
 // TODO: enable faults one by one once their fleet rate is checked

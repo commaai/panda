@@ -317,6 +317,26 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       } else {
       }
       break;
+    // **** 0xf5: break a read-back or cross-check, for testing
+    case 0xf5:
+      if (req->param1 == 0U) {
+        relay_readback_inject = true;
+      } else if (req->param1 == 1U) {
+        register_set(&(INTERRUPT_TIMER->PSC), (INTERRUPT_TIMER->PSC * 23U) / 20U, 0xFFFFU);
+      } else if (req->param1 == 2U) {
+        ADC3_COMMON->CCR &= ~ADC_CCR_VREFEN;
+      } else if (req->param1 == 3U) {
+        register_set(&(TICK_TIMER->PSC), (TICK_TIMER->PSC * 23U) / 20U, 0xFFFFU);
+      } else if (req->param1 == 4U) {
+        // raw writes, outside the register map
+        FDCAN1->IE ^= FDCAN_IE_TCFE;
+      } else if (req->param1 == 5U) {
+        RCC->APB1LENR |= RCC_APB1LENR_TIM13EN;
+      } else if (req->param1 == 6U) {
+        harness_adc2_offset_mV = 500U;
+      } else {
+      }
+      break;
     #endif
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:

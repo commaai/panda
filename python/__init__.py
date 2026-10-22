@@ -691,6 +691,9 @@ class Panda:
   def inject_self_test_failure(self, test):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xed, test, 0, b'')
 
+  def inject_readback_fault(self, test):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf5, test, 0, b'')
+
   def set_safety_mode(self, mode=CarParams.SafetyModel.silent, param=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
 

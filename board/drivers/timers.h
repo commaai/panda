@@ -16,13 +16,28 @@ static void timer_irq_enable(TIM_TypeDef *TIM, IRQn_Type irq) {
 }
 
 void microsecond_timer_init(void) {
-  MICROSECOND_TIMER->PSC = (APB1_TIMER_FREQ - 1U);
-  MICROSECOND_TIMER->CR1 = TIM_CR1_CEN;
+  register_set(&(MICROSECOND_TIMER->PSC), (APB1_TIMER_FREQ - 1U), 0xFFFFU);
+  register_set(&(MICROSECOND_TIMER->CR1), TIM_CR1_CEN, 0x3FU);
   MICROSECOND_TIMER->EGR = TIM_EGR_UG;
 }
 
 uint32_t microsecond_timer_get(void) {
   return MICROSECOND_TIMER->CNT;
+}
+
+// GTIM_SM_1: against the microsecond timer over two periods, one late interrupt can't fault
+void timer_check(timer_check_t *check) {
+  uint32_t now = microsecond_timer_get();
+  if (check->prev_ts != 0U) {
+    uint32_t dt = get_ts_elapsed(now, check->prev_ts);
+    bool ok = (dt > 1900000U) && (dt < 2100000U);
+    check->mismatches = ok ? 0U : (check->mismatches + 1U);
+    if (check->mismatches >= 2U) {
+      fault_occurred(FAULT_TIMER);
+    }
+  }
+  check->prev_ts = check->last_ts;
+  check->last_ts = now;
 }
 
 void interrupt_timer_init(void) {

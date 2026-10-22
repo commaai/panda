@@ -50,10 +50,12 @@ static uint32_t interrupt_timer_windows = 0U;
 
 // Every second
 void interrupt_timer_handler(void) {
+  static timer_check_t interrupt_timer_period = {0};
   if (INTERRUPT_TIMER->SR != 0U) {
     // cleared first, a flag cleared on the way out can retrigger the vector
     INTERRUPT_TIMER->SR = 0;
     interrupt_timer_windows += 1U;
+    timer_check(&interrupt_timer_period);
     for (uint16_t i = 0U; i < NUM_INTERRUPTS; i++) {
       // Log IRQ call rate faults
       if (check_interrupt_rate && (interrupts[i].call_counter > interrupts[i].max_call_rate)) {

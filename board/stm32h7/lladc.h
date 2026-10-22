@@ -42,14 +42,20 @@ uint16_t adc_get_raw(const adc_signal_t *signal) {
 
   // start conversion
   signal->adc->CR |= ADC_CR_ADSTART;
-  while (!(signal->adc->ISR & ADC_ISR_EOC));
-
-  uint16_t res = signal->adc->DR;
-
-  while (!(signal->adc->ISR & ADC_ISR_EOS));
-  signal->adc->ISR |= ADC_ISR_EOS;
+  // a stuck ADC reads 0
+  uint32_t timeout = 1000000U;
+  while (((signal->adc->ISR & ADC_ISR_EOS) == 0U) && (timeout > 0U)) {
+    timeout--;
+  }
+  uint16_t res = (timeout > 0U) ? (uint16_t)signal->adc->DR : 0U;
+  signal->adc->ISR = ADC_ISR_EOC | ADC_ISR_EOS;
 
   return res;
+}
+
+static uint32_t adc_measure_avdd_mV(void) {
+  uint16_t raw_vrefint = adc_get_raw(&(adc_signal_t){.adc = ADC2, .channel = 17U, .sample_time = SAMPLETIME_810_CYCLES, .oversampling = OVERSAMPLING_256});
+  return (raw_vrefint != 0U) ? ((uint32_t) *VREFINT_CAL_ADDR * 16U * 3300U / raw_vrefint) : 0U;
 }
 
 static void adc_calibrate_vdda(void) {
@@ -60,10 +66,19 @@ static void adc_calibrate_vdda(void) {
   ADC3_COMMON->CCR |= ADC_CCR_VREFEN;
   SYSCFG->ADC2ALT |= SYSCFG_ADC2ALT_ADC2_ROUT1;
 
-  // measure VREFINT and derive AVDD
-  uint16_t raw_vrefint = adc_get_raw(&(adc_signal_t){.adc = ADC2, .channel = 17U, .sample_time = SAMPLETIME_810_CYCLES, .oversampling = OVERSAMPLING_256});
-  adc_avdd_mV = (uint32_t) *VREFINT_CAL_ADDR * 16U * 3300U / raw_vrefint;
+  adc_avdd_mV = adc_measure_avdd_mV();
   print("  AVDD: 0x"); puth(adc_avdd_mV); print(" mV\n");
+}
+
+// the main loop is using ADC2
+static volatile bool adc2_busy = false;
+
+// ADC_SM_2, ADC_SM_3: AVDD from VREFINT has to match the board
+bool adc_check(uint32_t expected_avdd_mV) {
+  adc2_busy = true;
+  uint32_t avdd_mV = adc_measure_avdd_mV();
+  adc2_busy = false;
+  return (avdd_mV > ((expected_avdd_mV * 9U) / 10U)) && (avdd_mV < ((expected_avdd_mV * 11U) / 10U));
 }
 
 uint16_t adc_get_mV(const adc_signal_t *signal) {

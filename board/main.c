@@ -162,6 +162,8 @@ static void tick_handler(void) {
 
     // decimated to 1Hz
     if (loop_counter == 0U) {
+      static timer_check_t tick_timer_check = {0};
+      timer_check(&tick_timer_check);
       // set green LED to be controls allowed
       led_set(LED_GREEN, controls_allowed);
 
@@ -373,6 +375,13 @@ int main(void) {
     }
     #endif
     if (!power_save_enabled) {
+      // ADC_SM_3, takes milliseconds so not in an interrupt
+      if (!adc_check(current_board->avdd_mV)) {
+        ENTER_CRITICAL();
+        fault_occurred(FAULT_ADC);
+        EXIT_CRITICAL();
+      }
+
       // useful for debugging, fade breaks = panda is overloaded
       for (uint32_t fade = 0U; fade < MAX_LED_FADE; fade += 1U) {
         led_set(LED_RED, true);

@@ -158,6 +158,12 @@ typedef struct interrupt {
   uint32_t call_rate_fault;
 } interrupt;
 
+typedef struct {
+  uint32_t last_ts;
+  uint32_t prev_ts;
+  uint32_t mismatches;
+} timer_check_t;
+void timer_check(timer_check_t *check);
 void interrupt_timer_init(void);
 uint32_t microsecond_timer_get(void);
 

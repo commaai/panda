@@ -65,6 +65,27 @@ void flasher_peripherals_init(void) {
 }
 #endif
 
+// FFI_SM_0, FFI_SM_1: hold everything without a clock enable in reset, RST and EN bits share positions
+// all RST bits per stm32h725xx.h, except CPURST and the H73x only CRYP, HASH, OTFDEC
+static void hold_unused_in_reset(void) {
+  static const struct { volatile uint32_t *enr; volatile uint32_t *rstr; uint32_t rst_bits; } regs[] = {
+    {&(RCC->AHB1ENR), &(RCC->AHB1RSTR), 0x02008023U},
+    {&(RCC->AHB2ENR), &(RCC->AHB2RSTR), 0x00030241U},
+    {&(RCC->AHB3ENR), &(RCC->AHB3RSTR), 0x00295011U},
+    {&(RCC->AHB4ENR), &(RCC->AHB4RSTR), 0x032806FFU},
+    {&(RCC->APB1LENR), &(RCC->APB1LRSTR), 0xEAFFC3FFU},
+    {&(RCC->APB1HENR), &(RCC->APB1HRSTR), 0x03000136U},
+    {&(RCC->APB2ENR), &(RCC->APB2RSTR), 0x405730F3U},
+    {&(RCC->APB3ENR), &(RCC->APB3RSTR), 0x00000008U},
+    {&(RCC->APB4ENR), &(RCC->APB4RSTR), 0x0420DEAAU},
+  };
+  for (uint8_t i = 0U; i < (sizeof(regs) / sizeof(regs[0])); i++) {
+    uint32_t en = *regs[i].enr;
+    register_set(regs[i].rstr, regs[i].rst_bits & ~en, 0xFFFFFFFFU);
+    register_set(regs[i].enr, en, 0xFFFFFFFFU);
+  }
+}
+
 // Peripheral initialization
 void peripherals_init(void) {
   // enable GPIO(A,B,C,D,E,F,G,H)
@@ -114,6 +135,7 @@ void peripherals_init(void) {
   RCC->APB1LENR |= RCC_APB1LENR_TIM12EN;  // slow loop
   RCC->APB1LENR |= RCC_APB1LENR_TIM5EN; // sound trigger timer
 
+  hold_unused_in_reset();
 }
 
 void enable_interrupt_timer(void) {
