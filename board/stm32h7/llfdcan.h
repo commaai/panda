@@ -28,7 +28,7 @@ static bool fdcan_request_init(FDCAN_GlobalTypeDef *FDCANx) {
   return ret;
 }
 
-// SR-MCU-11, the config goes into the register map before leaving init
+// CAN_SM_0
 static void fdcan_track_config(FDCAN_GlobalTypeDef *FDCANx) {
   volatile uint32_t *regs[] = {&(FDCANx->NBTP), &(FDCANx->DBTP), &(FDCANx->IE), &(FDCANx->ILS), &(FDCANx->ILE), &(FDCANx->GFC),
                                &(FDCANx->SIDFC), &(FDCANx->XIDFC), &(FDCANx->RXF0C), &(FDCANx->RXESC), &(FDCANx->TXBC), &(FDCANx->TXESC)};

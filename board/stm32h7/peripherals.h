@@ -65,9 +65,8 @@ void flasher_peripherals_init(void) {
 }
 #endif
 
-// UM2331 FFI_SM_0 and FFI_SM_1: everything without a clock enable is held in reset, RST and EN bits share their position.
-// ENR and RSTR go in the register map, later writes have to use register_set.
-// all RST bits per stm32h725xx.h, AHB3 without CPURST, without the H73x only CRYP, HASH and OTFDEC
+// FFI_SM_0, FFI_SM_1: hold everything without a clock enable in reset, RST and EN bits share positions
+// all RST bits per stm32h725xx.h, except CPURST and the H73x only CRYP, HASH, OTFDEC
 static void hold_unused_in_reset(void) {
   static const struct { volatile uint32_t *enr; volatile uint32_t *rstr; uint32_t rst_bits; } regs[] = {
     {&(RCC->AHB1ENR), &(RCC->AHB1RSTR), 0x02008023U},

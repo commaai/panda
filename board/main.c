@@ -375,7 +375,7 @@ int main(void) {
     }
     #endif
     if (!power_save_enabled) {
-      // ADC_SM_3, outside the interrupts since a VREFINT acquisition takes milliseconds
+      // ADC_SM_3, takes milliseconds so not in an interrupt
       if (!adc_check(current_board->avdd_mV)) {
         ENTER_CRITICAL();
         fault_occurred(FAULT_ADC);

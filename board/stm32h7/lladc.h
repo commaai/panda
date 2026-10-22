@@ -42,7 +42,7 @@ uint16_t adc_get_raw(const adc_signal_t *signal) {
 
   // start conversion
   signal->adc->CR |= ADC_CR_ADSTART;
-  // bounded, a stuck ADC reads 0 and fails the ADC checks instead of hanging
+  // a stuck ADC reads 0
   uint32_t timeout = 1000000U;
   while (((signal->adc->ISR & ADC_ISR_EOS) == 0U) && (timeout > 0U)) {
     timeout--;
@@ -70,10 +70,10 @@ static void adc_calibrate_vdda(void) {
   print("  AVDD: 0x"); puth(adc_avdd_mV); print(" mV\n");
 }
 
-// set while the main loop converts on ADC2, the harness cross-read skips it then
+// the main loop is using ADC2
 static volatile bool adc2_busy = false;
 
-// ADC_SM_2 and ADC_SM_3: VREFINT against its factory calibration, AVDD has to match the board supply
+// ADC_SM_2, ADC_SM_3: AVDD from VREFINT has to match the board
 bool adc_check(uint32_t expected_avdd_mV) {
   adc2_busy = true;
   uint32_t avdd_mV = adc_measure_avdd_mV();

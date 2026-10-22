@@ -322,14 +322,13 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       if (req->param1 == 0U) {
         relay_readback_inject = true;
       } else if (req->param1 == 1U) {
-        // 15% slow, outside the cross-check but inside the interrupt rate limits
         register_set(&(INTERRUPT_TIMER->PSC), (INTERRUPT_TIMER->PSC * 23U) / 20U, 0xFFFFU);
       } else if (req->param1 == 2U) {
         ADC3_COMMON->CCR &= ~ADC_CCR_VREFEN;
       } else if (req->param1 == 3U) {
         register_set(&(TICK_TIMER->PSC), (TICK_TIMER->PSC * 23U) / 20U, 0xFFFFU);
       } else if (req->param1 == 4U) {
-        // writes that bypass the register map
+        // raw writes, outside the register map
         FDCAN1->IE ^= FDCAN_IE_TCFE;
       } else if (req->param1 == 5U) {
         RCC->APB1LENR |= RCC_APB1LENR_TIM13EN;

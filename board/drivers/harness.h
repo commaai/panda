@@ -37,7 +37,7 @@ void set_intercept_relay(bool intercept, bool ignition_relay) {
   }
 }
 
-// stop mode switches the pins to analog before the tick stops
+// pins go analog in stop mode
 static bool relay_pin_mismatch(const GPIO_TypeDef *GPIO, unsigned int pin) {
   bool is_output = ((GPIO->MODER >> (pin * 2U)) & 3U) == (uint32_t)MODE_OUTPUT;
   bool driven = (GPIO->ODR & (1UL << pin)) != 0U;
@@ -79,7 +79,7 @@ static uint8_t harness_detect_orientation(void) {
     harness.sbu2_voltage_mV = adc_get_mV(&current_board->harness_config->adc_signal_SBU2);
     uint16_t detection_threshold = current_board->avdd_mV / 2U;
 
-    // ADC_SM_4: SBU1 is ADC12_INP4, ADC2 has to agree with ADC1
+    // ADC_SM_4: SBU1 is on ADC1 and ADC2
     if (!adc2_busy) {
       adc_signal_t sbu1_adc2 = current_board->harness_config->adc_signal_SBU1;
       sbu1_adc2.adc = ADC2;
@@ -111,7 +111,7 @@ static uint8_t harness_detect_orientation(void) {
   }
   #endif
 
-  // raised after the ADC lock is released, the safe state drives the relay
+  // after the ADC lock, the safe state drives the relay
   if (adc_mismatches >= 8U) {
     fault_occurred(FAULT_ADC);
   }
@@ -122,8 +122,7 @@ static uint8_t harness_detect_orientation(void) {
 void harness_tick(void) {
   harness.status = harness_detect_orientation();
 
-  // GPIO_SM_2: open drain with a pull-up on the FET gate, so the pins read back what is driven.
-  // two mismatches in a row at 8Hz leave time for the gate to settle
+  // GPIO_SM_2: relay pins read back what is driven, one tick of slack for switching
   static uint32_t relay_mismatches = 0U;
   const harness_configuration *cfg = current_board->harness_config;
   bool mismatch = relay_pin_mismatch(cfg->GPIO_relay_SBU1, cfg->pin_relay_SBU1) ||
