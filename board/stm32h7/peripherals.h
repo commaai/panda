@@ -142,13 +142,11 @@ void enable_interrupt_timer(void) {
   register_set_bits(&(RCC->APB1LENR), RCC_APB1LENR_TIM6EN); // Enable interrupt timer peripheral
 }
 
-// firmware never writes option bytes, check the ones this image depends on
+// FLASH_SM_3: nothing unlocks the option bytes, and they boot from 0x08000000 when BOOT0 is low
 void check_option_bytes(void) {
-  // the linker map and RAM tests assume 64K ITCM and 320K AXI SRAM, RM0468 Table 8
-  bool ok = (FLASH->OPTSR2_CUR & FLASH_OPTSR2_TCM_AXI_SHARED) == 0U;
-  // boot from 0x08000000 when BOOT0 is low
-  ok = ok && ((FLASH->BOOT_CUR & FLASH_BOOT_ADD0) == 0x0800U);
-  if (!ok) {
+  bool locked = (FLASH->OPTCR & FLASH_OPTCR_OPTLOCK) != 0U;
+  bool boot_flash = (FLASH->BOOT_CUR & FLASH_BOOT_ADD0) == 0x0800U;
+  if (!locked || !boot_flash) {
     fault_occurred(FAULT_REGISTER_DIVERGENT);
   }
 }

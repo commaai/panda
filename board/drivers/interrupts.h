@@ -28,17 +28,15 @@ void nvic_disable(IRQn_Type irq) {
 }
 
 void nvic_check(void) {
-  bool ok = true;
-  ENTER_CRITICAL();
+  uint32_t diff = 0U;
   for (uint8_t i = 0U; i < 8U; i++) {
-    ok = ok && (NVIC->ISER[i] == nvic_expected[i]);
+    diff |= NVIC->ISER[i] ^ nvic_expected[i];
   }
   // nothing sets a priority, all IRQs stay at 0
   for (uint8_t i = 0U; i < 240U; i++) {
-    ok = ok && (NVIC->IP[i] == 0U);
+    diff |= NVIC->IP[i];
   }
-  EXIT_CRITICAL();
-  if (!ok) {
+  if (diff != 0U) {
     fault_occurred(FAULT_REGISTER_DIVERGENT);
   }
 }
