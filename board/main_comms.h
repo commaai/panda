@@ -317,6 +317,8 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       } else if (req->param1 == 4U) {
         // an unused IRQ, outside nvic_enable
         NVIC_EnableIRQ(WWDG_IRQn);
+      } else if (req->param1 == 5U) {
+        NVIC_SetPriority(WWDG_IRQn, 1U);
       } else {
       }
       break;
