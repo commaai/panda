@@ -1,7 +1,7 @@
 // the DUTs are plugged into ultimate provisioning (UP) boards, which stand in for the jungles.
 // a DUT is only reachable through its UP, over the USB network between them
 // the UP library, fetched on demand. uv's caches go on /data, the UP's /home is tiny
-UP = "UV_CACHE_DIR=/data/uv_cache UV_TOOL_DIR=/data/uv_tools uvx -q --refresh-package comma-ultimate-provisioning --from git+https://github.com/commaai/hardware@ultimate-provisioning#subdirectory=ultimate_provisioning ultimate_provisioning"
+UP = "UV_CACHE_DIR=/data/uv_cache UV_TOOL_DIR=/data/uv_tools uvx -q --refresh-package comma-ultimate-provisioning --from git+https://github.com/commaai/hardware@master#subdirectory=ultimate_provisioning ultimate_provisioning"
 
 def up(String ip, String step_label, String cmd, boolean returnStdout = false) {
   withCredentials([file(credentialsId: 'id_rsa', variable: 'key_file')]) {
