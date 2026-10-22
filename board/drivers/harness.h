@@ -4,10 +4,7 @@
 
 struct harness_t harness;
 
-#define HARNESS_ADC_AGREEMENT_MV 100
-
 #ifdef ALLOW_DEBUG
-uint16_t harness_adc_check_offset_mV = 0U;
 bool relay_readback_inject = false;
 #endif
 
@@ -49,8 +46,8 @@ static bool relay_pin_mismatch(const GPIO_TypeDef *GPIO, unsigned int pin) {
   return is_output && (driven != read);
 }
 
-// GPIO_SM_2: the relay pins are open drain with a pull-up on the FET gate, so the pin reads back what is driven.
-// called at 8Hz, two mismatches in a row are a fault, which leaves time for the gate to settle after a change
+// GPIO_SM_2: open drain with a pull-up on the FET gate, so the pin reads back what is driven.
+// called at 8Hz, two mismatches in a row leave time for the gate to settle
 void harness_check_relay_readback(void) {
   static uint32_t mismatches = 0U;
   const harness_configuration *cfg = current_board->harness_config;
@@ -83,7 +80,6 @@ bool harness_check_ignition(void) {
 
 static uint8_t harness_detect_orientation(void) {
   uint8_t ret = harness.status;
-  bool adc_fault = false;
 
   #ifndef BOOTSTUB
   // We can't detect orientation if the relay is being driven
@@ -95,18 +91,6 @@ static uint8_t harness_detect_orientation(void) {
     harness.sbu1_voltage_mV = adc_get_mV(&current_board->harness_config->adc_signal_SBU1);
     harness.sbu2_voltage_mV = adc_get_mV(&current_board->harness_config->adc_signal_SBU2);
     uint16_t detection_threshold = current_board->avdd_mV / 2U;
-
-    // ADC_SM_1: a second acquisition has to agree, log only for now
-    static uint32_t adc_mismatches = 0U;
-    uint16_t sbu1_check_mV = adc_get_mV(&current_board->harness_config->adc_signal_SBU1);
-    #ifdef ALLOW_DEBUG
-    sbu1_check_mV += harness_adc_check_offset_mV;
-    #endif
-    uint16_t sbu2_check_mV = adc_get_mV(&current_board->harness_config->adc_signal_SBU2);
-    bool agree = (ABS((int32_t)harness.sbu1_voltage_mV - (int32_t)sbu1_check_mV) <= HARNESS_ADC_AGREEMENT_MV) &&
-                 (ABS((int32_t)harness.sbu2_voltage_mV - (int32_t)sbu2_check_mV) <= HARNESS_ADC_AGREEMENT_MV);
-    adc_mismatches = agree ? 0U : (adc_mismatches + 1U);
-    adc_fault = adc_mismatches >= 8U;
 
     // Detect connection and orientation
     if((harness.sbu1_voltage_mV < detection_threshold) || (harness.sbu2_voltage_mV < detection_threshold)){
@@ -129,11 +113,6 @@ static uint8_t harness_detect_orientation(void) {
   }
   #endif
 
-  // the safe state drives the relay, which waits for the ADC lock
-  if (adc_fault) {
-    fault_occurred(FAULT_ADC);
-  }
-
   return ret;
 }
 
@@ -150,11 +129,6 @@ void harness_init(void) {
 
   // detect initial orientation
   harness.status = harness_detect_orientation();
-
-  // VREFINT derived AVDD outside the board supply range means the ADC or its reference is broken
-  if (!adc_avdd_plausible(current_board->avdd_mV)) {
-    fault_occurred(FAULT_ADC);
-  }
 
   // keep buses connected by default
   set_intercept_relay(false, false);

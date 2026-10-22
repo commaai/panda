@@ -13,11 +13,11 @@ FAULT_SIREN_MALFUNCTION_BIT = 25
 # one runtime RAM pass: DTCM, AXI SRAM and ITCM in 248 B steps at 8 Hz, see board/drivers/self_test.h
 RAM_TEST_PASS_S = 0x80000 / 248 / 8
 FAULT_MPU_BIT = 28
-# board/main_comms.h 0xf5 injection index: fault bit, safety mode, the harness ADC is only read while the relay isn't driven
+# board/main_comms.h 0xf5 injection index: fault bit, safety mode
 READBACK_FAULTS = {
   0: (13, CarParams.SafetyModel.allOutput),
   1: (29, CarParams.SafetyModel.allOutput),
-  2: (24, CarParams.SafetyModel.noOutput),
+  2: (24, CarParams.SafetyModel.allOutput),
   3: (29, CarParams.SafetyModel.allOutput),
   4: (18, CarParams.SafetyModel.allOutput),
   5: (18, CarParams.SafetyModel.allOutput),

@@ -377,6 +377,11 @@ int main(void) {
     }
     #endif
     if (!power_save_enabled) {
+      // ADC_SM_3, outside the interrupts since a VREFINT acquisition takes milliseconds
+      if (!adc_check(current_board->avdd_mV)) {
+        fault_occurred(FAULT_ADC);
+      }
+
       // useful for debugging, fade breaks = panda is overloaded
       for (uint32_t fade = 0U; fade < MAX_LED_FADE; fade += 1U) {
         led_set(LED_RED, true);

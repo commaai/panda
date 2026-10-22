@@ -325,7 +325,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         // 15% slow, outside the cross-check but inside the interrupt rate limits
         register_set(&(INTERRUPT_TIMER->PSC), (INTERRUPT_TIMER->PSC * 23U) / 20U, 0xFFFFU);
       } else if (req->param1 == 2U) {
-        harness_adc_check_offset_mV = 500U;
+        adc_check_inject = true;
       } else if (req->param1 == 3U) {
         register_set(&(TICK_TIMER->PSC), (TICK_TIMER->PSC * 23U) / 20U, 0xFFFFU);
       } else if (req->param1 == 4U) {
