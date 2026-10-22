@@ -6,6 +6,7 @@ struct harness_t harness;
 
 #ifdef ALLOW_DEBUG
 bool relay_readback_inject = false;
+uint16_t harness_adc2_offset_mV = 0U;
 #endif
 
 // The ignition relay is only used for testing purposes
@@ -80,6 +81,7 @@ bool harness_check_ignition(void) {
 
 static uint8_t harness_detect_orientation(void) {
   uint8_t ret = harness.status;
+  bool adc_fault = false;
 
   #ifndef BOOTSTUB
   // We can't detect orientation if the relay is being driven
@@ -91,6 +93,20 @@ static uint8_t harness_detect_orientation(void) {
     harness.sbu1_voltage_mV = adc_get_mV(&current_board->harness_config->adc_signal_SBU1);
     harness.sbu2_voltage_mV = adc_get_mV(&current_board->harness_config->adc_signal_SBU2);
     uint16_t detection_threshold = current_board->avdd_mV / 2U;
+
+    // ADC_SM_4: SBU1 is ADC12_INP4, ADC2 has to agree with ADC1, log only
+    if (!adc2_busy) {
+      static uint32_t adc_mismatches = 0U;
+      adc_signal_t sbu1_adc2 = current_board->harness_config->adc_signal_SBU1;
+      sbu1_adc2.adc = ADC2;
+      uint16_t sbu1_adc2_mV = adc_get_mV(&sbu1_adc2);
+      #ifdef ALLOW_DEBUG
+      sbu1_adc2_mV += harness_adc2_offset_mV;
+      #endif
+      bool agree = ABS((int32_t)harness.sbu1_voltage_mV - (int32_t)sbu1_adc2_mV) <= 100;
+      adc_mismatches = agree ? 0U : (adc_mismatches + 1U);
+      adc_fault = adc_mismatches >= 8U;
+    }
 
     // Detect connection and orientation
     if((harness.sbu1_voltage_mV < detection_threshold) || (harness.sbu2_voltage_mV < detection_threshold)){
@@ -112,6 +128,11 @@ static uint8_t harness_detect_orientation(void) {
     harness.sbu_adc_lock = false;
   }
   #endif
+
+  // raised after the ADC lock is released, the safe state drives the relay
+  if (adc_fault) {
+    fault_occurred(FAULT_ADC);
+  }
 
   return ret;
 }

@@ -21,6 +21,8 @@ READBACK_FAULTS = {
   3: (29, CarParams.SafetyModel.allOutput),
   4: (18, CarParams.SafetyModel.allOutput),
   5: (18, CarParams.SafetyModel.allOutput),
+  # harness detection only reads the ADC while the relay isn't driven
+  6: (24, CarParams.SafetyModel.noOutput),
 }
 
 

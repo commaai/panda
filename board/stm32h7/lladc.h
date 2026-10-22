@@ -40,13 +40,18 @@ uint16_t adc_get_raw(const adc_signal_t *signal) {
   signal->adc->CFGR2 = (((1U << (uint32_t) signal->oversampling) - 1U) << ADC_CFGR2_OVSR_Pos) | ((uint32_t) signal->oversampling << ADC_CFGR2_OVSS_Pos);
   signal->adc->CFGR2 |= (signal->oversampling != OVERSAMPLING_1) ? ADC_CFGR2_ROVSE : 0U;
 
-  // start conversion
+  // start conversion, bounded so a stuck ADC reads 0 instead of hanging
   signal->adc->CR |= ADC_CR_ADSTART;
-  while (!(signal->adc->ISR & ADC_ISR_EOC));
+  uint32_t timeout = 10000000U;
+  while (((signal->adc->ISR & ADC_ISR_EOC) == 0U) && (timeout > 0U)) {
+    timeout--;
+  }
 
-  uint16_t res = signal->adc->DR;
+  uint16_t res = (timeout > 0U) ? (uint16_t)signal->adc->DR : 0U;
 
-  while (!(signal->adc->ISR & ADC_ISR_EOS));
+  while (((signal->adc->ISR & ADC_ISR_EOS) == 0U) && (timeout > 0U)) {
+    timeout--;
+  }
   signal->adc->ISR |= ADC_ISR_EOS;
 
   return res;
@@ -71,12 +76,17 @@ static void adc_calibrate_vdda(void) {
 }
 
 #ifdef ALLOW_DEBUG
-bool adc_check_inject = false;
+volatile bool adc_check_inject = false;
 #endif
+
+// set while the main loop converts on ADC2, the harness cross-read skips it then
+static volatile bool adc2_busy = false;
 
 // ADC_SM_2 and ADC_SM_3: VREFINT against its factory calibration, AVDD has to match the board supply
 bool adc_check(uint32_t expected_avdd_mV) {
+  adc2_busy = true;
   uint32_t avdd_mV = adc_measure_avdd_mV();
+  adc2_busy = false;
   #ifdef ALLOW_DEBUG
   avdd_mV = adc_check_inject ? 0U : avdd_mV;
   #endif

@@ -333,6 +333,8 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         FDCAN1->IE ^= FDCAN_IE_TCFE;
       } else if (req->param1 == 5U) {
         RCC->APB1LENR |= RCC_APB1LENR_TIM13EN;
+      } else if (req->param1 == 6U) {
+        harness_adc2_offset_mV = 500U;
       } else {
       }
       break;

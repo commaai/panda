@@ -42,6 +42,7 @@ static void fdcan_track_config(FDCAN_GlobalTypeDef *FDCANx) {
   register_set(&(FDCANx->RXESC), FDCANx->RXESC, 0xFFFFFFFFU);
   register_set(&(FDCANx->TXBC), FDCANx->TXBC, 0xFFFFFFFFU);
   register_set(&(FDCANx->TXESC), FDCANx->TXESC, 0xFFFFFFFFU);
+  register_set(&(FDCANx->CCCR), FDCANx->CCCR, FDCAN_CCCR_MON | FDCAN_CCCR_DAR | FDCAN_CCCR_TEST | FDCAN_CCCR_FDOE | FDCAN_CCCR_BRSE | FDCAN_CCCR_NISO);
 }
 
 static bool fdcan_exit_init(FDCAN_GlobalTypeDef *FDCANx) {

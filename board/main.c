@@ -379,7 +379,9 @@ int main(void) {
     if (!power_save_enabled) {
       // ADC_SM_3, outside the interrupts since a VREFINT acquisition takes milliseconds
       if (!adc_check(current_board->avdd_mV)) {
+        ENTER_CRITICAL();
         fault_occurred(FAULT_ADC);
+        EXIT_CRITICAL();
       }
 
       // useful for debugging, fade breaks = panda is overloaded
