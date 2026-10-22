@@ -118,7 +118,7 @@ pipeline {
             stage('test cuatro') {
               agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root'; reuseNode true } }
               steps {
-                phone_steps("up-cuatro", [
+                phone_steps("up-mici", [
                   ["build", "scons"],
                   ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
                   ["test", "cd tests/hitl && PYTHONPATH=/data/ultimate_provisioning HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py"],
