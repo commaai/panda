@@ -161,7 +161,8 @@ typedef struct interrupt {
 
 typedef struct {
   uint32_t last_ts;
-  uint8_t mismatches;
+  uint32_t prev_ts;
+  uint32_t mismatches;
 } timer_check_t;
 void timer_check(timer_check_t *check, uint32_t expected_us);
 void interrupt_timer_init(void);
