@@ -154,6 +154,7 @@ typedef struct interrupt {
   uint32_t call_counter;
   uint32_t call_rate;
   uint32_t max_call_rate;   // Call rate is defined as the amount of calls each second
+  uint32_t min_call_rate;
   uint32_t call_rate_fault;
 } interrupt;
 

@@ -115,7 +115,9 @@ static void __attribute__ ((noinline)) enable_fpu(void) {
 
 // called at 8Hz
 static void tick_handler(void) {
-  if (TICK_TIMER->SR != 0U) {
+  if ((TICK_TIMER->SR & TIM_SR_UIF) != 0U) {
+    // cleared first, a flag cleared on the way out can retrigger the vector
+    TICK_TIMER->SR = 0;
     static uint32_t siren_countdown = 0; // siren plays while countdown > 0
     static uint32_t controls_allowed_countdown = 0;
     static uint8_t prev_harness_status = HARNESS_STATUS_NC;
@@ -246,6 +248,10 @@ static void tick_handler(void) {
 
       // check registers
       check_registers();
+      if (!clock_check()) {
+        fault_occurred(FAULT_CLOCK);
+      }
+      interrupt_timer_check();
 
       // set ignition_can to false after 2s of no CAN seen
       if (ignition_can_cnt > 2U) {
@@ -268,8 +274,10 @@ static void tick_handler(void) {
 
     loop_counter++;
     loop_counter %= 8U;
+  } else {
+    // TIM12 shares the vector with the TIM8 break, which has no interrupts enabled
+    fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
   }
-  TICK_TIMER->SR = 0;
 }
 
 int main(void) {
@@ -282,6 +290,7 @@ int main(void) {
   // init early devices
   clock_init();
   peripherals_init();
+  clock_check_init();
   detect_board_type();
   led_init();
   // red+green leds enabled until succesful USB/SPI init, as a debug indicator
@@ -328,6 +337,7 @@ int main(void) {
 
   // 8Hz timer
   REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK)
+  interrupts[TICK_TIMER_IRQ].min_call_rate = 4U;
   tick_timer_init();
 
   self_test_init();

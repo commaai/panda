@@ -110,6 +110,7 @@ void peripherals_init(void) {
   RCC->APB1LENR |= RCC_APB1LENR_TIM6EN;  // interrupt timer
   RCC->APB1LENR |= RCC_APB1LENR_TIM7EN;  // DMA trigger timer
   RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;  // tick timer
+  RCC->APB2ENR |= RCC_APB2ENR_TIM16EN;  // clock check
   RCC->APB1LENR |= RCC_APB1LENR_TIM12EN;  // slow loop
   RCC->APB1LENR |= RCC_APB1LENR_TIM5EN; // sound trigger timer
 

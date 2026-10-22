@@ -302,6 +302,21 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xed:
       self_test_inject((uint8_t)req->param1);
       break;
+    // **** 0xef: break an interrupt or the clock check, for testing
+    case 0xef:
+      if (req->param1 == 0U) {
+        NVIC_DisableIRQ(TICK_TIMER_IRQ);
+      } else if (req->param1 == 1U) {
+        NVIC_DisableIRQ(INTERRUPT_TIMER_IRQ);
+      } else if (req->param1 == 2U) {
+        // the tick handler runs without its flag
+        NVIC_SetPendingIRQ(TICK_TIMER_IRQ);
+      } else if (req->param1 == 3U) {
+        // halves the counts per LSI capture
+        register_set(&(TIM16->PSC), 1U, 0xFFFFU);
+      } else {
+      }
+      break;
     #endif
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:
