@@ -47,7 +47,9 @@ class TestSafety(PandaTestCase):
     for fault_bit in PERMANENT_FAULT_BITS:
       p.reset()
       p.set_safety_mode(CarParams.SafetyModel.allOutput)
-      assert p.health()['safety_mode'] == CarParams.SafetyModel.allOutput
+      h = p.health()
+      assert h['safety_mode'] == CarParams.SafetyModel.allOutput
+      assert not (h['faults'] & (1 << fault_bit))
 
       t = time.monotonic()
       p.inject_fault(fault_bit)
@@ -84,6 +86,7 @@ class TestSafety(PandaTestCase):
   def test_mpu_fault(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    assert not (p.health()['faults'] & (1 << FAULT_MPU_BIT))
     p.inject_mpu_fault()
     if FAULT_MPU_BIT in PERMANENT_FAULT_BITS:
       p.reconnect()
