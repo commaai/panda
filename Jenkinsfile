@@ -28,7 +28,7 @@ PYTHONPATH=/data/hardware/ultimate_provisioning python3 -m ultimate_provisioning
 """)
 }
 
-// serve the UP's harness and CAN to the tests on the DUT, see tests/hitl/up.py
+// serve the UP's harness and CAN to the tests on the DUT, see tests/hitl/base.py
 def upStart(String ip) {
   upHost(ip, "UP: start", "PYTHONPATH=/data/hardware/ultimate_provisioning python3 -m ultimate_provisioning serve")
 }
@@ -139,7 +139,7 @@ pipeline {
               device_steps("up-cuatro", [
                 ["build", "scons"],
                 ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
-                ["test", "cd tests/hitl && HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py"],
+                ["test", "cd tests/hitl && PYTHONPATH=/data/ultimate_provisioning HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py"],
               ])
             }
           }
@@ -152,7 +152,7 @@ pipeline {
               device_steps("up-tres", [
                 ["build", "scons"],
                 ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
-                ["test", "cd tests/hitl && HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py"],
+                ["test", "cd tests/hitl && PYTHONPATH=/data/ultimate_provisioning HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py"],
               ])
             }
           }

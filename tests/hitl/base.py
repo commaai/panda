@@ -5,13 +5,14 @@ import unittest
 
 from panda import Panda, PandaDFU
 from panda.tests.hitl.helpers import clear_can_buffers
-from panda.tests.hitl.up import UP
 
 SPEED_NORMAL = 500
 BUS_SPEEDS = [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL)]
 
 # test options
 NO_JUNGLE = os.environ.get("NO_JUNGLE", "0") == "1"
+# the UP's address on its USB network to the DUT, see ultimate_provisioning
+UP_IP = os.environ.get("UP_IP", "10.254.254.1")
 
 # Find all pandas connected
 _panda_jungle = None
@@ -19,8 +20,11 @@ _panda_type = None
 _panda_serial = None
 def init_devices():
   if not NO_JUNGLE:
+    # the DUT's panda is on a UP, which stands in for the jungle. `python -m ultimate_provisioning ready` copies
+    # ultimate_provisioning to the DUT. it's only on the DUT, so it's imported here
+    from ultimate_provisioning import UP
     global _panda_jungle
-    _panda_jungle = UP()
+    _panda_jungle = UP.remote(UP_IP)
 
   with Panda(serial=None, claim=False) as p:
     global _panda_type
@@ -33,7 +37,7 @@ def init_jungle():
   if _panda_jungle is None:
     return
   clear_can_buffers(_panda_jungle)
-  _panda_jungle.set_harness_orientation(UP.HARNESS_ORIENTATION_1)
+  _panda_jungle.set_harness_orientation(1)  # UP.HARNESS_ORIENTATION_1
   for bus, speed in BUS_SPEEDS:
     _panda_jungle.set_can_speed_kbps(bus, speed)
 
@@ -54,7 +58,7 @@ class PandaTestCase(unittest.TestCase):
     if _panda_serial is None:
       init_devices()
       if _panda_jungle is not None:
-        atexit.register(_panda_jungle.close)
+        atexit.register(_panda_jungle("close"))
     # init jungle
     init_jungle()
 
