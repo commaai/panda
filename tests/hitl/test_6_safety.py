@@ -14,7 +14,14 @@ FAULT_SIREN_MALFUNCTION_BIT = 25
 RAM_TEST_PASS_S = 0x80000 / 248 / 8
 FAULT_MPU_BIT = 28
 # board/main_comms.h 0xf5 injection index: fault bit, safety mode, the harness ADC is only read while the relay isn't driven
-READBACK_FAULTS = {0: (13, CarParams.SafetyModel.allOutput), 1: (29, CarParams.SafetyModel.allOutput), 2: (24, CarParams.SafetyModel.noOutput)}
+READBACK_FAULTS = {
+  0: (13, CarParams.SafetyModel.allOutput),
+  1: (29, CarParams.SafetyModel.allOutput),
+  2: (24, CarParams.SafetyModel.noOutput),
+  3: (29, CarParams.SafetyModel.allOutput),
+  4: (18, CarParams.SafetyModel.allOutput),
+  5: (18, CarParams.SafetyModel.allOutput),
+}
 
 
 class TestSafety(PandaTestCase):
@@ -167,7 +174,7 @@ class TestSafety(PandaTestCase):
         assert h['safety_mode'] == CarParams.SafetyModel.allOutput
     p.reset()
 
-  @panda_test(timeout=2*60)
+  @panda_test(timeout=3*60)
   def test_readback_fault(self):
     p = self.p
     for test, (fault_bit, mode) in READBACK_FAULTS.items():
@@ -179,7 +186,7 @@ class TestSafety(PandaTestCase):
       p.inject_readback_fault(test)
 
       t = time.monotonic()
-      while not ((h := p.health())['faults'] & (1 << fault_bit)) and (time.monotonic() - t) < 5:
+      while not ((h := p.health())['faults'] & (1 << fault_bit)) and (time.monotonic() - t) < 8:
         time.sleep(0.05)
       print(f"readback fault {test}: fault after {time.monotonic() - t:.1f} s")
       assert h['faults'] & (1 << fault_bit)

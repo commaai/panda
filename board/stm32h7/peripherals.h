@@ -65,10 +65,10 @@ void flasher_peripherals_init(void) {
 }
 #endif
 
-// all RST bits of each RCC reset register per stm32h725xx.h, AHB3 without CPURST
+// all RST bits of each RCC reset register per stm32h725xx.h, AHB3 without CPURST, without the H73x only CRYP, HASH and OTFDEC
 #define RCC_AHB1_RST_BITS 0x02008023U
-#define RCC_AHB2_RST_BITS 0x00030271U
-#define RCC_AHB3_RST_BITS 0x00E95011U
+#define RCC_AHB2_RST_BITS 0x00030241U
+#define RCC_AHB3_RST_BITS 0x00295011U
 #define RCC_AHB4_RST_BITS 0x032806FFU
 #define RCC_APB1L_RST_BITS 0xEAFFC3FFU
 #define RCC_APB1H_RST_BITS 0x03000136U
@@ -132,7 +132,7 @@ void peripherals_init(void) {
   RCC->APB1LENR |= RCC_APB1LENR_TIM12EN;  // slow loop
   RCC->APB1LENR |= RCC_APB1LENR_TIM5EN; // sound trigger timer
 
-  // UM2331 FFI_SM_0 and FFI_SM_1, any later clock enable has to be added above
+  // UM2331 FFI_SM_0 and FFI_SM_1, ENR and RSTR are in the register map, later writes have to use register_set
   hold_unused_in_reset(&(RCC->AHB1ENR), &(RCC->AHB1RSTR), RCC_AHB1_RST_BITS);
   hold_unused_in_reset(&(RCC->AHB2ENR), &(RCC->AHB2RSTR), RCC_AHB2_RST_BITS);
   hold_unused_in_reset(&(RCC->AHB3ENR), &(RCC->AHB3RSTR), RCC_AHB3_RST_BITS);

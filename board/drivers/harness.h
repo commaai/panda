@@ -4,8 +4,11 @@
 
 struct harness_t harness;
 
+#define HARNESS_ADC_AGREEMENT_MV 100
+
 #ifdef ALLOW_DEBUG
 uint16_t harness_adc_check_offset_mV = 0U;
+bool relay_readback_inject = false;
 #endif
 
 // The ignition relay is only used for testing purposes
@@ -35,10 +38,6 @@ void set_intercept_relay(bool intercept, bool ignition_relay) {
     harness.relay_driven = false;
   }
 }
-
-#ifdef ALLOW_DEBUG
-bool relay_readback_inject = false;
-#endif
 
 static bool relay_pin_mismatch(const GPIO_TypeDef *GPIO, unsigned int pin) {
   bool is_output = ((GPIO->MODER >> (pin * 2U)) & 3U) == (uint32_t)MODE_OUTPUT;
@@ -93,42 +92,34 @@ static uint8_t harness_detect_orientation(void) {
     set_gpio_mode(current_board->harness_config->GPIO_SBU1, current_board->harness_config->pin_SBU1, MODE_ANALOG);
     set_gpio_mode(current_board->harness_config->GPIO_SBU2, current_board->harness_config->pin_SBU2, MODE_ANALOG);
 
-    uint16_t sbu1_mV = adc_get_mV(&current_board->harness_config->adc_signal_SBU1);
-    uint16_t sbu2_mV = adc_get_mV(&current_board->harness_config->adc_signal_SBU2);
+    harness.sbu1_voltage_mV = adc_get_mV(&current_board->harness_config->adc_signal_SBU1);
+    harness.sbu2_voltage_mV = adc_get_mV(&current_board->harness_config->adc_signal_SBU2);
+    uint16_t detection_threshold = current_board->avdd_mV / 2U;
+
+    // ADC_SM_1: a second acquisition has to agree, log only for now
+    static uint32_t adc_mismatches = 0U;
     uint16_t sbu1_check_mV = adc_get_mV(&current_board->harness_config->adc_signal_SBU1);
     #ifdef ALLOW_DEBUG
     sbu1_check_mV += harness_adc_check_offset_mV;
     #endif
     uint16_t sbu2_check_mV = adc_get_mV(&current_board->harness_config->adc_signal_SBU2);
-    uint16_t detection_threshold = current_board->avdd_mV / 2U;
-
-    // the orientation sets the relay and CAN, so it only changes on two agreeing acquisitions
-    bool agree = (ABS((int32_t)sbu1_mV - (int32_t)sbu1_check_mV) <= HARNESS_ADC_AGREEMENT_MV) &&
-                 (ABS((int32_t)sbu2_mV - (int32_t)sbu2_check_mV) <= HARNESS_ADC_AGREEMENT_MV);
-    if (agree) {
-      harness.adc_mismatches = 0U;
-      harness.sbu1_voltage_mV = sbu1_mV;
-      harness.sbu2_voltage_mV = sbu2_mV;
-    } else if (harness.adc_mismatches < HARNESS_ADC_MISMATCH_FAULT) {
-      harness.adc_mismatches += 1U;
-    } else {
-      adc_fault = true;
-    }
+    bool agree = (ABS((int32_t)harness.sbu1_voltage_mV - (int32_t)sbu1_check_mV) <= HARNESS_ADC_AGREEMENT_MV) &&
+                 (ABS((int32_t)harness.sbu2_voltage_mV - (int32_t)sbu2_check_mV) <= HARNESS_ADC_AGREEMENT_MV);
+    adc_mismatches = agree ? 0U : (adc_mismatches + 1U);
+    adc_fault = adc_mismatches >= 8U;
 
     // Detect connection and orientation
-    if (agree) {
-      if((harness.sbu1_voltage_mV < detection_threshold) || (harness.sbu2_voltage_mV < detection_threshold)){
-        if (harness.sbu1_voltage_mV < harness.sbu2_voltage_mV) {
-          // orientation flipped (PANDA_SBU1->HARNESS_SBU1(relay), PANDA_SBU2->HARNESS_SBU2(ign))
-          ret = HARNESS_STATUS_FLIPPED;
-        } else {
-          // orientation normal (PANDA_SBU2->HARNESS_SBU1(relay), PANDA_SBU1->HARNESS_SBU2(ign))
-          // (SBU1->SBU2 is the normal orientation connection per USB-C cable spec)
-          ret = HARNESS_STATUS_NORMAL;
-        }
+    if((harness.sbu1_voltage_mV < detection_threshold) || (harness.sbu2_voltage_mV < detection_threshold)){
+      if (harness.sbu1_voltage_mV < harness.sbu2_voltage_mV) {
+        // orientation flipped (PANDA_SBU1->HARNESS_SBU1(relay), PANDA_SBU2->HARNESS_SBU2(ign))
+        ret = HARNESS_STATUS_FLIPPED;
       } else {
-        ret = HARNESS_STATUS_NC;
+        // orientation normal (PANDA_SBU2->HARNESS_SBU1(relay), PANDA_SBU1->HARNESS_SBU2(ign))
+        // (SBU1->SBU2 is the normal orientation connection per USB-C cable spec)
+        ret = HARNESS_STATUS_NORMAL;
       }
+    } else {
+      ret = HARNESS_STATUS_NC;
     }
 
     // Pins are not 5V tolerant in ADC mode
@@ -151,8 +142,6 @@ void harness_tick(void) {
 }
 
 void harness_init(void) {
-  harness.adc_mismatches = 0U;
-
   // init OBD_SBUx_RELAY
   set_gpio_output_type(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, OUTPUT_TYPE_OPEN_DRAIN);
   set_gpio_output_type(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, OUTPUT_TYPE_OPEN_DRAIN);

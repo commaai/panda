@@ -25,7 +25,7 @@ uint32_t microsecond_timer_get(void) {
   return MICROSECOND_TIMER->CNT;
 }
 
-// one timer measured against another, both would have to drift the same way to go unnoticed
+// SR-MCU-20, catches a stuck or misconfigured timer, the clock itself is checked by clock_check
 void timer_check(timer_check_t *check, uint32_t expected_us) {
   uint32_t now = microsecond_timer_get();
   if (check->last_ts != 0U) {

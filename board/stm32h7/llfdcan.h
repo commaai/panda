@@ -28,7 +28,7 @@ static bool fdcan_request_init(FDCAN_GlobalTypeDef *FDCANx) {
   return ret;
 }
 
-// config registers are only writable in init (RM0468 61.5), so they go into the register map before leaving it
+// SR-MCU-11, the config goes into the register map before leaving init
 static void fdcan_track_config(FDCAN_GlobalTypeDef *FDCANx) {
   register_set(&(FDCANx->NBTP), FDCANx->NBTP, 0xFFFFFFFFU);
   register_set(&(FDCANx->DBTP), FDCANx->DBTP, 0xFFFFFFFFU);

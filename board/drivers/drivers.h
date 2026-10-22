@@ -125,11 +125,7 @@ struct harness_t {
   uint16_t sbu2_voltage_mV;
   bool relay_driven;
   bool sbu_adc_lock;
-  uint8_t adc_mismatches;
 };
-
-#define HARNESS_ADC_AGREEMENT_MV 100
-#define HARNESS_ADC_MISMATCH_FAULT 8U
 extern struct harness_t harness;
 
 struct harness_configuration {
