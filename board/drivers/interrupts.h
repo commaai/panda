@@ -10,7 +10,7 @@ static void unused_interrupt_handler(void) {
 
 interrupt interrupts[NUM_INTERRUPTS];
 
-// NVIC_SM_0: enables only change through these, stop mode exits through reset
+// NVIC_SM_0: every IRQ enable goes through nvic_enable/nvic_disable, except the stop mode wakeups, which exit through a reset
 static uint32_t nvic_expected[8];
 
 void nvic_enable(IRQn_Type irq) {
