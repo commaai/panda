@@ -11,8 +11,6 @@ BUS_SPEEDS = [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL)]
 
 # test options
 NO_JUNGLE = os.environ.get("NO_JUNGLE", "0") == "1"
-# the UP's address on its USB network to the DUT, see ultimate_provisioning
-UP_IP = os.environ.get("UP_IP", "10.254.254.1")
 
 # Find all pandas connected
 _panda_jungle = None
@@ -24,7 +22,7 @@ def init_devices():
     # `python -m ultimate_provisioning ready` copies it to the DUT, so it's only imported when it's needed
     from ultimate_provisioning import UP
     global _panda_jungle
-    _panda_jungle = UP.remote(UP_IP)
+    _panda_jungle = UP.remote()
 
   with Panda(serial=None, claim=False) as p:
     global _panda_type
@@ -58,7 +56,7 @@ class PandaTestCase(unittest.TestCase):
     if _panda_serial is None:
       init_devices()
       if _panda_jungle is not None:
-        atexit.register(_panda_jungle("close"))
+        atexit.register(_panda_jungle("close"))  # closes the RPC connection, _panda_jungle.close() would close the UP
     # init jungle
     init_jungle()
 

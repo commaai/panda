@@ -51,11 +51,7 @@ class TestMisc(PandaTestCase):
           panda_jungle.can_send(0x123, b'\x01\x02', int(wakeup))
 
         # panda should reset and come back
-        if not Panda.wait_for_panda(serial, timeout=10):
-          # wake it up with ignition, the UP can't power cycle it for the next tests
-          panda_jungle.set_ignition(True)
-          Panda.wait_for_panda(serial, timeout=10)
-          raise AssertionError(f"panda didn't wake up on {wakeup}, orientation={orientation}")
+        assert Panda.wait_for_panda(serial, timeout=10)
 
         p.reconnect()
         assert p.health()['uptime'] < 3

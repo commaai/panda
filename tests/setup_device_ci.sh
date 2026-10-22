@@ -23,13 +23,6 @@ tee $CONTINUE_PATH << EOF
 
 sudo abctl --set_success
 
-# the tests reach this device through its UP, over USB, so keep adb (and its USB network) enabled
-# (rewriting AdbEnabled restarts the USB gadget, so only write it if needed)
-mkdir -p /data/params/d
-if [ "\$(cat /data/params/d/AdbEnabled 2>/dev/null)" != "1" ]; then
-  echo -n 1 > /data/params/d/AdbEnabled
-fi
-
 # patch sshd config
 sudo mount -o rw,remount /
 sudo sed -i "s,/data/params/d/GithubSshKeys,/usr/comma/setup_keys," /etc/ssh/sshd_config
