@@ -78,8 +78,8 @@ END"""
   }
 }
 
-def device_steps(steps) {
-  lock(resource: "", label: "up", inversePrecedence: true, variable: 'up_ip', quantity: 1, resourceSelectStrategy: 'random') {
+def device_steps(String device_type, steps) {
+  lock(resource: "", label: device_type, inversePrecedence: true, variable: 'up_ip', quantity: 1, resourceSelectStrategy: 'random') {
     timeout(time: 20, unit: 'MINUTES') {
       retry (3) {
         upSetup(up_ip)
@@ -130,15 +130,32 @@ pipeline {
       }
     }
 
-    stage('test cuatro') {
-      agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root'; reuseNode true } }
-      steps {
-        script {
-          device_steps([
-            ["build", "scons"],
-            ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
-            ["test", "cd tests/hitl && HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py"],
-          ])
+    stage('parallel tests') {
+      parallel {
+        stage('test cuatro') {
+          agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root'; reuseNode true } }
+          steps {
+            script {
+              device_steps("up-cuatro", [
+                ["build", "scons"],
+                ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
+                ["test", "cd tests/hitl && HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py"],
+              ])
+            }
+          }
+        }
+
+        stage('test tres') {
+          agent { docker { image 'ghcr.io/commaai/alpine-ssh'; args '--user=root'; reuseNode true } }
+          steps {
+            script {
+              device_steps("up-tres", [
+                ["build", "scons"],
+                ["flash", "cd scripts/ && ./reflash_internal_panda.py"],
+                ["test", "cd tests/hitl && HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py"],
+              ])
+            }
+          }
         }
       }
     }
