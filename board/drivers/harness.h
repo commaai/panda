@@ -94,7 +94,7 @@ static uint8_t harness_detect_orientation(void) {
     harness.sbu2_voltage_mV = adc_get_mV(&current_board->harness_config->adc_signal_SBU2);
     uint16_t detection_threshold = current_board->avdd_mV / 2U;
 
-    // ADC_SM_4: SBU1 is ADC12_INP4, ADC2 has to agree with ADC1, log only
+    // ADC_SM_4: SBU1 is ADC12_INP4, ADC2 has to agree with ADC1
     if (!adc2_busy) {
       static uint32_t adc_mismatches = 0U;
       adc_signal_t sbu1_adc2 = current_board->harness_config->adc_signal_SBU1;
