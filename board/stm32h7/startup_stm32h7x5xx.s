@@ -104,8 +104,8 @@ LoopFillZerobss:
 
 /**
  * @brief  This is the code that gets called when the processor receives an
- *         unexpected interrupt.  This simply enters an infinite loop, preserving
- *         the system state for examination by a debugger.
+ *         unexpected interrupt.  It resets through the HardFault handler, so the
+ *         reset shows up in health.
  * @param  None
  * @retval None
 */
@@ -118,7 +118,6 @@ ram_test_none:
   .thumb_set ram_test_startup, ram_test_none
 
     .section  .text.Default_Handler,"ax",%progbits
-/* exceptions without a handler of their own reset through the HardFault path, so they show up in health */
 Default_Handler:
   b  HardFault_Handler
   .size  Default_Handler, .-Default_Handler

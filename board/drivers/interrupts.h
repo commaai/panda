@@ -60,13 +60,10 @@ void interrupt_timer_handler(void) {
         print("Interrupt 0x"); puth(i); print(" fired too often (0x"); puth(interrupts[i].call_counter); print("/s)!\n");
       }
 
-      // the first window after registration can be partial
-      if (check_interrupt_rate && (interrupts[i].min_call_rate > 0U)) {
-        if (interrupts[i].min_call_rate_armed && (interrupts[i].call_counter < interrupts[i].min_call_rate)) {
-          print("Interrupt 0x"); puth(i); print(" stopped firing (0x"); puth(interrupts[i].call_counter); print("/s)!\n");
-          fault_occurred(FAULT_INTERRUPT_MISSING);
-        }
-        interrupts[i].min_call_rate_armed = true;
+      // the first window is partial
+      if (check_interrupt_rate && (interrupt_timer_windows > 1U) && (interrupts[i].call_counter < interrupts[i].min_call_rate)) {
+        print("Interrupt 0x"); puth(i); print(" stopped firing (0x"); puth(interrupts[i].call_counter); print("/s)!\n");
+        fault_occurred(FAULT_INTERRUPT_MISSING);
       }
 
       // Reset interrupt counters
@@ -87,11 +84,11 @@ void interrupt_timer_handler(void) {
   }
 }
 
-// called at 1Hz from the tick, the interrupt timer checks every other interrupt and this checks the interrupt timer
+// called at 1Hz from the tick, one miss is normal since the two timers drift
 void interrupt_timer_check(void) {
   static uint32_t last_windows = 0U;
-  static uint8_t misses = 0U;
-  misses = (interrupt_timer_windows == last_windows) ? (uint8_t)MIN(misses + 1U, 2U) : 0U;
+  static uint32_t misses = 0U;
+  misses = (interrupt_timer_windows == last_windows) ? (misses + 1U) : 0U;
   last_windows = interrupt_timer_windows;
   if (check_interrupt_rate && (misses >= 2U)) {
     fault_occurred(FAULT_INTERRUPT_MISSING);
@@ -104,7 +101,6 @@ void init_interrupts(bool check_rate_limit){
   for(uint16_t i=0U; i<NUM_INTERRUPTS; i++){
     interrupts[i].handler = unused_interrupt_handler;
     interrupts[i].min_call_rate = 0U;
-    interrupts[i].min_call_rate_armed = false;
   }
 
   // Init interrupt timer for a 1s interval

@@ -7,8 +7,7 @@ static void timer_init(TIM_TypeDef *TIM, int psc) {
   TIM->SR = 0;
 }
 
-// an update before SR was cleared stays pending in the NVIC and would run the handler without a flag,
-// read back so the clear reached the timer before the pending bit is dropped
+// drop an update that pended before init, read back so the clear lands first
 static void timer_irq_enable(TIM_TypeDef *TIM, IRQn_Type irq) {
   TIM->SR = 0;
   (void)TIM->SR;

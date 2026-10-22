@@ -676,20 +676,8 @@ class Panda:
   def inject_hardfault(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xeb, 0, 0, b'', expect_disconnect=True)
 
-  def stop_tick(self):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xef, 0, 0, b'')
-
-  def stop_interrupt_timer(self):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xef, 1, 0, b'')
-
-  def inject_unexpected_interrupt(self):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf7, 0, 0, b'')
-
-  def inject_css_reset(self):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf5, 0, 0, b'', expect_disconnect=True)
-
-  def set_clock_check_prescaler(self, psc):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf2, psc, 0, b'')
+  def inject_interrupt_fault(self, test):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xef, test, 0, b'')
 
   def inject_nmi(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xec, 0, 0, b'', expect_disconnect=True)

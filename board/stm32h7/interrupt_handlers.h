@@ -119,7 +119,7 @@ void BDMA_Channel4_IRQHandler(void) {handle_interrupt(BDMA_Channel4_IRQn);}
 void BDMA_Channel5_IRQHandler(void) {handle_interrupt(BDMA_Channel5_IRQn);}
 void BDMA_Channel6_IRQHandler(void) {handle_interrupt(BDMA_Channel6_IRQn);}
 void BDMA_Channel7_IRQHandler(void) {handle_interrupt(BDMA_Channel7_IRQn);}
-void COMP_IRQHandler(void) {handle_interrupt(COMP_IRQn);}
+void COMP1_IRQHandler(void) {handle_interrupt(COMP_IRQn);}
 void LPTIM2_IRQHandler(void) {handle_interrupt(LPTIM2_IRQn);}
 void LPTIM3_IRQHandler(void) {handle_interrupt(LPTIM3_IRQn);}
 void LPTIM4_IRQHandler(void) {handle_interrupt(LPTIM4_IRQn);}

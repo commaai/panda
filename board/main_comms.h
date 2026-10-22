@@ -302,22 +302,20 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xed:
       self_test_inject((uint8_t)req->param1);
       break;
-    // **** 0xef: stop the tick (0) or the interrupt timer (1) interrupt, for testing
+    // **** 0xef: break an interrupt or the clock check, for testing
     case 0xef:
-      NVIC_DisableIRQ((req->param1 == 0U) ? TICK_TIMER_IRQ : INTERRUPT_TIMER_IRQ);
-      break;
-    // **** 0xf2: set the clock check timer prescaler, for testing
-    case 0xf2:
-      register_set(&(TIM16->PSC), req->param1, 0xFFFFU);
-      break;
-    // **** 0xf7: call the tick handler without its flag, for testing
-    case 0xf7:
-      NVIC_SetPendingIRQ(TICK_TIMER_IRQ);
-      break;
-    // **** 0xf5: reset as after a clock security system NMI, for testing
-    case 0xf5:
-      fault_cookie = CSS_COOKIE;
-      NVIC_SystemReset();
+      if (req->param1 == 0U) {
+        NVIC_DisableIRQ(TICK_TIMER_IRQ);
+      } else if (req->param1 == 1U) {
+        NVIC_DisableIRQ(INTERRUPT_TIMER_IRQ);
+      } else if (req->param1 == 2U) {
+        // the tick handler runs without its flag
+        NVIC_SetPendingIRQ(TICK_TIMER_IRQ);
+      } else if (req->param1 == 3U) {
+        // halves the counts per LSI capture
+        register_set(&(TIM16->PSC), 1U, 0xFFFFU);
+      } else {
+      }
       break;
     #endif
     // **** 0xf1: Clear CAN ring buffer.

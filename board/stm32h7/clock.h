@@ -47,17 +47,6 @@ static PackageSMPSType get_package_smps_type(void) {
   return ret;
 }
 
-// bounded so a dead LSI can't hang init or the tick
-#define CLOCK_WAIT_LOOPS 1000000U
-
-static bool clock_wait(volatile const uint32_t *reg, uint32_t mask, uint32_t val) {
-  uint32_t loops = 0U;
-  while (((*reg & mask) != val) && (loops < CLOCK_WAIT_LOOPS)) {
-    loops++;
-  }
-  return (*reg & mask) == val;
-}
-
 void clock_init(void) {
   /*
     WARNING: PWR->CR3's lower byte can only be written once
@@ -132,41 +121,36 @@ void clock_init(void) {
   register_set_bits(&(PWR->CR3), PWR_CR3_USB33DEN);
 }
 
-// CLK_SM_3: TIM16 captures every 8th LSI edge (RM0468 Table 94, 46.6.18 TIM16_TISEL), counted on the
-// HSE derived 120MHz APB2 timer clock. 32kHz LSI gives 30000 counts, the 25% window only catches gross
-// HSE or PLL errors since LSI itself isn't accurate
-#define LSI_COUNTS_NOMINAL 30000U
+// CLK_SM_3: TIM16 captures every 8th edge of the 32kHz LSI on the HSE derived timer clock
+#define LSI_COUNTS_NOMINAL (APB2_TIMER_FREQ * 250U)
 
-bool clock_check_init(void) {
+void clock_check_init(void) {
   register_set_bits(&(RCC->CSR), RCC_CSR_LSION);
-  bool ok = clock_wait(&(RCC->CSR), RCC_CSR_LSIRDY, RCC_CSR_LSIRDY);
-
-  RCC->APB2ENR |= RCC_APB2ENR_TIM16EN;
   register_set(&(TIM16->TISEL), 1U, TIM_TISEL_TI1SEL);
   register_set(&(TIM16->CCMR1), TIM_CCMR1_CC1S_0 | TIM_CCMR1_IC1PSC_1 | TIM_CCMR1_IC1PSC_0, 0xFFU);
   register_set(&(TIM16->CCER), TIM_CCER_CC1E, 0xFU);
   register_set(&(TIM16->PSC), 0U, 0xFFFFU);
   register_set(&(TIM16->ARR), 0xFFFFU, 0xFFFFU);
   register_set(&(TIM16->CR1), TIM_CR1_CEN, 0x3FU);
-  return ok;
 }
 
+// waits up to 1ms for the next capture, an LSI/8 period is 250us
 static bool lsi_capture(uint16_t *count) {
-  bool ok = clock_wait(&(TIM16->SR), TIM_SR_CC1IF, TIM_SR_CC1IF);
-  // reading CCR1 clears CC1IF
+  uint32_t ts = microsecond_timer_get();
+  bool captured = false;
+  while (!captured && (get_ts_elapsed(microsecond_timer_get(), ts) < 1000U)) {
+    captured = (TIM16->SR & TIM_SR_CC1IF) != 0U;
+  }
   *count = (uint16_t)TIM16->CCR1;
-  return ok;
+  return captured;
 }
 
-// called at 1Hz, two LSI captures take under 1ms
+// called at 1Hz, LSI isn't accurate so the window only catches gross errors
 bool clock_check(void) {
-  uint16_t start = 0U;
+  // reading CCR1 clears CC1IF
+  uint16_t start = (uint16_t)TIM16->CCR1;
   uint16_t end = 0U;
-  (void)TIM16->CCR1;
-  bool ok = lsi_capture(&start);
-  if (ok) {
-    ok = lsi_capture(&end);
-  }
+  bool captured = lsi_capture(&end);
   uint32_t counts = (uint16_t)(end - start);
-  return ok && (counts > ((LSI_COUNTS_NOMINAL * 3U) / 4U)) && (counts < ((LSI_COUNTS_NOMINAL * 5U) / 4U));
+  return captured && (counts > ((LSI_COUNTS_NOMINAL * 3U) / 4U)) && (counts < ((LSI_COUNTS_NOMINAL * 5U) / 4U));
 }
