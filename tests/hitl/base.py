@@ -20,8 +20,8 @@ _panda_type = None
 _panda_serial = None
 def init_devices():
   if not NO_JUNGLE:
-    # the DUT's panda is on a UP, which stands in for the jungle. `python -m ultimate_provisioning ready` copies
-    # ultimate_provisioning to the DUT. it's only on the DUT, so it's imported here
+    # the DUT is plugged into a UP, which stands in for the jungle. ultimate_provisioning isn't a dependency,
+    # `python -m ultimate_provisioning ready` copies it to the DUT, so it's only imported when it's needed
     from ultimate_provisioning import UP
     global _panda_jungle
     _panda_jungle = UP.remote(UP_IP)
