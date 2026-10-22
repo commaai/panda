@@ -1,8 +1,8 @@
 // the DUTs are plugged into ultimate provisioning (UP) boards, which stand in for the jungles.
 // a DUT is only reachable through its UP, over the USB network between them
 UP_DUT_IP = "10.254.254.2"
-HARDWARE_REF = "ultimate-provisioning"
-UP = "PYTHONPATH=/data/hardware/ultimate_provisioning python3 -m ultimate_provisioning"
+// the UP library, fetched on demand. uv's caches go on /data, the UP's /home is tiny
+UP = "UV_CACHE_DIR=/data/uv_cache UV_TOOL_DIR=/data/uv_tools uvx -q --refresh-package comma-ultimate-provisioning --from git+https://github.com/commaai/hardware@ultimate-provisioning#subdirectory=ultimate_provisioning ultimate_provisioning"
 
 def up(String ip, String step_label, String cmd) {
   withCredentials([file(credentialsId: 'id_rsa', variable: 'key_file')]) {
@@ -58,16 +58,7 @@ def phone_steps(String device_type, steps) {
   lock(resource: "", label: device_type, inversePrecedence: true, variable: 'device_ip', quantity: 1) {
     timeout(time: 20, unit: 'MINUTES') {
       retry (3) {
-        // get the UP library and power up the DUT
-        up(device_ip, "UP: setup", """
-if [ ! -d /data/hardware ]; then
-  git clone --depth 1 --filter=blob:none --sparse https://github.com/commaai/hardware.git /data/hardware
-  git -C /data/hardware sparse-checkout set ultimate_provisioning
-fi
-git -C /data/hardware fetch --depth 1 origin ${HARDWARE_REF}
-git -C /data/hardware checkout -qf FETCH_HEAD
-${UP} ready
-""")
+        up(device_ip, "UP: ready", "${UP} ready")
         def date = sh(script: 'date', returnStdout: true).trim()
         phone(device_ip, "set time", "date -s '${date}'")
         phone(device_ip, "git checkout", readFile("tests/setup_device_ci.sh"))
