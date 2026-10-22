@@ -40,8 +40,9 @@ uint16_t adc_get_raw(const adc_signal_t *signal) {
   signal->adc->CFGR2 = (((1U << (uint32_t) signal->oversampling) - 1U) << ADC_CFGR2_OVSR_Pos) | ((uint32_t) signal->oversampling << ADC_CFGR2_OVSS_Pos);
   signal->adc->CFGR2 |= (signal->oversampling != OVERSAMPLING_1) ? ADC_CFGR2_ROVSE : 0U;
 
-  // start conversion, bounded so a stuck ADC reads 0 instead of hanging.
-  // an iteration takes at least 4 cycles, so 1M is above 16ms, the longest conversion (VREFINT) takes 6.6ms
+  // start conversion, bounded so a stuck ADC reads 0 instead of hanging. >= 4 cycles per iteration at 240MHz,
+  // so 1M is > 16ms, the longest conversion is VREFINT on ADC2: (810.5+8.5) x256 at 32MHz = 6.6ms
+  signal->adc->ISR = ADC_ISR_EOC | ADC_ISR_EOS | ADC_ISR_OVR;
   signal->adc->CR |= ADC_CR_ADSTART;
   uint32_t timeout = 1000000U;
   while (((signal->adc->ISR & ADC_ISR_EOC) == 0U) && (timeout > 0U)) {
@@ -54,7 +55,7 @@ uint16_t adc_get_raw(const adc_signal_t *signal) {
     timeout--;
   }
   signal->adc->ISR |= ADC_ISR_EOS;
-  if (timeout == 0U) {
+  if ((timeout == 0U) && ((signal->adc->CR & ADC_CR_ADSTART) != 0U)) {
     signal->adc->CR |= ADC_CR_ADSTP;
   }
 
