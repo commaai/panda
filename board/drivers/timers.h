@@ -31,6 +31,8 @@ void interrupt_timer_init(void) {
   register_set(&(INTERRUPT_TIMER->PSC), ((uint16_t)(15.25*APB1_TIMER_FREQ)-1U), 0xFFFFU);
   register_set(&(INTERRUPT_TIMER->DIER), TIM_DIER_UIE, 0x5F5FU);
   register_set(&(INTERRUPT_TIMER->CR1), TIM_CR1_CEN, 0x3FU);
+  // load the prescaler now, so the first window covers all of boot
+  INTERRUPT_TIMER->EGR = TIM_EGR_UG;
   timer_irq_enable(INTERRUPT_TIMER, INTERRUPT_TIMER_IRQ);
 }
 

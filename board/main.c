@@ -115,7 +115,7 @@ static void __attribute__ ((noinline)) enable_fpu(void) {
 
 // called at 8Hz
 static void tick_handler(void) {
-  if (TICK_TIMER->SR != 0U) {
+  if ((TICK_TIMER->SR & TIM_SR_UIF) != 0U) {
     // cleared first, a flag cleared on the way out can retrigger the vector
     TICK_TIMER->SR = 0;
     static uint32_t siren_countdown = 0; // siren plays while countdown > 0

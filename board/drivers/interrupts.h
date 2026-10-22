@@ -60,7 +60,7 @@ void interrupt_timer_handler(void) {
         print("Interrupt 0x"); puth(i); print(" fired too often (0x"); puth(interrupts[i].call_counter); print("/s)!\n");
       }
 
-      // the first window is partial
+      // the first window spans boot
       if (check_interrupt_rate && (interrupt_timer_windows > 1U) && (interrupts[i].call_counter < interrupts[i].min_call_rate)) {
         print("Interrupt 0x"); puth(i); print(" stopped firing (0x"); puth(interrupts[i].call_counter); print("/s)!\n");
         fault_occurred(FAULT_INTERRUPT_MISSING);
