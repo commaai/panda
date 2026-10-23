@@ -229,6 +229,6 @@ void sound_init(void) {
   // enable all initted blocks
   register_set_bits(&SAI4_Block_A->CR1, SAI_xCR1_SAIEN);
   register_set_bits(&SAI4_Block_B->CR1, SAI_xCR1_SAIEN);
-  NVIC_EnableIRQ(BDMA_Channel0_IRQn);
-  NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+  nvic_enable(BDMA_Channel0_IRQn);
+  nvic_enable(DMA1_Stream0_IRQn);
 }
