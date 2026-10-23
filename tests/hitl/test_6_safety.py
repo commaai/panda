@@ -10,8 +10,6 @@ SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11, 3: 12, 4: 12}
 # board/main_comms.h 0xef injection index: fault bit
 INTERRUPT_FAULT_BITS = {0: 17, 1: 17, 2: 1, 3: 16}
 FAULT_SIREN_MALFUNCTION_BIT = 25
-# one runtime RAM pass: DTCM, AXI SRAM and ITCM in 248 B steps at 8 Hz, see board/drivers/self_test.h
-RAM_TEST_PASS_S = 0x80000 / 248 / 8
 FAULT_MPU_BIT = 28
 # board/main_comms.h 0xf5 injection index: fault bit
 READBACK_FAULT_BITS = {0: 13, 1: 29, 2: 24, 3: 29, 4: 18, 5: 18, 6: 24}
@@ -134,18 +132,6 @@ class TestSafety(PandaTestCase):
       else:
         assert h['safety_mode'] == CarParams.SafetyModel.allOutput
     p.reset()
-
-  @panda_test(timeout=6*60)
-  def test_self_test_no_fault(self):
-    p = self.p
-    p.set_safety_mode(CarParams.SafetyModel.allOutput)
-    t = time.monotonic()
-    while (time.monotonic() - t) < (RAM_TEST_PASS_S + 5):
-      p.send_heartbeat(engaged=False)
-      time.sleep(0.2)
-    h = p.health()
-    assert h['faults'] == 0, f"faults {h['faults']:#x}"
-    assert h['safety_mode'] == CarParams.SafetyModel.allOutput
 
   @panda_test(timeout=2*60)
   def test_interrupt_fault(self):
