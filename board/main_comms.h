@@ -322,10 +322,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       } else if (req->param1 == 6U) {
         // the interrupt timer handler runs without its flag
         NVIC_SetPendingIRQ(INTERRUPT_TIMER_IRQ);
-      } else if (req->param1 == 7U) {
-        // a line next to SPI CS on the same vector, software triggers only reach the pending bit when unmasked
-        EXTI->IMR1 |= (1UL << 10);
-        EXTI->SWIER1 = (1UL << 10);
       } else {
       }
       break;

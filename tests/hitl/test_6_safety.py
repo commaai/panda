@@ -9,7 +9,7 @@ PERMANENT_FAULT_BITS = ()
 # board/drivers/self_test.h injection index: fault bit
 SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11, 3: 12, 4: 12}
 # board/main_comms.h 0xef injection index: fault bit
-INTERRUPT_FAULT_BITS = {0: 17, 1: 17, 2: 1, 3: 16, 4: 18, 5: 18, 6: 1, 7: 1}
+INTERRUPT_FAULT_BITS = {0: 17, 1: 17, 2: 1, 3: 16, 4: 18, 5: 18, 6: 1}
 FAULT_SAFETY_REDUNDANCY_BIT = 19
 FAULT_SIREN_MALFUNCTION_BIT = 25
 FAULT_MPU_BIT = 28
