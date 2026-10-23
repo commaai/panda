@@ -89,5 +89,5 @@ void llspi_init(void) {
   register_set_bits(&(EXTI->RTSR1), (1UL << SPI_CS_PIN));
   register_set_bits(&(EXTI->IMR1), (1UL << SPI_CS_PIN));
   EXTI->PR1 = (1UL << SPI_CS_PIN);
-  NVIC_EnableIRQ(EXTI15_10_IRQn);
+  nvic_enable(EXTI15_10_IRQn);
 }

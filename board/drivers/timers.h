@@ -12,7 +12,7 @@ static void timer_irq_enable(TIM_TypeDef *TIM, IRQn_Type irq) {
   TIM->SR = 0;
   (void)TIM->SR;
   NVIC_ClearPendingIRQ(irq);
-  NVIC_EnableIRQ(irq);
+  nvic_enable(irq);
 }
 
 void microsecond_timer_init(void) {
