@@ -45,6 +45,7 @@ extern uint8_t global_critical_depth;
 #define FAULT_CLOCK                         (1UL << 16)
 #define FAULT_INTERRUPT_MISSING             (1UL << 17)
 #define FAULT_REGISTER_DIVERGENT            (1UL << 18)
+#define FAULT_SAFETY_REDUNDANCY             (1UL << 19)
 #define FAULT_INTERRUPT_RATE_CLOCK_SOURCE   (1UL << 20)
 #define FAULT_INTERRUPT_RATE_TICK           (1UL << 21)
 #define FAULT_INTERRUPT_RATE_EXTI           (1UL << 22)

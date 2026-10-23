@@ -10,6 +10,7 @@ PERMANENT_FAULT_BITS = ()
 SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11, 3: 12, 4: 12}
 # board/main_comms.h 0xef injection index: fault bit
 INTERRUPT_FAULT_BITS = {0: 17, 1: 17, 2: 1, 3: 16, 4: 18, 5: 18, 6: 1, 7: 1}
+FAULT_SAFETY_REDUNDANCY_BIT = 19
 FAULT_SIREN_MALFUNCTION_BIT = 25
 FAULT_MPU_BIT = 28
 # board/main_comms.h 0xf5 injection index: fault bit
@@ -90,6 +91,19 @@ class TestSafety(PandaTestCase):
       h = p.health()
       assert h['faults'] & (1 << FAULT_MPU_BIT)
       assert h['safety_mode'] == CarParams.SafetyModel.allOutput
+    p.reset()
+
+  def test_safety_redundancy_fault(self):
+    p = self.p
+    p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    p.inject_safety_redundancy_fault()
+    t = time.monotonic()
+    while not ((h := p.health())['faults'] & (1 << FAULT_SAFETY_REDUNDANCY_BIT)) and (time.monotonic() - t) < 3:
+      p.send_heartbeat(engaged=False)
+      time.sleep(0.1)
+    assert h['faults'] & (1 << FAULT_SAFETY_REDUNDANCY_BIT)
+    assert h['safety_mode'] == (CarParams.SafetyModel.silent if FAULT_SAFETY_REDUNDANCY_BIT in PERMANENT_FAULT_BITS else CarParams.SafetyModel.allOutput)
+    assert not h['controls_allowed']
     p.reset()
 
   def test_stack_overflow_resets_to_silent(self):

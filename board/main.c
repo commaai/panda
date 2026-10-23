@@ -204,7 +204,7 @@ static void tick_handler(void) {
         heartbeat_engaged_mismatches += 1U;
         if (heartbeat_engaged_mismatches >= 3U) {
           mpu_safety_open();
-          controls_allowed = false;
+          clear_controls_allowed();
           mpu_safety_close();
         }
       } else {
@@ -270,6 +270,9 @@ static void tick_handler(void) {
       safety_tick();
       mpu_safety_close();
       mpu_check();
+      if (safety_state_invalid) {
+        fault_occurred(FAULT_SAFETY_REDUNDANCY);
+      }
     }
 
     self_test_tick();
