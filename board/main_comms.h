@@ -319,6 +319,13 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         NVIC_EnableIRQ(WWDG_IRQn);
       } else if (req->param1 == 5U) {
         NVIC_SetPriority(WWDG_IRQn, 1U);
+      } else if (req->param1 == 6U) {
+        // the interrupt timer handler runs without its flag
+        NVIC_SetPendingIRQ(INTERRUPT_TIMER_IRQ);
+      } else if (req->param1 == 7U) {
+        // a line next to SPI CS on the same vector
+        EXTI->SWIER1 = (1UL << 10);
+        NVIC_SetPendingIRQ(EXTI15_10_IRQn);
       } else {
       }
       break;
@@ -339,6 +346,11 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         RCC->APB1LENR |= RCC_APB1LENR_TIM13EN;
       } else if (req->param1 == 6U) {
         harness_adc2_offset_mV = 500U;
+      } else if (req->param1 == 7U) {
+        // a third MPU region, on unused FMC space
+        MPU->RNR = 2U;
+        MPU->RBAR = 0x60000000U;
+        MPU->RASR = mpu_rasr(ARM_MPU_AP_FULL, ARM_MPU_REGION_SIZE_32B);
       } else {
       }
       break;
