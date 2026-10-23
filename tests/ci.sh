@@ -1,54 +1,74 @@
 #!/usr/bin/env bash
 set -eo pipefail
-
 source ~/.bash_profile
 set -euo pipefail
 
 up() {
-  uvx -q --refresh-package comma-ultimate-provisioning \
-    --from 'git+https://github.com/commaai/hardware@master#subdirectory=ultimate_provisioning' \
-    ultimate_provisioning "$@"
+  uvx -q --from 'git+https://github.com/commaai/hardware@e02dc9f#subdirectory=ultimate_provisioning' ultimate_provisioning "$@"
 }
 trap 'exit 130' INT
 trap 'exit 143' HUP TERM
 trap 'up release' EXIT
 
+ready() {
+  local attempt
+  for attempt in 1 2 3; do
+    if dut_ip=$(up ready | tail -n1); then return; fi
+    echo "Device setup attempt $attempt failed" >&2
+  done
+  return 1
+}
+
 phone() {
   {
     cat <<'PROFILE'
 source ~/.bash_profile
-if [ -f /etc/profile ]; then
-  source /etc/profile
-fi
+if [ -f /etc/profile ]; then source /etc/profile; fi
+set -euo pipefail
 export CI=1 PYTHONWARNINGS=error LOGLEVEL=debug PYTEST_ADDOPTS='-p no:asyncio'
 unset PYTHONPATH
 PROFILE
-    printf 'export TEST_DIR=%q SOURCE_DIR=%q GIT_COMMIT=%q GIT_BRANCH=%q\n' "$TEST_DIR" "$SOURCE_DIR" "$GIT_COMMIT" "$GIT_BRANCH"
+    printf 'export TEST_DIR=%q GIT_COMMIT=%q UV_PROJECT_ENVIRONMENT=%q\n' "$TEST_DIR" "$GIT_COMMIT" "${TEST_DIR}.venv"
     cat
   } | ssh -T -oBatchMode=yes -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null \
       -oConnectTimeout=30 -oConnectionAttempts=3 -oServerAliveInterval=10 -oServerAliveCountMax=3 \
       "comma@$dut_ip" bash -se
 }
 
-ready=0
-for attempt in 1 2 3; do
-  if dut_ip=$(up ready | tail -n1) && {
-    printf 'date -s %q\n' "$(date)"
-    cat tests/setup_device_ci.sh
-  } | phone; then
-    ready=1
-    break
-  fi
-  echo "Device setup attempt $attempt failed" >&2
-done
-[[ $ready == 1 ]]
-
+ready
 up serve
 phone <<'DUT'
-cd "$TEST_DIR"
-source .venv/bin/activate
-scons
-(cd scripts && ./reflash_internal_panda.py)
-cd tests/hitl
-PYTHONPATH=/data/ultimate_provisioning HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py
+checkout() {
+  if [ ! -d "$TEST_DIR/.git" ]; then git clone --no-checkout https://github.com/commaai/panda.git "$TEST_DIR"; fi
+  cd "$TEST_DIR"
+  rm -f .git/index.lock
+  git reset --hard
+  git fetch --no-tags --no-recurse-submodules --depth 1 origin "$GIT_COMMIT"
+  git checkout --force --detach "$GIT_COMMIT"
+  git clean -xffd
+}
+
+install() {
+  # Bypass AGNOS's root-only uv shim.
+  local uv
+  uv=$(type -ap uv | grep -vF /usr/comma/shims | head -n1)
+  PYTHONWARNINGS=default "$uv" sync --cache-dir=/data/uv_cache --all-extras --upgrade-package opendbc
+  "$uv" cache prune --cache-dir=/data/uv_cache
+  source "$UV_PROJECT_ENVIRONMENT/bin/activate"
+}
+
+build() {
+  scons
+  (cd scripts && ./reflash_internal_panda.py)
+}
+
+test() {
+  cd tests/hitl
+  PYTHONPATH=/data/ultimate_provisioning HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py
+}
+
+checkout
+install
+build
+test
 DUT
