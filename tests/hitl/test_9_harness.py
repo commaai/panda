@@ -65,9 +65,10 @@ class TestHarness(PandaTestCase):
       # SBU voltages
       supply_voltage_mV = 1800 if p.get_type() in [Panda.HW_TYPE_TRES, Panda.HW_TYPE_CUATRO] else 3300
 
+      # the UP's SBU circuitry pulls an open line down to ~0.84x (tres) to ~0.88x (cuatro) supply
       if orientation == Panda.HARNESS_STATUS_NC:
-        assert health['sbu1_voltage_mV'] > 0.9 * supply_voltage_mV
-        assert health['sbu2_voltage_mV'] > 0.9 * supply_voltage_mV
+        assert health['sbu1_voltage_mV'] > 0.8 * supply_voltage_mV
+        assert health['sbu2_voltage_mV'] > 0.8 * supply_voltage_mV
       else:
         relay_line = 'sbu1_voltage_mV' if (detected_orientation == Panda.HARNESS_STATUS_FLIPPED) else 'sbu2_voltage_mV'
         ignition_line = 'sbu2_voltage_mV' if (detected_orientation == Panda.HARNESS_STATUS_FLIPPED) else 'sbu1_voltage_mV'
@@ -77,4 +78,4 @@ class TestHarness(PandaTestCase):
         if ignition:
           assert health[ignition_line] < 0.3 * supply_voltage_mV
         else:
-          assert health[ignition_line] > 0.9 * supply_voltage_mV
+          assert health[ignition_line] > 0.8 * supply_voltage_mV

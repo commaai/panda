@@ -671,10 +671,13 @@ class Panda:
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xb5, 0, 0, b'', expect_disconnect=True)
 
   def inject_fault(self, fault_bit):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xea, int(fault_bit), 0, b'')
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xea, fault_bit, 0, b'')
 
   def inject_hardfault(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xeb, 0, 0, b'', expect_disconnect=True)
+
+  def inject_interrupt_fault(self, test):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xef, test, 0, b'')
 
   def inject_nmi(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xec, 0, 0, b'', expect_disconnect=True)
@@ -687,6 +690,12 @@ class Panda:
 
   def inject_stack_overflow(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xf0, 0, 0, b'', expect_disconnect=True)
+
+  def inject_self_test_failure(self, test):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xed, test, 0, b'')
+
+  def inject_readback_fault(self, test):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf5, test, 0, b'')
 
   def set_safety_mode(self, mode=CarParams.SafetyModel.silent, param=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')

@@ -50,7 +50,7 @@ void early_initialization(void) {
   }
 
   // setup interrupt table
-  SCB->VTOR = (uint32_t)&g_pfnVectors;
+  register_set(&(SCB->VTOR), (uint32_t)&g_pfnVectors, SCB_VTOR_TBLOFF_Msk);
 
   // early GPIOs float everything
   early_gpio_float();

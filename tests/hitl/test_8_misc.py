@@ -21,7 +21,6 @@ class TestMisc(PandaTestCase):
     p = self.p
     panda_jungle = self.panda_jungle
     serial = p.get_usb_serial()
-    panda_jungle.set_obd(True)
 
     for orientation in (Panda.HARNESS_STATUS_FLIPPED, Panda.HARNESS_STATUS_NORMAL):
       panda_jungle.set_harness_orientation(orientation)
@@ -31,6 +30,10 @@ class TestMisc(PandaTestCase):
         panda_jungle.set_ignition(False)
         print(f"orientation={orientation} wakeup={wakeup}")
 
+        # drop any of the last wakeup's frames that nothing ACKed, they'd wake the panda right away
+        for bus in range(4):
+          panda_jungle.can_clear(bus)
+
         p.enter_stop_mode()
         p.close()
         # wait for panda to enter stop mode
@@ -39,6 +42,11 @@ class TestMisc(PandaTestCase):
         # wake via ignition or CAN activity
         if wakeup == "ign":
           panda_jungle.set_ignition(True)
+        elif wakeup == "1":
+          # the panda only wakes up on one of FDCAN2's two pairs, CAN1 or OBD depending on the orientation.
+          # those are the UP's buses 1 and 3 in either orientation (see LANES in ultimate_provisioning), so send on both
+          for bus in (1, 3):
+            panda_jungle.can_send(0x123, b'\x01\x02', bus)
         else:
           panda_jungle.can_send(0x123, b'\x01\x02', int(wakeup))
 

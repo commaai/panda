@@ -4,6 +4,9 @@ extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 // Prototypes
 void set_safety_mode(uint16_t mode, uint16_t param);
+#ifdef ALLOW_DEBUG
+void self_test_inject(uint8_t test);
+#endif
 bool is_car_safety_mode(uint16_t mode);
 
 static int get_health_pkt(void *dat) {
@@ -288,12 +291,56 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xee: write controls_allowed outside safety, for testing
     case 0xee:
-      controls_allowed = true;
+      controls_allowed = !controls_allowed;
       break;
     // **** 0xf0: run the stack into its MPU guard, for testing
     case 0xf0:
       __set_MSP((uint32_t)&_stack_guard + 32U);
       stack_guard_hit();
+      break;
+    // **** 0xed: inject self-test failure, for testing
+    case 0xed:
+      self_test_inject((uint8_t)req->param1);
+      break;
+    // **** 0xef: break an interrupt or the clock check, for testing
+    case 0xef:
+      if (req->param1 == 0U) {
+        nvic_disable(TICK_TIMER_IRQ);
+      } else if (req->param1 == 1U) {
+        nvic_disable(INTERRUPT_TIMER_IRQ);
+      } else if (req->param1 == 2U) {
+        // the tick handler runs without its flag
+        NVIC_SetPendingIRQ(TICK_TIMER_IRQ);
+      } else if (req->param1 == 3U) {
+        // halves the counts per LSI capture
+        register_set(&(TIM16->PSC), 1U, 0xFFFFU);
+      } else if (req->param1 == 4U) {
+        // an unused IRQ, outside nvic_enable
+        NVIC_EnableIRQ(WWDG_IRQn);
+      } else if (req->param1 == 5U) {
+        NVIC_SetPriority(WWDG_IRQn, 1U);
+      } else {
+      }
+      break;
+    // **** 0xf5: break a read-back or cross-check, for testing
+    case 0xf5:
+      if (req->param1 == 0U) {
+        relay_readback_inject = true;
+      } else if (req->param1 == 1U) {
+        register_set(&(INTERRUPT_TIMER->PSC), (INTERRUPT_TIMER->PSC * 23U) / 20U, 0xFFFFU);
+      } else if (req->param1 == 2U) {
+        ADC3_COMMON->CCR &= ~ADC_CCR_VREFEN;
+      } else if (req->param1 == 3U) {
+        register_set(&(TICK_TIMER->PSC), (TICK_TIMER->PSC * 23U) / 20U, 0xFFFFU);
+      } else if (req->param1 == 4U) {
+        // raw writes, outside the register map
+        FDCAN1->IE ^= FDCAN_IE_TCFE;
+      } else if (req->param1 == 5U) {
+        RCC->APB1LENR |= RCC_APB1LENR_TIM13EN;
+      } else if (req->param1 == 6U) {
+        harness_adc2_offset_mV = 500U;
+      } else {
+      }
       break;
     // **** 0xf7: corrupt the inverted copy of controls_allowed, for testing
     case 0xf7:

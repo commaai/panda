@@ -2,13 +2,18 @@ import time
 
 from opendbc.car.structs import CarParams
 from panda.tests.hitl.base import PandaTestCase, panda_test
-from panda.tests.hitl.helpers import clear_can_buffers
 
-# board/sys/sys.h PERMANENT_FAULTS
-PERMANENT_FAULT_BITS = (1, 2, 3, 4, 7, 8, 15, 19, 21)
+# keep in sync with PERMANENT_FAULTS, see board/sys/sys.h
+PERMANENT_FAULT_BITS = ()
+# board/drivers/self_test.h injection index: fault bit
+SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11, 3: 12, 4: 12}
+# board/main_comms.h 0xef injection index: fault bit
+INTERRUPT_FAULT_BITS = {0: 17, 1: 17, 2: 1, 3: 16, 4: 18, 5: 18}
 FAULT_SAFETY_REDUNDANCY_BIT = 19
 FAULT_SIREN_MALFUNCTION_BIT = 25
-FAULT_INTERRUPT_RATE_CAN_1_BIT = 2
+FAULT_MPU_BIT = 28
+# board/main_comms.h 0xf5 injection index: fault bit
+READBACK_FAULT_BITS = {0: 13, 1: 29, 2: 24, 3: 29, 4: 18, 5: 18, 6: 24}
 
 
 class TestSafety(PandaTestCase):
@@ -32,7 +37,9 @@ class TestSafety(PandaTestCase):
     for fault_bit in PERMANENT_FAULT_BITS:
       p.reset()
       p.set_safety_mode(CarParams.SafetyModel.allOutput)
-      assert p.health()['safety_mode'] == CarParams.SafetyModel.allOutput
+      h = p.health()
+      assert h['safety_mode'] == CarParams.SafetyModel.allOutput
+      assert not (h['faults'] & (1 << fault_bit))
 
       t = time.monotonic()
       p.inject_fault(fault_bit)
@@ -66,15 +73,23 @@ class TestSafety(PandaTestCase):
     assert h['safety_mode'] == CarParams.SafetyModel.silent
     assert not h['controls_allowed']
 
-  def test_mpu_fault_resets_to_silent(self):
+  def test_mpu_fault(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    assert not (p.health()['faults'] & (1 << FAULT_MPU_BIT))
     p.inject_mpu_fault()
-    p.reconnect()
-    h = p.health()
-    assert h['hardfault_reset']
-    assert h['safety_mode'] == CarParams.SafetyModel.silent
-    assert not h['controls_allowed']
+    if FAULT_MPU_BIT in PERMANENT_FAULT_BITS:
+      p.reconnect()
+      h = p.health()
+      assert h['hardfault_reset']
+      assert h['safety_mode'] == CarParams.SafetyModel.silent
+    else:
+      # flagged at the next safety hook, raised by mpu_check() at 1 Hz
+      time.sleep(2.5)
+      h = p.health()
+      assert h['faults'] & (1 << FAULT_MPU_BIT)
+      assert h['safety_mode'] == CarParams.SafetyModel.allOutput
+    p.reset()
 
   def test_safety_redundancy_fault(self):
     p = self.p
@@ -85,7 +100,7 @@ class TestSafety(PandaTestCase):
       p.send_heartbeat(engaged=False)
       time.sleep(0.1)
     assert h['faults'] & (1 << FAULT_SAFETY_REDUNDANCY_BIT)
-    assert h['safety_mode'] == CarParams.SafetyModel.silent
+    assert h['safety_mode'] == (CarParams.SafetyModel.silent if FAULT_SAFETY_REDUNDANCY_BIT in PERMANENT_FAULT_BITS else CarParams.SafetyModel.allOutput)
     assert not h['controls_allowed']
     p.reset()
 
@@ -109,20 +124,68 @@ class TestSafety(PandaTestCase):
     assert h['safety_mode'] == CarParams.SafetyModel.silent
     assert not h['controls_allowed']
 
-  @panda_test(needs_jungle=True)
-  def test_fault_stops_tx(self):
+  @panda_test(timeout=2*60)
+  def test_self_test_failure(self):
     p = self.p
-    jungle = self.panda_jungle
-    p.set_safety_mode(CarParams.SafetyModel.allOutput)
-    clear_can_buffers(p)
-    clear_can_buffers(jungle)
+    for test, fault_bit in SELF_TEST_FAULT_BITS.items():
+      p.reset()
+      p.set_safety_mode(CarParams.SafetyModel.allOutput)
+      assert not (p.health()['faults'] & (1 << fault_bit))
+      p.inject_self_test_failure(test)
 
-    p.can_send(0x1aa, b"before", 0)
-    time.sleep(0.05)
-    assert (0x1aa, b"before", 0) in jungle.can_recv()
+      # heartbeat keeps allOutput, so only the fault can set SILENT
+      t = time.monotonic()
+      while not (p.health()['faults'] & (1 << fault_bit)) and (time.monotonic() - t) < 30:
+        p.send_heartbeat(engaged=False)
+        time.sleep(0.1)
+      print(f"self-test {test}: fault after {time.monotonic() - t:.1f} s")
+      h = p.health()
+      assert h['faults'] & (1 << fault_bit)
+      if fault_bit in PERMANENT_FAULT_BITS:
+        assert h['safety_mode'] == CarParams.SafetyModel.silent
+      else:
+        assert h['safety_mode'] == CarParams.SafetyModel.allOutput
+    p.reset()
 
-    p.inject_fault(FAULT_INTERRUPT_RATE_CAN_1_BIT)
-    p.can_send(0x1aa, b"after", 0)
-    time.sleep(0.05)
-    assert all(addr != 0x1aa for addr, _, _ in jungle.can_recv())
+  @panda_test(timeout=2*60)
+  def test_interrupt_fault(self):
+    p = self.p
+    for test, fault_bit in INTERRUPT_FAULT_BITS.items():
+      p.reset()
+      p.set_safety_mode(CarParams.SafetyModel.allOutput)
+      # the missing interrupt check skips the first window
+      time.sleep(2.5)
+      h = p.health()
+      assert h['faults'] == 0, f"faults {h['faults']:#x}"
+      p.inject_interrupt_fault(test)
+
+      t = time.monotonic()
+      while not ((h := p.health())['faults'] & (1 << fault_bit)) and (time.monotonic() - t) < 5:
+        time.sleep(0.05)
+      print(f"interrupt fault {test}: fault after {time.monotonic() - t:.1f} s")
+      assert h['faults'] & (1 << fault_bit)
+      if fault_bit in PERMANENT_FAULT_BITS:
+        assert h['safety_mode'] == CarParams.SafetyModel.silent
+      else:
+        assert h['safety_mode'] == CarParams.SafetyModel.allOutput
+    p.reset()
+
+  @panda_test(timeout=3*60)
+  def test_readback_fault(self):
+    p = self.p
+    for test, fault_bit in READBACK_FAULT_BITS.items():
+      p.reset()
+      # harness detection only reads the ADC while the relay isn't driven
+      p.set_safety_mode(CarParams.SafetyModel.noOutput)
+      time.sleep(2.5)
+      h = p.health()
+      assert h['faults'] == 0, f"faults {h['faults']:#x}"
+      p.inject_readback_fault(test)
+
+      t = time.monotonic()
+      while not ((h := p.health())['faults'] & (1 << fault_bit)) and (time.monotonic() - t) < 8:
+        time.sleep(0.05)
+      print(f"readback fault {test}: fault after {time.monotonic() - t:.1f} s")
+      assert h['faults'] & (1 << fault_bit)
+      assert h['safety_mode'] == (CarParams.SafetyModel.silent if fault_bit in PERMANENT_FAULT_BITS else CarParams.SafetyModel.noOutput)
     p.reset()
