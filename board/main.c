@@ -253,6 +253,7 @@ static void tick_handler(void) {
       clock_check();
       interrupt_timer_check();
       nvic_check();
+      check_option_bytes();
 
       // set ignition_can to false after 2s of no CAN seen
       if (ignition_can_cnt > 2U) {
@@ -293,7 +294,6 @@ int main(void) {
   registers_save_reset_cause();
   peripherals_init();
   clock_check_init();
-  check_option_bytes();
   detect_board_type();
   led_init();
   // red+green leds enabled until succesful USB/SPI init, as a debug indicator
