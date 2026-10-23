@@ -26,7 +26,7 @@ source ~/.bash_profile
 if [ -f /etc/profile ]; then source /etc/profile; fi
 set -euo pipefail
 export CI=1 PYTHONWARNINGS=error LOGLEVEL=debug PYTEST_ADDOPTS='-p no:asyncio'
-unset PYTHONPATH
+unset PYTHONPATH VIRTUAL_ENV
 PROFILE
     printf 'export TEST_DIR=%q GIT_COMMIT=%q UV_PROJECT_ENVIRONMENT=%q\n' "$TEST_DIR" "$GIT_COMMIT" "${TEST_DIR}.venv"
     cat
@@ -41,6 +41,7 @@ phone <<'DUT'
 checkout() {
   if [ ! -d "$TEST_DIR/.git" ]; then git clone --no-checkout https://github.com/commaai/panda.git "$TEST_DIR"; fi
   cd "$TEST_DIR"
+  git remote set-url origin https://github.com/commaai/panda.git
   rm -f .git/index.lock
   git reset --hard
   git fetch --no-tags --no-recurse-submodules --depth 1 origin "$GIT_COMMIT"
