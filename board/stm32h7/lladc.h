@@ -74,11 +74,15 @@ static void adc_calibrate_vdda(void) {
 static volatile bool adc2_busy = false;
 
 // ADC_SM_2, ADC_SM_3: AVDD from VREFINT has to match the board
-bool adc_check(uint32_t expected_avdd_mV) {
+void adc_check(uint32_t expected_avdd_mV) {
   adc2_busy = true;
   uint32_t avdd_mV = adc_measure_avdd_mV();
   adc2_busy = false;
-  return (avdd_mV > ((expected_avdd_mV * 9U) / 10U)) && (avdd_mV < ((expected_avdd_mV * 11U) / 10U));
+  if ((avdd_mV <= ((expected_avdd_mV * 9U) / 10U)) || (avdd_mV >= ((expected_avdd_mV * 11U) / 10U))) {
+    ENTER_CRITICAL();
+    fault_occurred_value(FAULT_ADC, avdd_mV);
+    EXIT_CRITICAL();
+  }
 }
 
 uint16_t adc_get_mV(const adc_signal_t *signal) {

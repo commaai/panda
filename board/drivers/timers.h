@@ -33,7 +33,7 @@ void timer_check(timer_check_t *check) {
     bool ok = (dt > 1900000U) && (dt < 2100000U);
     check->mismatches = ok ? 0U : (check->mismatches + 1U);
     if (check->mismatches >= 2U) {
-      fault_occurred(FAULT_TIMER);
+      fault_occurred_value(FAULT_TIMER, dt);
     }
   }
   check->prev_ts = check->last_ts;

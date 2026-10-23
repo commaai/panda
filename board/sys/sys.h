@@ -64,6 +64,7 @@ extern uint8_t fault_status;
 extern uint32_t faults;
 
 void fault_occurred(uint32_t fault);
+void fault_occurred_value(uint32_t fault, uint32_t value);
 void fault_recovered(uint32_t fault);
 void fault_safe_state(void);
 

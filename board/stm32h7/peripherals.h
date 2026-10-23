@@ -147,6 +147,7 @@ void check_option_bytes(void) {
   bool locked = (FLASH->OPTCR & FLASH_OPTCR_OPTLOCK) != 0U;
   bool boot_flash = (FLASH->BOOT_CUR & FLASH_BOOT_ADD0) == 0x0800U;
   if (!locked || !boot_flash) {
+    print("Option bytes OPTCR 0x"); puth(FLASH->OPTCR); print(" BOOT_CUR 0x"); puth(FLASH->BOOT_CUR); print("\n");
     fault_occurred(FAULT_REGISTER_DIVERGENT);
   }
 }

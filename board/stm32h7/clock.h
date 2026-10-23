@@ -146,11 +146,13 @@ static bool lsi_capture(uint16_t *count) {
 }
 
 // called at 1Hz, LSI isn't accurate so the window only catches gross errors
-bool clock_check(void) {
+void clock_check(void) {
   // reading CCR1 clears CC1IF
   uint16_t start = (uint16_t)TIM16->CCR1;
   uint16_t end = 0U;
   bool captured = lsi_capture(&end);
   uint32_t counts = (uint16_t)(end - start);
-  return captured && (counts > ((LSI_COUNTS_NOMINAL * 3U) / 4U)) && (counts < ((LSI_COUNTS_NOMINAL * 5U) / 4U));
+  if (!captured || (counts <= ((LSI_COUNTS_NOMINAL * 3U) / 4U)) || (counts >= ((LSI_COUNTS_NOMINAL * 5U) / 4U))) {
+    fault_occurred_value(FAULT_CLOCK, captured ? counts : 0U);
+  }
 }

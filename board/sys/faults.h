@@ -19,6 +19,14 @@ void fault_occurred(uint32_t fault) {
   faults |= fault;
 }
 
+// prints what the check measured, once with the fault
+void fault_occurred_value(uint32_t fault, uint32_t value) {
+  if ((faults & fault) == 0U) {
+    print("Fault 0x"); puth(fault); print(" value 0x"); puth(value); print("\n");
+  }
+  fault_occurred(fault);
+}
+
 void fault_recovered(uint32_t fault) {
   if ((PERMANENT_FAULTS & fault) == 0U) {
     faults &= ~fault;
