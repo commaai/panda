@@ -8,7 +8,19 @@ up() {
 }
 trap 'exit 130' INT
 trap 'exit 143' HUP TERM
-trap 'up release' EXIT
+cleanup() {
+  local rc=$?
+  trap - EXIT
+  set +e
+  # Wait for the DUT shell's cleanup before releasing the UP for another job.
+  if [[ -n ${dut_ip:-} ]] && ! phone_ssh 'flock /tmp/alfred.lock true'; then
+    rc=1
+    up off
+  fi
+  up release || rc=$?
+  exit "$rc"
+}
+trap 'cleanup >/tmp/alfred-cleanup.log 2>&1' EXIT
 
 ready() {
   local attempt
@@ -18,6 +30,16 @@ ready() {
   done
   return 1
 }
+
+phone_ssh() {
+  ssh -T -oBatchMode=yes -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null \
+      -oConnectTimeout=30 -oConnectionAttempts=3 -oServerAliveInterval=10 -oServerAliveCountMax=3 \
+      "comma@$dut_ip" "$@"
+}
+
+# A waiting supervisor handles disconnects immediately, including while a test is running.
+# Keep the lock until the child has finished its EXIT cleanup.
+supervisor="trap '' PIPE; trap ':' TERM; trap 'trap - HUP; kill -TERM 0; wait \"\$child\"; exit 143' HUP; bash -se <&0 & child=\$!; wait \"\$child\""
 
 phone() {
   {
@@ -30,9 +52,7 @@ unset PYTHONPATH VIRTUAL_ENV
 PROFILE
     printf 'export TEST_DIR=%q GIT_COMMIT=%q UV_PROJECT_ENVIRONMENT=%q\n' "$TEST_DIR" "$GIT_COMMIT" "${TEST_DIR}.venv"
     cat
-  } | ssh -T -oBatchMode=yes -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null \
-      -oConnectTimeout=30 -oConnectionAttempts=3 -oServerAliveInterval=10 -oServerAliveCountMax=3 \
-      "comma@$dut_ip" bash -se
+  } | phone_ssh "exec setpriv --pdeathsig HUP flock --no-fork /tmp/alfred.lock bash -c $(printf %q "$supervisor")"
 }
 
 ready
