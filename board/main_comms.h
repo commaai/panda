@@ -342,10 +342,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       } else {
       }
       break;
-    // **** 0xf7: corrupt the inverted copy of controls_allowed, for testing
+    // **** 0xf7: change the safety param without its inverted copy, for testing
     case 0xf7:
       mpu_safety_open();
-      controls_allowed_inv = !controls_allowed_inv;
+      current_safety_param ^= 1U;
       mpu_safety_close();
       break;
     #endif

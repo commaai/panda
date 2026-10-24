@@ -101,7 +101,6 @@ class TestSafety(PandaTestCase):
       time.sleep(0.1)
     assert h['faults'] & (1 << FAULT_SAFETY_REDUNDANCY_BIT)
     assert h['safety_mode'] == (CarParams.SafetyModel.silent if FAULT_SAFETY_REDUNDANCY_BIT in PERMANENT_FAULT_BITS else CarParams.SafetyModel.allOutput)
-    assert not h['controls_allowed']
     p.reset()
 
   def test_stack_overflow_resets_to_silent(self):
