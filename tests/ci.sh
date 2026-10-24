@@ -6,8 +6,9 @@ set -euo pipefail
 # alfred checks the commit out in its WORKSPACE on the UP and pushes it to the same path on the DUT
 export TEST_DIR=$WORKSPACE
 
+# the rack keeps ultimate_provisioning installed on every UP
 up() {
-  uvx -q --from 'git+https://github.com/commaai/hardware@e02dc9f#subdirectory=ultimate_provisioning' ultimate_provisioning "$@"
+  PYTHONPATH=/data/rack-up python3 -m ultimate_provisioning "$@"
 }
 trap 'exit 130' INT
 trap 'exit 143' HUP TERM
@@ -24,15 +25,6 @@ cleanup() {
   exit "$rc"
 }
 trap 'cleanup >/tmp/alfred-cleanup.log 2>&1' EXIT
-
-ready() {
-  local attempt
-  for attempt in 1 2 3; do
-    if dut_ip=$(up ready | tail -n1); then return; fi
-    echo "Device setup attempt $attempt failed" >&2
-  done
-  return 1
-}
 
 phone_ssh() {
   ssh -T -oBatchMode=yes -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null \
@@ -58,7 +50,8 @@ PROFILE
   } | phone_ssh "exec setpriv --pdeathsig HUP flock --no-fork /tmp/alfred.lock bash -c $(printf %q "$supervisor")"
 }
 
-ready
+# the rack keeps the DUT up, ready preps it for tests and copies the package to it
+dut_ip=$(up ready | tail -n1)
 up serve
 phone <<'DUT'
 install() {
