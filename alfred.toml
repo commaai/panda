@@ -1,7 +1,6 @@
 [env]
 UV_CACHE_DIR = "/data/uv_cache"
 UV_TOOL_DIR = "/data/uv_tools"
-TEST_DIR = "/data/panda"
 
 [jobs.cuatro]
 runs-on = "up-mici"
