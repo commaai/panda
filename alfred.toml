@@ -1,0 +1,13 @@
+[env]
+UV_CACHE_DIR = "/data/uv_cache"
+UV_TOOL_DIR = "/data/uv_tools"
+
+[jobs.cuatro]
+runs-on = "up-mici"
+timeout-minutes = 20
+steps = [{ name = "Run tests", run = "bash tests/ci.sh" }]
+
+[jobs.tres]
+runs-on = "up-tres"
+timeout-minutes = 20
+steps = [{ name = "Run tests", run = "bash tests/ci.sh" }]
