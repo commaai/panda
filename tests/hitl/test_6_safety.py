@@ -88,17 +88,16 @@ class TestSafety(PandaTestCase):
       time.sleep(2.5)
       h = p.health()
       assert h['faults'] & (1 << FAULT_MPU_BIT)
-      assert h['safety_mode'] == CarParams.SafetyModel.allOutput
+      # the write outside safety also breaks the inverted copy of controls_allowed
+      assert h['safety_mode'] == (CarParams.SafetyModel.silent if FAULT_SAFETY_REDUNDANCY_BIT in PERMANENT_FAULT_BITS else CarParams.SafetyModel.allOutput)
     p.reset()
 
   def test_safety_redundancy_fault(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
     p.inject_safety_redundancy_fault()
-    t = time.monotonic()
-    while not ((h := p.health())['faults'] & (1 << FAULT_SAFETY_REDUNDANCY_BIT)) and (time.monotonic() - t) < 3:
-      p.send_heartbeat(engaged=False)
-      time.sleep(0.1)
+    time.sleep(2.5)
+    h = p.health()
     assert h['faults'] & (1 << FAULT_SAFETY_REDUNDANCY_BIT)
     assert h['safety_mode'] == (CarParams.SafetyModel.silent if FAULT_SAFETY_REDUNDANCY_BIT in PERMANENT_FAULT_BITS else CarParams.SafetyModel.allOutput)
     p.reset()
