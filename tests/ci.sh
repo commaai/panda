@@ -3,8 +3,8 @@ set -eo pipefail
 source ~/.bash_profile
 set -euo pipefail
 
-# alfred checks the commit out here on the UP and pushes it to the same path on the DUT
-export TEST_DIR=$PWD
+# alfred checks the commit out in its WORKSPACE on the UP and pushes it to the same path on the DUT
+export TEST_DIR=$WORKSPACE
 
 up() {
   uvx -q --from 'git+https://github.com/commaai/hardware@e02dc9f#subdirectory=ultimate_provisioning' ultimate_provisioning "$@"
