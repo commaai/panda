@@ -16,7 +16,7 @@ cleanup() {
   trap - EXIT
   set +e
   # Wait for the DUT shell's cleanup before releasing the UP for another job.
-  if [[ -n ${dut_ip:-} ]] && ! phone_ssh 'flock /tmp/alfred.lock true'; then
+  if [[ -n ${dut_ip:-} ]] && ! dut_ssh 'flock /tmp/alfred.lock true'; then
     rc=1
     up off
   fi
@@ -25,7 +25,7 @@ cleanup() {
 }
 trap 'cleanup >/tmp/alfred-cleanup.log 2>&1' EXIT
 
-phone_ssh() {
+dut_ssh() {
   ssh -T -oBatchMode=yes -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null \
       -oConnectTimeout=30 -oConnectionAttempts=3 -oServerAliveInterval=10 -oServerAliveCountMax=3 \
       "comma@$dut_ip" "$@"
@@ -35,7 +35,7 @@ phone_ssh() {
 # Keep the lock until the child has finished its EXIT cleanup.
 supervisor="trap '' PIPE; trap ':' TERM; trap 'trap - HUP; kill -TERM 0; wait \"\$child\"; exit 143' HUP; bash -se <&0 & child=\$!; wait \"\$child\""
 
-phone() {
+dut() {
   {
     cat <<'PROFILE'
 source ~/.bash_profile
@@ -46,13 +46,13 @@ unset PYTHONPATH VIRTUAL_ENV
 PROFILE
     printf 'export WORKSPACE=%q UV_PROJECT_ENVIRONMENT=%q\n' "$WORKSPACE" "${WORKSPACE}.venv"
     cat
-  } | phone_ssh "exec setpriv --pdeathsig HUP flock --no-fork /tmp/alfred.lock bash -c $(printf %q "$supervisor")"
+  } | dut_ssh "exec setpriv --pdeathsig HUP flock --no-fork /tmp/alfred.lock bash -c $(printf %q "$supervisor")"
 }
 
 # the rack keeps the DUT up, ready preps it for tests and copies the package to it
 dut_ip=$(up ready | tail -n1)
 up serve
-phone <<'DUT'
+dut <<'DUT'
 install() {
   # Bypass AGNOS's root-only uv shim.
   local uv
