@@ -3,6 +3,8 @@ set -eo pipefail
 source ~/.bash_profile
 set -euo pipefail
 
+export TEST_DIR=/data/panda
+
 up() {
   uvx -q --from 'git+https://github.com/commaai/hardware@e02dc9f#subdirectory=ultimate_provisioning' ultimate_provisioning "$@"
 }
