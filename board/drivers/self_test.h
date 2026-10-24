@@ -276,10 +276,10 @@ static void self_test_check(bool cpu_ok, bool ram_ok, bool flash_ok) {
 #endif
   // a CPU read with a double ECC error bus faults, this catches the DMA reads from flash
   if ((flash_sr & FLASH_SR_DBECCERR) != 0U) {
-    fault_occurred(FAULT_ECC);
+    fault_occurred_value(FAULT_ECC, flash_sr);
   }
   if ((ecc_sr & (RAMECC_SR_DEDF | RAMECC_SR_DEBWDF)) != 0U) {
-    fault_occurred(FAULT_ECC);
+    fault_occurred_value(FAULT_ECC, ecc_sr);
   }
 }
 

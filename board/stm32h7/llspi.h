@@ -60,7 +60,7 @@ static void EXTI15_10_IRQ_Handler(void) {
   // no other line on this vector has a trigger enabled
   if ((EXTI->PR1 & (EXTI15_10_LINES & ~(1UL << SPI_CS_PIN))) != 0U) {
     EXTI->PR1 = EXTI15_10_LINES & ~(1UL << SPI_CS_PIN);
-    fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
+    fault_occurred_value(FAULT_UNUSED_INTERRUPT_HANDLED, __get_IPSR());
   }
 }
 

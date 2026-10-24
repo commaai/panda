@@ -67,6 +67,7 @@ bool harness_check_ignition(void) {
 static uint8_t harness_detect_orientation(void) {
   uint8_t ret = harness.status;
   static uint32_t adc_mismatches = 0U;
+  uint16_t sbu1_adc2_mV = 0U;
 
   #ifndef BOOTSTUB
   // We can't detect orientation if the relay is being driven
@@ -83,7 +84,7 @@ static uint8_t harness_detect_orientation(void) {
     if (!adc2_busy) {
       adc_signal_t sbu1_adc2 = current_board->harness_config->adc_signal_SBU1;
       sbu1_adc2.adc = ADC2;
-      uint16_t sbu1_adc2_mV = adc_get_mV(&sbu1_adc2);
+      sbu1_adc2_mV = adc_get_mV(&sbu1_adc2);
       #ifdef ALLOW_DEBUG
       sbu1_adc2_mV += harness_adc2_offset_mV;
       #endif
@@ -113,7 +114,7 @@ static uint8_t harness_detect_orientation(void) {
 
   // after the ADC lock, the safe state drives the relay
   if (adc_mismatches >= 8U) {
-    fault_occurred(FAULT_ADC);
+    fault_occurred_value(FAULT_ADC, ((uint32_t)harness.sbu1_voltage_mV << 16) | sbu1_adc2_mV);
   }
 
   return ret;
@@ -125,14 +126,14 @@ void harness_tick(void) {
   // GPIO_SM_2: relay pins read back what is driven, one tick of slack for switching
   static uint32_t relay_mismatches = 0U;
   const harness_configuration *cfg = current_board->harness_config;
-  bool mismatch = relay_pin_mismatch(cfg->GPIO_relay_SBU1, cfg->pin_relay_SBU1) ||
-                  relay_pin_mismatch(cfg->GPIO_relay_SBU2, cfg->pin_relay_SBU2);
+  uint32_t pins = (relay_pin_mismatch(cfg->GPIO_relay_SBU1, cfg->pin_relay_SBU1) ? 1U : 0U) |
+                  (relay_pin_mismatch(cfg->GPIO_relay_SBU2, cfg->pin_relay_SBU2) ? 2U : 0U);
   #ifdef ALLOW_DEBUG
-  mismatch = mismatch || relay_readback_inject;
+  pins |= relay_readback_inject ? 4U : 0U;
   #endif
-  relay_mismatches = mismatch ? (relay_mismatches + 1U) : 0U;
+  relay_mismatches = (pins != 0U) ? (relay_mismatches + 1U) : 0U;
   if (relay_mismatches >= 2U) {
-    fault_occurred(FAULT_OUTPUT_READBACK);
+    fault_occurred_value(FAULT_OUTPUT_READBACK, pins);
   }
 }
 

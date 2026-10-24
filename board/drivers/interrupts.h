@@ -5,7 +5,7 @@
 static void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!
   print("Unused interrupt handler called!\n");
-  fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
+  fault_occurred_value(FAULT_UNUSED_INTERRUPT_HANDLED, __get_IPSR());
 }
 
 interrupt interrupts[NUM_INTERRUPTS];
@@ -37,7 +37,7 @@ void nvic_check(void) {
     diff |= NVIC->IP[i];
   }
   if (diff != 0U) {
-    fault_occurred(FAULT_REGISTER_DIVERGENT);
+    fault_occurred_value(FAULT_REGISTER_DIVERGENT, diff);
   }
 }
 
@@ -113,7 +113,7 @@ void interrupt_timer_handler(void) {
     busy_time = 0U;
   } else {
     // TIM6 shares the vector with the DAC, which has no interrupts enabled
-    fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
+    fault_occurred_value(FAULT_UNUSED_INTERRUPT_HANDLED, __get_IPSR());
   }
 }
 

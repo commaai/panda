@@ -250,9 +250,7 @@ static void tick_handler(void) {
 
       // check registers
       check_registers();
-      if (!clock_check()) {
-        fault_occurred(FAULT_CLOCK);
-      }
+      clock_check();
       interrupt_timer_check();
       nvic_check();
 
@@ -279,7 +277,7 @@ static void tick_handler(void) {
     loop_counter %= 8U;
   } else {
     // TIM12 shares the vector with the TIM8 break, which has no interrupts enabled
-    fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
+    fault_occurred_value(FAULT_UNUSED_INTERRUPT_HANDLED, __get_IPSR());
   }
 }
 
@@ -292,6 +290,7 @@ int main(void) {
 
   // init early devices
   clock_init();
+  registers_save_reset_cause();
   peripherals_init();
   clock_check_init();
   check_option_bytes();
@@ -363,6 +362,7 @@ int main(void) {
   }
   if (fault_cookie == HARDFAULT_COOKIE) {
     reset_flags |= HEALTH_FLAG_HARDFAULT_RESET;
+    print("HardFault CFSR 0x"); puth(fault_cfsr); print(" address 0x"); puth(fault_addr); print("\n");
   }
   fault_cookie = 0U;
 
@@ -378,11 +378,7 @@ int main(void) {
     #endif
     if (!power_save_enabled) {
       // ADC_SM_3, takes milliseconds so not in an interrupt
-      if (!adc_check(current_board->avdd_mV)) {
-        ENTER_CRITICAL();
-        fault_occurred(FAULT_ADC);
-        EXIT_CRITICAL();
-      }
+      adc_check(current_board->avdd_mV);
 
       // useful for debugging, fade breaks = panda is overloaded
       for (uint32_t fade = 0U; fade < MAX_LED_FADE; fade += 1U) {

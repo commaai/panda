@@ -69,6 +69,8 @@ void early_initialization(void) {
 #define NMI_COOKIE 0x4E4D4921U
 #define HARDFAULT_COOKIE 0x48464C54U
 extern uint32_t fault_cookie;
+extern uint32_t fault_cfsr;
+extern uint32_t fault_addr;
 
 void NMI_Handler(void) {
   fault_cookie = NMI_COOKIE;
@@ -77,5 +79,7 @@ void NMI_Handler(void) {
 
 void HardFault_Handler(void) {
   fault_cookie = HARDFAULT_COOKIE;
+  fault_cfsr = SCB->CFSR;
+  fault_addr = ((fault_cfsr & SCB_CFSR_MMARVALID_Msk) != 0U) ? SCB->MMFAR : SCB->BFAR;
   NVIC_SystemReset();
 }

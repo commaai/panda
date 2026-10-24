@@ -280,6 +280,10 @@ ram_test_startup:
   ldr r10, [r0]
   ldr r0, =fault_cookie
   ldr r11, [r0]
+  ldr r0, =fault_cfsr
+  ldr r7, [r0]
+  ldr r0, =fault_addr
+  ldr r12, [r0]
 
   ldr r9, =SELF_TEST_PASS
   ldr r8, =ram_test_regions
@@ -349,6 +353,10 @@ ram_test_startup:
   str r10, [r0]
   ldr r0, =fault_cookie
   str r11, [r0]
+  ldr r0, =fault_cfsr
+  str r7, [r0]
+  ldr r0, =fault_addr
+  str r12, [r0]
   ldr r0, =self_test_cookie
   str r9, [r0]
   bx lr
