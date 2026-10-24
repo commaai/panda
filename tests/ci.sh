@@ -3,7 +3,8 @@ set -eo pipefail
 source ~/.bash_profile
 set -euo pipefail
 
-export TEST_DIR=/data/panda
+# alfred checks the commit out here on the UP and pushes it to the same path on the DUT
+export TEST_DIR=$PWD
 
 up() {
   uvx -q --from 'git+https://github.com/commaai/hardware@e02dc9f#subdirectory=ultimate_provisioning' ultimate_provisioning "$@"
@@ -52,7 +53,7 @@ set -euo pipefail
 export CI=1 PYTHONWARNINGS=error LOGLEVEL=debug PYTEST_ADDOPTS='-p no:asyncio'
 unset PYTHONPATH VIRTUAL_ENV
 PROFILE
-    printf 'export TEST_DIR=%q GIT_COMMIT=%q UV_PROJECT_ENVIRONMENT=%q\n' "$TEST_DIR" "$GIT_COMMIT" "${TEST_DIR}.venv"
+    printf 'export TEST_DIR=%q UV_PROJECT_ENVIRONMENT=%q\n' "$TEST_DIR" "${TEST_DIR}.venv"
     cat
   } | phone_ssh "exec setpriv --pdeathsig HUP flock --no-fork /tmp/alfred.lock bash -c $(printf %q "$supervisor")"
 }
@@ -60,17 +61,6 @@ PROFILE
 ready
 up serve
 phone <<'DUT'
-checkout() {
-  if [ ! -d "$TEST_DIR/.git" ]; then git clone --no-checkout https://github.com/commaai/panda.git "$TEST_DIR"; fi
-  cd "$TEST_DIR"
-  git remote set-url origin https://github.com/commaai/panda.git
-  rm -f .git/index.lock
-  git reset --hard
-  git fetch --no-tags --no-recurse-submodules --depth 1 origin "$GIT_COMMIT"
-  git checkout --force --detach "$GIT_COMMIT"
-  git clean -xffd
-}
-
 install() {
   # Bypass AGNOS's root-only uv shim.
   local uv
@@ -90,7 +80,7 @@ test() {
   PYTHONPATH=/data/ultimate_provisioning HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py
 }
 
-checkout
+cd "$TEST_DIR"
 install
 build
 test

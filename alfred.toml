@@ -4,10 +4,12 @@ UV_TOOL_DIR = "/data/uv_tools"
 
 [jobs.cuatro]
 runs-on = "up-mici"
+dut-checkout = true
 timeout-minutes = 20
 steps = [{ name = "Run tests", run = "bash tests/ci.sh" }]
 
 [jobs.tres]
 runs-on = "up-tres"
+dut-checkout = true
 timeout-minutes = 20
 steps = [{ name = "Run tests", run = "bash tests/ci.sh" }]
