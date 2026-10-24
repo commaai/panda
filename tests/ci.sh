@@ -3,8 +3,7 @@ set -eo pipefail
 source ~/.bash_profile
 set -euo pipefail
 
-# alfred checks the commit out in its WORKSPACE on the UP and pushes it to the same path on the DUT
-export TEST_DIR=$WORKSPACE
+# alfred checks the commit out in $WORKSPACE on the UP and pushes it to the same path on the DUT
 
 # the rack keeps ultimate_provisioning installed on every UP
 up() {
@@ -45,7 +44,7 @@ set -euo pipefail
 export CI=1 PYTHONWARNINGS=error LOGLEVEL=debug PYTEST_ADDOPTS='-p no:asyncio'
 unset PYTHONPATH VIRTUAL_ENV
 PROFILE
-    printf 'export TEST_DIR=%q UV_PROJECT_ENVIRONMENT=%q\n' "$TEST_DIR" "${TEST_DIR}.venv"
+    printf 'export WORKSPACE=%q UV_PROJECT_ENVIRONMENT=%q\n' "$WORKSPACE" "${WORKSPACE}.venv"
     cat
   } | phone_ssh "exec setpriv --pdeathsig HUP flock --no-fork /tmp/alfred.lock bash -c $(printf %q "$supervisor")"
 }
@@ -73,7 +72,7 @@ test() {
   PYTHONPATH=/data/ultimate_provisioning HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py
 }
 
-cd "$TEST_DIR"
+cd "$WORKSPACE"
 install
 build
 test
