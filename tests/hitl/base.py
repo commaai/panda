@@ -8,20 +8,16 @@ from panda.tests.hitl.helpers import clear_can_buffers
 SPEED_NORMAL = 500
 BUS_SPEEDS = [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL)]
 
-# test options
-NO_UP = os.environ.get("NO_UP", "0") == "1"
-
 # Find all pandas connected
 _up = None
 _panda_type = None
 _panda_serial = None
 def init_devices():
-  if not NO_UP:
-    # the DUT is plugged into a UP: run the tests with `up run` or in `up ssh` on the UP.
-    # ultimate_provisioning isn't a dependency, those put it on the DUT's PYTHONPATH
-    from ultimate_provisioning import UP
-    global _up
-    _up = UP.remote()
+  # the DUT is plugged into a UP: run the tests with `up run` or in `up ssh` on the UP.
+  # ultimate_provisioning isn't a dependency, those put it on the DUT's PYTHONPATH
+  from ultimate_provisioning import UP
+  global _up
+  _up = UP.remote()
 
   with Panda(serial=None, claim=False) as p:
     global _panda_type
@@ -31,8 +27,6 @@ def init_devices():
   assert _panda_serial is not None, "No panda found!"
 
 def init_up():
-  if _up is None:
-    return
   clear_can_buffers(_up)
   _up.set_harness_orientation(1)  # UP.HARNESS_ORIENTATION_1
   for bus, speed in BUS_SPEEDS:
@@ -76,8 +70,6 @@ class PandaTestCase(unittest.TestCase):
     panda_types = self.options.get("panda_types", self.panda_types)
     if panda_types is not None and _panda_type not in panda_types:
       self.skipTest(f"Not applicable, {panda_types} pandas only")
-    if self.options.get("needs_up", False) and NO_UP:
-      self.skipTest("skipping tests that require a UP")
 
     previous_handler = signal.signal(signal.SIGALRM, self._timeout)
     self.addCleanup(signal.signal, signal.SIGALRM, previous_handler)
