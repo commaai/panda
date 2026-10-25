@@ -39,8 +39,12 @@ class TestCanLoopback(PandaTestCase):
         received = up.can_recv()
         assert received and all(m == message for m in received), (speed, bus, received)
         up.can_send_many([message])
-        time.sleep(0.01)
-        assert p.can_recv() == [message], (speed, bus)
+        received = []
+        deadline = time.monotonic() + 1
+        while not received and time.monotonic() < deadline:
+          received.extend(p.can_recv())
+          time.sleep(0.001)
+        assert received == [message], (speed, bus, received)
 
   @panda_test(expect_can_error=True)
   def test_gen2_loopback(self):
