@@ -10,6 +10,46 @@ from panda.tests.hitl.base import PandaTestCase, panda_test
 from panda.tests.hitl.helpers import get_random_can_messages, clear_can_buffers
 
 class TestCanLoopback(PandaTestCase):
+  def _exchange(self, sender, receiver, messages):
+    start = time.monotonic()
+    sender.can_send_many(messages)
+    received = []
+    while len(received) < len(messages) and time.monotonic() - start < 1:
+      received.extend(receiver.can_recv())
+    elapsed = time.monotonic() - start
+    assert sorted(received) == sorted(messages), (len(messages), len(received), received[:8])
+    if sender is self.p:
+      assert sorted(self.p.can_recv()) == sorted((addr, dat, bus | 0x80) for addr, dat, bus in messages)
+    return elapsed
+
+  @panda_test(timeout=180)
+  def test_physical_bulk(self):
+    self.p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    for bus in range(3):
+      self.p.set_can_speed_kbps(bus, 1000)
+      self.up.set_can_speed_kbps(bus, 1000)
+    for sender, receiver in ((self.p, self.up), (self.up, self.p)):
+      # Bound each burst to the UP's receive capacity; never retry missing frames.
+      for start in range(0, 40000, 8):
+        messages = [(0x123, i.to_bytes(4, "little") + b"test", 0 if i < 10000 else i % 3) for i in range(start, start + 8)]
+        self._exchange(sender, receiver, messages)
+      assert not receiver.can_recv()
+
+  @panda_test(timeout=120)
+  def test_latency(self):
+    self.p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    for speed in (50, 100, 125, 250, 500, 1000):
+      for bus in range(3):
+        self.p.set_can_speed_kbps(bus, speed)
+        self.up.set_can_speed_kbps(bus, speed)
+      for sender, receiver in ((self.p, self.up), (self.up, self.p)):
+        for bus in range(3):
+          latencies = [self._exchange(sender, receiver, [(0x123, i.to_bytes(4, "little") + b"test", bus)]) for i in range(20)]
+          # End-to-end bounds include the UP RPC and CAN serialization time.
+          wire_time = 135 / (speed * 1000)  # worst-case stuffed 8-byte standard frame
+          assert max(latencies) < wire_time + 0.05, (speed, bus, max(latencies))
+          assert sum(latencies) / len(latencies) < wire_time + 0.01, (speed, bus, latencies)
+
   def test_bitrates(self):
     p, up = self.p, self.up
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
