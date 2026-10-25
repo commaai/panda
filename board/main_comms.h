@@ -344,7 +344,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         harness_adc2_offset_mV = 500U;
       } else if (req->param1 == 7U) {
         // a third MPU region, on unused FMC space
-        MPU->RNR = 2U;
+        MPU->RNR = MPU_REGION_STACK_GUARD + 1U;
         MPU->RBAR = 0x60000000U;
         MPU->RASR = mpu_rasr(ARM_MPU_AP_FULL, ARM_MPU_REGION_SIZE_32B);
       } else {
