@@ -1,25 +1,26 @@
-profile = "tests/ci_profile.sh"
+# the tests run in AGNOS's venv, it has everything but opendbc
 before = [
   # for the tests on the DUT, they reach it with UP.remote()
   { name = "Serve the UP's harness and CAN", on = "up", run = "up serve" },
-  { name = "Install", run = """
-uv=$(type -ap uv | grep -vF /usr/comma/shims | head -n1)  # not AGNOS's root-only uv shim
-PYTHONWARNINGS=default "$uv" sync --cache-dir=/data/uv_cache --all-extras --upgrade-package opendbc
-"$uv" cache prune --cache-dir=/data/uv_cache""" },
+  { name = "Fetch opendbc", run = """
+d=/data/ci/opendbc
+[ -d $d/.git ] || git clone -q --depth 1 https://github.com/commaai/opendbc.git $d
+git -C $d fetch -q --depth 1 origin master && git -C $d reset -q --hard FETCH_HEAD && git -C $d clean -qffdx
+git -C $d log --oneline -1""" },
   { name = "Build", run = "scons && cd scripts && ./reflash_internal_panda.py" },
 ]
 
 [env]
+PYTHONPATH = "/data/ci/tree:/data/ci/opendbc:/data/ultimate_provisioning"  # the tree is /data/ci/tree/panda
 PYTHONWARNINGS = "error"
 LOGLEVEL = "debug"
-PYTEST_ADDOPTS = "-p no:asyncio"
 
 [jobs.cuatro]
 runs-on = "up-mici"
 timeout-minutes = 20
-steps = [{ name = "Test", run = "cd tests/hitl && PYTHONPATH=/data/ultimate_provisioning HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py" }]
+steps = [{ name = "Test", run = "cd tests/hitl && HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py" }]
 
 [jobs.tres]
 runs-on = "up-tres"
 timeout-minutes = 20
-steps = [{ name = "Test", run = "cd tests/hitl && PYTHONPATH=/data/ultimate_provisioning HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py" }]
+steps = [{ name = "Test", run = "cd tests/hitl && HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py" }]
