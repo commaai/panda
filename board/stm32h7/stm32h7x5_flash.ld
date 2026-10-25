@@ -223,6 +223,7 @@ SECTIONS
   ASSERT(DEFINED(current_safety_mode) ? (current_safety_mode >= _ssafety && current_safety_mode < _esafety) : !DEFINED(safety_tx_hook), "current_safety_mode not in the MPU region")
   ASSERT(DEFINED(current_safety_param) ? (current_safety_param >= _ssafety && current_safety_param < _esafety) : !DEFINED(safety_tx_hook), "current_safety_param not in the MPU region")
   ASSERT(DEFINED(current_safety_config) ? (current_safety_config >= _ssafety && current_safety_config < _esafety) : !DEFINED(safety_tx_hook), "current_safety_config not in the MPU region")
+  ASSERT(DEFINED(safety_state_invalid) ? (safety_state_invalid >= _ssafety && safety_state_invalid < _esafety) : !DEFINED(safety_tx_hook), "safety_state_invalid not in the MPU region")
 
   .itcmram (NOLOAD) :
   {
