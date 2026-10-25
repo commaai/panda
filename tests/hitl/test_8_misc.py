@@ -14,7 +14,6 @@ class TestMisc(PandaTestCase):
     # USB enumeration is slow, so SPI is faster
     assert time.monotonic() - st < (1.0 if p.spi else 5.0)
 
-  @panda_test(needs_up=True)
   @panda_test(expect_can_error=True)
   @panda_test(panda_types=(Panda.HW_TYPE_CUATRO, ))
   def test_stop_mode(self):

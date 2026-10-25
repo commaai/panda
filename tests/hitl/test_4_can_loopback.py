@@ -9,7 +9,6 @@ from panda.tests.hitl.base import PandaTestCase, panda_test
 from panda.tests.hitl.helpers import time_many_sends, get_random_can_messages, clear_can_buffers
 
 class TestCanLoopback(PandaTestCase):
-  @panda_test(needs_up=True)
   @panda_test(timeout=35)
   def test_send_recv(self):
     p = self.p
@@ -33,7 +32,6 @@ class TestCanLoopback(PandaTestCase):
     test(up, p)
 
 
-  @panda_test(needs_up=True)
   @panda_test(timeout=30)
   def test_latency(self):
     p = self.p
@@ -92,7 +90,6 @@ class TestCanLoopback(PandaTestCase):
     test(up, p)
 
 
-  @panda_test(needs_up=True)
   @panda_test(expect_can_error=True)
   def test_gen2_loopback(self):
     p = self.p
@@ -144,7 +141,6 @@ class TestCanLoopback(PandaTestCase):
     p.set_obd(False)
     up.set_obd(False)
 
-  @panda_test(needs_up=True)
   def test_bulk_write(self):
     p = self.p
     up = self.up

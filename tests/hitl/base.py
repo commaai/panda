@@ -76,8 +76,7 @@ class PandaTestCase(unittest.TestCase):
     self.addCleanup(signal.setitimer, signal.ITIMER_REAL, 0)
     signal.setitimer(signal.ITIMER_REAL, self.options.get("timeout", 60))
 
-    if self.options.get("needs_up", False):
-      init_up()
+    init_up()
     self.up = _up
     self.p.reset()
     assert self.p.up_to_date()

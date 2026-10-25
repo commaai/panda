@@ -2,7 +2,7 @@ import time
 
 from opendbc.car.hyundai.values import HyundaiSafetyFlags
 from opendbc.car.structs import CarParams
-from panda.tests.hitl.base import PandaTestCase, panda_test
+from panda.tests.hitl.base import PandaTestCase
 from panda import Panda
 
 
@@ -35,7 +35,6 @@ class TestHealth(PandaTestCase):
       assert pp.get_type() == hw_type, "Bootstub and app hw type mismatch"
       assert pp.get_uid() == app_uid
 
-  @panda_test(needs_up=True)
   def test_heartbeat(self):
     p = self.p
     up = self.up
