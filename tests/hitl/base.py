@@ -1,4 +1,3 @@
-import atexit
 import os
 import signal
 import unittest
@@ -18,8 +17,8 @@ _panda_type = None
 _panda_serial = None
 def init_devices():
   if not NO_JUNGLE:
-    # the DUT is plugged into a UP, which stands in for the jungle. ultimate_provisioning isn't a dependency,
-    # `ultimate_provisioning ready` copies it to the DUT, so it's only imported when it's needed
+    # the DUT is plugged into a UP, which stands in for the jungle: run the tests with `up run` or in `up ssh` on the UP.
+    # ultimate_provisioning isn't a dependency, those put it on the DUT's PYTHONPATH
     from ultimate_provisioning import UP
     global _panda_jungle
     _panda_jungle = UP.remote()
@@ -55,8 +54,6 @@ class PandaTestCase(unittest.TestCase):
   def setUpClass(cls):
     if _panda_serial is None:
       init_devices()
-      if _panda_jungle is not None:
-        atexit.register(_panda_jungle("close"))  # closes the RPC connection, _panda_jungle.close() would close the UP
     # init jungle
     init_jungle()
 
