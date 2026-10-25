@@ -9,11 +9,10 @@ from panda.tests.hitl.base import PandaTestCase, panda_test
 from panda.tests.hitl.helpers import time_many_sends, get_random_can_messages, clear_can_buffers
 
 class TestCanLoopback(PandaTestCase):
-  @panda_test(needs_jungle=True)
   @panda_test(timeout=35)
   def test_send_recv(self):
     p = self.p
-    panda_jungle = self.panda_jungle
+    up = self.up
     def test(p_send, p_recv):
       for bus in (0, 1, 2):
         for speed in (10, 20, 50, 100, 125, 250, 500, 1000):
@@ -29,15 +28,14 @@ class TestCanLoopback(PandaTestCase):
 
     # Run tests in both directions
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
-    test(p, panda_jungle)
-    test(panda_jungle, p)
+    test(p, up)
+    test(up, p)
 
 
-  @panda_test(needs_jungle=True)
   @panda_test(timeout=30)
   def test_latency(self):
     p = self.p
-    panda_jungle = self.panda_jungle
+    up = self.up
     def test(p_send, p_recv):
       for bus in (0, 1, 2):
         for speed in (10, 20, 50, 100, 125, 250, 500, 1000):
@@ -88,15 +86,14 @@ class TestCanLoopback(PandaTestCase):
 
     # Run tests in both directions
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
-    test(p, panda_jungle)
-    test(panda_jungle, p)
+    test(p, up)
+    test(up, p)
 
 
-  @panda_test(needs_jungle=True)
   @panda_test(expect_can_error=True)
   def test_gen2_loopback(self):
     p = self.p
-    panda_jungle = self.panda_jungle
+    up = self.up
     def test(p_send, p_recv, address=None):
       for bus in range(4):
         obd = False
@@ -132,22 +129,21 @@ class TestCanLoopback(PandaTestCase):
 
     # Run tests in both directions
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
-    test(p, panda_jungle)
-    test(panda_jungle, p)
+    test(p, up)
+    test(up, p)
 
     # Test extended frame address with ELM327 mode
     p.set_safety_mode(CarParams.SafetyModel.elm327)
-    test(p, panda_jungle, 0x18DB33F1)
-    test(panda_jungle, p, 0x18DB33F1)
+    test(p, up, 0x18DB33F1)
+    test(up, p, 0x18DB33F1)
 
     # TODO: why it's not being reset by fixtures reinit?
     p.set_obd(False)
-    panda_jungle.set_obd(False)
+    up.set_obd(False)
 
-  @panda_test(needs_jungle=True)
   def test_bulk_write(self):
     p = self.p
-    panda_jungle = self.panda_jungle
+    up = self.up
     # The TX buffers on pandas is 0x100 in length.
     NUM_MESSAGES_PER_BUS = 10000
 
@@ -175,7 +171,7 @@ class TestCanLoopback(PandaTestCase):
     start_time = time.monotonic()
     while time.monotonic() - start_time < 5 or len(rx) > old_len:
       old_len = len(rx)
-      rx.extend(panda_jungle.can_recv())
+      rx.extend(up.can_recv())
     print(f"Received {len(rx)} messages", time.monotonic())
 
     # All messages should have been received
