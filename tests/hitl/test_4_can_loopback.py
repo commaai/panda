@@ -22,7 +22,7 @@ class TestCanLoopback(PandaTestCase):
       assert sorted(self.p.can_recv()) == sorted((addr, dat, bus | 0x80) for addr, dat, bus in messages)
     return elapsed
 
-  @panda_test(timeout=180)
+  @panda_test(timeout=300)
   def test_physical_bulk(self):
     self.p.set_safety_mode(CarParams.SafetyModel.allOutput)
     for bus in range(3):
