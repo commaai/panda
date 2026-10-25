@@ -5,7 +5,7 @@
 // UM2331 CPU_SM_0, RAM_SM_0/7/8, FLASH_SM_0/7/9
 // at boot: all of RAM in board/stm32h7/self_test.s before the C runtime, then CPU, FPU and the whole flash image
 // at 8Hz: CPU, FPU, one RAM block, an ECC scrub of the DMA RAMs and one flash chunk, ECC flags of every RAM in use
-// UM2331 DMA_SM_3/4 at 8Hz: one DMA copy across the D1 to D2 interconnect, transfer errors of the sound DMAs
+// UM2331 DMA_SM_3/4 at 8Hz: one DMA copy across the D1 to D2 interconnect, transfer errors of the sound DMAs, SPI's in llspi_queue
 
 // keep in sync with board/stm32h7/self_test.s
 #define SELF_TEST_PASS 0x5AFEC0DEU
@@ -284,7 +284,7 @@ static bool dma_test_next(void) {
   for (uint8_t i = 0U; i < DMA_TEST_WORDS; i++) {
     ok = ok && (dma_test_buf[i] == dma_test_pattern[i]);
   }
-  // mic on DMA1 stream 0, sound and siren on DMA1 stream 1, SAI4 on BDMA channels 0 and 1, SPI is checked in llspi_queue
+  // mic on DMA1 stream 0, sound and siren on DMA1 stream 1, SAI4 on BDMA channels 0 and 1, a sound stop clears them in between
   ok = ok && ((DMA1->LISR & (DMA_LISR_TEIF0 | DMA_LISR_TEIF1)) == 0U);
   ok = ok && ((BDMA->ISR & (BDMA_ISR_TEIF0 | BDMA_ISR_TEIF1)) == 0U);
   dma_test_start();
