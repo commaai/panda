@@ -5,7 +5,7 @@ PYTHONWARNINGS = "error"
 LOGLEVEL = "debug"
 
 [jobs.hitl]
-runs-on = ["up-mici", "up-tres"]
+runs-on = "up-can"
 timeout-minutes = 20
 
 [[jobs.hitl.steps]]
