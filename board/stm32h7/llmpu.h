@@ -83,6 +83,10 @@ void mpu_check(void) {
   ENTER_CRITICAL();
   bool ok = mpu_region_ok(MPU_REGION_STACK_GUARD, (uint32_t)&_stack_guard, mpu_stack_guard_rasr());
   ok = mpu_region_ok(MPU_REGION_SAFETY, (uint32_t)&_ssafety, mpu_safety_rasr(MPU_SAFETY_CLOSED)) && ok;
+  for (uint32_t region = MPU_REGION_STACK_GUARD + 1U; region < ((MPU->TYPE & MPU_TYPE_DREGION_Msk) >> MPU_TYPE_DREGION_Pos); region++) {
+    MPU->RNR = region;
+    ok = ((MPU->RASR & MPU_RASR_ENABLE_Msk) == 0U) && ok;
+  }
   EXIT_CRITICAL();
   if (!ok) {
     fault_occurred(FAULT_REGISTER_DIVERGENT);

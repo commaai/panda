@@ -13,7 +13,7 @@ void fault_occurred(uint32_t fault) {
       fault_safe_state();
     } else {
       print("Temporary fault occurred: 0x"); puth(fault); print("\n");
-      fault_status = FAULT_STATUS_TEMPORARY;
+      fault_status = (fault_status == FAULT_STATUS_PERMANENT) ? FAULT_STATUS_PERMANENT : FAULT_STATUS_TEMPORARY;
     }
   }
   faults |= fault;

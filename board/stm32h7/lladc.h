@@ -63,8 +63,8 @@ static void adc_calibrate_vdda(void) {
   adc_init(ADC2);
 
   // enable VREFINT channel
-  ADC3_COMMON->CCR |= ADC_CCR_VREFEN;
-  SYSCFG->ADC2ALT |= SYSCFG_ADC2ALT_ADC2_ROUT1;
+  register_set_bits(&(ADC3_COMMON->CCR), ADC_CCR_VREFEN);
+  register_set_bits(&(SYSCFG->ADC2ALT), SYSCFG_ADC2ALT_ADC2_ROUT1);
 
   adc_avdd_mV = adc_measure_avdd_mV();
   print("  AVDD: 0x"); puth(adc_avdd_mV); print(" mV\n");
