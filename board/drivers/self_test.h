@@ -246,19 +246,24 @@ static bool flash_test_next(void) {
   return ok;
 }
 
-static const uint32_t dma_test_pattern[8] = {
+#define DMA_TEST_WORDS 8U
+static const uint32_t dma_test_pattern[DMA_TEST_WORDS] = {
   0x5AA5F00FU, 0xA55A0FF0U, 0x12345678U, 0x9ABCDEF0U, 0x0F1E2D3CU, 0x4B5A6978U, 0x87968574U, 0xC3D2E1F0U,
 };
-__attribute__((section(".sram12"))) static uint32_t dma_test_buf[8];
+__attribute__((section(".sram12"))) static uint32_t dma_test_buf[DMA_TEST_WORDS];
 
 static void dma_test_start(void) {
-  uint32_t len = sizeof(dma_test_buf) / sizeof(dma_test_buf[0]);
+  uint32_t len = DMA_TEST_WORDS;
 #ifdef ALLOW_DEBUG
   // a short copy leaves the last word cleared
-  len -= self_test_injected(SELF_TEST_DMA) ? 1U : 0U;
+  if (self_test_injected(SELF_TEST_DMA)) {
+    len -= 1U;
+  }
 #endif
-  (void)memset(dma_test_buf, 0, sizeof(dma_test_buf));
-  DMA2->HIFCR = (0x3DUL << 22U);  // stream 7
+  for (uint8_t i = 0U; i < DMA_TEST_WORDS; i++) {
+    dma_test_buf[i] = 0U;
+  }
+  DMA2->HIFCR = DMA_HIFCR_CTCIF7 | DMA_HIFCR_CHTIF7 | DMA_HIFCR_CTEIF7 | DMA_HIFCR_CDMEIF7 | DMA_HIFCR_CFEIF7;
   DMA2_Stream7->NDTR = len;
   // the cleared buffer lands in SRAM1 before the DMA starts
   __DMB();
@@ -274,10 +279,14 @@ static void dma_test_init(void) {
   dma_test_start();
 }
 
-// the last copy completed without errors and matches, and no transfer error on the sound DMAs
 static bool dma_test_next(void) {
-  bool ok = ((DMA2->HISR & (0x3DUL << 22U)) == DMA_HISR_TCIF7) && (memcmp(dma_test_buf, dma_test_pattern, sizeof(dma_test_buf)) == 0) &&
-            ((DMA1->LISR & (DMA_LISR_TEIF0 | DMA_LISR_TEIF1)) == 0U) && ((BDMA->ISR & (BDMA_ISR_TEIF0 | BDMA_ISR_TEIF1)) == 0U);
+  bool ok = (DMA2->HISR & (DMA_HISR_TCIF7 | DMA_HISR_TEIF7 | DMA_HISR_DMEIF7 | DMA_HISR_FEIF7)) == DMA_HISR_TCIF7;
+  for (uint8_t i = 0U; i < DMA_TEST_WORDS; i++) {
+    ok = ok && (dma_test_buf[i] == dma_test_pattern[i]);
+  }
+  // mic on DMA1 stream 0, sound and siren on DMA1 stream 1, SAI4 on BDMA channels 0 and 1, a sound stop clears them in between
+  ok = ok && ((DMA1->LISR & (DMA_LISR_TEIF0 | DMA_LISR_TEIF1)) == 0U);
+  ok = ok && ((BDMA->ISR & (BDMA_ISR_TEIF0 | BDMA_ISR_TEIF1)) == 0U);
   dma_test_start();
   return ok;
 }
