@@ -5,6 +5,7 @@
 // UM2331 CPU_SM_0, RAM_SM_0/7/8, FLASH_SM_0/7/9
 // at boot: all of RAM in board/stm32h7/self_test.s before the C runtime, then CPU, FPU and the whole flash image
 // at 8Hz: CPU, FPU, one RAM block, an ECC scrub of the DMA RAMs and one flash chunk, ECC flags of every RAM in use
+// UM2331 DMA_SM_3/4 at 8Hz: one DMA copy across the D1 to D2 interconnect, transfer errors of the sound DMAs, SPI's in llspi_queue
 
 // keep in sync with board/stm32h7/self_test.s
 #define SELF_TEST_PASS 0x5AFEC0DEU
@@ -52,6 +53,7 @@ static RAMECC_MonitorTypeDef *const ecc_monitors[] = {
 #define SELF_TEST_FLASH 2U
 #define SELF_TEST_RAM_ECC 3U
 #define SELF_TEST_FLASH_ECC 4U
+#define SELF_TEST_DMA 5U
 static uint8_t self_test_fail = 0U;
 static uint32_t flash_crc_flip = 0U;
 
@@ -59,7 +61,7 @@ static uint32_t flash_crc_flip = 0U;
 void self_test_inject(uint8_t test) {
   if (test == SELF_TEST_FLASH) {
     flash_crc_flip = 1U;
-  } else if (test <= SELF_TEST_FLASH_ECC) {
+  } else if (test <= SELF_TEST_DMA) {
     self_test_fail |= (uint8_t)(1U << test);
   } else {
   }
@@ -244,6 +246,51 @@ static bool flash_test_next(void) {
   return ok;
 }
 
+#define DMA_TEST_WORDS 8U
+static const uint32_t dma_test_pattern[DMA_TEST_WORDS] = {
+  0x5AA5F00FU, 0xA55A0FF0U, 0x12345678U, 0x9ABCDEF0U, 0x0F1E2D3CU, 0x4B5A6978U, 0x87968574U, 0xC3D2E1F0U,
+};
+__attribute__((section(".sram12"))) static uint32_t dma_test_buf[DMA_TEST_WORDS];
+
+static void dma_test_start(void) {
+  uint32_t len = DMA_TEST_WORDS;
+#ifdef ALLOW_DEBUG
+  // a short copy leaves the last word cleared
+  if (self_test_injected(SELF_TEST_DMA)) {
+    len -= 1U;
+  }
+#endif
+  for (uint8_t i = 0U; i < DMA_TEST_WORDS; i++) {
+    dma_test_buf[i] = 0U;
+  }
+  DMA2->HIFCR = DMA_HIFCR_CTCIF7 | DMA_HIFCR_CHTIF7 | DMA_HIFCR_CTEIF7 | DMA_HIFCR_CDMEIF7 | DMA_HIFCR_CFEIF7;
+  DMA2_Stream7->NDTR = len;
+  // the cleared buffer lands in SRAM1 before the DMA starts
+  __DMB();
+  DMA2_Stream7->CR |= DMA_SxCR_EN;
+}
+
+// flash to SRAM1, memory to memory needs the FIFO
+static void dma_test_init(void) {
+  register_set(&(DMA2_Stream7->PAR), (uint32_t)dma_test_pattern, 0xFFFFFFFFU);
+  register_set(&(DMA2_Stream7->M0AR), (uint32_t)dma_test_buf, 0xFFFFFFFFU);
+  register_set(&(DMA2_Stream7->FCR), DMA_SxFCR_DMDIS | DMA_SxFCR_FTH, DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);
+  register_set(&(DMA2_Stream7->CR), DMA_SxCR_DIR_1 | DMA_SxCR_PINC | DMA_SxCR_MINC | DMA_SxCR_PSIZE_1 | DMA_SxCR_MSIZE_1, 0x01FFFFFEU);
+  dma_test_start();
+}
+
+static bool dma_test_next(void) {
+  bool ok = (DMA2->HISR & (DMA_HISR_TCIF7 | DMA_HISR_TEIF7 | DMA_HISR_DMEIF7 | DMA_HISR_FEIF7)) == DMA_HISR_TCIF7;
+  for (uint8_t i = 0U; i < DMA_TEST_WORDS; i++) {
+    ok = ok && (dma_test_buf[i] == dma_test_pattern[i]);
+  }
+  // mic on DMA1 stream 0, sound and siren on DMA1 stream 1, SAI4 on BDMA channels 0 and 1, a sound stop clears them in between
+  ok = ok && ((DMA1->LISR & (DMA_LISR_TEIF0 | DMA_LISR_TEIF1)) == 0U);
+  ok = ok && ((BDMA->ISR & (BDMA_ISR_TEIF0 | BDMA_ISR_TEIF1)) == 0U);
+  dma_test_start();
+  return ok;
+}
+
 static void self_test_check(bool cpu_ok, bool ram_ok, bool flash_ok) {
   bool cpu = cpu_ok;
   bool ram = ram_ok;
@@ -297,6 +344,7 @@ void self_test_init(void) {
   uint32_t len = flash_crc_len();
   bool flash_ok = (len != 0U) && (crc32((const uint8_t *)_app_start, len) == flash_crc_stored());
   self_test_check((cpu_test() == SELF_TEST_PASS) && (fpu_test() == SELF_TEST_PASS), ram_ok, flash_ok);
+  dma_test_init();
 }
 
 // called at 8Hz
@@ -306,4 +354,7 @@ void self_test_tick(void) {
   ram_scrub_next();
   bool flash_ok = flash_test_next();
   self_test_check(cpu_ok, ram_ok, flash_ok);
+  if (!dma_test_next()) {
+    fault_occurred(FAULT_DMA);
+  }
 }
