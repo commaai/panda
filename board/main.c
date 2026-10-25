@@ -290,7 +290,6 @@ int main(void) {
 
   // init early devices
   clock_init();
-  registers_save_reset_cause();
   peripherals_init();
   clock_check_init();
   check_option_bytes();

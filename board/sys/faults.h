@@ -21,7 +21,7 @@ void fault_occurred(uint32_t fault) {
 
 void fault_occurred_value(uint32_t fault, uint32_t value) {
   if ((faults & fault) == 0U) {
-    print("Fault 0x"); puth(fault); print(" value 0x"); puth(value); print("\n");
+    print("Fault value 0x"); puth(value); print("\n");
   }
   fault_occurred(fault);
 }
