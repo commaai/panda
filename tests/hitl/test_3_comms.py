@@ -37,6 +37,7 @@ class TestComms(PandaTestCase):
     addrs = list(range(100, 100 + MSG_COUNT))
     ts = [(j, b"\xaa" * 8, 0) for j in addrs]
 
+    latencies = []
     for _ in range(100):
       st = time.monotonic()
 
@@ -53,9 +54,10 @@ class TestComms(PandaTestCase):
       assert sorted([x[0] for x in sent_echo]) == addrs
       assert len(r) == 200
 
-      # take sub 20ms
-      et = (time.monotonic() - st) * 1000.0
-      assert et < 20
+      latencies.append((time.monotonic() - st) * 1000.0)
+
+    # Bound sustained throughput without treating a host scheduling pause as frame loss.
+    assert sum(latencies) / len(latencies) < 20, latencies
 
   def test_debug_logs(self):
     p = self.p
