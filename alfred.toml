@@ -20,5 +20,5 @@ scripts/reflash_internal_panda.py
 name = "Test"
 run = """
 cd tests/hitl
-HITL=1 python -m unittest -v test_2*.py test_[5-9]*.py
+HITL=1 python -m unittest discover -v
 """
