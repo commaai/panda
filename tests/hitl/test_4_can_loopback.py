@@ -5,10 +5,43 @@ from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
 
 from opendbc.car.structs import CarParams
+from panda import Panda
 from panda.tests.hitl.base import PandaTestCase, panda_test
 from panda.tests.hitl.helpers import get_random_can_messages, clear_can_buffers
 
 class TestCanLoopback(PandaTestCase):
+  def test_bitrates(self):
+    p, up = self.p, self.up
+    p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    flipped = p.health()["car_harness_status"] == Panda.HARNESS_STATUS_FLIPPED
+    # The UP cannot clock 10 or 20 kbps; internal loopback covers those rates.
+    for speed in (50, 100, 125, 250, 500, 1000):
+      for bus in range(3):
+        p.set_can_speed_kbps(bus, speed)
+        up.set_can_speed_kbps(bus, speed)
+      time.sleep(0.1)
+      for bus in range(3):
+        can_number = 2 - bus if flipped else bus
+        message = (0x123, b"\xaa" * 8, bus)
+        target = p.can_health(can_number)["total_tx_cnt"] + 600
+        p.can_send_many([message] * 600, timeout=5000)
+        # Time queued transmissions, excluding host packing and reading back frames.
+        start = time.monotonic()
+        remaining = target - p.can_health(can_number)["total_tx_cnt"]
+        wire_time = remaining * 111 / (speed * 1000)  # 8-byte standard frames, excluding stuffing
+        time.sleep(0.75 * wire_time)
+        while p.can_health(can_number)["total_tx_cnt"] < target and time.monotonic() - start < 5:
+          time.sleep(0.001)
+        saturation = wire_time / (time.monotonic() - start)
+        assert 0.8 < saturation < 1, (speed, bus, saturation)
+        assert p.can_recv() == [(message[0], message[1], bus | 0x80)] * 600
+        # The UP can drop frames under saturation; validate what it did receive.
+        received = up.can_recv()
+        assert received and all(m == message for m in received), (speed, bus, received)
+        up.can_send_many([message])
+        time.sleep(0.01)
+        assert p.can_recv() == [message], (speed, bus)
+
   @panda_test(expect_can_error=True)
   def test_gen2_loopback(self):
     p = self.p

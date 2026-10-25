@@ -14,11 +14,15 @@ class TestComms(PandaTestCase):
     for bus, speed in itertools.product(range(3), (10, 20, 50, 100, 125, 250, 500, 1000)):
       p.set_can_speed_kbps(bus, speed)
       messages = [(addr, b"message", bus) for addr in range(0x100, 0x164)]
+      start = time.monotonic()
       p.can_send_many(messages)
       received = []
       deadline = time.monotonic() + 5
       while len(received) < 2 * len(messages) and time.monotonic() < deadline:
         received.extend(p.can_recv())
+      if speed < 50:  # rates the UP cannot generate
+        saturation = len(messages) * (47 + 8 * len(messages[0][1])) / ((time.monotonic() - start) * speed * 1000)
+        assert 0.8 < saturation < 1, (bus, speed, saturation)
       expected = messages + [(addr, dat, bus | 0x80) for addr, dat, bus in messages]
       assert sorted(received) == sorted(expected), (bus, speed, len(received))
 
