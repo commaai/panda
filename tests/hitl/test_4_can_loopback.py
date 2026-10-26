@@ -36,22 +36,8 @@ class TestCanLoopback(PandaTestCase):
           self._exchange(sender, receiver, messages)
       assert not receiver.can_recv()
 
-  @panda_test(timeout=120)
-  def test_latency(self):
-    self.p.set_safety_mode(CarParams.SafetyModel.allOutput)
-    for speed in (50, 100, 125, 250, 500, 1000):
-      for bus in range(3):
-        self.p.set_can_speed_kbps(bus, speed)
-        self.up.set_can_speed_kbps(bus, speed)
-      for sender, receiver in ((self.p, self.up), (self.up, self.p)):
-        for bus in range(3):
-          latencies = [self._exchange(sender, receiver, [(0x123, i.to_bytes(4, "little") + b"test", bus)]) for i in range(20)]
-          # End-to-end bounds include the UP RPC and CAN serialization time.
-          wire_time = 135 / (speed * 1000)  # worst-case stuffed 8-byte standard frame
-          assert max(latencies) < wire_time + 0.05, (speed, bus, max(latencies))
-          assert sum(latencies) / len(latencies) < wire_time + 0.01, (speed, bus, latencies)
-
-  def test_bitrates(self):
+  @panda_test(timeout=180)
+  def test_bitrates_and_latency(self):
     p, up = self.p, self.up
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
     flipped = p.health()["car_harness_status"] == Panda.HARNESS_STATUS_FLIPPED
@@ -61,6 +47,15 @@ class TestCanLoopback(PandaTestCase):
         p.set_can_speed_kbps(bus, speed)
         up.set_can_speed_kbps(bus, speed)
       time.sleep(0.1)
+      # Measure latency before saturating the bus; every exchange checks its receipts.
+      for sender, receiver in ((self.p, self.up), (self.up, self.p)):
+        for bus in range(3):
+          latencies = [self._exchange(sender, receiver, [(0x123, i.to_bytes(4, "little") + b"test", bus)]) for i in range(20)]
+          # End-to-end bounds include the UP RPC and CAN serialization time.
+          wire_time = 135 / (speed * 1000)  # worst-case stuffed 8-byte standard frame
+          assert max(latencies) < wire_time + 0.05, (speed, bus, max(latencies))
+          assert sum(latencies) / len(latencies) < wire_time + 0.01, (speed, bus, latencies)
+
       for bus in range(3):
         can_number = 2 - bus if flipped else bus
         message = (0x123, b"\xaa" * 8, bus)
@@ -86,6 +81,9 @@ class TestCanLoopback(PandaTestCase):
           received.extend(p.can_recv())
           time.sleep(0.001)
         assert received == [message], (speed, bus, received)
+      # Never discard saturation traffic before the next speed's latency samples.
+      assert not p.can_recv()
+      assert not up.can_recv()
 
   @panda_test(expect_can_error=True)
   def test_gen2_loopback(self):
@@ -98,9 +96,9 @@ class TestCanLoopback(PandaTestCase):
           obd = True
           bus = 1
 
-        # Previous traffic was received; only RX frames/receipts need draining.
-        p_send.can_recv()
-        p_recv.can_recv()
+        # Previous exchanges consumed their frames and receipts; reject leftovers.
+        assert not p_send.can_recv()
+        assert not p_recv.can_recv()
 
         # Send a random string
         addr = address if address else random.randint(1, 2000)
@@ -109,11 +107,16 @@ class TestCanLoopback(PandaTestCase):
         # The UP exposes the OBD pair as bus 3 instead of switching bus 1.
         send_bus = 3 if obd and p_send is up else bus
         recv_bus = 3 if obd and p_recv is up else bus
-        time.sleep(0.2)
+        # set_obd synchronously switches GPIOs in the control request handler.
+        # Keep the original receive window to detect late duplicates as well.
         p_send.can_send(addr, string, send_bus)
-        time.sleep(0.2)
-
-        content = p_recv.can_recv()
+        content = []
+        deadline = time.monotonic() + 0.2
+        while time.monotonic() < deadline:
+          content.extend(p_recv.can_recv())
+          assert len(content) <= 1, content
+          time.sleep(0.001)
+        content.extend(p_recv.can_recv())
 
         # Check amount of messages
         assert len(content) == 1
@@ -123,6 +126,12 @@ class TestCanLoopback(PandaTestCase):
 
         # Check bus
         assert content[0][2] == recv_bus
+
+        if p_send is p:
+          receipts = p.can_recv()
+          assert receipts == [(addr, string, send_bus | 0x80)], receipts
+        assert not p_send.can_recv()
+        assert not p_recv.can_recv()
 
         print("Bus:", bus, "address:", addr, "OBD:", obd, "OK")
 
