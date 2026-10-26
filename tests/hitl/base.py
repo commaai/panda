@@ -48,22 +48,11 @@ class PandaTestCase(unittest.TestCase):
   def setUpClass(cls):
     if _panda_serial is None:
       init_devices()
-    # init UP
-    init_up()
-
-    # init panda
+    # Open one handle per class; setUp resets the hardware before each test.
     assert Panda.wait_for_panda(_panda_serial, timeout=10), "panda not found"
     p = Panda(serial=_panda_serial)
     cls.addClassCleanup(p.close)
     cls.p = p
-    p.reset(reconnect=True)
-
-    p.set_can_loopback(False)
-    p.set_power_save(False)
-    for bus, speed in BUS_SPEEDS:
-      p.set_can_speed_kbps(bus, speed)
-    clear_can_buffers(p)
-    p.set_power_save(False)
 
   def setUp(self):
     self.options = getattr(getattr(self, self._testMethodName), "panda_options", {})
@@ -86,11 +75,11 @@ class PandaTestCase(unittest.TestCase):
 
   def tearDown(self):
     p = self.p
-    # reconnect
-    if p.get_dfu_serial() in PandaDFU.list():
-      PandaDFU(p.get_dfu_serial()).reset()
-      p.reconnect()
+    # reset() closes the connection before entering DFU.
     if not p.connected:
+      if p.get_dfu_serial() in PandaDFU.list():
+        with PandaDFU(p.get_dfu_serial()) as dfu:
+          dfu.reset()
       p.reconnect()
     if p.bootstub:
       p.reset()
