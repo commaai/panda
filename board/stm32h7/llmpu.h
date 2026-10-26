@@ -1,7 +1,7 @@
 #pragma once
 
 // linker symbols, see stm32h7x5_flash.ld
-extern uint32_t _ssafety[16];
+extern uint32_t _ssafety[256];
 extern uint32_t _stack_guard;
 
 #define MPU_REGION_SAFETY 0U
@@ -11,7 +11,7 @@ extern uint32_t _stack_guard;
 #define MPU_SAFETY_CLOSED (((PERMANENT_FAULTS & FAULT_MPU) != 0U) ? ARM_MPU_AP_PRO : ARM_MPU_AP_PRIV)
 
 static uint8_t mpu_safety_depth = 0U;
-static uint32_t mpu_safety_copy[16];
+static uint32_t mpu_safety_copy[256];
 static bool mpu_safety_changed = false;
 
 // normal memory, non-cacheable, never executed
@@ -20,7 +20,7 @@ static uint32_t mpu_rasr(uint32_t access, uint32_t size) {
 }
 
 static uint32_t mpu_safety_rasr(uint32_t access) {
-  return mpu_rasr(access, ARM_MPU_REGION_SIZE_64B);
+  return mpu_rasr(access, ARM_MPU_REGION_SIZE_1KB);
 }
 
 static uint32_t mpu_stack_guard_rasr(void) {
