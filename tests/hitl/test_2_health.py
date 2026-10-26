@@ -29,7 +29,6 @@ class TestHealth(PandaTestCase):
 
     p.reset(enter_bootstub=True, reconnect=True)
     p.close()
-    time.sleep(3)
     with Panda(p.get_usb_serial()) as pp:
       assert pp.bootstub
       assert pp.get_type() == hw_type, "Bootstub and app hw type mismatch"

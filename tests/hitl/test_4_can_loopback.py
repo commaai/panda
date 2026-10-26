@@ -7,7 +7,7 @@ from collections import defaultdict
 from opendbc.car.structs import CarParams
 from panda import Panda
 from panda.tests.hitl.base import PandaTestCase, panda_test
-from panda.tests.hitl.helpers import get_random_can_messages, clear_can_buffers
+from panda.tests.hitl.helpers import get_random_can_messages
 
 class TestCanLoopback(PandaTestCase):
   def _exchange(self, sender, receiver, messages):
@@ -29,10 +29,11 @@ class TestCanLoopback(PandaTestCase):
       self.p.set_can_speed_kbps(bus, 1000)
       self.up.set_can_speed_kbps(bus, 1000)
     for sender, receiver in ((self.p, self.up), (self.up, self.p)):
-      # Bound each burst to the UP's receive capacity; never retry missing frames.
-      for start in range(0, 40000, 8):
-        messages = [(0x123, i.to_bytes(4, "little") + b"test", 0 if i < 10000 else i % 3) for i in range(start, start + 8)]
-        self._exchange(sender, receiver, messages)
+      # At most eight frames per bus: use all three buses for the mixed traffic.
+      for first, last, burst in ((0, 10000, 8), (10000, 40000, 24)):
+        for start in range(first, last, burst):
+          messages = [(0x123, i.to_bytes(4, "little") + b"test", 0 if i < 10000 else i % 3) for i in range(start, start + burst)]
+          self._exchange(sender, receiver, messages)
       assert not receiver.can_recv()
 
   @panda_test(timeout=120)
@@ -97,9 +98,9 @@ class TestCanLoopback(PandaTestCase):
           obd = True
           bus = 1
 
-        # Clear buses
-        clear_can_buffers(p_send)
-        clear_can_buffers(p_recv)
+        # Previous traffic was received; only RX frames/receipts need draining.
+        p_send.can_recv()
+        p_recv.can_recv()
 
         # Send a random string
         addr = address if address else random.randint(1, 2000)
