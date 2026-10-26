@@ -15,7 +15,6 @@ static uint8_t mpu_safety_depth = 0U;
 static uint32_t mpu_safety_copy[256];
 static bool mpu_safety_changed = false;
 
-// only the used part of the region
 static uint32_t mpu_safety_size(void) {
   return (uint32_t)&_esafety_state - (uint32_t)&_ssafety;
 }
