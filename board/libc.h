@@ -67,9 +67,22 @@ void *memcpy(void *dest, const void *src, unsigned int len) {
 // cppcheck-suppress misra-c2012-21.2
 int memcmp(const void * ptr1, const void * ptr2, unsigned int num) {
   int ret = 0;
+  unsigned int n = num;
   const uint8_t *p1 = ptr1;
   const uint8_t *p2 = ptr2;
-  for (unsigned int i = 0; i < num; i++) {
+
+  if ((n >= 4U) && !UNALIGNED(p1, p2)) {
+    const uint32_t *w1 = (const uint32_t *)p1; // cppcheck-suppress misra-c2012-11.3 ; already checked that it's properly aligned
+    const uint32_t *w2 = (const uint32_t *)p2; // cppcheck-suppress misra-c2012-11.3 ; already checked that it's properly aligned
+    while ((n >= 4U) && (*w1 == *w2)) {
+      w1++;
+      w2++;
+      n -= 4U;
+    }
+    p1 = (const uint8_t *)w1;
+    p2 = (const uint8_t *)w2;
+  }
+  for (unsigned int i = 0; i < n; i++) {
     if (*p1 != *p2) {
       ret = -1;
       break;

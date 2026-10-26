@@ -2,6 +2,7 @@
 
 // linker symbols, see stm32h7x5_flash.ld
 extern uint32_t _ssafety[256];
+extern uint32_t _esafety_state;
 extern uint32_t _stack_guard;
 
 #define MPU_REGION_SAFETY 0U
@@ -13,6 +14,11 @@ extern uint32_t _stack_guard;
 static uint8_t mpu_safety_depth = 0U;
 static uint32_t mpu_safety_copy[256];
 static bool mpu_safety_changed = false;
+
+// only the used part of the region
+static uint32_t mpu_safety_size(void) {
+  return (uint32_t)&_esafety_state - (uint32_t)&_ssafety;
+}
 
 // normal memory, non-cacheable, never executed
 static uint32_t mpu_rasr(uint32_t access, uint32_t size) {
@@ -40,7 +46,7 @@ void mpu_safety_open(void) {
   ENTER_CRITICAL();
   if (mpu_safety_depth == 0U) {
     // body firmware runs without the MPU
-    if (((MPU->CTRL & MPU_CTRL_ENABLE_Msk) != 0U) && (memcmp(_ssafety, mpu_safety_copy, sizeof(mpu_safety_copy)) != 0)) {
+    if (((MPU->CTRL & MPU_CTRL_ENABLE_Msk) != 0U) && (memcmp(_ssafety, mpu_safety_copy, mpu_safety_size()) != 0)) {
       mpu_safety_changed = true;
     }
     mpu_set_safety_access(ARM_MPU_AP_PRIV);
@@ -52,7 +58,7 @@ void mpu_safety_close(void) {
   mpu_safety_depth -= 1U;
   if (mpu_safety_depth == 0U) {
     mpu_set_safety_access(MPU_SAFETY_CLOSED);
-    (void)memcpy(mpu_safety_copy, _ssafety, sizeof(mpu_safety_copy));
+    (void)memcpy(mpu_safety_copy, _ssafety, mpu_safety_size());
   }
   EXIT_CRITICAL();
 }
@@ -65,7 +71,7 @@ void mpu_init(void) {
   MPU->RNR = MPU_REGION_SAFETY;
   MPU->RBAR = (uint32_t)&_ssafety;
   MPU->RASR = mpu_safety_rasr(MPU_SAFETY_CLOSED);
-  (void)memcpy(mpu_safety_copy, _ssafety, sizeof(mpu_safety_copy));
+  (void)memcpy(mpu_safety_copy, _ssafety, mpu_safety_size());
 
   // privileged default map for everything else, a violation escalates to HardFault
   register_set(&(MPU->CTRL), MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_ENABLE_Msk, 0x7U);

@@ -170,6 +170,7 @@ SECTIONS
     __start_safety_state = .;
     KEEP(*(safety_state))
     __stop_safety_state = .;
+    _esafety_state = .;
     . = ALIGN(1024);
     _esafety = .;
 
