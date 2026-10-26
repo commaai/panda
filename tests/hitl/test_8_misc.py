@@ -4,6 +4,7 @@ from panda.tests.hitl.base import PandaTestCase, panda_test
 from panda import Panda
 
 class TestMisc(PandaTestCase):
+  @panda_test(reset_up=False)
   def test_boot_time(self):
     p = self.p
     # boot time should be instant

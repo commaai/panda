@@ -7,6 +7,8 @@ from panda import Panda
 
 
 class TestHealth(PandaTestCase):
+  reset_up = False  # only writes ignition=True, the fixture baseline
+
   def test_voltage(self):
     p = self.p
     for _ in range(10):
