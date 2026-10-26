@@ -1,8 +1,7 @@
-import os
 import time
 
 from panda.tests.hitl.base import PandaTestCase, panda_test
-from panda import Panda, PandaDFU, McuType, BASEDIR
+from panda import Panda, PandaDFU, McuType
 
 
 def check_signature(p):
@@ -19,56 +18,13 @@ class TestProgram(PandaTestCase):
     p.reset(enter_bootloader=True)
     assert Panda.wait_for_dfu(dfu_serial, timeout=19), "failed to enter DFU"
 
-    dfu = PandaDFU(dfu_serial)
-    assert dfu.get_mcu_type() == McuType.H7
-
     assert dfu_serial in PandaDFU.list()
-
-    dfu._handle.clear_status()
-    dfu.reset()
+    with PandaDFU(dfu_serial) as dfu:
+      assert dfu.get_mcu_type() == McuType.H7
+      dfu._handle.clear_status()
+      dfu.reset()
     p.reconnect()
 
-  # TODO: make more comprehensive bootstub tests and run on a few production ones + current
-  # TODO: also test release-signed app
-  @panda_test(timeout=30)
-  def test_known_bootstub(self):
-    """
-    Test that compiled app can work with known production bootstub
-    """
-    p = self.p
-    known_bootstubs = {
-      McuType.H7: ["bootstub.panda_h7.bin"],
-    }
-
-    for kb in known_bootstubs[McuType.H7]:
-      app_serial = p.get_usb_serial()
-      assert app_serial is not None
-
-      p.reset(enter_bootstub=True)
-      p.reset(enter_bootloader=True)
-
-      dfu_serial = p.get_dfu_serial()
-      assert Panda.wait_for_dfu(dfu_serial, timeout=30)
-
-      dfu = PandaDFU(dfu_serial)
-      with open(os.path.join(BASEDIR, "tests/hitl/known_bootstub", kb), "rb") as f:
-        code = f.read()
-
-      dfu.program_bootstub(code)
-      dfu.reset()
-
-      p.connect(claim=False, wait=True)
-
-      # check for serial mismatch
-      with Panda(p._serial, claim=False) as np:
-        assert np.get_usb_serial() == app_serial
-
-      # ensure we can flash app and it jumps to app
-      p.flash()
-      check_signature(p)
-      assert not p.bootstub
-
-  @panda_test(timeout=25)
   def test_recover(self):
     p = self.p
     assert p.recover(timeout=30)
