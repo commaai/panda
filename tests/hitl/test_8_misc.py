@@ -20,6 +20,7 @@ class TestMisc(PandaTestCase):
     p = self.p
     up = self.up
     serial = p.get_usb_serial()
+    pending_buses = range(4)  # preceding tests may have left traffic on any interface
 
     for orientation in (Panda.HARNESS_STATUS_FLIPPED, Panda.HARNESS_STATUS_NORMAL):
       up.set_harness_orientation(orientation)
@@ -30,8 +31,9 @@ class TestMisc(PandaTestCase):
         print(f"orientation={orientation} wakeup={wakeup}")
 
         # drop any of the last wakeup's frames that nothing ACKed, they'd wake the panda right away
-        for bus in range(4):
+        for bus in pending_buses:
           up.can_clear(bus)
+        pending_buses = ()
 
         p.enter_stop_mode()
         p.close()
@@ -44,10 +46,12 @@ class TestMisc(PandaTestCase):
         elif wakeup == "1":
           # the panda only wakes up on one of FDCAN2's two pairs, CAN1 or OBD depending on the orientation.
           # those are the UP's buses 1 and 3 in either orientation (see LANES in ultimate_provisioning), so send on both
-          for bus in (1, 3):
+          pending_buses = (1, 3)
+          for bus in pending_buses:
             up.can_send(0x123, b'\x01\x02', bus)
         else:
-          up.can_send(0x123, b'\x01\x02', int(wakeup))
+          pending_buses = (int(wakeup),)
+          up.can_send(0x123, b'\x01\x02', pending_buses[0])
 
         # panda should reset and come back
         assert Panda.wait_for_panda(serial, timeout=10)
