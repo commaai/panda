@@ -7,7 +7,7 @@ from collections import defaultdict
 from opendbc.car.structs import CarParams
 from panda import Panda
 from panda.tests.hitl.base import PandaTestCase, panda_test
-from panda.tests.hitl.helpers import get_random_can_messages, clear_can_buffers
+from panda.tests.hitl.helpers import get_random_can_messages
 
 class TestCanLoopback(PandaTestCase):
   def _exchange(self, sender, receiver, messages):
@@ -22,35 +22,33 @@ class TestCanLoopback(PandaTestCase):
       assert sorted(self.p.can_recv()) == sorted((addr, dat, bus | 0x80) for addr, dat, bus in messages)
     return elapsed
 
-  @panda_test(timeout=300)
+  @panda_test(timeout=120)
   def test_physical_bulk(self):
     self.p.set_safety_mode(CarParams.SafetyModel.allOutput)
     for bus in range(3):
       self.p.set_can_speed_kbps(bus, 1000)
       self.up.set_can_speed_kbps(bus, 1000)
     for sender, receiver in ((self.p, self.up), (self.up, self.p)):
-      # Bound each burst to the UP's receive capacity; never retry missing frames.
-      for start in range(0, 40000, 8):
-        messages = [(0x123, i.to_bytes(4, "little") + b"test", 0 if i < 10000 else i % 3) for i in range(start, start + 8)]
-        self._exchange(sender, receiver, messages)
+      # 512 frames per isolated bus wrap each 416-entry TX ring. Another 3072
+      # mixed frames bring each direction past the 4096-entry RX ring boundary.
+      # Queue-capacity stress is covered by test_bulk_write; here bursts stay
+      # within the UP's receive capacity (eight frames per bus).
+      sequence = 0
+      for buses, count in (((0,), 512), ((1,), 512), ((2,), 512), ((0, 1, 2), 3072)):
+        with self.subTest(direction="panda->UP" if sender is self.p else "UP->panda", buses=buses):
+          for _ in range(count // (8 * len(buses))):
+            messages = []
+            for j in range(8 * len(buses)):
+              i = sequence + j
+              address = (0x10000 + i) if i % 2 else i % 0x800
+              data = (i.to_bytes(4, "little") + b"\x00\xff\x55\xaa")[:(i // 2) % 9]
+              messages.append((address, data, buses[j % len(buses)]))
+            self._exchange(sender, receiver, messages)
+            sequence += len(messages)
       assert not receiver.can_recv()
 
-  @panda_test(timeout=120)
-  def test_latency(self):
-    self.p.set_safety_mode(CarParams.SafetyModel.allOutput)
-    for speed in (50, 100, 125, 250, 500, 1000):
-      for bus in range(3):
-        self.p.set_can_speed_kbps(bus, speed)
-        self.up.set_can_speed_kbps(bus, speed)
-      for sender, receiver in ((self.p, self.up), (self.up, self.p)):
-        for bus in range(3):
-          latencies = [self._exchange(sender, receiver, [(0x123, i.to_bytes(4, "little") + b"test", bus)]) for i in range(20)]
-          # End-to-end bounds include the UP RPC and CAN serialization time.
-          wire_time = 135 / (speed * 1000)  # worst-case stuffed 8-byte standard frame
-          assert max(latencies) < wire_time + 0.05, (speed, bus, max(latencies))
-          assert sum(latencies) / len(latencies) < wire_time + 0.01, (speed, bus, latencies)
-
-  def test_bitrates(self):
+  @panda_test(timeout=180)
+  def test_bitrates_and_latency(self):
     p, up = self.p, self.up
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
     flipped = p.health()["car_harness_status"] == Panda.HARNESS_STATUS_FLIPPED
@@ -60,6 +58,15 @@ class TestCanLoopback(PandaTestCase):
         p.set_can_speed_kbps(bus, speed)
         up.set_can_speed_kbps(bus, speed)
       time.sleep(0.1)
+      # Measure latency before saturating the bus; every exchange checks its receipts.
+      for sender, receiver in ((self.p, self.up), (self.up, self.p)):
+        for bus in range(3):
+          latencies = [self._exchange(sender, receiver, [(0x123, i.to_bytes(4, "little") + b"test", bus)]) for i in range(20)]
+          # End-to-end bounds include the UP RPC and CAN serialization time.
+          wire_time = 135 / (speed * 1000)  # worst-case stuffed 8-byte standard frame
+          assert max(latencies) < wire_time + 0.05, (speed, bus, max(latencies))
+          assert sum(latencies) / len(latencies) < wire_time + 0.01, (speed, bus, latencies)
+
       for bus in range(3):
         can_number = 2 - bus if flipped else bus
         message = (0x123, b"\xaa" * 8, bus)
@@ -85,6 +92,9 @@ class TestCanLoopback(PandaTestCase):
           received.extend(p.can_recv())
           time.sleep(0.001)
         assert received == [message], (speed, bus, received)
+      # Never discard saturation traffic before the next speed's latency samples.
+      assert not p.can_recv()
+      assert not up.can_recv()
 
   @panda_test(expect_can_error=True)
   def test_gen2_loopback(self):
@@ -97,9 +107,9 @@ class TestCanLoopback(PandaTestCase):
           obd = True
           bus = 1
 
-        # Clear buses
-        clear_can_buffers(p_send)
-        clear_can_buffers(p_recv)
+        # Previous exchanges consumed their frames and receipts; reject leftovers.
+        assert not p_send.can_recv()
+        assert not p_recv.can_recv()
 
         # Send a random string
         addr = address if address else random.randint(1, 2000)
@@ -108,10 +118,10 @@ class TestCanLoopback(PandaTestCase):
         # The UP exposes the OBD pair as bus 3 instead of switching bus 1.
         send_bus = 3 if obd and p_send is up else bus
         recv_bus = 3 if obd and p_recv is up else bus
-        time.sleep(0.2)
+        # set_obd synchronously switches GPIOs in the control request handler.
+        # Keep the original receive window to detect late duplicates as well.
         p_send.can_send(addr, string, send_bus)
         time.sleep(0.2)
-
         content = p_recv.can_recv()
 
         # Check amount of messages
@@ -122,6 +132,12 @@ class TestCanLoopback(PandaTestCase):
 
         # Check bus
         assert content[0][2] == recv_bus
+
+        if p_send is p:
+          receipts = p.can_recv()
+          assert receipts == [(addr, string, send_bus | 0x80)], receipts
+        assert not p_send.can_recv()
+        assert not p_recv.can_recv()
 
         print("Bus:", bus, "address:", addr, "OBD:", obd, "OK")
 

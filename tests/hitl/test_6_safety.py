@@ -86,8 +86,9 @@ class TestSafety(PandaTestCase):
       assert h['safety_mode'] == CarParams.SafetyModel.silent
     else:
       # flagged at the next safety hook, raised by mpu_check() at 1 Hz
-      time.sleep(2.5)
-      h = p.health()
+      t = time.monotonic()
+      while not ((h := p.health())['faults'] & (1 << FAULT_MPU_BIT)) and (time.monotonic() - t) < 2.5:
+        time.sleep(0.05)
       assert h['faults'] & (1 << FAULT_MPU_BIT)
       assert h['safety_mode'] == CarParams.SafetyModel.allOutput
     p.reset()
@@ -141,7 +142,7 @@ class TestSafety(PandaTestCase):
     for test, fault_bit in INTERRUPT_FAULT_BITS.items():
       p.reset()
       p.set_safety_mode(CarParams.SafetyModel.allOutput)
-      # the missing interrupt check skips the first window
+      # The missing interrupt check skips the first monitoring window.
       time.sleep(2.5)
       h = p.health()
       assert h['faults'] == 0, f"faults {h['faults']:#x}"
