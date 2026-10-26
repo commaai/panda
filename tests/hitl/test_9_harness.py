@@ -8,8 +8,6 @@ from panda import Panda
 # TODO: test relay
 
 class TestHarness(PandaTestCase):
-  up_can_tx = (0, 1, 2)
-
   @panda_test(expect_can_error=True)
   def test_harness_status(self):
     p = self.p

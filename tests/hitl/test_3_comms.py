@@ -6,8 +6,6 @@ from panda.tests.hitl.base import PandaTestCase
 
 
 class TestComms(PandaTestCase):
-  reset_up = False
-
   def test_can_loopback(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)

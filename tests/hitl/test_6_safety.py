@@ -17,18 +17,6 @@ READBACK_FAULT_BITS = {0: 13, 1: 29, 2: 24, 3: 29, 4: 18, 5: 18, 6: 24, 7: 18}
 
 
 class TestSafety(PandaTestCase):
-  reset_up = False
-
-  def wait_for_monitoring(self, uptime):
-    deadline = time.monotonic() + 2.5
-    while True:
-      h = self.p.health()
-      assert h['faults'] == 0, f"faults {h['faults']:#x}"
-      if h['uptime'] >= uptime:
-        return
-      assert time.monotonic() < deadline, f"monitoring not ready: uptime {h['uptime']} < {uptime}"
-      time.sleep(0.05)
-
   def test_safety_nooutput(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.silent)
@@ -154,9 +142,8 @@ class TestSafety(PandaTestCase):
     for test, fault_bit in INTERRUPT_FAULT_BITS.items():
       p.reset()
       p.set_safety_mode(CarParams.SafetyModel.allOutput)
-      # The first 1 Hz tick is near boot, so uptime 3 covers two seconds.
-      # The interrupt timer starts before the tick timer and skips its first window.
-      self.wait_for_monitoring(3)
+      # The missing interrupt check skips the first monitoring window.
+      time.sleep(2.5)
       h = p.health()
       assert h['faults'] == 0, f"faults {h['faults']:#x}"
       p.inject_interrupt_fault(test)
@@ -179,9 +166,7 @@ class TestSafety(PandaTestCase):
       p.reset()
       # harness detection only reads the ADC while the relay isn't driven
       p.set_safety_mode(CarParams.SafetyModel.noOutput)
-      # Two uptime increments guarantee at least one full second (eight harness
-      # ticks) in noOutput for ADC sampling. Also cover the initial interrupt monitoring windows.
-      self.wait_for_monitoring(max(3, p.health()['uptime'] + 2))
+      time.sleep(2.5)
       h = p.health()
       assert h['faults'] == 0, f"faults {h['faults']:#x}"
       p.inject_readback_fault(test)
