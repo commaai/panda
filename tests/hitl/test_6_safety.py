@@ -13,7 +13,7 @@ INTERRUPT_FAULT_BITS = {0: 17, 1: 17, 2: 1, 3: 16, 4: 18, 5: 18, 6: 1}
 FAULT_SIREN_MALFUNCTION_BIT = 25
 FAULT_MPU_BIT = 28
 # board/main_comms.h 0xf5 injection index: fault bit
-READBACK_FAULT_BITS = {0: 13, 1: 29, 2: 24, 3: 29, 4: 18, 5: 18, 6: 24, 7: 18}
+READBACK_FAULT_BITS = {0: 13, 1: 29, 2: 24, 3: 29, 4: 18, 5: 18, 6: 24, 7: 18, 8: 18}
 
 
 class TestSafety(PandaTestCase):

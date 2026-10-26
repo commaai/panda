@@ -347,6 +347,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         MPU->RNR = MPU_REGION_STACK_GUARD + 1U;
         MPU->RBAR = 0x60000000U;
         MPU->RASR = mpu_rasr(ARM_MPU_AP_FULL, ARM_MPU_REGION_SIZE_32B);
+      } else if (req->param1 == 8U) {
+        // raw USB turnaround time write, outside the register map
+        USBx->GUSBCFG ^= USB_OTG_GUSBCFG_TRDT_0;
       } else {
       }
       break;
