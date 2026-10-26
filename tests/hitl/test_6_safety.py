@@ -17,6 +17,8 @@ READBACK_FAULT_BITS = {0: 13, 1: 29, 2: 24, 3: 29, 4: 18, 5: 18, 6: 24, 7: 18}
 
 
 class TestSafety(PandaTestCase):
+  reset_up = False
+
   def test_safety_nooutput(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.silent)

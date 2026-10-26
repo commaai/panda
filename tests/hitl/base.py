@@ -28,6 +28,7 @@ def init_devices():
 
 def init_up():
   clear_can_buffers(_up)
+  _up.set_ignition(True)
   _up.set_harness_orientation(1)  # UP.HARNESS_ORIENTATION_1
   for bus, speed in BUS_SPEEDS:
     _up.set_can_speed_kbps(bus, speed)
@@ -43,9 +44,12 @@ def panda_test(**options):
 @unittest.skipUnless(os.environ.get("HITL") == "1", "hardware tests require HITL=1")
 class PandaTestCase(unittest.TestCase):
   panda_types = None
+  # Opt out only if every test leaves UP configuration and CAN queues untouched.
+  reset_up = True
 
   @classmethod
   def setUpClass(cls):
+    cls._up_initialized = False
     if _panda_serial is None:
       init_devices()
     # Open one handle per class; setUp resets the hardware before each test.
@@ -65,7 +69,10 @@ class PandaTestCase(unittest.TestCase):
     self.addCleanup(signal.setitimer, signal.ITIMER_REAL, 0)
     signal.setitimer(signal.ITIMER_REAL, self.options.get("timeout", 60))
 
-    init_up()
+    # Reinitialize on class entry even when running a subset or revisiting a class.
+    if self.reset_up or not type(self)._up_initialized:
+      init_up()
+      type(self)._up_initialized = True
     self.up = _up
     self.p.reset()
     assert self.p.up_to_date()

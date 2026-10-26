@@ -12,6 +12,8 @@ from panda.python.spi import PandaSpiNackResponse, PandaSpiMissingAck, REQ_HEADE
 
 
 class TestSpi(PandaTestCase):
+  reset_up = False
+
   def _ping(self, panda):
     # should work with no retries
     with patch.object(panda._handle, '_transfer_spidev', wraps=panda._handle._transfer_spidev) as spy:
