@@ -12,9 +12,11 @@ DEBUG_SYMBOLS = {"self_test_inject", "relay_readback_inject", "harness_adc2_offs
 FLASH_SYMBOLS = {"flash_unlock", "flash_erase_sector", "flash_write_word"}
 
 
+# names in the ELF string tables, so no binutils are needed
 def symbols(elf):
-  out = subprocess.run(["arm-none-eabi-nm", elf], check=True, capture_output=True, text=True).stdout
-  return {line.split()[-1] for line in out.splitlines()}
+  with open(elf, "rb") as f:
+    dat = f.read()
+  return {s for s in DEBUG_SYMBOLS | FLASH_SYMBOLS if b"\0" + s.encode() + b"\0" in dat}
 
 
 class TestRelease(unittest.TestCase):
