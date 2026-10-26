@@ -22,18 +22,29 @@ class TestCanLoopback(PandaTestCase):
       assert sorted(self.p.can_recv()) == sorted((addr, dat, bus | 0x80) for addr, dat, bus in messages)
     return elapsed
 
-  @panda_test(timeout=300, up_can_tx=(0, 1, 2))
+  @panda_test(timeout=120, up_can_tx=(0, 1, 2))
   def test_physical_bulk(self):
     self.p.set_safety_mode(CarParams.SafetyModel.allOutput)
     for bus in range(3):
       self.p.set_can_speed_kbps(bus, 1000)
       self.up.set_can_speed_kbps(bus, 1000)
     for sender, receiver in ((self.p, self.up), (self.up, self.p)):
-      # At most eight frames per bus: use all three buses for the mixed traffic.
-      for first, last, burst in ((0, 10000, 8), (10000, 40000, 24)):
-        for start in range(first, last, burst):
-          messages = [(0x123, i.to_bytes(4, "little") + b"test", 0 if i < 10000 else i % 3) for i in range(start, start + burst)]
-          self._exchange(sender, receiver, messages)
+      # 512 frames per isolated bus wrap each 416-entry TX ring. Another 3072
+      # mixed frames bring each direction past the 4096-entry RX ring boundary.
+      # Queue-capacity stress is covered by test_bulk_write; here bursts stay
+      # within the UP's receive capacity (eight frames per bus).
+      sequence = 0
+      for buses, count in (((0,), 512), ((1,), 512), ((2,), 512), ((0, 1, 2), 3072)):
+        with self.subTest(direction="panda->UP" if sender is self.p else "UP->panda", buses=buses):
+          for _ in range(count // (8 * len(buses))):
+            messages = []
+            for j in range(8 * len(buses)):
+              i = sequence + j
+              address = (0x10000 + i) if i % 2 else i % 0x800
+              data = (i.to_bytes(4, "little") + b"\x00\xff\x55\xaa")[:(i // 2) % 9]
+              messages.append((address, data, buses[j % len(buses)]))
+            self._exchange(sender, receiver, messages)
+            sequence += len(messages)
       assert not receiver.can_recv()
 
   @panda_test(timeout=180, up_can_tx=(0, 1, 2))
