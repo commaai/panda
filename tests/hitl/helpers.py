@@ -12,13 +12,13 @@ def get_random_can_messages(n):
   return m
 
 
-def clear_can_buffers(panda, speed: int | None = None, *, tx_buses=range(4)):
+def clear_can_buffers(panda, speed: int | None = None):
   if speed is not None:
     for bus in range(3):
       panda.set_can_speed_kbps(bus, speed)
 
   # clear tx buffers
-  for i in tx_buses:
+  for i in range(4):
     panda.can_clear(i)
 
   # clear rx buffers

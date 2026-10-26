@@ -22,7 +22,7 @@ class TestCanLoopback(PandaTestCase):
       assert sorted(self.p.can_recv()) == sorted((addr, dat, bus | 0x80) for addr, dat, bus in messages)
     return elapsed
 
-  @panda_test(timeout=120, up_can_tx=(0, 1, 2))
+  @panda_test(timeout=120)
   def test_physical_bulk(self):
     self.p.set_safety_mode(CarParams.SafetyModel.allOutput)
     for bus in range(3):
@@ -47,7 +47,7 @@ class TestCanLoopback(PandaTestCase):
             sequence += len(messages)
       assert not receiver.can_recv()
 
-  @panda_test(timeout=180, up_can_tx=(0, 1, 2))
+  @panda_test(timeout=180)
   def test_bitrates_and_latency(self):
     p, up = self.p, self.up
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
@@ -96,7 +96,7 @@ class TestCanLoopback(PandaTestCase):
       assert not p.can_recv()
       assert not up.can_recv()
 
-  @panda_test(expect_can_error=True, reset_up=False, up_can_tx=(0, 1, 2, 3))
+  @panda_test(expect_can_error=True)
   def test_gen2_loopback(self):
     p = self.p
     up = self.up
@@ -121,13 +121,8 @@ class TestCanLoopback(PandaTestCase):
         # set_obd synchronously switches GPIOs in the control request handler.
         # Keep the original receive window to detect late duplicates as well.
         p_send.can_send(addr, string, send_bus)
-        content = []
-        deadline = time.monotonic() + 0.2
-        while time.monotonic() < deadline:
-          content.extend(p_recv.can_recv())
-          assert len(content) <= 1, content
-          time.sleep(0.001)
-        content.extend(p_recv.can_recv())
+        time.sleep(0.2)
+        content = p_recv.can_recv()
 
         # Check amount of messages
         assert len(content) == 1
@@ -158,7 +153,6 @@ class TestCanLoopback(PandaTestCase):
 
     p.set_obd(False)
 
-  @panda_test(reset_up=False)
   def test_bulk_write(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
@@ -194,7 +188,6 @@ class TestCanLoopback(PandaTestCase):
         assert actual == count, (bus, receipt, actual, count)
     assert len(received) == 8 * NUM_MESSAGES_PER_BUS
 
-  @panda_test(reset_up=False)
   def test_message_integrity(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)

@@ -8,8 +8,6 @@ def check_signature(p):
 
 
 class TestProgram(PandaTestCase):
-  reset_up = False
-
   def test_dfu(self):
     p = self.p
     dfu_serial = p.get_dfu_serial()
