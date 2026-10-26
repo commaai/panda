@@ -76,14 +76,6 @@ void usb_init(void) {
   // Soft disconnect disable:
   USBx_DEVICE->DCTL &= ~(USB_OTG_DCTL_SDIS);
 
-  // the static configuration in the register map, the device address changes on enumeration
-  register_set(&(USBx->GUSBCFG), USBx->GUSBCFG, USB_OTG_GUSBCFG_PHYSEL | USB_OTG_GUSBCFG_FHMOD | USB_OTG_GUSBCFG_FDMOD | USB_OTG_GUSBCFG_TRDT);
-  register_set(&(USBx->GAHBCFG), USBx->GAHBCFG, USB_OTG_GAHBCFG_GINT);
-  register_set(&(USBx->GCCFG), USBx->GCCFG, USB_OTG_GCCFG_PWRDWN | USB_OTG_GCCFG_VBDEN);
-  register_set(&(USBx->GOTGCTL), USBx->GOTGCTL, USB_OTG_GOTGCTL_BVALOEN | USB_OTG_GOTGCTL_BVALOVAL);
-  register_set(&(USBx_DEVICE->DCFG), USBx_DEVICE->DCFG, USB_OTG_DCFG_PFIVL | USB_OTG_DCFG_DSPD | USB_OTG_DCFG_NZLSOHSK);
-  register_set(&(USBx->GINTMSK), USBx->GINTMSK, 0xFFFFFFFFU);
-
   // enable the IRQ
   nvic_enable(OTG_HS_IRQn);
 }
