@@ -22,7 +22,7 @@ class TestCanLoopback(PandaTestCase):
       assert sorted(self.p.can_recv()) == sorted((addr, dat, bus | 0x80) for addr, dat, bus in messages)
     return elapsed
 
-  @panda_test(timeout=300)
+  @panda_test(timeout=300, up_can_tx=(0, 1, 2))
   def test_physical_bulk(self):
     self.p.set_safety_mode(CarParams.SafetyModel.allOutput)
     for bus in range(3):
@@ -36,7 +36,7 @@ class TestCanLoopback(PandaTestCase):
           self._exchange(sender, receiver, messages)
       assert not receiver.can_recv()
 
-  @panda_test(timeout=180)
+  @panda_test(timeout=180, up_can_tx=(0, 1, 2))
   def test_bitrates_and_latency(self):
     p, up = self.p, self.up
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
@@ -85,7 +85,7 @@ class TestCanLoopback(PandaTestCase):
       assert not p.can_recv()
       assert not up.can_recv()
 
-  @panda_test(expect_can_error=True)
+  @panda_test(expect_can_error=True, reset_up=False, up_can_tx=(0, 1, 2, 3))
   def test_gen2_loopback(self):
     p = self.p
     up = self.up
@@ -147,6 +147,7 @@ class TestCanLoopback(PandaTestCase):
 
     p.set_obd(False)
 
+  @panda_test(reset_up=False)
   def test_bulk_write(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
@@ -182,6 +183,7 @@ class TestCanLoopback(PandaTestCase):
         assert actual == count, (bus, receipt, actual, count)
     assert len(received) == 8 * NUM_MESSAGES_PER_BUS
 
+  @panda_test(reset_up=False)
   def test_message_integrity(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)

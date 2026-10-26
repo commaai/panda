@@ -12,21 +12,22 @@ def get_random_can_messages(n):
   return m
 
 
-def clear_can_buffers(panda, speed: int | None = None):
+def clear_can_buffers(panda, speed: int | None = None, *, tx_buses=range(4)):
   if speed is not None:
     for bus in range(3):
       panda.set_can_speed_kbps(bus, speed)
 
   # clear tx buffers
-  for i in range(4):
+  for i in tx_buses:
     panda.can_clear(i)
 
   # clear rx buffers
   panda.can_clear(0xFFFF)
-  r = [1]
   st = time.monotonic()
-  while len(r) > 0:
+  while True:
     r = panda.can_recv()
-    time.sleep(0.05)
     if (time.monotonic() - st) > 10:
       raise Exception("Unable to clear can buffers for panda ", panda.get_serial())
+    if not r:
+      break
+    time.sleep(0.05)
