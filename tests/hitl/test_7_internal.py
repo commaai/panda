@@ -7,6 +7,8 @@ from panda import Panda
 MAX_RPM = 5000
 
 class TestInternal(PandaTestCase):
+  reset_up = False
+
   panda_types = Panda.INTERNAL_DEVICES
 
   @panda_test(timeout=2*60)
