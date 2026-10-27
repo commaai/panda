@@ -1,4 +1,3 @@
-import atexit
 import os
 import signal
 import unittest
@@ -9,20 +8,16 @@ from panda.tests.hitl.helpers import clear_can_buffers
 SPEED_NORMAL = 500
 BUS_SPEEDS = [(0, SPEED_NORMAL), (1, SPEED_NORMAL), (2, SPEED_NORMAL)]
 
-# test options
-NO_JUNGLE = os.environ.get("NO_JUNGLE", "0") == "1"
-
 # Find all pandas connected
-_panda_jungle = None
+_up = None
 _panda_type = None
 _panda_serial = None
 def init_devices():
-  if not NO_JUNGLE:
-    # the DUT is plugged into a UP, which stands in for the jungle. ultimate_provisioning isn't a dependency,
-    # `ultimate_provisioning ready` copies it to the DUT, so it's only imported when it's needed
-    from ultimate_provisioning import UP
-    global _panda_jungle
-    _panda_jungle = UP.remote()
+  # the DUT is plugged into a UP: run the tests with `up run` or in `up ssh` on the UP.
+  # ultimate_provisioning isn't a dependency, those put it on the DUT's PYTHONPATH
+  from ultimate_provisioning import UP
+  global _up
+  _up = UP.remote()
 
   with Panda(serial=None, claim=False) as p:
     global _panda_type
@@ -31,13 +26,11 @@ def init_devices():
     _panda_type = bytes(p.get_type())
   assert _panda_serial is not None, "No panda found!"
 
-def init_jungle():
-  if _panda_jungle is None:
-    return
-  clear_can_buffers(_panda_jungle)
-  _panda_jungle.set_harness_orientation(1)  # UP.HARNESS_ORIENTATION_1
+def init_up():
+  clear_can_buffers(_up)
+  _up.set_harness_orientation(1)  # UP.HARNESS_ORIENTATION_1
   for bus, speed in BUS_SPEEDS:
-    _panda_jungle.set_can_speed_kbps(bus, speed)
+    _up.set_can_speed_kbps(bus, speed)
 
 
 def panda_test(**options):
@@ -55,10 +48,8 @@ class PandaTestCase(unittest.TestCase):
   def setUpClass(cls):
     if _panda_serial is None:
       init_devices()
-      if _panda_jungle is not None:
-        atexit.register(_panda_jungle("close"))  # closes the RPC connection, _panda_jungle.close() would close the UP
-    # init jungle
-    init_jungle()
+    # init UP
+    init_up()
 
     # init panda
     assert Panda.wait_for_panda(_panda_serial, timeout=10), "panda not found"
@@ -79,17 +70,14 @@ class PandaTestCase(unittest.TestCase):
     panda_types = self.options.get("panda_types", self.panda_types)
     if panda_types is not None and _panda_type not in panda_types:
       self.skipTest(f"Not applicable, {panda_types} pandas only")
-    if self.options.get("needs_jungle", False) and NO_JUNGLE:
-      self.skipTest("skipping tests that require a jungle")
 
     previous_handler = signal.signal(signal.SIGALRM, self._timeout)
     self.addCleanup(signal.signal, signal.SIGALRM, previous_handler)
     self.addCleanup(signal.setitimer, signal.ITIMER_REAL, 0)
     signal.setitimer(signal.ITIMER_REAL, self.options.get("timeout", 60))
 
-    if self.options.get("needs_jungle", False):
-      init_jungle()
-    self.panda_jungle = _panda_jungle
+    init_up()
+    self.up = _up
     self.p.reset()
     assert self.p.up_to_date()
 

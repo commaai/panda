@@ -8,12 +8,11 @@ from panda import Panda
 # TODO: test relay
 
 class TestHarness(PandaTestCase):
-  @panda_test(needs_jungle=True)
   @panda_test(expect_can_error=True)
   def test_harness_status(self):
     p = self.p
-    panda_jungle = self.panda_jungle
-    # map from jungle orientations to panda orientations
+    up = self.up
+    # map from UP orientations to panda orientations
     orientation_map = {
       Panda.HARNESS_STATUS_NC: Panda.HARNESS_STATUS_NC,
     }
@@ -23,8 +22,8 @@ class TestHarness(PandaTestCase):
     for ignition, orientation in itertools.product([True, False], [Panda.HARNESS_STATUS_NC, Panda.HARNESS_STATUS_NORMAL, Panda.HARNESS_STATUS_FLIPPED]):
       print()
       p.set_safety_mode(CarParams.SafetyModel.elm327)
-      panda_jungle.set_harness_orientation(orientation)
-      panda_jungle.set_ignition(ignition)
+      up.set_harness_orientation(orientation)
+      up.set_ignition(ignition)
 
       # wait for orientation detection
       time.sleep(0.25)
@@ -50,14 +49,14 @@ class TestHarness(PandaTestCase):
       # CAN traffic
       if orientation != Panda.HARNESS_STATUS_NC:
         for bus in range(3):
-          panda_jungle.can_send(0x123, f"{bus}".encode(), bus)
+          up.can_send(0x123, f"{bus}".encode(), bus)
         time.sleep(0.5)
 
         msgs = p.can_recv()
         buses = {int(dat): bus for _, dat, bus in msgs if bus <= 3}
         print(msgs)
 
-        # jungle doesn't actually switch buses when switching orientation
+        # UP doesn't actually switch buses when switching orientation
         flipped = orientation == Panda.HARNESS_STATUS_FLIPPED
         assert buses[0] == (2 if flipped else 0)
         assert buses[2] == (0 if flipped else 2)
