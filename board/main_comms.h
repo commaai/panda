@@ -350,12 +350,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       } else {
       }
       break;
-    // **** 0xf7: change the safety param without its inverted copy, for testing
-    case 0xf7:
-      mpu_safety_open();
-      current_safety_param ^= 1U;
-      mpu_safety_close();
-      break;
     #endif
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:

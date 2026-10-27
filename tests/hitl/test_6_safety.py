@@ -12,7 +12,6 @@ SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11, 3: 12, 4: 12, 5: 14}
 INTERRUPT_FAULT_BITS = {0: 17, 1: 17, 2: 1, 3: 16, 4: 18, 5: 18, 6: 1}
 FAULT_SIREN_MALFUNCTION_BIT = 25
 FAULT_MPU_BIT = 28
-FAULT_SAFETY_REDUNDANCY_BIT = 19
 # board/main_comms.h 0xf5 injection index: fault bit
 READBACK_FAULT_BITS = {0: 13, 1: 29, 2: 24, 3: 29, 4: 18, 5: 18, 6: 24, 7: 18}
 
@@ -90,18 +89,7 @@ class TestSafety(PandaTestCase):
       time.sleep(2.5)
       h = p.health()
       assert h['faults'] & (1 << FAULT_MPU_BIT)
-      # the write outside safety also breaks the inverted copy of controls_allowed
-      assert h['safety_mode'] == (CarParams.SafetyModel.silent if FAULT_SAFETY_REDUNDANCY_BIT in PERMANENT_FAULT_BITS else CarParams.SafetyModel.allOutput)
-    p.reset()
-
-  def test_safety_redundancy_fault(self):
-    p = self.p
-    p.set_safety_mode(CarParams.SafetyModel.allOutput)
-    p.inject_safety_redundancy_fault()
-    time.sleep(2.5)
-    h = p.health()
-    assert h['faults'] & (1 << FAULT_SAFETY_REDUNDANCY_BIT)
-    assert h['safety_mode'] == (CarParams.SafetyModel.silent if FAULT_SAFETY_REDUNDANCY_BIT in PERMANENT_FAULT_BITS else CarParams.SafetyModel.allOutput)
+      assert h['safety_mode'] == CarParams.SafetyModel.allOutput
     p.reset()
 
   def test_stack_overflow_resets_to_silent(self):

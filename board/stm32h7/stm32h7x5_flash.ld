@@ -172,10 +172,6 @@ SECTIONS
     *(.data.current_safety_param .bss.current_safety_param)
     *(.data.current_hooks .bss.current_hooks)
     *(.data.current_safety_config .bss.current_safety_config)
-    *(.data.controls_allowed_inv .bss.controls_allowed_inv)
-    *(.data.current_safety_mode_inv .bss.current_safety_mode_inv)
-    *(.data.current_safety_param_inv .bss.current_safety_param_inv)
-    *(.data.safety_state_invalid .bss.safety_state_invalid)
     . = ALIGN(64);
     _esafety = .;
 
@@ -223,7 +219,6 @@ SECTIONS
   ASSERT(DEFINED(current_safety_mode) ? (current_safety_mode >= _ssafety && current_safety_mode < _esafety) : !DEFINED(safety_tx_hook), "current_safety_mode not in the MPU region")
   ASSERT(DEFINED(current_safety_param) ? (current_safety_param >= _ssafety && current_safety_param < _esafety) : !DEFINED(safety_tx_hook), "current_safety_param not in the MPU region")
   ASSERT(DEFINED(current_safety_config) ? (current_safety_config >= _ssafety && current_safety_config < _esafety) : !DEFINED(safety_tx_hook), "current_safety_config not in the MPU region")
-  ASSERT(DEFINED(safety_state_invalid) ? (safety_state_invalid >= _ssafety && safety_state_invalid < _esafety) : !DEFINED(safety_tx_hook), "safety_state_invalid not in the MPU region")
 
   .itcmram (NOLOAD) :
   {
