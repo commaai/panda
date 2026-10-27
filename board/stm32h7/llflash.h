@@ -30,6 +30,6 @@ void flash_write_word(void *prog_ptr, uint32_t data) {
 void flush_write_buffer(void) {
   if (FLASH->SR1 & FLASH_SR_WBNE) {
     FLASH->CR1 |= FLASH_CR_FW;
-    while (FLASH->SR1 & FLASH_CR_FW);
+    while (FLASH->SR1 & FLASH_SR_QW);
   }
 }

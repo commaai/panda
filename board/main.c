@@ -40,6 +40,7 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
     print("Error: safety set mode failed. Falling back to SILENT\n");
     mode_copy = SAFETY_SILENT;
     err = set_safety_hooks(mode_copy, 0U);
+    set_intercept_relay(false, false);
     // TERMINAL ERROR: we can't continue if SILENT safety mode isn't succesfully set
     assert_fatal(err == 0, "Error: Failed setting SILENT mode. Hanging\n");
   }
@@ -200,16 +201,16 @@ static void tick_handler(void) {
       }
 
       // exit controls allowed if unused by openpilot for a few seconds
+      mpu_safety_open();
       if (controls_allowed && !heartbeat_engaged) {
         heartbeat_engaged_mismatches += 1U;
         if (heartbeat_engaged_mismatches >= 3U) {
-          mpu_safety_open();
           controls_allowed = false;
-          mpu_safety_close();
         }
       } else {
         heartbeat_engaged_mismatches = 0U;
       }
+      mpu_safety_close();
 
       if (!heartbeat_disabled) {
         // if the heartbeat has been gone for a while, go to SILENT safety mode and enter power save
@@ -229,7 +230,9 @@ static void tick_handler(void) {
           }
 
           // clear heartbeat engaged state
+          mpu_safety_open();
           heartbeat_engaged = false;
+          mpu_safety_close();
 
           if (current_safety_mode != SAFETY_SILENT) {
             set_safety_mode(SAFETY_SILENT, 0U);
@@ -264,14 +267,17 @@ static void tick_handler(void) {
 
       // on to the next one
       uptime_cnt += 1U;
-      safety_mode_cnt += 1U;
       ignition_can_cnt += 1U;
 
       // synchronous safety check
       mpu_safety_open();
+      safety_mode_cnt += 1U;
       safety_tick();
       mpu_safety_close();
       mpu_check();
+      if (safety_compute_mismatch) {
+        fault_occurred(FAULT_SAFETY_REDUNDANCY);
+      }
     }
 
     self_test_tick();
@@ -287,6 +293,9 @@ static void tick_handler(void) {
 int main(void) {
   // Init interrupt table
   init_interrupts(true);
+
+  // register_map is zeroed with .bss after early_initialization
+  register_set(&(SCB->VTOR), (uint32_t)&g_pfnVectors, SCB_VTOR_TBLOFF_Msk);
 
   // shouldn't have interrupts here, but just in case
   disable_interrupts();
