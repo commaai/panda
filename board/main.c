@@ -163,7 +163,10 @@ static void tick_handler(void) {
     // decimated to 1Hz
     if (loop_counter == 0U) {
       static timer_check_t tick_timer_check = {0};
-      timer_check(&tick_timer_check);
+      uint32_t tick_dt = 0U;
+      if (timer_check(&tick_timer_check, &tick_dt)) {
+        fault_occurred_value(FAULT_TIMER, tick_dt);
+      }
       // set green LED to be controls allowed
       led_set(LED_GREEN, controls_allowed);
 
@@ -358,12 +361,12 @@ int main(void) {
 
   if (fault_cookie == NMI_COOKIE) {
     reset_flags |= HEALTH_FLAG_NMI_RESET;
+    print("NMI PC 0x"); puth(fault_pc); print("\n");
   }
   if (fault_cookie == HARDFAULT_COOKIE) {
     reset_flags |= HEALTH_FLAG_HARDFAULT_RESET;
-    print("HardFault CFSR 0x"); puth(fault_cfsr); print(" address 0x"); puth(fault_addr); print("\n");
+    print("HardFault CFSR 0x"); puth(fault_cfsr); print(" address 0x"); puth(fault_addr); print(" PC 0x"); puth(fault_pc); print("\n");
   }
-  fault_cookie = 0U;
 
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();

@@ -284,6 +284,8 @@ ram_test_startup:
   ldr r7, [r0]
   ldr r0, =fault_addr
   ldr r12, [r0]
+  ldr r0, =fault_pc
+  ldr r4, [r0]
 
   ldr r9, =SELF_TEST_PASS
   ldr r8, =ram_test_regions
@@ -294,11 +296,10 @@ ram_test_startup:
   beq .Lram_done
   .irp bg, 0x55555555, 0x00000000
   ldr r2, =\bg
-  mov r4, r2
   mvn r3, r2
   mov r5, r0
 1:
-  strd r2, r4, [r5], #8
+  strd r2, r2, [r5], #8
   cmp r5, r1
   blo 1b
   mov r5, r0
@@ -357,6 +358,8 @@ ram_test_startup:
   str r7, [r0]
   ldr r0, =fault_addr
   str r12, [r0]
+  ldr r0, =fault_pc
+  str r4, [r0]
   ldr r0, =self_test_cookie
   str r9, [r0]
   bx lr

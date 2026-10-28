@@ -163,7 +163,7 @@ typedef struct {
   uint32_t prev_ts;
   uint32_t mismatches;
 } timer_check_t;
-void timer_check(timer_check_t *check);
+bool timer_check(timer_check_t *check, uint32_t *dt_out);
 void interrupt_timer_init(void);
 uint32_t microsecond_timer_get(void);
 
