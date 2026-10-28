@@ -69,13 +69,37 @@ void early_initialization(void) {
 #define NMI_COOKIE 0x4E4D4921U
 #define HARDFAULT_COOKIE 0x48464C54U
 extern uint32_t fault_cookie;
+extern uint32_t fault_cfsr;
+extern uint32_t fault_addr;
+extern uint32_t fault_pc;
 
-void NMI_Handler(void) {
-  fault_cookie = NMI_COOKIE;
+// frame is the stacked r0-r3, r12, lr, pc and xpsr, panda only runs on the MSP
+static void fault_record(uint32_t cookie, const uint32_t *frame) {
+  fault_cookie = cookie;
+  if (cookie == HARDFAULT_COOKIE) {
+    fault_cfsr = SCB->CFSR;
+    fault_addr = ((fault_cfsr & SCB_CFSR_MMARVALID_Msk) != 0U) ? SCB->MMFAR : SCB->BFAR;
+  }
+  // a failed stacking leaves no frame to read
+  fault_pc = ((SCB->CFSR & (SCB_CFSR_MSTKERR_Msk | SCB_CFSR_STKERR_Msk)) == 0U) ? frame[6] : 0U;
   NVIC_SystemReset();
 }
 
-void HardFault_Handler(void) {
-  fault_cookie = HARDFAULT_COOKIE;
-  NVIC_SystemReset();
+__attribute__((used)) static void nmi_record(const uint32_t *frame) {
+  fault_record(NMI_COOKIE, frame);
+}
+
+__attribute__((used)) static void hardfault_record(const uint32_t *frame) {
+  fault_record(HARDFAULT_COOKIE, frame);
+}
+
+// naked to read the frame before anything is pushed
+__attribute__((naked)) void NMI_Handler(void) {
+  // cppcheck-suppress misra-c2012-17.3 ; inline asm
+  __asm volatile ("mrs r0, msp\n b nmi_record");
+}
+
+__attribute__((naked)) void HardFault_Handler(void) {
+  // cppcheck-suppress misra-c2012-17.3 ; inline asm
+  __asm volatile ("mrs r0, msp\n b hardfault_record");
 }

@@ -56,6 +56,9 @@ ENTRY(Reset_Handler)
 enter_bootloader_mode = 0x38001FFC;
 fault_cookie = 0x38003FFC;
 self_test_cookie = 0x38003FF8;
+fault_cfsr = 0x38003FF4;
+fault_addr = 0x38003FF0;
+fault_pc = 0x38003FEC;
 
 _estack = 0x20020000;    /* end of RAM */
 _dtcmram_start = ORIGIN(DTCMRAM);

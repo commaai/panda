@@ -144,9 +144,9 @@ void enable_interrupt_timer(void) {
 
 // FLASH_SM_3: nothing unlocks the option bytes, and they boot from 0x08000000 when BOOT0 is low
 void check_option_bytes(void) {
-  bool locked = (FLASH->OPTCR & FLASH_OPTCR_OPTLOCK) != 0U;
-  bool boot_flash = (FLASH->BOOT_CUR & FLASH_BOOT_ADD0) == 0x0800U;
-  if (!locked || !boot_flash) {
-    fault_occurred(FAULT_REGISTER_DIVERGENT);
+  uint32_t optlock = FLASH->OPTCR & FLASH_OPTCR_OPTLOCK;
+  uint32_t boot = FLASH->BOOT_CUR & FLASH_BOOT_ADD0;
+  if ((optlock == 0U) || (boot != 0x0800U)) {
+    fault_occurred_value(FAULT_REGISTER_DIVERGENT, (boot << 16) | optlock);
   }
 }

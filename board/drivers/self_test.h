@@ -169,8 +169,8 @@ static bool ram_test_block(uint32_t addr, uint32_t words, uint32_t start, uint32
   return ok;
 }
 
-// next block of the running pass, wraps around all regions
-static bool ram_test_next(void) {
+// next block of the running pass, wraps around all regions, failed is set to the block address on a failure
+static bool ram_test_next(uint32_t *failed) {
   // SRAM1/2 and SRAM4 hold the DMA buffers, which DMA can write mid test, and the test's own backup, they're covered at boot, by ECC and the scrub
   static const ram_region ram_regions[] = {
     {(uint32_t)&_dtcmram_start, (uint32_t)&_dtcmram_end},
@@ -184,6 +184,7 @@ static bool ram_test_next(void) {
   }
   uint32_t words = MIN(RAM_TEST_BLOCK_WORDS, (ram_regions[region].end - block) / 4U);
   bool ok = ram_test_skip(block, block + (words * 4U)) || ram_test_block(block, words, ram_regions[region].start, ram_regions[region].end);
+  *failed = block;
   block += RAM_TEST_STEP;
   if (block >= ram_regions[region].end) {
     region = (uint8_t)((region + 1U) % (sizeof(ram_regions) / sizeof(ram_regions[0])));
@@ -226,7 +227,8 @@ static uint32_t flash_crc_stored(void) {
   return (uint32_t)p[0] | ((uint32_t)p[1] << 8U) | ((uint32_t)p[2] << 16U) | ((uint32_t)p[3] << 24U);
 }
 
-static bool flash_test_next(void) {
+// crc is set to the computed CRC once a pass completes
+static bool flash_test_next(uint32_t *crc_out) {
   static uint32_t offset = 0U;
   static uint32_t crc = 0xFFFFFFFFU;
   bool ok = true;
@@ -239,7 +241,8 @@ static bool flash_test_next(void) {
     crc ^= flash_crc_flip;
     flash_crc_flip = 0U;
 #endif
-    ok = (len != 0U) && ((crc ^ 0xFFFFFFFFU) == flash_crc_stored());
+    *crc_out = crc ^ 0xFFFFFFFFU;
+    ok = (len != 0U) && (*crc_out == flash_crc_stored());
     offset = 0U;
     crc = 0xFFFFFFFFU;
   }
@@ -279,19 +282,23 @@ static void dma_test_init(void) {
   dma_test_start();
 }
 
-static bool dma_test_next(void) {
-  bool ok = (DMA2->HISR & (DMA_HISR_TCIF7 | DMA_HISR_TEIF7 | DMA_HISR_DMEIF7 | DMA_HISR_FEIF7)) == DMA_HISR_TCIF7;
+// 0 if it passed, else bits 0-7 the wrong words, 8-11 DMA1 stream 0/1 and BDMA channel 0/1 errors, 22-27 the DMA2 stream 7 flags with TCIF7 if not done
+static uint32_t dma_test_next(void) {
+  uint32_t err = (DMA2->HISR & (DMA_HISR_TCIF7 | DMA_HISR_TEIF7 | DMA_HISR_DMEIF7 | DMA_HISR_FEIF7)) ^ DMA_HISR_TCIF7;
   for (uint8_t i = 0U; i < DMA_TEST_WORDS; i++) {
-    ok = ok && (dma_test_buf[i] == dma_test_pattern[i]);
+    err |= (dma_test_buf[i] != dma_test_pattern[i]) ? (1UL << i) : 0U;
   }
   // mic on DMA1 stream 0, sound and siren on DMA1 stream 1, SAI4 on BDMA channels 0 and 1, a sound stop clears them in between
-  ok = ok && ((DMA1->LISR & (DMA_LISR_TEIF0 | DMA_LISR_TEIF1)) == 0U);
-  ok = ok && ((BDMA->ISR & (BDMA_ISR_TEIF0 | BDMA_ISR_TEIF1)) == 0U);
+  err |= ((DMA1->LISR & DMA_LISR_TEIF0) != 0U) ? (1UL << 8) : 0U;
+  err |= ((DMA1->LISR & DMA_LISR_TEIF1) != 0U) ? (1UL << 9) : 0U;
+  err |= ((BDMA->ISR & BDMA_ISR_TEIF0) != 0U) ? (1UL << 10) : 0U;
+  err |= ((BDMA->ISR & BDMA_ISR_TEIF1) != 0U) ? (1UL << 11) : 0U;
   dma_test_start();
-  return ok;
+  return err;
 }
 
-static void self_test_check(bool cpu_ok, bool ram_ok, bool flash_ok) {
+// ram_addr is the failing block, 0 at boot, flash_crc the computed CRC
+static void self_test_check(bool cpu_ok, bool ram_ok, uint32_t ram_addr, bool flash_ok, uint32_t flash_crc) {
   bool cpu = cpu_ok;
   bool ram = ram_ok;
   bool flash = flash_ok;
@@ -303,15 +310,21 @@ static void self_test_check(bool cpu_ok, bool ram_ok, bool flash_ok) {
     fault_occurred(FAULT_SELF_TEST_CPU);
   }
   if (!ram) {
-    fault_occurred(FAULT_SELF_TEST_RAM);
+    fault_occurred_value(FAULT_SELF_TEST_RAM, ram_addr);
   }
   if (!flash) {
-    fault_occurred(FAULT_SELF_TEST_FLASH);
+    fault_occurred_value(FAULT_SELF_TEST_FLASH, flash_crc);
   }
   uint32_t flash_sr = FLASH->SR1;
   uint32_t ecc_sr = 0U;
+  // the monitor index in the top 4 bits and the failing word within that RAM
+  uint32_t ecc_far = 0U;
   for (uint8_t i = 0U; i < ECC_MONITOR_CNT; i++) {
-    ecc_sr |= ecc_monitors[i]->SR;
+    uint32_t sr = ecc_monitors[i]->SR;
+    if ((ecc_far == 0U) && ((sr & (RAMECC_SR_DEDF | RAMECC_SR_DEBWDF)) != 0U)) {
+      ecc_far = ((uint32_t)i << 28U) | (ecc_monitors[i]->FAR & 0x0FFFFFFFU);
+    }
+    ecc_sr |= sr;
   }
 #ifdef ALLOW_DEBUG
   if (self_test_injected(SELF_TEST_FLASH_ECC)) {
@@ -323,10 +336,10 @@ static void self_test_check(bool cpu_ok, bool ram_ok, bool flash_ok) {
 #endif
   // a CPU read with a double ECC error bus faults, this catches the DMA reads from flash
   if ((flash_sr & FLASH_SR_DBECCERR) != 0U) {
-    fault_occurred(FAULT_ECC);
+    fault_occurred_value(FAULT_ECC, FLASH->ECC_FA1);
   }
   if ((ecc_sr & (RAMECC_SR_DEDF | RAMECC_SR_DEBWDF)) != 0U) {
-    fault_occurred(FAULT_ECC);
+    fault_occurred_value(FAULT_ECC, ecc_far);
   }
 }
 
@@ -342,19 +355,23 @@ void self_test_init(void) {
   bool ram_ok = (self_test_cookie == SELF_TEST_PASS);
   self_test_cookie = 0U;
   uint32_t len = flash_crc_len();
-  bool flash_ok = (len != 0U) && (crc32((const uint8_t *)_app_start, len) == flash_crc_stored());
-  self_test_check((cpu_test() == SELF_TEST_PASS) && (fpu_test() == SELF_TEST_PASS), ram_ok, flash_ok);
+  uint32_t crc = crc32((const uint8_t *)_app_start, len);
+  bool flash_ok = (len != 0U) && (crc == flash_crc_stored());
+  self_test_check((cpu_test() == SELF_TEST_PASS) && (fpu_test() == SELF_TEST_PASS), ram_ok, 0U, flash_ok, crc);
   dma_test_init();
 }
 
 // called at 8Hz
 void self_test_tick(void) {
   bool cpu_ok = (cpu_test() == SELF_TEST_PASS) && (fpu_test() == SELF_TEST_PASS);
-  bool ram_ok = ram_test_next();
+  uint32_t ram_addr = 0U;
+  bool ram_ok = ram_test_next(&ram_addr);
   ram_scrub_next();
-  bool flash_ok = flash_test_next();
-  self_test_check(cpu_ok, ram_ok, flash_ok);
-  if (!dma_test_next()) {
-    fault_occurred(FAULT_DMA);
+  uint32_t crc = 0U;
+  bool flash_ok = flash_test_next(&crc);
+  self_test_check(cpu_ok, ram_ok, ram_addr, flash_ok, crc);
+  uint32_t dma_err = dma_test_next();
+  if (dma_err != 0U) {
+    fault_occurred_value(FAULT_DMA, dma_err);
   }
 }

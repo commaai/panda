@@ -163,7 +163,10 @@ static void tick_handler(void) {
     // decimated to 1Hz
     if (loop_counter == 0U) {
       static timer_check_t tick_timer_check = {0};
-      timer_check(&tick_timer_check);
+      uint32_t tick_dt = 0U;
+      if (timer_check(&tick_timer_check, &tick_dt)) {
+        fault_occurred_value(FAULT_TIMER, tick_dt);
+      }
       // set green LED to be controls allowed
       led_set(LED_GREEN, controls_allowed);
 
@@ -250,9 +253,7 @@ static void tick_handler(void) {
 
       // check registers
       check_registers();
-      if (!clock_check()) {
-        fault_occurred(FAULT_CLOCK);
-      }
+      clock_check();
       interrupt_timer_check();
       nvic_check();
       check_option_bytes();
@@ -280,7 +281,7 @@ static void tick_handler(void) {
     loop_counter %= 8U;
   } else {
     // TIM12 shares the vector with the TIM8 break, which has no interrupts enabled
-    fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
+    fault_occurred_value(FAULT_UNUSED_INTERRUPT_HANDLED, __get_IPSR());
   }
 }
 
@@ -363,11 +364,16 @@ int main(void) {
 
   if (fault_cookie == NMI_COOKIE) {
     reset_flags |= HEALTH_FLAG_NMI_RESET;
+    print("NMI PC 0x"); puth(fault_pc); print("\n");
   }
   if (fault_cookie == HARDFAULT_COOKIE) {
     reset_flags |= HEALTH_FLAG_HARDFAULT_RESET;
+    print("HardFault CFSR 0x"); puth(fault_cfsr); print(" address 0x"); puth(fault_addr); print(" PC 0x"); puth(fault_pc); print("\n");
   }
   fault_cookie = 0U;
+  // cleared so the next boot shows only its own reset
+  print("RSR 0x"); puth(RCC->RSR); print("\n");
+  RCC->RSR |= RCC_RSR_RMVF;
 
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();
@@ -381,11 +387,7 @@ int main(void) {
     #endif
     if (!power_save_enabled) {
       // ADC_SM_3, takes milliseconds so not in an interrupt
-      if (!adc_check(current_board->avdd_mV)) {
-        ENTER_CRITICAL();
-        fault_occurred(FAULT_ADC);
-        EXIT_CRITICAL();
-      }
+      adc_check(current_board->avdd_mV);
 
       // useful for debugging, fade breaks = panda is overloaded
       for (uint32_t fade = 0U; fade < MAX_LED_FADE; fade += 1U) {

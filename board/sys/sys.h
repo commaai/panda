@@ -65,6 +65,11 @@ extern uint8_t fault_status;
 extern uint32_t faults;
 
 void fault_occurred(uint32_t fault);
+void fault_occurred_at(uint32_t fault, uint32_t value, const char *site);
+// a bit can be raised from several places, so each logs where it was raised
+#define FAULT_STR(x) #x
+#define FAULT_XSTR(x) FAULT_STR(x)
+#define fault_occurred_value(fault, value) fault_occurred_at((fault), (value), __FILE__ ":" FAULT_XSTR(__LINE__))
 void fault_recovered(uint32_t fault);
 void fault_safe_state(void);
 

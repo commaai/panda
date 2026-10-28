@@ -5,7 +5,7 @@
 static void unused_interrupt_handler(void) {
   // Something is wrong if this handler is called!
   print("Unused interrupt handler called!\n");
-  fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
+  fault_occurred_value(FAULT_UNUSED_INTERRUPT_HANDLED, __get_IPSR());
 }
 
 interrupt interrupts[NUM_INTERRUPTS];
@@ -27,17 +27,26 @@ void nvic_disable(IRQn_Type irq) {
   EXIT_CRITICAL();
 }
 
+// logs the first divergent IRQ, 0x100 added if it's the priority
 void nvic_check(void) {
   uint32_t diff = 0U;
+  uint32_t first = 0U;
   for (uint8_t i = 0U; i < 8U; i++) {
-    diff |= NVIC->ISER[i] ^ nvic_expected[i];
+    uint32_t d = NVIC->ISER[i] ^ nvic_expected[i];
+    if ((diff == 0U) && (d != 0U)) {
+      first = ((uint32_t)i * 32U) + __CLZ(__RBIT(d));
+    }
+    diff |= d;
   }
   // nothing sets a priority, all IRQs stay at 0
   for (uint8_t i = 0U; i < 240U; i++) {
+    if ((diff == 0U) && (NVIC->IP[i] != 0U)) {
+      first = 0x100U + (uint32_t)i;
+    }
     diff |= NVIC->IP[i];
   }
   if (diff != 0U) {
-    fault_occurred(FAULT_REGISTER_DIVERGENT);
+    fault_occurred_value(FAULT_REGISTER_DIVERGENT, first);
   }
 }
 
@@ -86,7 +95,10 @@ void interrupt_timer_handler(void) {
     // cleared first, a flag cleared on the way out can retrigger the vector
     INTERRUPT_TIMER->SR = 0;
     interrupt_timer_windows += 1U;
-    timer_check(&interrupt_timer_period);
+    uint32_t dt = 0U;
+    if (timer_check(&interrupt_timer_period, &dt)) {
+      fault_occurred_value(FAULT_TIMER, dt);
+    }
     for (uint16_t i = 0U; i < NUM_INTERRUPTS; i++) {
       // Log IRQ call rate faults
       if (check_interrupt_rate && (interrupts[i].call_counter > interrupts[i].max_call_rate)) {
@@ -113,7 +125,7 @@ void interrupt_timer_handler(void) {
     busy_time = 0U;
   } else {
     // TIM6 shares the vector with the DAC, which has no interrupts enabled
-    fault_occurred(FAULT_UNUSED_INTERRUPT_HANDLED);
+    fault_occurred_value(FAULT_UNUSED_INTERRUPT_HANDLED, __get_IPSR());
   }
 }
 

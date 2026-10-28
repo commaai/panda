@@ -26,18 +26,20 @@ uint32_t microsecond_timer_get(void) {
 }
 
 // GTIM_SM_1: against the microsecond timer over two periods, one late interrupt can't fault
-void timer_check(timer_check_t *check) {
+// returns true on a fault, raised by the caller so each timer logs as its own site
+bool timer_check(timer_check_t *check, uint32_t *dt_out) {
+  bool fault = false;
   uint32_t now = microsecond_timer_get();
   if (check->prev_ts != 0U) {
     uint32_t dt = get_ts_elapsed(now, check->prev_ts);
     bool ok = (dt > 1900000U) && (dt < 2100000U);
     check->mismatches = ok ? 0U : (check->mismatches + 1U);
-    if (check->mismatches >= 2U) {
-      fault_occurred(FAULT_TIMER);
-    }
+    fault = check->mismatches >= 2U;
+    *dt_out = dt;
   }
   check->prev_ts = check->last_ts;
   check->last_ts = now;
+  return fault;
 }
 
 void interrupt_timer_init(void) {
