@@ -74,6 +74,14 @@ class TestSafety(PandaTestCase):
     assert h['safety_mode'] == CarParams.SafetyModel.silent
     assert not h['controls_allowed']
 
+  def test_canfd_auto_bus_out_of_range(self):
+    p = self.p
+    p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    p.set_canfd_auto(0xFFFF, True)
+    h = p.health()
+    assert not h['hardfault_reset']
+    assert h['safety_mode'] == CarParams.SafetyModel.allOutput
+
   def test_mpu_fault(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
