@@ -372,8 +372,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         heartbeat_tick_counter = 0U;
         heartbeat_lost = false;
         heartbeat_disabled = false;
-        // the host reads the log in the same loop, until then a reset reports the last HardFault or NMI again
-        fault_cookie = 0U;
         heartbeat_engaged = (req->param1 == 1U);
         break;
       }

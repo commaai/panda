@@ -63,7 +63,7 @@ void check_registers(void){
       if((*(register_map[i].address) & register_map[i].check_mask) != (register_map[i].value & register_map[i].check_mask)){
         if(!register_map[i].logged_fault || (calls == 0U)){
           print("Register 0x"); puth((uint32_t) register_map[i].address); print(" divergent! Map: 0x"); puth(register_map[i].value); print(" Reg: 0x"); puth(*(register_map[i].address));
-          print(" CR3: 0x"); puth(PWR->CR3); print(" RSR: 0x"); puth(RCC->RSR); print("\n");
+          print(" CR3: 0x"); puth(PWR->CR3); print("\n");
           register_map[i].logged_fault = true;
         }
         fault_occurred(FAULT_REGISTER_DIVERGENT);

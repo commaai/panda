@@ -88,7 +88,6 @@ static bool mpu_region_ok(uint32_t region, uint32_t base, uint32_t rasr) {
 // RBAR and RASR are banked by RNR, so register_set can't read them back
 void mpu_check(void) {
   ENTER_CRITICAL();
-  // a mask of the divergent regions
   uint32_t bad = mpu_region_ok(MPU_REGION_STACK_GUARD, (uint32_t)&_stack_guard, mpu_stack_guard_rasr()) ? 0U : (1UL << MPU_REGION_STACK_GUARD);
   bad |= mpu_region_ok(MPU_REGION_SAFETY, (uint32_t)&_ssafety, mpu_safety_rasr(MPU_SAFETY_CLOSED)) ? 0U : (1UL << MPU_REGION_SAFETY);
   for (uint32_t region = MPU_REGION_STACK_GUARD + 1U; region < ((MPU->TYPE & MPU_TYPE_DREGION_Msk) >> MPU_TYPE_DREGION_Pos); region++) {

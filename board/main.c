@@ -370,6 +370,10 @@ int main(void) {
     reset_flags |= HEALTH_FLAG_HARDFAULT_RESET;
     print("HardFault CFSR 0x"); puth(fault_cfsr); print(" address 0x"); puth(fault_addr); print(" PC 0x"); puth(fault_pc); print("\n");
   }
+  fault_cookie = 0U;
+  // cleared so the next boot shows only its own reset
+  print("RSR 0x"); puth(RCC->RSR); print("\n");
+  RCC->RSR |= RCC_RSR_RMVF;
 
   print("**** INTERRUPTS ON ****\n");
   enable_interrupts();
