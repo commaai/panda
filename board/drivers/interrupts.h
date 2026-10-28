@@ -34,7 +34,7 @@ void nvic_check(void) {
   for (uint8_t i = 0U; i < 8U; i++) {
     uint32_t d = NVIC->ISER[i] ^ nvic_expected[i];
     if ((diff == 0U) && (d != 0U)) {
-      first = ((uint32_t)i * 32U) + (31U - __CLZ(d & (~d + 1U)));
+      first = ((uint32_t)i * 32U) + __CLZ(__RBIT(d));
     }
     diff |= d;
   }

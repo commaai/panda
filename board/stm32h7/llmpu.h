@@ -41,12 +41,11 @@ void mpu_safety_open(void) {
   ENTER_CRITICAL();
   if (mpu_safety_depth == 0U) {
     // body firmware runs without the MPU
-    if (((MPU->CTRL & MPU_CTRL_ENABLE_Msk) != 0U) && (memcmp(_ssafety, mpu_safety_copy, sizeof(mpu_safety_copy)) != 0)) {
-      mpu_safety_changed = true;
+    if ((MPU->CTRL & MPU_CTRL_ENABLE_Msk) != 0U) {
       for (uint8_t i = 0U; i < 16U; i++) {
-        if (_ssafety[i] != mpu_safety_copy[i]) {
+        if (!mpu_safety_changed && (_ssafety[i] != mpu_safety_copy[i])) {
+          mpu_safety_changed = true;
           mpu_safety_changed_addr = (uint32_t)&_ssafety[i];
-          break;
         }
       }
     }

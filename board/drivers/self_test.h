@@ -282,8 +282,7 @@ static void dma_test_init(void) {
   dma_test_start();
 }
 
-// returns 0 if it passed, else the words copied wrong in bits 0-7, the DMA1 stream 0/1 and BDMA channel 0/1 transfer errors in bits 8-11
-// and the DMA2 stream 7 flags in bits 22-27, with TCIF7 set if the transfer didn't complete
+// 0 if it passed, else bits 0-7 the wrong words, 8-11 DMA1 stream 0/1 and BDMA channel 0/1 errors, 22-27 the DMA2 stream 7 flags with TCIF7 if not done
 static uint32_t dma_test_next(void) {
   uint32_t err = (DMA2->HISR & (DMA_HISR_TCIF7 | DMA_HISR_TEIF7 | DMA_HISR_DMEIF7 | DMA_HISR_FEIF7)) ^ DMA_HISR_TCIF7;
   for (uint8_t i = 0U; i < DMA_TEST_WORDS; i++) {

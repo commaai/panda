@@ -21,10 +21,12 @@ void fault_occurred(uint32_t fault) {
 
 #define FAULT_SITES 32U
 
-// printed once per call site
-void fault_occurred_at(uint32_t fault, uint32_t value, const char *site) {
-  static const char *sites[FAULT_SITES];
+// each call site logs once with its address, noinline so it's the caller's
+__attribute__((noinline)) void fault_occurred_value(uint32_t fault, uint32_t value) {
+  static uint32_t sites[FAULT_SITES];
   static uint8_t site_cnt = 0U;
+  // cppcheck-suppress misra-c2012-17.3 ; compiler builtin
+  uint32_t site = (uint32_t)__builtin_return_address(0);
   bool seen = false;
   for (uint8_t i = 0U; i < site_cnt; i++) {
     seen = seen || (sites[i] == site);
@@ -32,7 +34,7 @@ void fault_occurred_at(uint32_t fault, uint32_t value, const char *site) {
   if (!seen && (site_cnt < FAULT_SITES)) {
     sites[site_cnt] = site;
     site_cnt++;
-    print("Fault 0x"); puth(fault); print(" at "); print(site); print(" value 0x"); puth(value); print("\n");
+    print("Fault 0x"); puth(fault); print(" at 0x"); puth(site); print(" value 0x"); puth(value); print("\n");
   }
   fault_occurred(fault);
 }

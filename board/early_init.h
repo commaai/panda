@@ -74,7 +74,7 @@ extern uint32_t fault_addr;
 extern uint32_t fault_pc;
 
 // frame is the stacked r0-r3, r12, lr, pc and xpsr, panda only runs on the MSP
-__attribute__((used)) static void fault_record(uint32_t cookie, const uint32_t *frame) {
+static void fault_record(uint32_t cookie, const uint32_t *frame) {
   fault_cookie = cookie;
   if (cookie == HARDFAULT_COOKIE) {
     fault_cfsr = SCB->CFSR;
@@ -85,13 +85,21 @@ __attribute__((used)) static void fault_record(uint32_t cookie, const uint32_t *
   NVIC_SystemReset();
 }
 
-// naked to read the frame before anything is pushed, r0 is the cookie
+__attribute__((used)) static void nmi_record(const uint32_t *frame) {
+  fault_record(NMI_COOKIE, frame);
+}
+
+__attribute__((used)) static void hardfault_record(const uint32_t *frame) {
+  fault_record(HARDFAULT_COOKIE, frame);
+}
+
+// naked to read the frame before anything is pushed
 __attribute__((naked)) void NMI_Handler(void) {
   // cppcheck-suppress misra-c2012-17.3 ; inline asm
-  __asm volatile ("movw r0, #0x4921\n movt r0, #0x4E4D\n mrs r1, msp\n b fault_record");
+  __asm volatile ("mrs r0, msp\n b nmi_record");
 }
 
 __attribute__((naked)) void HardFault_Handler(void) {
   // cppcheck-suppress misra-c2012-17.3 ; inline asm
-  __asm volatile ("movw r0, #0x4C54\n movt r0, #0x4846\n mrs r1, msp\n b fault_record");
+  __asm volatile ("mrs r0, msp\n b hardfault_record");
 }
