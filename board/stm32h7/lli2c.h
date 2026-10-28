@@ -24,11 +24,7 @@ static bool i2c_write_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t v
 
   // Setup transfer and send START + addr
   for (uint32_t i = 0U; i < I2C_RETRY_COUNT; i++) {
-    register_clear_bits(&I2C->CR2, I2C_CR2_ADD10);
-    I2C->CR2 = ((uint32_t)addr << 1U) & I2C_CR2_SADD_Msk;
-    register_clear_bits(&I2C->CR2, I2C_CR2_RD_WRN);
-    register_set_bits(&I2C->CR2, I2C_CR2_AUTOEND);
-    I2C->CR2 |= 2UL << I2C_CR2_NBYTES_Pos;
+    I2C->CR2 = (((uint32_t)addr << 1U) & I2C_CR2_SADD_Msk) | I2C_CR2_AUTOEND | (2UL << I2C_CR2_NBYTES_Pos);
 
     I2C->CR2 |= I2C_CR2_START;
     if(!i2c_status_wait(&I2C->CR2, I2C_CR2_START, 0U)) {
@@ -37,7 +33,7 @@ static bool i2c_write_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t v
 
     // check if we lost arbitration
     if ((I2C->ISR & I2C_ISR_ARLO) != 0U) {
-      register_set_bits(&I2C->ICR, I2C_ICR_ARLOCF);
+      I2C->ICR = I2C_ICR_ARLOCF;
     } else {
       ret = true;
       break;
@@ -70,11 +66,7 @@ static bool i2c_read_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t *v
 
   // Setup transfer and send START + addr
   for (uint32_t i = 0U; i < I2C_RETRY_COUNT; i++) {
-    register_clear_bits(&I2C->CR2, I2C_CR2_ADD10);
-    I2C->CR2 = ((uint32_t)addr << 1U) & I2C_CR2_SADD_Msk;
-    register_clear_bits(&I2C->CR2, I2C_CR2_RD_WRN);
-    register_clear_bits(&I2C->CR2, I2C_CR2_AUTOEND);
-    I2C->CR2 |= 1UL << I2C_CR2_NBYTES_Pos;
+    I2C->CR2 = (((uint32_t)addr << 1U) & I2C_CR2_SADD_Msk) | (1UL << I2C_CR2_NBYTES_Pos);
 
     I2C->CR2 |= I2C_CR2_START;
     if(!i2c_status_wait(&I2C->CR2, I2C_CR2_START, 0U)) {
@@ -83,7 +75,7 @@ static bool i2c_read_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t *v
 
     // check if we lost arbitration
     if ((I2C->ISR & I2C_ISR_ARLO) != 0U) {
-      register_set_bits(&I2C->ICR, I2C_ICR_ARLOCF);
+      I2C->ICR = I2C_ICR_ARLOCF;
     } else {
       ret = true;
       break;
@@ -110,7 +102,7 @@ static bool i2c_read_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t *v
 
   // check if we lost arbitration
   if ((I2C->ISR & I2C_ISR_ARLO) != 0U) {
-    register_set_bits(&I2C->ICR, I2C_ICR_ARLOCF);
+    I2C->ICR = I2C_ICR_ARLOCF;
     ret = false;
     goto end;
   }

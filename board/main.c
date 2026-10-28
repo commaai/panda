@@ -288,6 +288,9 @@ int main(void) {
   // Init interrupt table
   init_interrupts(true);
 
+  // register_map is zeroed with .bss after early_initialization
+  register_set(&(SCB->VTOR), (uint32_t)&g_pfnVectors, SCB_VTOR_TBLOFF_Msk);
+
   // shouldn't have interrupts here, but just in case
   disable_interrupts();
 

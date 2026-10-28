@@ -272,7 +272,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xe8: set can-fd auto swithing mode
     case 0xe8:
-      bus_config[req->param1].canfd_auto = req->param2 > 0U;
+      if (req->param1 < PANDA_CAN_CNT) {
+        bus_config[req->param1].canfd_auto = req->param2 > 0U;
+      }
       break;
     #ifdef ALLOW_DEBUG
     // **** 0xea: inject fault, for testing
