@@ -41,6 +41,7 @@ extern uint8_t global_critical_depth;
 #define FAULT_SELF_TEST_FLASH               (1UL << 11)
 #define FAULT_ECC                           (1UL << 12)
 #define FAULT_OUTPUT_READBACK               (1UL << 13)
+#define FAULT_DMA                           (1UL << 14)
 #define FAULT_INTERRUPT_RATE_USB            (1UL << 15)
 #define FAULT_CLOCK                         (1UL << 16)
 #define FAULT_INTERRUPT_MISSING             (1UL << 17)

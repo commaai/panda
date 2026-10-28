@@ -21,6 +21,10 @@ void llspi_queue(const uint8_t *tx, uint16_t tx_len) {
     (void)dat;
   }
   SPI4->IFCR = (0x1FFU << 3U);
+  // DMA_SM_4: a transfer error of the last transfer, checked before the clear
+  if ((DMA2->LISR & (DMA_LISR_TEIF2 | DMA_LISR_TEIF3)) != 0U) {
+    fault_occurred(FAULT_DMA);
+  }
   DMA2->LIFCR = (0x3DUL << 16U) | (0x3DUL << 22U);  // streams 2 + 3
 
   // setup buffers

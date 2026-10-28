@@ -1,4 +1,5 @@
 import time
+import unittest
 
 from opendbc.car.structs import CarParams
 from panda.tests.hitl.base import PandaTestCase, panda_test
@@ -6,13 +7,13 @@ from panda.tests.hitl.base import PandaTestCase, panda_test
 # keep in sync with PERMANENT_FAULTS, see board/sys/sys.h
 PERMANENT_FAULT_BITS = ()
 # board/drivers/self_test.h injection index: fault bit
-SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11, 3: 12, 4: 12}
+SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11, 3: 12, 4: 12, 5: 14}
 # board/main_comms.h 0xef injection index: fault bit
-INTERRUPT_FAULT_BITS = {0: 17, 1: 17, 2: 1, 3: 16, 4: 18, 5: 18}
+INTERRUPT_FAULT_BITS = {0: 17, 1: 17, 2: 1, 3: 16, 4: 18, 5: 18, 6: 1}
 FAULT_SIREN_MALFUNCTION_BIT = 25
 FAULT_MPU_BIT = 28
 # board/main_comms.h 0xf5 injection index: fault bit
-READBACK_FAULT_BITS = {0: 13, 1: 29, 2: 24, 3: 29, 4: 18, 5: 18, 6: 24}
+READBACK_FAULT_BITS = {0: 13, 1: 29, 2: 24, 3: 29, 4: 18, 5: 18, 6: 24, 7: 18}
 
 
 class TestSafety(PandaTestCase):
@@ -31,6 +32,7 @@ class TestSafety(PandaTestCase):
     assert len([x for x in r if x[2] != 192]) == 0
     assert len([x for x in r if x[2] == 192]) == 1
 
+  @unittest.skipIf(len(PERMANENT_FAULT_BITS) == 0, "no permanent faults")
   def test_fault_safe_state(self):
     p = self.p
     for fault_bit in PERMANENT_FAULT_BITS:
