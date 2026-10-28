@@ -1,8 +1,7 @@
 #pragma once
 
 // linker symbols, see stm32h7x5_flash.ld
-extern uint32_t _ssafety[256];
-extern uint32_t _esafety_state;
+extern uint32_t _ssafety[16];
 extern uint32_t _stack_guard;
 
 #define MPU_REGION_SAFETY 0U
@@ -12,12 +11,8 @@ extern uint32_t _stack_guard;
 #define MPU_SAFETY_CLOSED (((PERMANENT_FAULTS & FAULT_MPU) != 0U) ? ARM_MPU_AP_PRO : ARM_MPU_AP_PRIV)
 
 static uint8_t mpu_safety_depth = 0U;
-static uint32_t mpu_safety_copy[256];
+static uint32_t mpu_safety_copy[16];
 static bool mpu_safety_changed = false;
-
-static uint32_t mpu_safety_size(void) {
-  return (uint32_t)&_esafety_state - (uint32_t)&_ssafety;
-}
 
 // normal memory, non-cacheable, never executed
 static uint32_t mpu_rasr(uint32_t access, uint32_t size) {
@@ -25,7 +20,7 @@ static uint32_t mpu_rasr(uint32_t access, uint32_t size) {
 }
 
 static uint32_t mpu_safety_rasr(uint32_t access) {
-  return mpu_rasr(access, ARM_MPU_REGION_SIZE_1KB);
+  return mpu_rasr(access, ARM_MPU_REGION_SIZE_64B);
 }
 
 static uint32_t mpu_stack_guard_rasr(void) {
@@ -45,7 +40,7 @@ void mpu_safety_open(void) {
   ENTER_CRITICAL();
   if (mpu_safety_depth == 0U) {
     // body firmware runs without the MPU
-    if (((MPU->CTRL & MPU_CTRL_ENABLE_Msk) != 0U) && (memcmp(_ssafety, mpu_safety_copy, mpu_safety_size()) != 0)) {
+    if (((MPU->CTRL & MPU_CTRL_ENABLE_Msk) != 0U) && (memcmp(_ssafety, mpu_safety_copy, sizeof(mpu_safety_copy)) != 0)) {
       mpu_safety_changed = true;
     }
     mpu_set_safety_access(ARM_MPU_AP_PRIV);
@@ -57,7 +52,7 @@ void mpu_safety_close(void) {
   mpu_safety_depth -= 1U;
   if (mpu_safety_depth == 0U) {
     mpu_set_safety_access(MPU_SAFETY_CLOSED);
-    (void)memcpy(mpu_safety_copy, _ssafety, mpu_safety_size());
+    (void)memcpy(mpu_safety_copy, _ssafety, sizeof(mpu_safety_copy));
   }
   EXIT_CRITICAL();
 }
@@ -70,7 +65,7 @@ void mpu_init(void) {
   MPU->RNR = MPU_REGION_SAFETY;
   MPU->RBAR = (uint32_t)&_ssafety;
   MPU->RASR = mpu_safety_rasr(MPU_SAFETY_CLOSED);
-  (void)memcpy(mpu_safety_copy, _ssafety, mpu_safety_size());
+  (void)memcpy(mpu_safety_copy, _ssafety, sizeof(mpu_safety_copy));
 
   // privileged default map for everything else, a violation escalates to HardFault
   register_set(&(MPU->CTRL), MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_ENABLE_Msk, 0x7U);

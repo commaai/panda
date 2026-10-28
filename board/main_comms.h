@@ -254,9 +254,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xdf:
       // you can only set this if you are in a non car safety mode
       if (!is_car_safety_mode(current_safety_mode)) {
-        mpu_safety_open();
         alternative_experience = req->param1;
-        mpu_safety_close();
       }
       break;
     // **** 0xe5: set CAN loopback (for testing)
@@ -354,10 +352,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       } else {
       }
       break;
-    // **** 0xf7: the two computations of a safety decision differ, for testing
-    case 0xf7:
-      safety_compute_mismatch = true;
-      break;
     #endif
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:
@@ -378,9 +372,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         heartbeat_tick_counter = 0U;
         heartbeat_lost = false;
         heartbeat_disabled = false;
-        mpu_safety_open();
         heartbeat_engaged = (req->param1 == 1U);
-        mpu_safety_close();
         break;
       }
     // **** 0xf6: set siren enabled

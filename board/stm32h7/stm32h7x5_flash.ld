@@ -165,13 +165,14 @@ SECTIONS
     _sdata = .;        /* create a global symbol at data start */
 
     /* safety state, one MPU region, see board/stm32h7/llmpu.h */
-    . = ALIGN(1024);
+    . = ALIGN(64);
     _ssafety = .;
-    __start_safety_state = .;
-    KEEP(*(safety_state))
-    __stop_safety_state = .;
-    _esafety_state = .;
-    . = ALIGN(1024);
+    *(.data.controls_allowed .bss.controls_allowed)
+    *(.data.current_safety_mode .bss.current_safety_mode)
+    *(.data.current_safety_param .bss.current_safety_param)
+    *(.data.current_hooks .bss.current_hooks)
+    *(.data.current_safety_config .bss.current_safety_config)
+    . = ALIGN(64);
     _esafety = .;
 
     *(.data)           /* .data sections */
@@ -213,8 +214,11 @@ SECTIONS
     . = ALIGN(8);
   } >DTCMRAM
 
-  ASSERT((_esafety - _ssafety) <= 1024, "safety state doesn't fit its MPU region")
+  ASSERT((_esafety - _ssafety) <= 64, "safety state doesn't fit its MPU region")
   ASSERT(DEFINED(controls_allowed) ? (controls_allowed >= _ssafety && controls_allowed < _esafety) : !DEFINED(safety_tx_hook), "controls_allowed not in the MPU region")
+  ASSERT(DEFINED(current_safety_mode) ? (current_safety_mode >= _ssafety && current_safety_mode < _esafety) : !DEFINED(safety_tx_hook), "current_safety_mode not in the MPU region")
+  ASSERT(DEFINED(current_safety_param) ? (current_safety_param >= _ssafety && current_safety_param < _esafety) : !DEFINED(safety_tx_hook), "current_safety_param not in the MPU region")
+  ASSERT(DEFINED(current_safety_config) ? (current_safety_config >= _ssafety && current_safety_config < _esafety) : !DEFINED(safety_tx_hook), "current_safety_config not in the MPU region")
 
   .itcmram (NOLOAD) :
   {
