@@ -27,8 +27,7 @@ def init_devices():
   assert _panda_serial is not None, "No panda found!"
 
 def init_up():
-  clear_can_buffers(_up)
-  _up.set_harness_orientation(1)  # UP.HARNESS_ORIENTATION_1
+  _up.reset()
   for bus, speed in BUS_SPEEDS:
     _up.set_can_speed_kbps(bus, speed)
 
