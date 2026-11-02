@@ -23,10 +23,11 @@ def clear_can_buffers(panda, speed: int | None = None):
 
   # clear rx buffers
   panda.can_clear(0xFFFF)
-  r = [1]
   st = time.monotonic()
-  while len(r) > 0:
+  while True:
     r = panda.can_recv()
-    time.sleep(0.05)
     if (time.monotonic() - st) > 10:
       raise Exception("Unable to clear can buffers for panda ", panda.get_serial())
+    if not r:
+      break
+    time.sleep(0.05)

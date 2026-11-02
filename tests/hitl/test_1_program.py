@@ -1,5 +1,3 @@
-import time
-
 from panda.tests.hitl.base import PandaTestCase, panda_test
 from panda import Panda, PandaDFU, McuType
 
@@ -38,7 +36,6 @@ class TestProgram(PandaTestCase):
     assert serial is not None
     p.reset(enter_bootstub=True)
     p.close()
-    time.sleep(2)
 
     with Panda(serial) as np:
       assert np.bootstub
