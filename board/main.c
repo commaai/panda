@@ -370,6 +370,9 @@ int main(void) {
     reset_flags |= HEALTH_FLAG_HARDFAULT_RESET;
     print("HardFault CFSR 0x"); puth(fault_cfsr); print(" address 0x"); puth(fault_addr); print(" PC 0x"); puth(fault_pc); print("\n");
   }
+  if (fault_cookie == STOP_MODE_COOKIE) {
+    print("stop mode wakeup EXTI 0x"); puth(fault_pc); print("\n");
+  }
   fault_cookie = 0U;
   // cleared so the next boot shows only its own reset
   print("RSR 0x"); puth(RCC->RSR); print("\n");
@@ -389,15 +392,15 @@ int main(void) {
       // ADC_SM_3, takes milliseconds so not in an interrupt
       adc_check(current_board->avdd_mV);
 
-      // useful for debugging, fade breaks = panda is overloaded
-      for (uint32_t fade = 0U; fade < MAX_LED_FADE; fade += 1U) {
+      // useful for debugging, fade breaks = panda is overloaded. cut short by power saving, e.g. to enter stop mode
+      for (uint32_t fade = 0U; (fade < MAX_LED_FADE) && !power_save_enabled; fade += 1U) {
         led_set(LED_RED, true);
         delay(fade >> 4);
         led_set(LED_RED, false);
         delay((MAX_LED_FADE - fade) >> 4);
       }
 
-      for (uint32_t fade = MAX_LED_FADE; fade > 0U; fade -= 1U) {
+      for (uint32_t fade = MAX_LED_FADE; (fade > 0U) && !power_save_enabled; fade -= 1U) {
         led_set(LED_RED, true);
         delay(fade >> 4);
         led_set(LED_RED, false);
