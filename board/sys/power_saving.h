@@ -124,8 +124,8 @@ static void enter_stop_mode(void) {
   // don't wake up on SPI chip select (EXTI11, shares an IRQ with FDCAN3 RX)
   register_clear_bits(&(EXTI->IMR1), (1UL << 11));
 
-  // clear pending EXTI
-  EXTI->PR1 = (1U << 1) | (1U << 4) | can_exti_line;
+  // clear pending EXTI, including a chip select from before it was masked
+  EXTI->PR1 = (1U << 1) | (1U << 4) | (1UL << 11) | can_exti_line;
 
   // reset if ignition just came on before going to sleep
   if (harness_check_ignition()) {
@@ -159,5 +159,8 @@ static void enter_stop_mode(void) {
   // cppcheck-suppress misra-c2012-17.3 ; CMSIS __WFI macro expands to inline asm
   __WFI();
 
+  // log the wakeup across the reset
+  fault_cookie = STOP_MODE_COOKIE;
+  fault_pc = EXTI->PR1;
   NVIC_SystemReset();
 }
