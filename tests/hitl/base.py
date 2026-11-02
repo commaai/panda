@@ -3,7 +3,6 @@ import signal
 import unittest
 
 from panda import Panda, PandaDFU
-from panda.tests.hitl.helpers import clear_can_buffers
 
 SPEED_NORMAL = 500
 BUS_SPEEDS = [(bus, SPEED_NORMAL) for bus in range(4)]
