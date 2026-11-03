@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import glob
+import os
 import time
 from panda import Panda, PandaDFU
 
@@ -7,12 +9,21 @@ class GPIO:
   STM_BOOT0 = 134
 
 
+def tlmm_base() -> int:
+  # the SoC GPIO controller's sysfs number base: 0 on the downstream kernel, assigned at boot on the upstream one
+  for chip in glob.glob("/sys/class/gpio/gpiochip*"):
+    with open(os.path.join(chip, "label")) as f:
+      if f.read().strip() == "3400000.pinctrl":
+        with open(os.path.join(chip, "base")) as b:
+          return int(b.read())
+  raise RuntimeError("SoC GPIO controller not found")
+
 def gpio_init(pin, output):
-  with open(f"/sys/class/gpio/gpio{pin}/direction", 'wb') as f:
+  with open(f"/sys/class/gpio/gpio{tlmm_base() + pin}/direction", 'wb') as f:
     f.write(b"out" if output else b"in")
 
 def gpio_set(pin, high):
-  with open(f"/sys/class/gpio/gpio{pin}/value", 'wb') as f:
+  with open(f"/sys/class/gpio/gpio{tlmm_base() + pin}/value", 'wb') as f:
     f.write(b"1" if high else b"0")
 
 
