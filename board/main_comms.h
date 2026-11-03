@@ -154,9 +154,11 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       }
       break;
     // **** 0xc5: DEBUG: drive relay
+    #ifdef ALLOW_DEBUG
     case 0xc5:
       set_intercept_relay((req->param1 & 0x1U), (req->param1 & 0x2U));
       break;
+    #endif
     // **** 0xc6: DEBUG: read SOM GPIO
     case 0xc6:
       resp[0] = current_board->read_som_gpio();
