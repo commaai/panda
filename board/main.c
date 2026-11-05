@@ -310,9 +310,6 @@ int main(void) {
   // print hello
   print("\n\n\n************************ MAIN START ************************\n");
 
-  // check for non-supported board types
-  assert_fatal(hw_type != HW_TYPE_UNKNOWN, "Unsupported board type");
-
   print("Config:\n");
   print("  Board type: 0x"); puth(hw_type); print("\n");
   print("  MCU UID: "); hexdump((const uint8_t *)UID_BASE, 12);
