@@ -47,6 +47,8 @@ void detect_board_type(void) {
     current_board = &board_tres;
   } else {
     hw_type = HW_TYPE_UNKNOWN;
-    print("Hardware type is UNKNOWN!\n");
   }
+
+  // check for non-supported board types
+  assert_fatal(hw_type != HW_TYPE_UNKNOWN, "Unsupported board type\n");
 }
