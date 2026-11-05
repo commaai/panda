@@ -175,8 +175,9 @@ SECTIONS
     *(.data.current_safety_param .bss.current_safety_param)
     *(.data.current_hooks .bss.current_hooks)
     *(.data.current_safety_config .bss.current_safety_config)
-    . = ALIGN(64);
+    . = ALIGN(4);
     _esafety = .;
+    . = ALIGN(64);
 
     *(.data)           /* .data sections */
     *(.data*)          /* .data* sections */
