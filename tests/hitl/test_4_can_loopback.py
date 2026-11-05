@@ -188,6 +188,30 @@ class TestCanLoopback(PandaTestCase):
         assert actual == count, (bus, receipt, actual, count)
     assert len(received) == 8 * NUM_MESSAGES_PER_BUS
 
+  def test_interrupt_load(self):
+    p = self.p
+    p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    p.set_can_loopback(True)
+    p.set_heartbeat_disabled()
+    for bus in range(3):
+      p.set_can_speed_kbps(bus, 1000)
+
+    # fixed 8000 msg/s, the budget fails with an MPU open per safety hook
+    rate = 8000
+    messages = [(0x200 + i, b"\xaa" * 8, i % 3) for i in range(rate // 100)]
+    rx_start = sum(p.can_health(bus)["total_rx_cnt"] for bus in range(3))
+    start = time.monotonic()
+    # 10 ms ticks, every poll is a DUT interrupt so all host traffic is fixed rate
+    for tick in range(300):
+      p.can_send_many(messages, timeout=0)
+      p.can_recv()
+      time.sleep(max(0, start + (tick + 1) * 0.01 - time.monotonic()))
+    # interrupt_load is the last full 1 s window
+    load = p.health()["interrupt_load"]
+    rx = sum(p.can_health(bus)["total_rx_cnt"] for bus in range(3)) - rx_start
+    assert load < 0.54, load
+    assert rx > 0.95 * rate * (time.monotonic() - start), rx
+
   def test_message_integrity(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
