@@ -127,6 +127,7 @@ class Panda:
   USB_PIDS = (0xddee, 0xddcc)
   REQUEST_IN = usb1.ENDPOINT_IN | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
   REQUEST_OUT = usb1.ENDPOINT_OUT | usb1.TYPE_VENDOR | usb1.RECIPIENT_DEVICE
+  FLASH_FILL = b"\xff\xde"  # thumb udf, the trap instruction gcc emits for __builtin_trap()
 
   # from https://github.com/commaai/openpilot/blob/103b4df18cbc38f4129555ab8b15824d1a672bdf/cereal/log.capnp#L648
   HW_TYPE_UNKNOWN = b'\x00'
@@ -411,6 +412,10 @@ class Panda:
     last_sector = next((i + 1 for i, v in enumerate(apps_sectors_cumsum) if v > len(code)), -1)
     assert last_sector >= 1, "Binary too small? No sector to erase."
     assert last_sector < 7, "Binary too large! Risk of overwriting provisioning chunk."
+
+    # UM2331 FLASH_SM_6, executing unused flash in the erased sectors faults
+    erased_size = sum(mcu_type.config.sector_sizes[1:last_sector + 1])
+    code = code + (Panda.FLASH_FILL * (erased_size // len(Panda.FLASH_FILL)))[len(code):]
 
     # unlock flash
     logger.info("flash: unlocking")
