@@ -32,6 +32,14 @@ class TestSafety(PandaTestCase):
     assert len([x for x in r if x[2] != 192]) == 0
     assert len([x for x in r if x[2] == 192]) == 1
 
+  def test_power_save_car_mode(self):
+    p = self.p
+    p.set_safety_mode(CarParams.SafetyModel.toyota, 73)
+    p.set_power_save(1)
+    h = p.health()
+    assert h['safety_mode'] == CarParams.SafetyModel.toyota
+    assert not h['power_save_enabled']
+
   @unittest.skipIf(len(PERMANENT_FAULT_BITS) == 0, "no permanent faults")
   def test_fault_safe_state(self):
     p = self.p

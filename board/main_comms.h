@@ -270,7 +270,8 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xe7: set power save state
     case 0xe7:
-      set_power_save_state(req->param1 != 0U);
+      // power save only outside car safety modes
+      set_power_save_state((req->param1 != 0U) && !is_car_safety_mode(current_safety_mode));
       break;
     // **** 0xe8: set can-fd auto swithing mode
     case 0xe8:
