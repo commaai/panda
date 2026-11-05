@@ -11,7 +11,7 @@ static void OTG_HS_IRQ_Handler(void) {
 }
 
 void usb_init(void) {
-  REGISTER_INTERRUPT(OTG_HS_IRQn, OTG_HS_IRQ_Handler, 1500000U, FAULT_INTERRUPT_RATE_USB) // TODO: Find out a better rate limit for USB. Now it's the 1.5MB/s rate
+  REGISTER_INTERRUPT(OTG_HS_IRQn, OTG_HS_IRQ_Handler, 100000U, FAULT_INTERRUPT_RATE_USB) // about 2x the max measured host load
 
   // Disable global interrupt
   USBx->GAHBCFG &= ~(USB_OTG_GAHBCFG_GINT);
