@@ -2,6 +2,8 @@ import socket
 import struct
 import time
 
+from .utils import logger
+
 # /**
 #  * struct canfd_frame - CAN flexible data rate frame structure
 #  * @can_id: CAN ID of the frame and CAN_*_FLAG flags, see canid_t definition
@@ -33,6 +35,9 @@ CANFD_FDF = 0x04 # mark CAN FD for dual use of struct canfd_frame
 # socket.SO_RXQ_OVFL is missing
 # https://github.com/torvalds/linux/blob/47ac09b91befbb6a235ab620c32af719f8208399/include/uapi/asm-generic/socket.h#L61
 SO_RXQ_OVFL = 40
+# with SO_RXQ_OVFL set, each received frame carries the socket's cumulative drop count as a __u32
+RXQ_OVFL_FMT = "=I"
+RXQ_OVFL_ANCBUF_SIZE = socket.CMSG_SPACE(struct.calcsize(RXQ_OVFL_FMT))
 
 import typing
 @typing.no_type_check # mypy struggles with macOS here...
@@ -43,9 +48,9 @@ def create_socketcan(interface:str, recv_buffer_size:int) -> socket.socket:
   socketcan.setsockopt(socket.SOL_CAN_RAW, socket.CAN_RAW_FD_FRAMES, 1)
   socketcan.setsockopt(socket.SOL_CAN_RAW, socket.CAN_RAW_RECV_OWN_MSGS, 1)
   socketcan.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, recv_buffer_size)
-  # TODO: why is it always 2x the requested size?
+  # the kernel doubles SO_RCVBUF to leave room for bookkeeping overhead, see socket(7)
   assert socketcan.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF) == recv_buffer_size * 2
-  # TODO: how to dectect and alert on buffer overflow?
+  # report the drop count with each received frame, read back in SocketPanda.can_recv
   socketcan.setsockopt(socket.SOL_SOCKET, SO_RXQ_OVFL, 1)
   socketcan.bind((interface,))
   return socketcan
@@ -56,6 +61,9 @@ class SocketPanda():
     self.interface = interface
     self.recv_buffer_size = recv_buffer_size
     self.socket = create_socketcan(interface, recv_buffer_size)
+    # frames the kernel dropped because the receive queue was full, like the panda's rx_buffer_overflow
+    self.rx_buffer_overflow = 0
+    self._socket_drops = 0
 
   def __del__(self):
     self.socket.close()
@@ -69,6 +77,8 @@ class SocketPanda():
   def can_clear(self, bus:int) -> None:
     self.socket.close()
     self.socket = create_socketcan(self.interface, self.recv_buffer_size)
+    # the drop count is per socket, so it starts over on the new one
+    self._socket_drops = 0
 
   def set_safety_mode(self, mode:int, param=0) -> None:
     pass
@@ -109,7 +119,8 @@ class SocketPanda():
     msgs = list()
     while True:
       try:
-        dat, _, msg_flags, _ = self.socket.recvmsg(self.recv_buffer_size)
+        dat, ancdata, msg_flags, _ = self.socket.recvmsg(self.recv_buffer_size, RXQ_OVFL_ANCBUF_SIZE)
+        self._check_rx_overflow(ancdata)
         assert len(dat) >= CAN_HEADER_LEN, f"ERROR: received {len(dat)} bytes"
 
         can_id, msg_len, _ = struct.unpack(CAN_HEADER_FMT, dat[:CAN_HEADER_LEN])
@@ -121,3 +132,14 @@ class SocketPanda():
       except BlockingIOError:
         break # buffered data exhausted
     return msgs
+
+  def _check_rx_overflow(self, ancdata) -> None:
+    for level, msg_type, data in ancdata:
+      if level == socket.SOL_SOCKET and msg_type == SO_RXQ_OVFL and len(data) >= struct.calcsize(RXQ_OVFL_FMT):
+        drops, = struct.unpack_from(RXQ_OVFL_FMT, data)
+        # the kernel counter is a __u32, so mask the difference in case it wraps
+        new_drops = (drops - self._socket_drops) & 0xFFFFFFFF
+        if new_drops:
+          self.rx_buffer_overflow += new_drops
+          logger.warning(f"{self.interface}: receive buffer overflow, dropped {new_drops} CAN frames ({self.rx_buffer_overflow} total)")
+        self._socket_drops = drops
