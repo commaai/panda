@@ -117,7 +117,10 @@ def build_project(project_name, project, main, extra_flags):
   bs_env.Objcopy(f"./board/obj/bootstub.{project_name}.bin", bs_elf)
 
   # Build + sign main (aka app)
-  main_elf = env.Program(f"{project_dir}/main.elf", [
+  # flash runs uncached, so build constants with movw/movt instead of literal pool loads
+  main_env = env.Clone()
+  main_env.Append(CFLAGS="-mslow-flash-data")
+  main_elf = main_env.Program(f"{project_dir}/main.elf", [
     startup,
     env.Object("./board/stm32h7/self_test.s"),
     main
