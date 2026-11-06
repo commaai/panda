@@ -2,6 +2,7 @@ import time
 import unittest
 
 from opendbc.car.structs import CarParams
+from panda import Panda
 from panda.tests.hitl.base import PandaTestCase, panda_test
 
 # keep in sync with PERMANENT_FAULTS, see board/sys/sys.h
@@ -11,11 +12,27 @@ SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11, 3: 12, 4: 12, 5: 14}
 # board/main_comms.h 0xef injection index: fault bit
 INTERRUPT_FAULT_BITS = {0: 17, 1: 17, 2: 1, 3: 16, 4: 18, 5: 18, 6: 1}
 FAULT_SIREN_MALFUNCTION_BIT = 25
+FAULT_HEARTBEAT_LOOP_WATCHDOG_BIT = 26
 FAULT_MPU_BIT = 28
 # board/main_comms.h 0xf5 injection index: fault bit
 READBACK_FAULT_BITS = {0: 13, 1: 29, 2: 24, 3: 29, 4: 18, 5: 18, 6: 24, 7: 18}
 # board/main.c: controls_allowed exits after this many 1 Hz ticks without heartbeat engaged
 HEARTBEAT_ENGAGED_MISMATCHES = 3
+# IRQn: FAULT_INTERRUPT_RATE_* bit
+RATE_FAULT_BITS = {
+  19: 2,   # FDCAN1_IT0
+  20: 3,   # FDCAN2_IT0
+  159: 4,  # FDCAN3_IT0
+  8: 5,    # EXTI2, fan tach
+  54: 7,   # TIM6_DAC, interrupt timer
+  43: 21,  # TIM8_BRK_TIM12, tick
+  40: 23,  # EXTI15_10, SPI CS
+}
+# sound DMAs, only registered on cuatro
+CUATRO_RATE_FAULT_BITS = {
+  11: 27,   # DMA1_Stream0
+  129: 27,  # BDMA_Channel0
+}
 
 
 class TestSafety(PandaTestCase):
@@ -214,4 +231,42 @@ class TestSafety(PandaTestCase):
       print(f"readback fault {test}: fault after {time.monotonic() - t:.1f} s")
       assert h['faults'] & (1 << fault_bit)
       assert h['safety_mode'] == (CarParams.SafetyModel.silent if fault_bit in PERMANENT_FAULT_BITS else CarParams.SafetyModel.noOutput)
+    p.reset()
+
+  def _clean_start(self):
+    p = self.p
+    p.reset()
+    p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    p.set_heartbeat_disabled()
+    # The missing interrupt check skips the first monitoring window.
+    time.sleep(2.5)
+    h = p.health()
+    assert h['faults'] == 0, f"faults {h['faults']:#x}"
+
+  def _assert_fault_raised(self, fault_bit):
+    t = time.monotonic()
+    while not ((h := self.p.health())['faults'] & (1 << fault_bit)) and (time.monotonic() - t) < 5:
+      time.sleep(0.05)
+    assert h['faults'] & (1 << fault_bit), f"faults {h['faults']:#x}"
+    assert h['safety_mode'] == CarParams.SafetyModel.allOutput
+
+  @panda_test(timeout=3*60)
+  def test_interrupt_rate_limit(self):
+    p = self.p
+    rate_fault_bits = RATE_FAULT_BITS | (CUATRO_RATE_FAULT_BITS if p.get_type() == Panda.HW_TYPE_CUATRO else {})
+    for irq, fault_bit in rate_fault_bits.items():
+      with self.subTest(irq=irq):
+        self._clean_start()
+        p.inject_interrupt_fault(8, irq)
+        self._assert_fault_raised(fault_bit)
+    p.reset()
+
+  def test_heartbeat_loop_watchdog(self):
+    p = self.p
+    self._clean_start()
+    # stall the tick longer than the watchdog allows, flagged on the first tick after
+    p.inject_interrupt_fault(0)
+    time.sleep(1)
+    p.inject_interrupt_fault(7)
+    self._assert_fault_raised(FAULT_HEARTBEAT_LOOP_WATCHDOG_BIT)
     p.reset()

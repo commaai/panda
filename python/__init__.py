@@ -681,8 +681,8 @@ class Panda:
   def inject_hardfault(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xeb, 0, 0, b'', expect_disconnect=True)
 
-  def inject_interrupt_fault(self, test):
-    self._handle.controlWrite(Panda.REQUEST_OUT, 0xef, test, 0, b'')
+  def inject_interrupt_fault(self, test, param=0):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xef, test, param, b'')
 
   def inject_nmi(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xec, 0, 0, b'', expect_disconnect=True)

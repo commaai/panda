@@ -327,6 +327,13 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       } else if (req->param1 == 6U) {
         // the interrupt timer handler runs without its flag
         NVIC_SetPendingIRQ(INTERRUPT_TIMER_IRQ);
+      } else if (req->param1 == 7U) {
+        // re-enable the tick disabled by 0
+        nvic_enable(TICK_TIMER_IRQ);
+      } else if ((req->param1 == 8U) && (req->param2 < NUM_INTERRUPTS)) {
+        // one more call than the limit allows
+        interrupts[req->param2].call_counter = interrupts[req->param2].max_call_rate;
+        NVIC_SetPendingIRQ((IRQn_Type)req->param2);
       } else {
       }
       break;
