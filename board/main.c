@@ -119,15 +119,14 @@ static void tick_handler(void) {
     // cleared first, a flag cleared on the way out can retrigger the vector
     TICK_TIMER->SR = 0;
     static uint32_t siren_countdown = 0; // siren plays while countdown > 0
-    static uint32_t controls_allowed_countdown = 0;
     static uint8_t prev_harness_status = HARNESS_STATUS_NC;
     static uint8_t loop_counter = 0U;
     static bool relay_malfunction_prev = false;
 
     heartbeat_tick_counter += 1U;
 
-    // start the siren early on power loss
-    if ((controls_allowed_countdown > 0U) && (heartbeat_tick_counter > 2U) && (current_board->read_voltage_mV() < 6000U)) {
+    // start the siren early on power loss while engaged
+    if (heartbeat_engaged && (heartbeat_tick_counter > 2U) && (current_board->read_voltage_mV() < 6000U)) {
       siren_countdown = 3U;
     }
 
@@ -194,14 +193,6 @@ static void tick_handler(void) {
         siren_countdown -= 1U;
       }
 
-      if (controls_allowed || heartbeat_engaged) {
-        controls_allowed_countdown = 5U;
-      } else if (controls_allowed_countdown > 0U) {
-        controls_allowed_countdown -= 1U;
-      } else {
-
-      }
-
       // exit controls allowed if unused by openpilot for a few seconds
       if (controls_allowed && !heartbeat_engaged) {
         heartbeat_engaged_mismatches += 1U;
@@ -221,9 +212,8 @@ static void tick_handler(void) {
           puth(heartbeat_counter);
           print(" seconds. Safety is set to SILENT mode.\n");
 
-          if (controls_allowed_countdown > 0U) {
+          if (heartbeat_engaged) {
             siren_countdown = 3U;
-            controls_allowed_countdown = 0U;
           }
 
           // set flag to indicate the heartbeat was lost
