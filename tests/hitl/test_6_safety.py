@@ -25,6 +25,7 @@ RATE_FAULT_BITS = {
   159: 4,  # FDCAN3_IT0
   8: 5,    # EXTI2, fan tach
   54: 7,   # TIM6_DAC, interrupt timer
+  77: 15,  # OTG_HS, USB
   43: 21,  # TIM8_BRK_TIM12, tick
   40: 23,  # EXTI15_10, SPI CS
 }
