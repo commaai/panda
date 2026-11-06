@@ -14,6 +14,8 @@ FAULT_SIREN_MALFUNCTION_BIT = 25
 FAULT_MPU_BIT = 28
 # board/main_comms.h 0xf5 injection index: fault bit
 READBACK_FAULT_BITS = {0: 13, 1: 29, 2: 24, 3: 29, 4: 18, 5: 18, 6: 24, 7: 18}
+# board/main.c: controls_allowed exits after this many 1 Hz ticks without heartbeat engaged
+HEARTBEAT_ENGAGED_MISMATCHES = 3
 
 
 class TestSafety(PandaTestCase):
@@ -71,6 +73,25 @@ class TestSafety(PandaTestCase):
     assert h['fault_status'] == 1
     assert h['safety_mode'] == CarParams.SafetyModel.allOutput
     p.reset()
+
+  def test_engaged_mismatch(self):
+    p = self.p
+    p.set_safety_mode(CarParams.SafetyModel.allOutput)
+
+    t = time.monotonic()
+    while (time.monotonic() - t) < HEARTBEAT_ENGAGED_MISMATCHES + 1:
+      p.send_heartbeat(engaged=True)
+      assert p.health()['controls_allowed']
+      time.sleep(0.1)
+
+    # the first tick lands anywhere in the first second
+    t = time.monotonic()
+    while (h := p.health())['controls_allowed'] and (time.monotonic() - t) < HEARTBEAT_ENGAGED_MISMATCHES + 1:
+      p.send_heartbeat(engaged=False)
+      time.sleep(0.1)
+    assert not h['controls_allowed']
+    assert time.monotonic() - t >= HEARTBEAT_ENGAGED_MISMATCHES - 1
+    assert h['safety_mode'] == CarParams.SafetyModel.allOutput
 
   def test_hardfault_resets_to_silent(self):
     p = self.p
