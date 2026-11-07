@@ -16,7 +16,7 @@ FAULT_HEARTBEAT_LOOP_WATCHDOG_BIT = 26
 FAULT_MPU_BIT = 28
 # board/main_comms.h 0xf5 injection index: fault bit
 READBACK_FAULT_BITS = {0: 13, 1: 29, 2: 24, 3: 29, 4: 18, 5: 18, 6: 24, 7: 18}
-# board/main.c: controls_allowed exits after this many 1 Hz ticks without heartbeat engaged
+# opendbc safety.h: controls_allowed exits after this many 1 Hz ticks without heartbeat engaged
 HEARTBEAT_ENGAGED_MISMATCHES = 3
 # IRQn: FAULT_INTERRUPT_RATE_* bit
 RATE_FAULT_BITS = {

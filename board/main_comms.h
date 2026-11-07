@@ -254,7 +254,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xdf:
       // you can only set this if you are in a non car safety mode
       if (!is_car_safety_mode(current_safety_mode)) {
+        mpu_safety_open();
         alternative_experience = req->param1;
+        mpu_safety_close();
       }
       break;
     // **** 0xe5: set CAN loopback (for testing)
@@ -383,7 +385,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         heartbeat_lost = false;
         heartbeat_disabled = false;
         mpu_safety_open();
-        safety.heartbeat_engaged = (req->param1 == 1U);
+        safety_heartbeat(req->param1 == 1U);
         mpu_safety_close();
         break;
       }
