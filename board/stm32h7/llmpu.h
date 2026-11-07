@@ -1,5 +1,7 @@
 #pragma once
 
+#include "opendbc/safety/declarations.h"
+
 // linker symbols, see stm32h7x5_flash.ld
 extern uint32_t _ssafety[16];
 extern uint32_t _esafety;
@@ -8,14 +10,15 @@ extern uint32_t _stack_guard;
 #define MPU_REGION_SAFETY 0U
 #define MPU_REGION_STACK_GUARD 1U
 
-// only the used words, the rest of the region is padding
+// only the config words, controls_allowed is compared separately
 #define MPU_SAFETY_SIZE ((uint32_t)&_esafety - (uint32_t)&_ssafety)
 
-// read only once FAULT_MPU is permanent, until then a write from outside the safety code is caught in mpu_safety_open()
+// read only once FAULT_MPU is permanent, until then a write to the config or controls_allowed from outside the safety code is caught in mpu_safety_open()
 #define MPU_SAFETY_CLOSED (((PERMANENT_FAULTS & FAULT_MPU) != 0U) ? ARM_MPU_AP_PRO : ARM_MPU_AP_PRIV)
 
 static uint8_t mpu_safety_depth = 0U;
 static uint32_t mpu_safety_copy[16];
+static bool mpu_safety_controls_allowed_copy = false;
 static bool mpu_safety_changed = false;
 static uint32_t mpu_safety_changed_addr = 0U;
 
@@ -25,7 +28,7 @@ static uint32_t mpu_rasr(uint32_t access, uint32_t size) {
 }
 
 static uint32_t mpu_safety_rasr(uint32_t access) {
-  return mpu_rasr(access, ARM_MPU_REGION_SIZE_64B);
+  return mpu_rasr(access, ARM_MPU_REGION_SIZE_1KB);
 }
 
 static uint32_t mpu_stack_guard_rasr(void) {
@@ -52,6 +55,10 @@ void mpu_safety_open(void) {
           mpu_safety_changed_addr = (uint32_t)&_ssafety[i];
         }
       }
+      if (!mpu_safety_changed && (safety.controls_allowed != mpu_safety_controls_allowed_copy)) {
+        mpu_safety_changed = true;
+        mpu_safety_changed_addr = (uint32_t)&safety.controls_allowed;
+      }
     }
     mpu_set_safety_access(ARM_MPU_AP_PRIV);
   }
@@ -63,6 +70,7 @@ void mpu_safety_close(void) {
   if (mpu_safety_depth == 0U) {
     mpu_set_safety_access(MPU_SAFETY_CLOSED);
     (void)memcpy(mpu_safety_copy, _ssafety, MPU_SAFETY_SIZE);
+    mpu_safety_controls_allowed_copy = safety.controls_allowed;
   }
   EXIT_CRITICAL();
 }
@@ -76,6 +84,7 @@ void mpu_init(void) {
   MPU->RBAR = (uint32_t)&_ssafety;
   MPU->RASR = mpu_safety_rasr(MPU_SAFETY_CLOSED);
   (void)memcpy(mpu_safety_copy, _ssafety, MPU_SAFETY_SIZE);
+  mpu_safety_controls_allowed_copy = safety.controls_allowed;
 
   // privileged default map for everything else, a violation escalates to HardFault
   register_set(&(MPU->CTRL), MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_ENABLE_Msk, 0x7U);
