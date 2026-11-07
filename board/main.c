@@ -126,7 +126,7 @@ static void tick_handler(void) {
     heartbeat_tick_counter += 1U;
 
     // start the siren early on power loss while engaged
-    if (heartbeat_engaged && (heartbeat_tick_counter > 2U) && (current_board->read_voltage_mV() < 6000U)) {
+    if (safety.heartbeat_engaged && (heartbeat_tick_counter > 2U) && (current_board->read_voltage_mV() < 6000U)) {
       siren_countdown = 3U;
     }
 
@@ -139,14 +139,14 @@ static void tick_handler(void) {
     simple_watchdog_kick();
     sound_tick();
 
-    if (relay_malfunction_prev != relay_malfunction) {
-      if (relay_malfunction) {
+    if (relay_malfunction_prev != safety.relay_malfunction) {
+      if (safety.relay_malfunction) {
         fault_occurred(FAULT_RELAY_MALFUNCTION);
       } else {
         fault_recovered(FAULT_RELAY_MALFUNCTION);
       }
     }
-    relay_malfunction_prev = relay_malfunction;
+    relay_malfunction_prev = safety.relay_malfunction;
 
     // re-init everything that uses harness status
     if (harness.status != prev_harness_status) {
@@ -167,7 +167,7 @@ static void tick_handler(void) {
         fault_occurred_value(FAULT_TIMER, tick_dt);
       }
       // set green LED to be controls allowed
-      led_set(LED_GREEN, controls_allowed);
+      led_set(LED_GREEN, safety.controls_allowed);
 
       // turn off the blue LED, turned on by CAN
       // unless we are in power saving mode
@@ -194,16 +194,16 @@ static void tick_handler(void) {
       }
 
       // exit controls allowed if unused by openpilot for a few seconds
-      if (controls_allowed && !heartbeat_engaged) {
-        heartbeat_engaged_mismatches += 1U;
-        if (heartbeat_engaged_mismatches >= 3U) {
-          mpu_safety_open();
-          controls_allowed = false;
-          mpu_safety_close();
+      mpu_safety_open();
+      if (safety.controls_allowed && !safety.heartbeat_engaged) {
+        safety.heartbeat_engaged_mismatches += 1U;
+        if (safety.heartbeat_engaged_mismatches >= 3U) {
+          safety.controls_allowed = false;
         }
       } else {
-        heartbeat_engaged_mismatches = 0U;
+        safety.heartbeat_engaged_mismatches = 0U;
       }
+      mpu_safety_close();
 
       if (!heartbeat_disabled) {
         // if the heartbeat has been gone for a while, go to SILENT safety mode and enter power save
@@ -212,7 +212,7 @@ static void tick_handler(void) {
           puth(heartbeat_counter);
           print(" seconds. Safety is set to SILENT mode.\n");
 
-          if (heartbeat_engaged) {
+          if (safety.heartbeat_engaged) {
             siren_countdown = 3U;
           }
 
@@ -222,7 +222,9 @@ static void tick_handler(void) {
           }
 
           // clear heartbeat engaged state
-          heartbeat_engaged = false;
+          mpu_safety_open();
+          safety.heartbeat_engaged = false;
+          mpu_safety_close();
 
           if (current_safety_mode != SAFETY_SILENT) {
             set_safety_mode(SAFETY_SILENT, 0U);
@@ -255,11 +257,11 @@ static void tick_handler(void) {
 
       // on to the next one
       uptime_cnt += 1U;
-      safety_mode_cnt += 1U;
       ignition_can_cnt += 1U;
 
       // synchronous safety check
       mpu_safety_open();
+      safety.safety_mode_cnt += 1U;
       safety_tick();
       mpu_safety_close();
       mpu_check();
