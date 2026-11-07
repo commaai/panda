@@ -20,10 +20,10 @@ static int get_health_pkt(void *dat) {
   health->flags_pkt = 0U;
   health->flags_pkt |= harness_check_ignition() ? HEALTH_FLAG_IGNITION_LINE : 0U;
   health->flags_pkt |= ignition_can ? HEALTH_FLAG_IGNITION_CAN : 0U;
-  health->flags_pkt |= controls_allowed ? HEALTH_FLAG_CONTROLS_ALLOWED : 0U;
+  health->flags_pkt |= safety.controls_allowed ? HEALTH_FLAG_CONTROLS_ALLOWED : 0U;
   health->flags_pkt |= power_save_enabled ? HEALTH_FLAG_POWER_SAVE_ENABLED : 0U;
   health->flags_pkt |= heartbeat_lost ? HEALTH_FLAG_HEARTBEAT_LOST : 0U;
-  health->flags_pkt |= safety_rx_checks_invalid ? HEALTH_FLAG_SAFETY_RX_CHECKS_INVALID : 0U;
+  health->flags_pkt |= safety.safety_rx_checks_invalid ? HEALTH_FLAG_SAFETY_RX_CHECKS_INVALID : 0U;
   health->flags_pkt |= bootkick_reset_triggered ? HEALTH_FLAG_SOM_RESET_TRIGGERED : 0U;
   health->flags_pkt |= heartbeat_disabled ? HEALTH_FLAG_HEARTBEAT_DISABLED : 0U;
   health->flags_pkt |= reset_flags;
@@ -296,7 +296,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xee: write controls_allowed outside safety, for testing
     case 0xee:
-      controls_allowed = !controls_allowed;
+      safety.controls_allowed = !safety.controls_allowed;
       break;
     // **** 0xf0: run the stack into its MPU guard, for testing
     case 0xf0:
@@ -382,7 +382,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         heartbeat_tick_counter = 0U;
         heartbeat_lost = false;
         heartbeat_disabled = false;
-        heartbeat_engaged = (req->param1 == 1U);
+        mpu_safety_open();
+        safety.heartbeat_engaged = (req->param1 == 1U);
+        mpu_safety_close();
         break;
       }
     // **** 0xf6: set siren enabled
