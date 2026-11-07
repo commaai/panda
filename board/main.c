@@ -255,8 +255,8 @@ static void tick_handler(void) {
       mpu_safety_open();
       safety_tick();
       mpu_safety_close();
-      if (safety_redundancy_fault) {
-        fault_occurred(FAULT_SAFETY_REDUNDANCY);
+      if (safety_redundancy_fault != 0U) {
+        fault_occurred_value(FAULT_SAFETY_REDUNDANCY, safety_redundancy_fault);
       }
       mpu_check();
     }
