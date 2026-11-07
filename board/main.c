@@ -155,7 +155,7 @@ static void tick_handler(void) {
 
       // re-init everything that uses harness status
       can_init_all();
-      set_safety_mode(safety_cfg.current_safety_mode, safety_cfg.current_safety_param);
+      set_safety_mode(safety_setup.current_safety_mode, safety_setup.current_safety_param);
       set_power_save_state(power_save_enabled);
     }
 
@@ -185,7 +185,7 @@ static void tick_handler(void) {
       }
 
       // disabling heartbeat not allowed while in safety mode
-      if (is_car_safety_mode(safety_cfg.current_safety_mode)) {
+      if (is_car_safety_mode(safety_setup.current_safety_mode)) {
         heartbeat_disabled = false;
       }
 
@@ -209,7 +209,7 @@ static void tick_handler(void) {
           }
 
           // set flag to indicate the heartbeat was lost
-          if (is_car_safety_mode(safety_cfg.current_safety_mode)) {
+          if (is_car_safety_mode(safety_setup.current_safety_mode)) {
             heartbeat_lost = true;
           }
 
@@ -218,7 +218,7 @@ static void tick_handler(void) {
           safety_heartbeat(false);
           mpu_safety_close();
 
-          if (safety_cfg.current_safety_mode != SAFETY_SILENT) {
+          if (safety_setup.current_safety_mode != SAFETY_SILENT) {
             set_safety_mode(SAFETY_SILENT, 0U);
           }
 
@@ -388,7 +388,7 @@ int main(void) {
       }
     } else {
       if ((hw_type == HW_TYPE_CUATRO) && !current_board->read_som_gpio()) {
-        assert_fatal(safety_cfg.current_safety_mode == SAFETY_SILENT, "Error: Entering low power mode while not in SAFETY_SILENT. Hanging\n");
+        assert_fatal(safety_setup.current_safety_mode == SAFETY_SILENT, "Error: Entering low power mode while not in SAFETY_SILENT. Hanging\n");
         enter_stop_mode(); // deep sleep, wakes on CAN or SBU activity
         assert_fatal(false, "Error: enter_stop_mode returned after system reset. Hanging\n");
       }
