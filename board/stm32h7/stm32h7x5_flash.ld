@@ -172,7 +172,7 @@ SECTIONS
     _ssafety = .;
     *(.data.safety_a .bss.safety_a)
     *(.data.safety_b .bss.safety_b)
-    *(.data.safety_cur .bss.safety_cur)
+    *(.data.current_copy .bss.current_copy)
     *(.data.safety_redundancy_fault .bss.safety_redundancy_fault)
     ASSERT((. - _ssafety) <= 2048, "safety state doesn't fit its MPU region");
     . = ALIGN(2048);
@@ -218,7 +218,7 @@ SECTIONS
 
   ASSERT(DEFINED(safety_a) ? (safety_a >= _ssafety && safety_a < (_ssafety + 2048)) : !DEFINED(safety_tx_hook), "safety_a not in the MPU region")
   ASSERT(DEFINED(safety_b) ? (safety_b >= _ssafety && safety_b < (_ssafety + 2048)) : !DEFINED(safety_tx_hook), "safety_b not in the MPU region")
-  ASSERT(DEFINED(safety_cur) ? (safety_cur >= _ssafety && safety_cur < (_ssafety + 2048)) : !DEFINED(safety_tx_hook), "safety_cur not in the MPU region")
+  ASSERT(DEFINED(current_copy) ? (current_copy >= _ssafety && current_copy < (_ssafety + 2048)) : !DEFINED(safety_tx_hook), "current_copy not in the MPU region")
   ASSERT(DEFINED(safety_redundancy_fault) ? (safety_redundancy_fault >= _ssafety && safety_redundancy_fault < (_ssafety + 2048)) : !DEFINED(safety_tx_hook), "safety_redundancy_fault not in the MPU region")
 
   .itcmram (NOLOAD) :
