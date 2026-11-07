@@ -35,7 +35,8 @@ void detect_board_type(void) {
   if (id2 == 3U) {
     hw_type = HW_TYPE_CUATRO;
     current_board = &board_cuatro;
-  } else if (id1 == 0U) {
+  } else if ((get_package_smps_type() == PACKAGE_WITH_SMPS) && (id1 == 0U)) {
+    // id1 also reads 0 on cuatro, the package tells them apart
     hw_type = HW_TYPE_RED_PANDA;
     current_board = &board_red;
   } else if (id1 == 1U) {

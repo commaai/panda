@@ -72,12 +72,12 @@ separate IRQs for RX and TX.
   #include "board/stm32h7/llmpu.h"
 #endif
 
+#include "board/stm32h7/clock.h"
 #ifdef PANDA_BODY
 #include "board/body/stm32h7/board.h"
 #else
 #include "board/stm32h7/board.h"
 #endif
-#include "board/stm32h7/clock.h"
 
 #ifdef BOOTSTUB
   #include "board/stm32h7/llflash.h"
