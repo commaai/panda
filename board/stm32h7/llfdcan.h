@@ -28,6 +28,16 @@ static bool fdcan_request_init(FDCAN_GlobalTypeDef *FDCANx) {
   return ret;
 }
 
+// CAN_SM_0
+static void fdcan_track_config(FDCAN_GlobalTypeDef *FDCANx) {
+  volatile uint32_t *regs[] = {&(FDCANx->NBTP), &(FDCANx->DBTP), &(FDCANx->IE), &(FDCANx->ILS), &(FDCANx->ILE), &(FDCANx->GFC),
+                               &(FDCANx->SIDFC), &(FDCANx->XIDFC), &(FDCANx->RXF0C), &(FDCANx->RXESC), &(FDCANx->TXBC), &(FDCANx->TXESC)};
+  for (uint8_t i = 0U; i < (sizeof(regs) / sizeof(regs[0])); i++) {
+    register_set(regs[i], *regs[i], 0xFFFFFFFFU);
+  }
+  register_set(&(FDCANx->CCCR), FDCANx->CCCR, FDCAN_CCCR_MON | FDCAN_CCCR_DAR | FDCAN_CCCR_TEST | FDCAN_CCCR_FDOE | FDCAN_CCCR_BRSE | FDCAN_CCCR_NISO);
+}
+
 static bool fdcan_exit_init(FDCAN_GlobalTypeDef *FDCANx) {
   bool ret = true;
 
@@ -108,6 +118,7 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_t data_
     if (silent) {
       FDCANx->CCCR |= FDCAN_CCCR_MON;
     }
+    fdcan_track_config(FDCANx);
     ret = fdcan_exit_init(FDCANx);
     if (!ret) {
       print(CAN_NAME_FROM_CANIF(FDCANx)); print(" set_speed timed out! (2)\n");
@@ -120,28 +131,28 @@ bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_t data_
 
 void llcan_irq_disable(const FDCAN_GlobalTypeDef *FDCANx) {
   if (FDCANx == FDCAN1) {
-    NVIC_DisableIRQ(FDCAN1_IT0_IRQn);
-    NVIC_DisableIRQ(FDCAN1_IT1_IRQn);
+    nvic_disable(FDCAN1_IT0_IRQn);
+    nvic_disable(FDCAN1_IT1_IRQn);
   } else if (FDCANx == FDCAN2) {
-    NVIC_DisableIRQ(FDCAN2_IT0_IRQn);
-    NVIC_DisableIRQ(FDCAN2_IT1_IRQn);
+    nvic_disable(FDCAN2_IT0_IRQn);
+    nvic_disable(FDCAN2_IT1_IRQn);
   } else if (FDCANx == FDCAN3) {
-    NVIC_DisableIRQ(FDCAN3_IT0_IRQn);
-    NVIC_DisableIRQ(FDCAN3_IT1_IRQn);
+    nvic_disable(FDCAN3_IT0_IRQn);
+    nvic_disable(FDCAN3_IT1_IRQn);
   } else {
   }
 }
 
 void llcan_irq_enable(const FDCAN_GlobalTypeDef *FDCANx) {
   if (FDCANx == FDCAN1) {
-    NVIC_EnableIRQ(FDCAN1_IT0_IRQn);
-    NVIC_EnableIRQ(FDCAN1_IT1_IRQn);
+    nvic_enable(FDCAN1_IT0_IRQn);
+    nvic_enable(FDCAN1_IT1_IRQn);
   } else if (FDCANx == FDCAN2) {
-    NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
-    NVIC_EnableIRQ(FDCAN2_IT1_IRQn);
+    nvic_enable(FDCAN2_IT0_IRQn);
+    nvic_enable(FDCAN2_IT1_IRQn);
   } else if (FDCANx == FDCAN3) {
-    NVIC_EnableIRQ(FDCAN3_IT0_IRQn);
-    NVIC_EnableIRQ(FDCAN3_IT1_IRQn);
+    nvic_enable(FDCAN3_IT0_IRQn);
+    nvic_enable(FDCAN3_IT1_IRQn);
   } else {
   }
 }
@@ -207,6 +218,7 @@ bool llcan_init(FDCAN_GlobalTypeDef *FDCANx) {
     FDCANx->ILS |= FDCAN_ILS_TFEL;
     FDCANx->IE |= FDCAN_IE_TFEE; // Tx FIFO empty
 
+    fdcan_track_config(FDCANx);
     ret = fdcan_exit_init(FDCANx);
     if(!ret) {
       print(CAN_NAME_FROM_CANIF(FDCANx)); print(" llcan_init timed out (2)!\n");

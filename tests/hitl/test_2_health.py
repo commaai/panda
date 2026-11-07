@@ -2,7 +2,7 @@ import time
 
 from opendbc.car.hyundai.values import HyundaiSafetyFlags
 from opendbc.car.structs import CarParams
-from panda.tests.hitl.base import PandaTestCase, panda_test
+from panda.tests.hitl.base import PandaTestCase
 from panda import Panda
 
 
@@ -11,7 +11,8 @@ class TestHealth(PandaTestCase):
     p = self.p
     for _ in range(10):
       voltage = p.health()['voltage']
-      assert ((voltage > 11000) and (voltage < 13000))
+      # the UP supplies ~15V
+      assert ((voltage > 11000) and (voltage < 16000))
       time.sleep(0.1)
 
   def test_hw_type(self):
@@ -34,11 +35,10 @@ class TestHealth(PandaTestCase):
       assert pp.get_type() == hw_type, "Bootstub and app hw type mismatch"
       assert pp.get_uid() == app_uid
 
-  @panda_test(needs_jungle=True)
   def test_heartbeat(self):
     p = self.p
-    panda_jungle = self.panda_jungle
-    panda_jungle.set_ignition(True)
+    up = self.up
+    up.set_ignition(True)
     # TODO: add more cases here once the tests aren't super slow
     p.set_safety_mode(mode=CarParams.SafetyModel.hyundai, param=HyundaiSafetyFlags.LONG)
     p.send_heartbeat()

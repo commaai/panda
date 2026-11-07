@@ -16,6 +16,7 @@ extern uint16_t reset_flags;
 
 // heartbeat state
 extern uint32_t heartbeat_counter;
+extern uint32_t heartbeat_tick_counter;
 extern bool heartbeat_lost;
 extern bool heartbeat_disabled;
 

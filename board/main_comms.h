@@ -4,6 +4,9 @@ extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 // Prototypes
 void set_safety_mode(uint16_t mode, uint16_t param);
+#ifdef ALLOW_DEBUG
+void self_test_inject(uint8_t test);
+#endif
 bool is_car_safety_mode(uint16_t mode);
 
 static int get_health_pkt(void *dat) {
@@ -22,6 +25,7 @@ static int get_health_pkt(void *dat) {
   health->flags_pkt |= heartbeat_lost ? HEALTH_FLAG_HEARTBEAT_LOST : 0U;
   health->flags_pkt |= safety_rx_checks_invalid ? HEALTH_FLAG_SAFETY_RX_CHECKS_INVALID : 0U;
   health->flags_pkt |= bootkick_reset_triggered ? HEALTH_FLAG_SOM_RESET_TRIGGERED : 0U;
+  health->flags_pkt |= heartbeat_disabled ? HEALTH_FLAG_HEARTBEAT_DISABLED : 0U;
   health->flags_pkt |= reset_flags;
 
   health->safety_tx_blocked_pkt = safety_tx_blocked;
@@ -59,6 +63,14 @@ void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   UNUSED(data);
   UNUSED(len);
 }
+
+#ifdef ALLOW_DEBUG
+static void __attribute__((noinline)) stack_guard_hit(void) {
+  volatile uint32_t frame[4];
+  frame[0] = 0U;
+  UNUSED(frame);
+}
+#endif
 
 int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   unsigned int resp_len = 0;
@@ -260,8 +272,87 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xe8: set can-fd auto swithing mode
     case 0xe8:
-      bus_config[req->param1].canfd_auto = req->param2 > 0U;
+      if (req->param1 < PANDA_CAN_CNT) {
+        bus_config[req->param1].canfd_auto = req->param2 > 0U;
+      }
       break;
+    #ifdef ALLOW_DEBUG
+    // **** 0xea: inject fault, for testing
+    case 0xea:
+      if (req->param1 < 32U) {
+        fault_occurred(1UL << req->param1);
+      }
+      break;
+    // **** 0xeb: inject HardFault, for testing
+    case 0xeb:
+      __builtin_trap();
+      break;
+    // **** 0xec: inject NMI, for testing
+    case 0xec:
+      SCB->ICSR = SCB_ICSR_NMIPENDSET_Msk;
+      break;
+    // **** 0xee: write controls_allowed outside safety, for testing
+    case 0xee:
+      controls_allowed = !controls_allowed;
+      break;
+    // **** 0xf0: run the stack into its MPU guard, for testing
+    case 0xf0:
+      __set_MSP((uint32_t)&_stack_guard + 32U);
+      stack_guard_hit();
+      break;
+    // **** 0xed: inject self-test failure, for testing
+    case 0xed:
+      self_test_inject((uint8_t)req->param1);
+      break;
+    // **** 0xef: break an interrupt or the clock check, for testing
+    case 0xef:
+      if (req->param1 == 0U) {
+        nvic_disable(TICK_TIMER_IRQ);
+      } else if (req->param1 == 1U) {
+        nvic_disable(INTERRUPT_TIMER_IRQ);
+      } else if (req->param1 == 2U) {
+        // the tick handler runs without its flag
+        NVIC_SetPendingIRQ(TICK_TIMER_IRQ);
+      } else if (req->param1 == 3U) {
+        // halves the counts per LSI capture
+        register_set(&(TIM16->PSC), 1U, 0xFFFFU);
+      } else if (req->param1 == 4U) {
+        // an unused IRQ, outside nvic_enable
+        NVIC_EnableIRQ(WWDG_IRQn);
+      } else if (req->param1 == 5U) {
+        NVIC_SetPriority(WWDG_IRQn, 1U);
+      } else if (req->param1 == 6U) {
+        // the interrupt timer handler runs without its flag
+        NVIC_SetPendingIRQ(INTERRUPT_TIMER_IRQ);
+      } else {
+      }
+      break;
+    // **** 0xf5: break a read-back or cross-check, for testing
+    case 0xf5:
+      if (req->param1 == 0U) {
+        relay_readback_inject = true;
+      } else if (req->param1 == 1U) {
+        register_set(&(INTERRUPT_TIMER->PSC), (INTERRUPT_TIMER->PSC * 23U) / 20U, 0xFFFFU);
+      } else if (req->param1 == 2U) {
+        ADC3_COMMON->CCR &= ~ADC_CCR_VREFEN;
+      } else if (req->param1 == 3U) {
+        register_set(&(TICK_TIMER->PSC), (TICK_TIMER->PSC * 23U) / 20U, 0xFFFFU);
+      } else if (req->param1 == 4U) {
+        // raw writes, outside the register map
+        FDCAN1->IE ^= FDCAN_IE_TCFE;
+      } else if (req->param1 == 5U) {
+        RCC->APB1LENR |= RCC_APB1LENR_TIM13EN;
+      } else if (req->param1 == 6U) {
+        harness_adc2_offset_mV = 500U;
+      } else if (req->param1 == 7U) {
+        // a third MPU region, on unused FMC space
+        MPU->RNR = MPU_REGION_STACK_GUARD + 1U;
+        MPU->RBAR = 0x60000000U;
+        MPU->RASR = mpu_rasr(ARM_MPU_AP_FULL, ARM_MPU_REGION_SIZE_32B);
+      } else {
+      }
+      break;
+    #endif
     // **** 0xf1: Clear CAN ring buffer.
     case 0xf1:
       if (req->param1 == 0xFFFFU) {
@@ -278,6 +369,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xf3:
       {
         heartbeat_counter = 0U;
+        heartbeat_tick_counter = 0U;
         heartbeat_lost = false;
         heartbeat_disabled = false;
         heartbeat_engaged = (req->param1 == 1U);

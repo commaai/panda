@@ -5,6 +5,7 @@ import struct
 import hashlib
 import binascii
 import base64
+import zlib
 
 
 def read_der(dat):
@@ -36,12 +37,11 @@ if __name__ == "__main__":
 
   with open(sys.argv[2], "wb") as f:
     if os.getenv("SETLEN") is not None:
-      # add the version at the end
-      dat += b"VERS" + struct.pack("I", VERSION)
-      # add the length at the beginning
-      x = struct.pack("I", len(dat)) + dat[4:]
-      # mock signature of dat[4:]
-      dd = hashlib.sha1(dat[4:]).digest()
+      # add the length at the beginning, then the crc32 for the flash self-test and the version at the end
+      x = struct.pack("I", len(dat) + 12) + dat[4:]
+      x += struct.pack("I", zlib.crc32(x)) + b"VERS" + struct.pack("I", VERSION)
+      # mock signature of x[4:]
+      dd = hashlib.sha1(x[4:]).digest()
     else:
       x = dat
       dd = hashlib.sha1(dat).digest()

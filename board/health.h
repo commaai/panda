@@ -9,6 +9,7 @@
 #define HEALTH_FLAG_SOM_RESET_TRIGGERED      (1U << 6)
 #define HEALTH_FLAG_NMI_RESET                (1U << 7)
 #define HEALTH_FLAG_HARDFAULT_RESET          ((uint16_t)1U << 8)
+#define HEALTH_FLAG_HEARTBEAT_DISABLED       ((uint16_t)1U << 9)
 
 struct __attribute__((packed)) health_t {
   uint32_t uptime_pkt;

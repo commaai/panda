@@ -17,6 +17,10 @@
 
 #include "board/body/main_comms.h"
 
+// body has no safety modes
+void fault_safe_state(void) {
+}
+
 static volatile uint32_t tick_count = 0U;
 static volatile uint32_t ignition_press_timestamp_us = 0U;
 static volatile bool ignition = false;
@@ -94,11 +98,11 @@ int main(void) {
 
   REGISTER_INTERRUPT(EXTI15_10_IRQn, exti15_10_handler, 10000U, FAULT_INTERRUPT_RATE_EXTI);
   NVIC_ClearPendingIRQ(EXTI15_10_IRQn);
-  NVIC_EnableIRQ(EXTI15_10_IRQn);
+  nvic_enable(EXTI15_10_IRQn);
 
   REGISTER_INTERRUPT(TIM8_UP_TIM13_IRQn, bldc_tim8_handler, 100000U, FAULT_INTERRUPT_RATE_TICK);
   NVIC_ClearPendingIRQ(TIM8_UP_TIM13_IRQn);
-  NVIC_EnableIRQ(TIM8_UP_TIM13_IRQn);
+  nvic_enable(TIM8_UP_TIM13_IRQn);
 
   REGISTER_INTERRUPT(TICK_TIMER_IRQ, tick_handler, 10U, FAULT_INTERRUPT_RATE_TICK);
 

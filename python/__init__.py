@@ -1,6 +1,7 @@
 # python library to interface with panda
 import os
 import re
+import math
 import sys
 import time
 import usb1
@@ -17,7 +18,7 @@ from opendbc.car.structs import CarParams
 from .base import BaseHandle
 from .constants import BASEDIR, FW_PATH, McuType, compute_version_hash
 from .dfu import PandaDFU
-from .spi import PandaSpiHandle, PandaSpiException, PandaProtocolMismatch
+from .spi import PandaSpiHandle, PandaSpiException, PandaSpiNackResponse, PandaProtocolMismatch
 from .usb import PandaUsbHandle
 from .utils import logger
 
@@ -148,6 +149,7 @@ class Panda:
   HEALTH_FLAG_SOM_RESET_TRIGGERED = 1 << 6
   HEALTH_FLAG_NMI_RESET = 1 << 7
   HEALTH_FLAG_HARDFAULT_RESET = 1 << 8
+  HEALTH_FLAG_HEARTBEAT_DISABLED = 1 << 9
 
   H7_DEVICES = [HW_TYPE_RED_PANDA, HW_TYPE_TRES, HW_TYPE_CUATRO, HW_TYPE_BODY]
   SUPPORTED_DEVICES = H7_DEVICES
@@ -251,10 +253,10 @@ class Panda:
     return isinstance(self._handle, PandaSpiHandle)
 
   @classmethod
-  def spi_connect(cls, serial, ignore_version=False):
+  def spi_connect(cls, serial):
     try:
       handle = PandaSpiHandle()
-      dat = handle.get_protocol_version()
+      dat = handle.get_info()
     except PandaSpiException:
       return None, None, None, False
 
@@ -263,15 +265,10 @@ class Panda:
     if pid not in (0xcc, 0xee):
       raise PandaProtocolMismatch(f"invalid bootstub status ({pid=}). reflash panda")
     bootstub = pid == 0xee
-    spi_version = dat[14]
 
     # did we get the right panda?
     if serial is not None and spi_serial != serial:
       return None, None, None, False
-
-    # ensure our protocol version matches the panda
-    if (not ignore_version) and spi_version != handle.PROTOCOL_VERSION:
-      raise PandaProtocolMismatch(f"panda protocol mismatch: expected {handle.PROTOCOL_VERSION}, got {spi_version}. reflash panda")
 
     # got a device and all good
     return None, handle, spi_serial, bootstub
@@ -350,7 +347,7 @@ class Panda:
 
   @classmethod
   def spi_list(cls):
-    _, _, serial, _ = cls.spi_connect(None, ignore_version=True)
+    _, _, serial, _ = cls.spi_connect(None)
     if serial is not None:
       return [serial, ]
     return []
@@ -553,6 +550,7 @@ class Panda:
       "som_reset_triggered": bool(flags & self.HEALTH_FLAG_SOM_RESET_TRIGGERED),
       "nmi_reset": bool(flags & self.HEALTH_FLAG_NMI_RESET),
       "hardfault_reset": bool(flags & self.HEALTH_FLAG_HARDFAULT_RESET),
+      "heartbeat_disabled": bool(flags & self.HEALTH_FLAG_HEARTBEAT_DISABLED),
       "sound_output_level": a[19],
       "temperature": a[20] - 40.0,
     }
@@ -672,6 +670,30 @@ class Panda:
   def enter_stop_mode(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xb5, 0, 0, b'', expect_disconnect=True)
 
+  def inject_fault(self, fault_bit):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xea, fault_bit, 0, b'')
+
+  def inject_hardfault(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xeb, 0, 0, b'', expect_disconnect=True)
+
+  def inject_interrupt_fault(self, test):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xef, test, 0, b'')
+
+  def inject_nmi(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xec, 0, 0, b'', expect_disconnect=True)
+
+  def inject_mpu_fault(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xee, 0, 0, b'', expect_disconnect=True)
+
+  def inject_stack_overflow(self):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf0, 0, 0, b'', expect_disconnect=True)
+
+  def inject_self_test_failure(self, test):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xed, test, 0, b'')
+
+  def inject_readback_fault(self, test):
+    self._handle.controlWrite(Panda.REQUEST_OUT, 0xf5, test, 0, b'')
+
   def set_safety_mode(self, mode=CarParams.SafetyModel.silent, param=0):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xdc, mode, param, b'')
 
@@ -704,16 +726,27 @@ class Panda:
   # libusb will try to send it again, with a max timeout.
   # Timeout is in ms. If set to 0, the timeout is infinite.
   CAN_SEND_TIMEOUT_MS = 10
+  # over SPI, a NACK comes back right away. this is how long we wait before trying that chunk again
+  CAN_SEND_RETRY_S = 1e-3
 
   def can_reset_communications(self):
     self._handle.controlWrite(Panda.REQUEST_OUT, 0xc0, 0, 0, b'')
 
   @ensure_can_packet_version
   def can_send_many(self, arr, *, fd=False, timeout=CAN_SEND_TIMEOUT_MS):
-    snds = pack_can_buffer(arr, chunk=(not self.spi), fd=fd)
+    deadline = time.monotonic() + (timeout * 1e-3 if timeout != 0 else math.inf)
+    snds = pack_can_buffer(arr, chunk=True, fd=fd)
     for tx in snds:
       while len(tx) > 0:
-        bs = self._handle.bulkWrite(3, tx, timeout=timeout)
+        try:
+          bs = self._handle.bulkWrite(3, tx, timeout=timeout)
+        except PandaSpiNackResponse:
+          # the panda's CAN TX buffers are full. try this chunk again if there's time for it,
+          # so a timeout of one retry period or less means a single attempt
+          if time.monotonic() + self.CAN_SEND_RETRY_S > deadline:
+            raise
+          time.sleep(self.CAN_SEND_RETRY_S)
+          continue
         tx = tx[bs:]
 
   def can_send(self, addr, dat, bus, *, fd=False, timeout=CAN_SEND_TIMEOUT_MS):

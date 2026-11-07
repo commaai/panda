@@ -23,6 +23,10 @@ void __initialize_hardware_early(void) {
   early_initialization();
 }
 
+// no CAN or safety mode in the bootstub
+void fault_safe_state(void) {
+}
+
 void fail(void) {
   soft_flasher_start();
 }

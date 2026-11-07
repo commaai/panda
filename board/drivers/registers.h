@@ -17,7 +17,7 @@ static reg register_map[REGISTER_MAP_SIZE];
 // See: tests/development/register_hashmap_spread.py
 // Also, check the collision warnings in the debug output, and minimize those.
 static uint16_t hash_addr(uint32_t input){
-  return (((input >> 16U) ^ ((((input + 1U) & 0xFFFFU) * HASHING_PRIME) & 0xFFFFU)) & REGISTER_MAP_SIZE);
+  return (((input >> 16U) ^ ((((input + 1U) & 0xFFFFU) * HASHING_PRIME) & 0xFFFFU)) & (REGISTER_MAP_SIZE - 1U));
 }
 
 // Do not put bits in the check mask that get changed by the hardware
@@ -54,12 +54,16 @@ void register_clear_bits(volatile uint32_t *addr, uint32_t val) {
 
 // To be called periodically
 void check_registers(void){
+  // log again every 60 calls, a divergence at boot is printed before the device starts logging
+  static uint8_t calls = 0U;
+  calls = (uint8_t)((calls + 1U) % 60U);
   for(uint16_t i=0U; i<REGISTER_MAP_SIZE; i++){
     if((uint32_t) register_map[i].address != 0U){
       ENTER_CRITICAL()
       if((*(register_map[i].address) & register_map[i].check_mask) != (register_map[i].value & register_map[i].check_mask)){
-        if(!register_map[i].logged_fault){
-          print("Register 0x"); puth((uint32_t) register_map[i].address); print(" divergent! Map: 0x"); puth(register_map[i].value); print(" Reg: 0x"); puth(*(register_map[i].address)); print("\n");
+        if(!register_map[i].logged_fault || (calls == 0U)){
+          print("Register 0x"); puth((uint32_t) register_map[i].address); print(" divergent! Map: 0x"); puth(register_map[i].value); print(" Reg: 0x"); puth(*(register_map[i].address));
+          print(" CR3: 0x"); puth(PWR->CR3); print("\n");
           register_map[i].logged_fault = true;
         }
         fault_occurred(FAULT_REGISTER_DIVERGENT);

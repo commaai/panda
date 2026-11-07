@@ -28,7 +28,7 @@ void FDCAN1_IT1_IRQHandler(void) {handle_interrupt(FDCAN1_IT1_IRQn);}
 void FDCAN2_IT1_IRQHandler(void) {handle_interrupt(FDCAN2_IT1_IRQn);}
 void EXTI9_5_IRQHandler(void) {handle_interrupt(EXTI9_5_IRQn);}
 void TIM1_BRK_IRQHandler(void) {handle_interrupt(TIM1_BRK_IRQn);}
-void TIM1_UP_TIM10_IRQHandler(void) {handle_interrupt(TIM1_UP_TIM10_IRQn);}
+void TIM1_UP_IRQHandler(void) {handle_interrupt(TIM1_UP_IRQn);}
 void TIM1_TRG_COM_IRQHandler(void) {handle_interrupt(TIM1_TRG_COM_IRQn);}
 void TIM1_CC_IRQHandler(void) {handle_interrupt(TIM1_CC_IRQn);}
 void TIM2_IRQHandler(void) {handle_interrupt(TIM2_IRQn);}
@@ -119,7 +119,7 @@ void BDMA_Channel4_IRQHandler(void) {handle_interrupt(BDMA_Channel4_IRQn);}
 void BDMA_Channel5_IRQHandler(void) {handle_interrupt(BDMA_Channel5_IRQn);}
 void BDMA_Channel6_IRQHandler(void) {handle_interrupt(BDMA_Channel6_IRQn);}
 void BDMA_Channel7_IRQHandler(void) {handle_interrupt(BDMA_Channel7_IRQn);}
-void COMP_IRQHandler(void) {handle_interrupt(COMP_IRQn);}
+void COMP1_IRQHandler(void) {handle_interrupt(COMP_IRQn);}
 void LPTIM2_IRQHandler(void) {handle_interrupt(LPTIM2_IRQn);}
 void LPTIM3_IRQHandler(void) {handle_interrupt(LPTIM3_IRQn);}
 void LPTIM4_IRQHandler(void) {handle_interrupt(LPTIM4_IRQn);}
