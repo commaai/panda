@@ -193,16 +193,8 @@ static void tick_handler(void) {
         siren_countdown -= 1U;
       }
 
-      // exit controls allowed if unused by openpilot for a few seconds
       mpu_safety_open();
-      if (safety.controls_allowed && !safety.heartbeat_engaged) {
-        safety.heartbeat_engaged_mismatches += 1U;
-        if (safety.heartbeat_engaged_mismatches >= 3U) {
-          safety.controls_allowed = false;
-        }
-      } else {
-        safety.heartbeat_engaged_mismatches = 0U;
-      }
+      safety_heartbeat_check();
       mpu_safety_close();
 
       if (!heartbeat_disabled) {
@@ -223,7 +215,7 @@ static void tick_handler(void) {
 
           // clear heartbeat engaged state
           mpu_safety_open();
-          safety.heartbeat_engaged = false;
+          safety_heartbeat(false);
           mpu_safety_close();
 
           if (current_safety_mode != SAFETY_SILENT) {
@@ -261,9 +253,11 @@ static void tick_handler(void) {
 
       // synchronous safety check
       mpu_safety_open();
-      safety.safety_mode_cnt += 1U;
       safety_tick();
       mpu_safety_close();
+      if (safety_redundancy_fault) {
+        fault_occurred(FAULT_SAFETY_REDUNDANCY);
+      }
       mpu_check();
     }
 
