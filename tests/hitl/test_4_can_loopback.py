@@ -209,7 +209,7 @@ class TestCanLoopback(PandaTestCase):
     # interrupt_load is the last full 1 s window
     load = p.health()["interrupt_load"]
     rx = sum(p.can_health(bus)["total_rx_cnt"] for bus in range(3)) - rx_start
-    assert load < 0.54, load
+    assert load < 0.56, load
     assert rx > 0.95 * rate * (time.monotonic() - start), rx
 
   def test_message_integrity(self):

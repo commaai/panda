@@ -174,9 +174,13 @@ SECTIONS
     *(.data.current_safety_param .bss.current_safety_param)
     *(.data.current_hooks .bss.current_hooks)
     *(.data.current_safety_config .bss.current_safety_config)
+    *(.data.alternative_experience .bss.alternative_experience)
     . = ALIGN(4);
     _esafety = .;
-    *(.data.safety .bss.safety)
+    *(.data.safety_a .bss.safety_a)
+    *(.data.safety_b .bss.safety_b)
+    *(.data.safety_cur .bss.safety_cur)
+    *(.data.safety_redundancy_fault .bss.safety_redundancy_fault)
     ASSERT((. - _ssafety) <= 1024, "safety state doesn't fit its MPU region");
     . = ALIGN(1024);
 
@@ -220,10 +224,14 @@ SECTIONS
   } >DTCMRAM
 
   ASSERT((_esafety - _ssafety) <= 64, "safety config doesn't fit mpu_safety_copy")
-  ASSERT(DEFINED(safety) ? (safety >= _esafety && safety < (_ssafety + 1024)) : !DEFINED(safety_tx_hook), "safety not in the MPU region")
+  ASSERT(DEFINED(safety_a) ? (safety_a >= _esafety && safety_a < (_ssafety + 1024)) : !DEFINED(safety_tx_hook), "safety_a not in the MPU region")
+  ASSERT(DEFINED(safety_b) ? (safety_b >= _esafety && safety_b < (_ssafety + 1024)) : !DEFINED(safety_tx_hook), "safety_b not in the MPU region")
+  ASSERT(DEFINED(safety_cur) ? (safety_cur >= _esafety && safety_cur < (_ssafety + 1024)) : !DEFINED(safety_tx_hook), "safety_cur not in the MPU region")
+  ASSERT(DEFINED(safety_redundancy_fault) ? (safety_redundancy_fault >= _esafety && safety_redundancy_fault < (_ssafety + 1024)) : !DEFINED(safety_tx_hook), "safety_redundancy_fault not in the MPU region")
   ASSERT(DEFINED(current_safety_mode) ? (current_safety_mode >= _ssafety && current_safety_mode < _esafety) : !DEFINED(safety_tx_hook), "current_safety_mode not in the MPU region")
   ASSERT(DEFINED(current_safety_param) ? (current_safety_param >= _ssafety && current_safety_param < _esafety) : !DEFINED(safety_tx_hook), "current_safety_param not in the MPU region")
   ASSERT(DEFINED(current_safety_config) ? (current_safety_config >= _ssafety && current_safety_config < _esafety) : !DEFINED(safety_tx_hook), "current_safety_config not in the MPU region")
+  ASSERT(DEFINED(alternative_experience) ? (alternative_experience >= _ssafety && alternative_experience < _esafety) : !DEFINED(safety_tx_hook), "alternative_experience not in the MPU region")
 
   .itcmram (NOLOAD) :
   {
