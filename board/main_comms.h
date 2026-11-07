@@ -33,9 +33,9 @@ static int get_health_pkt(void *dat) {
   health->tx_buffer_overflow_pkt = tx_buffer_overflow;
   health->rx_buffer_overflow_pkt = rx_buffer_overflow;
   health->car_harness_status_pkt = harness.status;
-  health->safety_mode_pkt = (uint8_t)(current_safety_mode);
-  health->safety_param_pkt = current_safety_param;
-  health->alternative_experience_pkt = alternative_experience;
+  health->safety_mode_pkt = (uint8_t)(safety_cfg.current_safety_mode);
+  health->safety_param_pkt = safety_cfg.current_safety_param;
+  health->alternative_experience_pkt = safety_cfg.alternative_experience;
 
   health->spi_error_count_pkt = spi_error_count;
 
@@ -253,9 +253,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // **** 0xdf: set alternative experience
     case 0xdf:
       // you can only set this if you are in a non car safety mode
-      if (!is_car_safety_mode(current_safety_mode)) {
+      if (!is_car_safety_mode(safety_cfg.current_safety_mode)) {
         mpu_safety_open();
-        alternative_experience = req->param1;
+        safety_alternative_experience(req->param1);
         mpu_safety_close();
       }
       break;
@@ -273,7 +273,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // **** 0xe7: set power save state
     case 0xe7:
       // power save only outside car safety modes
-      set_power_save_state((req->param1 != 0U) && !is_car_safety_mode(current_safety_mode));
+      set_power_save_state((req->param1 != 0U) && !is_car_safety_mode(safety_cfg.current_safety_mode));
       break;
     // **** 0xe8: set can-fd auto swithing mode
     case 0xe8:
@@ -395,7 +395,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xf8: disable heartbeat checks
     case 0xf8:
-      if (!is_car_safety_mode(current_safety_mode)) {
+      if (!is_car_safety_mode(safety_cfg.current_safety_mode)) {
         heartbeat_disabled = true;
       }
       break;
