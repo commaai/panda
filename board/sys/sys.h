@@ -59,8 +59,7 @@ extern uint8_t global_critical_depth;
 #define FAULT_SAFETY_REDUNDANCY             (1UL << 30)
 
 // permanent faults put panda in the safe state until reset
-// TODO: enable faults one by one once their fleet rate is checked
-#define PERMANENT_FAULTS 0U
+#define PERMANENT_FAULTS 0xFFFFFFFFU
 
 extern uint8_t fault_status;
 extern uint32_t faults;
