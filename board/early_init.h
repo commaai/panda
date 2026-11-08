@@ -68,6 +68,8 @@ void early_initialization(void) {
 // we don't want to infinitely loop, so let's set a logging cookie and reset.
 #define NMI_COOKIE 0x4E4D4921U
 #define HARDFAULT_COOKIE 0x48464C54U
+// left by a wakeup from stop mode, with the EXTI lines that woke it in fault_pc
+#define STOP_MODE_COOKIE 0x53544F50U
 extern uint32_t fault_cookie;
 extern uint32_t fault_cfsr;
 extern uint32_t fault_addr;
