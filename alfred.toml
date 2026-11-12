@@ -22,3 +22,21 @@ run = """
 cd tests/hitl
 HITL=1 python -m unittest discover -v
 """
+
+# the test routes from the UP into the panda, its safety decisions must match libsafety's
+[jobs.replay]
+runs-on = "up-can"
+timeout-minutes = 90
+env = { REPLAY_SECONDS = "10" }
+
+[[jobs.replay.steps]]
+name = "Build"
+run = """
+git clone -q --depth 1 -b hw-replay https://github.com/commaai/opendbc.git opendbc_repo
+scons
+scripts/reflash_internal_panda.py
+"""
+
+[[jobs.replay.steps]]
+name = "Replay"
+run = "python opendbc_repo/opendbc/safety/tests/safety_replay/hw_replay.py"
