@@ -77,6 +77,33 @@ class TestPandaComms(unittest.TestCase):
     for m in msgs:
       assert m == test_msg, "message buffer should contain valid test messages"
 
+  def test_rx_frames_read(self):
+    # a frame split across reads counts once its tail is sent, a reset drops it, frames the host sent don't count
+    dat = (ctypes.c_uint8 * 512)()
+    while lpp.comms_can_read(dat, len(dat)) > 0:
+      pass
+
+    for reset in (False, True):
+      pkt = libpanda_py.make_CANPacket(0x100, 0, b"12345678")
+      for _ in range(2):
+        lpp.can_push(lpp.rx_q, pkt)
+      pkt.rejected = 1
+      lpp.can_push(lpp.rx_q, pkt)
+
+      pkt_len = 6 + 8
+      dat = (ctypes.c_uint8 * (pkt_len + 2))()
+      read = lpp.can_rx_frames_read()
+      lpp.comms_can_read(dat, pkt_len + 2)
+      assert lpp.can_rx_frames_read() == read + 1
+      if reset:
+        lpp.comms_can_reset()
+      else:
+        lpp.comms_can_read(dat, pkt_len - 2)
+      assert lpp.can_rx_frames_read() == read + 2
+      while lpp.comms_can_read(dat, len(dat)) > 0:
+        pass
+      assert lpp.can_rx_frames_read() == read + 2
+
   def test_comms_reset_tx(self):
     # store some test messages in the queue
     test_msg = (0x100, b"test", 0)
