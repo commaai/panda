@@ -27,7 +27,8 @@ HITL=1 python -m unittest discover -v
 [jobs.replay]
 runs-on = "up-can"
 timeout-minutes = 90
-env = { REPLAY_SECONDS = "10" }
+# the DUT's /tmp is a small tmpfs, the downloaded test routes would fill it
+env = { REPLAY_SECONDS = "10", COMMA_CACHE = "/data/tmp/comma_download_cache" }
 
 [[jobs.replay.steps]]
 name = "Build"
