@@ -166,6 +166,8 @@ typedef struct {
 bool timer_check(timer_check_t *check, uint32_t *dt_out);
 void interrupt_timer_init(void);
 uint32_t microsecond_timer_get(void);
+uint32_t can_rx_frames_queued(void);
+uint32_t can_rx_frames_read(void);
 
 extern interrupt interrupts[NUM_INTERRUPTS];
 

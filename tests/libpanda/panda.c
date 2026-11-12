@@ -17,6 +17,8 @@ void mpu_safety_close(void) { }
 #include "sys/faults.h"
 #include "libc.h"
 #include "boards/board_declarations.h"
+uint32_t can_rx_frames_queued(void);
+uint32_t can_rx_frames_read(void);
 #include "opendbc/safety/safety.h"
 #include "main_definitions.h"
 #include "drivers/can_common.h"

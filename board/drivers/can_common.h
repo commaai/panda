@@ -93,10 +93,36 @@ uint32_t can_slots_empty(const can_ring *q) {
   return ret;
 }
 
+// RX frames for the host in queue order, safety uses them to tell which ones the host read
+static uint32_t rx_frames_queued = 0U;
+static uint32_t rx_frames_read = 0U;
+
+uint32_t can_rx_frames_queued(void) {
+  return rx_frames_queued;
+}
+
+uint32_t can_rx_frames_read(void) {
+  return rx_frames_read;
+}
+
+void can_rx_push(const CANPacket_t *to_push) {
+  ENTER_CRITICAL();
+  rx_frames_queued += 1U;
+  if (!can_push(&can_rx_q, to_push)) {
+    rx_buffer_overflow += 1U;
+    // the host never gets it
+    rx_frames_read += 1U;
+  }
+  EXIT_CRITICAL();
+}
+
 void can_clear(can_ring *q) {
   ENTER_CRITICAL();
   q->w_ptr = 0;
   q->r_ptr = 0;
+  if (q == &can_rx_q) {
+    rx_frames_read = rx_frames_queued;
+  }
   EXIT_CRITICAL();
   // handle TX buffer full with zero ECUs awake on the bus
   refresh_can_tx_slots_available();

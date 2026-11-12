@@ -224,7 +224,7 @@ static void can_rx(uint8_t can_number) {
     ignition_can_hook(&to_push);
 
     led_set(LED_BLUE, true);
-    rx_buffer_overflow += can_push(&can_rx_q, &to_push) ? 0U : 1U;
+    can_rx_push(&to_push);
 
     // Enable CAN FD and BRS if CAN FD message was received
     if (!(bus_config[can_number].canfd_enabled) && (canfd_frame)) {
