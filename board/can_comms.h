@@ -60,6 +60,11 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
     // Fill rest of buffer with new data
     CANPacket_t can_packet;
     while ((pos < max_len) && can_pop(&can_rx_q, &can_packet)) {
+      if ((can_packet.returned == 0U) && (can_packet.rejected == 0U)) {
+        ENTER_CRITICAL();
+        rx_frames_read += 1U;
+        EXIT_CRITICAL();
+      }
       uint32_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[can_packet.data_len_code];
       if ((pos + pckt_len) <= max_len) {
         (void)memcpy(&data[pos], (uint8_t*)&can_packet, pckt_len);
