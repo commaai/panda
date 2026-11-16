@@ -7,7 +7,7 @@
 #define DTS_PCLK_FREQ 60000000U // APB4 frequency, see clock.h
 #define DTS_HSREF_DIV 64U // calibration counter must run below 1MHz
 
-void dts_init(void) {
+static void dts_init(void) {
   // set sampling time, pclk reference, software trigger, calibrated measurement, calibration clock prescaler
   register_set(&(DTS->CFGR1), (((uint32_t) DTS_SMP_TIME << DTS_CFGR1_TS1_SMP_TIME_Pos) | ((uint32_t) DTS_HSREF_DIV << DTS_CFGR1_HSREF_CLK_DIV_Pos)),
     (DTS_CFGR1_TS1_SMP_TIME_Msk | DTS_CFGR1_REFCLK_SEL_Msk | DTS_CFGR1_Q_MEAS_OPT_Msk | DTS_CFGR1_HSREF_CLK_DIV_Msk | DTS_CFGR1_TS1_INTRIG_SEL_Msk));
@@ -17,7 +17,7 @@ void dts_init(void) {
   register_set_bits(&(DTS->CFGR1), DTS_CFGR1_TS1_START);
 }
 
-float dts_get_temperature(void) {
+static float dts_get_temperature(void) {
   // formula with pclk used
   float ret = 0.0f;
   uint32_t measurement_cycles = DTS->DR & DTS_DR_TS1_MFREQ_Msk;

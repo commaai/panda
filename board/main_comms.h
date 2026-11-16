@@ -5,68 +5,87 @@
 extern int app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 // Prototypes
-void set_safety_mode(uint16_t mode, uint16_t param);
+static void set_safety_mode(uint16_t mode, uint16_t param);
 #ifdef ALLOW_DEBUG
-void self_test_inject(uint8_t test);
+static void self_test_inject(uint8_t test);
 #endif
-bool is_car_safety_mode(uint16_t mode);
+static bool is_car_safety_mode(uint16_t mode);
 
-static int get_health_pkt(void *dat) {
-  COMPILE_TIME_ASSERT(sizeof(struct health_t) <= USBPACKET_MAX_SIZE);
-  struct health_t * health = (struct health_t*)dat;
+// ********************* Globals **********************
+// main.c's state that the health packet reports or the control requests set
+static uint32_t uptime_cnt = 0;
+static uint16_t reset_flags = 0U;
 
-  health->uptime_pkt = uptime_cnt;
-  health->voltage_pkt = (uint16_t)MIN(current_board->read_voltage_mV(), 0xFFFFU);
-  health->current_pkt = (uint16_t)MIN(current_board->read_current_mA(), 0xFFFFU);
+// heartbeat state
+static uint32_t heartbeat_counter = 0;
+static uint32_t heartbeat_tick_counter = 0;        // 8Hz
+static bool heartbeat_lost = false;
+static bool heartbeat_disabled = false;            // set over USB
 
-  health->flags_pkt = 0U;
-  health->flags_pkt |= harness_check_ignition() ? HEALTH_FLAG_IGNITION_LINE : 0U;
-  health->flags_pkt |= ignition_can ? HEALTH_FLAG_IGNITION_CAN : 0U;
-  health->flags_pkt |= safety.controls_allowed ? HEALTH_FLAG_CONTROLS_ALLOWED : 0U;
-  health->flags_pkt |= power_save_enabled ? HEALTH_FLAG_POWER_SAVE_ENABLED : 0U;
-  health->flags_pkt |= heartbeat_lost ? HEALTH_FLAG_HEARTBEAT_LOST : 0U;
-  health->flags_pkt |= safety.safety_rx_checks_invalid ? HEALTH_FLAG_SAFETY_RX_CHECKS_INVALID : 0U;
-  health->flags_pkt |= bootkick_reset_triggered ? HEALTH_FLAG_SOM_RESET_TRIGGERED : 0U;
-  health->flags_pkt |= heartbeat_disabled ? HEALTH_FLAG_HEARTBEAT_DISABLED : 0U;
-  health->flags_pkt |= reset_flags;
+// siren state
+static bool siren_enabled = false;
 
-  health->safety_tx_blocked_pkt = safety_tx_blocked;
-  health->safety_rx_invalid_pkt = safety_rx_invalid;
-  health->tx_buffer_overflow_pkt = tx_buffer_overflow;
-  health->rx_buffer_overflow_pkt = rx_buffer_overflow;
-  health->car_harness_status_pkt = harness.status;
-  health->safety_mode_pkt = (uint8_t)(safety_setup.current_safety_mode);
-  health->safety_param_pkt = safety_setup.current_safety_param;
-  health->alternative_experience_pkt = safety_setup.alternative_experience;
+_Static_assert(sizeof(struct health_t) <= USBPACKET_MAX_SIZE, "health packet must fit in one USB packet");
+_Static_assert(sizeof(can_health_t) <= USBPACKET_MAX_SIZE, "CAN health packet must fit in one USB packet");
+_Static_assert(sizeof(GITVERSION) <= USBPACKET_MAX_SIZE, "version must fit in one USB packet");
 
-  health->spi_error_count_pkt = spi_error_count;
+static uint32_t get_health_pkt(uint8_t *resp) {
+  struct health_t health = {0};
 
-  health->fault_status_pkt = fault_status;
-  health->faults_pkt = faults;
+  health.uptime_pkt = uptime_cnt;
+  health.voltage_pkt = (uint16_t)min_u32(current_board->read_voltage_mV(), 0xFFFFU);
+  health.current_pkt = (uint16_t)min_u32(current_board->read_current_mA(), 0xFFFFU);
 
-  float interrupt_load_scaled = (CLAMP(interrupt_load, 0.0f, 1.0f) * 255.0f) + 0.5f;
-  health->interrupt_load_pkt = (uint8_t)interrupt_load_scaled;
+  health.flags_pkt = 0U;
+  health.flags_pkt |= harness_check_ignition() ? HEALTH_FLAG_IGNITION_LINE : 0U;
+  health.flags_pkt |= ignition_can ? HEALTH_FLAG_IGNITION_CAN : 0U;
+  health.flags_pkt |= safety.controls_allowed ? HEALTH_FLAG_CONTROLS_ALLOWED : 0U;
+  health.flags_pkt |= power_save_enabled ? HEALTH_FLAG_POWER_SAVE_ENABLED : 0U;
+  health.flags_pkt |= heartbeat_lost ? HEALTH_FLAG_HEARTBEAT_LOST : 0U;
+  health.flags_pkt |= safety.safety_rx_checks_invalid ? HEALTH_FLAG_SAFETY_RX_CHECKS_INVALID : 0U;
+  health.flags_pkt |= bootkick_reset_triggered ? HEALTH_FLAG_SOM_RESET_TRIGGERED : 0U;
+  health.flags_pkt |= heartbeat_disabled ? HEALTH_FLAG_HEARTBEAT_DISABLED : 0U;
+  health.flags_pkt |= reset_flags;
 
-  health->fan_power = fan_state.power;
+  health.safety_tx_blocked_pkt = safety_tx_blocked;
+  health.safety_rx_invalid_pkt = safety_rx_invalid;
+  health.tx_buffer_overflow_pkt = tx_buffer_overflow;
+  health.rx_buffer_overflow_pkt = rx_buffer_overflow;
+  health.car_harness_status_pkt = harness.status;
+  health.safety_mode_pkt = (uint8_t)(safety_setup.current_safety_mode);
+  health.safety_param_pkt = safety_setup.current_safety_param;
+  health.alternative_experience_pkt = safety_setup.alternative_experience;
 
-  health->sbu1_voltage_mV = harness.sbu1_voltage_mV;
-  health->sbu2_voltage_mV = harness.sbu2_voltage_mV;
+  health.spi_error_count_pkt = spi_error_count;
 
-  health->sound_output_level_pkt = sound_output_level;
+  health.fault_status_pkt = fault_status;
+  health.faults_pkt = faults;
 
-  float temperature_encoded = (CLAMP(dts_get_temperature(), -40.0f, 214.5f) + 40.0f) + 0.5f;
-  health->temperature_pkt = (uint8_t)temperature_encoded;
+  float interrupt_load_scaled = (clamp_f32(interrupt_load, 0.0f, 1.0f) * 255.0f) + 0.5f;
+  health.interrupt_load_pkt = (uint8_t)interrupt_load_scaled;
 
-  return sizeof(*health);
+  health.fan_power = fan_state.power;
+
+  health.sbu1_voltage_mV = harness.sbu1_voltage_mV;
+  health.sbu2_voltage_mV = harness.sbu2_voltage_mV;
+
+  health.sound_output_level_pkt = sound_output_level;
+
+  float temperature_encoded = (clamp_f32(dts_get_temperature(), -40.0f, 214.5f) + 40.0f) + 0.5f;
+  health.temperature_pkt = (uint8_t)temperature_encoded;
+
+  (void)memcpy(resp, &health, sizeof(health));
+  return sizeof(health);
 }
 
 // Endpoint 2 is only used by the bootstub for flashing.
-void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
+static void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   UNUSED(data);
   UNUSED(len);
 }
 
 #ifdef ALLOW_DEBUG
+// cppcheck-suppress misra-c2012-1.2 ; must not be inlined, the call has to push onto the stack that 0xf0 moves into the guard
 static void __attribute__((noinline)) stack_guard_hit(void) {
   volatile uint32_t frame[4];
   frame[0] = 0U;
@@ -74,32 +93,32 @@ static void __attribute__((noinline)) stack_guard_hit(void) {
 }
 #endif
 
-int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
-  unsigned int resp_len = 0;
+static uint32_t comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
+  // kbps multiplied by 10
+  static const uint32_t speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};
+  static const uint32_t data_speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U, 20000U, 50000U};
+  uint32_t resp_len = 0;
   uint32_t time;
 
   switch (req->request) {
     // **** 0xa8: get microsecond timer
     case 0xa8:
       time = microsecond_timer_get();
-      resp[0] = (time & 0x000000FFU);
-      resp[1] = ((time & 0x0000FF00U) >> 8U);
-      resp[2] = ((time & 0x00FF0000U) >> 16U);
-      resp[3] = ((time & 0xFF000000U) >> 24U);
+      WORD_TO_BYTE_ARRAY(resp, time);
       resp_len = 4U;
       break;
     // **** 0xb0: set IR power
     case 0xb0:
-      current_board->set_ir_power(req->param1);
+      current_board->set_ir_power((uint8_t)req->param1);
       break;
     // **** 0xb1: set fan power
     case 0xb1:
-      fan_set_power(req->param1);
+      fan_set_power((uint8_t)req->param1);
       break;
     // **** 0xb2: get fan rpm
     case 0xb2:
-      resp[0] = (fan_state.rpm & 0x00FFU);
-      resp[1] = ((fan_state.rpm & 0xFF00U) >> 8U);
+      resp[0] = (uint8_t)fan_state.rpm;
+      resp[1] = (uint8_t)(fan_state.rpm >> 8U);
       resp_len = 2;
       break;
     // **** 0xb5: request deep sleep, wakes on CAN or SBU
@@ -112,7 +131,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     #endif
     // **** 0xb6: read debug logs
     case 0xb6:
-      while ((resp_len < req->length) && (resp_len < USBPACKET_MAX_SIZE) && debug_get_char((char*)&resp[resp_len])) {
+      while ((resp_len < req->length) && (resp_len < USBPACKET_MAX_SIZE)) {
+        if (!debug_get_char((char*)&resp[resp_len])) {
+          break;
+        }
         ++resp_len;
       }
       break;
@@ -127,14 +149,13 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xc2: CAN health stats
     case 0xc2:
-      COMPILE_TIME_ASSERT(sizeof(can_health_t) <= USBPACKET_MAX_SIZE);
       if (req->param1 < 3U) {
-        update_can_health_pkt(req->param1, 0U);
-        can_health[req->param1].can_speed = (bus_config[req->param1].can_speed / 10U);
-        can_health[req->param1].can_data_speed = (bus_config[req->param1].can_data_speed / 10U);
-        can_health[req->param1].canfd_enabled = bus_config[req->param1].canfd_enabled;
-        can_health[req->param1].brs_enabled = bus_config[req->param1].brs_enabled;
-        can_health[req->param1].canfd_non_iso = bus_config[req->param1].canfd_non_iso;
+        update_can_health_pkt((uint8_t)req->param1, 0U);
+        can_health[req->param1].can_speed = (uint16_t)(bus_config[req->param1].can_speed / 10U);
+        can_health[req->param1].can_data_speed = (uint16_t)(bus_config[req->param1].can_data_speed / 10U);
+        can_health[req->param1].canfd_enabled = bus_config[req->param1].canfd_enabled ? 1U : 0U;
+        can_health[req->param1].brs_enabled = bus_config[req->param1].brs_enabled ? 1U : 0U;
+        can_health[req->param1].canfd_non_iso = bus_config[req->param1].canfd_non_iso ? 1U : 0U;
         resp_len = sizeof(can_health[req->param1]);
         (void)memcpy(resp, (uint8_t*)(&can_health[req->param1]), resp_len);
       }
@@ -148,20 +169,17 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xc4:
       if (req->param1 < NUM_INTERRUPTS) {
         uint32_t load = interrupts[req->param1].call_rate;
-        resp[0] = (load & 0x000000FFU);
-        resp[1] = ((load & 0x0000FF00U) >> 8U);
-        resp[2] = ((load & 0x00FF0000U) >> 16U);
-        resp[3] = ((load & 0xFF000000U) >> 24U);
+        WORD_TO_BYTE_ARRAY(resp, load);
         resp_len = 4U;
       }
       break;
     // **** 0xc5: DEBUG: drive relay
     case 0xc5:
-      set_intercept_relay((req->param1 & 0x1U), (req->param1 & 0x2U));
+      set_intercept_relay((req->param1 & 0x1U) != 0U, (req->param1 & 0x2U) != 0U);
       break;
     // **** 0xc6: DEBUG: read SOM GPIO
     case 0xc6:
-      resp[0] = current_board->read_som_gpio();
+      resp[0] = current_board->read_som_gpio() ? 1U : 0U;
       resp_len = 1;
       break;
     // **** 0xd0: fetch serial (aka the provisioned dongle ID)
@@ -178,23 +196,19 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // **** 0xd1: enter bootloader mode
     case 0xd1:
       // this allows reflashing of the bootstub
-      switch (req->param1) {
-        case 0:
-          // only allow bootloader entry on debug builds
-          #ifdef ALLOW_DEBUG
-            print("-> entering bootloader\n");
-            enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-            NVIC_SystemReset();
-          #endif
-          break;
-        case 1:
-          print("-> entering softloader\n");
-          enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
-          NVIC_SystemReset();
-          break;
-        default:
-          print("Bootloader mode invalid\n");
-          break;
+      if (req->param1 == 0U) {
+        // only allow bootloader entry on debug builds
+        #ifdef ALLOW_DEBUG
+        print("-> entering bootloader\n");
+        enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+        NVIC_SystemReset();
+        #endif
+      } else if (req->param1 == 1U) {
+        print("-> entering softloader\n");
+        enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
+        NVIC_SystemReset();
+      } else {
+        print("Bootloader mode invalid\n");
       }
       break;
     // **** 0xd2: get health packet
@@ -221,7 +235,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xd6: get version
     case 0xd6:
-      COMPILE_TIME_ASSERT(sizeof(GITVERSION) <= USBPACKET_MAX_SIZE);
       (void)memcpy(resp, GITVERSION, sizeof(GITVERSION));
       resp_len = sizeof(GITVERSION) - 1U;
       break;
@@ -292,6 +305,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xeb: inject HardFault, for testing
     case 0xeb:
+      // cppcheck-suppress misra-c2012-1.2 ; an undefined instruction, the one fault C can't cause on purpose
       __builtin_trap();
       break;
     // **** 0xec: inject NMI, for testing
@@ -337,8 +351,10 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       } else if ((req->param1 == 8U) && (req->param2 < NUM_INTERRUPTS)) {
         // one more call than the limit allows
         interrupts[req->param2].call_counter = interrupts[req->param2].max_call_rate;
-        NVIC_SetPendingIRQ((IRQn_Type)req->param2);
+        // pended in the register, param2 is a number and not an IRQn_Type
+        NVIC->ISPR[req->param2 >> 5U] = 1UL << (req->param2 & 0x1FU);
       } else {
+        // not a test, nothing to break
       }
       break;
     // **** 0xf5: break a read-back or cross-check, for testing

@@ -23,7 +23,7 @@ dev = [
   "ruff",
   "setuptools",
   "comma-deps-gcc-arm-none-eabi",
-  "comma-deps-cppcheck",
+  "misrable==0.2.0",
 ]
 
 [build-system]
@@ -39,7 +39,7 @@ packages = [
 ]
 
 [tool.setuptools.package-data]
-"panda.board" = ["health.h"]
+"panda.board" = ["health.h", "can_wire.h"]
 
 [tool.setuptools.package-dir]
 panda = "."

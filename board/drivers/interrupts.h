@@ -9,19 +9,19 @@ static void unused_interrupt_handler(void) {
   fault_occurred_value(FAULT_UNUSED_INTERRUPT_HANDLED, __get_IPSR());
 }
 
-interrupt interrupts[NUM_INTERRUPTS];
+static interrupt interrupts[NUM_INTERRUPTS];
 
 // NVIC_SM_0: every IRQ enable goes through nvic_enable/nvic_disable, except the stop mode wakeups, which exit through a reset
 static uint32_t nvic_expected[8];
 
-void nvic_enable(IRQn_Type irq) {
+static void nvic_enable(IRQn_Type irq) {
   ENTER_CRITICAL();
   nvic_expected[(uint32_t)irq >> 5U] |= (1UL << ((uint32_t)irq & 0x1FU));
   NVIC_EnableIRQ(irq);
   EXIT_CRITICAL();
 }
 
-void nvic_disable(IRQn_Type irq) {
+static void nvic_disable(IRQn_Type irq) {
   ENTER_CRITICAL();
   nvic_expected[(uint32_t)irq >> 5U] &= ~(1UL << ((uint32_t)irq & 0x1FU));
   NVIC_DisableIRQ(irq);
@@ -29,7 +29,7 @@ void nvic_disable(IRQn_Type irq) {
 }
 
 // logs the first divergent IRQ, 0x100 added if it's the priority
-void nvic_check(void) {
+static inline void nvic_check(void) {
   uint32_t diff = 0U;
   uint32_t first = 0U;
   for (uint8_t i = 0U; i < 8U; i++) {
@@ -41,10 +41,11 @@ void nvic_check(void) {
   }
   // nothing sets a priority, all IRQs stay at 0
   for (uint8_t i = 0U; i < 240U; i++) {
-    if ((diff == 0U) && (NVIC->IP[i] != 0U)) {
+    uint8_t priority = NVIC->IP[i];
+    if ((diff == 0U) && (priority != 0U)) {
       first = 0x100U + (uint32_t)i;
     }
-    diff |= NVIC->IP[i];
+    diff |= priority;
   }
   if (diff != 0U) {
     fault_occurred_value(FAULT_REGISTER_DIVERGENT, first);
@@ -55,9 +56,15 @@ static bool check_interrupt_rate = false;
 
 static uint32_t idle_time = 0U;
 static uint32_t busy_time = 0U;
-float interrupt_load = 0.0f;
+#if !defined(BOOTSTUB)
+static float interrupt_load = 0.0f;
+#endif
 
-void handle_interrupt(IRQn_Type irq_type){
+// every IRQ vector in board/stm32h7/startup_stm32h7x5xx.s points here
+void handle_interrupt(void);
+void handle_interrupt(void) {
+  // exceptions 0 to 15 are the core's, IRQ n is exception 16 + n
+  uint32_t irq_type = __get_IPSR() - 16U;
   static uint8_t interrupt_depth = 0U;
   static uint32_t last_time = 0U;
   ENTER_CRITICAL();
@@ -90,7 +97,7 @@ void handle_interrupt(IRQn_Type irq_type){
 static uint32_t interrupt_timer_windows = 0U;
 
 // Every second
-void interrupt_timer_handler(void) {
+static void interrupt_timer_handler(void) {
   static timer_check_t interrupt_timer_period = {0};
   if (INTERRUPT_TIMER->SR != 0U) {
     // cleared first, a flag cleared on the way out can retrigger the vector
@@ -118,9 +125,10 @@ void interrupt_timer_handler(void) {
     }
 
     // Calculate interrupt load
-    // The bootstub does not have the FPU enabled, so can't do float operations.
+    // the bootstub doesn't report the load
 #if !defined(BOOTSTUB)
-    interrupt_load = ((busy_time + idle_time) > 0U) ? ((float) (((float) busy_time) / (busy_time + idle_time))) : 0.0f;
+    uint32_t total_time = busy_time + idle_time;
+    interrupt_load = (total_time > 0U) ? (((float) busy_time) / ((float) total_time)) : 0.0f;
 #endif
     idle_time = 0U;
     busy_time = 0U;
@@ -131,7 +139,7 @@ void interrupt_timer_handler(void) {
 }
 
 // called at 1Hz from the tick, one miss is normal since the two timers drift
-void interrupt_timer_check(void) {
+static inline void interrupt_timer_check(void) {
   static uint32_t last_windows = 0U;
   static uint32_t misses = 0U;
   misses = (interrupt_timer_windows == last_windows) ? (misses + 1U) : 0U;
@@ -141,7 +149,7 @@ void interrupt_timer_check(void) {
   }
 }
 
-void init_interrupts(bool check_rate_limit){
+static void init_interrupts(bool check_rate_limit){
   check_interrupt_rate = check_rate_limit;
 
   for(uint16_t i=0U; i<NUM_INTERRUPTS; i++){

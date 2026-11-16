@@ -12,7 +12,7 @@ static void gpio_usb_init(void) {
   GPIOA->OSPEEDR = GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12;
 }
 
-void gpio_spi_init(void) {
+static inline void gpio_spi_init(void) {
   set_gpio_alternate(GPIOE, 11, GPIO_AF5_SPI4);
   set_gpio_alternate(GPIOE, 12, GPIO_AF5_SPI4);
   set_gpio_alternate(GPIOE, 13, GPIO_AF5_SPI4);
@@ -21,7 +21,7 @@ void gpio_spi_init(void) {
 }
 
 // Common GPIO initialization
-void common_init_gpio(void) {
+static inline void common_init_gpio(void) {
   //F11: VOLT_S
   set_gpio_pullup(GPIOF, 11, PULL_NONE);
   set_gpio_mode(GPIOF, 11, MODE_ANALOG);
@@ -82,13 +82,15 @@ static void hold_unused_in_reset(void) {
   };
   for (uint8_t i = 0U; i < (sizeof(regs) / sizeof(regs[0])); i++) {
     uint32_t en = *regs[i].enr;
+    // cppcheck-suppress misra-c2012-1.1 ; misrable false positive: the member is volatile uint32_t *, the const of the array is top-level only and is not discarded
     register_set(regs[i].rstr, regs[i].rst_bits & ~en, 0xFFFFFFFFU);
+    // cppcheck-suppress misra-c2012-1.1 ; misrable false positive: same as above
     register_set(regs[i].enr, en, 0xFFFFFFFFU);
   }
 }
 
 // Peripheral initialization
-void peripherals_init(void) {
+static inline void peripherals_init(void) {
   // enable GPIO(A,B,C,D,E,F,G,H)
   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;
   RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;
@@ -139,12 +141,12 @@ void peripherals_init(void) {
   hold_unused_in_reset();
 }
 
-void enable_interrupt_timer(void) {
+static void enable_interrupt_timer(void) {
   register_set_bits(&(RCC->APB1LENR), RCC_APB1LENR_TIM6EN); // Enable interrupt timer peripheral
 }
 
 // FLASH_SM_3: nothing unlocks the option bytes, and they boot from 0x08000000 when BOOT0 is low
-void check_option_bytes(void) {
+static inline void check_option_bytes(void) {
   uint32_t optlock = FLASH->OPTCR & FLASH_OPTCR_OPTLOCK;
   uint32_t boot = FLASH->BOOT_CUR & FLASH_BOOT_ADD0;
   if ((optlock == 0U) || (boot != 0x0800U)) {

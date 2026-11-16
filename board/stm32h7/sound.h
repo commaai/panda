@@ -5,10 +5,11 @@
 #define SOUND_TX_BUF_SIZE (SOUND_RX_BUF_SIZE/2U)
 #define MIC_RX_BUF_SIZE 512U
 #define MIC_TX_BUF_SIZE (MIC_RX_BUF_SIZE * 2U)
-__attribute__((section(".sram4"))) static uint16_t sound_rx_buf[2][SOUND_RX_BUF_SIZE];
-__attribute__((section(".sram4"))) static uint16_t sound_tx_buf[2][SOUND_TX_BUF_SIZE];
-__attribute__((section(".sram4"))) static uint32_t mic_rx_buf[2][MIC_RX_BUF_SIZE];
-__attribute__((section(".sram4"))) static uint16_t mic_tx_buf[2][MIC_TX_BUF_SIZE];
+// the DMAs can't reach the DTCM where .bss lives, and BDMA only reaches SRAM4
+SECTION(".sram4") static uint16_t sound_rx_buf[2][SOUND_RX_BUF_SIZE];
+SECTION(".sram4") static uint16_t sound_tx_buf[2][SOUND_TX_BUF_SIZE];
+SECTION(".sram4") static uint32_t mic_rx_buf[2][MIC_RX_BUF_SIZE];
+SECTION(".sram4") static uint16_t mic_tx_buf[2][MIC_TX_BUF_SIZE];
 
 #define SOUND_IDLE_TIMEOUT 4U
 #define MIC_PLL_FRAC 3867U // 5 MHz * (65 + 3867/8192) / 62 / 2 / 55 is approximately 48 kHz
@@ -16,9 +17,9 @@ __attribute__((section(".sram4"))) static uint16_t mic_tx_buf[2][MIC_TX_BUF_SIZE
 static uint8_t sound_idle_count;
 static uint8_t mic_idle_count;
 static uint8_t mic_buffer_count;
-uint16_t sound_output_level;
+static uint16_t sound_output_level;
 
-void sound_tick(void) {
+static inline void sound_tick(void) {
   if (sound_idle_count > 0U) {
     sound_idle_count--;
     if (sound_idle_count == 0U) {
@@ -62,7 +63,7 @@ static void DMA1_Stream0_IRQ_Handler(void) {
     // process samples
     uint8_t buf_idx = (((DMA1_Stream0->CR & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos) == 1U) ? 0U : 1U;
     for (uint16_t i=0U; i < MIC_RX_BUF_SIZE; i++) {
-      mic_tx_buf[tx_buf_idx][2U*i] = ((mic_rx_buf[buf_idx][i] >> 16U) & 0xFFFFU);
+      mic_tx_buf[tx_buf_idx][2U*i] = (uint16_t)(mic_rx_buf[buf_idx][i] >> 16U);
       mic_tx_buf[tx_buf_idx][(2U*i)+1U] = mic_tx_buf[tx_buf_idx][2U*i];
     }
   }
@@ -79,8 +80,9 @@ static void BDMA_Channel0_IRQ_Handler(void) {
 
   // wait until we're done playing the current buf
   for (uint32_t timeout_counter = 100000U; timeout_counter > 0U; timeout_counter--){
-    uint8_t playing_buf = (DMA1_Stream1->CR & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos;
-    if ((playing_buf != playback_buf) || ((DMA1_Stream1->CR & DMA_SxCR_EN) == 0U)) {
+    uint32_t cr = DMA1_Stream1->CR;
+    uint32_t playing_buf = (cr & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos;
+    if ((playing_buf != playback_buf) || ((cr & DMA_SxCR_EN) == 0U)) {
       break;
     }
   }
@@ -140,7 +142,7 @@ static void BDMA_Channel0_IRQ_Handler(void) {
   mic_idle_count = SOUND_IDLE_TIMEOUT;
 }
 
-void sound_init_dac(void) {
+static void sound_init_dac(void) {
   // Init DAC
   DAC1->DHR12R1 = (1UL << 11);
   DAC1->DHR12R2 = (1UL << 11);
@@ -172,7 +174,7 @@ static void sound_stop_dac(void) {
   while ((DAC1->CR & (DAC_CR_EN1 | DAC_CR_EN2)) != 0U) {}
 }
 
-void sound_init(void) {
+static void sound_init(void) {
   REGISTER_INTERRUPT(BDMA_Channel0_IRQn, BDMA_Channel0_IRQ_Handler, 128U, FAULT_INTERRUPT_RATE_SOUND_DMA)
   REGISTER_INTERRUPT(DMA1_Stream0_IRQn, DMA1_Stream0_IRQ_Handler, 128U, FAULT_INTERRUPT_RATE_SOUND_DMA)
 

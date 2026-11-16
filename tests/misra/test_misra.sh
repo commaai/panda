@@ -3,76 +3,36 @@ set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PANDA_DIR=$(realpath $DIR/../../)
-OPENDBC_ROOT=$(python3 -c "import opendbc; print(opendbc.INCLUDE_PATH)")
+OPENDBC_ROOT=${OPENDBC_ROOT:-$(python3 -c "import opendbc; print(opendbc.INCLUDE_PATH)")}
 
 GREEN="\e[1;32m"
-YELLOW="\e[1;33m"
 RED="\e[1;31m"
 NC='\033[0m'
-
-: "${CPPCHECK_DIR:=$(python3 -c "import cppcheck; print(cppcheck.DIR)")}"
-
-# ensure checked in coverage table is up to date
-cd $DIR
-if [ -z "$SKIP_TABLES_DIFF" ]; then
-  python3 $CPPCHECK_DIR/addons/misra.py -generate-table > coverage_table
-  if ! git diff --quiet coverage_table; then
-    echo -e "${YELLOW}MISRA coverage table doesn't match. Update and commit:${NC}"
-    exit 3
-  fi
-fi
 
 cd $PANDA_DIR
 if [ -z "${SKIP_BUILD}" ]; then
   scons
 fi
 
-CHECKLIST=$DIR/checkers.txt
-echo "Cppcheck checkers list from test_misra.sh:" > $CHECKLIST
-
-cppcheck() {
-  # get all gcc defines: arm-none-eabi-gcc -dM -E - < /dev/null
-  COMMON_DEFINES="-D__GNUC__=9 -UCMSIS_NVIC_VIRTUAL -UCMSIS_VECTAB_VIRTUAL -UBOOTSTUB"
-
-  # note that cppcheck build cache results in inconsistent results as of v2.13.0
-  OUTPUT=$DIR/.output.log
-
-  echo -e "\n\n\n\n\nTEST variant options:" >> $CHECKLIST
-  echo -e ""${@//$PANDA_DIR/}"\n\n" >> $CHECKLIST # (absolute path removed)
-
-  $CPPCHECK_DIR/cppcheck --inline-suppr \
-          -I $PANDA_DIR \
-          -I "$(arm-none-eabi-gcc -print-file-name=include)" \
-          -I $OPENDBC_ROOT \
-          --suppressions-list=$DIR/suppressions.txt --suppress=*:*inc/* \
-          --suppress=*:*include/* --error-exitcode=2 --check-level=exhaustive --safety \
-          --platform=arm32-wchar_t4 $COMMON_DEFINES --checkers-report=$CHECKLIST.tmp \
-          --std=c11 "$@" 2>&1 | tee $OUTPUT
-
-  cat $CHECKLIST.tmp >> $CHECKLIST
-  rm $CHECKLIST.tmp
-  # cppcheck bug: some MISRA errors won't result in the error exit code,
-  # so check the output (https://trac.cppcheck.net/ticket/12440#no1)
-  if grep -e "misra violation" -e "error" -e "style: " $OUTPUT > /dev/null; then
-    printf "${RED}** FAILED: MISRA violations found!${NC}\n"
+misra() {
+  # exits with 1 on findings and 2 on analysis or usage errors
+  # opendbc's safety code is checked by opendbc's own MISRA test
+  # CMSIS picks its compiler support by __GNUC__, and scons generates the version defines
+  # --inline-suppr honors the cppcheck-suppress comments in the sources, misrable reads cppcheck's syntax
+  if ! misrable -I $PANDA_DIR -isystem $OPENDBC_ROOT -isystem $PANDA_DIR/board/stm32h7/inc \
+         -D__GNUC__=9 -DGITVERSION='"misra"' -DHEALTH_PACKET_VERSION=0x1U -DCAN_PACKET_VERSION_HASH=0x1U \
+         --inline-suppr \
+         --suppressions-list $DIR/suppressions.txt \
+         --external-api $DIR/external_api.txt \
+         "$@"; then
+    printf "${RED}** FAILED: MISRA violations or analysis errors!${NC}\n"
     exit 1
   fi
 }
 
-PANDA_OPTS="--enable=all --disable=unusedFunction --addon=misra"
-
 printf "\n${GREEN}** PANDA H7 CODE **${NC}\n"
-cppcheck $PANDA_OPTS -DSTM32H7 -DSTM32H725xx -I $PANDA_DIR/board/stm32h7/inc/ $PANDA_DIR/board/main.c
-
-# unused needs to run globally
-#printf "\n${GREEN}** UNUSED ALL CODE **${NC}\n"
-#cppcheck --enable=unusedFunction --quiet $PANDA_DIR/board/
+misra -DSTM32H7 -DSTM32H725xx $PANDA_DIR/board/main.c
+printf "\n${GREEN}** PANDA H7 CODE with ALLOW_DEBUG **${NC}\n"
+misra -DSTM32H7 -DSTM32H725xx -DALLOW_DEBUG $PANDA_DIR/board/main.c
 
 printf "\n${GREEN}Success!${NC} took $SECONDS seconds\n"
-
-# ensure list of checkers is up to date
-cd $DIR
-if [ -z "$SKIP_TABLES_DIFF" ] && ! git diff --quiet $CHECKLIST; then
-  echo -e "\n${YELLOW}WARNING: Cppcheck checkers.txt report has changed. Review and commit...${NC}"
-  exit 4
-fi

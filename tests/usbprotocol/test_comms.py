@@ -102,6 +102,30 @@ class TestPandaComms(unittest.TestCase):
     for m in queue_msgs:
       assert m == test_msg, "message buffer should contain valid test messages"
 
+  def test_can_send_bad_checksum(self):
+    msg = (0x100, b"test", 0)
+    good = pack_can_buffer([msg])[0]
+    bad = bytearray(good)
+    bad[-1] ^= 0xFF
+    pkt = libpanda_py.CANPacket()
+
+    # a corrupt packet is counted and dropped before the safety hooks see it: silent mode
+    # would reject a valid packet and return it to the host
+    lpp.set_safety_hooks(CarParams.SafetyModel.silent, 0)
+    checksum_errors, tx_blocked = lpp.get_tx_checksum_error_cnt(0), lpp.get_safety_tx_blocked()
+    lpp.comms_can_write(bytes(bad), len(bad))
+    self.assertEqual(lpp.get_tx_checksum_error_cnt(0), checksum_errors + 1)
+    self.assertEqual(lpp.get_safety_tx_blocked(), tx_blocked)
+    self.assertFalse(lpp.can_pop(lpp.rx_q, pkt))
+
+    # the valid packet after it still goes out
+    lpp.set_safety_hooks(CarParams.SafetyModel.allOutput, 0)
+    buf = bytes(bad + good)
+    lpp.comms_can_write(buf, len(buf))
+    queue_msgs = []
+    while lpp.can_pop(TX_QUEUES[0], pkt):
+      queue_msgs.append(unpackage_can_msg(pkt))
+    self.assertEqual(queue_msgs, [msg])
 
   def test_can_send_usb(self):
     for bus in range(3):

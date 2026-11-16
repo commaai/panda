@@ -1,11 +1,14 @@
 // ********************* Includes *********************
 #include "board/config.h"
 
-#include "board/drivers/led.h"
 #include "board/drivers/pwm.h"
+#include "board/drivers/led.h"
 #include "board/drivers/usb.h"
 #include "board/drivers/simple_watchdog.h"
 #include "board/drivers/bootkick.h"
+#include "board/drivers/fan.h"
+#include "board/stm32h7/llfan.h"
+#include "board/stm32h7/lldts.h"
 
 #include "board/early_init.h"
 #include "board/provision.h"
@@ -20,8 +23,6 @@
 
 #include "board/sys/power_saving.h"
 
-#include "board/obj/gitversion.h"
-
 #include "board/can_comms.h"
 #include "board/main_comms.h"
 #include "board/drivers/self_test.h"
@@ -29,9 +30,10 @@
 // ****************************** safety mode ******************************
 
 // this is the only way to leave silent mode
-void set_safety_mode(uint16_t mode, uint16_t param) {
+static void set_safety_mode(uint16_t mode, uint16_t param) {
   uint16_t mode_copy = mode;
-  if ((faults & PERMANENT_FAULTS) != 0U) {
+  // a permanent fault keeps panda silent until reset
+  if (fault_status == FAULT_STATUS_PERMANENT) {
     mode_copy = SAFETY_SILENT;
   }
   mpu_safety_open();
@@ -84,12 +86,14 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
   can_init_all();
 }
 
+#if PERMANENT_FAULTS != 0U
 // SILENT clears controls_allowed and opens the relay
-void fault_safe_state(void) {
+static void fault_safe_state(void) {
   set_safety_mode(SAFETY_SILENT, 0U);
 }
+#endif
 
-bool is_car_safety_mode(uint16_t mode) {
+static bool is_car_safety_mode(uint16_t mode) {
   return (mode != SAFETY_SILENT) &&
          (mode != SAFETY_NOOUTPUT) &&
          (mode != SAFETY_ALLOUTPUT) &&
@@ -99,15 +103,9 @@ bool is_car_safety_mode(uint16_t mode) {
 // ***************************** main code *****************************
 
 // called by the startup code
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-// cppcheck-suppress misra-c2012-8.4
+void initialize_hardware_early(void);
 void initialize_hardware_early(void) {
   early_initialization();
-}
-
-static void __attribute__ ((noinline)) enable_fpu(void) {
-  // enable the FPU
-  SCB->CPACR |= ((3UL << (10U * 2U)) | (3UL << (11U * 2U)));
 }
 
 // go into SILENT when heartbeat isn't received for this amount of seconds.
@@ -132,7 +130,7 @@ static void tick_handler(void) {
     }
 
     // siren
-    current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
+    current_board->set_siren(((loop_counter & 1U) != 0U) && (siren_enabled || (siren_countdown > 0U)));
 
     // tick drivers at 8Hz
     fan_tick();
@@ -172,7 +170,7 @@ static void tick_handler(void) {
 
       // turn off the blue LED, turned on by CAN
       // unless we are in power saving mode
-      led_set(LED_BLUE, (uptime_cnt & 1U) && power_save_enabled);
+      led_set(LED_BLUE, ((uptime_cnt & 1U) != 0U) && power_save_enabled);
 
       const bool recent_heartbeat = heartbeat_counter == 0U;
 
@@ -306,9 +304,6 @@ int main(void) {
   current_board->set_can_mode(CAN_MODE_NORMAL);
   harness_init();
 
-  // panda has an FPU, let's use it!
-  enable_fpu();
-
   microsecond_timer_init();
 
   current_board->set_siren(false);
@@ -393,11 +388,8 @@ int main(void) {
         enter_stop_mode(); // deep sleep, wakes on CAN or SBU activity
         assert_fatal(false, "Error: enter_stop_mode returned after system reset. Hanging\n");
       }
-      // cppcheck-suppress misra-c2012-17.3 ; CMSIS __WFI macro expands to inline asm
-      __WFI();
+      wait_for_interrupt();
       SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
     }
   }
-
-  return 0;
 }

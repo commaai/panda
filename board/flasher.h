@@ -4,12 +4,14 @@
 // from the linker script
 #define APP_START_ADDRESS 0x8020000U
 
+_Static_assert(sizeof(GITVERSION) <= USBPACKET_MAX_SIZE, "version must fit in one USB packet");
+
 // flasher state variables
 uint32_t *prog_ptr = NULL;
 bool unlocked = false;
 
-int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
-  int resp_len = 0;
+static uint32_t comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
+  uint32_t resp_len = 0;
 
   // flasher machine
   memset(resp, 0, 4);
@@ -82,7 +84,6 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xd6: get version
     case 0xd6:
-      COMPILE_TIME_ASSERT(sizeof(GITVERSION) <= USBPACKET_MAX_SIZE);
       memcpy(resp, GITVERSION, sizeof(GITVERSION));
       resp_len = sizeof(GITVERSION) - 1U;
       break;
@@ -100,7 +101,7 @@ void comms_can_write(const uint8_t *data, uint32_t len) {
   UNUSED(len);
 }
 
-int comms_can_read(uint8_t *data, uint32_t max_len) {
+uint32_t comms_can_read(uint8_t *data, uint32_t max_len) {
   UNUSED(data);
   UNUSED(max_len);
   return 0;
@@ -108,7 +109,7 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
 
 void refresh_can_tx_slots_available(void) {}
 
-void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
+static void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   led_set(LED_RED, 0);
   for (uint32_t i = 0; i < len/4; i++) {
     flash_write_word(prog_ptr, *(uint32_t*)(data+(i*4)));

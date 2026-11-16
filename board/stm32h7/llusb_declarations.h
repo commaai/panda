@@ -1,8 +1,6 @@
 #ifndef BOARD_STM32H7_LLUSB_DECLARATIONS_H
 #define BOARD_STM32H7_LLUSB_DECLARATIONS_H
 
-extern USB_OTG_GlobalTypeDef *USBx;
-
 #define USBx_DEVICE     ((USB_OTG_DeviceTypeDef *)((uint32_t)USBx + USB_OTG_DEVICE_BASE))
 #define USBx_INEP(i)    ((USB_OTG_INEndpointTypeDef *)((uint32_t)USBx + USB_OTG_IN_ENDPOINT_BASE + ((i) * USB_OTG_EP_REG_SIZE)))
 #define USBx_OUTEP(i)   ((USB_OTG_OUTEndpointTypeDef *)((uint32_t)USBx + USB_OTG_OUT_ENDPOINT_BASE + ((i) * USB_OTG_EP_REG_SIZE)))
@@ -13,7 +11,6 @@ extern USB_OTG_GlobalTypeDef *USBx;
 #define USB_OTG_SPEED_FULL        3U
 #define DCFG_FRAME_INTERVAL_80    0U
 
-void usb_irqhandler(void);
-void usb_init(void);
+static void usb_irqhandler(void);
 
 #endif  // BOARD_STM32H7_LLUSB_DECLARATIONS_H

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import glob
+import re
 import unittest
 import shutil
 import subprocess
@@ -23,34 +24,26 @@ IGNORED_PATHS = (
   'board/bootstub.c',
   'board/bootstub_declarations.h',
   'board/stm32h7/llflash.h',
+  'board/crypto',
 )
 
 mutations = [
-  (None, None, False),  # no mods, should pass
-  ("board/stm32h7/llfdcan.h", "s/return ret;/if (true) { return ret; } else { return false; }/g", True),
+  # no mutation, should pass
+  (None, None, None, False),
+  ("board/stm32h7/llfdcan.h", "misra-c2012-15.5", lambda s: s.replace("return ret;", "if (true) { return ret; } else { return false; }"), True),
 ]
 
 patterns = [
-  # misra-c2012-13.3
-  "$a void test(int tmp) { int tmp2 = tmp++ + 2; if (tmp2) {;}}",
-  # misra-c2012-13.4
-  "$a int test(int x, int y) { return (x=2) && (y=2); }",
-  # misra-c2012-13.5
-  "$a void test(int tmp) { if (true && tmp++) {;} }",
-  # misra-c2012-13.6
-  "$a void test(int tmp) { if (sizeof(tmp++)) {;} }",
-  # misra-c2012-14.1
-  "$a void test(float len) { for (float j = 0; j < len; j++) {;} }",
-  # misra-c2012-14.4
-  "$a void test(int len) { if (len - 8) {;} }",
-  # misra-c2012-16.4
-  r"$a void test(int temp) {switch (temp) { case 1: ; }}\n",
-  # misra-c2012-17.8
-  "$a void test(int cnt) { for (cnt=0;;cnt++) {;} }",
-  # misra-c2012-20.4
-  r"$a #define auto 1\n",
-  # misra-c2012-20.5
-  r"$a #define TEST 1\n#undef TEST\n",
+  ("misra-c2012-13.3", lambda s: s + "\nvoid test(int tmp) { int tmp2 = tmp++ + 2; if (tmp2) {;}}\n"),
+  ("misra-c2012-13.4", lambda s: s + "\nint test(int x, int y) { return (x=2) && (y=2); }\n"),
+  ("misra-c2012-13.5", lambda s: s + "\nvoid test(int tmp) { if (true && tmp++) {;} }\n"),
+  ("misra-c2012-13.6", lambda s: s + "\nvoid test(int tmp) { if (sizeof(tmp++)) {;} }\n"),
+  ("misra-c2012-14.1", lambda s: s + "\nvoid test(float len) { for (float j = 0; j < len; j++) {;} }\n"),
+  ("misra-c2012-14.4", lambda s: s + "\nvoid test(int len) { if (len - 8) {;} }\n"),
+  ("misra-c2012-16.4", lambda s: s + "\nvoid test(int temp) {switch (temp) { case 1: ; }}\n"),
+  ("misra-c2012-17.8", lambda s: s + "\nvoid test(int cnt) { for (cnt=0;;cnt++) {;} }\n"),
+  ("misra-c2012-20.4", lambda s: s + "\n#define auto 1\n"),
+  ("misra-c2012-20.5", lambda s: s + "\n#define TEST 1\n#undef TEST\n"),
 ]
 
 all_files = glob.glob('board/**', root_dir=ROOT, recursive=True)
@@ -60,12 +53,23 @@ assert len(files) > 50, all(d in files for d in ('board/main.c', 'board/stm32h7/
 # fixed seed for reproducible mutation selection
 rng = random.Random(len(files))
 for p in patterns:
-  mutations.append((rng.choice(files), p, True))
+  mutations.append((rng.choice(files), *p, True))
 
 # sample to keep CI fast, but always include the no-mutation case
 mutations = [mutations[0]] + rng.sample(mutations[1:], min(2, len(mutations) - 1))
 
-def run_mutation(fn, patch, should_fail):
+
+def apply_mutation(content, transform):
+  # keep the added code inside the include guard, so it is only added once
+  m = re.search(r"^#endif  // BOARD_\w+_H\n\Z", content, re.MULTILINE)
+  if m is None:
+    return transform(content)
+  return transform(content[:m.start()]) + "\n" + content[m.start():]
+
+
+def run_mutation(index):
+  # mutations hold lambdas, which can't be pickled, so workers look theirs up by index
+  fn, _, transform, _ = mutations[index]
   with tempfile.TemporaryDirectory() as tmp:
     shutil.copytree(ROOT, tmp + "/panda", ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__"))
 
@@ -74,15 +78,10 @@ def run_mutation(fn, patch, should_fail):
       fpath = os.path.join(tmp, "panda", fn)
       with open(fpath) as f:
         content = f.read()
-      if patch.startswith("s/"):
-        old, new = patch[2:].rsplit("/g", 1)[0].split("/", 1)
-        content = content.replace(old, new)
-      elif patch.startswith("$a "):
-        content += patch[3:].replace(r"\n", "\n")
       with open(fpath, "w") as f:
-        f.write(content)
+        f.write(apply_mutation(content, transform))
 
-    return subprocess.run("SKIP_TABLES_DIFF=1 panda/tests/misra/test_misra.sh", cwd=tmp, shell=True,
+    return subprocess.run("SKIP_BUILD=1 panda/tests/misra/test_misra.sh", cwd=tmp, shell=True,
                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
 
@@ -92,14 +91,17 @@ class TestMisraMutation(unittest.TestCase):
     # Each mutation has its own checkout and subprocess; keep the expensive checks parallel.
     executor = ProcessPoolExecutor(max_workers=len(mutations))
     cls.addClassCleanup(executor.shutdown)
-    cls.results = [executor.submit(run_mutation, *mutation) for mutation in mutations]
+    cls.results = [executor.submit(run_mutation, i) for i in range(len(mutations))]
 
 
 def mutation_test(index):
   def test(self):
     result = self.results[index].result()
-    self.assertEqual(result.returncode != 0, mutations[index][2], result.stdout)
-  test.__doc__ = f"MISRA mutation: {mutations[index]}"
+    _, rule, _, should_fail = mutations[index]
+    self.assertEqual(result.returncode != 0, should_fail, result.stdout)
+    if should_fail:
+      self.assertIn(rule, result.stdout, "MISRA test failed but not for the correct violation")
+  test.__doc__ = f"MISRA mutation: {mutations[index][:2]}"
   return test
 
 

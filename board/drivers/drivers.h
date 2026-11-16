@@ -1,6 +1,11 @@
 #ifndef BOARD_DRIVERS_DRIVERS_H
 #define BOARD_DRIVERS_DRIVERS_H
 
+// The firmware, the bootstub and the body are each one translation unit built
+// from these header-only drivers, so the driver functions are static. The ones
+// that not all three of them call are static inline, so GCC doesn't warn that
+// they're unused.
+
 #include "board/can.h"
 #include "board/health.h"
 #include "board/crc.h"
@@ -8,17 +13,12 @@
 #include "board/stm32h7/lladc_declarations.h"
 #endif
 
-// ******************** bootkick ********************
-
-extern bool bootkick_reset_triggered;
-
-void bootkick_tick(bool ignition, bool recent_heartbeat);
-
 // ******************** can_common ********************
 
 typedef struct {
-  volatile uint32_t w_ptr;
-  volatile uint32_t r_ptr;
+  // only accessed in critical sections
+  uint32_t w_ptr;
+  uint32_t r_ptr;
   uint32_t fifo_size;
   CANPacket_t *elems;
 } can_ring;
@@ -34,49 +34,22 @@ typedef struct {
   bool canfd_non_iso;
 } bus_config_t;
 
-extern uint32_t safety_tx_blocked;
-extern uint32_t safety_rx_invalid;
-extern uint32_t tx_buffer_overflow;
-extern uint32_t rx_buffer_overflow;
-
-extern can_health_t can_health[PANDA_CAN_CNT];
-
-extern bool can_silent;
-extern bool can_loopback;
-
-// ******************* functions prototypes *********************
-bool can_init(uint8_t can_number);
-void process_can(uint8_t can_number);
-
-// ********************* instantiate queues *********************
-extern can_ring *can_queues[PANDA_CAN_CNT];
-
 // helpers
-#define WORD_TO_BYTE_ARRAY(dst8, src32) 0[dst8] = ((src32) & 0xFFU); 1[dst8] = (((src32) >> 8U) & 0xFFU); 2[dst8] = (((src32) >> 16U) & 0xFFU); 3[dst8] = (((src32) >> 24U) & 0xFFU)
-#define BYTE_ARRAY_TO_WORD(dst32, src8) ((dst32) = 0[src8] | (1[src8] << 8U) | (2[src8] << 16U) | (3[src8] << 24U))
+#define WORD_TO_BYTE_ARRAY(dst8, src32) (dst8)[0] = (uint8_t)((src32) & 0xFFU); (dst8)[1] = (uint8_t)(((src32) >> 8U) & 0xFFU); (dst8)[2] = (uint8_t)(((src32) >> 16U) & 0xFFU); (dst8)[3] = (uint8_t)(((src32) >> 24U) & 0xFFU)
+#define BYTE_ARRAY_TO_WORD(dst32, src8) ((dst32) = (uint32_t)(src8)[0] | ((uint32_t)(src8)[1] << 8U) | ((uint32_t)(src8)[2] << 16U) | ((uint32_t)(src8)[3] << 24U))
+static inline uint16_t read_u16_le(const uint8_t *src8) {
+  return src8[0] | ((uint16_t)src8[1] << 8U);
+}
 
 // ********************* interrupt safe queue *********************
+// not static, tests/libpanda calls these
 bool can_pop(can_ring *q, CANPacket_t *elem);
 bool can_push(can_ring *q, const CANPacket_t *elem);
 uint32_t can_slots_empty(const can_ring *q);
-extern bus_config_t bus_config[PANDA_CAN_CNT];
 
-#define CANIF_FROM_CAN_NUM(num) (cans[num])
-#define BUS_NUM_FROM_CAN_NUM(num) (bus_config[num].bus_lookup)
-#define CAN_NUM_FROM_BUS_NUM(num) (bus_config[num].can_num_lookup)
-
-void can_init_all(void);
-void can_set_orientation(bool flipped);
-bool can_tx_check_min_slots_free(uint32_t min);
-void can_set_checksum(CANPacket_t *packet);
-bool can_check_checksum(CANPacket_t *packet);
-void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook);
-bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len);
-
-// ******************** clock_source ********************
-
-void clock_source_set_timer_params(uint16_t param1, uint16_t param2);
-void clock_source_init(bool enable_channel1);
+#define CANIF_FROM_CAN_NUM(num) (cans[(num)])
+#define BUS_NUM_FROM_CAN_NUM(num) (bus_config[(num)].bus_lookup)
+#define CAN_NUM_FROM_BUS_NUM(num) (bus_config[(num)].can_num_lookup)
 
 // ******************** fan ********************
 
@@ -86,13 +59,6 @@ struct fan_state_t {
   uint8_t power;
   uint8_t cooldown_counter;
 };
-extern struct fan_state_t fan_state;
-
-void fan_set_power(uint8_t percentage);
-void llfan_init(void);
-void fan_init(void);
-// Call this at FAN_TICK_FREQ
-void fan_tick(void);
 
 // ******************** fdcan ********************
 #ifdef STM32H7
@@ -102,13 +68,7 @@ typedef struct {
   volatile uint32_t data_word[CANPACKET_DATA_SIZE_MAX/4U];
 } canfd_fifo;
 
-extern FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT];
-
 #define CAN_ACK_ERROR 3U
-
-void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number);
-void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg);
-
 
 // ******************** harness ********************
 
@@ -123,7 +83,6 @@ struct harness_t {
   bool relay_driven;
   bool sbu_adc_lock;
 };
-extern struct harness_t harness;
 
 struct harness_configuration {
   GPIO_TypeDef * const GPIO_SBU1;
@@ -138,15 +97,9 @@ struct harness_configuration {
   const adc_signal_t adc_signal_SBU2;
 };
 
-// The ignition relay is only used for testing purposes
-void set_intercept_relay(bool intercept, bool ignition_relay);
-bool harness_check_ignition(void);
-void harness_tick(void);
-void harness_init(void);
-
 // ******************** interrupts ********************
 
-typedef struct interrupt {
+typedef struct {
   void (*handler)(void);
   uint32_t call_counter;
   uint32_t call_rate;
@@ -160,28 +113,16 @@ typedef struct {
   uint32_t prev_ts;
   uint32_t mismatches;
 } timer_check_t;
-bool timer_check(timer_check_t *check, uint32_t *dt_out);
-void interrupt_timer_init(void);
+static bool timer_check(timer_check_t *check, uint32_t *dt_out);
+static void interrupt_timer_init(void);
 uint32_t microsecond_timer_get(void);
 
-extern interrupt interrupts[NUM_INTERRUPTS];
-
 #define REGISTER_INTERRUPT(irq_num, func_ptr, call_rate_max, rate_fault) \
-  interrupts[irq_num].handler = (func_ptr);  \
-  interrupts[irq_num].call_counter = 0U;   \
-  interrupts[irq_num].call_rate = 0U;   \
-  interrupts[irq_num].max_call_rate = (call_rate_max); \
-  interrupts[irq_num].call_rate_fault = (rate_fault);
-
-extern float interrupt_load;
-
-void handle_interrupt(IRQn_Type irq_type);
-// Every second
-void interrupt_timer_handler(void);
-void init_interrupts(bool check_rate_limit);
-void nvic_enable(IRQn_Type irq);
-void nvic_disable(IRQn_Type irq);
-void nvic_check(void);
+  interrupts[(irq_num)].handler = (func_ptr);  \
+  interrupts[(irq_num)].call_counter = 0U;   \
+  interrupts[(irq_num)].call_rate = 0U;   \
+  interrupts[(irq_num)].max_call_rate = (call_rate_max); \
+  interrupts[(irq_num)].call_rate_fault = (rate_fault);
 
 #endif // STM32H7
 
@@ -191,33 +132,13 @@ void nvic_check(void);
 #define REGISTER_MAP_SIZE 0x400U
 #define HASHING_PRIME 23U
 
-// Do not put bits in the check mask that get changed by the hardware
-void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask);
-// Set individual bits. Also add them to the check_mask.
-// Do not use this to change bits that get reset by the hardware
-void register_set_bits(volatile uint32_t *addr, uint32_t val);
-// Clear individual bits. Also add them to the check_mask.
-// Do not use this to clear bits that get set by the hardware
-void register_clear_bits(volatile uint32_t *addr, uint32_t val);
-// To be called periodically
-void check_registers(void);
-void init_registers(void);
-
-// ******************** mpu ********************
-
-void mpu_safety_open(void);
-void mpu_safety_close(void);
-
 // ******************** simple_watchdog ********************
 
-typedef struct simple_watchdog_state_t {
+typedef struct {
   uint32_t fault;
   uint32_t last_ts;
   uint32_t threshold;
 } simple_watchdog_state_t;
-
-void simple_watchdog_kick(void);
-void simple_watchdog_init(uint32_t fault, uint32_t threshold);
 
 // ******************** spi ********************
 
@@ -226,25 +147,31 @@ void simple_watchdog_init(uint32_t fault, uint32_t threshold);
 #define SPI_IRQ_RATE  16000U
 
 #define SPI_BUF_SIZE 4096U
-extern uint8_t spi_buf_rx[SPI_BUF_SIZE];
-extern uint8_t spi_buf_tx[SPI_BUF_SIZE];
-
-extern uint16_t spi_error_count;
-
-void can_tx_comms_resume_spi(void);
-void spi_init(void);
 
 // ******************** debug ********************
-bool debug_get_char(char *elem);
-void print(const char *a);
-void puth(unsigned int i);
-static void hexdump(const void *a, int l);
-static inline void puth4(unsigned int i);
+static void print(const char *a);
+static void puth(unsigned int i);
 
 // ******************** usb ********************
 
-void usb_init(void);
-void refresh_can_tx_slots_available(void);
-void can_tx_comms_resume_usb(void);
+static void refresh_can_tx_slots_available(void);
+
+// ******************** comms ********************
+// USB and SPI hand requests to these. The firmware, the bootstub and the body each implement them
+
+// A control request. USB fills it from the setup packet, SPI decodes it from its endpoint 0 data
+typedef struct {
+  uint8_t request;
+  uint16_t param1;
+  uint16_t param2;
+  uint16_t length;
+} ControlPacket_t;
+
+static uint32_t comms_control_handler(ControlPacket_t *req, uint8_t *resp);
+static void comms_endpoint2_write(const uint8_t *data, uint32_t len);
+// not static, tests/libpanda calls these
+void comms_can_write(const uint8_t *data, uint32_t len);
+uint32_t comms_can_read(uint8_t *data, uint32_t max_len);
+void comms_can_reset(void);
 
 #endif  // BOARD_DRIVERS_DRIVERS_H
