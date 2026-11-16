@@ -220,9 +220,9 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xd6: get version
     case 0xd6:
-      COMPILE_TIME_ASSERT(sizeof(gitversion) <= USBPACKET_MAX_SIZE);
-      (void)memcpy(resp, gitversion, sizeof(gitversion));
-      resp_len = sizeof(gitversion) - 1U;
+      COMPILE_TIME_ASSERT(sizeof(GITVERSION) <= USBPACKET_MAX_SIZE);
+      (void)memcpy(resp, GITVERSION, sizeof(GITVERSION));
+      resp_len = sizeof(GITVERSION) - 1U;
       break;
     // **** 0xd8: reset ST
     case 0xd8:
