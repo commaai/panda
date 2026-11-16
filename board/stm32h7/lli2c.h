@@ -24,110 +24,73 @@ static void i2c_reset(I2C_TypeDef *I2C) {
   register_set_bits(&I2C->CR1, I2C_CR1_PE);
 }
 
-static bool i2c_write_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg_addr, uint8_t value) {
-  bool ret = false;
+// clears the flag if we lost arbitration
+static bool i2c_arbitration_lost(I2C_TypeDef *I2C) {
+  bool lost = (I2C->ISR & I2C_ISR_ARLO) != 0U;
+  if (lost) {
+    I2C->ICR = I2C_ICR_ARLOCF;
+  }
+  return lost;
+}
 
-  // Setup transfer and send START + addr
-  for (uint32_t i = 0U; i < I2C_RETRY_COUNT; i++) {
-    I2C->CR2 = (((uint32_t)addr << 1U) & I2C_CR2_SADD_Msk) | I2C_CR2_AUTOEND | (2UL << I2C_CR2_NBYTES_Pos);
-
+// Setup transfer and send START + addr
+static bool i2c_start(I2C_TypeDef *I2C, uint32_t cr2) {
+  bool started = false;
+  for (uint32_t i = 0U; (i < I2C_RETRY_COUNT) && !started; i++) {
+    I2C->CR2 = cr2;
     I2C->CR2 |= I2C_CR2_START;
-    if(!i2c_status_wait(&I2C->CR2, I2C_CR2_START, 0U)) {
-      continue;
-    }
-
-    // check if we lost arbitration
-    if ((I2C->ISR & I2C_ISR_ARLO) != 0U) {
-      I2C->ICR = I2C_ICR_ARLOCF;
-    } else {
-      ret = true;
-      break;
+    if (i2c_status_wait(&I2C->CR2, I2C_CR2_START, 0U)) {
+      started = !i2c_arbitration_lost(I2C);
     }
   }
+  return started;
+}
 
-  if (!ret) {
-    goto end;
+static bool i2c_send(I2C_TypeDef *I2C, uint8_t data) {
+  bool ready = i2c_status_wait(&I2C->ISR, I2C_ISR_TXIS, I2C_ISR_TXIS);
+  if (ready) {
+    I2C->TXDR = data;
   }
+  return ready;
+}
 
-  // Send data
-  ret = i2c_status_wait(&I2C->ISR, I2C_ISR_TXIS, I2C_ISR_TXIS);
-  if(!ret) {
-    goto end;
+static bool i2c_write_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg_addr, uint8_t value) {
+  bool ret = i2c_start(I2C, (((uint32_t)addr << 1U) & I2C_CR2_SADD_Msk) | I2C_CR2_AUTOEND | (2UL << I2C_CR2_NBYTES_Pos));
+  if (ret) {
+    ret = i2c_send(I2C, reg_addr);
   }
-  I2C->TXDR = reg_addr;
-
-  ret = i2c_status_wait(&I2C->ISR, I2C_ISR_TXIS, I2C_ISR_TXIS);
-  if(!ret) {
-    goto end;
+  if (ret) {
+    ret = i2c_send(I2C, value);
   }
-  I2C->TXDR = value;
-
-end:
   return ret;
 }
 
 static bool i2c_read_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg_addr, uint8_t *value) {
-  bool ret = false;
-
-  // Setup transfer and send START + addr
-  for (uint32_t i = 0U; i < I2C_RETRY_COUNT; i++) {
-    I2C->CR2 = (((uint32_t)addr << 1U) & I2C_CR2_SADD_Msk) | (1UL << I2C_CR2_NBYTES_Pos);
-
-    I2C->CR2 |= I2C_CR2_START;
-    if(!i2c_status_wait(&I2C->CR2, I2C_CR2_START, 0U)) {
-      continue;
-    }
-
-    // check if we lost arbitration
-    if ((I2C->ISR & I2C_ISR_ARLO) != 0U) {
-      I2C->ICR = I2C_ICR_ARLOCF;
-    } else {
-      ret = true;
-      break;
-    }
+  bool ret = i2c_start(I2C, (((uint32_t)addr << 1U) & I2C_CR2_SADD_Msk) | (1UL << I2C_CR2_NBYTES_Pos));
+  if (ret) {
+    ret = i2c_send(I2C, reg_addr);
   }
-
-  if (!ret) {
-    goto end;
-  }
-
-  // Send data
-  ret = i2c_status_wait(&I2C->ISR, I2C_ISR_TXIS, I2C_ISR_TXIS);
-  if(!ret) {
-    goto end;
-  }
-  I2C->TXDR = reg_addr;
 
   // Restart
-  I2C->CR2 = (((addr << 1) | 0x1U) & I2C_CR2_SADD_Msk) | (1UL << I2C_CR2_NBYTES_Pos) | I2C_CR2_RD_WRN | I2C_CR2_START;
-  ret = i2c_status_wait(&I2C->CR2, I2C_CR2_START, 0U);
-  if(!ret) {
-    goto end;
+  if (ret) {
+    I2C->CR2 = ((((uint32_t)addr << 1U) | 0x1U) & I2C_CR2_SADD_Msk) | (1UL << I2C_CR2_NBYTES_Pos) | I2C_CR2_RD_WRN | I2C_CR2_START;
+    ret = i2c_status_wait(&I2C->CR2, I2C_CR2_START, 0U);
   }
-
-  // check if we lost arbitration
-  if ((I2C->ISR & I2C_ISR_ARLO) != 0U) {
-    I2C->ICR = I2C_ICR_ARLOCF;
-    ret = false;
-    goto end;
+  if (ret) {
+    ret = !i2c_arbitration_lost(I2C);
   }
 
   // Read data
-  ret = i2c_status_wait(&I2C->ISR, I2C_ISR_RXNE, I2C_ISR_RXNE);
-  if(!ret) {
-    goto end;
+  if (ret) {
+    ret = i2c_status_wait(&I2C->ISR, I2C_ISR_RXNE, I2C_ISR_RXNE);
   }
-  *value = I2C->RXDR;
-
-  // Stop
-  I2C->CR2 |= I2C_CR2_STOP;
-
-end:
-
-  if (!ret) {
+  if (ret) {
+    *value = (uint8_t)I2C->RXDR;
+    // Stop
+    I2C->CR2 |= I2C_CR2_STOP;
+  } else {
     i2c_reset(I2C);
   }
-
   return ret;
 }
 
