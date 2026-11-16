@@ -9,7 +9,7 @@ static char debug_buffer[DEBUG_BUFFER_SIZE];
 static volatile uint16_t debug_write_ptr = 0;
 static volatile uint16_t debug_read_ptr = 0;
 
-bool debug_get_char(char *elem) {
+static bool debug_get_char(char *elem) {
   bool ret = false;
 
   ENTER_CRITICAL();
@@ -37,7 +37,7 @@ static void putch(const char a) {
   EXIT_CRITICAL();
 }
 
-void print(const char *a) {
+static void print(const char *a) {
   for (const char *in = a; *in; in++) {
     if (*in == '\n') {
       putch('\r');
@@ -53,7 +53,7 @@ static void puthx(uint32_t i, uint8_t len) {
   }
 }
 
-void puth(unsigned int i) {
+static void puth(unsigned int i) {
   puthx(i, 8U);
 }
 

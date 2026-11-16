@@ -8,7 +8,7 @@
 uint32_t *prog_ptr = NULL;
 bool unlocked = false;
 
-int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
+static int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   int resp_len = 0;
 
   // flasher machine
@@ -108,7 +108,7 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
 
 void refresh_can_tx_slots_available(void) {}
 
-void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
+static void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   led_set(LED_RED, 0);
   for (uint32_t i = 0; i < len/4; i++) {
     flash_write_word(prog_ptr, *(uint32_t*)(data+(i*4)));

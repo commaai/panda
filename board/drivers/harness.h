@@ -3,15 +3,16 @@
 
 #include "board/drivers/drivers.h"
 
-struct harness_t harness;
+static struct harness_t harness;
 
 #ifdef ALLOW_DEBUG
-bool relay_readback_inject = false;
-uint16_t harness_adc2_offset_mV = 0U;
+// set by the 0xf5 control request, for testing
+static bool relay_readback_inject = false;
+static uint16_t harness_adc2_offset_mV = 0U;
 #endif
 
 // The ignition relay is only used for testing purposes
-void set_intercept_relay(bool intercept, bool ignition_relay) {
+static void set_intercept_relay(bool intercept, bool ignition_relay) {
   bool drive_relay = intercept;
   if (harness.status == HARNESS_STATUS_NC) {
     // no harness, no relay to drive
@@ -46,7 +47,7 @@ static bool relay_pin_mismatch(const GPIO_TypeDef *GPIO, unsigned int pin) {
   return is_output && (driven != read);
 }
 
-bool harness_check_ignition(void) {
+static inline bool harness_check_ignition(void) {
   bool ret = false;
 
   // wait until we're not reading the analog voltages anymore
@@ -70,7 +71,6 @@ static uint8_t harness_detect_orientation(void) {
   static uint32_t adc_mismatches = 0U;
   static uint16_t sbu1_adc2_mV = 0U;
 
-  #ifndef BOOTSTUB
   // We can't detect orientation if the relay is being driven
   if (!harness.relay_driven) {
     harness.sbu_adc_lock = true;
@@ -111,7 +111,6 @@ static uint8_t harness_detect_orientation(void) {
     set_gpio_mode(current_board->harness_config->GPIO_SBU2, current_board->harness_config->pin_SBU2, MODE_INPUT);
     harness.sbu_adc_lock = false;
   }
-  #endif
 
   // after the ADC lock, the safe state drives the relay
   if (adc_mismatches >= 8U) {
@@ -121,7 +120,7 @@ static uint8_t harness_detect_orientation(void) {
   return ret;
 }
 
-void harness_tick(void) {
+static inline void harness_tick(void) {
   harness.status = harness_detect_orientation();
 
   // GPIO_SM_2: relay pins read back what is driven, one tick of slack for switching
@@ -138,7 +137,7 @@ void harness_tick(void) {
   }
 }
 
-void harness_init(void) {
+static inline void harness_init(void) {
   // init OBD_SBUx_RELAY
   set_gpio_output_type(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, OUTPUT_TYPE_OPEN_DRAIN);
   set_gpio_output_type(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, OUTPUT_TYPE_OPEN_DRAIN);

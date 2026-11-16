@@ -5,7 +5,7 @@
 
 // TODO: Implement for 32-bit timers
 
-void pwm_init(TIM_TypeDef *TIM, uint8_t channel){
+static void pwm_init(TIM_TypeDef *TIM, uint8_t channel){
   // Enable timer and auto-reload
   register_set(&(TIM->CR1), TIM_CR1_CEN | TIM_CR1_ARPE, 0x3FU);
 
@@ -38,7 +38,7 @@ void pwm_init(TIM_TypeDef *TIM, uint8_t channel){
   TIM->EGR |= TIM_EGR_UG;
 }
 
-void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage){
+static void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage){
   uint16_t comp_value = (((uint16_t) percentage * PWM_COUNTER_OVERFLOW) / 100U);
   switch(channel){
     case 1U:

@@ -5,7 +5,7 @@
 
 static uint32_t adc_avdd_mV = 0U;
 
-void adc_init(ADC_TypeDef *adc) {
+static void adc_init(ADC_TypeDef *adc) {
   adc->CR &= ~(ADC_CR_ADEN); // Disable ADC
   adc->CR &= ~(ADC_CR_DEEPPWD); // Reset deep-power-down mode
   adc->CR |= ADC_CR_ADVREGEN; // Enable ADC regulator
@@ -23,7 +23,7 @@ void adc_init(ADC_TypeDef *adc) {
   while(!(adc->ISR & ADC_ISR_ADRDY)) {}
 }
 
-uint16_t adc_get_raw(const adc_signal_t *signal) {
+static uint16_t adc_get_raw(const adc_signal_t *signal) {
   signal->adc->SQR1 &= ~(ADC_SQR1_L);
   signal->adc->SQR1 = ((uint32_t) signal->channel << 6U);
 
@@ -75,7 +75,7 @@ static void adc_calibrate_vdda(void) {
 static volatile bool adc2_busy = false;
 
 // ADC_SM_2, ADC_SM_3: AVDD from VREFINT has to match the board
-void adc_check(uint32_t expected_avdd_mV) {
+static inline void adc_check(uint32_t expected_avdd_mV) {
   adc2_busy = true;
   uint32_t avdd_mV = adc_measure_avdd_mV();
   adc2_busy = false;
@@ -86,7 +86,7 @@ void adc_check(uint32_t expected_avdd_mV) {
   }
 }
 
-uint16_t adc_get_mV(const adc_signal_t *signal) {
+static inline uint16_t adc_get_mV(const adc_signal_t *signal) {
   uint16_t ret = 0;
 
   if (adc_avdd_mV == 0U) {

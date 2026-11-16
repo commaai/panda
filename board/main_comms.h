@@ -5,11 +5,25 @@
 extern int app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 // Prototypes
-void set_safety_mode(uint16_t mode, uint16_t param);
+static void set_safety_mode(uint16_t mode, uint16_t param);
 #ifdef ALLOW_DEBUG
-void self_test_inject(uint8_t test);
+static void self_test_inject(uint8_t test);
 #endif
-bool is_car_safety_mode(uint16_t mode);
+static bool is_car_safety_mode(uint16_t mode);
+
+// ********************* Globals **********************
+// main.c's state that the health packet reports or the control requests set
+static uint32_t uptime_cnt = 0;
+static uint16_t reset_flags = 0U;
+
+// heartbeat state
+static uint32_t heartbeat_counter = 0;
+static uint32_t heartbeat_tick_counter = 0;        // 8Hz
+static bool heartbeat_lost = false;
+static bool heartbeat_disabled = false;            // set over USB
+
+// siren state
+static bool siren_enabled = false;
 
 static int get_health_pkt(void *dat) {
   COMPILE_TIME_ASSERT(sizeof(struct health_t) <= USBPACKET_MAX_SIZE);
@@ -61,7 +75,7 @@ static int get_health_pkt(void *dat) {
 }
 
 // Endpoint 2 is only used by the bootstub for flashing.
-void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
+static void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   UNUSED(data);
   UNUSED(len);
 }
@@ -74,7 +88,10 @@ static void __attribute__((noinline)) stack_guard_hit(void) {
 }
 #endif
 
-int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
+static int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
+  // kbps multiplied by 10
+  static const uint32_t speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};
+  static const uint32_t data_speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U, 20000U, 50000U};
   unsigned int resp_len = 0;
   uint32_t time;
 

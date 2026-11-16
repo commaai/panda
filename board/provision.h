@@ -6,7 +6,7 @@
 
 #define PROVISION_CHUNK_LEN 0x20
 
-void get_provision_chunk(uint8_t *resp) {
+static void get_provision_chunk(uint8_t *resp) {
   const unsigned char unprovisioned_text[] = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff";
 
   (void)memcpy(resp, (uint8_t *)PROVISION_CHUNK_ADDRESS, PROVISION_CHUNK_LEN);

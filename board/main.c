@@ -1,11 +1,14 @@
 // ********************* Includes *********************
 #include "board/config.h"
 
-#include "board/drivers/led.h"
 #include "board/drivers/pwm.h"
+#include "board/drivers/led.h"
 #include "board/drivers/usb.h"
 #include "board/drivers/simple_watchdog.h"
 #include "board/drivers/bootkick.h"
+#include "board/drivers/fan.h"
+#include "board/stm32h7/llfan.h"
+#include "board/stm32h7/lldts.h"
 
 #include "board/early_init.h"
 #include "board/provision.h"
@@ -27,7 +30,7 @@
 // ****************************** safety mode ******************************
 
 // this is the only way to leave silent mode
-void set_safety_mode(uint16_t mode, uint16_t param) {
+static void set_safety_mode(uint16_t mode, uint16_t param) {
   uint16_t mode_copy = mode;
   if ((faults & PERMANENT_FAULTS) != 0U) {
     mode_copy = SAFETY_SILENT;
@@ -83,11 +86,11 @@ void set_safety_mode(uint16_t mode, uint16_t param) {
 }
 
 // SILENT clears controls_allowed and opens the relay
-void fault_safe_state(void) {
+static void fault_safe_state(void) {
   set_safety_mode(SAFETY_SILENT, 0U);
 }
 
-bool is_car_safety_mode(uint16_t mode) {
+static bool is_car_safety_mode(uint16_t mode) {
   return (mode != SAFETY_SILENT) &&
          (mode != SAFETY_NOOUTPUT) &&
          (mode != SAFETY_ALLOUTPUT) &&
@@ -97,8 +100,7 @@ bool is_car_safety_mode(uint16_t mode) {
 // ***************************** main code *****************************
 
 // called by the startup code
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-// cppcheck-suppress misra-c2012-8.4
+void initialize_hardware_early(void);
 void initialize_hardware_early(void) {
   early_initialization();
 }

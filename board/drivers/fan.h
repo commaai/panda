@@ -3,11 +3,14 @@
 
 #include "board/drivers/drivers.h"
 
-struct fan_state_t fan_state;
+// defined in llfan.h, which is included after this
+static void llfan_init(void);
 
-static const uint8_t FAN_TICK_FREQ = 8U;
+static struct fan_state_t fan_state;
 
-void fan_set_power(uint8_t percentage) {
+#define FAN_TICK_FREQ 8U
+
+static void fan_set_power(uint8_t percentage) {
   if (percentage > 0U) {
     fan_state.power = CLAMP(percentage, 20U, 100U);
   } else {
@@ -15,13 +18,13 @@ void fan_set_power(uint8_t percentage) {
   }
 }
 
-void fan_init(void) {
+static void fan_init(void) {
   fan_state.cooldown_counter = current_board->fan_enable_cooldown_time * FAN_TICK_FREQ;
   llfan_init();
 }
 
 // Call this at FAN_TICK_FREQ
-void fan_tick(void) {
+static void fan_tick(void) {
   if (current_board->has_fan) {
     // Measure fan RPM
     uint16_t fan_rpm_fast = fan_state.tach_counter * (60U * FAN_TICK_FREQ / 4U);   // 4 interrupts per rotation
