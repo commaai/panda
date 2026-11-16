@@ -121,6 +121,28 @@ ram_test_none:
 Default_Handler:
   b  HardFault_Handler
   .size  Default_Handler, .-Default_Handler
+
+/**
+ * @brief  NMI and HardFault pass the exception stack frame to their C handlers
+ *         in board/early_init.h. It is read before anything else is pushed,
+ *         and panda only runs on the main stack.
+ * @param  None
+ * @retval None
+*/
+    .section  .text.NMI_Handler,"ax",%progbits
+  .type  NMI_Handler, %function
+NMI_Handler:
+  mrs  r0, msp
+  b  nmi_record
+  .size  NMI_Handler, .-NMI_Handler
+
+    .section  .text.HardFault_Handler,"ax",%progbits
+  .type  HardFault_Handler, %function
+HardFault_Handler:
+  mrs  r0, msp
+  b  hardfault_record
+  .size  HardFault_Handler, .-HardFault_Handler
+
 /******************************************************************************
 *
 * The minimal vector table for a Cortex M. Note that the proper constructs
@@ -324,12 +346,6 @@ g_pfnVectors:
 * this definition.
 *
 *******************************************************************************/
-   .weak      NMI_Handler
-   .thumb_set NMI_Handler,Default_Handler
-
-   .weak      HardFault_Handler
-   .thumb_set HardFault_Handler,Default_Handler
-
    .weak      MemManage_Handler
    .thumb_set MemManage_Handler,Default_Handler
 
