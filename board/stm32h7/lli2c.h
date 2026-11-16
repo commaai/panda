@@ -7,10 +7,10 @@
 #define I2C_RETRY_COUNT 10U
 #define I2C_TIMEOUT_US 100000U
 
-bool i2c_status_wait(const volatile uint32_t *reg, uint32_t mask, uint32_t val) {
+bool i2c_status_wait(const volatile uint32_t *status_reg, uint32_t mask, uint32_t val) {
   uint32_t start_time = microsecond_timer_get();
-  while(((*reg & mask) != val) && (get_ts_elapsed(microsecond_timer_get(), start_time) < I2C_TIMEOUT_US));
-  return ((*reg & mask) == val);
+  while(((*status_reg & mask) != val) && (get_ts_elapsed(microsecond_timer_get(), start_time) < I2C_TIMEOUT_US));
+  return ((*status_reg & mask) == val);
 }
 
 void i2c_reset(I2C_TypeDef *I2C) {
@@ -20,7 +20,7 @@ void i2c_reset(I2C_TypeDef *I2C) {
   register_set_bits(&I2C->CR1, I2C_CR1_PE);
 }
 
-static bool i2c_write_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t value) {
+static bool i2c_write_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg_addr, uint8_t value) {
   bool ret = false;
 
   // Setup transfer and send START + addr
@@ -50,7 +50,7 @@ static bool i2c_write_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t v
   if(!ret) {
     goto end;
   }
-  I2C->TXDR = reg;
+  I2C->TXDR = reg_addr;
 
   ret = i2c_status_wait(&I2C->ISR, I2C_ISR_TXIS, I2C_ISR_TXIS);
   if(!ret) {
@@ -62,7 +62,7 @@ end:
   return ret;
 }
 
-static bool i2c_read_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t *value) {
+static bool i2c_read_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg_addr, uint8_t *value) {
   bool ret = false;
 
   // Setup transfer and send START + addr
@@ -92,7 +92,7 @@ static bool i2c_read_reg(I2C_TypeDef *I2C, uint8_t addr, uint8_t reg, uint8_t *v
   if(!ret) {
     goto end;
   }
-  I2C->TXDR = reg;
+  I2C->TXDR = reg_addr;
 
   // Restart
   I2C->CR2 = (((addr << 1) | 0x1U) & I2C_CR2_SADD_Msk) | (1UL << I2C_CR2_NBYTES_Pos) | I2C_CR2_RD_WRN | I2C_CR2_START;
@@ -127,29 +127,29 @@ end:
   return ret;
 }
 
-bool i2c_set_reg_bits(I2C_TypeDef *I2C, uint8_t address, uint8_t regis, uint8_t bits) {
+bool i2c_set_reg_bits(I2C_TypeDef *I2C, uint8_t address, uint8_t reg_addr, uint8_t bits) {
   uint8_t value;
-  bool ret = i2c_read_reg(I2C, address, regis, &value);
+  bool ret = i2c_read_reg(I2C, address, reg_addr, &value);
   if(ret) {
-    ret = i2c_write_reg(I2C, address, regis, value | bits);
+    ret = i2c_write_reg(I2C, address, reg_addr, value | bits);
   }
   return ret;
 }
 
-bool i2c_clear_reg_bits(I2C_TypeDef *I2C, uint8_t address, uint8_t regis, uint8_t bits) {
+bool i2c_clear_reg_bits(I2C_TypeDef *I2C, uint8_t address, uint8_t reg_addr, uint8_t bits) {
   uint8_t value;
-  bool ret = i2c_read_reg(I2C, address, regis, &value);
+  bool ret = i2c_read_reg(I2C, address, reg_addr, &value);
   if (ret) {
-    ret = i2c_write_reg(I2C, address, regis, value & (uint8_t) (~bits));
+    ret = i2c_write_reg(I2C, address, reg_addr, value & (uint8_t) (~bits));
   }
   return ret;
 }
 
-bool i2c_set_reg_mask(I2C_TypeDef *I2C, uint8_t address, uint8_t regis, uint8_t value, uint8_t mask) {
+bool i2c_set_reg_mask(I2C_TypeDef *I2C, uint8_t address, uint8_t reg_addr, uint8_t value, uint8_t mask) {
   uint8_t old_value;
-  bool ret = i2c_read_reg(I2C, address, regis, &old_value);
+  bool ret = i2c_read_reg(I2C, address, reg_addr, &old_value);
   if(ret) {
-    ret = i2c_write_reg(I2C, address, regis, (old_value & (uint8_t) (~mask)) | (value & mask));
+    ret = i2c_write_reg(I2C, address, reg_addr, (old_value & (uint8_t) (~mask)) | (value & mask));
   }
   return ret;
 }
