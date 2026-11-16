@@ -175,7 +175,7 @@ extern interrupt interrupts[NUM_INTERRUPTS];
 
 extern float interrupt_load;
 
-void handle_interrupt(IRQn_Type irq_type);
+void handle_interrupt(void);
 // Every second
 void interrupt_timer_handler(void);
 void init_interrupts(bool check_rate_limit);

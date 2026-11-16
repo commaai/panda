@@ -57,7 +57,11 @@ static uint32_t idle_time = 0U;
 static uint32_t busy_time = 0U;
 float interrupt_load = 0.0f;
 
-void handle_interrupt(IRQn_Type irq_type){
+// every IRQ vector in board/stm32h7/startup_stm32h7x5xx.s points here
+void handle_interrupt(void);
+void handle_interrupt(void) {
+  // exceptions 0 to 15 are the core's, IRQ n is exception 16 + n
+  uint32_t irq_type = __get_IPSR() - 16U;
   static uint8_t interrupt_depth = 0U;
   static uint32_t last_time = 0U;
   ENTER_CRITICAL();
