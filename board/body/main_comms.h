@@ -57,8 +57,8 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
 
     // **** 0xd6: get version
     case 0xd6:
-      (void)memcpy(resp, gitversion, sizeof(gitversion));
-      resp_len = sizeof(gitversion) - 1U;
+      (void)memcpy(resp, GITVERSION, sizeof(GITVERSION));
+      resp_len = sizeof(GITVERSION) - 1U;
       break;
 
     // **** 0xd8: reset ST
