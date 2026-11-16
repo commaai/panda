@@ -25,53 +25,57 @@ static bool heartbeat_disabled = false;            // set over USB
 // siren state
 static bool siren_enabled = false;
 
-static int get_health_pkt(void *dat) {
-  COMPILE_TIME_ASSERT(sizeof(struct health_t) <= USBPACKET_MAX_SIZE);
-  struct health_t * health = (struct health_t*)dat;
+_Static_assert(sizeof(struct health_t) <= USBPACKET_MAX_SIZE, "health packet must fit in one USB packet");
+_Static_assert(sizeof(can_health_t) <= USBPACKET_MAX_SIZE, "CAN health packet must fit in one USB packet");
+_Static_assert(sizeof(GITVERSION) <= USBPACKET_MAX_SIZE, "version must fit in one USB packet");
 
-  health->uptime_pkt = uptime_cnt;
-  health->voltage_pkt = (uint16_t)min_u32(current_board->read_voltage_mV(), 0xFFFFU);
-  health->current_pkt = (uint16_t)min_u32(current_board->read_current_mA(), 0xFFFFU);
+static uint32_t get_health_pkt(uint8_t *resp) {
+  struct health_t health = {0};
 
-  health->flags_pkt = 0U;
-  health->flags_pkt |= harness_check_ignition() ? HEALTH_FLAG_IGNITION_LINE : 0U;
-  health->flags_pkt |= ignition_can ? HEALTH_FLAG_IGNITION_CAN : 0U;
-  health->flags_pkt |= safety.controls_allowed ? HEALTH_FLAG_CONTROLS_ALLOWED : 0U;
-  health->flags_pkt |= power_save_enabled ? HEALTH_FLAG_POWER_SAVE_ENABLED : 0U;
-  health->flags_pkt |= heartbeat_lost ? HEALTH_FLAG_HEARTBEAT_LOST : 0U;
-  health->flags_pkt |= safety.safety_rx_checks_invalid ? HEALTH_FLAG_SAFETY_RX_CHECKS_INVALID : 0U;
-  health->flags_pkt |= bootkick_reset_triggered ? HEALTH_FLAG_SOM_RESET_TRIGGERED : 0U;
-  health->flags_pkt |= heartbeat_disabled ? HEALTH_FLAG_HEARTBEAT_DISABLED : 0U;
-  health->flags_pkt |= reset_flags;
+  health.uptime_pkt = uptime_cnt;
+  health.voltage_pkt = (uint16_t)min_u32(current_board->read_voltage_mV(), 0xFFFFU);
+  health.current_pkt = (uint16_t)min_u32(current_board->read_current_mA(), 0xFFFFU);
 
-  health->safety_tx_blocked_pkt = safety_tx_blocked;
-  health->safety_rx_invalid_pkt = safety_rx_invalid;
-  health->tx_buffer_overflow_pkt = tx_buffer_overflow;
-  health->rx_buffer_overflow_pkt = rx_buffer_overflow;
-  health->car_harness_status_pkt = harness.status;
-  health->safety_mode_pkt = (uint8_t)(safety_setup.current_safety_mode);
-  health->safety_param_pkt = safety_setup.current_safety_param;
-  health->alternative_experience_pkt = safety_setup.alternative_experience;
+  health.flags_pkt = 0U;
+  health.flags_pkt |= harness_check_ignition() ? HEALTH_FLAG_IGNITION_LINE : 0U;
+  health.flags_pkt |= ignition_can ? HEALTH_FLAG_IGNITION_CAN : 0U;
+  health.flags_pkt |= safety.controls_allowed ? HEALTH_FLAG_CONTROLS_ALLOWED : 0U;
+  health.flags_pkt |= power_save_enabled ? HEALTH_FLAG_POWER_SAVE_ENABLED : 0U;
+  health.flags_pkt |= heartbeat_lost ? HEALTH_FLAG_HEARTBEAT_LOST : 0U;
+  health.flags_pkt |= safety.safety_rx_checks_invalid ? HEALTH_FLAG_SAFETY_RX_CHECKS_INVALID : 0U;
+  health.flags_pkt |= bootkick_reset_triggered ? HEALTH_FLAG_SOM_RESET_TRIGGERED : 0U;
+  health.flags_pkt |= heartbeat_disabled ? HEALTH_FLAG_HEARTBEAT_DISABLED : 0U;
+  health.flags_pkt |= reset_flags;
 
-  health->spi_error_count_pkt = spi_error_count;
+  health.safety_tx_blocked_pkt = safety_tx_blocked;
+  health.safety_rx_invalid_pkt = safety_rx_invalid;
+  health.tx_buffer_overflow_pkt = tx_buffer_overflow;
+  health.rx_buffer_overflow_pkt = rx_buffer_overflow;
+  health.car_harness_status_pkt = harness.status;
+  health.safety_mode_pkt = (uint8_t)(safety_setup.current_safety_mode);
+  health.safety_param_pkt = safety_setup.current_safety_param;
+  health.alternative_experience_pkt = (uint16_t)safety_setup.alternative_experience;
 
-  health->fault_status_pkt = fault_status;
-  health->faults_pkt = faults;
+  health.spi_error_count_pkt = spi_error_count;
+
+  health.fault_status_pkt = fault_status;
+  health.faults_pkt = faults;
 
   float interrupt_load_scaled = (clamp_f32(interrupt_load, 0.0f, 1.0f) * 255.0f) + 0.5f;
-  health->interrupt_load_pkt = (uint8_t)interrupt_load_scaled;
+  health.interrupt_load_pkt = (uint8_t)interrupt_load_scaled;
 
-  health->fan_power = fan_state.power;
+  health.fan_power = fan_state.power;
 
-  health->sbu1_voltage_mV = harness.sbu1_voltage_mV;
-  health->sbu2_voltage_mV = harness.sbu2_voltage_mV;
+  health.sbu1_voltage_mV = harness.sbu1_voltage_mV;
+  health.sbu2_voltage_mV = harness.sbu2_voltage_mV;
 
-  health->sound_output_level_pkt = sound_output_level;
+  health.sound_output_level_pkt = sound_output_level;
 
   float temperature_encoded = (clamp_f32(dts_get_temperature(), -40.0f, 214.5f) + 40.0f) + 0.5f;
-  health->temperature_pkt = (uint8_t)temperature_encoded;
+  health.temperature_pkt = (uint8_t)temperature_encoded;
 
-  return sizeof(*health);
+  (void)memcpy(resp, &health, sizeof(health));
+  return sizeof(health);
 }
 
 // Endpoint 2 is only used by the bootstub for flashing.
@@ -145,7 +149,6 @@ static uint32_t comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xc2: CAN health stats
     case 0xc2:
-      COMPILE_TIME_ASSERT(sizeof(can_health_t) <= USBPACKET_MAX_SIZE);
       if (req->param1 < 3U) {
         update_can_health_pkt((uint8_t)req->param1, 0U);
         can_health[req->param1].can_speed = (uint16_t)(bus_config[req->param1].can_speed / 10U);
@@ -232,7 +235,6 @@ static uint32_t comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xd6: get version
     case 0xd6:
-      COMPILE_TIME_ASSERT(sizeof(GITVERSION) <= USBPACKET_MAX_SIZE);
       (void)memcpy(resp, GITVERSION, sizeof(GITVERSION));
       resp_len = sizeof(GITVERSION) - 1U;
       break;
