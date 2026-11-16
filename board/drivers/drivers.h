@@ -97,7 +97,7 @@ struct harness_configuration {
 
 // ******************** interrupts ********************
 
-typedef struct interrupt {
+typedef struct {
   void (*handler)(void);
   uint32_t call_counter;
   uint32_t call_rate;
@@ -132,7 +132,7 @@ uint32_t microsecond_timer_get(void);
 
 // ******************** simple_watchdog ********************
 
-typedef struct simple_watchdog_state_t {
+typedef struct {
   uint32_t fault;
   uint32_t last_ts;
   uint32_t threshold;
