@@ -33,13 +33,13 @@ typedef struct {
 
 static void comms_can_send(const uint8_t *buf) {
   CANPacket_t to_push = {0};
-  bool checksum_valid = can_packet_deserialize(buf, &to_push);
-  if (!checksum_valid && (to_push.bus < PANDA_CAN_CNT)) {
+  if (can_packet_deserialize(buf, &to_push)) {
+    can_send(&to_push, to_push.bus, false);
+  } else if (to_push.bus < PANDA_CAN_CNT) {
     can_health[CAN_NUM_FROM_BUS_NUM(to_push.bus)].total_tx_checksum_error_cnt += 1U;
+  } else {
+    // no CAN to count a corrupt bus number against
   }
-  // a corrupt packet still goes through safety_tx_hook and is returned to the host if the hook
-  // rejects it, but it's never queued: can_send drops packets for a bus that doesn't exist
-  can_send(&to_push, checksum_valid ? to_push.bus : PANDA_CAN_CNT, false);
 }
 
 static asm_buffer can_read_buffer = {.ptr = 0U, .tail_size = 0U};
