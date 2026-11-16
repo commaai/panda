@@ -3,7 +3,7 @@
 
 #include "board/drivers/drivers.h"
 
-typedef struct reg {
+typedef struct {
   volatile uint32_t *address;
   uint32_t value;
   uint32_t check_mask;
