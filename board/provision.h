@@ -10,8 +10,8 @@ static void get_provision_chunk(uint8_t *resp) {
   const unsigned char unprovisioned_text[] = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff";
 
   (void)memcpy(resp, (uint8_t *)PROVISION_CHUNK_ADDRESS, PROVISION_CHUNK_LEN);
-  if (memcmp(resp, unprovisioned_text, 0x20) == 0) {
-    (void)memcpy(resp, "unprovisioned\x00\x00\x00testing123\x00\x00\xa3\xa6\x99\xec", 0x20);
+  if (bytes_equal(resp, unprovisioned_text, PROVISION_CHUNK_LEN)) {
+    (void)memcpy(resp, "unprovisioned\x00\x00\x00" "testing123\x00\x00\xa3\xa6\x99\xec", PROVISION_CHUNK_LEN);
   }
 }
 

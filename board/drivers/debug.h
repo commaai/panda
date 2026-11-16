@@ -58,13 +58,13 @@ static void puth(unsigned int i) {
   puthx(i, 8U);
 }
 
-static void hexdump(const void *a, int l) {
+static void hexdump(const uint8_t *a, int l) {
   if (a != NULL) {
     for (int i=0; i < l; i++) {
       if ((i != 0) && ((i % 16) == 0)) {
         print("\n");
       }
-      puthx(((const unsigned char*)a)[i], 2U);
+      puthx(a[i], 2U);
       print(" ");
     }
   }
