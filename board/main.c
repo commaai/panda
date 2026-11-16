@@ -32,7 +32,8 @@
 // this is the only way to leave silent mode
 static void set_safety_mode(uint16_t mode, uint16_t param) {
   uint16_t mode_copy = mode;
-  if ((faults & PERMANENT_FAULTS) != 0U) {
+  // a permanent fault keeps panda silent until reset
+  if (fault_status == FAULT_STATUS_PERMANENT) {
     mode_copy = SAFETY_SILENT;
   }
   mpu_safety_open();
@@ -85,10 +86,12 @@ static void set_safety_mode(uint16_t mode, uint16_t param) {
   can_init_all();
 }
 
+#if PERMANENT_FAULTS != 0U
 // SILENT clears controls_allowed and opens the relay
 static void fault_safe_state(void) {
   set_safety_mode(SAFETY_SILENT, 0U);
 }
+#endif
 
 static bool is_car_safety_mode(uint16_t mode) {
   return (mode != SAFETY_SILENT) &&

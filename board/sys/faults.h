@@ -6,16 +6,18 @@
 static uint8_t fault_status = FAULT_STATUS_NONE;
 static uint32_t faults = 0U;
 
-void fault_occurred(uint32_t fault) {
+static void fault_occurred(uint32_t fault) {
   if ((faults & fault) == 0U) {
+    print("Fault occurred: 0x"); puth(fault); print("\n");
+    if (fault_status == FAULT_STATUS_NONE) {
+      fault_status = FAULT_STATUS_TEMPORARY;
+    }
+#if PERMANENT_FAULTS != 0U
     if ((PERMANENT_FAULTS & fault) != 0U) {
-      print("Permanent fault occurred: 0x"); puth(fault); print("\n");
       fault_status = FAULT_STATUS_PERMANENT;
       fault_safe_state();
-    } else {
-      print("Temporary fault occurred: 0x"); puth(fault); print("\n");
-      fault_status = (fault_status == FAULT_STATUS_PERMANENT) ? FAULT_STATUS_PERMANENT : FAULT_STATUS_TEMPORARY;
     }
+#endif
   }
   faults |= fault;
 }
@@ -38,12 +40,9 @@ void fault_occurred_at(uint32_t fault, uint32_t value, const char *site) {
   fault_occurred(fault);
 }
 
-void fault_recovered(uint32_t fault) {
-  if ((PERMANENT_FAULTS & fault) == 0U) {
-    faults &= ~fault;
-  } else {
-    print("Cannot recover from a permanent fault!\n");
-  }
+// permanent faults stay set until reset
+static inline void fault_recovered(uint32_t fault) {
+  faults &= ~(fault & ~PERMANENT_FAULTS);
 }
 
 #endif  // BOARD_SYS_FAULTS_H
