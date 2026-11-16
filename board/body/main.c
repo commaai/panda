@@ -6,7 +6,6 @@
 #include "board/drivers/pwm.h"
 #include "board/drivers/usb.h"
 #include "board/early_init.h"
-#include "board/obj/gitversion.h"
 #include "board/body/can.h"
 #include "opendbc/safety/safety.h"
 #include "board/drivers/can_common.h"
