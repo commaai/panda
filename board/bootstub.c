@@ -17,7 +17,6 @@
 #include "board/obj/cert.h"
 #include "board/flasher.h"
 
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void initialize_hardware_early(void) {
   early_initialization();
 }

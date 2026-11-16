@@ -82,7 +82,9 @@ static void hold_unused_in_reset(void) {
   };
   for (uint8_t i = 0U; i < (sizeof(regs) / sizeof(regs[0])); i++) {
     uint32_t en = *regs[i].enr;
+    // cppcheck-suppress misra-c2012-1.1 ; misrable false positive: the member is volatile uint32_t *, the const of the array is top-level only and is not discarded
     register_set(regs[i].rstr, regs[i].rst_bits & ~en, 0xFFFFFFFFU);
+    // cppcheck-suppress misra-c2012-1.1 ; misrable false positive: same as above
     register_set(regs[i].enr, en, 0xFFFFFFFFU);
   }
 }
