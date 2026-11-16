@@ -26,13 +26,14 @@ static void red_enable_can_transceiver(uint8_t transceiver, bool enabled) {
   }
 }
 
+// tres and cuatro use the same pins
 static void red_set_can_mode(uint8_t mode) {
-  red_enable_can_transceiver(2U, false);
-  red_enable_can_transceiver(4U, false);
+  current_board->enable_can_transceiver(2U, false);
+  current_board->enable_can_transceiver(4U, false);
   switch (mode) {
     case CAN_MODE_NORMAL:
     case CAN_MODE_OBD_CAN2:
-      if ((bool)(mode == CAN_MODE_NORMAL) != (bool)(harness.status == HARNESS_STATUS_FLIPPED)) {
+      if ((mode == CAN_MODE_NORMAL) != (harness.status == HARNESS_STATUS_FLIPPED)) {
         // B12,B13: disable normal mode
         set_gpio_pullup(GPIOB, 12, PULL_NONE);
         set_gpio_mode(GPIOB, 12, MODE_ANALOG);
@@ -46,7 +47,7 @@ static void red_set_can_mode(uint8_t mode) {
 
         set_gpio_pullup(GPIOB, 6, PULL_NONE);
         set_gpio_alternate(GPIOB, 6, GPIO_AF9_FDCAN2);
-        red_enable_can_transceiver(2U, true);
+        current_board->enable_can_transceiver(2U, true);
       } else {
         // B5,B6: disable normal mode
         set_gpio_pullup(GPIOB, 5, PULL_NONE);
@@ -60,7 +61,7 @@ static void red_set_can_mode(uint8_t mode) {
 
         set_gpio_pullup(GPIOB, 13, PULL_NONE);
         set_gpio_alternate(GPIOB, 13, GPIO_AF9_FDCAN2);
-        red_enable_can_transceiver(4U, true);
+        current_board->enable_can_transceiver(4U, true);
       }
       break;
     default:
