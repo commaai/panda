@@ -5,10 +5,11 @@
 #define SOUND_TX_BUF_SIZE (SOUND_RX_BUF_SIZE/2U)
 #define MIC_RX_BUF_SIZE 512U
 #define MIC_TX_BUF_SIZE (MIC_RX_BUF_SIZE * 2U)
-__attribute__((section(".sram4"))) static uint16_t sound_rx_buf[2][SOUND_RX_BUF_SIZE];
-__attribute__((section(".sram4"))) static uint16_t sound_tx_buf[2][SOUND_TX_BUF_SIZE];
-__attribute__((section(".sram4"))) static uint32_t mic_rx_buf[2][MIC_RX_BUF_SIZE];
-__attribute__((section(".sram4"))) static uint16_t mic_tx_buf[2][MIC_TX_BUF_SIZE];
+// the DMAs can't reach the DTCM where .bss lives, and BDMA only reaches SRAM4
+SECTION(".sram4") static uint16_t sound_rx_buf[2][SOUND_RX_BUF_SIZE];
+SECTION(".sram4") static uint16_t sound_tx_buf[2][SOUND_TX_BUF_SIZE];
+SECTION(".sram4") static uint32_t mic_rx_buf[2][MIC_RX_BUF_SIZE];
+SECTION(".sram4") static uint16_t mic_tx_buf[2][MIC_TX_BUF_SIZE];
 
 #define SOUND_IDLE_TIMEOUT 4U
 #define MIC_PLL_FRAC 3867U // 5 MHz * (65 + 3867/8192) / 62 / 2 / 55 is approximately 48 kHz

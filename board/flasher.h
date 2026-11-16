@@ -4,6 +4,8 @@
 // from the linker script
 #define APP_START_ADDRESS 0x8020000U
 
+_Static_assert(sizeof(GITVERSION) <= USBPACKET_MAX_SIZE, "version must fit in one USB packet");
+
 // flasher state variables
 uint32_t *prog_ptr = NULL;
 bool unlocked = false;
@@ -82,7 +84,6 @@ static uint32_t comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xd6: get version
     case 0xd6:
-      COMPILE_TIME_ASSERT(sizeof(GITVERSION) <= USBPACKET_MAX_SIZE);
       memcpy(resp, GITVERSION, sizeof(GITVERSION));
       resp_len = sizeof(GITVERSION) - 1U;
       break;

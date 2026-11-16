@@ -132,7 +132,7 @@ static bool ram_test_aliases_ok(volatile uint32_t *const *alias, const uint32_t 
 // checked after both backgrounds since an alias can hold one of them already
 static bool ram_test_block(uint32_t addr, uint32_t words, uint32_t start, uint32_t end) {
   // outside the tested regions, copies are read back instead
-  __attribute__((section(".sram12"))) static volatile uint32_t ram_test_backup[RAM_TEST_BLOCK_WORDS];
+  SECTION(".sram12") static volatile uint32_t ram_test_backup[RAM_TEST_BLOCK_WORDS];
   volatile uint32_t *p = (uint32_t *)addr;
   volatile uint32_t *alias[RAM_TEST_ALIASES];
   uint32_t alias_val[RAM_TEST_ALIASES];
@@ -189,8 +189,11 @@ static bool ram_test_next(uint32_t *failed) {
   if (block == 0U) {
     block = ram_regions[region].start;
   }
-  uint32_t words = MIN(RAM_TEST_BLOCK_WORDS, (ram_regions[region].end - block) / 4U);
-  bool ok = ram_test_skip(block, block + (words * 4U)) || ram_test_block(block, words, ram_regions[region].start, ram_regions[region].end);
+  uint32_t words = min_u32(RAM_TEST_BLOCK_WORDS, (ram_regions[region].end - block) / 4U);
+  bool ok = true;
+  if (!ram_test_skip(block, block + (words * 4U))) {
+    ok = ram_test_block(block, words, ram_regions[region].start, ram_regions[region].end);
+  }
   *failed = block;
   block += RAM_TEST_STEP;
   if (block >= ram_regions[region].end) {
@@ -212,7 +215,7 @@ static void ram_scrub_next(void) {
     addr = scrub_regions[region].start;
   }
   const volatile uint32_t *p = (const uint32_t *)addr;
-  uint32_t words = MIN(RAM_SCRUB_WORDS, (scrub_regions[region].end - addr) / 4U);
+  uint32_t words = min_u32(RAM_SCRUB_WORDS, (scrub_regions[region].end - addr) / 4U);
   for (uint32_t i = 0U; i < words; i++) {
     (void)p[i];
   }
@@ -240,7 +243,7 @@ static bool flash_test_next(uint32_t *crc_out) {
   static uint32_t crc = 0xFFFFFFFFU;
   bool ok = true;
   uint32_t len = flash_crc_len();
-  uint32_t n = MIN(FLASH_CRC_CHUNK, len - offset);
+  uint32_t n = min_u32(FLASH_CRC_CHUNK, len - offset);
   crc = crc32_update(crc, &((const uint8_t *)app_start)[offset], n);
   offset += n;
   if (offset >= len) {
@@ -260,7 +263,7 @@ static bool flash_test_next(uint32_t *crc_out) {
 static const uint32_t dma_test_pattern[DMA_TEST_WORDS] = {
   0x5AA5F00FU, 0xA55A0FF0U, 0x12345678U, 0x9ABCDEF0U, 0x0F1E2D3CU, 0x4B5A6978U, 0x87968574U, 0xC3D2E1F0U,
 };
-__attribute__((section(".sram12"))) static uint32_t dma_test_buf[DMA_TEST_WORDS];
+SECTION(".sram12") static uint32_t dma_test_buf[DMA_TEST_WORDS];
 
 static void dma_test_start(void) {
   uint32_t len = DMA_TEST_WORDS;

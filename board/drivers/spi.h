@@ -4,15 +4,9 @@
 #include "board/drivers/drivers.h"
 
 // H7 DMA2 located in D2 domain, so we need to use SRAM1/SRAM2
-#ifdef STM32H7
-__attribute__((section(".sram12"))) uint8_t spi_buf_rx[SPI_BUF_SIZE];
-__attribute__((section(".sram12"))) uint8_t spi_buf_tx[SPI_BUF_SIZE];
-__attribute__((section(".sram12"))) static uint8_t spi_buf_ready[1];
-#else
-uint8_t spi_buf_rx[SPI_BUF_SIZE];
-uint8_t spi_buf_tx[SPI_BUF_SIZE];
-static uint8_t spi_buf_ready[1];
-#endif
+SECTION(".sram12") static uint8_t spi_buf_rx[SPI_BUF_SIZE];
+SECTION(".sram12") static uint8_t spi_buf_tx[SPI_BUF_SIZE];
+SECTION(".sram12") static uint8_t spi_buf_ready[1];
 
 // SPI protocol, see python/spi.py for the host side.
 //
@@ -131,7 +125,7 @@ static uint16_t spi_process_request(uint16_t n) {
     bool ack = spi_handle_endpoint(req.endpoint, &spi_buf_rx[sizeof(req)], req.tx_len, max_data_len,
                                    &spi_buf_tx[sizeof(spi_resp_header_t)], &data_len);
     // like USB, a response is cut off at what the host reads
-    data_len = ack ? MIN(data_len, max_data_len) : 0U;
+    data_len = ack ? (uint16_t)min_u32(data_len, max_data_len) : 0U;
     spi_resp_header_t resp = {
       .status = ack ? SPI_ACK : SPI_NACK,
       .id = req.id,

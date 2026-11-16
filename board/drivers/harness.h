@@ -90,7 +90,7 @@ static uint8_t harness_detect_orientation(void) {
       #ifdef ALLOW_DEBUG
       sbu1_adc2_mV += harness_adc2_offset_mV;
       #endif
-      adc_mismatches = (ABS((int32_t)harness.sbu1_voltage_mV - (int32_t)sbu1_adc2_mV) <= 100) ? 0U : (adc_mismatches + 1U);
+      adc_mismatches = (abs_i32((int32_t)harness.sbu1_voltage_mV - (int32_t)sbu1_adc2_mV) <= 100) ? 0U : (adc_mismatches + 1U);
     }
 
     // Detect connection and orientation

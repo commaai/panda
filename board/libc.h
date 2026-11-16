@@ -3,7 +3,8 @@
 
 // **** libc ****
 
-__attribute__((aligned(32), noinline)) void delay(uint32_t a) {
+// cppcheck-suppress misra-c2012-1.2 ; fixed alignment and no inlining keep the busy loop timing constant
+__attribute__((aligned(32), noinline)) static void delay(uint32_t a) {
   // loop is 2.6x faster when 32-byte aligned (ART accelerator prefetches flash in 32-byte chunks)
   uint32_t n = a * 13U / 5U;
   volatile uint32_t i = 0U;
