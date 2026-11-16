@@ -54,7 +54,7 @@ static uint32_t get_health_pkt(uint8_t *resp) {
   health.car_harness_status_pkt = harness.status;
   health.safety_mode_pkt = (uint8_t)(safety_setup.current_safety_mode);
   health.safety_param_pkt = safety_setup.current_safety_param;
-  health.alternative_experience_pkt = (uint16_t)safety_setup.alternative_experience;
+  health.alternative_experience_pkt = safety_setup.alternative_experience;
 
   health.spi_error_count_pkt = spi_error_count;
 
@@ -270,7 +270,7 @@ static uint32_t comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       // you can only set this if you are in a non car safety mode
       if (!is_car_safety_mode(safety_setup.current_safety_mode)) {
         mpu_safety_open();
-        safety_alternative_experience((int)req->param1);
+        safety_alternative_experience(req->param1);
         mpu_safety_close();
       }
       break;

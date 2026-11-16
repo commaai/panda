@@ -198,7 +198,7 @@ static void can_rx(uint8_t can_number) {
 
     // forwarding
     mpu_safety_open();
-    int bus_fwd_num = safety_fwd_hook((int)bus_number, (int)to_push.addr);
+    int bus_fwd_num = safety_fwd_hook(bus_number, to_push.addr);
     safety_rx_invalid += safety_rx_hook(&to_push) ? 0U : 1U;
     mpu_safety_close();
     if (bus_fwd_num >= 0) {

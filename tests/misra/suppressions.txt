@@ -9,7 +9,6 @@ misra-c2012-8.9:*/board/boards/*.h
 
 # Temporary, removed later in this series by the changes to the USB/SPI wire formats, the health packet
 # and opendbc's safety types, which have to land together with openpilot and opendbc
-misra-c2012-10.6:*/board/drivers/can_common.h
 misra-c2012-10.6:*/board/can_comms.h
 misra-c2012-13.5:*/board/can_comms.h
 misra-c2012-8.4:*/board/drivers/can_common.h
