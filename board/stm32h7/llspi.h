@@ -14,7 +14,13 @@ static void llspi_queue(const uint8_t *tx, uint16_t tx_len) {
   DMA2_Stream2->CR &= ~DMA_SxCR_EN;
   DMA2_Stream3->CR &= ~DMA_SxCR_EN;
   register_clear_bits(&(SPI4->CFG1), SPI_CFG1_RXDMAEN | SPI_CFG1_TXDMAEN);
-  for (uint16_t i = 0U; (i < 1000U) && (((DMA2_Stream2->CR & DMA_SxCR_EN) != 0U) || ((DMA2_Stream3->CR & DMA_SxCR_EN) != 0U)); i++) {}
+  for (uint16_t i = 0U; i < 1000U; i++) {
+    bool rx_on = (DMA2_Stream2->CR & DMA_SxCR_EN) != 0U;
+    bool tx_on = (DMA2_Stream3->CR & DMA_SxCR_EN) != 0U;
+    if (!rx_on && !tx_on) {
+      break;
+    }
+  }
 
   // drain the RX FIFO and clear all flags
   while ((SPI4->SR & SPI_SR_RXP) != 0U) {
@@ -45,8 +51,14 @@ static void llspi_queue(const uint8_t *tx, uint16_t tx_len) {
 // Number of bytes received since we last queued, saturates at SPI_BUF_SIZE
 static uint16_t llspi_rx_count(void) {
   // let the DMA empty the FIFO, unless it's already full
-  for (uint16_t i = 0U; (i < 1000U) && ((SPI4->SR & SPI_SR_RXP) != 0U) && (DMA2_Stream2->NDTR != 0U); i++) {}
-  return SPI_BUF_SIZE - DMA2_Stream2->NDTR;
+  for (uint16_t i = 0U; i < 1000U; i++) {
+    bool fifo_empty = (SPI4->SR & SPI_SR_RXP) == 0U;
+    bool buf_full = DMA2_Stream2->NDTR == 0U;
+    if (fifo_empty || buf_full) {
+      break;
+    }
+  }
+  return (uint16_t)(SPI_BUF_SIZE - DMA2_Stream2->NDTR);
 }
 
 #define EXTI15_10_LINES 0xFC00U

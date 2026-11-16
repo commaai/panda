@@ -12,7 +12,7 @@
 #ifndef EXIT_CRITICAL
 #define EXIT_CRITICAL()                                       \
   global_critical_depth -= 1U;                                \
-  if ((global_critical_depth == 0U) && interrupts_enabled) {  \
+  if (interrupts_enabled && (global_critical_depth == 0U)) {  \
     __enable_irq();                                           \
   }
 #endif

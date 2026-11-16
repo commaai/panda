@@ -82,7 +82,9 @@ static inline void mpu_init(void) {
 
 static bool mpu_region_ok(uint32_t region, uint32_t base, uint32_t rasr) {
   MPU->RNR = region;
-  return ((MPU->RBAR & MPU_RBAR_ADDR_Msk) == base) && (MPU->RASR == rasr);
+  bool base_ok = (MPU->RBAR & MPU_RBAR_ADDR_Msk) == base;
+  bool rasr_ok = MPU->RASR == rasr;
+  return base_ok && rasr_ok;
 }
 
 // RBAR and RASR are banked by RNR, so register_set can't read them back

@@ -61,6 +61,7 @@ static inline bool harness_check_ignition(void) {
       ret = !get_gpio_input(current_board->harness_config->GPIO_SBU2, current_board->harness_config->pin_SBU2);
       break;
     default:
+      // no harness, no ignition line
       break;
   }
   return ret;
@@ -126,8 +127,9 @@ static inline void harness_tick(void) {
   // GPIO_SM_2: relay pins read back what is driven, one tick of slack for switching
   static uint32_t relay_mismatches = 0U;
   const harness_configuration *cfg = current_board->harness_config;
-  bool mismatch = relay_pin_mismatch(cfg->GPIO_relay_SBU1, cfg->pin_relay_SBU1) ||
-                  relay_pin_mismatch(cfg->GPIO_relay_SBU2, cfg->pin_relay_SBU2);
+  bool sbu1_mismatch = relay_pin_mismatch(cfg->GPIO_relay_SBU1, cfg->pin_relay_SBU1);
+  bool sbu2_mismatch = relay_pin_mismatch(cfg->GPIO_relay_SBU2, cfg->pin_relay_SBU2);
+  bool mismatch = sbu1_mismatch || sbu2_mismatch;
   #ifdef ALLOW_DEBUG
   mismatch = mismatch || relay_readback_inject;
   #endif

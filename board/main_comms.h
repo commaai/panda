@@ -126,7 +126,10 @@ static uint32_t comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     #endif
     // **** 0xb6: read debug logs
     case 0xb6:
-      while ((resp_len < req->length) && (resp_len < USBPACKET_MAX_SIZE) && debug_get_char((char*)&resp[resp_len])) {
+      while ((resp_len < req->length) && (resp_len < USBPACKET_MAX_SIZE)) {
+        if (!debug_get_char((char*)&resp[resp_len])) {
+          break;
+        }
         ++resp_len;
       }
       break;

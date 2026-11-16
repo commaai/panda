@@ -88,23 +88,23 @@ static bool ram_test_march(volatile uint32_t *p, uint32_t n, uint32_t bg) {
     p[i] = bg;
   }
   for (uint32_t i = 0U; i < n; i++) {
-    ok = ok && (p[i] == bg);
+    ok = (p[i] == bg) && ok;
     p[i] = inv;
   }
   for (uint32_t i = 0U; i < n; i++) {
-    ok = ok && (p[i] == inv);
+    ok = (p[i] == inv) && ok;
     p[i] = bg;
   }
   for (uint32_t i = n; i > 0U; i--) {
-    ok = ok && (p[i - 1U] == bg);
+    ok = (p[i - 1U] == bg) && ok;
     p[i - 1U] = inv;
   }
   for (uint32_t i = n; i > 0U; i--) {
-    ok = ok && (p[i - 1U] == inv);
+    ok = (p[i - 1U] == inv) && ok;
     p[i - 1U] = bg;
   }
   for (uint32_t i = 0U; i < n; i++) {
-    ok = ok && (p[i] == bg);
+    ok = (p[i] == bg) && ok;
   }
   return ok;
 }
@@ -121,7 +121,7 @@ static bool ram_test_skip(uint32_t start, uint32_t end) {
 static bool ram_test_aliases_ok(volatile uint32_t *const *alias, const uint32_t *val, uint8_t n) {
   bool ok = true;
   for (uint8_t i = 0U; i < n; i++) {
-    ok = ok && (*alias[i] == val[i]);
+    ok = (*alias[i] == val[i]) && ok;
   }
   return ok;
 }
@@ -151,7 +151,8 @@ static bool ram_test_block(uint32_t addr, uint32_t words, uint32_t start, uint32
     ram_test_backup[i] = p[i];
   }
   for (uint32_t i = 0U; i < words; i++) {
-    ok = ok && (ram_test_backup[i] == p[i]);
+    uint32_t backup = ram_test_backup[i];
+    ok = (p[i] == backup) && ok;
   }
   for (uint8_t i = 0U; i < aliases; i++) {
     alias_val[i] = *alias[i];
@@ -166,7 +167,8 @@ static bool ram_test_block(uint32_t addr, uint32_t words, uint32_t start, uint32
     p[i] = ram_test_backup[i];
   }
   for (uint32_t i = 0U; i < words; i++) {
-    ok = ok && (p[i] == ram_test_backup[i]);
+    uint32_t backup = ram_test_backup[i];
+    ok = (p[i] == backup) && ok;
   }
   mpu_safety_close();
   EXIT_CRITICAL()
@@ -307,8 +309,12 @@ static void self_test_check(bool cpu_ok, bool ram_ok, uint32_t ram_addr, bool fl
   bool ram = ram_ok;
   bool flash = flash_ok;
 #ifdef ALLOW_DEBUG
-  cpu = cpu && !self_test_injected(SELF_TEST_CPU);
-  ram = ram && !self_test_injected(SELF_TEST_RAM);
+  if (self_test_injected(SELF_TEST_CPU)) {
+    cpu = false;
+  }
+  if (self_test_injected(SELF_TEST_RAM)) {
+    ram = false;
+  }
 #endif
   if (!cpu) {
     fault_occurred(FAULT_SELF_TEST_CPU);
