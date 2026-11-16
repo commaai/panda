@@ -37,6 +37,9 @@ typedef struct {
 // helpers
 #define WORD_TO_BYTE_ARRAY(dst8, src32) (dst8)[0] = (uint8_t)((src32) & 0xFFU); (dst8)[1] = (uint8_t)(((src32) >> 8U) & 0xFFU); (dst8)[2] = (uint8_t)(((src32) >> 16U) & 0xFFU); (dst8)[3] = (uint8_t)(((src32) >> 24U) & 0xFFU)
 #define BYTE_ARRAY_TO_WORD(dst32, src8) ((dst32) = (uint32_t)(src8)[0] | ((uint32_t)(src8)[1] << 8U) | ((uint32_t)(src8)[2] << 16U) | ((uint32_t)(src8)[3] << 24U))
+static inline uint16_t read_u16_le(const uint8_t *src8) {
+  return src8[0] | ((uint16_t)src8[1] << 8U);
+}
 
 // ********************* interrupt safe queue *********************
 // not static, tests/libpanda calls these
@@ -153,5 +156,23 @@ static void puth(unsigned int i);
 // ******************** usb ********************
 
 static void refresh_can_tx_slots_available(void);
+
+// ******************** comms ********************
+// USB and SPI hand requests to these. The firmware, the bootstub and the body each implement them
+
+// A control request. USB fills it from the setup packet, SPI decodes it from its endpoint 0 data
+typedef struct {
+  uint8_t request;
+  uint16_t param1;
+  uint16_t param2;
+  uint16_t length;
+} ControlPacket_t;
+
+static uint32_t comms_control_handler(ControlPacket_t *req, uint8_t *resp);
+static void comms_endpoint2_write(const uint8_t *data, uint32_t len);
+// not static, tests/libpanda calls these
+void comms_can_write(const uint8_t *data, uint32_t len);
+uint32_t comms_can_read(uint8_t *data, uint32_t max_len);
+void comms_can_reset(void);
 
 #endif  // BOARD_DRIVERS_DRIVERS_H
