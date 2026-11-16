@@ -26,12 +26,7 @@ static volatile bool ignition = false;
 static volatile bool plug_charging = false;
 
 
-void __attribute__ ((noinline)) enable_fpu(void) {
-  SCB->CPACR |= ((3UL << (10U * 2U)) | (3UL << (11U * 2U)));
-}
-
 void initialize_hardware_early(void) {
-  enable_fpu();
   early_initialization();
 }
 

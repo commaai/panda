@@ -60,6 +60,15 @@ defined in linker script */
   .type  Reset_Handler, %function
 Reset_Handler:
   ldr   sp, =_estack      /* set stack pointer */
+
+/* Enable the FPU, full access to CP10 and CP11, before any C code runs */
+  ldr   r0, =0xE000ED88   /* SCB->CPACR */
+  ldr   r1, [r0]
+  orr   r1, r1, #(0xF << 20)
+  str   r1, [r0]
+  dsb
+  isb
+
   bl initialize_hardware_early
   bl ram_test_startup
 

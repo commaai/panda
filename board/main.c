@@ -103,11 +103,6 @@ void initialize_hardware_early(void) {
   early_initialization();
 }
 
-static void __attribute__ ((noinline)) enable_fpu(void) {
-  // enable the FPU
-  SCB->CPACR |= ((3UL << (10U * 2U)) | (3UL << (11U * 2U)));
-}
-
 // go into SILENT when heartbeat isn't received for this amount of seconds.
 #define HEARTBEAT_IGNITION_CNT_ON 5U
 #define HEARTBEAT_IGNITION_CNT_OFF 2U
@@ -303,9 +298,6 @@ int main(void) {
   current_board->init();
   current_board->set_can_mode(CAN_MODE_NORMAL);
   harness_init();
-
-  // panda has an FPU, let's use it!
-  enable_fpu();
 
   microsecond_timer_init();
 
