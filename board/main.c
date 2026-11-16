@@ -20,8 +20,6 @@
 
 #include "board/sys/power_saving.h"
 
-#include "board/obj/gitversion.h"
-
 #include "board/can_comms.h"
 #include "board/main_comms.h"
 #include "board/drivers/self_test.h"
