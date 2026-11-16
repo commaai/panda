@@ -12,7 +12,7 @@ void dts_init(void) {
   register_set(&(DTS->CFGR1), (((uint32_t) DTS_SMP_TIME << DTS_CFGR1_TS1_SMP_TIME_Pos) | ((uint32_t) DTS_HSREF_DIV << DTS_CFGR1_HSREF_CLK_DIV_Pos)),
     (DTS_CFGR1_TS1_SMP_TIME_Msk | DTS_CFGR1_REFCLK_SEL_Msk | DTS_CFGR1_Q_MEAS_OPT_Msk | DTS_CFGR1_HSREF_CLK_DIV_Msk | DTS_CFGR1_TS1_INTRIG_SEL_Msk));
   register_set_bits(&(DTS->CFGR1), DTS_CFGR1_TS1_EN);
-  while ((DTS->SR & DTS_SR_TS1_RDY) == 0U);
+  while ((DTS->SR & DTS_SR_TS1_RDY) == 0U) {}
   // continuous measurements w/ sw trigger
   register_set_bits(&(DTS->CFGR1), DTS_CFGR1_TS1_START);
 }

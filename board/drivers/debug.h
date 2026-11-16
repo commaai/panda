@@ -14,7 +14,9 @@ bool debug_get_char(char *elem) {
 
   ENTER_CRITICAL();
   if (debug_write_ptr != debug_read_ptr) {
-    if (elem != NULL) *elem = debug_buffer[debug_read_ptr];
+    if (elem != NULL) {
+      *elem = debug_buffer[debug_read_ptr];
+    }
     debug_read_ptr = (debug_read_ptr + 1U) % DEBUG_BUFFER_SIZE;
     ret = true;
   }
@@ -37,7 +39,9 @@ static void putch(const char a) {
 
 void print(const char *a) {
   for (const char *in = a; *in; in++) {
-    if (*in == '\n') putch('\r');
+    if (*in == '\n') {
+      putch('\r');
+    }
     putch(*in);
   }
 }
@@ -56,7 +60,9 @@ void puth(unsigned int i) {
 static void hexdump(const void *a, int l) {
   if (a != NULL) {
     for (int i=0; i < l; i++) {
-      if ((i != 0) && ((i & 0xf) == 0)) print("\n");
+      if ((i != 0) && ((i & 0xf) == 0)) {
+        print("\n");
+      }
       puthx(((const unsigned char*)a)[i], 2U);
       print(" ");
     }
