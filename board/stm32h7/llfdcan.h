@@ -213,7 +213,7 @@ static bool llcan_init(FDCAN_GlobalTypeDef *FDCANx) {
     FDCANx->IE |= FDCAN_IE_RF0NE; // Rx FIFO 0 new message
     FDCANx->IE |= FDCAN_IE_PEDE | FDCAN_IE_PEAE | FDCAN_IE_BOE | FDCAN_IE_EPE | FDCAN_IE_RF0LE;
 
-    // Messages for INT1 (Only TFE works??)
+    // Messages for INT1 (Only TFE works?)
     FDCANx->ILS |= FDCAN_ILS_TFEL;
     FDCANx->IE |= FDCAN_IE_TFEE; // Tx FIFO empty
 
