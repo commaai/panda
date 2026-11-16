@@ -159,10 +159,8 @@ static bool ram_test_block(uint32_t addr, uint32_t words, uint32_t start, uint32
     alias_val[i] = *alias[i];
   }
   ok = ram_test_march(p, words, 0x00000000U) && ok;
-  // cppcheck-suppress uninitvar ; only the first aliases entries are read and all of them are written above
   ok = ram_test_aliases_ok(alias, alias_val, aliases) && ok;
   ok = ram_test_march(p, words, 0x55555555U) && ok;
-  // cppcheck-suppress uninitvar ; only the first aliases entries are read and all of them are written above
   ok = ram_test_aliases_ok(alias, alias_val, aliases) && ok;
   for (uint32_t i = 0U; i < words; i++) {
     p[i] = ram_test_backup[i];

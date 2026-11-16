@@ -1,0 +1,57 @@
+# Passed to misrable with --external-api: the externally linked functions and
+# objects that code outside of main.c uses or defines, and the macros that only
+# other builds use. One name per line and comment lines start with #. misrable
+# fails on a name the firmware doesn't have.
+
+# called from the vector table, fault handlers and reset handler in board/stm32h7/startup_stm32h7x5xx.s
+handle_interrupt
+hardfault_record
+initialize_hardware_early
+nmi_record
+
+# linker symbols, defined in board/stm32h7/stm32h7x5_flash.ld
+app_start
+safety_start
+stack_guard
+stack_guard_end
+dtcmram_start
+dtcmram_end
+axisram_start
+axisram_end
+itcmram_start
+itcmram_end
+sram12_start
+sram12_end
+sram4_start
+sram4_end
+enter_bootloader_mode
+fault_cookie
+self_test_cookie
+fault_cfsr
+fault_addr
+fault_pc
+
+# assembly symbols: the vector table in board/stm32h7/startup_stm32h7x5xx.s, and the CPU
+# and FPU self tests in board/stm32h7/self_test.s
+g_pfnVectors
+cpu_test
+fpu_test
+
+# memset and memcpy are also called by code that the compiler generates
+memset
+memcpy
+
+# declared with external linkage by opendbc's safety code, which uses it
+microsecond_timer_get
+
+# called by the CAN tests through tests/libpanda
+can_pop
+can_push
+can_slots_empty
+comms_can_read
+comms_can_write
+comms_can_reset
+
+# shared driver macros that only the body firmware uses
+OUTPUT_TYPE_PUSH_PULL
+FAULT_INTERRUPT_RATE_EXTI

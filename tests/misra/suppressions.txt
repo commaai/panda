@@ -1,21 +1,23 @@
-# Advisory: casting from void pointer to type pointer is ok. Done by STM libraries as well
+# Advisory: register-level code converts between addresses and integers. The CMSIS peripheral macros
+# (GPIOA, RCC, ...) cast fixed addresses to struct pointers, the DMA and MPU registers take the addresses
+# of buffers and linker symbols, and the UID and provisioning data are at fixed flash addresses. This is
+# reported where the macros are used, all over the drivers, so it can't be scoped to the CMSIS headers.
 misra-c2012-11.4
-# Advisory: casting from void pointer to type pointer is ok. Done by STM libraries as well
-misra-c2012-11.5
-# Advisory: as stated in the Misra document, use of goto statements in accordance to 15.2 and 15.3 is ok
-misra-c2012-15.1
-# Advisory: union types can be used
-misra-c2012-19.2
-# Advisory: The # and ## preprocessor operators should not be used
-misra-c2012-20.10
+# Advisory: each board is one object in its own header, and detect_board_type() is the only function
+# that names them, to pick the one current_board points to
+misra-c2012-8.9:*/board/boards/*.h
 
-# needed since not all of these suppressions are applicable to all builds
-unmatchedSuppression
-
-# All interrupt handlers are defined, including ones we don't use
-unusedFunction:*/interrupt_handlers*.h
-
-# all of the below suppressions are from new checks introduced after updating
-# cppcheck from 2.5 -> 2.13. they are listed here to separate the update from
-# fixing the violations and all are intended to be removed soon after
-misra-c2012-2.5   # unused macros. a few legit, rest aren't common between F4/H7 builds. should we do this in the unusedFunction pass?
+# Temporary, removed later in this series by the changes to the USB/SPI wire formats, the health packet
+# and opendbc's safety types, which have to land together with openpilot and opendbc
+misra-c2012-1.2:*/board/comms_definitions.h
+misra-c2012-1.2:*/board/drivers/spi.h
+misra-c2012-1.2:*/board/health.h
+misra-c2012-10.6:*/board/drivers/can_common.h
+misra-c2012-10.6:*/board/can_comms.h
+misra-c2012-13.5:*/board/can_comms.h
+misra-c2012-8.4:*/board/drivers/can_common.h
+misra-c2012-8.7:*/board/drivers/can_common.h
+misra-c2012-13.5:*/board/drivers/can_common.h
+misra-c2012-10.3:*/board/drivers/fdcan.h
+misra-c2012-10.7:*/board/drivers/fdcan.h
+misra-c2012-12.2:*/board/drivers/fdcan.h

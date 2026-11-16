@@ -23,7 +23,7 @@ dev = [
   "ruff",
   "setuptools",
   "comma-deps-gcc-arm-none-eabi",
-  "comma-deps-cppcheck",
+  "misrable==0.2.0",
 ]
 
 [build-system]
