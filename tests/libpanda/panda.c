@@ -1,4 +1,3 @@
-#include "fake_stm.h"
 #include "config.h"
 #include "can.h"
 
