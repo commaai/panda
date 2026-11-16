@@ -98,7 +98,7 @@ static void cuatro_init(void) {
   sound_init();
 }
 
-static harness_configuration cuatro_harness_config = {
+static const harness_configuration cuatro_harness_config = {
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
   .GPIO_relay_SBU1 = GPIOA,
@@ -111,7 +111,7 @@ static harness_configuration cuatro_harness_config = {
   .adc_signal_SBU2 = ADC_CHANNEL_DEFAULT(ADC1, 17)
 };
 
-board board_cuatro = {
+static const board board_cuatro = {
   .harness_config = &cuatro_harness_config,
   .has_spi = true,
   .has_fan = true,

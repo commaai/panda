@@ -102,7 +102,7 @@ static void red_init(void) {
   set_gpio_output(GPIOB, 14, true);
 }
 
-static harness_configuration red_harness_config = {
+static const harness_configuration red_harness_config = {
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
   .GPIO_relay_SBU1 = GPIOC,
@@ -115,7 +115,7 @@ static harness_configuration red_harness_config = {
   .adc_signal_SBU2 = ADC_CHANNEL_DEFAULT(ADC1, 17)
 };
 
-board board_red = {
+static const board board_red = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &red_harness_config,
   .has_spi = false,
