@@ -6,7 +6,7 @@
 #define CLOCK_SOURCE_PERIOD_MS           50U
 #define CLOCK_SOURCE_PULSE_LEN_MS        2U
 
-static inline void clock_source_set_timer_params(uint16_t param1, uint16_t param2) {
+static inline void clock_source_set_timer_params(uint32_t param1, uint32_t param2) {
   // Pulse length of each channel
   register_set(&(TIM1->CCR1), (((param1 & 0xFF00U) >> 8U)*10U), 0xFFFFU);
   register_set(&(TIM1->CCR2), ((param1 & 0x00FFU)*10U), 0xFFFFU);

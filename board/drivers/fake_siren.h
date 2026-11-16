@@ -39,13 +39,13 @@ static void siren_dma_init(void) {
 static void fake_siren_codec_enable(bool enabled) {
   if (enabled) {
     bool success = true;
-    success &= i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x2B, (1U << 1)); // Left speaker mix from INA1
-    success &= i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x2C, (1U << 1)); // Right speaker mix from INA1
-    success &= i2c_set_reg_mask(I2C5, CODEC_I2C_ADDR, 0x3D, 0x17, 0x1F); // Left speaker volume
-    success &= i2c_set_reg_mask(I2C5, CODEC_I2C_ADDR, 0x3E, 0x17, 0x1F); // Right speaker volume
-    success &= i2c_set_reg_mask(I2C5, CODEC_I2C_ADDR, 0x37, 0x5, 0x7); // INA gain
-    success &= i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x4C, (1U << 7)); // Enable INA
-    success &= i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x51, (1U << 7)); // Disable global shutdown
+    success = i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x2B, (1U << 1)) && success; // Left speaker mix from INA1
+    success = i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x2C, (1U << 1)) && success; // Right speaker mix from INA1
+    success = i2c_set_reg_mask(I2C5, CODEC_I2C_ADDR, 0x3D, 0x17, 0x1F) && success; // Left speaker volume
+    success = i2c_set_reg_mask(I2C5, CODEC_I2C_ADDR, 0x3E, 0x17, 0x1F) && success; // Right speaker volume
+    success = i2c_set_reg_mask(I2C5, CODEC_I2C_ADDR, 0x37, 0x5, 0x7) && success; // INA gain
+    success = i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x4C, (1U << 7)) && success; // Enable INA
+    success = i2c_set_reg_bits(I2C5, CODEC_I2C_ADDR, 0x51, (1U << 7)) && success; // Disable global shutdown
     if (!success) {
       print("Siren codec enable failed\n");
       fault_occurred(FAULT_SIREN_MALFUNCTION);

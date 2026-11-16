@@ -45,7 +45,7 @@ typedef struct {
 
 static asm_buffer can_read_buffer = {.ptr = 0U, .tail_size = 0U};
 
-int comms_can_read(uint8_t *data, uint32_t max_len) {
+uint32_t comms_can_read(uint8_t *data, uint32_t max_len) {
   uint32_t pos = 0U;
 
   // Send tail of previous message if it is in buffer
@@ -112,7 +112,7 @@ void comms_can_write(const uint8_t *data, uint32_t len) {
 
   // rest of the message
   while (pos < len) {
-    uint32_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[(data[pos] >> 4U)];
+    uint32_t pckt_len = CANPACKET_HEAD_SIZE + (uint32_t)dlc_to_len[(data[pos] >> 4U)];
     if ((pos + pckt_len) <= len) {
       CANPacket_t to_push = {0};
       (void)memcpy((uint8_t*)&to_push, &data[pos], pckt_len);

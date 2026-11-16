@@ -57,7 +57,7 @@ static void tres_enable_can_transceiver(uint8_t transceiver, bool enabled) {
 }
 
 static bool tres_read_som_gpio (void) {
-  return (get_gpio_input(GPIOC, 2) != 0);
+  return get_gpio_input(GPIOC, 2);
 }
 
 static void tres_init(void) {

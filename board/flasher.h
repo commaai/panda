@@ -8,8 +8,8 @@
 uint32_t *prog_ptr = NULL;
 bool unlocked = false;
 
-static int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
-  int resp_len = 0;
+static uint32_t comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
+  uint32_t resp_len = 0;
 
   // flasher machine
   memset(resp, 0, 4);
@@ -100,7 +100,7 @@ void comms_can_write(const uint8_t *data, uint32_t len) {
   UNUSED(len);
 }
 
-int comms_can_read(uint8_t *data, uint32_t max_len) {
+uint32_t comms_can_read(uint8_t *data, uint32_t max_len) {
   UNUSED(data);
   UNUSED(max_len);
   return 0;

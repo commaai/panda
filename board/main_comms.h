@@ -88,35 +88,32 @@ static void __attribute__((noinline)) stack_guard_hit(void) {
 }
 #endif
 
-static int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
+static uint32_t comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   // kbps multiplied by 10
   static const uint32_t speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U};
   static const uint32_t data_speeds[] = {100U, 200U, 500U, 1000U, 1250U, 2500U, 5000U, 10000U, 20000U, 50000U};
-  unsigned int resp_len = 0;
+  uint32_t resp_len = 0;
   uint32_t time;
 
   switch (req->request) {
     // **** 0xa8: get microsecond timer
     case 0xa8:
       time = microsecond_timer_get();
-      resp[0] = (time & 0x000000FFU);
-      resp[1] = ((time & 0x0000FF00U) >> 8U);
-      resp[2] = ((time & 0x00FF0000U) >> 16U);
-      resp[3] = ((time & 0xFF000000U) >> 24U);
+      WORD_TO_BYTE_ARRAY(resp, time);
       resp_len = 4U;
       break;
     // **** 0xb0: set IR power
     case 0xb0:
-      current_board->set_ir_power(req->param1);
+      current_board->set_ir_power((uint8_t)req->param1);
       break;
     // **** 0xb1: set fan power
     case 0xb1:
-      fan_set_power(req->param1);
+      fan_set_power((uint8_t)req->param1);
       break;
     // **** 0xb2: get fan rpm
     case 0xb2:
-      resp[0] = (fan_state.rpm & 0x00FFU);
-      resp[1] = ((fan_state.rpm & 0xFF00U) >> 8U);
+      resp[0] = (uint8_t)fan_state.rpm;
+      resp[1] = (uint8_t)(fan_state.rpm >> 8U);
       resp_len = 2;
       break;
     // **** 0xb5: request deep sleep, wakes on CAN or SBU
@@ -146,12 +143,12 @@ static int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xc2:
       COMPILE_TIME_ASSERT(sizeof(can_health_t) <= USBPACKET_MAX_SIZE);
       if (req->param1 < 3U) {
-        update_can_health_pkt(req->param1, 0U);
-        can_health[req->param1].can_speed = (bus_config[req->param1].can_speed / 10U);
-        can_health[req->param1].can_data_speed = (bus_config[req->param1].can_data_speed / 10U);
-        can_health[req->param1].canfd_enabled = bus_config[req->param1].canfd_enabled;
-        can_health[req->param1].brs_enabled = bus_config[req->param1].brs_enabled;
-        can_health[req->param1].canfd_non_iso = bus_config[req->param1].canfd_non_iso;
+        update_can_health_pkt((uint8_t)req->param1, 0U);
+        can_health[req->param1].can_speed = (uint16_t)(bus_config[req->param1].can_speed / 10U);
+        can_health[req->param1].can_data_speed = (uint16_t)(bus_config[req->param1].can_data_speed / 10U);
+        can_health[req->param1].canfd_enabled = bus_config[req->param1].canfd_enabled ? 1U : 0U;
+        can_health[req->param1].brs_enabled = bus_config[req->param1].brs_enabled ? 1U : 0U;
+        can_health[req->param1].canfd_non_iso = bus_config[req->param1].canfd_non_iso ? 1U : 0U;
         resp_len = sizeof(can_health[req->param1]);
         (void)memcpy(resp, (uint8_t*)(&can_health[req->param1]), resp_len);
       }
@@ -165,20 +162,17 @@ static int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xc4:
       if (req->param1 < NUM_INTERRUPTS) {
         uint32_t load = interrupts[req->param1].call_rate;
-        resp[0] = (load & 0x000000FFU);
-        resp[1] = ((load & 0x0000FF00U) >> 8U);
-        resp[2] = ((load & 0x00FF0000U) >> 16U);
-        resp[3] = ((load & 0xFF000000U) >> 24U);
+        WORD_TO_BYTE_ARRAY(resp, load);
         resp_len = 4U;
       }
       break;
     // **** 0xc5: DEBUG: drive relay
     case 0xc5:
-      set_intercept_relay((req->param1 & 0x1U), (req->param1 & 0x2U));
+      set_intercept_relay((req->param1 & 0x1U) != 0U, (req->param1 & 0x2U) != 0U);
       break;
     // **** 0xc6: DEBUG: read SOM GPIO
     case 0xc6:
-      resp[0] = current_board->read_som_gpio();
+      resp[0] = current_board->read_som_gpio() ? 1U : 0U;
       resp_len = 1;
       break;
     // **** 0xd0: fetch serial (aka the provisioned dongle ID)
@@ -274,7 +268,7 @@ static int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       // you can only set this if you are in a non car safety mode
       if (!is_car_safety_mode(safety_setup.current_safety_mode)) {
         mpu_safety_open();
-        safety_alternative_experience(req->param1);
+        safety_alternative_experience((int)req->param1);
         mpu_safety_close();
       }
       break;
@@ -354,7 +348,8 @@ static int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       } else if ((req->param1 == 8U) && (req->param2 < NUM_INTERRUPTS)) {
         // one more call than the limit allows
         interrupts[req->param2].call_counter = interrupts[req->param2].max_call_rate;
-        NVIC_SetPendingIRQ((IRQn_Type)req->param2);
+        // pended in the register, param2 is a number and not an IRQn_Type
+        NVIC->ISPR[req->param2 >> 5U] = 1UL << (req->param2 & 0x1FU);
       } else {
       }
       break;

@@ -127,7 +127,7 @@ static void tick_handler(void) {
     }
 
     // siren
-    current_board->set_siren((loop_counter & 1U) && (siren_enabled || (siren_countdown > 0U)));
+    current_board->set_siren(((loop_counter & 1U) != 0U) && (siren_enabled || (siren_countdown > 0U)));
 
     // tick drivers at 8Hz
     fan_tick();
@@ -167,7 +167,7 @@ static void tick_handler(void) {
 
       // turn off the blue LED, turned on by CAN
       // unless we are in power saving mode
-      led_set(LED_BLUE, (uptime_cnt & 1U) && power_save_enabled);
+      led_set(LED_BLUE, ((uptime_cnt & 1U) != 0U) && power_save_enabled);
 
       const bool recent_heartbeat = heartbeat_counter == 0U;
 

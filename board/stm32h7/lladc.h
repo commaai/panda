@@ -9,7 +9,7 @@ static void adc_init(ADC_TypeDef *adc) {
   adc->CR &= ~(ADC_CR_ADEN); // Disable ADC
   adc->CR &= ~(ADC_CR_DEEPPWD); // Reset deep-power-down mode
   adc->CR |= ADC_CR_ADVREGEN; // Enable ADC regulator
-  while(!(adc->ISR & ADC_ISR_LDORDY) && (adc != ADC3)) {}
+  while(((adc->ISR & ADC_ISR_LDORDY) == 0U) && (adc != ADC3)) {}
 
   if (adc != ADC3) {
     adc->CR &= ~(ADC_CR_ADCALDIF); // Choose single-ended calibration
@@ -20,7 +20,7 @@ static void adc_init(ADC_TypeDef *adc) {
 
   adc->ISR |= ADC_ISR_ADRDY;
   adc->CR |= ADC_CR_ADEN;
-  while(!(adc->ISR & ADC_ISR_ADRDY)) {}
+  while((adc->ISR & ADC_ISR_ADRDY) == 0U) {}
 }
 
 static uint16_t adc_get_raw(const adc_signal_t *signal) {
@@ -38,7 +38,7 @@ static uint16_t adc_get_raw(const adc_signal_t *signal) {
   signal->adc->PCSEL_RES0 = (0x1UL << signal->channel);
 
   // oversampling
-  signal->adc->CFGR2 = (((1U << (uint32_t) signal->oversampling) - 1U) << ADC_CFGR2_OVSR_Pos) | ((uint32_t) signal->oversampling << ADC_CFGR2_OVSS_Pos);
+  signal->adc->CFGR2 = (((1UL << (uint32_t) signal->oversampling) - 1U) << ADC_CFGR2_OVSR_Pos) | ((uint32_t) signal->oversampling << ADC_CFGR2_OVSS_Pos);
   signal->adc->CFGR2 |= (signal->oversampling != OVERSAMPLING_1) ? ADC_CFGR2_ROVSE : 0U;
 
   // start conversion
@@ -94,9 +94,9 @@ static inline uint16_t adc_get_mV(const adc_signal_t *signal) {
   }
 
   if ((signal->adc == ADC1) || (signal->adc == ADC2)) {
-    ret = (adc_get_raw(signal) * adc_avdd_mV) / 65535U;
+    ret = (uint16_t)((adc_get_raw(signal) * adc_avdd_mV) / 65535U);
   } else if (signal->adc == ADC3) {
-    ret = (adc_get_raw(signal) * adc_avdd_mV) / 4095U;
+    ret = (uint16_t)((adc_get_raw(signal) * adc_avdd_mV) / 4095U);
   } else {
     // not an ADC with external channels
   }

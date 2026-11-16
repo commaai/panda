@@ -60,7 +60,7 @@ static void early_initialization(void) {
 
   if (enter_bootloader_mode == ENTER_BOOTLOADER_MAGIC) {
     led_init();
-    led_set(LED_GREEN, 1);
+    led_set(LED_GREEN, true);
     jump_to_bootloader();
   }
 }

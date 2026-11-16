@@ -43,7 +43,7 @@ static void set_intercept_relay(bool intercept, bool ignition_relay) {
 static bool relay_pin_mismatch(const GPIO_TypeDef *GPIO, unsigned int pin) {
   bool is_output = ((GPIO->MODER >> (pin * 2U)) & 3U) == (uint32_t)MODE_OUTPUT;
   bool driven = (GPIO->ODR & (1UL << pin)) != 0U;
-  bool read = get_gpio_input(GPIO, pin) != 0;
+  bool read = get_gpio_input(GPIO, pin);
   return is_output && (driven != read);
 }
 
@@ -141,8 +141,8 @@ static inline void harness_init(void) {
   // init OBD_SBUx_RELAY
   set_gpio_output_type(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, OUTPUT_TYPE_OPEN_DRAIN);
   set_gpio_output_type(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, OUTPUT_TYPE_OPEN_DRAIN);
-  set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, 1);
-  set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, 1);
+  set_gpio_output(current_board->harness_config->GPIO_relay_SBU1, current_board->harness_config->pin_relay_SBU1, true);
+  set_gpio_output(current_board->harness_config->GPIO_relay_SBU2, current_board->harness_config->pin_relay_SBU2, true);
 
   // detect initial orientation
   harness.status = harness_detect_orientation();
