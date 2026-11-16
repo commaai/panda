@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_UTILS_H
+#define BOARD_UTILS_H
 
 // cppcheck-suppress-macro [misra-c2012-1.2, misra-c2012-17.3]; allow __typeof__ extension
 #define MIN(a, b) ({ \
@@ -47,3 +48,5 @@
 uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
   return ts - ts_last;
 }
+
+#endif  // BOARD_UTILS_H

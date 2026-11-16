@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_SYS_FAULTS_H
+#define BOARD_SYS_FAULTS_H
 
 #include "board/sys/sys.h"
 
@@ -44,3 +45,5 @@ void fault_recovered(uint32_t fault) {
     print("Cannot recover from a permanent fault!\n");
   }
 }
+
+#endif  // BOARD_SYS_FAULTS_H

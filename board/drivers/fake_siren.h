@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_DRIVERS_FAKE_SIREN_H
+#define BOARD_DRIVERS_FAKE_SIREN_H
 
 #include "board/stm32h7/lli2c.h"
 
@@ -115,3 +116,5 @@ void fake_siren_set(bool enabled) {
     fake_siren_enabled = enabled;
   }
 }
+
+#endif  // BOARD_DRIVERS_FAKE_SIREN_H

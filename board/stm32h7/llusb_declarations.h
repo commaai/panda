@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_STM32H7_LLUSB_DECLARATIONS_H
+#define BOARD_STM32H7_LLUSB_DECLARATIONS_H
 
 extern USB_OTG_GlobalTypeDef *USBx;
 
@@ -14,3 +15,5 @@ extern USB_OTG_GlobalTypeDef *USBx;
 
 void usb_irqhandler(void);
 void usb_init(void);
+
+#endif  // BOARD_STM32H7_LLUSB_DECLARATIONS_H

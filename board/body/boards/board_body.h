@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_BODY_BOARDS_BOARD_BODY_H
+#define BOARD_BODY_BOARDS_BOARD_BODY_H
 
 #include "board/config.h"
 #include "board/body/body.h"
@@ -48,3 +49,5 @@ board board_body = {
   .led_pin = {10, 10, 10},
   .init = board_body_init,
 };
+
+#endif  // BOARD_BODY_BOARDS_BOARD_BODY_H

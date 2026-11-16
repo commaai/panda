@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_LIBC_H
+#define BOARD_LIBC_H
 
 // **** libc ****
 
@@ -79,3 +80,5 @@ int memcmp(const void * ptr1, const void * ptr2, unsigned int num) {
   }
   return ret;
 }
+
+#endif  // BOARD_LIBC_H

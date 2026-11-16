@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_STM32H7_LLDTS_H
+#define BOARD_STM32H7_LLDTS_H
 
 // Digital temperature sensor (DTS)
 
@@ -30,3 +31,5 @@ float dts_get_temperature(void) {
   }
   return ret;
 }
+
+#endif  // BOARD_STM32H7_LLDTS_H

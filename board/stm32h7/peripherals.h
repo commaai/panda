@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_STM32H7_PERIPHERALS_H
+#define BOARD_STM32H7_PERIPHERALS_H
 
 #ifdef BOOTSTUB
 void gpio_usb_init(void) {
@@ -150,3 +151,5 @@ void check_option_bytes(void) {
     fault_occurred_value(FAULT_REGISTER_DIVERGENT, (boot << 16) | optlock);
   }
 }
+
+#endif  // BOARD_STM32H7_PERIPHERALS_H

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_SYS_CRITICAL_H
+#define BOARD_SYS_CRITICAL_H
 
 #include "board/sys/sys.h"
 
@@ -16,3 +17,5 @@ void disable_interrupts(void) {
   interrupts_enabled = false;
   __disable_irq();
 }
+
+#endif  // BOARD_SYS_CRITICAL_H

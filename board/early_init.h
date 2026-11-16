@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_EARLY_INIT_H
+#define BOARD_EARLY_INIT_H
 
 // Early bringup
 #define ENTER_BOOTLOADER_MAGIC 0xdeadbeefU
@@ -103,3 +104,5 @@ __attribute__((naked)) void HardFault_Handler(void) {
   // cppcheck-suppress misra-c2012-17.3 ; inline asm
   __asm volatile ("mrs r0, msp\n b hardfault_record");
 }
+
+#endif  // BOARD_EARLY_INIT_H

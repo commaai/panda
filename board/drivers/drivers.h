@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_DRIVERS_DRIVERS_H
+#define BOARD_DRIVERS_DRIVERS_H
 
 #include "board/can.h"
 #include "board/health.h"
@@ -245,3 +246,5 @@ static inline void puth4(unsigned int i);
 void usb_init(void);
 void refresh_can_tx_slots_available(void);
 void can_tx_comms_resume_usb(void);
+
+#endif  // BOARD_DRIVERS_DRIVERS_H

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_DRIVERS_REGISTERS_H
+#define BOARD_DRIVERS_REGISTERS_H
 
 #include "board/drivers/drivers.h"
 
@@ -79,3 +80,5 @@ void init_registers(void) {
     register_map[i].check_mask = 0U;
   }
 }
+
+#endif  // BOARD_DRIVERS_REGISTERS_H

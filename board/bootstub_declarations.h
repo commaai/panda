@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_BOOTSTUB_DECLARATIONS_H
+#define BOARD_BOOTSTUB_DECLARATIONS_H
 
 // ******************** Prototypes ********************
 void print(const char *a){ UNUSED(a); }
@@ -13,3 +14,5 @@ void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage);
 // ********************* Globals **********************
 uint8_t hw_type = 0;
 board *current_board;
+
+#endif  // BOARD_BOOTSTUB_DECLARATIONS_H

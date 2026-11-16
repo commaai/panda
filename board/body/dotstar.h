@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_BODY_DOTSTAR_H
+#define BOARD_BODY_DOTSTAR_H
 
 #include "board/config.h"
 #include "board/body/body.h"
@@ -203,3 +204,5 @@ void dotstar_apply_breathe(dotstar_rgb_t color, uint32_t now_us, uint32_t cycle_
   dotstar_set_global_brightness(DOTSTAR_GLOBAL_BRIGHTNESS_MAX);
   dotstar_fill(r, g, b);
 }
+
+#endif  // BOARD_BODY_DOTSTAR_H

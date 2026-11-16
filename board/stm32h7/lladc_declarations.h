@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_STM32H7_LLADC_DECLARATIONS_H
+#define BOARD_STM32H7_LLADC_DECLARATIONS_H
 
 typedef enum {
   SAMPLETIME_1_CYCLE = 0,
@@ -35,3 +36,5 @@ typedef struct {
 #define ADC_CHANNEL_DEFAULT(a, c) {.adc = (a), .channel = (c), .sample_time = SAMPLETIME_32_CYCLES, .oversampling = OVERSAMPLING_64}
 
 #define VREFINT_CAL_ADDR ((uint16_t *)0x1FF1E860UL)
+
+#endif  // BOARD_STM32H7_LLADC_DECLARATIONS_H

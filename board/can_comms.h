@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_CAN_COMMS_H
+#define BOARD_CAN_COMMS_H
 
 /*
   CAN transactions to and from the host come in the form of
@@ -144,3 +145,5 @@ void refresh_can_tx_slots_available(void) {
     can_tx_comms_resume_spi();
   }
 }
+
+#endif  // BOARD_CAN_COMMS_H

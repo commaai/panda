@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_PROVISION_H
+#define BOARD_PROVISION_H
 
 // this is where we manage the dongle ID assigned during our
 // manufacturing. aside from this, there's a UID for the MCU
@@ -13,3 +14,5 @@ void get_provision_chunk(uint8_t *resp) {
     (void)memcpy(resp, "unprovisioned\x00\x00\x00testing123\x00\x00\xa3\xa6\x99\xec", 0x20);
   }
 }
+
+#endif  // BOARD_PROVISION_H

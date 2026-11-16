@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_STM32H7_LLFDCAN_DECLARATIONS_H
+#define BOARD_STM32H7_LLFDCAN_DECLARATIONS_H
 
 // SAE J2284-4 document specifies a bus-line network running at 2 Mbit/s
 // SAE J2284-5 document specifies a point-to-point communication running at 5 Mbit/s
@@ -48,3 +49,5 @@ void llcan_irq_disable(const FDCAN_GlobalTypeDef *FDCANx);
 void llcan_irq_enable(const FDCAN_GlobalTypeDef *FDCANx);
 bool llcan_init(FDCAN_GlobalTypeDef *FDCANx);
 void llcan_clear_send(FDCAN_GlobalTypeDef *FDCANx);
+
+#endif  // BOARD_STM32H7_LLFDCAN_DECLARATIONS_H

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_STM32H7_LLFDCAN_H
+#define BOARD_STM32H7_LLFDCAN_H
 
 #include "llfdcan_declarations.h"
 
@@ -239,3 +240,5 @@ void llcan_clear_send(FDCAN_GlobalTypeDef *FDCANx) {
   bool ret = llcan_init(FDCANx);
   UNUSED(ret);
 }
+
+#endif  // BOARD_STM32H7_LLFDCAN_H

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_STM32H7_CLOCK_H
+#define BOARD_STM32H7_CLOCK_H
 
 /*
 HSE: 25MHz
@@ -157,3 +158,5 @@ void clock_check(void) {
     fault_occurred_value(FAULT_CLOCK, captured ? counts : 0U);
   }
 }
+
+#endif  // BOARD_STM32H7_CLOCK_H

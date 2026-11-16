@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_CONFIG_H
+#define BOARD_CONFIG_H
 
 #include <stdbool.h>
 
@@ -24,3 +25,5 @@
   // building for tests
   //#include "fake_stm.h"
 #endif
+
+#endif  // BOARD_CONFIG_H

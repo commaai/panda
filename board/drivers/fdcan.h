@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_DRIVERS_FDCAN_H
+#define BOARD_DRIVERS_FDCAN_H
 
 #include "board/drivers/drivers.h"
 
@@ -272,3 +273,5 @@ bool can_init(uint8_t can_number) {
   }
   return ret;
 }
+
+#endif  // BOARD_DRIVERS_FDCAN_H

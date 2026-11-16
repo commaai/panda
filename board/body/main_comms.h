@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_BODY_MAIN_COMMS_H
+#define BOARD_BODY_MAIN_COMMS_H
 
 #include "board/config.h"
 #include "board/body/body.h"
@@ -94,3 +95,5 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   }
   return resp_len;
 }
+
+#endif  // BOARD_BODY_MAIN_COMMS_H

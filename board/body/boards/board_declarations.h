@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_BODY_BOARDS_BOARD_DECLARATIONS_H
+#define BOARD_BODY_BOARDS_BOARD_DECLARATIONS_H
 
 #include "stm32h7xx.h"
 
@@ -55,3 +56,5 @@ struct board {
 #define OBDC_IGNITION_ON_PIN  11
 
 extern struct board board_body;
+
+#endif  // BOARD_BODY_BOARDS_BOARD_DECLARATIONS_H

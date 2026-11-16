@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_DRIVERS_BOOTKICK_H
+#define BOARD_DRIVERS_BOOTKICK_H
 
 #include "board/drivers/drivers.h"
 
@@ -65,3 +66,5 @@ void bootkick_tick(bool ignition, bool recent_heartbeat) {
   }
   current_board->set_bootkick(boot_state);
 }
+
+#endif  // BOARD_DRIVERS_BOOTKICK_H

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_DRIVERS_USB_H
+#define BOARD_DRIVERS_USB_H
 
 #include "board/drivers/drivers.h"
 
@@ -751,3 +752,5 @@ void can_tx_comms_resume_usb(void) {
   }
   EXIT_CRITICAL();
 }
+
+#endif  // BOARD_DRIVERS_USB_H

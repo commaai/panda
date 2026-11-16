@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_STM32H7_LLSPI_H
+#define BOARD_STM32H7_LLSPI_H
 
 // SPI4 NSS (chip select) is PE11
 #define SPI_CS_PIN 11U
@@ -95,3 +96,5 @@ void llspi_init(void) {
   EXTI->PR1 = (1UL << SPI_CS_PIN);
   nvic_enable(EXTI15_10_IRQn);
 }
+
+#endif  // BOARD_STM32H7_LLSPI_H

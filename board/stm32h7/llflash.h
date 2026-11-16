@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_STM32H7_LLFLASH_H
+#define BOARD_STM32H7_LLFLASH_H
 
 bool flash_is_locked(void) {
   return (FLASH->CR1 & FLASH_CR_LOCK);
@@ -33,3 +34,5 @@ void flush_write_buffer(void) {
     while (FLASH->SR1 & FLASH_SR_QW);
   }
 }
+
+#endif  // BOARD_STM32H7_LLFLASH_H

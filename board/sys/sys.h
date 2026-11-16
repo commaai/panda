@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_SYS_SYS_H
+#define BOARD_SYS_SYS_H
 
 // ******************** critical ********************
 
@@ -79,3 +80,5 @@ void fault_safe_state(void);
 extern bool power_save_enabled;
 
 void set_power_save_state(bool enable);
+
+#endif  // BOARD_SYS_SYS_H

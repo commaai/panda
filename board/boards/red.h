@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_BOARDS_RED_H
+#define BOARD_BOARDS_RED_H
 
 #include "board_declarations.h"
 
@@ -131,3 +132,5 @@ board board_red = {
   .read_som_gpio = unused_read_som_gpio,
   .set_amp_enabled = unused_set_amp_enabled
 };
+
+#endif  // BOARD_BOARDS_RED_H
