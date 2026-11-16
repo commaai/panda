@@ -7,6 +7,11 @@
 // cppcheck-suppress-macro misra-c2012-1.2 ; ISO C has no way to choose the section of an object
 #define SECTION(name) __attribute__((section(name)))
 
+// code runs from flash without an instruction cache, and flash is read in 32-byte lines: a small loop that
+// crosses a line boundary fetches two lines on every iteration, so hot loops start on a line instead
+// cppcheck-suppress-macro misra-c2012-1.2 ; ISO C has no way to align a function
+#define FLASH_LINE_ALIGNED __attribute__((aligned(32)))
+
 static inline uint32_t min_u32(uint32_t a, uint32_t b) {
   return (a < b) ? a : b;
 }
