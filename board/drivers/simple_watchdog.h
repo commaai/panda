@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_DRIVERS_SIMPLE_WATCHDOG_H
+#define BOARD_DRIVERS_SIMPLE_WATCHDOG_H
 
 #include "board/drivers/drivers.h"
 
@@ -21,3 +22,5 @@ void simple_watchdog_init(uint32_t fault, uint32_t threshold) {
   wd_state.threshold = threshold;
   wd_state.last_ts = microsecond_timer_get();
 }
+
+#endif  // BOARD_DRIVERS_SIMPLE_WATCHDOG_H

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_STM32H7_LLADC_H
+#define BOARD_STM32H7_LLADC_H
 
 #include "lladc_declarations.h"
 
@@ -99,3 +100,5 @@ uint16_t adc_get_mV(const adc_signal_t *signal) {
   } else {}
   return ret;
 }
+
+#endif  // BOARD_STM32H7_LLADC_H

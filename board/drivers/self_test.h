@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_DRIVERS_SELF_TEST_H
+#define BOARD_DRIVERS_SELF_TEST_H
 
 #include "board/crc.h"
 
@@ -377,3 +378,5 @@ void self_test_tick(void) {
     fault_occurred_value(FAULT_DMA, dma_err);
   }
 }
+
+#endif  // BOARD_DRIVERS_SELF_TEST_H

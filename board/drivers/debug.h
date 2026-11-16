@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_DRIVERS_DEBUG_H
+#define BOARD_DRIVERS_DEBUG_H
 
 #include "board/drivers/drivers.h"
 
@@ -66,3 +67,5 @@ static void hexdump(const void *a, int l) {
 static inline void puth4(unsigned int i) {
   puthx(i, 4U);
 }
+
+#endif  // BOARD_DRIVERS_DEBUG_H

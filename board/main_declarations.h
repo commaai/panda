@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_MAIN_DECLARATIONS_H
+#define BOARD_MAIN_DECLARATIONS_H
 
 #include "board/drivers/drivers.h"
 
@@ -25,3 +26,5 @@ extern bool siren_enabled;
 
 // sound
 extern uint16_t sound_output_level;
+
+#endif  // BOARD_MAIN_DECLARATIONS_H

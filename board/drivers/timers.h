@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_DRIVERS_TIMERS_H
+#define BOARD_DRIVERS_TIMERS_H
 
 static void timer_init(TIM_TypeDef *TIM, int psc) {
   register_set(&(TIM->PSC), (psc-1), 0xFFFFU);
@@ -57,3 +58,5 @@ void tick_timer_init(void) {
   timer_init(TICK_TIMER, (uint16_t)((15.25*APB2_TIMER_FREQ)/8U));
   timer_irq_enable(TICK_TIMER, TICK_TIMER_IRQ);
 }
+
+#endif  // BOARD_DRIVERS_TIMERS_H

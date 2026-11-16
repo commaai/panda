@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_BOARDS_TRES_H
+#define BOARD_BOARDS_TRES_H
 
 #include "board_declarations.h"
 
@@ -168,3 +169,5 @@ board board_tres = {
   .read_som_gpio = tres_read_som_gpio,
   .set_amp_enabled = unused_set_amp_enabled
 };
+
+#endif  // BOARD_BOARDS_TRES_H

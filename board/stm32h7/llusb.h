@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_STM32H7_LLUSB_H
+#define BOARD_STM32H7_LLUSB_H
 
 #include "llusb_declarations.h"
 
@@ -79,3 +80,5 @@ void usb_init(void) {
   // enable the IRQ
   nvic_enable(OTG_HS_IRQn);
 }
+
+#endif  // BOARD_STM32H7_LLUSB_H

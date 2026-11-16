@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_STM32H7_LLMPU_H
+#define BOARD_STM32H7_LLMPU_H
 
 #include "opendbc/safety/declarations.h"
 
@@ -101,3 +102,5 @@ void mpu_check(void) {
     fault_occurred_value(FAULT_MPU, mpu_safety_changed_addr);
   }
 }
+
+#endif  // BOARD_STM32H7_LLMPU_H

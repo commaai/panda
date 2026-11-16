@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_BOARDS_CUATRO_H
+#define BOARD_BOARDS_CUATRO_H
 
 #include "board_declarations.h"
 
@@ -130,3 +131,5 @@ board board_cuatro = {
   .read_som_gpio = tres_read_som_gpio,
   .set_amp_enabled = cuatro_set_amp_enabled
 };
+
+#endif  // BOARD_BOARDS_CUATRO_H

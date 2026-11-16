@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_DRIVERS_HARNESS_H
+#define BOARD_DRIVERS_HARNESS_H
 
 #include "board/drivers/drivers.h"
 
@@ -150,3 +151,5 @@ void harness_init(void) {
   // keep buses connected by default
   set_intercept_relay(false, false);
 }
+
+#endif  // BOARD_DRIVERS_HARNESS_H

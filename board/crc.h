@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_CRC_H
+#define BOARD_CRC_H
 
 // standard CRC-32, same as zlib's crc32()
 static uint32_t crc32_table[256];
@@ -24,3 +25,5 @@ uint32_t crc32_update(uint32_t crc, const uint8_t *dat, uint32_t len) {
 uint32_t crc32(const uint8_t *dat, uint32_t len) {
   return crc32_update(0xFFFFFFFFU, dat, len) ^ 0xFFFFFFFFU;
 }
+
+#endif  // BOARD_CRC_H

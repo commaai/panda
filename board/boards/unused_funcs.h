@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_BOARDS_UNUSED_FUNCS_H
+#define BOARD_BOARDS_UNUSED_FUNCS_H
 
 void unused_set_ir_power(uint8_t percentage) {
   UNUSED(percentage);
@@ -27,3 +28,5 @@ bool unused_read_som_gpio(void) {
 void unused_set_amp_enabled(bool enabled) {
   UNUSED(enabled);
 }
+
+#endif  // BOARD_BOARDS_UNUSED_FUNCS_H

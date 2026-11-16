@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_BODY_STM32H7_BOARD_H
+#define BOARD_BODY_STM32H7_BOARD_H
 
 #include "board/config.h"
 #include "board/body/body.h"
@@ -8,3 +9,5 @@
 void detect_board_type(void) {
   // Board type set explicitly in main()
 }
+
+#endif  // BOARD_BODY_STM32H7_BOARD_H

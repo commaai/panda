@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_DRIVERS_CAN_COMMON_H
+#define BOARD_DRIVERS_CAN_COMMON_H
 
 #include "board/drivers/drivers.h"
 #include "opendbc/safety/ignition.h"
@@ -191,3 +192,5 @@ bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len) {
   }
   return ret;
 }
+
+#endif  // BOARD_DRIVERS_CAN_COMMON_H

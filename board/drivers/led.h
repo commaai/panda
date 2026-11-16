@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_DRIVERS_LED_H
+#define BOARD_DRIVERS_LED_H
 
 
 #define LED_RED 0U
@@ -32,3 +33,5 @@ void led_init(void) {
     led_set(i, false);
   }
 }
+
+#endif  // BOARD_DRIVERS_LED_H

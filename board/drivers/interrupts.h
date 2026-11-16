@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_DRIVERS_INTERRUPTS_H
+#define BOARD_DRIVERS_INTERRUPTS_H
 
 #include "board/drivers/drivers.h"
 
@@ -151,3 +152,5 @@ void init_interrupts(bool check_rate_limit){
   // Init interrupt timer for a 1s interval
   interrupt_timer_init();
 }
+
+#endif  // BOARD_DRIVERS_INTERRUPTS_H

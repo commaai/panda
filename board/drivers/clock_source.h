@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_DRIVERS_CLOCK_SOURCE_H
+#define BOARD_DRIVERS_CLOCK_SOURCE_H
 
 #include "board/drivers/drivers.h"
 
@@ -66,3 +67,5 @@ void clock_source_init(bool enable_channel1) {
   register_set(&(TIM1->CR1), TIM_CR1_CEN, 0x3FU);
   register_set(&(TIM8->CR1), TIM_CR1_CEN, 0x3FU);
 }
+
+#endif  // BOARD_DRIVERS_CLOCK_SOURCE_H

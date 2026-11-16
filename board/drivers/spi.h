@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_DRIVERS_SPI_H
+#define BOARD_DRIVERS_SPI_H
 
 #include "board/drivers/drivers.h"
 
@@ -196,3 +197,5 @@ void spi_init(void) {
 void can_tx_comms_resume_spi(void) {
   spi_can_tx_ready = true;
 }
+
+#endif  // BOARD_DRIVERS_SPI_H

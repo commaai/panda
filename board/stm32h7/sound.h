@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_STM32H7_SOUND_H
+#define BOARD_STM32H7_SOUND_H
 
 #define SOUND_RX_BUF_SIZE 1000U
 #define SOUND_TX_BUF_SIZE (SOUND_RX_BUF_SIZE/2U)
@@ -252,3 +253,5 @@ void sound_init(void) {
   nvic_enable(BDMA_Channel0_IRQn);
   nvic_enable(DMA1_Stream0_IRQn);
 }
+
+#endif  // BOARD_STM32H7_SOUND_H

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_DRIVERS_FAN_H
+#define BOARD_DRIVERS_FAN_H
 
 #include "board/drivers/drivers.h"
 
@@ -41,3 +42,5 @@ void fan_tick(void) {
     current_board->set_fan_enabled((fan_state.power > 0U) || (fan_state.cooldown_counter > 0U));
   }
 }
+
+#endif  // BOARD_DRIVERS_FAN_H

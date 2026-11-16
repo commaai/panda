@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_FLASHER_H
+#define BOARD_FLASHER_H
 
 // from the linker script
 #define APP_START_ADDRESS 0x8020000U
@@ -150,3 +151,5 @@ void soft_flasher_start(void) {
     delay(500000);
   }
 }
+
+#endif  // BOARD_FLASHER_H

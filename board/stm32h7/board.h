@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_STM32H7_BOARD_H
+#define BOARD_STM32H7_BOARD_H
 
 // ///////////////////////////////////////////////////////////// //
 // Hardware abstraction layer for all different supported boards //
@@ -53,3 +54,5 @@ void detect_board_type(void) {
   // check for non-supported board types
   assert_fatal(hw_type != HW_TYPE_UNKNOWN, "Unsupported board type\n");
 }
+
+#endif  // BOARD_STM32H7_BOARD_H

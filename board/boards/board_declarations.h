@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_BOARDS_BOARD_DECLARATIONS_H
+#define BOARD_BOARDS_BOARD_DECLARATIONS_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -58,3 +59,5 @@ struct board {
 extern struct board board_tres;
 extern struct board board_cuatro;
 extern struct board board_red;
+
+#endif  // BOARD_BOARDS_BOARD_DECLARATIONS_H

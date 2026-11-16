@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_MAIN_COMMS_H
+#define BOARD_MAIN_COMMS_H
 
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
@@ -426,3 +427,5 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
   }
   return resp_len;
 }
+
+#endif  // BOARD_MAIN_COMMS_H

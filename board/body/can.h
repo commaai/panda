@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_BODY_CAN_H
+#define BOARD_BODY_CAN_H
 
 #include "board/config.h"
 #include "board/body/body.h"
@@ -117,3 +118,5 @@ void body_can_periodic(uint32_t now, bool ignition, bool plug_charging) {
     last_motor_speed_tx_us = now;
   }
 }
+
+#endif  // BOARD_BODY_CAN_H

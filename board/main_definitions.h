@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_MAIN_DEFINITIONS_H
+#define BOARD_MAIN_DEFINITIONS_H
 
 #include "main_declarations.h"
 
@@ -16,3 +17,5 @@ bool heartbeat_disabled = false;            // set over USB
 
 // siren state
 bool siren_enabled = false;
+
+#endif  // BOARD_MAIN_DEFINITIONS_H

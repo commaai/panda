@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_SYS_POWER_SAVING_H
+#define BOARD_SYS_POWER_SAVING_H
 
 #include "board/sys/sys.h"
 
@@ -161,3 +162,5 @@ static void enter_stop_mode(void) {
 
   NVIC_SystemReset();
 }
+
+#endif  // BOARD_SYS_POWER_SAVING_H

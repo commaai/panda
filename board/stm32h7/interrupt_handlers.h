@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_STM32H7_INTERRUPT_HANDLERS_H
+#define BOARD_STM32H7_INTERRUPT_HANDLERS_H
 
 // ********************* Bare interrupt handlers *********************
 // Interrupts for STM32H7x5
@@ -143,3 +144,5 @@ void FDCAN3_IT0_IRQHandler(void) {handle_interrupt(FDCAN3_IT0_IRQn);}
 void FDCAN3_IT1_IRQHandler(void) {handle_interrupt(FDCAN3_IT1_IRQn);}
 void TIM23_IRQHandler(void) {handle_interrupt(TIM23_IRQn);}
 void TIM24_IRQHandler(void) {handle_interrupt(TIM24_IRQn);}
+
+#endif  // BOARD_STM32H7_INTERRUPT_HANDLERS_H
