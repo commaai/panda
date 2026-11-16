@@ -6,14 +6,3 @@ misra-c2012-11.4
 # Advisory: each board is one object in its own header, and detect_board_type() is the only function
 # that names them, to pick the one current_board points to
 misra-c2012-8.9:*/board/boards/*.h
-
-# Temporary, removed later in this series by the changes to the USB/SPI wire formats, the health packet
-# and opendbc's safety types, which have to land together with openpilot and opendbc
-misra-c2012-10.6:*/board/can_comms.h
-misra-c2012-13.5:*/board/can_comms.h
-misra-c2012-8.4:*/board/drivers/can_common.h
-misra-c2012-8.7:*/board/drivers/can_common.h
-misra-c2012-13.5:*/board/drivers/can_common.h
-misra-c2012-10.3:*/board/drivers/fdcan.h
-misra-c2012-10.7:*/board/drivers/fdcan.h
-misra-c2012-12.2:*/board/drivers/fdcan.h

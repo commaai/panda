@@ -138,28 +138,14 @@ static inline void can_set_orientation(bool flipped) {
   bus_config[2].can_num_lookup = flipped ? 0U : 2U;
 }
 
-bool can_tx_check_min_slots_free(uint32_t min) {
-  return
-    (can_slots_empty(&can_tx1_q) >= min) &&
-    (can_slots_empty(&can_tx2_q) >= min) &&
-    (can_slots_empty(&can_tx3_q) >= min);
-}
-
-static uint8_t calculate_checksum(const uint8_t *dat, uint32_t len) {
-  uint8_t checksum = 0U;
-  for (uint32_t i = 0U; i < len; i++) {
-    checksum ^= dat[i];
+static bool can_tx_check_min_slots_free(uint32_t min) {
+  bool ret = true;
+  for (uint8_t i = 0U; i < PANDA_CAN_CNT; i++) {
+    if (can_slots_empty(can_queues[i]) < min) {
+      ret = false;
+    }
   }
-  return checksum;
-}
-
-void can_set_checksum(CANPacket_t *packet) {
-  packet->checksum = 0U;
-  packet->checksum = calculate_checksum((uint8_t *) packet, CANPACKET_HEAD_SIZE + GET_LEN(packet));
-}
-
-bool can_check_checksum(CANPacket_t *packet) {
-  return (calculate_checksum((uint8_t *) packet, CANPACKET_HEAD_SIZE + GET_LEN(packet)) == 0U);
+  return ret;
 }
 
 static void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
@@ -179,9 +165,6 @@ static void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook
     safety_tx_blocked += 1U;
     to_push->returned = 0U;
     to_push->rejected = 1U;
-
-    // data changed
-    can_set_checksum(to_push);
     rx_buffer_overflow += can_push(&can_rx_q, to_push) ? 0U : 1U;
   }
 }

@@ -7,40 +7,17 @@ libpanda_dir = os.path.dirname(os.path.abspath(__file__))
 libpanda_fn = os.path.join(libpanda_dir, "libpanda.so")
 
 
-class CANPacketHeader(ctypes.LittleEndianStructure):
-  _pack_ = 1
+class CANPacket(ctypes.Structure):
   _fields_ = [
-    ("fd", ctypes.c_uint8, 1),
-    ("bus", ctypes.c_uint8, 3),
-    ("data_len_code", ctypes.c_uint8, 4),
-  ]
-
-
-class CANPacketAddress(ctypes.LittleEndianStructure):
-  _pack_ = 1
-  _fields_ = [
-    ("rejected", ctypes.c_uint32, 1),
-    ("returned", ctypes.c_uint32, 1),
-    ("extended", ctypes.c_uint32, 1),
-    ("addr", ctypes.c_uint32, 29),
-  ]
-
-
-class CANPacketFields(ctypes.LittleEndianStructure):
-  _pack_ = 1
-  _anonymous_ = ("header", "address")
-  _fields_ = [
-    ("header", CANPacketHeader),
-    ("address", CANPacketAddress),
-    ("checksum", ctypes.c_uint8),
+    ("addr", ctypes.c_uint, 29),
+    ("extended", ctypes.c_uint, 1),
+    ("returned", ctypes.c_uint, 1),
+    ("rejected", ctypes.c_uint, 1),
+    ("bus", ctypes.c_uint8),
+    ("data_len_code", ctypes.c_uint8),
+    ("fd", ctypes.c_uint8),
     ("data", ctypes.c_uint8 * 64),
   ]
-
-
-class CANPacket(ctypes.Union):
-  # Match CANPacket_t's packed fields and aligned(4) attribute.
-  _anonymous_ = ("packet",)
-  _fields_ = [("packet", CANPacketFields), ("_alignment", ctypes.c_uint32)]
 
 
 class CANRing(ctypes.Structure):
@@ -61,11 +38,12 @@ for name, argtypes, restype in (
   ("set_safety_hooks", [ctypes.c_uint16, ctypes.c_uint16], ctypes.c_int),
   ("can_pop", [ctypes.POINTER(CANRing), ctypes.POINTER(CANPacket)], ctypes.c_bool),
   ("can_push", [ctypes.POINTER(CANRing), ctypes.POINTER(CANPacket)], ctypes.c_bool),
-  ("can_set_checksum", [ctypes.POINTER(CANPacket)], None),
-  ("comms_can_read", [ctypes.POINTER(ctypes.c_uint8), ctypes.c_uint32], ctypes.c_int),
+  ("comms_can_read", [ctypes.POINTER(ctypes.c_uint8), ctypes.c_uint32], ctypes.c_uint32),
   ("comms_can_write", [ctypes.c_char_p, ctypes.c_uint32], None),
   ("comms_can_reset", [], None),
   ("can_slots_empty", [ctypes.POINTER(CANRing)], ctypes.c_uint32),
+  ("get_safety_tx_blocked", [], ctypes.c_uint32),
+  ("get_tx_checksum_error_cnt", [ctypes.c_uint8], ctypes.c_uint32),
 ):
   func = getattr(libpanda, name)
   func.argtypes = argtypes
@@ -79,5 +57,4 @@ def make_CANPacket(addr: int, bus: int, dat) -> CANPacket:
   ret.data_len_code = LEN_TO_DLC[len(dat)]
   ret.bus = bus
   ret.data[:len(dat)] = bytes(dat)
-  libpanda.can_set_checksum(ret)
   return ret

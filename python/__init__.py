@@ -12,7 +12,6 @@ import ctypes
 from functools import wraps, partial
 from itertools import accumulate
 
-import opendbc
 from opendbc.car.structs import CarParams
 
 from .base import BaseHandle
@@ -137,7 +136,7 @@ class Panda:
   HW_TYPE_CUATRO = b'\x0a'
   HW_TYPE_BODY = b'\xb1'
 
-  CAN_PACKET_VERSION = compute_version_hash(os.path.join(opendbc.INCLUDE_PATH, "opendbc/safety/can.h"))
+  CAN_PACKET_VERSION = compute_version_hash(os.path.join(BASEDIR, "board/can_wire.h"))
   HEALTH_PACKET_VERSION = compute_version_hash(os.path.join(BASEDIR, "board/health.h"))
   HEALTH_STRUCT, HEALTH_FIELDS = _parse_c_struct(os.path.join(BASEDIR, "board/health.h"), "health_t")
   CAN_HEALTH_STRUCT, CAN_HEALTH_FIELDS = _parse_c_struct(os.path.join(BASEDIR, "board/health.h"), "can_health_t")
