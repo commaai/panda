@@ -47,11 +47,12 @@ def calculate_checksum(data):
 def _parse_c_struct(path, name):
   type_to_format = {"uint8_t": "B", "uint16_t": "H", "uint32_t": "I", "float": "f"}
   with open(path) as f:
-    lines = [l.strip() for l in f.read().split(f"struct __attribute__((packed)) {name} {{", 1)[1].split("};", 1)[0].splitlines() if l.strip()]
-  fields = [re.fullmatch(rf"({'|'.join(type_to_format)})\s+\w+;", l) for l in lines]
+    source = re.sub(r"//.*", "", f.read())
+  body = re.search(rf"struct {name} {{([^}}]*)}};|typedef struct {{([^}}]*)}} {name};", source)
+  fields = [re.fullmatch(rf"({'|'.join(type_to_format)})\s+(\w+);", l.strip()) for l in (body[1] or body[2]).splitlines() if l.strip()]
   if not all(fields):
     raise ValueError(f"unsupported {name} layout in {path}")
-  return struct.Struct("<" + "".join(type_to_format[m[1]] for m in fields))
+  return struct.Struct("<" + "".join(type_to_format[m[1]] for m in fields)), [m[2] for m in fields]
 
 def pack_can_buffer(arr, chunk=False, fd=False):
   snds = [bytearray(), ]
@@ -138,8 +139,8 @@ class Panda:
 
   CAN_PACKET_VERSION = compute_version_hash(os.path.join(opendbc.INCLUDE_PATH, "opendbc/safety/can.h"))
   HEALTH_PACKET_VERSION = compute_version_hash(os.path.join(BASEDIR, "board/health.h"))
-  HEALTH_STRUCT = _parse_c_struct(os.path.join(BASEDIR, "board/health.h"), "health_t")
-  CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
+  HEALTH_STRUCT, HEALTH_FIELDS = _parse_c_struct(os.path.join(BASEDIR, "board/health.h"), "health_t")
+  CAN_HEALTH_STRUCT, CAN_HEALTH_FIELDS = _parse_c_struct(os.path.join(BASEDIR, "board/health.h"), "can_health_t")
 
   HEALTH_FLAG_IGNITION_LINE = 1 << 0
   HEALTH_FLAG_IGNITION_CAN = 1 << 1
@@ -525,39 +526,39 @@ class Panda:
   @ensure_health_packet_version
   def health(self):
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xd2, 0, 0, self.HEALTH_STRUCT.size)
-    a = self.HEALTH_STRUCT.unpack(dat)
-    flags = a[8]
+    h = dict(zip(self.HEALTH_FIELDS, self.HEALTH_STRUCT.unpack(dat)))
+    flags = h["flags_pkt"]
     return {
-      "uptime": a[0],
-      "voltage": a[1],
-      "current": a[2],
-      "safety_tx_blocked": a[3],
-      "safety_rx_invalid": a[4],
-      "tx_buffer_overflow": a[5],
-      "rx_buffer_overflow": a[6],
-      "faults": a[7],
+      "uptime": h["uptime_pkt"],
+      "voltage": h["voltage_pkt"],
+      "current": h["current_pkt"],
+      "safety_tx_blocked": h["safety_tx_blocked_pkt"],
+      "safety_rx_invalid": h["safety_rx_invalid_pkt"],
+      "tx_buffer_overflow": h["tx_buffer_overflow_pkt"],
+      "rx_buffer_overflow": h["rx_buffer_overflow_pkt"],
+      "faults": h["faults_pkt"],
       "ignition_line": bool(flags & self.HEALTH_FLAG_IGNITION_LINE),
       "ignition_can": bool(flags & self.HEALTH_FLAG_IGNITION_CAN),
       "controls_allowed": bool(flags & self.HEALTH_FLAG_CONTROLS_ALLOWED),
-      "car_harness_status": a[9],
-      "safety_mode": a[10],
-      "safety_param": a[11],
-      "fault_status": a[12],
+      "car_harness_status": h["car_harness_status_pkt"],
+      "safety_mode": h["safety_mode_pkt"],
+      "safety_param": h["safety_param_pkt"],
+      "fault_status": h["fault_status_pkt"],
       "power_save_enabled": bool(flags & self.HEALTH_FLAG_POWER_SAVE_ENABLED),
       "heartbeat_lost": bool(flags & self.HEALTH_FLAG_HEARTBEAT_LOST),
-      "alternative_experience": a[13],
-      "interrupt_load": a[14] / 255.0,
-      "fan_power": a[15],
+      "alternative_experience": h["alternative_experience_pkt"],
+      "interrupt_load": h["interrupt_load_pkt"] / 255.0,
+      "fan_power": h["fan_power"],
       "safety_rx_checks_invalid": bool(flags & self.HEALTH_FLAG_SAFETY_RX_CHECKS_INVALID),
-      "spi_error_count": a[16],
-      "sbu1_voltage_mV": a[17],
-      "sbu2_voltage_mV": a[18],
+      "spi_error_count": h["spi_error_count_pkt"],
+      "sbu1_voltage_mV": h["sbu1_voltage_mV"],
+      "sbu2_voltage_mV": h["sbu2_voltage_mV"],
       "som_reset_triggered": bool(flags & self.HEALTH_FLAG_SOM_RESET_TRIGGERED),
       "nmi_reset": bool(flags & self.HEALTH_FLAG_NMI_RESET),
       "hardfault_reset": bool(flags & self.HEALTH_FLAG_HARDFAULT_RESET),
       "heartbeat_disabled": bool(flags & self.HEALTH_FLAG_HEARTBEAT_DISABLED),
-      "sound_output_level": a[19],
-      "temperature": a[20] - 40.0,
+      "sound_output_level": h["sound_output_level_pkt"],
+      "temperature": h["temperature_pkt"] - 40.0,
     }
 
   @ensure_health_packet_version
@@ -573,34 +574,34 @@ class Panda:
       7: "NoChange",
     }
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xc2, int(can_number), 0, self.CAN_HEALTH_STRUCT.size)
-    a = self.CAN_HEALTH_STRUCT.unpack(dat)
+    h = dict(zip(self.CAN_HEALTH_FIELDS, self.CAN_HEALTH_STRUCT.unpack(dat)))
     return {
-      "bus_off": a[0],
-      "bus_off_cnt": a[1],
-      "error_warning": a[2],
-      "error_passive": a[3],
-      "last_error": LEC_ERROR_CODE[a[4]],
-      "last_stored_error": LEC_ERROR_CODE[a[5]],
-      "last_data_error": LEC_ERROR_CODE[a[6]],
-      "last_data_stored_error": LEC_ERROR_CODE[a[7]],
-      "receive_error_cnt": a[8],
-      "transmit_error_cnt": a[9],
-      "total_error_cnt": a[10],
-      "total_tx_lost_cnt": a[11],
-      "total_rx_lost_cnt": a[12],
-      "total_tx_cnt": a[13],
-      "total_rx_cnt": a[14],
-      "total_fwd_cnt": a[15],
-      "total_tx_checksum_error_cnt": a[16],
-      "can_speed": a[17],
-      "can_data_speed": a[18],
-      "canfd_enabled": a[19],
-      "brs_enabled": a[20],
-      "canfd_non_iso": a[21],
-      "irq0_call_rate": a[22],
-      "irq1_call_rate": a[23],
-      "irq2_call_rate": a[24],
-      "can_core_reset_count": a[25],
+      "bus_off": h["bus_off"],
+      "bus_off_cnt": h["bus_off_cnt"],
+      "error_warning": h["error_warning"],
+      "error_passive": h["error_passive"],
+      "last_error": LEC_ERROR_CODE[h["last_error"]],
+      "last_stored_error": LEC_ERROR_CODE[h["last_stored_error"]],
+      "last_data_error": LEC_ERROR_CODE[h["last_data_error"]],
+      "last_data_stored_error": LEC_ERROR_CODE[h["last_data_stored_error"]],
+      "receive_error_cnt": h["receive_error_cnt"],
+      "transmit_error_cnt": h["transmit_error_cnt"],
+      "total_error_cnt": h["total_error_cnt"],
+      "total_tx_lost_cnt": h["total_tx_lost_cnt"],
+      "total_rx_lost_cnt": h["total_rx_lost_cnt"],
+      "total_tx_cnt": h["total_tx_cnt"],
+      "total_rx_cnt": h["total_rx_cnt"],
+      "total_fwd_cnt": h["total_fwd_cnt"],
+      "total_tx_checksum_error_cnt": h["total_tx_checksum_error_cnt"],
+      "can_speed": h["can_speed"],
+      "can_data_speed": h["can_data_speed"],
+      "canfd_enabled": h["canfd_enabled"],
+      "brs_enabled": h["brs_enabled"],
+      "canfd_non_iso": h["canfd_non_iso"],
+      "irq0_call_rate": h["irq0_call_rate"],
+      "irq1_call_rate": h["irq1_call_rate"],
+      "irq2_call_rate": h["irq2_call_rate"],
+      "can_core_reset_count": h["can_core_reset_cnt"],
     }
 
   # ******************* control *******************
