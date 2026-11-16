@@ -9,19 +9,19 @@ static void unused_interrupt_handler(void) {
   fault_occurred_value(FAULT_UNUSED_INTERRUPT_HANDLED, __get_IPSR());
 }
 
-interrupt interrupts[NUM_INTERRUPTS];
+static interrupt interrupts[NUM_INTERRUPTS];
 
 // NVIC_SM_0: every IRQ enable goes through nvic_enable/nvic_disable, except the stop mode wakeups, which exit through a reset
 static uint32_t nvic_expected[8];
 
-void nvic_enable(IRQn_Type irq) {
+static void nvic_enable(IRQn_Type irq) {
   ENTER_CRITICAL();
   nvic_expected[(uint32_t)irq >> 5U] |= (1UL << ((uint32_t)irq & 0x1FU));
   NVIC_EnableIRQ(irq);
   EXIT_CRITICAL();
 }
 
-void nvic_disable(IRQn_Type irq) {
+static void nvic_disable(IRQn_Type irq) {
   ENTER_CRITICAL();
   nvic_expected[(uint32_t)irq >> 5U] &= ~(1UL << ((uint32_t)irq & 0x1FU));
   NVIC_DisableIRQ(irq);
@@ -29,7 +29,7 @@ void nvic_disable(IRQn_Type irq) {
 }
 
 // logs the first divergent IRQ, 0x100 added if it's the priority
-void nvic_check(void) {
+static inline void nvic_check(void) {
   uint32_t diff = 0U;
   uint32_t first = 0U;
   for (uint8_t i = 0U; i < 8U; i++) {
@@ -55,7 +55,9 @@ static bool check_interrupt_rate = false;
 
 static uint32_t idle_time = 0U;
 static uint32_t busy_time = 0U;
-float interrupt_load = 0.0f;
+#if !defined(BOOTSTUB)
+static float interrupt_load = 0.0f;
+#endif
 
 // every IRQ vector in board/stm32h7/startup_stm32h7x5xx.s points here
 void handle_interrupt(void);
@@ -94,7 +96,7 @@ void handle_interrupt(void) {
 static uint32_t interrupt_timer_windows = 0U;
 
 // Every second
-void interrupt_timer_handler(void) {
+static void interrupt_timer_handler(void) {
   static timer_check_t interrupt_timer_period = {0};
   if (INTERRUPT_TIMER->SR != 0U) {
     // cleared first, a flag cleared on the way out can retrigger the vector
@@ -135,7 +137,7 @@ void interrupt_timer_handler(void) {
 }
 
 // called at 1Hz from the tick, one miss is normal since the two timers drift
-void interrupt_timer_check(void) {
+static inline void interrupt_timer_check(void) {
   static uint32_t last_windows = 0U;
   static uint32_t misses = 0U;
   misses = (interrupt_timer_windows == last_windows) ? (misses + 1U) : 0U;
@@ -145,7 +147,7 @@ void interrupt_timer_check(void) {
   }
 }
 
-void init_interrupts(bool check_rate_limit){
+static void init_interrupts(bool check_rate_limit){
   check_interrupt_rate = check_rate_limit;
 
   for(uint16_t i=0U; i<NUM_INTERRUPTS; i++){

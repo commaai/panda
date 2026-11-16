@@ -40,7 +40,7 @@ static void mpu_set_safety_access(uint32_t access) {
 }
 
 // only safety code writes the safety state, interrupts stay off while it's writable
-void mpu_safety_open(void) {
+static void mpu_safety_open(void) {
   ENTER_CRITICAL();
   if (mpu_safety_depth == 0U) {
     // body firmware runs without the MPU
@@ -55,7 +55,7 @@ void mpu_safety_open(void) {
   mpu_safety_depth += 1U;
 }
 
-void mpu_safety_close(void) {
+static void mpu_safety_close(void) {
   mpu_safety_depth -= 1U;
   if (mpu_safety_depth == 0U) {
     mpu_set_safety_access(MPU_SAFETY_CLOSED);
@@ -64,7 +64,7 @@ void mpu_safety_close(void) {
   EXIT_CRITICAL();
 }
 
-void mpu_init(void) {
+static inline void mpu_init(void) {
   MPU->RNR = MPU_REGION_STACK_GUARD;
   MPU->RBAR = (uint32_t)&stack_guard;
   MPU->RASR = mpu_stack_guard_rasr();
@@ -86,7 +86,7 @@ static bool mpu_region_ok(uint32_t region, uint32_t base, uint32_t rasr) {
 }
 
 // RBAR and RASR are banked by RNR, so register_set can't read them back
-void mpu_check(void) {
+static inline void mpu_check(void) {
   ENTER_CRITICAL();
   uint32_t bad = mpu_region_ok(MPU_REGION_STACK_GUARD, (uint32_t)&stack_guard, mpu_stack_guard_rasr()) ? 0U : (1UL << MPU_REGION_STACK_GUARD);
   bad |= mpu_region_ok(MPU_REGION_SAFETY, (uint32_t)&safety_start, mpu_safety_rasr(MPU_SAFETY_CLOSED)) ? 0U : (1UL << MPU_REGION_SAFETY);

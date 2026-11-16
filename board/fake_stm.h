@@ -10,11 +10,11 @@
 #define ENTER_CRITICAL() 0
 #define EXIT_CRITICAL() 0
 
-void print(const char *a) {
+static void print(const char *a) {
   printf("%s", a);
 }
 
-void puth(unsigned int i) {
+static void puth(unsigned int i) {
   printf("%u", i);
 }
 

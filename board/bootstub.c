@@ -4,8 +4,8 @@
 // ********************* Includes *********************
 #include "board/config.h"
 
-#include "board/drivers/led.h"
 #include "board/drivers/pwm.h"
+#include "board/drivers/led.h"
 #include "board/drivers/usb.h"
 
 #include "board/early_init.h"

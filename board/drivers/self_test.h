@@ -60,7 +60,7 @@ static uint8_t self_test_fail = 0U;
 static uint32_t flash_crc_flip = 0U;
 
 // the flash CRC injection goes through the CRC compare
-void self_test_inject(uint8_t test) {
+static void self_test_inject(uint8_t test) {
   if (test == SELF_TEST_FLASH) {
     flash_crc_flip = 1U;
   } else if (test <= SELF_TEST_DMA) {
@@ -347,7 +347,7 @@ static void self_test_check(bool cpu_ok, bool ram_ok, uint32_t ram_addr, bool fl
   }
 }
 
-void self_test_init(void) {
+static void self_test_init(void) {
   crc32_init();
 
   // the boot RAM test wrote every word, so no RAM holds an unset ECC code anymore
@@ -366,7 +366,7 @@ void self_test_init(void) {
 }
 
 // called at 8Hz
-void self_test_tick(void) {
+static void self_test_tick(void) {
   bool cpu_ok = (cpu_test() == SELF_TEST_PASS) && (fpu_test() == SELF_TEST_PASS);
   uint32_t ram_addr = 0U;
   bool ram_ok = ram_test_next(&ram_addr);

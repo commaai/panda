@@ -3,7 +3,7 @@
 
 #include "board/drivers/drivers.h"
 
-FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT] = {FDCAN1, FDCAN2, FDCAN3};
+static FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT] = {FDCAN1, FDCAN2, FDCAN3};
 
 static bool can_set_speed(uint8_t can_number) {
   bool ret = true;
@@ -21,7 +21,7 @@ static bool can_set_speed(uint8_t can_number) {
   return ret;
 }
 
-void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number) {
+static void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number) {
   static uint32_t last_reset = 0U;
   uint32_t time = microsecond_timer_get();
 
@@ -34,7 +34,7 @@ void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number) {
   }
 }
 
-void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
+static void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   uint8_t can_irq_number[PANDA_CAN_CNT][2] = {
     { FDCAN1_IT0_IRQn, FDCAN1_IT1_IRQn },
     { FDCAN2_IT0_IRQn, FDCAN2_IT1_IRQn },
@@ -86,7 +86,7 @@ void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
 
 // ***************************** CAN *****************************
 // FDFDCANx_IT1 IRQ Handler (TX)
-void process_can(uint8_t can_number) {
+static void process_can(uint8_t can_number) {
   if (can_number != 0xffU) {
     ENTER_CRITICAL();
 
@@ -254,7 +254,7 @@ static void FDCAN2_IT1_IRQ_Handler(void) { process_can(1); }
 static void FDCAN3_IT0_IRQ_Handler(void) { can_rx(2);  }
 static void FDCAN3_IT1_IRQ_Handler(void) { process_can(2); }
 
-bool can_init(uint8_t can_number) {
+static bool can_init(uint8_t can_number) {
   bool ret = false;
 
   REGISTER_INTERRUPT(FDCAN1_IT0_IRQn, FDCAN1_IT0_IRQ_Handler, CAN_INTERRUPT_RATE, FAULT_INTERRUPT_RATE_CAN_1)

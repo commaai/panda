@@ -5,7 +5,7 @@
 
 static simple_watchdog_state_t wd_state;
 
-void simple_watchdog_kick(void) {
+static void simple_watchdog_kick(void) {
   uint32_t ts = microsecond_timer_get();
 
   uint32_t et = get_ts_elapsed(ts, wd_state.last_ts);
@@ -17,7 +17,7 @@ void simple_watchdog_kick(void) {
   wd_state.last_ts = ts;
 }
 
-void simple_watchdog_init(uint32_t fault, uint32_t threshold) {
+static void simple_watchdog_init(uint32_t fault, uint32_t threshold) {
   wd_state.fault = fault;
   wd_state.threshold = threshold;
   wd_state.last_ts = microsecond_timer_get();

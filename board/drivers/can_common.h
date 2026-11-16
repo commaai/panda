@@ -4,21 +4,25 @@
 #include "board/drivers/drivers.h"
 #include "opendbc/safety/ignition.h"
 
-uint32_t safety_tx_blocked = 0;
-uint32_t safety_rx_invalid = 0;
-uint32_t tx_buffer_overflow = 0;
-uint32_t rx_buffer_overflow = 0;
+// defined in fdcan.h, which is included after this
+static bool can_init(uint8_t can_number);
+static void process_can(uint8_t can_number);
 
-can_health_t can_health[PANDA_CAN_CNT] = {{0}, {0}, {0}};
+static uint32_t safety_tx_blocked = 0;
+static uint32_t safety_rx_invalid = 0;
+static uint32_t tx_buffer_overflow = 0;
+static uint32_t rx_buffer_overflow = 0;
 
-bool can_silent = true;
-bool can_loopback = false;
+static can_health_t can_health[PANDA_CAN_CNT] = {{0}, {0}, {0}};
 
 // ********************* instantiate queues *********************
 #define can_buffer(x, size) \
   static CANPacket_t elems_##x[size]; \
   extern can_ring can_##x; \
   can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = (size), .elems = (CANPacket_t *)&(elems_##x) };
+static bool can_silent = true;
+// cppcheck-suppress misra-c2012-8.9 ; also set by the 0xe5 control request in ALLOW_DEBUG builds
+static bool can_loopback = false;
 
 #define CAN_RX_BUFFER_SIZE 4096U
 #define CAN_TX_BUFFER_SIZE 416U
@@ -35,9 +39,7 @@ can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
 #endif
 can_buffer(tx3_q, CAN_TX_BUFFER_SIZE)
 
-// FIXME:
-// cppcheck-suppress misra-c2012-9.3
-can_ring *can_queues[PANDA_CAN_CNT] = {&can_tx1_q, &can_tx2_q, &can_tx3_q};
+static can_ring *can_queues[PANDA_CAN_CNT] = {&can_tx1_q, &can_tx2_q, &can_tx3_q};
 
 // ********************* interrupt safe queue *********************
 bool can_pop(can_ring *q, CANPacket_t *elem) {
@@ -94,7 +96,7 @@ uint32_t can_slots_empty(const can_ring *q) {
   return ret;
 }
 
-void can_clear(can_ring *q) {
+static void can_clear(can_ring *q) {
   ENTER_CRITICAL();
   q->w_ptr = 0;
   q->r_ptr = 0;
@@ -114,13 +116,13 @@ void can_clear(can_ring *q) {
 
 // Helpers
 // Panda:       Bus 0=CAN1   Bus 1=CAN2   Bus 2=CAN3
-bus_config_t bus_config[PANDA_CAN_CNT] = {
+static bus_config_t bus_config[PANDA_CAN_CNT] = {
   { .bus_lookup = 0U, .can_num_lookup = 0U, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_auto = false, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
   { .bus_lookup = 1U, .can_num_lookup = 1U, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_auto = false, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
   { .bus_lookup = 2U, .can_num_lookup = 2U, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_auto = false, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
 };
 
-void can_init_all(void) {
+static void can_init_all(void) {
   for (uint8_t i=0U; i < PANDA_CAN_CNT; i++) {
     bus_config[i].canfd_enabled = false;
     can_clear(can_queues[i]);
@@ -128,7 +130,7 @@ void can_init_all(void) {
   }
 }
 
-void can_set_orientation(bool flipped) {
+static inline void can_set_orientation(bool flipped) {
   bus_config[0].bus_lookup = flipped ? 2U : 0U;
   bus_config[0].can_num_lookup = flipped ? 2U : 0U;
   bus_config[2].bus_lookup = flipped ? 0U : 2U;
@@ -159,7 +161,7 @@ bool can_check_checksum(CANPacket_t *packet) {
   return (calculate_checksum((uint8_t *) packet, CANPACKET_HEAD_SIZE + GET_LEN(packet)) == 0U);
 }
 
-void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
+static void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
   bool tx_allowed = skip_tx_hook;
   if (!tx_allowed) {
     mpu_safety_open();
@@ -183,7 +185,7 @@ void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook) {
   }
 }
 
-bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len) {
+static inline bool is_speed_valid(uint32_t speed, const uint32_t *all_speeds, uint8_t len) {
   bool ret = false;
   for (uint8_t i = 0U; i < len; i++) {
     if (all_speeds[i] == speed) {

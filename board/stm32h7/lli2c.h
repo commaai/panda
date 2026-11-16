@@ -7,13 +7,13 @@
 #define I2C_RETRY_COUNT 10U
 #define I2C_TIMEOUT_US 100000U
 
-bool i2c_status_wait(const volatile uint32_t *status_reg, uint32_t mask, uint32_t val) {
+static bool i2c_status_wait(const volatile uint32_t *status_reg, uint32_t mask, uint32_t val) {
   uint32_t start_time = microsecond_timer_get();
   while(((*status_reg & mask) != val) && (get_ts_elapsed(microsecond_timer_get(), start_time) < I2C_TIMEOUT_US));
   return ((*status_reg & mask) == val);
 }
 
-void i2c_reset(I2C_TypeDef *I2C) {
+static void i2c_reset(I2C_TypeDef *I2C) {
   // peripheral reset
   register_clear_bits(&I2C->CR1, I2C_CR1_PE);
   while ((I2C->CR1 & I2C_CR1_PE) != 0U);
@@ -127,7 +127,7 @@ end:
   return ret;
 }
 
-bool i2c_set_reg_bits(I2C_TypeDef *I2C, uint8_t address, uint8_t reg_addr, uint8_t bits) {
+static bool i2c_set_reg_bits(I2C_TypeDef *I2C, uint8_t address, uint8_t reg_addr, uint8_t bits) {
   uint8_t value;
   bool ret = i2c_read_reg(I2C, address, reg_addr, &value);
   if(ret) {
@@ -136,7 +136,7 @@ bool i2c_set_reg_bits(I2C_TypeDef *I2C, uint8_t address, uint8_t reg_addr, uint8
   return ret;
 }
 
-bool i2c_clear_reg_bits(I2C_TypeDef *I2C, uint8_t address, uint8_t reg_addr, uint8_t bits) {
+static bool i2c_clear_reg_bits(I2C_TypeDef *I2C, uint8_t address, uint8_t reg_addr, uint8_t bits) {
   uint8_t value;
   bool ret = i2c_read_reg(I2C, address, reg_addr, &value);
   if (ret) {
@@ -145,7 +145,7 @@ bool i2c_clear_reg_bits(I2C_TypeDef *I2C, uint8_t address, uint8_t reg_addr, uin
   return ret;
 }
 
-bool i2c_set_reg_mask(I2C_TypeDef *I2C, uint8_t address, uint8_t reg_addr, uint8_t value, uint8_t mask) {
+static bool i2c_set_reg_mask(I2C_TypeDef *I2C, uint8_t address, uint8_t reg_addr, uint8_t value, uint8_t mask) {
   uint8_t old_value;
   bool ret = i2c_read_reg(I2C, address, reg_addr, &old_value);
   if(ret) {
@@ -154,7 +154,7 @@ bool i2c_set_reg_mask(I2C_TypeDef *I2C, uint8_t address, uint8_t reg_addr, uint8
   return ret;
 }
 
-void i2c_init(I2C_TypeDef *I2C) {
+static void i2c_init(I2C_TypeDef *I2C) {
   // 100kHz clock speed
   I2C->TIMINGR = 0x107075B0;
 

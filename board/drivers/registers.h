@@ -22,7 +22,7 @@ static uint16_t hash_addr(uint32_t input){
 }
 
 // Do not put bits in the check mask that get changed by the hardware
-void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask){
+static void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask){
   ENTER_CRITICAL()
   // Set bits in register that are also in the mask
   (*addr) = ((*addr) & (~mask)) | (val & mask);
@@ -43,18 +43,18 @@ void register_set(volatile uint32_t *addr, uint32_t val, uint32_t mask){
 
 // Set individual bits. Also add them to the check_mask.
 // Do not use this to change bits that get reset by the hardware
-void register_set_bits(volatile uint32_t *addr, uint32_t val) {
+static void register_set_bits(volatile uint32_t *addr, uint32_t val) {
   register_set(addr, val, val);
 }
 
 // Clear individual bits. Also add them to the check_mask.
 // Do not use this to clear bits that get set by the hardware
-void register_clear_bits(volatile uint32_t *addr, uint32_t val) {
+static void register_clear_bits(volatile uint32_t *addr, uint32_t val) {
   register_set(addr, (~val), val);
 }
 
 // To be called periodically
-void check_registers(void){
+static inline void check_registers(void){
   // log again every 60 calls, a divergence at boot is printed before the device starts logging
   static uint8_t calls = 0U;
   calls = (uint8_t)((calls + 1U) % 60U);
@@ -74,7 +74,7 @@ void check_registers(void){
   }
 }
 
-void init_registers(void) {
+static void init_registers(void) {
   for(uint16_t i=0U; i<REGISTER_MAP_SIZE; i++){
     register_map[i].address = (volatile uint32_t *) 0U;
     register_map[i].check_mask = 0U;

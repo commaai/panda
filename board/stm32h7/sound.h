@@ -16,9 +16,9 @@ __attribute__((section(".sram4"))) static uint16_t mic_tx_buf[2][MIC_TX_BUF_SIZE
 static uint8_t sound_idle_count;
 static uint8_t mic_idle_count;
 static uint8_t mic_buffer_count;
-uint16_t sound_output_level;
+static uint16_t sound_output_level;
 
-void sound_tick(void) {
+static inline void sound_tick(void) {
   if (sound_idle_count > 0U) {
     sound_idle_count--;
     if (sound_idle_count == 0U) {
@@ -140,7 +140,7 @@ static void BDMA_Channel0_IRQ_Handler(void) {
   mic_idle_count = SOUND_IDLE_TIMEOUT;
 }
 
-void sound_init_dac(void) {
+static void sound_init_dac(void) {
   // Init DAC
   DAC1->DHR12R1 = (1UL << 11);
   DAC1->DHR12R2 = (1UL << 11);
@@ -172,7 +172,7 @@ static void sound_stop_dac(void) {
   while ((DAC1->CR & (DAC_CR_EN1 | DAC_CR_EN2)) != 0U) {}
 }
 
-void sound_init(void) {
+static void sound_init(void) {
   REGISTER_INTERRUPT(BDMA_Channel0_IRQn, BDMA_Channel0_IRQ_Handler, 128U, FAULT_INTERRUPT_RATE_SOUND_DMA)
   REGISTER_INTERRUPT(DMA1_Stream0_IRQn, DMA1_Stream0_IRQ_Handler, 128U, FAULT_INTERRUPT_RATE_SOUND_DMA)
 

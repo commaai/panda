@@ -3,8 +3,8 @@
 
 #include "board/sys/sys.h"
 
-uint8_t fault_status = FAULT_STATUS_NONE;
-uint32_t faults = 0U;
+static uint8_t fault_status = FAULT_STATUS_NONE;
+static uint32_t faults = 0U;
 
 void fault_occurred(uint32_t fault) {
   if ((faults & fault) == 0U) {

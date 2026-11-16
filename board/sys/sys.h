@@ -3,11 +3,6 @@
 
 // ******************** critical ********************
 
-void enable_interrupts(void);
-void disable_interrupts(void);
-
-extern uint8_t global_critical_depth;
-
 #ifndef ENTER_CRITICAL
 #define ENTER_CRITICAL()                                      \
   __disable_irq();                                            \
@@ -63,22 +58,10 @@ extern uint8_t global_critical_depth;
 // TODO: enable faults one by one once their fleet rate is checked
 #define PERMANENT_FAULTS 0U
 
-extern uint8_t fault_status;
-extern uint32_t faults;
-
-void fault_occurred(uint32_t fault);
-void fault_occurred_at(uint32_t fault, uint32_t value, const char *site);
 // a bit can be raised from several places, so each logs where it was raised
 #define FAULT_STR(x) #x
 #define FAULT_XSTR(x) FAULT_STR(x)
 #define fault_occurred_value(fault, value) fault_occurred_at((fault), (value), __FILE__ ":" FAULT_XSTR(__LINE__))
-void fault_recovered(uint32_t fault);
-void fault_safe_state(void);
-
-// ******************** power_saving ********************
-
-extern bool power_save_enabled;
-
-void set_power_save_state(bool enable);
+static void fault_safe_state(void);
 
 #endif  // BOARD_SYS_SYS_H

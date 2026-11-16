@@ -10,7 +10,7 @@ __attribute__((aligned(32), noinline)) void delay(uint32_t a) {
   for (i = 0; i < n; i++) {}
 }
 
-void assert_fatal(bool condition, const char *msg) {
+static inline void assert_fatal(bool condition, const char *msg) {
   if (!condition) {
     print("ASSERT FAILED\n");
     print(msg);

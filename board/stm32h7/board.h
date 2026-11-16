@@ -8,11 +8,9 @@
 #include "board/boards/unused_funcs.h"
 
 // ///// Board definition and detection ///// //
+#include "board/drivers/pwm.h"
 #include "board/stm32h7/lladc.h"
-#include "board/stm32h7/lldts.h"
 #include "board/drivers/harness.h"
-#include "board/drivers/fan.h"
-#include "board/stm32h7/llfan.h"
 #include "board/stm32h7/sound.h"
 #include "board/drivers/fake_siren.h"
 #include "board/drivers/clock_source.h"
@@ -21,7 +19,7 @@
 #include "board/boards/cuatro.h"
 
 
-void detect_board_type(void) {
+static void detect_board_type(void) {
   // On STM32H7 pandas, we use two different sets of pins.
   const uint8_t id1 = detect_with_pull(GPIOF, 7, PULL_UP) |
                      (detect_with_pull(GPIOF, 8, PULL_UP) << 1U) |

@@ -56,8 +56,4 @@ struct board {
 #define CAN_MODE_NORMAL 0U
 #define CAN_MODE_OBD_CAN2 1U
 
-extern struct board board_tres;
-extern struct board board_cuatro;
-extern struct board board_red;
-
 #endif  // BOARD_BOARDS_BOARD_DECLARATIONS_H

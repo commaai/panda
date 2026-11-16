@@ -48,7 +48,7 @@ static PackageSMPSType get_package_smps_type(void) {
   return ret;
 }
 
-void clock_init(void) {
+static void clock_init(void) {
   /*
     WARNING: PWR->CR3's lower byte can only be written once
     * subsequent writes will silently fail
@@ -126,7 +126,7 @@ void clock_init(void) {
 // CLK_SM_3: TIM16 captures every 8th edge of the 32kHz LSI on the HSE derived timer clock
 #define LSI_COUNTS_NOMINAL (APB2_TIMER_FREQ * 250U)
 
-void clock_check_init(void) {
+static inline void clock_check_init(void) {
   register_set_bits(&(RCC->CSR), RCC_CSR_LSION);
   register_set(&(TIM16->TISEL), 1U, TIM_TISEL_TI1SEL);
   register_set(&(TIM16->CCMR1), TIM_CCMR1_CC1S_0 | TIM_CCMR1_IC1PSC_1 | TIM_CCMR1_IC1PSC_0, 0xFFU);
@@ -148,7 +148,7 @@ static bool lsi_capture(uint16_t *count) {
 }
 
 // called at 1Hz, LSI isn't accurate so the window only catches gross errors
-void clock_check(void) {
+static inline void clock_check(void) {
   // reading CCR1 clears CC1IF
   uint16_t start = (uint16_t)TIM16->CCR1;
   uint16_t end = 0U;

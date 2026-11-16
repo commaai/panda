@@ -53,12 +53,12 @@ typedef struct {
 
 #define SPI_ENDPOINT_INFO 0xF0U
 
-uint16_t spi_error_count = 0;
+static uint16_t spi_error_count = 0;
 
 // low level SPI prototypes
-void llspi_init(void);
-void llspi_queue(const uint8_t *tx, uint16_t tx_len);
-uint16_t llspi_rx_count(void);
+static void llspi_init(void);
+static void llspi_queue(const uint8_t *tx, uint16_t tx_len);
+static uint16_t llspi_rx_count(void);
 
 static bool spi_can_tx_ready = false;
 
@@ -154,7 +154,7 @@ static uint16_t spi_process_request(uint16_t n) {
 }
 
 // Called at the end of every transfer: CS is active low, so it rises when the host is done
-void spi_cs_rising(void) {
+static void spi_cs_rising(void) {
   // what we queued for the transfer that just ended
   static bool response_queued = false;
   static uint16_t resp_len = 0U;
@@ -185,7 +185,7 @@ void spi_cs_rising(void) {
   }
 }
 
-void spi_init(void) {
+static inline void spi_init(void) {
   crc32_init();
   llspi_init();
 
@@ -194,7 +194,7 @@ void spi_init(void) {
   llspi_queue(spi_buf_ready, 1U);
 }
 
-void can_tx_comms_resume_spi(void) {
+static inline void can_tx_comms_resume_spi(void) {
   spi_can_tx_ready = true;
 }
 
