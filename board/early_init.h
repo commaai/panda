@@ -86,23 +86,16 @@ static void fault_record(uint32_t cookie, const uint32_t *frame) {
   NVIC_SystemReset();
 }
 
-__attribute__((used)) static void nmi_record(const uint32_t *frame) {
+// called by NMI_Handler and HardFault_Handler in board/stm32h7/startup_stm32h7x5xx.s
+void nmi_record(const uint32_t *frame);
+void hardfault_record(const uint32_t *frame);
+
+void nmi_record(const uint32_t *frame) {
   fault_record(NMI_COOKIE, frame);
 }
 
-__attribute__((used)) static void hardfault_record(const uint32_t *frame) {
+void hardfault_record(const uint32_t *frame) {
   fault_record(HARDFAULT_COOKIE, frame);
-}
-
-// naked to read the frame before anything is pushed
-__attribute__((naked)) void NMI_Handler(void) {
-  // cppcheck-suppress misra-c2012-17.3 ; inline asm
-  __asm volatile ("mrs r0, msp\n b nmi_record");
-}
-
-__attribute__((naked)) void HardFault_Handler(void) {
-  // cppcheck-suppress misra-c2012-17.3 ; inline asm
-  __asm volatile ("mrs r0, msp\n b hardfault_record");
 }
 
 #endif  // BOARD_EARLY_INIT_H
