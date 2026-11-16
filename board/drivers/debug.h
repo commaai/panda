@@ -6,8 +6,9 @@
 #define DEBUG_BUFFER_SIZE 0x400U
 
 static char debug_buffer[DEBUG_BUFFER_SIZE];
-static volatile uint16_t debug_write_ptr = 0;
-static volatile uint16_t debug_read_ptr = 0;
+// only accessed in critical sections
+static uint16_t debug_write_ptr = 0;
+static uint16_t debug_read_ptr = 0;
 
 static bool debug_get_char(char *elem) {
   bool ret = false;
@@ -60,7 +61,7 @@ static void puth(unsigned int i) {
 static void hexdump(const void *a, int l) {
   if (a != NULL) {
     for (int i=0; i < l; i++) {
-      if ((i != 0) && ((i & 0xf) == 0)) {
+      if ((i != 0) && ((i % 16) == 0)) {
         print("\n");
       }
       puthx(((const unsigned char*)a)[i], 2U);

@@ -41,10 +41,11 @@ static inline void nvic_check(void) {
   }
   // nothing sets a priority, all IRQs stay at 0
   for (uint8_t i = 0U; i < 240U; i++) {
-    if ((diff == 0U) && (NVIC->IP[i] != 0U)) {
+    uint8_t priority = NVIC->IP[i];
+    if ((diff == 0U) && (priority != 0U)) {
       first = 0x100U + (uint32_t)i;
     }
-    diff |= NVIC->IP[i];
+    diff |= priority;
   }
   if (diff != 0U) {
     fault_occurred_value(FAULT_REGISTER_DIVERGENT, first);

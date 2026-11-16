@@ -79,7 +79,11 @@ static void fault_record(uint32_t cookie, const uint32_t *frame) {
   fault_cookie = cookie;
   if (cookie == HARDFAULT_COOKIE) {
     fault_cfsr = SCB->CFSR;
-    fault_addr = ((fault_cfsr & SCB_CFSR_MMARVALID_Msk) != 0U) ? SCB->MMFAR : SCB->BFAR;
+    if ((fault_cfsr & SCB_CFSR_MMARVALID_Msk) != 0U) {
+      fault_addr = SCB->MMFAR;
+    } else {
+      fault_addr = SCB->BFAR;
+    }
   }
   // a failed stacking leaves no frame to read
   fault_pc = ((SCB->CFSR & (SCB_CFSR_MSTKERR_Msk | SCB_CFSR_STKERR_Msk)) == 0U) ? frame[6] : 0U;

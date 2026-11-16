@@ -62,7 +62,7 @@ static void DMA1_Stream0_IRQ_Handler(void) {
     // process samples
     uint8_t buf_idx = (((DMA1_Stream0->CR & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos) == 1U) ? 0U : 1U;
     for (uint16_t i=0U; i < MIC_RX_BUF_SIZE; i++) {
-      mic_tx_buf[tx_buf_idx][2U*i] = ((mic_rx_buf[buf_idx][i] >> 16U) & 0xFFFFU);
+      mic_tx_buf[tx_buf_idx][2U*i] = (uint16_t)(mic_rx_buf[buf_idx][i] >> 16U);
       mic_tx_buf[tx_buf_idx][(2U*i)+1U] = mic_tx_buf[tx_buf_idx][2U*i];
     }
   }
@@ -79,8 +79,9 @@ static void BDMA_Channel0_IRQ_Handler(void) {
 
   // wait until we're done playing the current buf
   for (uint32_t timeout_counter = 100000U; timeout_counter > 0U; timeout_counter--){
-    uint8_t playing_buf = (DMA1_Stream1->CR & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos;
-    if ((playing_buf != playback_buf) || ((DMA1_Stream1->CR & DMA_SxCR_EN) == 0U)) {
+    uint32_t cr = DMA1_Stream1->CR;
+    uint32_t playing_buf = (cr & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos;
+    if ((playing_buf != playback_buf) || ((cr & DMA_SxCR_EN) == 0U)) {
       break;
     }
   }

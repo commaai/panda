@@ -16,8 +16,9 @@
 // ******************** can_common ********************
 
 typedef struct {
-  volatile uint32_t w_ptr;
-  volatile uint32_t r_ptr;
+  // only accessed in critical sections
+  uint32_t w_ptr;
+  uint32_t r_ptr;
   uint32_t fifo_size;
   CANPacket_t *elems;
 } can_ring;
