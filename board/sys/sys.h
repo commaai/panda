@@ -60,6 +60,8 @@
 #define FAULT_STR(x) #x
 #define FAULT_XSTR(x) FAULT_STR(x)
 #define fault_occurred_value(fault, value) fault_occurred_at((fault), (value), __FILE__ ":" FAULT_XSTR(__LINE__))
+#if PERMANENT_FAULTS != 0U
 static void fault_safe_state(void);
+#endif
 
 #endif  // BOARD_SYS_SYS_H
