@@ -153,6 +153,5 @@ static void puth(unsigned int i);
 // ******************** usb ********************
 
 static void refresh_can_tx_slots_available(void);
-void can_tx_comms_resume_usb(void);
 
 #endif  // BOARD_DRIVERS_DRIVERS_H
