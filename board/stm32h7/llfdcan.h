@@ -83,7 +83,7 @@ static bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_
     uint32_t sp = CAN_SP_NOMINAL;
     uint32_t seg1 = CAN_SEG1(tq, sp);
     uint32_t seg2 = CAN_SEG2(tq, sp);
-    uint8_t sjw = MIN(127U, seg2);
+    uint32_t sjw = min_u32(127U, seg2);
 
     FDCANx->NBTP = (((sjw & 0x7FUL)-1U)<<FDCAN_NBTP_NSJW_Pos) | (((seg1 & 0xFFU)-1U)<<FDCAN_NBTP_NTSEG1_Pos) | (((seg2 & 0x7FU)-1U)<<FDCAN_NBTP_NTSEG2_Pos) | (((prescaler & 0x1FFUL)-1U)<<FDCAN_NBTP_NBRP_Pos);
 
@@ -96,7 +96,7 @@ static bool llcan_set_speed(FDCAN_GlobalTypeDef *FDCANx, uint32_t speed, uint32_
     tq = CAN_QUANTA(data_speed, prescaler);
     seg1 = CAN_SEG1(tq, sp);
     seg2 = CAN_SEG2(tq, sp);
-    sjw = MIN(15U, seg2);
+    sjw = min_u32(15U, seg2);
 
     FDCANx->DBTP = (((sjw & 0xFUL)-1U)<<FDCAN_DBTP_DSJW_Pos) | (((seg1 & 0x1FU)-1U)<<FDCAN_DBTP_DTSEG1_Pos) | (((seg2 & 0xFU)-1U)<<FDCAN_DBTP_DTSEG2_Pos) | (((prescaler & 0x1FUL)-1U)<<FDCAN_DBTP_DBRP_Pos);
 

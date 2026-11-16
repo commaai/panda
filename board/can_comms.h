@@ -50,7 +50,7 @@ uint32_t comms_can_read(uint8_t *data, uint32_t max_len) {
 
   // Send tail of previous message if it is in buffer
   if (can_read_buffer.ptr > 0U) {
-    uint32_t overflow_len = MIN(max_len - pos, can_read_buffer.ptr);
+    uint32_t overflow_len = min_u32(max_len - pos, can_read_buffer.ptr);
     (void)memcpy(&data[pos], can_read_buffer.data, overflow_len);
     pos += overflow_len;
     (void)memcpy(can_read_buffer.data, &can_read_buffer.data[overflow_len], can_read_buffer.ptr - overflow_len);

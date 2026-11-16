@@ -30,8 +30,8 @@ static int get_health_pkt(void *dat) {
   struct health_t * health = (struct health_t*)dat;
 
   health->uptime_pkt = uptime_cnt;
-  health->voltage_pkt = (uint16_t)MIN(current_board->read_voltage_mV(), 0xFFFFU);
-  health->current_pkt = (uint16_t)MIN(current_board->read_current_mA(), 0xFFFFU);
+  health->voltage_pkt = (uint16_t)min_u32(current_board->read_voltage_mV(), 0xFFFFU);
+  health->current_pkt = (uint16_t)min_u32(current_board->read_current_mA(), 0xFFFFU);
 
   health->flags_pkt = 0U;
   health->flags_pkt |= harness_check_ignition() ? HEALTH_FLAG_IGNITION_LINE : 0U;
@@ -58,7 +58,7 @@ static int get_health_pkt(void *dat) {
   health->fault_status_pkt = fault_status;
   health->faults_pkt = faults;
 
-  float interrupt_load_scaled = (CLAMP(interrupt_load, 0.0f, 1.0f) * 255.0f) + 0.5f;
+  float interrupt_load_scaled = (clamp_f32(interrupt_load, 0.0f, 1.0f) * 255.0f) + 0.5f;
   health->interrupt_load_pkt = (uint8_t)interrupt_load_scaled;
 
   health->fan_power = fan_state.power;
@@ -68,7 +68,7 @@ static int get_health_pkt(void *dat) {
 
   health->sound_output_level_pkt = sound_output_level;
 
-  float temperature_encoded = (CLAMP(dts_get_temperature(), -40.0f, 214.5f) + 40.0f) + 0.5f;
+  float temperature_encoded = (clamp_f32(dts_get_temperature(), -40.0f, 214.5f) + 40.0f) + 0.5f;
   health->temperature_pkt = (uint8_t)temperature_encoded;
 
   return sizeof(*health);
@@ -81,6 +81,7 @@ static void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
 }
 
 #ifdef ALLOW_DEBUG
+// cppcheck-suppress misra-c2012-1.2 ; must not be inlined, the call has to push onto the stack that 0xf0 moves into the guard
 static void __attribute__((noinline)) stack_guard_hit(void) {
   volatile uint32_t frame[4];
   frame[0] = 0U;
@@ -302,6 +303,7 @@ static uint32_t comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xeb: inject HardFault, for testing
     case 0xeb:
+      // cppcheck-suppress misra-c2012-1.2 ; an undefined instruction, the one fault C can't cause on purpose
       __builtin_trap();
       break;
     // **** 0xec: inject NMI, for testing

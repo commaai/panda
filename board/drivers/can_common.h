@@ -15,29 +15,30 @@ static uint32_t rx_buffer_overflow = 0;
 
 static can_health_t can_health[PANDA_CAN_CNT] = {{0}, {0}, {0}};
 
-// ********************* instantiate queues *********************
-#define can_buffer(x, size) \
-  static CANPacket_t elems_##x[size]; \
-  extern can_ring can_##x; \
-  can_ring can_##x = { .w_ptr = 0, .r_ptr = 0, .fifo_size = (size), .elems = (CANPacket_t *)&(elems_##x) };
 static bool can_silent = true;
 // cppcheck-suppress misra-c2012-8.9 ; also set by the 0xe5 control request in ALLOW_DEBUG builds
 static bool can_loopback = false;
 
+// ********************* instantiate queues *********************
 #define CAN_RX_BUFFER_SIZE 4096U
 #define CAN_TX_BUFFER_SIZE 416U
 
 #ifdef STM32H7
 // ITCM RAM and DTCM RAM are the fastest for Cortex-M7 core access
-__attribute__((section(".axisram"))) can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
-__attribute__((section(".itcmram"))) can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
-__attribute__((section(".itcmram"))) can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
+SECTION(".axisram") static CANPacket_t elems_rx_q[CAN_RX_BUFFER_SIZE];
+SECTION(".itcmram") static CANPacket_t elems_tx1_q[CAN_TX_BUFFER_SIZE];
+SECTION(".itcmram") static CANPacket_t elems_tx2_q[CAN_TX_BUFFER_SIZE];
 #else  // kept for PC
-can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
-can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
-can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
+static CANPacket_t elems_rx_q[CAN_RX_BUFFER_SIZE];
+static CANPacket_t elems_tx1_q[CAN_TX_BUFFER_SIZE];
+static CANPacket_t elems_tx2_q[CAN_TX_BUFFER_SIZE];
 #endif
-can_buffer(tx3_q, CAN_TX_BUFFER_SIZE)
+static CANPacket_t elems_tx3_q[CAN_TX_BUFFER_SIZE];
+
+static can_ring can_rx_q = { .w_ptr = 0U, .r_ptr = 0U, .fifo_size = CAN_RX_BUFFER_SIZE, .elems = elems_rx_q };
+static can_ring can_tx1_q = { .w_ptr = 0U, .r_ptr = 0U, .fifo_size = CAN_TX_BUFFER_SIZE, .elems = elems_tx1_q };
+static can_ring can_tx2_q = { .w_ptr = 0U, .r_ptr = 0U, .fifo_size = CAN_TX_BUFFER_SIZE, .elems = elems_tx2_q };
+static can_ring can_tx3_q = { .w_ptr = 0U, .r_ptr = 0U, .fifo_size = CAN_TX_BUFFER_SIZE, .elems = elems_tx3_q };
 
 static can_ring *can_queues[PANDA_CAN_CNT] = {&can_tx1_q, &can_tx2_q, &can_tx3_q};
 

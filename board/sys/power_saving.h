@@ -56,6 +56,12 @@ static void set_power_save_state(bool enable) {
   }
 }
 
+// the core sleeps until the next interrupt, in stop mode if SLEEPDEEP is set
+static inline void wait_for_interrupt(void) {
+  // cppcheck-suppress misra-c2012-1.2 ; CMSIS __WFI() is inline assembly
+  __WFI();
+}
+
 static void enter_stop_mode(void) {
   // the SPI CS interrupt shares an IRQ with the FDCAN3 RX wakeup line, and doesn't clear its pending bit
   nvic_disable(EXTI15_10_IRQn);
@@ -161,8 +167,7 @@ static void enter_stop_mode(void) {
 
   __DSB();
   __ISB();
-  // cppcheck-suppress misra-c2012-17.3 ; CMSIS __WFI macro expands to inline asm
-  __WFI();
+  wait_for_interrupt();
 
   NVIC_SystemReset();
 }

@@ -12,7 +12,7 @@ static struct fan_state_t fan_state;
 
 static void fan_set_power(uint8_t percentage) {
   if (percentage > 0U) {
-    fan_state.power = CLAMP(percentage, 20U, 100U);
+    fan_state.power = clamp_u8(percentage, 20U, 100U);
   } else {
     fan_state.power = 0U;
   }
