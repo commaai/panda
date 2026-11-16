@@ -18,7 +18,7 @@ static void llspi_queue(const uint8_t *tx, uint16_t tx_len) {
 
   // drain the RX FIFO and clear all flags
   while ((SPI4->SR & SPI_SR_RXP) != 0U) {
-    volatile uint8_t dat = SPI4->RXDR;
+    volatile uint8_t dat = (uint8_t)SPI4->RXDR;
     (void)dat;
   }
   SPI4->IFCR = (0x1FFU << 3U);

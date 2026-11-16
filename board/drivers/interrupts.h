@@ -126,7 +126,8 @@ static void interrupt_timer_handler(void) {
     // Calculate interrupt load
     // the bootstub doesn't report the load
 #if !defined(BOOTSTUB)
-    interrupt_load = ((busy_time + idle_time) > 0U) ? ((float) (((float) busy_time) / (busy_time + idle_time))) : 0.0f;
+    uint32_t total_time = busy_time + idle_time;
+    interrupt_load = (total_time > 0U) ? (((float) busy_time) / ((float) total_time)) : 0.0f;
 #endif
     idle_time = 0U;
     busy_time = 0U;

@@ -42,7 +42,7 @@ static void set_gpio_output_type(GPIO_TypeDef *GPIO, unsigned int pin, unsigned 
   if(output_type == OUTPUT_TYPE_OPEN_DRAIN) {
     register_set_bits(&(GPIO->OTYPER), (1UL << pin));
   } else {
-    register_clear_bits(&(GPIO->OTYPER), (1U << pin));
+    register_clear_bits(&(GPIO->OTYPER), (1UL << pin));
   }
   EXIT_CRITICAL();
 }
@@ -50,7 +50,7 @@ static void set_gpio_output_type(GPIO_TypeDef *GPIO, unsigned int pin, unsigned 
 static void set_gpio_alternate(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
   ENTER_CRITICAL();
   uint32_t tmp = GPIO->AFR[pin >> 3U];
-  tmp &= ~(0xFU << ((pin & 7U) * 4U));
+  tmp &= ~(0xFUL << ((pin & 7U) * 4U));
   tmp |= mode << ((pin & 7U) * 4U);
   register_set(&(GPIO->AFR[pin >> 3]), tmp, (0xFUL << ((pin & 7U) * 4U)));
   set_gpio_mode(GPIO, pin, MODE_ALTERNATE);
@@ -69,7 +69,7 @@ static void set_gpio_pullup(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int m
   }
 }
 
-static int get_gpio_input(const GPIO_TypeDef *GPIO, unsigned int pin) {
+static bool get_gpio_input(const GPIO_TypeDef *GPIO, unsigned int pin) {
   return (GPIO->IDR & (1UL << pin)) == (1UL << pin);
 }
 

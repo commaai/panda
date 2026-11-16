@@ -8,10 +8,10 @@ typedef struct {
   uint16_t length;
 } __attribute__((packed)) ControlPacket_t;
 
-static int comms_control_handler(ControlPacket_t *req, uint8_t *resp);
+static uint32_t comms_control_handler(ControlPacket_t *req, uint8_t *resp);
 static void comms_endpoint2_write(const uint8_t *data, uint32_t len);
 void comms_can_write(const uint8_t *data, uint32_t len);
-int comms_can_read(uint8_t *data, uint32_t max_len);
+uint32_t comms_can_read(uint8_t *data, uint32_t max_len);
 void comms_can_reset(void);
 
 #endif  // BOARD_COMMS_DEFINITIONS_H

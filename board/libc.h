@@ -14,7 +14,7 @@ static inline void assert_fatal(bool condition, const char *msg) {
   if (!condition) {
     print("ASSERT FAILED\n");
     print(msg);
-    while (1) {
+    while (true) {
       // hang
     }
   }
@@ -24,7 +24,7 @@ static inline void assert_fatal(bool condition, const char *msg) {
 void *memset(void *str, int c, unsigned int n) {
   uint8_t *s = str;
   for (unsigned int i = 0; i < n; i++) {
-    *s = c;
+    *s = (uint8_t)c;
     s++;
   }
   return str;

@@ -38,7 +38,7 @@ static void putch(const char a) {
 }
 
 static void print(const char *a) {
-  for (const char *in = a; *in; in++) {
+  for (const char *in = a; *in != '\0'; in++) {
     if (*in == '\n') {
       putch('\r');
     }

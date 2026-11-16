@@ -6,11 +6,10 @@
 static FDCAN_GlobalTypeDef *cans[PANDA_CAN_CNT] = {FDCAN1, FDCAN2, FDCAN3};
 
 static bool can_set_speed(uint8_t can_number) {
-  bool ret = true;
   FDCAN_GlobalTypeDef *FDCANx = CANIF_FROM_CAN_NUM(can_number);
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
 
-  ret &= llcan_set_speed(
+  return llcan_set_speed(
     FDCANx,
     bus_config[bus_number].can_speed,
     bus_config[bus_number].can_data_speed,
@@ -18,7 +17,6 @@ static bool can_set_speed(uint8_t can_number) {
     can_loopback,
     can_silent
   );
-  return ret;
 }
 
 static void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number) {
@@ -35,7 +33,7 @@ static void can_clear_send(FDCAN_GlobalTypeDef *FDCANx, uint8_t can_number) {
 }
 
 static void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
-  uint8_t can_irq_number[PANDA_CAN_CNT][2] = {
+  static const IRQn_Type can_irq_number[PANDA_CAN_CNT][2] = {
     { FDCAN1_IT0_IRQn, FDCAN1_IT1_IRQn },
     { FDCAN2_IT0_IRQn, FDCAN2_IT1_IRQn },
     { FDCAN3_IT0_IRQn, FDCAN3_IT1_IRQn },
@@ -45,23 +43,23 @@ static void update_can_health_pkt(uint8_t can_number, uint32_t ir_reg) {
   uint32_t psr_reg = FDCANx->PSR;
   uint32_t ecr_reg = FDCANx->ECR;
 
-  can_health[can_number].bus_off = ((psr_reg & FDCAN_PSR_BO) >> FDCAN_PSR_BO_Pos);
+  can_health[can_number].bus_off = (uint8_t)((psr_reg & FDCAN_PSR_BO) >> FDCAN_PSR_BO_Pos);
   can_health[can_number].bus_off_cnt += can_health[can_number].bus_off;
-  can_health[can_number].error_warning = ((psr_reg & FDCAN_PSR_EW) >> FDCAN_PSR_EW_Pos);
-  can_health[can_number].error_passive = ((psr_reg & FDCAN_PSR_EP) >> FDCAN_PSR_EP_Pos);
+  can_health[can_number].error_warning = (uint8_t)((psr_reg & FDCAN_PSR_EW) >> FDCAN_PSR_EW_Pos);
+  can_health[can_number].error_passive = (uint8_t)((psr_reg & FDCAN_PSR_EP) >> FDCAN_PSR_EP_Pos);
 
-  can_health[can_number].last_error = ((psr_reg & FDCAN_PSR_LEC) >> FDCAN_PSR_LEC_Pos);
+  can_health[can_number].last_error = (uint8_t)((psr_reg & FDCAN_PSR_LEC) >> FDCAN_PSR_LEC_Pos);
   if ((can_health[can_number].last_error != 0U) && (can_health[can_number].last_error != 7U)) {
     can_health[can_number].last_stored_error = can_health[can_number].last_error;
   }
 
-  can_health[can_number].last_data_error = ((psr_reg & FDCAN_PSR_DLEC) >> FDCAN_PSR_DLEC_Pos);
+  can_health[can_number].last_data_error = (uint8_t)((psr_reg & FDCAN_PSR_DLEC) >> FDCAN_PSR_DLEC_Pos);
   if ((can_health[can_number].last_data_error != 0U) && (can_health[can_number].last_data_error != 7U)) {
     can_health[can_number].last_data_stored_error = can_health[can_number].last_data_error;
   }
 
-  can_health[can_number].receive_error_cnt = ((ecr_reg & FDCAN_ECR_REC) >> FDCAN_ECR_REC_Pos);
-  can_health[can_number].transmit_error_cnt = ((ecr_reg & FDCAN_ECR_TEC) >> FDCAN_ECR_TEC_Pos);
+  can_health[can_number].receive_error_cnt = (uint8_t)((ecr_reg & FDCAN_ECR_REC) >> FDCAN_ECR_REC_Pos);
+  can_health[can_number].transmit_error_cnt = (uint8_t)((ecr_reg & FDCAN_ECR_TEC) >> FDCAN_ECR_TEC_Pos);
 
   can_health[can_number].irq0_call_rate = interrupts[can_irq_number[can_number][0]].call_rate;
   can_health[can_number].irq1_call_rate = interrupts[can_irq_number[can_number][1]].call_rate;
@@ -178,16 +176,18 @@ static void can_rx(uint8_t can_number) {
     // getting address
     fifo = (const canfd_fifo *)(RxFIFO0SA + (rx_fifo_idx * FDCAN_RX_FIFO_0_EL_SIZE));
 
-    bool canfd_frame = ((fifo->header[1] >> 21) & 0x1U);
-    bool brs_frame = ((fifo->header[1] >> 20) & 0x1U);
+    uint32_t header0 = fifo->header[0];
+    uint32_t header1 = fifo->header[1];
+    bool canfd_frame = ((header1 >> 21) & 0x1U) != 0U;
+    bool brs_frame = ((header1 >> 20) & 0x1U) != 0U;
 
-    to_push.fd = canfd_frame;
+    to_push.fd = canfd_frame ? 1U : 0U;
     to_push.returned = 0U;
     to_push.rejected = 0U;
-    to_push.extended = (fifo->header[0] >> 30) & 0x1U;
-    to_push.addr = ((to_push.extended != 0U) ? (fifo->header[0] & 0x1FFFFFFFU) : ((fifo->header[0] >> 18) & 0x7FFU));
+    to_push.extended = (uint8_t)((header0 >> 30) & 0x1U);
+    to_push.addr = ((to_push.extended != 0U) ? (header0 & 0x1FFFFFFFU) : ((header0 >> 18) & 0x7FFU));
     to_push.bus = bus_number;
-    to_push.data_len_code = ((fifo->header[1] >> 16) & 0xFU);
+    to_push.data_len_code = (uint8_t)((header1 >> 16) & 0xFU);
 
     uint8_t data_len_w = (dlc_to_len[to_push.data_len_code] / 4U);
     data_len_w += ((dlc_to_len[to_push.data_len_code] % 4U) > 0U) ? 1U : 0U;
@@ -198,7 +198,7 @@ static void can_rx(uint8_t can_number) {
 
     // forwarding
     mpu_safety_open();
-    int bus_fwd_num = safety_fwd_hook(bus_number, to_push.addr);
+    int bus_fwd_num = safety_fwd_hook((int)bus_number, (int)to_push.addr);
     safety_rx_invalid += safety_rx_hook(&to_push) ? 0U : 1U;
     mpu_safety_close();
     if (bus_fwd_num >= 0) {
@@ -214,7 +214,7 @@ static void can_rx(uint8_t can_number) {
       (void)memcpy(to_send.data, to_push.data, dlc_to_len[to_push.data_len_code]);
       can_set_checksum(&to_send);
 
-      can_send(&to_send, bus_fwd_num, true);
+      can_send(&to_send, (uint8_t)bus_fwd_num, true);
       can_health[can_number].total_fwd_cnt += 1U;
     }
 
@@ -266,8 +266,8 @@ static bool can_init(uint8_t can_number) {
 
   if (can_number != 0xffU) {
     FDCAN_GlobalTypeDef *FDCANx = CANIF_FROM_CAN_NUM(can_number);
-    ret &= can_set_speed(can_number);
-    ret &= llcan_init(FDCANx);
+    ret = can_set_speed(can_number);
+    ret = llcan_init(FDCANx) && ret;
     // in case there are queued up messages
     process_can(can_number);
   }

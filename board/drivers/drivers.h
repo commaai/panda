@@ -34,8 +34,8 @@ typedef struct {
 } bus_config_t;
 
 // helpers
-#define WORD_TO_BYTE_ARRAY(dst8, src32) 0[dst8] = ((src32) & 0xFFU); 1[dst8] = (((src32) >> 8U) & 0xFFU); 2[dst8] = (((src32) >> 16U) & 0xFFU); 3[dst8] = (((src32) >> 24U) & 0xFFU)
-#define BYTE_ARRAY_TO_WORD(dst32, src8) ((dst32) = 0[src8] | (1[src8] << 8U) | (2[src8] << 16U) | (3[src8] << 24U))
+#define WORD_TO_BYTE_ARRAY(dst8, src32) (dst8)[0] = (uint8_t)((src32) & 0xFFU); (dst8)[1] = (uint8_t)(((src32) >> 8U) & 0xFFU); (dst8)[2] = (uint8_t)(((src32) >> 16U) & 0xFFU); (dst8)[3] = (uint8_t)(((src32) >> 24U) & 0xFFU)
+#define BYTE_ARRAY_TO_WORD(dst32, src8) ((dst32) = (uint32_t)(src8)[0] | ((uint32_t)(src8)[1] << 8U) | ((uint32_t)(src8)[2] << 16U) | ((uint32_t)(src8)[3] << 24U))
 
 // ********************* interrupt safe queue *********************
 // not static, tests/libpanda calls these
@@ -44,9 +44,9 @@ bool can_push(can_ring *q, const CANPacket_t *elem);
 uint32_t can_slots_empty(const can_ring *q);
 void can_set_checksum(CANPacket_t *packet);
 
-#define CANIF_FROM_CAN_NUM(num) (cans[num])
-#define BUS_NUM_FROM_CAN_NUM(num) (bus_config[num].bus_lookup)
-#define CAN_NUM_FROM_BUS_NUM(num) (bus_config[num].can_num_lookup)
+#define CANIF_FROM_CAN_NUM(num) (cans[(num)])
+#define BUS_NUM_FROM_CAN_NUM(num) (bus_config[(num)].bus_lookup)
+#define CAN_NUM_FROM_BUS_NUM(num) (bus_config[(num)].can_num_lookup)
 
 // ******************** fan ********************
 
@@ -115,11 +115,11 @@ static void interrupt_timer_init(void);
 uint32_t microsecond_timer_get(void);
 
 #define REGISTER_INTERRUPT(irq_num, func_ptr, call_rate_max, rate_fault) \
-  interrupts[irq_num].handler = (func_ptr);  \
-  interrupts[irq_num].call_counter = 0U;   \
-  interrupts[irq_num].call_rate = 0U;   \
-  interrupts[irq_num].max_call_rate = (call_rate_max); \
-  interrupts[irq_num].call_rate_fault = (rate_fault);
+  interrupts[(irq_num)].handler = (func_ptr);  \
+  interrupts[(irq_num)].call_counter = 0U;   \
+  interrupts[(irq_num)].call_rate = 0U;   \
+  interrupts[(irq_num)].max_call_rate = (call_rate_max); \
+  interrupts[(irq_num)].call_rate_fault = (rate_fault);
 
 #endif // STM32H7
 

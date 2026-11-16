@@ -165,7 +165,7 @@ static void can_send(CANPacket_t *to_push, uint8_t bus_number, bool skip_tx_hook
   bool tx_allowed = skip_tx_hook;
   if (!tx_allowed) {
     mpu_safety_open();
-    tx_allowed = safety_tx_hook(to_push) != 0;
+    tx_allowed = safety_tx_hook(to_push);
     mpu_safety_close();
   }
   if (tx_allowed) {
