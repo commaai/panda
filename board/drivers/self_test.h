@@ -66,6 +66,7 @@ static void self_test_inject(uint8_t test) {
   } else if (test <= SELF_TEST_DMA) {
     self_test_fail |= (uint8_t)(1U << test);
   } else {
+    // not a self test, nothing to inject
   }
 }
 
@@ -136,9 +137,9 @@ static bool ram_test_block(uint32_t addr, uint32_t words, uint32_t start, uint32
   volatile uint32_t *alias[RAM_TEST_ALIASES];
   uint32_t alias_val[RAM_TEST_ALIASES];
   uint8_t aliases = 0U;
-  for (uint32_t bit = RAM_TEST_BLOCK_WORDS * 4U; (bit < (end - start)) && (aliases < RAM_TEST_ALIASES); bit <<= 1U) {
+  for (uint32_t bit = RAM_TEST_BLOCK_WORDS * 4U; bit < (end - start); bit <<= 1U) {
     uint32_t a = addr ^ bit;
-    if ((a >= start) && ((a + 4U) <= end) && !ram_test_skip(a, a + 4U)) {
+    if ((aliases < RAM_TEST_ALIASES) && (a >= start) && ((a + 4U) <= end) && !ram_test_skip(a, a + 4U)) {
       alias[aliases] = (uint32_t *)a;
       aliases++;
     }

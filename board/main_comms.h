@@ -192,23 +192,19 @@ static uint32_t comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     // **** 0xd1: enter bootloader mode
     case 0xd1:
       // this allows reflashing of the bootstub
-      switch (req->param1) {
-        case 0:
-          // only allow bootloader entry on debug builds
-          #ifdef ALLOW_DEBUG
-            print("-> entering bootloader\n");
-            enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-            NVIC_SystemReset();
-          #endif
-          break;
-        case 1:
-          print("-> entering softloader\n");
-          enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
-          NVIC_SystemReset();
-          break;
-        default:
-          print("Bootloader mode invalid\n");
-          break;
+      if (req->param1 == 0U) {
+        // only allow bootloader entry on debug builds
+        #ifdef ALLOW_DEBUG
+        print("-> entering bootloader\n");
+        enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
+        NVIC_SystemReset();
+        #endif
+      } else if (req->param1 == 1U) {
+        print("-> entering softloader\n");
+        enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
+        NVIC_SystemReset();
+      } else {
+        print("Bootloader mode invalid\n");
       }
       break;
     // **** 0xd2: get health packet
@@ -354,6 +350,7 @@ static uint32_t comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         // pended in the register, param2 is a number and not an IRQn_Type
         NVIC->ISPR[req->param2 >> 5U] = 1UL << (req->param2 & 0x1FU);
       } else {
+        // not a test, nothing to break
       }
       break;
     // **** 0xf5: break a read-back or cross-check, for testing

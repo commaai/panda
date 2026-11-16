@@ -390,6 +390,4 @@ int main(void) {
       SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
     }
   }
-
-  return 0;
 }

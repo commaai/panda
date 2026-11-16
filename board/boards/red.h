@@ -22,6 +22,7 @@ static void red_enable_can_transceiver(uint8_t transceiver, bool enabled) {
       set_gpio_output(GPIOB, 4, !enabled);
       break;
     default:
+      // no such transceiver
       break;
   }
 }
@@ -65,6 +66,7 @@ static void red_set_can_mode(uint8_t mode) {
       }
       break;
     default:
+      // unknown mode, transceivers 2 and 4 stay off
       break;
   }
 }

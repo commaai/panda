@@ -92,7 +92,8 @@ static inline void mpu_check(void) {
   ENTER_CRITICAL();
   uint32_t bad = mpu_region_ok(MPU_REGION_STACK_GUARD, (uint32_t)&stack_guard, mpu_stack_guard_rasr()) ? 0U : (1UL << MPU_REGION_STACK_GUARD);
   bad |= mpu_region_ok(MPU_REGION_SAFETY, (uint32_t)&safety_start, mpu_safety_rasr(MPU_SAFETY_CLOSED)) ? 0U : (1UL << MPU_REGION_SAFETY);
-  for (uint32_t region = MPU_REGION_STACK_GUARD + 1U; region < ((MPU->TYPE & MPU_TYPE_DREGION_Msk) >> MPU_TYPE_DREGION_Pos); region++) {
+  const uint32_t regions = (MPU->TYPE & MPU_TYPE_DREGION_Msk) >> MPU_TYPE_DREGION_Pos;
+  for (uint32_t region = MPU_REGION_STACK_GUARD + 1U; region < regions; region++) {
     MPU->RNR = region;
     bad |= ((MPU->RASR & MPU_RASR_ENABLE_Msk) == 0U) ? 0U : (1UL << region);
   }

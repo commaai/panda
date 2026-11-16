@@ -79,7 +79,10 @@ static bool get_gpio_input(const GPIO_TypeDef *GPIO, unsigned int pin) {
 static inline bool detect_with_pull(GPIO_TypeDef *GPIO, unsigned int pin, unsigned int mode) {
   set_gpio_mode(GPIO, pin, MODE_INPUT);
   set_gpio_pullup(GPIO, pin, mode);
-  for (volatile int i=0; i<PULL_EFFECTIVE_DELAY; i++) {}
+  volatile int i = 0;
+  while (i < PULL_EFFECTIVE_DELAY) {
+    i++;
+  }
   bool ret = get_gpio_input(GPIO, pin);
   set_gpio_pullup(GPIO, pin, PULL_NONE);
   return ret;
