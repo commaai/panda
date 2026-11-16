@@ -46,7 +46,6 @@ static inline uint16_t read_u16_le(const uint8_t *src8) {
 bool can_pop(can_ring *q, CANPacket_t *elem);
 bool can_push(can_ring *q, const CANPacket_t *elem);
 uint32_t can_slots_empty(const can_ring *q);
-void can_set_checksum(CANPacket_t *packet);
 
 #define CANIF_FROM_CAN_NUM(num) (cans[(num)])
 #define BUS_NUM_FROM_CAN_NUM(num) (bus_config[(num)].bus_lookup)
