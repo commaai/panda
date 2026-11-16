@@ -9,7 +9,11 @@
 
 static bool i2c_status_wait(const volatile uint32_t *status_reg, uint32_t mask, uint32_t val) {
   uint32_t start_time = microsecond_timer_get();
-  while(((*status_reg & mask) != val) && (get_ts_elapsed(microsecond_timer_get(), start_time) < I2C_TIMEOUT_US));
+  while ((*status_reg & mask) != val) {
+    if (get_ts_elapsed(microsecond_timer_get(), start_time) >= I2C_TIMEOUT_US) {
+      break;
+    }
+  }
   return ((*status_reg & mask) == val);
 }
 

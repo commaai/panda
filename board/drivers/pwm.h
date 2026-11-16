@@ -28,6 +28,7 @@ static void pwm_init(TIM_TypeDef *TIM, uint8_t channel){
       register_set_bits(&(TIM->CCER), TIM_CCER_CC4E);
       break;
     default:
+      // the timer only has channels 1 to 4
       break;
   }
 
@@ -54,6 +55,7 @@ static void pwm_set(TIM_TypeDef *TIM, uint8_t channel, uint8_t percentage){
       register_set(&(TIM->CCR4), comp_value, 0xFFFFU);
       break;
     default:
+      // the timer only has channels 1 to 4
       break;
   }
 }

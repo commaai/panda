@@ -22,6 +22,7 @@ static void cuatro_enable_can_transceiver(uint8_t transceiver, bool enabled) {
       set_gpio_output(GPIOB, 11, !enabled);
       break;
     default:
+      // no such transceiver
       break;
   }
 }
