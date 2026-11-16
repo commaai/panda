@@ -33,7 +33,7 @@ static void red_set_can_mode(uint8_t mode) {
   switch (mode) {
     case CAN_MODE_NORMAL:
     case CAN_MODE_OBD_CAN2:
-      if ((bool)(mode == CAN_MODE_NORMAL) != (bool)(harness.status == HARNESS_STATUS_FLIPPED)) {
+      if ((mode == CAN_MODE_NORMAL) != (harness.status == HARNESS_STATUS_FLIPPED)) {
         // B12,B13: disable normal mode
         set_gpio_pullup(GPIOB, 12, PULL_NONE);
         set_gpio_mode(GPIOB, 12, MODE_ANALOG);
@@ -101,7 +101,7 @@ static void red_init(void) {
   set_gpio_output(GPIOB, 14, true);
 }
 
-static harness_configuration red_harness_config = {
+static const harness_configuration red_harness_config = {
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
   .GPIO_relay_SBU1 = GPIOC,
@@ -114,7 +114,7 @@ static harness_configuration red_harness_config = {
   .adc_signal_SBU2 = ADC_CHANNEL_DEFAULT(ADC1, 17)
 };
 
-board board_red = {
+static const board board_red = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &red_harness_config,
   .has_spi = false,

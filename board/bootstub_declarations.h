@@ -11,6 +11,6 @@ typedef struct harness_configuration harness_configuration;
 
 // ********************* Globals **********************
 uint8_t hw_type = 0;
-board *current_board;
+const board *current_board;
 
 #endif  // BOARD_BOOTSTUB_DECLARATIONS_H
