@@ -31,7 +31,7 @@ void __attribute__ ((noinline)) enable_fpu(void) {
   SCB->CPACR |= ((3UL << (10U * 2U)) | (3UL << (11U * 2U)));
 }
 
-void __initialize_hardware_early(void) {
+void initialize_hardware_early(void) {
   enable_fpu();
   early_initialization();
 }

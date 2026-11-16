@@ -49,8 +49,8 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xd4: {
       uint8_t offset = (req->request == 0xd3) ? 0U : 64U;
       resp_len = 64U;
-      char *code = (char *)_app_start;
-      int code_len = _app_start[0];
+      char *code = (char *)app_start;
+      int code_len = app_start[0];
       (void)memcpy(resp, &code[code_len + offset], resp_len);
       break;
     }

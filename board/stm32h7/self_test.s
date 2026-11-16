@@ -369,9 +369,9 @@ ram_test_startup:
   .section .rodata.ram_test_regions
   .align 2
 ram_test_regions:
-  .word _dtcmram_start, _dtcmram_end
-  .word _axisram_start, _axisram_end
-  .word _itcmram_start, _itcmram_end
-  .word _sram12_start, _sram12_end
-  .word _sram4_start, _sram4_end
+  .word dtcmram_start, dtcmram_end
+  .word axisram_start, axisram_end
+  .word itcmram_start, itcmram_end
+  .word sram12_start, sram12_end
+  .word sram4_start, sram4_end
   .word 0, 0

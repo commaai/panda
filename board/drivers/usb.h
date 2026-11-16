@@ -14,9 +14,9 @@ typedef union {
   bw;
 } uint16_t_uint8_t;
 
-typedef union _USB_Setup {
+typedef union USB_Setup {
   uint32_t d8[2];
-  struct _SetupPkt_Struc
+  struct SetupPkt_Struc
   {
     uint8_t           bmRequestType;
     uint8_t           bRequest;
