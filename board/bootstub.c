@@ -15,7 +15,6 @@
 #include "board/crypto/sha.h"
 
 #include "board/obj/cert.h"
-#include "board/obj/gitversion.h"
 #include "board/flasher.h"
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
