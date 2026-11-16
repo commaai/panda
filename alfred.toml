@@ -1,6 +1,6 @@
 # the tests run in AGNOS's venv, it has everything but opendbc
 [env]
-PYTHONPATH = "/data/ci/tree:/data/ci/tree/panda/opendbc_repo"  # the tree is /data/ci/tree/panda, each job clones opendbc into it
+PYTHONPATH = "/data/ci/tree:/data/ci/tree/panda/opendbc_repo"  # the tree is /data/ci/tree/panda, each job clones the opendbc pinned in pyproject.toml into it
 PYTHONWARNINGS = "error"
 LOGLEVEL = "debug"
 
@@ -11,7 +11,9 @@ timeout-minutes = 20
 [[jobs.hitl.steps]]
 name = "Build"
 run = """
-git clone -q --depth 1 https://github.com/commaai/opendbc.git opendbc_repo
+git init -q opendbc_repo
+git -C opendbc_repo fetch -q --depth 1 https://github.com/commaai/opendbc.git $(grep -oE 'opendbc.git@[0-9a-f]{40}' pyproject.toml | cut -d@ -f2)
+git -C opendbc_repo checkout -q FETCH_HEAD
 scons
 scripts/reflash_internal_panda.py
 """
