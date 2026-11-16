@@ -33,13 +33,13 @@ static PackageSMPSType get_package_smps_type(void) {
   RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN; // make sure SYSCFG clock is enabled. does seem to read fine without too though
 
   switch(SYSCFG->PKGR & 0xFU) {
-    case 0b0001U: // TFBGA100 Legacy
-    case 0b0011U: // TFBGA100
+    case 0x1U: // TFBGA100 Legacy
+    case 0x3U: // TFBGA100
       ret = PACKAGE_WITHOUT_SMPS;
       break;
-    case 0b0101U: // LQFP144 Legacy
-    case 0b0111U: // LQFP144 Industrial
-    case 0b1000U: // UFBGA169
+    case 0x5U: // LQFP144 Legacy
+    case 0x7U: // LQFP144 Industrial
+    case 0x8U: // UFBGA169
       ret = PACKAGE_WITH_SMPS;
       break;
     default:
