@@ -109,17 +109,16 @@ class TestPandaComms(unittest.TestCase):
     bad[-1] ^= 0xFF
     pkt = libpanda_py.CANPacket()
 
-    # a corrupt packet is counted, still goes through the safety hooks, and silent mode rejects
-    # it and returns it to the host
+    # a corrupt packet is counted and dropped before the safety hooks see it: silent mode
+    # would reject a valid packet and return it to the host
     lpp.set_safety_hooks(CarParams.SafetyModel.silent, 0)
     checksum_errors, tx_blocked = lpp.get_tx_checksum_error_cnt(0), lpp.get_safety_tx_blocked()
     lpp.comms_can_write(bytes(bad), len(bad))
     self.assertEqual(lpp.get_tx_checksum_error_cnt(0), checksum_errors + 1)
-    self.assertEqual(lpp.get_safety_tx_blocked(), tx_blocked + 1)
-    self.assertTrue(lpp.can_pop(lpp.rx_q, pkt))
-    self.assertEqual(pkt.rejected, 1)
+    self.assertEqual(lpp.get_safety_tx_blocked(), tx_blocked)
+    self.assertFalse(lpp.can_pop(lpp.rx_q, pkt))
 
-    # one the hooks allow is never sent, the valid packet after it still goes out
+    # the valid packet after it still goes out
     lpp.set_safety_hooks(CarParams.SafetyModel.allOutput, 0)
     buf = bytes(bad + good)
     lpp.comms_can_write(buf, len(buf))
