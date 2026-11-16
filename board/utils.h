@@ -3,30 +3,30 @@
 
 // cppcheck-suppress-macro [misra-c2012-1.2, misra-c2012-17.3]; allow __typeof__ extension
 #define MIN(a, b) ({ \
-  __typeof__ (a) _a = (a); \
-  __typeof__ (b) _b = (b); \
-  (_a < _b) ? _a : _b; \
+  __typeof__ (a) min_a = (a); \
+  __typeof__ (b) min_b = (b); \
+  (min_a < min_b) ? min_a : min_b; \
 })
 
 // cppcheck-suppress-macro [misra-c2012-1.2, misra-c2012-17.3]; allow __typeof__ extension
 #define MAX(a, b) ({ \
-  __typeof__ (a) _a = (a); \
-  __typeof__ (b) _b = (b); \
-  (_a > _b) ? _a : _b; \
+  __typeof__ (a) max_a = (a); \
+  __typeof__ (b) max_b = (b); \
+  (max_a > max_b) ? max_a : max_b; \
 })
 
 // cppcheck-suppress-macro [misra-c2012-1.2, misra-c2012-17.3]; allow __typeof__ extension
 #define CLAMP(x, low, high) ({ \
-  __typeof__(x) __x = (x); \
-  __typeof__(low) __low = (low);\
-  __typeof__(high) __high = (high);\
-  (__x > __high) ? __high : ((__x < __low) ? __low : __x); \
+  __typeof__(x) clamp_x = (x); \
+  __typeof__(low) clamp_low = (low);\
+  __typeof__(high) clamp_high = (high);\
+  (clamp_x > clamp_high) ? clamp_high : ((clamp_x < clamp_low) ? clamp_low : clamp_x); \
 })
 
 // cppcheck-suppress-macro [misra-c2012-1.2, misra-c2012-17.3]; allow __typeof__ extension
 #define ABS(a) ({ \
-  __typeof__ (a) _a = (a); \
-  (_a > 0) ? _a : (-_a); \
+  __typeof__ (a) abs_a = (a); \
+  (abs_a > 0) ? abs_a : (-abs_a); \
 })
 
 #ifndef NULL

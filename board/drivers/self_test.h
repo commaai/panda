@@ -23,17 +23,18 @@
 #define RAM_SCRUB_WORDS 64U
 #define FLASH_CRC_CHUNK 0x400U
 
-extern uint32_t _dtcmram_start;
-extern uint32_t _dtcmram_end;
-extern uint32_t _axisram_start;
-extern uint32_t _axisram_end;
-extern uint32_t _itcmram_start;
-extern uint32_t _itcmram_end;
-extern uint32_t _sram12_start;
-extern uint32_t _sram12_end;
-extern uint32_t _sram4_start;
-extern uint32_t _sram4_end;
-extern uint32_t _stack_guard_end;
+// linker symbols, see stm32h7x5_flash.ld
+extern uint32_t dtcmram_start;
+extern uint32_t dtcmram_end;
+extern uint32_t axisram_start;
+extern uint32_t axisram_end;
+extern uint32_t itcmram_start;
+extern uint32_t itcmram_end;
+extern uint32_t sram12_start;
+extern uint32_t sram12_end;
+extern uint32_t sram4_start;
+extern uint32_t sram4_end;
+extern uint32_t stack_guard_end;
 extern uint32_t self_test_cookie;
 
 typedef struct {
@@ -111,7 +112,7 @@ static bool ram_test_march(volatile uint32_t *p, uint32_t n, uint32_t bg) {
 // the stack guard faults on access and the running frames can't hold test patterns, both are covered at boot
 static bool ram_test_skip(uint32_t start, uint32_t end) {
   uint32_t sp = __get_MSP();
-  bool guard_hit = (start < (uint32_t)&_stack_guard_end) && (end > (uint32_t)&_stack_guard);
+  bool guard_hit = (start < (uint32_t)&stack_guard_end) && (end > (uint32_t)&stack_guard);
   bool stack_hit = (start < (sp + RAM_TEST_STACK_WINDOW)) && (end > (sp - RAM_TEST_STACK_WINDOW));
   return guard_hit || stack_hit;
 }
@@ -176,9 +177,9 @@ static bool ram_test_block(uint32_t addr, uint32_t words, uint32_t start, uint32
 static bool ram_test_next(uint32_t *failed) {
   // SRAM1/2 and SRAM4 hold the DMA buffers, which DMA can write mid test, and the test's own backup, they're covered at boot, by ECC and the scrub
   static const ram_region ram_regions[] = {
-    {(uint32_t)&_dtcmram_start, (uint32_t)&_dtcmram_end},
-    {(uint32_t)&_axisram_start, (uint32_t)&_axisram_end},
-    {(uint32_t)&_itcmram_start, (uint32_t)&_itcmram_end},
+    {(uint32_t)&dtcmram_start, (uint32_t)&dtcmram_end},
+    {(uint32_t)&axisram_start, (uint32_t)&axisram_end},
+    {(uint32_t)&itcmram_start, (uint32_t)&itcmram_end},
   };
   static uint8_t region = 0U;
   static uint32_t block = 0U;
@@ -199,8 +200,8 @@ static bool ram_test_next(uint32_t *failed) {
 // UM2331 RAM_SM_7, a read reveals an ECC error in RAM that isn't march tested at runtime
 static void ram_scrub_next(void) {
   static const ram_region scrub_regions[] = {
-    {(uint32_t)&_sram12_start, (uint32_t)&_sram12_end},
-    {(uint32_t)&_sram4_start, (uint32_t)&_sram4_end},
+    {(uint32_t)&sram12_start, (uint32_t)&sram12_end},
+    {(uint32_t)&sram4_start, (uint32_t)&sram4_end},
   };
   static uint8_t region = 0U;
   static uint32_t addr = 0U;
@@ -221,12 +222,12 @@ static void ram_scrub_next(void) {
 
 // board/crypto/sign.py: length, image, crc32 of everything before it, version tag and version, signature
 static uint32_t flash_crc_len(void) {
-  uint32_t len = (uint32_t)_app_start[0];
-  return ((len >= 12U) && (len < sizeof(_app_start))) ? (len - 12U) : 0U;
+  uint32_t len = (uint32_t)app_start[0];
+  return ((len >= 12U) && (len < sizeof(app_start))) ? (len - 12U) : 0U;
 }
 
 static uint32_t flash_crc_stored(void) {
-  const uint8_t *p = &((const uint8_t *)_app_start)[flash_crc_len()];
+  const uint8_t *p = &((const uint8_t *)app_start)[flash_crc_len()];
   return (uint32_t)p[0] | ((uint32_t)p[1] << 8U) | ((uint32_t)p[2] << 16U) | ((uint32_t)p[3] << 24U);
 }
 
@@ -237,7 +238,7 @@ static bool flash_test_next(uint32_t *crc_out) {
   bool ok = true;
   uint32_t len = flash_crc_len();
   uint32_t n = MIN(FLASH_CRC_CHUNK, len - offset);
-  crc = crc32_update(crc, &((const uint8_t *)_app_start)[offset], n);
+  crc = crc32_update(crc, &((const uint8_t *)app_start)[offset], n);
   offset += n;
   if (offset >= len) {
 #ifdef ALLOW_DEBUG
@@ -358,7 +359,7 @@ void self_test_init(void) {
   bool ram_ok = (self_test_cookie == SELF_TEST_PASS);
   self_test_cookie = 0U;
   uint32_t len = flash_crc_len();
-  uint32_t crc = crc32((const uint8_t *)_app_start, len);
+  uint32_t crc = crc32((const uint8_t *)app_start, len);
   bool flash_ok = (len != 0U) && (crc == flash_crc_stored());
   self_test_check((cpu_test() == SELF_TEST_PASS) && (fpu_test() == SELF_TEST_PASS), ram_ok, 0U, flash_ok, crc);
   dma_test_init();

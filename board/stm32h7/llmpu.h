@@ -4,8 +4,8 @@
 #include "opendbc/safety/declarations.h"
 
 // linker symbols, see stm32h7x5_flash.ld
-extern uint32_t _ssafety;
-extern uint32_t _stack_guard;
+extern uint32_t safety_start;
+extern uint32_t stack_guard;
 
 #define MPU_REGION_SAFETY 0U
 #define MPU_REGION_STACK_GUARD 1U
@@ -66,11 +66,11 @@ void mpu_safety_close(void) {
 
 void mpu_init(void) {
   MPU->RNR = MPU_REGION_STACK_GUARD;
-  MPU->RBAR = (uint32_t)&_stack_guard;
+  MPU->RBAR = (uint32_t)&stack_guard;
   MPU->RASR = mpu_stack_guard_rasr();
 
   MPU->RNR = MPU_REGION_SAFETY;
-  MPU->RBAR = (uint32_t)&_ssafety;
+  MPU->RBAR = (uint32_t)&safety_start;
   MPU->RASR = mpu_safety_rasr(MPU_SAFETY_CLOSED);
   mpu_safety_controls_allowed_copy = safety.controls_allowed;
 
@@ -88,8 +88,8 @@ static bool mpu_region_ok(uint32_t region, uint32_t base, uint32_t rasr) {
 // RBAR and RASR are banked by RNR, so register_set can't read them back
 void mpu_check(void) {
   ENTER_CRITICAL();
-  uint32_t bad = mpu_region_ok(MPU_REGION_STACK_GUARD, (uint32_t)&_stack_guard, mpu_stack_guard_rasr()) ? 0U : (1UL << MPU_REGION_STACK_GUARD);
-  bad |= mpu_region_ok(MPU_REGION_SAFETY, (uint32_t)&_ssafety, mpu_safety_rasr(MPU_SAFETY_CLOSED)) ? 0U : (1UL << MPU_REGION_SAFETY);
+  uint32_t bad = mpu_region_ok(MPU_REGION_STACK_GUARD, (uint32_t)&stack_guard, mpu_stack_guard_rasr()) ? 0U : (1UL << MPU_REGION_STACK_GUARD);
+  bad |= mpu_region_ok(MPU_REGION_SAFETY, (uint32_t)&safety_start, mpu_safety_rasr(MPU_SAFETY_CLOSED)) ? 0U : (1UL << MPU_REGION_SAFETY);
   for (uint32_t region = MPU_REGION_STACK_GUARD + 1U; region < ((MPU->TYPE & MPU_TYPE_DREGION_Msk) >> MPU_TYPE_DREGION_Pos); region++) {
     MPU->RNR = region;
     bad |= ((MPU->RASR & MPU_RASR_ENABLE_Msk) == 0U) ? 0U : (1UL << region);
