@@ -27,6 +27,8 @@ if __name__ == "__main__":
   time.sleep(0.2)
   gpio_set(GPIO.STM_RST_N, 0)
   gpio_set(GPIO.STM_BOOT0, 0)
+  # give the bootloader time to start before any SPI traffic
+  time.sleep(0.01)
 
   # bootstub flash takes 2s and is limited by the 255 byte flashing chunk size
   print("flashing bootstub")
