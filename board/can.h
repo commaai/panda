@@ -5,4 +5,6 @@
 
 #include "opendbc/safety/can.h"
 
+#define CANPACKET_HEAD_SIZE 6U
+
 #endif  // BOARD_CAN_H
