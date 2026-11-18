@@ -1,9 +1,12 @@
 #ifndef BOARD_LIBC_H
 #define BOARD_LIBC_H
 
+#include "board/utils.h"
+
 // **** libc ****
 
-__attribute__((aligned(32), noinline)) void delay(uint32_t a) {
+// cppcheck-suppress misra-c2012-1.2 ; no inlining keeps the busy loop timing constant
+FLASH_LINE_ALIGNED __attribute__((noinline)) void delay(uint32_t a) {
   // loop is 2.6x faster when 32-byte aligned (ART accelerator prefetches flash in 32-byte chunks)
   volatile uint32_t i;
   uint32_t n = a * 13U / 5U;
@@ -20,8 +23,9 @@ void assert_fatal(bool condition, const char *msg) {
   }
 }
 
+// zeroes every CAN packet from the host
 // cppcheck-suppress misra-c2012-21.2
-void *memset(void *str, int c, unsigned int n) {
+FLASH_LINE_ALIGNED void *memset(void *str, int c, unsigned int n) {
   uint8_t *s = str;
   for (unsigned int i = 0; i < n; i++) {
     *s = c;
