@@ -47,6 +47,16 @@ class TestCanLoopback(PandaTestCase):
             sequence += len(messages)
       assert not receiver.can_recv()
 
+  def test_canfd(self):
+    # same setup as pandad
+    self.p.set_safety_mode(CarParams.SafetyModel.allOutput)
+    for bus in range(3):
+      self.p.set_canfd_auto(bus, True)
+      self.up.set_can_data_speed_kbps(bus, 2000)
+    for sender, receiver in ((self.up, self.p), (self.p, self.up)):
+      messages = [(0x200 + length, os.urandom(length), bus) for bus in range(3) for length in (12, 16, 20, 24, 32, 48, 64)]
+      self._exchange(sender, receiver, messages)
+
   @panda_test(timeout=180)
   def test_bitrates_and_latency(self):
     p, up = self.p, self.up
