@@ -97,6 +97,8 @@ def unpack_can_buffer(dat):
       break
 
     assert calculate_checksum(dat[:(CANPACKET_HEAD_SIZE+data_len)]) == 0, "CAN packet checksum incorrect"
+    # the panda never sets both. a stream that's out of sync can, and still pass the checksum
+    assert header[1] & 0x3 != 0x3, "CAN packet both returned and rejected"
 
     data = dat[CANPACKET_HEAD_SIZE:(CANPACKET_HEAD_SIZE+data_len)]
     dat = dat[(CANPACKET_HEAD_SIZE+data_len):]
@@ -140,6 +142,16 @@ class Panda:
   HEALTH_PACKET_VERSION = compute_version_hash(os.path.join(BASEDIR, "board/health.h"))
   HEALTH_STRUCT = _parse_c_struct(os.path.join(BASEDIR, "board/health.h"), "health_t")
   CAN_HEALTH_STRUCT = struct.Struct("<BIBBBBBBBBIIIIIIIHHBBBIIII")
+  LEC_ERROR_CODE = {
+    0: "No error",
+    1: "Stuff error",
+    2: "Form error",
+    3: "AckError",
+    4: "Bit1Error",
+    5: "Bit0Error",
+    6: "CRCError",
+    7: "NoChange",
+  }
 
   HEALTH_FLAG_IGNITION_LINE = 1 << 0
   HEALTH_FLAG_IGNITION_CAN = 1 << 1
@@ -562,16 +574,6 @@ class Panda:
 
   @ensure_health_packet_version
   def can_health(self, can_number):
-    LEC_ERROR_CODE = {
-      0: "No error",
-      1: "Stuff error",
-      2: "Form error",
-      3: "AckError",
-      4: "Bit1Error",
-      5: "Bit0Error",
-      6: "CRCError",
-      7: "NoChange",
-    }
     dat = self._handle.controlRead(Panda.REQUEST_IN, 0xc2, int(can_number), 0, self.CAN_HEALTH_STRUCT.size)
     a = self.CAN_HEALTH_STRUCT.unpack(dat)
     return {
@@ -579,10 +581,10 @@ class Panda:
       "bus_off_cnt": a[1],
       "error_warning": a[2],
       "error_passive": a[3],
-      "last_error": LEC_ERROR_CODE[a[4]],
-      "last_stored_error": LEC_ERROR_CODE[a[5]],
-      "last_data_error": LEC_ERROR_CODE[a[6]],
-      "last_data_stored_error": LEC_ERROR_CODE[a[7]],
+      "last_error": self.LEC_ERROR_CODE[a[4]],
+      "last_stored_error": self.LEC_ERROR_CODE[a[5]],
+      "last_data_error": self.LEC_ERROR_CODE[a[6]],
+      "last_data_stored_error": self.LEC_ERROR_CODE[a[7]],
       "receive_error_cnt": a[8],
       "transmit_error_cnt": a[9],
       "total_error_cnt": a[10],
@@ -750,6 +752,24 @@ class Panda:
           continue
         tx = tx[bs:]
 
+  @ensure_can_packet_version
+  def can_send_nonblocking(self, arr, *, fd=False) -> int:
+    """Sends frames in order until the panda NACKs (its CAN TX buffers are full), without retrying. Returns how many went out.
+    Writes are about 256 bytes: the panda takes one once each TX buffer has room for a full SPI write, and may take
+    the next one before that's true again"""
+    sent = 0
+    while sent < len(arr):
+      n = size = 0
+      while sent + n < len(arr) and size <= 256:
+        size += CANPACKET_HEAD_SIZE + len(arr[sent + n][1])
+        n += 1
+      try:
+        self._handle.bulkWrite(3, pack_can_buffer(arr[sent:sent + n], fd=fd)[0])
+      except PandaSpiNackResponse:
+        break
+      sent += n
+    return sent
+
   def can_send(self, addr, dat, bus, *, fd=False, timeout=CAN_SEND_TIMEOUT_MS):
     self.can_send_many([[addr, dat, bus]], fd=fd, timeout=timeout)
 
@@ -763,7 +783,13 @@ class Panda:
       except (usb1.USBErrorIO, usb1.USBErrorOverflow):
         logger.error("CAN: BAD RECV, RETRYING")
         time.sleep(0.1)
-    msgs, self.can_rx_overflow_buffer = unpack_can_buffer(self.can_rx_overflow_buffer + dat)
+    try:
+      msgs, self.can_rx_overflow_buffer = unpack_can_buffer(self.can_rx_overflow_buffer + dat)
+    except AssertionError:
+      # out of sync with the panda's stream: drop what we have and start over on both sides
+      self.can_rx_overflow_buffer = b''
+      self.can_reset_communications()
+      raise
     return msgs
 
   def can_clear(self, bus):

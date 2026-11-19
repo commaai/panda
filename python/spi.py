@@ -2,6 +2,7 @@ import binascii
 import ctypes
 import os
 import math
+import random
 import time
 import struct
 import threading
@@ -101,6 +102,9 @@ class SpiDevice:
     self._transfer = bytearray(self.SPI_IOC_TRANSFER.pack(address, address, 0, speed, 0, bits, 0, 0, 0, 0, 0))
     self._transfer_words = memoryview(self._transfer).cast('I')
 
+    # fault injection for tests: probability of each kind of fault per transfer
+    self.err_prob = 0.0
+
   @contextmanager
   def acquire(self):
     with SPI_LOCK:
@@ -121,19 +125,36 @@ class SpiDevice:
     if not 0 < length <= cls.MAX_TRANSFER_SIZE:
       raise ValueError(f"SPI transfer length must be between 1 and {cls.MAX_TRANSFER_SIZE}")
 
-  def xfer2(self, data) -> memoryview:
+  def xfer2(self, data, request: bool = True) -> memoryview:
     length = len(data)
     if not 0 < length <= self.MAX_TRANSFER_SIZE:
       raise ValueError(f"SPI transfer length must be between 1 and {self.MAX_TRANSFER_SIZE}")
     self._view[:length] = bytes(data)
-    self._transfer_words[4] = length  # len field at byte offset 16
-    if self._ioctl(self._fd, self.SPI_IOC_MESSAGE_1, self._transfer) != length:
+    xfer_len = random.randint(1, self.MAX_TRANSFER_SIZE) if self._fault() else length
+    if request and self._fault():
+      self._corrupt(length)
+    self._transfer_words[4] = xfer_len  # len field at byte offset 16
+    ret = self._ioctl(self._fd, self.SPI_IOC_MESSAGE_1, self._transfer)
+    if self._fault():
+      raise OSError("injected SPI ioctl error")
+    if self._fault():
+      self._corrupt(length)
+    if ret != xfer_len:
       raise OSError("Short SPI transfer")
     return self._view[:length]
 
+  def _fault(self) -> bool:
+    return self.err_prob > 0 and random.random() < self.err_prob
+
+  def _corrupt(self, length: int) -> None:
+    for i in range(length):
+      if random.random() < 0.1:
+        self._view[i] = random.getrandbits(8)
+
   # Both operations use one SPI_IOC_MESSAGE(1) for the single-block calls in panda.
+  # Only requests get TX corruption from fault injection
   def xfer(self, data) -> bytes:
-    return bytes(self.xfer2(data))
+    return bytes(self.xfer2(data, request=False))
 
   def readbytes(self, length: int) -> bytes:
     self._check_length(length)
@@ -156,6 +177,8 @@ class PandaSpiHandle(BaseHandle):
 
   def __init__(self) -> None:
     self.dev = SpiDevice()
+    # fault injection for tests, e.g. SPI_ERR_PROB=0.01
+    self.dev.err_prob = float(os.getenv("SPI_ERR_PROB", "0"))
 
   def _transfer_spidev(self, spi, endpoint: int, req_id: int, data, deadline: float, max_rx_len: int, expect_disconnect: bool) -> bytes | None:
     """One request and its response. Retries until the panda got the request and we got its response, or the deadline.
@@ -169,15 +192,25 @@ class PandaSpiHandle(BaseHandle):
     # when the panda last showed it's there
     alive = time.monotonic()
     while True:
-      # send the request, until the panda was ready for it
-      if spi.xfer2(packet)[0] == SLAVE_READY:
+      # send the request, until the panda was ready for it.
+      # a failed transfer is like one the panda didn't see: sending the same request again is always safe
+      try:
+        ready = spi.xfer2(packet)[0] == SLAVE_READY
+      except OSError:
+        logger.error("SPI: transfer failed")
+        ready = False
+      if ready:
         alive = time.monotonic()
         if expect_disconnect:
           return b""
 
         # read until the response. if the panda is ready again, it never got the request
         while True:
-          dat = spi.xfer(poll)
+          try:
+            dat = spi.xfer(poll)
+          except OSError:
+            logger.error("SPI: transfer failed")
+            break
           if dat[0] == SLAVE_READY:
             alive = time.monotonic()
             break
