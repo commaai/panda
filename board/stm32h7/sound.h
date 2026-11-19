@@ -77,6 +77,13 @@ static void BDMA_Channel0_IRQ_Handler(void) {
   uint8_t rx_buf_idx = (((BDMA_Channel0->CCR & BDMA_CCR_CT) >> BDMA_CCR_CT_Pos) == 1U) ? 0U : 1U;
   playback_buf = 1U - playback_buf;
 
+  // the DAC just started the buf we want, we're out of phase with it. take the other one instead of waiting it out
+  uint32_t dac_cr = DMA1_Stream1->CR;
+  uint32_t dac_buf = (dac_cr & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos;
+  if (((dac_cr & DMA_SxCR_EN) != 0U) && (dac_buf == playback_buf) && (DMA1_Stream1->NDTR > (SOUND_TX_BUF_SIZE / 4U))) {
+    playback_buf = 1U - playback_buf;
+  }
+
   // wait until we're done playing the current buf
   for (uint32_t timeout_counter = 100000U; timeout_counter > 0U; timeout_counter--){
     uint8_t playing_buf = (DMA1_Stream1->CR & DMA_SxCR_CT) >> DMA_SxCR_CT_Pos;
