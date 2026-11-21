@@ -241,9 +241,9 @@ static void tick_handler(void) {
       nvic_check();
       check_option_bytes();
 
-      // set ignition_can to false after 2s of no CAN seen
+      // reset ignition_can after 2s of no CAN seen
       if (ignition_can_cnt > 2U) {
-        ignition_can = false;
+        ignition_can_reset();
       }
 
       // on to the next one

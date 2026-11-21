@@ -14,7 +14,7 @@ classifiers = [
 dependencies = [
   "libusb1",
   "libusb-package",
-  "opendbc @ git+https://github.com/commaai/opendbc.git@6cd8a71d18019b50173f107018b98f8293813858#egg=opendbc",
+  "opendbc @ git+https://github.com/commaai/opendbc.git@6cdc70bd25f5e05a4ca696b3b7e3a011d0e021de#egg=opendbc",
 ]
 
 [project.optional-dependencies]
