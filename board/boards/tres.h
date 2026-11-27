@@ -48,6 +48,7 @@ static void tres_enable_can_transceiver(uint8_t transceiver, bool enabled) {
       set_gpio_output(GPIOB, 11, !enabled);
       break;
     default:
+      // no such transceiver
       break;
   }
 
@@ -57,7 +58,7 @@ static void tres_enable_can_transceiver(uint8_t transceiver, bool enabled) {
 }
 
 static bool tres_read_som_gpio (void) {
-  return (get_gpio_input(GPIOC, 2) != 0);
+  return get_gpio_input(GPIOC, 2);
 }
 
 static void tres_init(void) {
@@ -94,7 +95,7 @@ static void tres_init(void) {
   clock_source_init(false);
 }
 
-static harness_configuration tres_harness_config = {
+static const harness_configuration tres_harness_config = {
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
   .GPIO_relay_SBU1 = GPIOA,
@@ -107,7 +108,7 @@ static harness_configuration tres_harness_config = {
   .adc_signal_SBU2 = ADC_CHANNEL_DEFAULT(ADC1, 17)
 };
 
-board board_tres = {
+static const board board_tres = {
   .harness_config = &tres_harness_config,
   .has_spi = true,
   .has_fan = true,

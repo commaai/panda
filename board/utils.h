@@ -1,51 +1,49 @@
 #ifndef BOARD_UTILS_H
 #define BOARD_UTILS_H
 
-// cppcheck-suppress-macro [misra-c2012-1.2, misra-c2012-17.3]; allow __typeof__ extension
-#define MIN(a, b) ({ \
-  __typeof__ (a) min_a = (a); \
-  __typeof__ (b) min_b = (b); \
-  (min_a < min_b) ? min_a : min_b; \
-})
+#include <stddef.h>
 
-// cppcheck-suppress-macro [misra-c2012-1.2, misra-c2012-17.3]; allow __typeof__ extension
-#define MAX(a, b) ({ \
-  __typeof__ (a) max_a = (a); \
-  __typeof__ (b) max_b = (b); \
-  (max_a > max_b) ? max_a : max_b; \
-})
+// places an object in a linker section, for buffers that must live in a RAM region other than the DTCM
+// cppcheck-suppress-macro misra-c2012-1.2 ; ISO C has no way to choose the section of an object
+#define SECTION(name) __attribute__((section(name)))
 
-// cppcheck-suppress-macro [misra-c2012-1.2, misra-c2012-17.3]; allow __typeof__ extension
-#define CLAMP(x, low, high) ({ \
-  __typeof__(x) clamp_x = (x); \
-  __typeof__(low) clamp_low = (low);\
-  __typeof__(high) clamp_high = (high);\
-  (clamp_x > clamp_high) ? clamp_high : ((clamp_x < clamp_low) ? clamp_low : clamp_x); \
-})
+// code runs from flash without an instruction cache, and flash is read in 32-byte lines: a small loop that
+// crosses a line boundary fetches two lines on every iteration, so hot loops start on a line instead
+// cppcheck-suppress-macro misra-c2012-1.2 ; ISO C has no way to align a function
+#define FLASH_LINE_ALIGNED __attribute__((aligned(32)))
 
-// cppcheck-suppress-macro [misra-c2012-1.2, misra-c2012-17.3]; allow __typeof__ extension
-#define ABS(a) ({ \
-  __typeof__ (a) abs_a = (a); \
-  (abs_a > 0) ? abs_a : (-abs_a); \
-})
+static inline uint32_t min_u32(uint32_t a, uint32_t b) {
+  return (a < b) ? a : b;
+}
 
-#ifndef NULL
-// this just provides a standard implementation of NULL
-// in lieu of including libc in the panda build
-// cppcheck-suppress [misra-c2012-21.1]
-#define NULL ((void*)0)
-#endif
+static inline uint8_t clamp_u8(uint8_t x, uint8_t low, uint8_t high) {
+  return (x > high) ? high : ((x < low) ? low : x);
+}
+
+static inline int32_t clamp_i32(int32_t x, int32_t low, int32_t high) {
+  return (x > high) ? high : ((x < low) ? low : x);
+}
+
+static inline float clamp_f32(float x, float low, float high) {
+  return (x > high) ? high : ((x < low) ? low : x);
+}
+
+static inline int32_t abs_i32(int32_t a) {
+  return (a > 0) ? a : -a;
+}
+
+static inline float abs_f32(float a) {
+  return (a > 0.0f) ? a : -a;
+}
 
 // STM32 HAL defines this
 #ifndef UNUSED
 #define UNUSED(x) ((void)(x))
 #endif
 
-#define COMPILE_TIME_ASSERT(pred) ((void)sizeof(char[1 - (2 * (!(pred) ? 1 : 0))]))
-
 // compute the time elapsed (in microseconds) from 2 counter samples
 // case where ts < ts_last is ok: overflow is properly re-casted into uint32_t
-uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
+static uint32_t get_ts_elapsed(uint32_t ts, uint32_t ts_last) {
   return ts - ts_last;
 }
 

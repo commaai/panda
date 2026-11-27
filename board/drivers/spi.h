@@ -4,15 +4,9 @@
 #include "board/drivers/drivers.h"
 
 // H7 DMA2 located in D2 domain, so we need to use SRAM1/SRAM2
-#ifdef STM32H7
-__attribute__((section(".sram12"))) uint8_t spi_buf_rx[SPI_BUF_SIZE];
-__attribute__((section(".sram12"))) uint8_t spi_buf_tx[SPI_BUF_SIZE];
-__attribute__((section(".sram12"))) static uint8_t spi_buf_ready[1];
-#else
-uint8_t spi_buf_rx[SPI_BUF_SIZE];
-uint8_t spi_buf_tx[SPI_BUF_SIZE];
-static uint8_t spi_buf_ready[1];
-#endif
+SECTION(".sram12") static uint8_t spi_buf_rx[SPI_BUF_SIZE];
+SECTION(".sram12") static uint8_t spi_buf_tx[SPI_BUF_SIZE];
+SECTION(".sram12") static uint8_t spi_buf_ready[1];
 
 // SPI protocol, see python/spi.py for the host side.
 //
@@ -20,6 +14,7 @@ static uint8_t spi_buf_ready[1];
 //   MOSI: endpoint, id (u32), tx_len (u16), rx_len (u16), data[tx_len], crc32 (u32)
 // then reads rx_len bytes at a time, until the first byte is a response:
 //   MISO: SPI_ACK or SPI_NACK, id (u32), len (u16), data[len], crc32 (u32)
+// Multi-byte fields are little endian.
 // The id is random for each new request, and stays the same when the host sends it again.
 // The response always fits in rx_len, so the next transfer reads all of it.
 // If a read gets SPI_SLAVE_READY instead, the host sends the request again.
@@ -40,25 +35,22 @@ typedef struct {
   uint32_t id;
   uint16_t tx_len;
   uint16_t rx_len;
-} __attribute__((packed)) spi_req_header_t;
+} spi_req_header_t;
 
-typedef struct {
-  uint8_t status;
-  uint32_t id;
-  uint16_t len;
-} __attribute__((packed)) spi_resp_header_t;
-
+#define SPI_REQ_HEADER_SIZE 9U
+#define SPI_RESP_HEADER_SIZE 7U
 #define SPI_CRC_SIZE 4U
-#define SPI_RESP_OVERHEAD (sizeof(spi_resp_header_t) + SPI_CRC_SIZE)
+#define SPI_CONTROL_REQUEST_SIZE 7U  // endpoint 0 data: request, param1, param2, length
+#define SPI_RESP_OVERHEAD (SPI_RESP_HEADER_SIZE + SPI_CRC_SIZE)
 
 #define SPI_ENDPOINT_INFO 0xF0U
 
-uint16_t spi_error_count = 0;
+static uint16_t spi_error_count = 0;
 
 // low level SPI prototypes
-void llspi_init(void);
-void llspi_queue(const uint8_t *tx, uint16_t tx_len);
-uint16_t llspi_rx_count(void);
+static void llspi_init(void);
+static void llspi_queue(const uint8_t *tx, uint16_t tx_len);
+static uint16_t llspi_rx_count(void);
 
 static bool spi_can_tx_ready = false;
 
@@ -69,9 +61,14 @@ static bool spi_handle_endpoint(uint8_t endpoint, const uint8_t *data, uint16_t 
   *resp_len = 0U;
 
   if (endpoint == 0U) {
-    if (data_len >= sizeof(ControlPacket_t)) {
-      ControlPacket_t ctrl = {0};
-      (void)memcpy((uint8_t*)&ctrl, data, sizeof(ControlPacket_t));
+    // request, then param1, param2 and length little endian
+    if (data_len >= SPI_CONTROL_REQUEST_SIZE) {
+      ControlPacket_t ctrl = {
+        .request = data[0],
+        .param1 = read_u16_le(&data[1]),
+        .param2 = read_u16_le(&data[3]),
+        .length = read_u16_le(&data[5]),
+      };
       *resp_len = (uint16_t)comms_control_handler(&ctrl, resp);
       ack = true;
     }
@@ -114,12 +111,16 @@ static uint16_t spi_process_request(uint16_t n) {
   static uint32_t handled_crc = 0U;
 
   // n can include filler from the host's reads if we were slow, it's ignored
-  spi_req_header_t req;
-  (void)memcpy((uint8_t *)&req, spi_buf_rx, sizeof(req));
-  uint32_t req_len = sizeof(req) + (uint32_t)req.tx_len + SPI_CRC_SIZE;
+  spi_req_header_t req = {
+    .endpoint = spi_buf_rx[0],
+    .tx_len = read_u16_le(&spi_buf_rx[5]),
+    .rx_len = read_u16_le(&spi_buf_rx[7]),
+  };
+  BYTE_ARRAY_TO_WORD(req.id, &spi_buf_rx[1]);
+  uint32_t req_len = SPI_REQ_HEADER_SIZE + (uint32_t)req.tx_len + SPI_CRC_SIZE;
   uint32_t crc = 0U;
   if (req_len <= n) {
-    (void)memcpy((uint8_t *)&crc, &spi_buf_rx[req_len - SPI_CRC_SIZE], SPI_CRC_SIZE);
+    BYTE_ARRAY_TO_WORD(crc, &spi_buf_rx[req_len - SPI_CRC_SIZE]);
   }
   bool valid = (req_len <= n) && (crc32(spi_buf_rx, req_len - SPI_CRC_SIZE) == crc) &&
                (req.rx_len >= SPI_RESP_OVERHEAD) && (req.rx_len <= SPI_BUF_SIZE);
@@ -128,19 +129,17 @@ static uint16_t spi_process_request(uint16_t n) {
     // a new request. a repeat of the last one (same id) gets the same response again
     uint16_t max_data_len = req.rx_len - SPI_RESP_OVERHEAD;
     uint16_t data_len = 0U;
-    bool ack = spi_handle_endpoint(req.endpoint, &spi_buf_rx[sizeof(req)], req.tx_len, max_data_len,
-                                   &spi_buf_tx[sizeof(spi_resp_header_t)], &data_len);
+    bool ack = spi_handle_endpoint(req.endpoint, &spi_buf_rx[SPI_REQ_HEADER_SIZE], req.tx_len, max_data_len,
+                                   &spi_buf_tx[SPI_RESP_HEADER_SIZE], &data_len);
     // like USB, a response is cut off at what the host reads
-    data_len = ack ? MIN(data_len, max_data_len) : 0U;
-    spi_resp_header_t resp = {
-      .status = ack ? SPI_ACK : SPI_NACK,
-      .id = req.id,
-      .len = data_len,
-    };
-    (void)memcpy(spi_buf_tx, (uint8_t *)&resp, sizeof(resp));
-    uint32_t len = sizeof(resp) + resp.len;
+    data_len = ack ? (uint16_t)min_u32(data_len, max_data_len) : 0U;
+    spi_buf_tx[0] = ack ? SPI_ACK : SPI_NACK;
+    WORD_TO_BYTE_ARRAY(&spi_buf_tx[1], req.id);
+    spi_buf_tx[5] = (uint8_t)(data_len & 0xFFU);
+    spi_buf_tx[6] = (uint8_t)(data_len >> 8U);
+    uint32_t len = SPI_RESP_HEADER_SIZE + (uint32_t)data_len;
     uint32_t resp_crc = crc32(spi_buf_tx, len);
-    (void)memcpy(&spi_buf_tx[len], (uint8_t *)&resp_crc, SPI_CRC_SIZE);
+    WORD_TO_BYTE_ARRAY(&spi_buf_tx[len], resp_crc);
     handled = true;
     handled_id = req.id;
     handled_crc = crc;
@@ -154,7 +153,7 @@ static uint16_t spi_process_request(uint16_t n) {
 }
 
 // Called at the end of every transfer: CS is active low, so it rises when the host is done
-void spi_cs_rising(void) {
+static void spi_cs_rising(void) {
   // what we queued for the transfer that just ended
   static bool response_queued = false;
   static uint16_t resp_len = 0U;
@@ -185,7 +184,7 @@ void spi_cs_rising(void) {
   }
 }
 
-void spi_init(void) {
+static inline void spi_init(void) {
   crc32_init();
   llspi_init();
 
@@ -194,7 +193,7 @@ void spi_init(void) {
   llspi_queue(spi_buf_ready, 1U);
 }
 
-void can_tx_comms_resume_spi(void) {
+static inline void can_tx_comms_resume_spi(void) {
   spi_can_tx_ready = true;
 }
 

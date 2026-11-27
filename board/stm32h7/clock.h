@@ -44,11 +44,12 @@ static PackageSMPSType get_package_smps_type(void) {
       break;
     default:
       ret = PACKAGE_UNKNOWN;
+      break;
   }
   return ret;
 }
 
-void clock_init(void) {
+static void clock_init(void) {
   /*
     WARNING: PWR->CR3's lower byte can only be written once
     * subsequent writes will silently fail
@@ -72,7 +73,9 @@ void clock_init(void) {
   // Set VOS level (VOS3 to 170Mhz, VOS2 to 300Mhz, VOS1 to 400Mhz, VOS0 to 550Mhz)
   register_set(&(PWR->D3CR), PWR_D3CR_VOS_1 | PWR_D3CR_VOS_0, 0xC000U); //VOS1, needed for 80Mhz CAN FD
   while ((PWR->CSR1 & PWR_CSR1_ACTVOSRDY) == 0U) {}
-  while ((PWR->CSR1 & PWR_CSR1_ACTVOS) != (PWR->D3CR & PWR_D3CR_VOS)) {} // check that VOS level was actually set
+  // check that VOS level was actually set
+  uint32_t vos = PWR->D3CR & PWR_D3CR_VOS;
+  while ((PWR->CSR1 & PWR_CSR1_ACTVOS) != vos) {}
 
   // Configure Flash ACR register LATENCY and WRHIGHFREQ (VOS0 range!)
   register_set(&(FLASH->ACR), FLASH_ACR_LATENCY_2WS | 0x20U, 0x3FU); // VOS2, AXI 100MHz-150MHz
@@ -126,7 +129,7 @@ void clock_init(void) {
 // CLK_SM_3: TIM16 captures every 8th edge of the 32kHz LSI on the HSE derived timer clock
 #define LSI_COUNTS_NOMINAL (APB2_TIMER_FREQ * 250U)
 
-void clock_check_init(void) {
+static inline void clock_check_init(void) {
   register_set_bits(&(RCC->CSR), RCC_CSR_LSION);
   register_set(&(TIM16->TISEL), 1U, TIM_TISEL_TI1SEL);
   register_set(&(TIM16->CCMR1), TIM_CCMR1_CC1S_0 | TIM_CCMR1_IC1PSC_1 | TIM_CCMR1_IC1PSC_0, 0xFFU);
@@ -140,7 +143,7 @@ void clock_check_init(void) {
 static bool lsi_capture(uint16_t *count) {
   uint32_t ts = microsecond_timer_get();
   bool captured = false;
-  while (!captured && (get_ts_elapsed(microsecond_timer_get(), ts) < 1000U)) {
+  while ((get_ts_elapsed(microsecond_timer_get(), ts) < 1000U) && !captured) {
     captured = (TIM16->SR & TIM_SR_CC1IF) != 0U;
   }
   *count = (uint16_t)TIM16->CCR1;
@@ -148,7 +151,7 @@ static bool lsi_capture(uint16_t *count) {
 }
 
 // called at 1Hz, LSI isn't accurate so the window only catches gross errors
-void clock_check(void) {
+static inline void clock_check(void) {
   // reading CCR1 clears CC1IF
   uint16_t start = (uint16_t)TIM16->CCR1;
   uint16_t end = 0U;

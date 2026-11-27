@@ -22,6 +22,7 @@ static void red_enable_can_transceiver(uint8_t transceiver, bool enabled) {
       set_gpio_output(GPIOB, 4, !enabled);
       break;
     default:
+      // no such transceiver
       break;
   }
 }
@@ -65,12 +66,13 @@ static void red_set_can_mode(uint8_t mode) {
       }
       break;
     default:
+      // unknown mode, transceivers 2 and 4 stay off
       break;
   }
 }
 
 static uint32_t red_read_voltage_mV(void){
-  return adc_get_mV(&(const adc_signal_t) ADC_CHANNEL_DEFAULT(ADC1, 2)) * 11U;
+  return (uint32_t)adc_get_mV(&(const adc_signal_t) ADC_CHANNEL_DEFAULT(ADC1, 2)) * 11U;
 }
 
 static void red_init(void) {
@@ -97,10 +99,10 @@ static void red_init(void) {
   set_gpio_output_type(GPIOB, 14, OUTPUT_TYPE_OPEN_DRAIN);
   set_gpio_pullup(GPIOB, 14, PULL_UP);
   set_gpio_mode(GPIOB, 14, MODE_OUTPUT);
-  set_gpio_output(GPIOB, 14, 1);
+  set_gpio_output(GPIOB, 14, true);
 }
 
-static harness_configuration red_harness_config = {
+static const harness_configuration red_harness_config = {
   .GPIO_SBU1 = GPIOC,
   .GPIO_SBU2 = GPIOA,
   .GPIO_relay_SBU1 = GPIOC,
@@ -113,7 +115,7 @@ static harness_configuration red_harness_config = {
   .adc_signal_SBU2 = ADC_CHANNEL_DEFAULT(ADC1, 17)
 };
 
-board board_red = {
+static const board board_red = {
   .set_bootkick = unused_set_bootkick,
   .harness_config = &red_harness_config,
   .has_spi = false,

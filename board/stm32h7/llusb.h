@@ -3,7 +3,7 @@
 
 #include "llusb_declarations.h"
 
-USB_OTG_GlobalTypeDef *USBx = USB_OTG_HS;
+static USB_OTG_GlobalTypeDef *USBx = USB_OTG_HS;
 
 static void OTG_HS_IRQ_Handler(void) {
   nvic_disable(OTG_HS_IRQn);
@@ -11,7 +11,7 @@ static void OTG_HS_IRQ_Handler(void) {
   nvic_enable(OTG_HS_IRQn);
 }
 
-void usb_init(void) {
+static void usb_init(void) {
   REGISTER_INTERRUPT(OTG_HS_IRQn, OTG_HS_IRQ_Handler, 100000U, FAULT_INTERRUPT_RATE_USB) // about 2x the max measured host load
 
   // Disable global interrupt

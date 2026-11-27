@@ -37,7 +37,6 @@ void body_can_send_motor_speeds(uint8_t bus, float left_speed_rpm, float right_s
   pkt.data[4] = 0U;
   pkt.data[5] = 0U;
   pkt.data[6] = counter & 0xFFU;
-  can_set_checksum(&pkt);
   can_send(&pkt, bus, true);
   counter++;
 }
@@ -50,7 +49,6 @@ void body_can_send_var_values(uint8_t bus, bool ignition, bool enable_motors, ui
   pkt.data[0] = (ignition ? 1U : 0U) | ((enable_motors ? 1U : 0U) << 1U) | ((fault & 0x3FU) << 2U);
   pkt.data[1] = left_z_errcode;
   pkt.data[2] = right_z_errcode;
-  can_set_checksum(&pkt);
   can_send(&pkt, bus, true);
 }
 
@@ -63,7 +61,6 @@ void body_can_send_body_data(uint8_t bus, uint8_t mcu_temp_raw, uint16_t batt_vo
   pkt.data[1] = (uint8_t)((batt_voltage_raw >> 8) & 0xFFU);
   pkt.data[2] = (uint8_t)(batt_voltage_raw & 0xFFU);
   pkt.data[3] = (charger_connected ? 1U : 0U) | ((batt_percentage & 0x7FU) << 1U);
-  can_set_checksum(&pkt);
   can_send(&pkt, bus, true);
 }
 
@@ -112,7 +109,6 @@ void body_can_periodic(uint32_t now, bool ignition, bool plug_charging) {
     id_pkt.addr = BODY_CAN_ADDR_V2_ID;
     id_pkt.data_len_code = 1;
     id_pkt.data[0] = 1U;
-    can_set_checksum(&id_pkt);
     can_send(&id_pkt, BODY_BUS_NUMBER, true);
 
     last_motor_speed_tx_us = now;

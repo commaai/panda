@@ -4,13 +4,13 @@
 #include "board/config.h"
 #include "board/body/body.h"
 
-void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
+static void comms_endpoint2_write(const uint8_t *data, uint32_t len) {
   UNUSED(data);
   UNUSED(len);
 }
 
-int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
-  unsigned int resp_len = 0;
+static uint32_t comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
+  uint32_t resp_len = 0;
 
   switch (req->request) {
     // **** 0xb6: read debug logs

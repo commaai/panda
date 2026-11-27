@@ -28,7 +28,7 @@ static void jump_to_bootloader(void) {
   NVIC_SystemReset();
 }
 
-void early_initialization(void) {
+static void early_initialization(void) {
   // Reset global critical depth
   disable_interrupts();
   global_critical_depth = 0;
@@ -60,7 +60,7 @@ void early_initialization(void) {
 
   if (enter_bootloader_mode == ENTER_BOOTLOADER_MAGIC) {
     led_init();
-    led_set(LED_GREEN, 1);
+    led_set(LED_GREEN, true);
     jump_to_bootloader();
   }
 }
@@ -79,30 +79,27 @@ static void fault_record(uint32_t cookie, const uint32_t *frame) {
   fault_cookie = cookie;
   if (cookie == HARDFAULT_COOKIE) {
     fault_cfsr = SCB->CFSR;
-    fault_addr = ((fault_cfsr & SCB_CFSR_MMARVALID_Msk) != 0U) ? SCB->MMFAR : SCB->BFAR;
+    if ((fault_cfsr & SCB_CFSR_MMARVALID_Msk) != 0U) {
+      fault_addr = SCB->MMFAR;
+    } else {
+      fault_addr = SCB->BFAR;
+    }
   }
   // a failed stacking leaves no frame to read
   fault_pc = ((SCB->CFSR & (SCB_CFSR_MSTKERR_Msk | SCB_CFSR_STKERR_Msk)) == 0U) ? frame[6] : 0U;
   NVIC_SystemReset();
 }
 
-__attribute__((used)) static void nmi_record(const uint32_t *frame) {
+// called by NMI_Handler and HardFault_Handler in board/stm32h7/startup_stm32h7x5xx.s
+void nmi_record(const uint32_t *frame);
+void hardfault_record(const uint32_t *frame);
+
+void nmi_record(const uint32_t *frame) {
   fault_record(NMI_COOKIE, frame);
 }
 
-__attribute__((used)) static void hardfault_record(const uint32_t *frame) {
+void hardfault_record(const uint32_t *frame) {
   fault_record(HARDFAULT_COOKIE, frame);
-}
-
-// naked to read the frame before anything is pushed
-__attribute__((naked)) void NMI_Handler(void) {
-  // cppcheck-suppress misra-c2012-17.3 ; inline asm
-  __asm volatile ("mrs r0, msp\n b nmi_record");
-}
-
-__attribute__((naked)) void HardFault_Handler(void) {
-  // cppcheck-suppress misra-c2012-17.3 ; inline asm
-  __asm volatile ("mrs r0, msp\n b hardfault_record");
 }
 
 #endif  // BOARD_EARLY_INIT_H

@@ -60,12 +60,13 @@ static uint8_t self_test_fail = 0U;
 static uint32_t flash_crc_flip = 0U;
 
 // the flash CRC injection goes through the CRC compare
-void self_test_inject(uint8_t test) {
+static void self_test_inject(uint8_t test) {
   if (test == SELF_TEST_FLASH) {
     flash_crc_flip = 1U;
   } else if (test <= SELF_TEST_DMA) {
     self_test_fail |= (uint8_t)(1U << test);
   } else {
+    // not a self test, nothing to inject
   }
 }
 
@@ -88,23 +89,23 @@ static bool ram_test_march(volatile uint32_t *p, uint32_t n, uint32_t bg) {
     p[i] = bg;
   }
   for (uint32_t i = 0U; i < n; i++) {
-    ok = ok && (p[i] == bg);
+    ok = (p[i] == bg) && ok;
     p[i] = inv;
   }
   for (uint32_t i = 0U; i < n; i++) {
-    ok = ok && (p[i] == inv);
+    ok = (p[i] == inv) && ok;
     p[i] = bg;
   }
   for (uint32_t i = n; i > 0U; i--) {
-    ok = ok && (p[i - 1U] == bg);
+    ok = (p[i - 1U] == bg) && ok;
     p[i - 1U] = inv;
   }
   for (uint32_t i = n; i > 0U; i--) {
-    ok = ok && (p[i - 1U] == inv);
+    ok = (p[i - 1U] == inv) && ok;
     p[i - 1U] = bg;
   }
   for (uint32_t i = 0U; i < n; i++) {
-    ok = ok && (p[i] == bg);
+    ok = (p[i] == bg) && ok;
   }
   return ok;
 }
@@ -121,7 +122,7 @@ static bool ram_test_skip(uint32_t start, uint32_t end) {
 static bool ram_test_aliases_ok(volatile uint32_t *const *alias, const uint32_t *val, uint8_t n) {
   bool ok = true;
   for (uint8_t i = 0U; i < n; i++) {
-    ok = ok && (*alias[i] == val[i]);
+    ok = (*alias[i] == val[i]) && ok;
   }
   return ok;
 }
@@ -131,14 +132,14 @@ static bool ram_test_aliases_ok(volatile uint32_t *const *alias, const uint32_t 
 // checked after both backgrounds since an alias can hold one of them already
 static bool ram_test_block(uint32_t addr, uint32_t words, uint32_t start, uint32_t end) {
   // outside the tested regions, copies are read back instead
-  __attribute__((section(".sram12"))) static volatile uint32_t ram_test_backup[RAM_TEST_BLOCK_WORDS];
+  SECTION(".sram12") static volatile uint32_t ram_test_backup[RAM_TEST_BLOCK_WORDS];
   volatile uint32_t *p = (uint32_t *)addr;
   volatile uint32_t *alias[RAM_TEST_ALIASES];
   uint32_t alias_val[RAM_TEST_ALIASES];
   uint8_t aliases = 0U;
-  for (uint32_t bit = RAM_TEST_BLOCK_WORDS * 4U; (bit < (end - start)) && (aliases < RAM_TEST_ALIASES); bit <<= 1U) {
+  for (uint32_t bit = RAM_TEST_BLOCK_WORDS * 4U; bit < (end - start); bit <<= 1U) {
     uint32_t a = addr ^ bit;
-    if ((a >= start) && ((a + 4U) <= end) && !ram_test_skip(a, a + 4U)) {
+    if ((aliases < RAM_TEST_ALIASES) && (a >= start) && ((a + 4U) <= end) && !ram_test_skip(a, a + 4U)) {
       alias[aliases] = (uint32_t *)a;
       aliases++;
     }
@@ -151,22 +152,22 @@ static bool ram_test_block(uint32_t addr, uint32_t words, uint32_t start, uint32
     ram_test_backup[i] = p[i];
   }
   for (uint32_t i = 0U; i < words; i++) {
-    ok = ok && (ram_test_backup[i] == p[i]);
+    uint32_t backup = ram_test_backup[i];
+    ok = (p[i] == backup) && ok;
   }
   for (uint8_t i = 0U; i < aliases; i++) {
     alias_val[i] = *alias[i];
   }
   ok = ram_test_march(p, words, 0x00000000U) && ok;
-  // cppcheck-suppress uninitvar ; only the first aliases entries are read and all of them are written above
   ok = ram_test_aliases_ok(alias, alias_val, aliases) && ok;
   ok = ram_test_march(p, words, 0x55555555U) && ok;
-  // cppcheck-suppress uninitvar ; only the first aliases entries are read and all of them are written above
   ok = ram_test_aliases_ok(alias, alias_val, aliases) && ok;
   for (uint32_t i = 0U; i < words; i++) {
     p[i] = ram_test_backup[i];
   }
   for (uint32_t i = 0U; i < words; i++) {
-    ok = ok && (p[i] == ram_test_backup[i]);
+    uint32_t backup = ram_test_backup[i];
+    ok = (p[i] == backup) && ok;
   }
   mpu_safety_close();
   EXIT_CRITICAL()
@@ -186,8 +187,11 @@ static bool ram_test_next(uint32_t *failed) {
   if (block == 0U) {
     block = ram_regions[region].start;
   }
-  uint32_t words = MIN(RAM_TEST_BLOCK_WORDS, (ram_regions[region].end - block) / 4U);
-  bool ok = ram_test_skip(block, block + (words * 4U)) || ram_test_block(block, words, ram_regions[region].start, ram_regions[region].end);
+  uint32_t words = min_u32(RAM_TEST_BLOCK_WORDS, (ram_regions[region].end - block) / 4U);
+  bool ok = true;
+  if (!ram_test_skip(block, block + (words * 4U))) {
+    ok = ram_test_block(block, words, ram_regions[region].start, ram_regions[region].end);
+  }
   *failed = block;
   block += RAM_TEST_STEP;
   if (block >= ram_regions[region].end) {
@@ -209,7 +213,7 @@ static void ram_scrub_next(void) {
     addr = scrub_regions[region].start;
   }
   const volatile uint32_t *p = (const uint32_t *)addr;
-  uint32_t words = MIN(RAM_SCRUB_WORDS, (scrub_regions[region].end - addr) / 4U);
+  uint32_t words = min_u32(RAM_SCRUB_WORDS, (scrub_regions[region].end - addr) / 4U);
   for (uint32_t i = 0U; i < words; i++) {
     (void)p[i];
   }
@@ -237,7 +241,7 @@ static bool flash_test_next(uint32_t *crc_out) {
   static uint32_t crc = 0xFFFFFFFFU;
   bool ok = true;
   uint32_t len = flash_crc_len();
-  uint32_t n = MIN(FLASH_CRC_CHUNK, len - offset);
+  uint32_t n = min_u32(FLASH_CRC_CHUNK, len - offset);
   crc = crc32_update(crc, &((const uint8_t *)app_start)[offset], n);
   offset += n;
   if (offset >= len) {
@@ -257,7 +261,7 @@ static bool flash_test_next(uint32_t *crc_out) {
 static const uint32_t dma_test_pattern[DMA_TEST_WORDS] = {
   0x5AA5F00FU, 0xA55A0FF0U, 0x12345678U, 0x9ABCDEF0U, 0x0F1E2D3CU, 0x4B5A6978U, 0x87968574U, 0xC3D2E1F0U,
 };
-__attribute__((section(".sram12"))) static uint32_t dma_test_buf[DMA_TEST_WORDS];
+SECTION(".sram12") static uint32_t dma_test_buf[DMA_TEST_WORDS];
 
 static void dma_test_start(void) {
   uint32_t len = DMA_TEST_WORDS;
@@ -307,8 +311,12 @@ static void self_test_check(bool cpu_ok, bool ram_ok, uint32_t ram_addr, bool fl
   bool ram = ram_ok;
   bool flash = flash_ok;
 #ifdef ALLOW_DEBUG
-  cpu = cpu && !self_test_injected(SELF_TEST_CPU);
-  ram = ram && !self_test_injected(SELF_TEST_RAM);
+  if (self_test_injected(SELF_TEST_CPU)) {
+    cpu = false;
+  }
+  if (self_test_injected(SELF_TEST_RAM)) {
+    ram = false;
+  }
 #endif
   if (!cpu) {
     fault_occurred(FAULT_SELF_TEST_CPU);
@@ -347,7 +355,7 @@ static void self_test_check(bool cpu_ok, bool ram_ok, uint32_t ram_addr, bool fl
   }
 }
 
-void self_test_init(void) {
+static void self_test_init(void) {
   crc32_init();
 
   // the boot RAM test wrote every word, so no RAM holds an unset ECC code anymore
@@ -366,7 +374,7 @@ void self_test_init(void) {
 }
 
 // called at 8Hz
-void self_test_tick(void) {
+static void self_test_tick(void) {
   bool cpu_ok = (cpu_test() == SELF_TEST_PASS) && (fpu_test() == SELF_TEST_PASS);
   uint32_t ram_addr = 0U;
   bool ram_ok = ram_test_next(&ram_addr);

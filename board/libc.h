@@ -1,30 +1,41 @@
 #ifndef BOARD_LIBC_H
 #define BOARD_LIBC_H
 
+#include "board/utils.h"
+
 // **** libc ****
 
-__attribute__((aligned(32), noinline)) void delay(uint32_t a) {
+// cppcheck-suppress misra-c2012-1.2 ; no inlining keeps the busy loop timing constant
+FLASH_LINE_ALIGNED __attribute__((noinline)) static void delay(uint32_t a) {
   // loop is 2.6x faster when 32-byte aligned (ART accelerator prefetches flash in 32-byte chunks)
-  volatile uint32_t i;
   uint32_t n = a * 13U / 5U;
-  for (i = 0; i < n; i++) {}
+  volatile uint32_t i = 0U;
+  while (i < n) {
+    i++;
+  }
 }
 
-void assert_fatal(bool condition, const char *msg) {
+static inline void assert_fatal(bool condition, const char *msg) {
   if (!condition) {
     print("ASSERT FAILED\n");
     print(msg);
-    while (1) {
+    while (true) {
       // hang
     }
   }
 }
 
-// cppcheck-suppress misra-c2012-21.2
-void *memset(void *str, int c, unsigned int n) {
+// GCC emits calls to memset and memcpy for struct copies and initializers, even with -fno-builtin.
+// They keep the standard names and signatures, so their void pointers become byte and word pointers.
+// cppcheck-suppress-begin [misra-c2012-21.2, misra-c2012-11.5] ; the standard functions GCC calls
+void *memset(void *str, int c, unsigned int n);
+void *memcpy(void *dest, const void *src, unsigned int len);
+
+// zeroes every CAN packet from the host
+FLASH_LINE_ALIGNED void *memset(void *str, int c, unsigned int n) {
   uint8_t *s = str;
   for (unsigned int i = 0; i < n; i++) {
-    *s = c;
+    *s = (uint8_t)c;
     s++;
   }
   return str;
@@ -33,15 +44,15 @@ void *memset(void *str, int c, unsigned int n) {
 #define UNALIGNED(X, Y) \
   (((uint32_t)(X) & (sizeof(uint32_t) - 1U)) | ((uint32_t)(Y) & (sizeof(uint32_t) - 1U)))
 
-// cppcheck-suppress misra-c2012-21.2
 void *memcpy(void *dest, const void *src, unsigned int len) {
   unsigned int n = len;
   uint8_t *d8 = dest;
   const uint8_t *s8 = src;
 
-  if ((n >= 4U) && !UNALIGNED(s8, d8)) {
-    uint32_t *d32 = (uint32_t *)d8; // cppcheck-suppress misra-c2012-11.3 ; already checked that it's properly aligned
-    const uint32_t *s32 = (const uint32_t *)s8; // cppcheck-suppress misra-c2012-11.3 ; already checked that it's properly aligned
+  if ((n >= 4U) && (UNALIGNED(s8, d8) == 0U)) {
+    // already checked that both are word aligned
+    uint32_t *d32 = dest;
+    const uint32_t *s32 = src;
 
     while(n >= 16U) {
       *d32 = *s32; d32++; s32++;
@@ -64,21 +75,14 @@ void *memcpy(void *dest, const void *src, unsigned int len) {
   }
   return dest;
 }
+// cppcheck-suppress-end [misra-c2012-21.2, misra-c2012-11.5]
 
-// cppcheck-suppress misra-c2012-21.2
-int memcmp(const void * ptr1, const void * ptr2, unsigned int num) {
-  int ret = 0;
-  const uint8_t *p1 = ptr1;
-  const uint8_t *p2 = ptr2;
-  for (unsigned int i = 0; i < num; i++) {
-    if (*p1 != *p2) {
-      ret = -1;
-      break;
-    }
-    p1++;
-    p2++;
+static inline bool bytes_equal(const uint8_t *a, const uint8_t *b, uint32_t len) {
+  bool equal = true;
+  for (uint32_t i = 0U; (i < len) && equal; i++) {
+    equal = (a[i] == b[i]);
   }
-  return ret;
+  return equal;
 }
 
 #endif  // BOARD_LIBC_H

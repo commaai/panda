@@ -8,12 +8,13 @@
 
 // Low power state "stop mode" is only entered from SAFETY_SILENT when no safety function is active and exited via reset which is a safe state.
 
-bool power_save_enabled = false;
+static bool power_save_enabled = false;
 #ifdef ALLOW_DEBUG
-volatile bool stop_mode_requested = false;
+// set by the 0xb5 control request, for testing
+static volatile bool stop_mode_requested = false;
 #endif
 
-void enable_can_transceivers(bool enabled) {
+static void enable_can_transceivers(bool enabled) {
   // Leave main CAN always on for CAN-based ignition detection
   uint8_t main_bus = (harness.status == HARNESS_STATUS_FLIPPED) ? 3U : 1U;
   for(uint8_t i=1U; i<=4U; i++){
@@ -21,7 +22,7 @@ void enable_can_transceivers(bool enabled) {
   }
 }
 
-void set_power_save_state(bool enable) {
+static void set_power_save_state(bool enable) {
   if (enable != power_save_enabled) {
     if (enable) {
       print("enable power savings\n");
@@ -53,6 +54,12 @@ void set_power_save_state(bool enable) {
 
     power_save_enabled = enable;
   }
+}
+
+// the core sleeps until the next interrupt, in stop mode if SLEEPDEEP is set
+static inline void wait_for_interrupt(void) {
+  // cppcheck-suppress misra-c2012-1.2 ; CMSIS __WFI() is inline assembly
+  __WFI();
 }
 
 static void enter_stop_mode(void) {
@@ -160,8 +167,7 @@ static void enter_stop_mode(void) {
 
   __DSB();
   __ISB();
-  // cppcheck-suppress misra-c2012-17.3 ; CMSIS __WFI macro expands to inline asm
-  __WFI();
+  wait_for_interrupt();
 
   NVIC_SystemReset();
 }

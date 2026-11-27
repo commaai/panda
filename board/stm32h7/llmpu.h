@@ -11,7 +11,11 @@ extern uint32_t stack_guard;
 #define MPU_REGION_STACK_GUARD 1U
 
 // read only once FAULT_MPU is permanent, until then a write to controls_allowed from outside the safety code is caught in mpu_safety_open()
-#define MPU_SAFETY_CLOSED (((PERMANENT_FAULTS & FAULT_MPU) != 0U) ? ARM_MPU_AP_PRO : ARM_MPU_AP_PRIV)
+#if (PERMANENT_FAULTS & FAULT_MPU) != 0U
+#define MPU_SAFETY_CLOSED ARM_MPU_AP_PRO
+#else
+#define MPU_SAFETY_CLOSED ARM_MPU_AP_PRIV
+#endif
 
 static uint8_t mpu_safety_depth = 0U;
 static bool mpu_safety_controls_allowed_copy = false;
@@ -40,7 +44,7 @@ static void mpu_set_safety_access(uint32_t access) {
 }
 
 // only safety code writes the safety state, interrupts stay off while it's writable
-void mpu_safety_open(void) {
+static void mpu_safety_open(void) {
   ENTER_CRITICAL();
   if (mpu_safety_depth == 0U) {
     // body firmware runs without the MPU
@@ -55,7 +59,7 @@ void mpu_safety_open(void) {
   mpu_safety_depth += 1U;
 }
 
-void mpu_safety_close(void) {
+static void mpu_safety_close(void) {
   mpu_safety_depth -= 1U;
   if (mpu_safety_depth == 0U) {
     mpu_set_safety_access(MPU_SAFETY_CLOSED);
@@ -64,7 +68,7 @@ void mpu_safety_close(void) {
   EXIT_CRITICAL();
 }
 
-void mpu_init(void) {
+static inline void mpu_init(void) {
   MPU->RNR = MPU_REGION_STACK_GUARD;
   MPU->RBAR = (uint32_t)&stack_guard;
   MPU->RASR = mpu_stack_guard_rasr();
@@ -82,15 +86,18 @@ void mpu_init(void) {
 
 static bool mpu_region_ok(uint32_t region, uint32_t base, uint32_t rasr) {
   MPU->RNR = region;
-  return ((MPU->RBAR & MPU_RBAR_ADDR_Msk) == base) && (MPU->RASR == rasr);
+  bool base_ok = (MPU->RBAR & MPU_RBAR_ADDR_Msk) == base;
+  bool rasr_ok = MPU->RASR == rasr;
+  return base_ok && rasr_ok;
 }
 
 // RBAR and RASR are banked by RNR, so register_set can't read them back
-void mpu_check(void) {
+static inline void mpu_check(void) {
   ENTER_CRITICAL();
   uint32_t bad = mpu_region_ok(MPU_REGION_STACK_GUARD, (uint32_t)&stack_guard, mpu_stack_guard_rasr()) ? 0U : (1UL << MPU_REGION_STACK_GUARD);
   bad |= mpu_region_ok(MPU_REGION_SAFETY, (uint32_t)&safety_start, mpu_safety_rasr(MPU_SAFETY_CLOSED)) ? 0U : (1UL << MPU_REGION_SAFETY);
-  for (uint32_t region = MPU_REGION_STACK_GUARD + 1U; region < ((MPU->TYPE & MPU_TYPE_DREGION_Msk) >> MPU_TYPE_DREGION_Pos); region++) {
+  const uint32_t regions = (MPU->TYPE & MPU_TYPE_DREGION_Msk) >> MPU_TYPE_DREGION_Pos;
+  for (uint32_t region = MPU_REGION_STACK_GUARD + 1U; region < regions; region++) {
     MPU->RNR = region;
     bad |= ((MPU->RASR & MPU_RASR_ENABLE_Msk) == 0U) ? 0U : (1UL << region);
   }

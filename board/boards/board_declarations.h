@@ -24,7 +24,7 @@ typedef bool (*board_read_som_gpio)(void);
 typedef void (*board_set_amp_enabled)(bool enabled);
 
 struct board {
-  harness_configuration *harness_config;
+  const harness_configuration *harness_config;
   GPIO_TypeDef * const led_GPIO[3];
   const uint8_t led_pin[3];
   const uint8_t led_pwm_channels[3]; // leave at 0 to disable PWM
@@ -55,9 +55,5 @@ struct board {
 // CAN modes
 #define CAN_MODE_NORMAL 0U
 #define CAN_MODE_OBD_CAN2 1U
-
-extern struct board board_tres;
-extern struct board board_cuatro;
-extern struct board board_red;
 
 #endif  // BOARD_BOARDS_BOARD_DECLARATIONS_H

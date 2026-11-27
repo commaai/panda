@@ -1,16 +1,15 @@
 #include "config.h"
 #include "can.h"
 
-bool can_init(uint8_t can_number) { return true; }
-void process_can(uint8_t can_number) { }
+static bool can_init(uint8_t can_number) { return true; }
+static void process_can(uint8_t can_number) { }
 //int safety_tx_hook(CANPacket_t *to_send) { return 1; }
 
 typedef struct harness_configuration harness_configuration;
-void can_tx_comms_resume_usb(void) { };
-void can_tx_comms_resume_spi(void) { };
-void fault_safe_state(void) { }
-void mpu_safety_open(void) { }
-void mpu_safety_close(void) { }
+static void can_tx_comms_resume_usb(void) { };
+static void can_tx_comms_resume_spi(void) { };
+static void mpu_safety_open(void) { }
+static void mpu_safety_close(void) { }
 
 #include "health.h"
 #include "sys/faults.h"
@@ -25,5 +24,7 @@ can_ring *tx1_q = &can_tx1_q;
 can_ring *tx2_q = &can_tx2_q;
 can_ring *tx3_q = &can_tx3_q;
 
-#include "comms_definitions.h"
+uint32_t get_safety_tx_blocked(void) { return safety_tx_blocked; }
+uint32_t get_tx_checksum_error_cnt(uint8_t can_number) { return can_health[can_number].total_tx_checksum_error_cnt; }
+
 #include "can_comms.h"

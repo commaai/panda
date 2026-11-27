@@ -1,21 +1,13 @@
 #ifndef BOARD_MAIN_DEFINITIONS_H
 #define BOARD_MAIN_DEFINITIONS_H
 
-#include "main_declarations.h"
+#include "board/drivers/drivers.h"
+
+typedef struct board board;
+typedef struct harness_configuration harness_configuration;
 
 // ********************* Globals **********************
-uint8_t hw_type = 0;
-board *current_board;
-uint32_t uptime_cnt = 0;
-uint16_t reset_flags = 0U;
-
-// heartbeat state
-uint32_t heartbeat_counter = 0;
-uint32_t heartbeat_tick_counter = 0;        // 8Hz
-bool heartbeat_lost = false;
-bool heartbeat_disabled = false;            // set over USB
-
-// siren state
-bool siren_enabled = false;
+static uint8_t hw_type = 0;
+static const board *current_board;
 
 #endif  // BOARD_MAIN_DEFINITIONS_H

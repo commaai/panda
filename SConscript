@@ -153,12 +153,12 @@ with open("board/obj/cert.h", "w") as f:
   for cert in certs:
     f.write("\n".join(cert) + "\n")
 
-# Packet version defines: SHA hash of the struct header files
+# Packet version defines: SHA hash of the files that define the health and CAN packet formats
 def version_hash(path):
   with open(path, "rb") as f:
     # Normalize line endings on Windows
     return int.from_bytes(hashlib.sha256(f.read().replace(b'\r', b'')).digest()[:4], 'little')
-hh, ch = version_hash("board/health.h"), version_hash(os.path.join(opendbc.INCLUDE_PATH, "opendbc/safety/can.h"))
+hh, ch = version_hash("board/health.h"), version_hash("board/can_wire.h")
 common_flags += [f"-DHEALTH_PACKET_VERSION=0x{hh:08X}U", f"-DCAN_PACKET_VERSION_HASH=0x{ch:08X}U"]
 
 # panda fw

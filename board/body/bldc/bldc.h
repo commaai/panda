@@ -83,7 +83,7 @@ float motor_encoder_get_speed_rpm(uint8_t motor) {
     speed_rpm = (float)rtY_Right.n_mot;
   }
 
-  if (ABS(speed_rpm) < RPM_DEADBAND) {
+  if (abs_f32(speed_rpm) < RPM_DEADBAND) {
     speed_rpm = 0.0f;
   }
 
@@ -272,10 +272,10 @@ void bldc_step(void) {
   rtU_Left.b_motEna      = enableFin;
   rtU_Left.z_ctrlModReq  = CTRL_MOD_REQ; // Speed Mode
   int deadband_rpm_left = rpm_left;
-  if (ABS(deadband_rpm_left) < RPM_DEADBAND) {
+  if (abs_i32(deadband_rpm_left) < RPM_DEADBAND) {
     deadband_rpm_left = 0;
   }
-  rtU_Left.r_inpTgt      = (CLAMP((int)deadband_rpm_left, -MAX_RPM, MAX_RPM) * RPM_TO_UNIT);
+  rtU_Left.r_inpTgt      = (clamp_i32((int)deadband_rpm_left, -MAX_RPM, MAX_RPM) * RPM_TO_UNIT);
 
   rtU_Left.i_phaAB       = curL_phaA;
   rtU_Left.i_phaBC       = curL_phaC;
@@ -287,18 +287,18 @@ void bldc_step(void) {
   int vl = rtY_Left.DC_phaB;
   int wl = rtY_Left.DC_phaC;
 
-  LEFT_TIM->CCR1 = (uint16_t)CLAMP((ul + pwm_res / 2), PWM_MARGIN, pwm_res - PWM_MARGIN);
-  LEFT_TIM->CCR2 = (uint16_t)CLAMP((vl + pwm_res / 2), PWM_MARGIN, pwm_res - PWM_MARGIN);
-  LEFT_TIM->CCR3 = (uint16_t)CLAMP((wl + pwm_res / 2), PWM_MARGIN, pwm_res - PWM_MARGIN);
+  LEFT_TIM->CCR1 = (uint16_t)clamp_i32((ul + pwm_res / 2), PWM_MARGIN, pwm_res - PWM_MARGIN);
+  LEFT_TIM->CCR2 = (uint16_t)clamp_i32((vl + pwm_res / 2), PWM_MARGIN, pwm_res - PWM_MARGIN);
+  LEFT_TIM->CCR3 = (uint16_t)clamp_i32((wl + pwm_res / 2), PWM_MARGIN, pwm_res - PWM_MARGIN);
 
   // ========================= RIGHT MOTOR ===========================
   rtU_Right.b_motEna      = enableFin;
   rtU_Right.z_ctrlModReq  = CTRL_MOD_REQ; // Speed Mode
   int deadband_rpm_right = rpm_right;
-  if (ABS(deadband_rpm_right) < RPM_DEADBAND) {
+  if (abs_i32(deadband_rpm_right) < RPM_DEADBAND) {
     deadband_rpm_right = 0;
   }
-  rtU_Right.r_inpTgt      = -(CLAMP((int)deadband_rpm_right, -MAX_RPM, MAX_RPM) * RPM_TO_UNIT);
+  rtU_Right.r_inpTgt      = -(clamp_i32((int)deadband_rpm_right, -MAX_RPM, MAX_RPM) * RPM_TO_UNIT);
 
   rtU_Right.i_phaAB       = curR_phaA;
   rtU_Right.i_phaBC       = curR_phaC;
@@ -310,9 +310,9 @@ void bldc_step(void) {
   int vr = rtY_Right.DC_phaB;
   int wr = rtY_Right.DC_phaC;
 
-  RIGHT_TIM->CCR1 = (uint16_t)CLAMP((ur + pwm_res / 2), PWM_MARGIN, pwm_res - PWM_MARGIN);
-  RIGHT_TIM->CCR2 = (uint16_t)CLAMP((vr + pwm_res / 2), PWM_MARGIN, pwm_res - PWM_MARGIN);
-  RIGHT_TIM->CCR3 = (uint16_t)CLAMP((wr + pwm_res / 2), PWM_MARGIN, pwm_res - PWM_MARGIN);
+  RIGHT_TIM->CCR1 = (uint16_t)clamp_i32((ur + pwm_res / 2), PWM_MARGIN, pwm_res - PWM_MARGIN);
+  RIGHT_TIM->CCR2 = (uint16_t)clamp_i32((vr + pwm_res / 2), PWM_MARGIN, pwm_res - PWM_MARGIN);
+  RIGHT_TIM->CCR3 = (uint16_t)clamp_i32((wr + pwm_res / 2), PWM_MARGIN, pwm_res - PWM_MARGIN);
 }
 
 #endif
