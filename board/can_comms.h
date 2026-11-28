@@ -44,6 +44,14 @@ typedef struct {
 } asm_buffer;
 
 static asm_buffer can_read_buffer = {.ptr = 0U, .tail_size = 0U};
+// the frame split into can_read_buffer counts as read once its tail is sent
+static bool can_read_buffer_rx = false;
+
+static void rx_frame_read(void) {
+  ENTER_CRITICAL();
+  rx_frames_read += 1U;
+  EXIT_CRITICAL();
+}
 
 int comms_can_read(uint8_t *data, uint32_t max_len) {
   uint32_t pos = 0U;
@@ -55,17 +63,26 @@ int comms_can_read(uint8_t *data, uint32_t max_len) {
     pos += overflow_len;
     (void)memcpy(can_read_buffer.data, &can_read_buffer.data[overflow_len], can_read_buffer.ptr - overflow_len);
     can_read_buffer.ptr -= overflow_len;
+    if ((can_read_buffer.ptr == 0U) && can_read_buffer_rx) {
+      can_read_buffer_rx = false;
+      rx_frame_read();
+    }
   }
 
   if (can_read_buffer.ptr == 0U) {
     // Fill rest of buffer with new data
     CANPacket_t can_packet;
     while ((pos < max_len) && can_pop(&can_rx_q, &can_packet)) {
+      bool rx = (can_packet.returned == 0U) && (can_packet.rejected == 0U);
       uint32_t pckt_len = CANPACKET_HEAD_SIZE + dlc_to_len[can_packet.data_len_code];
       if ((pos + pckt_len) <= max_len) {
         (void)memcpy(&data[pos], (uint8_t*)&can_packet, pckt_len);
         pos += pckt_len;
+        if (rx) {
+          rx_frame_read();
+        }
       } else {
+        can_read_buffer_rx = rx;
         (void)memcpy(&data[pos], (uint8_t*)&can_packet, max_len - pos);
         can_read_buffer.ptr += pckt_len - (max_len - pos);
         // cppcheck-suppress objectIndex
@@ -134,6 +151,11 @@ void comms_can_reset(void) {
   can_write_buffer.tail_size = 0U;
   can_read_buffer.ptr = 0U;
   can_read_buffer.tail_size = 0U;
+  // the host never gets the split frame
+  if (can_read_buffer_rx) {
+    can_read_buffer_rx = false;
+    rx_frame_read();
+  }
 }
 
 // TODO: make this more general!
