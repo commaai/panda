@@ -6,7 +6,7 @@ from panda import Panda
 from panda.tests.hitl.base import PandaTestCase, panda_test
 
 # keep in sync with PERMANENT_FAULTS, see board/sys/sys.h
-PERMANENT_FAULT_BITS = ()
+PERMANENT_FAULT_BITS = (0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30)
 # board/drivers/self_test.h injection index: fault bit
 SELF_TEST_FAULT_BITS = {0: 9, 1: 10, 2: 11, 3: 12, 4: 12, 5: 14}
 # board/main_comms.h 0xef injection index: fault bit
@@ -83,6 +83,7 @@ class TestSafety(PandaTestCase):
       assert p.health()['safety_mode'] == CarParams.SafetyModel.silent
     p.reset()
 
+  @unittest.skipIf(FAULT_SIREN_MALFUNCTION_BIT in PERMANENT_FAULT_BITS, "no temporary faults")
   def test_temporary_fault_no_safe_state(self):
     p = self.p
     p.set_safety_mode(CarParams.SafetyModel.allOutput)
@@ -249,7 +250,7 @@ class TestSafety(PandaTestCase):
     while not ((h := self.p.health())['faults'] & (1 << fault_bit)) and (time.monotonic() - t) < 5:
       time.sleep(0.05)
     assert h['faults'] & (1 << fault_bit), f"faults {h['faults']:#x}"
-    assert h['safety_mode'] == CarParams.SafetyModel.allOutput
+    assert h['safety_mode'] == (CarParams.SafetyModel.silent if fault_bit in PERMANENT_FAULT_BITS else CarParams.SafetyModel.allOutput)
 
   @panda_test(timeout=3*60)
   def test_interrupt_rate_limit(self):
